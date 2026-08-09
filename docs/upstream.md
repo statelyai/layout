@@ -27,8 +27,20 @@ TypeScript files must be recorded here and in source headers.
 6. Retain EPL-2.0 copyright and notice obligations for translated source.
 7. Benchmark before and after each phase replacement.
 
-## Upstream snapshot
+## Upstream snapshots
 
 The initial architectural review used Eclipse Layout Kernel commit
-`8aaa3c145c2a18a38aabbc725aa3791ddc517a76` from 2026-08-05. This is a
-research reference, not yet a vendored or translated source snapshot.
+`8aaa3c145c2a18a38aabbc725aa3791ddc517a76` from 2026-08-05 as a research
+reference.
+
+The first direct Java translations use ELK v0.11.0 commit
+`54123e884b1ae743b453260f713b20c9bf5787f2`, matching the ELK baseline shipped
+through elkjs 0.11.1:
+
+| Java source                 | TypeScript source | Covered behavior                   |
+| --------------------------- | ----------------- | ---------------------------------- |
+| `BoxLayoutProvider.java`    | `src/box.ts`      | SIMPLE packing and priority order  |
+| `RandomLayoutProvider.java` | `src/random.ts`   | Java RNG and seeded node placement |
+
+Translated files retain upstream copyright and SPDX headers. Differential
+tests compare their seeded geometry with elkjs.

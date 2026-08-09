@@ -1,8 +1,10 @@
 import { getGraphIssues, type Graph, type GraphPatch, type VisualGraph } from "@statelyai/graph";
 import { LayoutError, UnsupportedLayoutError } from "./errors";
+import { boxAlgorithm } from "./box";
 import { fixedAlgorithm } from "./fixed";
 import { layeredAlgorithm } from "./layered";
 import { rectanglePackingAlgorithm } from "./packing";
+import { randomAlgorithm } from "./random";
 import { sporeCompactionAlgorithm, sporeOverlapRemovalAlgorithm } from "./spore";
 import type {
   LayoutAlgorithm,
@@ -15,9 +17,11 @@ import type {
 } from "./types";
 
 const algorithms = new Map<string, LayoutAlgorithm<never>>([
+  ["box", boxAlgorithm as LayoutAlgorithm<never>],
   ["layered", layeredAlgorithm as LayoutAlgorithm<never>],
   ["fixed", fixedAlgorithm as LayoutAlgorithm<never>],
   ["rectpacking", rectanglePackingAlgorithm as LayoutAlgorithm<never>],
+  ["random", randomAlgorithm as LayoutAlgorithm<never>],
   ["sporeCompaction", sporeCompactionAlgorithm as LayoutAlgorithm<never>],
   ["sporeOverlap", sporeOverlapRemovalAlgorithm as LayoutAlgorithm<never>],
 ]);

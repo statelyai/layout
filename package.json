@@ -22,6 +22,11 @@
   "scripts": {
     "build": "tsdown",
     "bench": "vitest bench --run",
+    "demo": "vite --config demo/vite.config.ts",
+    "demo:build": "vite build --config demo/vite.config.ts",
+    "demo:check": "tsx scripts/generate-demo-corpus.ts --check",
+    "demo:generate": "tsx scripts/generate-demo-corpus.ts",
+    "demo:typecheck": "tsc --project demo/tsconfig.json",
     "dev": "tsdown --watch",
     "format": "oxfmt .",
     "format:check": "oxfmt --check .",
@@ -30,13 +35,14 @@
     "test": "vitest",
     "typecheck": "tsc --noEmit",
     "typecheck:repo": "tsc --project tsconfig.repo.json",
-    "verify": "oxfmt --check . && oxlint && tsc --noEmit && tsc --project tsconfig.repo.json && vitest --run && tsdown && publint --pack npm && tsx scripts/smoke-package.ts",
+    "verify": "oxfmt --check . && oxlint && tsc --noEmit && tsc --project tsconfig.repo.json && tsc --project demo/tsconfig.json && tsx scripts/generate-demo-corpus.ts --check && vitest --run && tsdown && vite build --config demo/vite.config.ts && publint --pack npm && tsx scripts/smoke-package.ts",
     "validate:package": "publint --pack npm && tsx scripts/smoke-package.ts"
   },
   "dependencies": {
     "@statelyai/graph": "^2.1.0"
   },
   "devDependencies": {
+    "@statelyai/sdk": "^0.20.1",
     "@types/node": "^25.0.3",
     "elkjs": "^0.11.1",
     "oxfmt": "0.62.0",
@@ -45,6 +51,7 @@
     "tsdown": "^0.18.1",
     "tsx": "^4.22.4",
     "typescript": "^5.9.3",
+    "vite": "^8.2.1",
     "vitest": "^4.0.18"
   },
   "peerDependencies": {

@@ -1,7 +1,9 @@
 import { createGraph, type Graph } from "@statelyai/graph";
+import { getBoxLayout } from "../box";
 import { getFixedLayout } from "../fixed";
 import { getLayeredLayout } from "../layered";
 import { getRectanglePackingLayout } from "../packing";
+import { getRandomLayout } from "../random";
 import { getSporeCompactionLayout, getSporeOverlapRemovalLayout } from "../spore";
 import type {
   ElkConstructorArguments,
@@ -42,7 +44,9 @@ export default class ELK {
   constructor(options: ElkConstructorArguments = {}) {
     this.#options = options;
     this.#algorithmIds = new Set([
+      "box",
       "fixed",
+      "random",
       "rectpacking",
       "sporeCompaction",
       "sporeOverlap",
@@ -55,7 +59,9 @@ export default class ELK {
       id,
       name: {
         layered: "Layered",
+        box: "Box",
         fixed: "Fixed",
+        random: "Random",
         rectpacking: "Rectangle Packing",
         sporeCompaction: "SPOrE Compaction",
         sporeOverlap: "SPOrE Overlap Removal",
@@ -69,7 +75,11 @@ export default class ELK {
               "elk.spacing.nodeNode",
               "elk.layered.spacing.nodeNodeBetweenLayers",
             ]
-          : ["position", "bendPoints"],
+          : id === "box"
+            ? ["padding", "spacing.nodeNode", "aspectRatio", "box.packingMode"]
+            : id === "random"
+              ? ["padding", "spacing.nodeNode", "aspectRatio", "randomSeed"]
+              : ["position", "bendPoints"],
     }));
   }
 
@@ -78,6 +88,8 @@ export default class ELK {
       { id: "elk.algorithm", name: "Layout Algorithm", type: "STRING" },
       { id: "elk.direction", name: "Direction", type: "ENUM" },
       { id: "elk.padding", name: "Padding", type: "OBJECT" },
+      { id: "elk.aspectRatio", name: "Aspect Ratio", type: "DOUBLE" },
+      { id: "elk.randomSeed", name: "Random Seed", type: "INT" },
       { id: "elk.spacing.nodeNode", name: "Node Spacing", type: "DOUBLE" },
       {
         id: "elk.layered.spacing.nodeNodeBetweenLayers",
@@ -94,7 +106,7 @@ export default class ELK {
         name: "Layered",
         knownLayouters: this.#algorithmIds.has("layered") ? ["layered"] : [],
       },
-      { id: "other", name: "Other", knownLayouters: ["fixed"] },
+      { id: "other", name: "Other", knownLayouters: ["box", "fixed", "random"] },
     ];
   }
 
@@ -121,21 +133,19 @@ export default class ELK {
       ...graph.properties,
       ...graph.layoutOptions,
     };
-    const algorithm = getOption(layoutOptions, "algorithm") ?? "layered";
+    const requestedAlgorithm = String(getOption(layoutOptions, "algorithm") ?? "layered");
+    const algorithm = requestedAlgorithm.replace(/^(?:org\.eclipse\.)?elk\./, "");
     if (
       algorithm !== "layered" &&
-      algorithm !== "elk.layered" &&
+      algorithm !== "box" &&
       algorithm !== "fixed" &&
-      algorithm !== "elk.fixed" &&
+      algorithm !== "random" &&
       algorithm !== "rectpacking" &&
-      algorithm !== "elk.rectpacking" &&
       algorithm !== "sporeCompaction" &&
-      algorithm !== "elk.sporeCompaction" &&
-      algorithm !== "sporeOverlap" &&
-      algorithm !== "elk.sporeOverlap"
+      algorithm !== "sporeOverlap"
     ) {
       throw new Error(
-        `org.eclipse.elk.core.UnsupportedConfigurationException: Layout algorithm '${algorithm}' not found`,
+        `org.eclipse.elk.core.UnsupportedConfigurationException: Layout algorithm '${requestedAlgorithm}' not found`,
       );
     }
     const hasHierarchy = (graph.children ?? []).some((child) => (child.children?.length ?? 0) > 0);
@@ -173,7 +183,7 @@ export default class ELK {
       ),
     );
     if (
-      (algorithm === "layered" || algorithm === "elk.layered") &&
+      algorithm === "layered" &&
       graph_.edges.some((edge) => {
         const sourceLayer = constrainedLayerByNodeId.get(edge.sourceId);
         const targetLayer = constrainedLayerByNodeId.get(edge.targetId);
@@ -185,34 +195,58 @@ export default class ELK {
       );
     }
     const laidOut =
-      algorithm === "sporeCompaction" || algorithm === "elk.sporeCompaction"
+      algorithm === "sporeCompaction"
         ? getSporeCompactionLayout(graph_, {
             padding,
             spacing: getNumberOption(layoutOptions, "spacing.nodeNode"),
           })
-        : algorithm === "sporeOverlap" || algorithm === "elk.sporeOverlap"
+        : algorithm === "sporeOverlap"
           ? getSporeOverlapRemovalLayout(graph_, {
               padding,
               spacing: getNumberOption(layoutOptions, "spacing.nodeNode"),
             })
-          : algorithm === "rectpacking" || algorithm === "elk.rectpacking"
+          : algorithm === "rectpacking"
             ? getRectanglePackingLayout(graph_, {
                 padding,
                 spacing: getNumberOption(layoutOptions, "spacing.nodeNode"),
               })
-            : algorithm === "fixed" || algorithm === "elk.fixed"
-              ? getFixedLayout(graph_, { direction: getDirection(layoutOptions) })
-              : getLayeredLayout(graph_, {
-                  direction: getDirection(layoutOptions),
-                  spacing: {
-                    node: getNumberOption(layoutOptions, "spacing.nodeNode"),
-                    layer: getNumberOption(layoutOptions, "layered.spacing.nodeNodeBetweenLayers"),
-                  },
-                  padding,
-                  constraints: {
-                    layer: (node) => constrainedLayerByNodeId.get(node.id),
-                  },
-                });
+            : algorithm === "random"
+              ? getRandomLayout(graph_, {
+                  padding: getOption(layoutOptions, "padding") === undefined ? 15 : padding,
+                  spacing: getNumberOption(layoutOptions, "spacing.nodeNode"),
+                  aspectRatio: getNumberOption(layoutOptions, "aspectRatio"),
+                  seed: getNumberOption(layoutOptions, "randomSeed"),
+                })
+              : algorithm === "box"
+                ? getBoxLayout(graph_, {
+                    padding: getOption(layoutOptions, "padding") === undefined ? 15 : padding,
+                    spacing: getNumberOption(layoutOptions, "spacing.nodeNode"),
+                    aspectRatio: getNumberOption(layoutOptions, "aspectRatio"),
+                    interactive: getBooleanOption(layoutOptions, "interactive"),
+                    expandNodes: getBooleanOption(layoutOptions, "expandNodes"),
+                    priority: (node) => {
+                      const child = graph.children?.find(
+                        (candidate) => String(candidate.id) === node.id,
+                      );
+                      return getNumberOption(child?.layoutOptions ?? {}, "priority");
+                    },
+                  })
+                : algorithm === "fixed"
+                  ? getFixedLayout(graph_, { direction: getDirection(layoutOptions) })
+                  : getLayeredLayout(graph_, {
+                      direction: getDirection(layoutOptions),
+                      spacing: {
+                        node: getNumberOption(layoutOptions, "spacing.nodeNode"),
+                        layer: getNumberOption(
+                          layoutOptions,
+                          "layered.spacing.nodeNodeBetweenLayers",
+                        ),
+                      },
+                      padding,
+                      constraints: {
+                        layer: (node) => constrainedLayerByNodeId.get(node.id),
+                      },
+                    });
     applyLayout(graph, laidOut, padding, layoutOptions);
     if (arguments_.logging || arguments_.measureExecutionTime) {
       graph.logging = {
@@ -260,6 +294,19 @@ function getNumberOption(
   if (typeof value === "string" && value.trim() !== "") {
     const parsed = Number(value);
     if (Number.isFinite(parsed)) return parsed;
+  }
+  return undefined;
+}
+
+function getBooleanOption(
+  options: Readonly<Record<string, unknown>>,
+  suffix: string,
+): boolean | undefined {
+  const value = getOption(options, suffix);
+  if (typeof value === "boolean") return value;
+  if (typeof value === "string") {
+    if (value.toLowerCase() === "true") return true;
+    if (value.toLowerCase() === "false") return false;
   }
   return undefined;
 }

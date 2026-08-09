@@ -34,8 +34,10 @@ tests combine related assertions while preserving all listed behaviors.
 
 | Algorithm             | Native API                     | Current fidelity                                      |
 | --------------------- | ------------------------------ | ----------------------------------------------------- |
+| Box                   | `getBoxLayout`                 | Java SIMPLE node placement; grouped modes pending     |
 | Layered               | `getLayeredLayout`             | Initial flat Sugiyama-style pipeline; not Java parity |
 | Fixed                 | `getFixedLayout`               | Preserves authored geometry and routes                |
+| Random                | `getRandomLayout`              | Seeded Java-exact nodes; edge-route parity pending    |
 | Rectangle packing     | `getRectanglePackingLayout`    | Deterministic shelf baseline; not ELK parity          |
 | SPOrE compaction      | `getSporeCompactionLayout`     | Initial relative-direction baseline; not ELK parity   |
 | SPOrE overlap removal | `getSporeOverlapRemovalLayout` | Initial separation baseline; not ELK parity           |
@@ -43,6 +45,16 @@ tests combine related assertions while preserving all listed behaviors.
 The compatibility adapter recursively handles the upstream compound-parent
 regression. Native compound layout, cross-hierarchy routing, worker execution,
 and the Java algorithm suites remain open.
+
+## Visual corpus
+
+<!-- representative graph count and engines from demo/scenarios.ts -->
+
+The SDK project-view corpus contains 14 pre-laid graphs across the 11 layout
+families available in elkjs 0.11.1. Nine currently run through native
+TypeScript; five remain elkjs oracle snapshots (`stress`, `mrtree`, `radial`,
+`force`, and compound layered). Corpus generation is offline, so the browser
+bundle contains the resulting Stately graphs but not elkjs.
 
 ## Definition of full parity
 

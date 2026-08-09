@@ -1,0 +1,5390 @@
+[
+  {
+    "id": "layered-diamond",
+    "name": "Layered · diamond",
+    "description": "Branch and join baseline with orthogonal routes.",
+    "algorithm": "layered",
+    "engine": "native",
+    "graph": {
+      "id": "layered-diamond",
+      "mode": "directed",
+      "type": "directed",
+      "initialNodeId": "layered-diamond:root",
+      "parentId": null,
+      "direction": "right",
+      "layout": {
+        "status": "complete",
+        "direction": "RIGHT"
+      },
+      "annotations": [],
+      "nodes": [
+        {
+          "type": "node",
+          "id": "layered-diamond:root",
+          "parentId": null,
+          "initialNodeId": "start",
+          "label": "Layered · diamond",
+          "position": {
+            "x": 0,
+            "y": 0
+          },
+          "x": 0,
+          "y": 0,
+          "dx": 0,
+          "dy": 0,
+          "width": 536,
+          "height": 208,
+          "data": {
+            "nodeId": "layered-diamond:root",
+            "parentId": null,
+            "key": "layered-diamond:root",
+            "type": "normal",
+            "initialId": "start",
+            "history": false,
+            "entry": [],
+            "exit": [],
+            "invokes": [],
+            "tags": [],
+            "meta": null
+          }
+        },
+        {
+          "type": "node",
+          "id": "start",
+          "parentId": "layered-diamond:root",
+          "initialNodeId": null,
+          "label": "start",
+          "position": {
+            "x": 24,
+            "y": 74
+          },
+          "x": 24,
+          "y": 74,
+          "dx": 0,
+          "dy": 0,
+          "width": 112,
+          "height": 60,
+          "data": {
+            "nodeId": "start",
+            "parentId": "layered-diamond:root",
+            "key": "start",
+            "type": "normal",
+            "initialId": null,
+            "history": false,
+            "entry": [],
+            "exit": [],
+            "invokes": [],
+            "tags": [],
+            "meta": null
+          }
+        },
+        {
+          "type": "node",
+          "id": "review",
+          "parentId": "layered-diamond:root",
+          "initialNodeId": null,
+          "label": "review",
+          "position": {
+            "x": 212,
+            "y": 74
+          },
+          "x": 212,
+          "y": 74,
+          "dx": 0,
+          "dy": 0,
+          "width": 112,
+          "height": 60,
+          "data": {
+            "nodeId": "review",
+            "parentId": "layered-diamond:root",
+            "key": "review",
+            "type": "normal",
+            "initialId": null,
+            "history": false,
+            "entry": [],
+            "exit": [],
+            "invokes": [],
+            "tags": [],
+            "meta": null
+          }
+        },
+        {
+          "type": "node",
+          "id": "revise",
+          "parentId": "layered-diamond:root",
+          "initialNodeId": null,
+          "label": "revise",
+          "position": {
+            "x": 400,
+            "y": 24
+          },
+          "x": 400,
+          "y": 24,
+          "dx": 0,
+          "dy": 0,
+          "width": 112,
+          "height": 60,
+          "data": {
+            "nodeId": "revise",
+            "parentId": "layered-diamond:root",
+            "key": "revise",
+            "type": "normal",
+            "initialId": null,
+            "history": false,
+            "entry": [],
+            "exit": [],
+            "invokes": [],
+            "tags": [],
+            "meta": null
+          }
+        },
+        {
+          "type": "node",
+          "id": "done",
+          "parentId": "layered-diamond:root",
+          "initialNodeId": null,
+          "label": "done",
+          "position": {
+            "x": 400,
+            "y": 124
+          },
+          "x": 400,
+          "y": 124,
+          "dx": 0,
+          "dy": 0,
+          "width": 112,
+          "height": 60,
+          "data": {
+            "nodeId": "done",
+            "parentId": "layered-diamond:root",
+            "key": "done",
+            "type": "normal",
+            "initialId": null,
+            "history": false,
+            "entry": [],
+            "exit": [],
+            "invokes": [],
+            "tags": [],
+            "meta": null
+          }
+        }
+      ],
+      "edges": [
+        {
+          "type": "edge",
+          "id": "submit",
+          "sourceId": "start",
+          "targetId": "review",
+          "position": {
+            "x": 157,
+            "y": 88
+          },
+          "x": 157,
+          "y": 88,
+          "dx": 0,
+          "dy": 0,
+          "width": 72,
+          "height": 32,
+          "data": {
+            "eventType": "submit",
+            "transitionType": "normal",
+            "guard": null,
+            "actions": [],
+            "description": null,
+            "meta": null
+          }
+        },
+        {
+          "type": "edge",
+          "id": "changes",
+          "sourceId": "review",
+          "targetId": "revise",
+          "position": {
+            "x": 322,
+            "y": 63
+          },
+          "x": 322,
+          "y": 63,
+          "dx": 0,
+          "dy": 0,
+          "width": 80,
+          "height": 32,
+          "data": {
+            "eventType": "changes",
+            "transitionType": "normal",
+            "guard": null,
+            "actions": [],
+            "description": null,
+            "meta": null
+          }
+        },
+        {
+          "type": "edge",
+          "id": "approve",
+          "sourceId": "review",
+          "targetId": "done",
+          "position": {
+            "x": 322,
+            "y": 113
+          },
+          "x": 322,
+          "y": 113,
+          "dx": 0,
+          "dy": 0,
+          "width": 80,
+          "height": 32,
+          "data": {
+            "eventType": "approve",
+            "transitionType": "normal",
+            "guard": null,
+            "actions": [],
+            "description": null,
+            "meta": null
+          }
+        },
+        {
+          "type": "edge",
+          "id": "resubmit",
+          "sourceId": "revise",
+          "targetId": "review",
+          "position": {
+            "x": 318,
+            "y": 63
+          },
+          "x": 318,
+          "y": 63,
+          "dx": 0,
+          "dy": 0,
+          "width": 88,
+          "height": 32,
+          "data": {
+            "eventType": "resubmit",
+            "transitionType": "normal",
+            "guard": null,
+            "actions": [],
+            "description": null,
+            "meta": null
+          }
+        }
+      ],
+      "data": {
+        "profile": "xstate-v5",
+        "implementations": {
+          "actions": [],
+          "guards": [],
+          "actors": [],
+          "delays": [],
+          "tags": []
+        },
+        "schemas": {
+          "context": null,
+          "events": {},
+          "input": null,
+          "output": null,
+          "actions": {},
+          "guards": {},
+          "actors": {},
+          "tags": {},
+          "delays": {}
+        }
+      }
+    }
+  },
+  {
+    "id": "layered-cycle",
+    "name": "Layered · cycle",
+    "description": "Cycle breaking, a self-loop, and deterministic routing.",
+    "algorithm": "layered",
+    "engine": "native",
+    "graph": {
+      "id": "layered-cycle",
+      "mode": "directed",
+      "type": "directed",
+      "initialNodeId": "layered-cycle:root",
+      "parentId": null,
+      "direction": "right",
+      "layout": {
+        "status": "complete",
+        "direction": "RIGHT"
+      },
+      "annotations": [],
+      "nodes": [
+        {
+          "type": "node",
+          "id": "layered-cycle:root",
+          "parentId": null,
+          "initialNodeId": "idle",
+          "label": "Layered · cycle",
+          "position": {
+            "x": 0,
+            "y": 0
+          },
+          "x": 0,
+          "y": 0,
+          "dx": 0,
+          "dy": 0,
+          "width": 524,
+          "height": 204,
+          "data": {
+            "nodeId": "layered-cycle:root",
+            "parentId": null,
+            "key": "layered-cycle:root",
+            "type": "normal",
+            "initialId": "idle",
+            "history": false,
+            "entry": [],
+            "exit": [],
+            "invokes": [],
+            "tags": [],
+            "meta": null
+          }
+        },
+        {
+          "type": "node",
+          "id": "idle",
+          "parentId": "layered-cycle:root",
+          "initialNodeId": null,
+          "label": "idle",
+          "position": {
+            "x": 24,
+            "y": 73
+          },
+          "x": 24,
+          "y": 73,
+          "dx": 0,
+          "dy": 0,
+          "width": 108,
+          "height": 58,
+          "data": {
+            "nodeId": "idle",
+            "parentId": "layered-cycle:root",
+            "key": "idle",
+            "type": "normal",
+            "initialId": null,
+            "history": false,
+            "entry": [],
+            "exit": [],
+            "invokes": [],
+            "tags": [],
+            "meta": null
+          }
+        },
+        {
+          "type": "node",
+          "id": "running",
+          "parentId": "layered-cycle:root",
+          "initialNodeId": null,
+          "label": "running",
+          "position": {
+            "x": 208,
+            "y": 73
+          },
+          "x": 208,
+          "y": 73,
+          "dx": 0,
+          "dy": 0,
+          "width": 108,
+          "height": 58,
+          "data": {
+            "nodeId": "running",
+            "parentId": "layered-cycle:root",
+            "key": "running",
+            "type": "normal",
+            "initialId": null,
+            "history": false,
+            "entry": [],
+            "exit": [],
+            "invokes": [],
+            "tags": [],
+            "meta": null
+          }
+        },
+        {
+          "type": "node",
+          "id": "paused",
+          "parentId": "layered-cycle:root",
+          "initialNodeId": null,
+          "label": "paused",
+          "position": {
+            "x": 392,
+            "y": 24
+          },
+          "x": 392,
+          "y": 24,
+          "dx": 0,
+          "dy": 0,
+          "width": 108,
+          "height": 58,
+          "data": {
+            "nodeId": "paused",
+            "parentId": "layered-cycle:root",
+            "key": "paused",
+            "type": "normal",
+            "initialId": null,
+            "history": false,
+            "entry": [],
+            "exit": [],
+            "invokes": [],
+            "tags": [],
+            "meta": null
+          }
+        },
+        {
+          "type": "node",
+          "id": "failed",
+          "parentId": "layered-cycle:root",
+          "initialNodeId": null,
+          "label": "failed",
+          "position": {
+            "x": 392,
+            "y": 122
+          },
+          "x": 392,
+          "y": 122,
+          "dx": 0,
+          "dy": 0,
+          "width": 108,
+          "height": 58,
+          "data": {
+            "nodeId": "failed",
+            "parentId": "layered-cycle:root",
+            "key": "failed",
+            "type": "normal",
+            "initialId": null,
+            "history": false,
+            "entry": [],
+            "exit": [],
+            "invokes": [],
+            "tags": [],
+            "meta": null
+          }
+        }
+      ],
+      "edges": [
+        {
+          "type": "edge",
+          "id": "start",
+          "sourceId": "idle",
+          "targetId": "running",
+          "position": {
+            "x": 157,
+            "y": 86
+          },
+          "x": 157,
+          "y": 86,
+          "dx": 0,
+          "dy": 0,
+          "width": 64,
+          "height": 32,
+          "data": {
+            "eventType": "start",
+            "transitionType": "normal",
+            "guard": null,
+            "actions": [],
+            "description": null,
+            "meta": null
+          }
+        },
+        {
+          "type": "edge",
+          "id": "pause",
+          "sourceId": "running",
+          "targetId": "paused",
+          "position": {
+            "x": 322,
+            "y": 61.5
+          },
+          "x": 322,
+          "y": 61.5,
+          "dx": 0,
+          "dy": 0,
+          "width": 64,
+          "height": 32,
+          "data": {
+            "eventType": "pause",
+            "transitionType": "normal",
+            "guard": null,
+            "actions": [],
+            "description": null,
+            "meta": null
+          }
+        },
+        {
+          "type": "edge",
+          "id": "resume",
+          "sourceId": "paused",
+          "targetId": "running",
+          "position": {
+            "x": 318,
+            "y": 61.5
+          },
+          "x": 318,
+          "y": 61.5,
+          "dx": 0,
+          "dy": 0,
+          "width": 72,
+          "height": 32,
+          "data": {
+            "eventType": "resume",
+            "transitionType": "normal",
+            "guard": null,
+            "actions": [],
+            "description": null,
+            "meta": null
+          }
+        },
+        {
+          "type": "edge",
+          "id": "retry",
+          "sourceId": "failed",
+          "targetId": "running",
+          "position": {
+            "x": 322,
+            "y": 110.5
+          },
+          "x": 322,
+          "y": 110.5,
+          "dx": 0,
+          "dy": 0,
+          "width": 64,
+          "height": 32,
+          "data": {
+            "eventType": "retry",
+            "transitionType": "normal",
+            "guard": null,
+            "actions": [],
+            "description": null,
+            "meta": null
+          }
+        },
+        {
+          "type": "edge",
+          "id": "fail",
+          "sourceId": "running",
+          "targetId": "failed",
+          "position": {
+            "x": 322,
+            "y": 110.5
+          },
+          "x": 322,
+          "y": 110.5,
+          "dx": 0,
+          "dy": 0,
+          "width": 64,
+          "height": 32,
+          "data": {
+            "eventType": "fail",
+            "transitionType": "normal",
+            "guard": null,
+            "actions": [],
+            "description": null,
+            "meta": null
+          }
+        },
+        {
+          "type": "edge",
+          "id": "tick",
+          "sourceId": "running",
+          "targetId": "running",
+          "position": {
+            "x": 308,
+            "y": 74
+          },
+          "x": 308,
+          "y": 74,
+          "dx": 0,
+          "dy": 0,
+          "width": 64,
+          "height": 32,
+          "data": {
+            "eventType": "tick",
+            "transitionType": "normal",
+            "guard": null,
+            "actions": [],
+            "description": null,
+            "meta": null
+          }
+        }
+      ],
+      "data": {
+        "profile": "xstate-v5",
+        "implementations": {
+          "actions": [],
+          "guards": [],
+          "actors": [],
+          "delays": [],
+          "tags": []
+        },
+        "schemas": {
+          "context": null,
+          "events": {},
+          "input": null,
+          "output": null,
+          "actions": {},
+          "guards": {},
+          "actors": {},
+          "tags": {},
+          "delays": {}
+        }
+      }
+    }
+  },
+  {
+    "id": "layered-long-edges",
+    "name": "Layered · long edges",
+    "description": "Crossings and edges spanning several ranks.",
+    "algorithm": "layered",
+    "engine": "native",
+    "graph": {
+      "id": "layered-long-edges",
+      "mode": "directed",
+      "type": "directed",
+      "initialNodeId": "layered-long-edges:root",
+      "parentId": null,
+      "direction": "right",
+      "layout": {
+        "status": "complete",
+        "direction": "RIGHT"
+      },
+      "annotations": [],
+      "nodes": [
+        {
+          "type": "node",
+          "id": "layered-long-edges:root",
+          "parentId": null,
+          "initialNodeId": "source",
+          "label": "Layered · long edges",
+          "position": {
+            "x": 0,
+            "y": 0
+          },
+          "x": 0,
+          "y": 0,
+          "dx": 0,
+          "dy": 0,
+          "width": 1124,
+          "height": 104,
+          "data": {
+            "nodeId": "layered-long-edges:root",
+            "parentId": null,
+            "key": "layered-long-edges:root",
+            "type": "normal",
+            "initialId": "source",
+            "history": false,
+            "entry": [],
+            "exit": [],
+            "invokes": [],
+            "tags": [],
+            "meta": null
+          }
+        },
+        {
+          "type": "node",
+          "id": "source",
+          "parentId": "layered-long-edges:root",
+          "initialNodeId": null,
+          "label": "source",
+          "position": {
+            "x": 24,
+            "y": 24
+          },
+          "x": 24,
+          "y": 24,
+          "dx": 0,
+          "dy": 0,
+          "width": 116,
+          "height": 56,
+          "data": {
+            "nodeId": "source",
+            "parentId": "layered-long-edges:root",
+            "key": "source",
+            "type": "normal",
+            "initialId": null,
+            "history": false,
+            "entry": [],
+            "exit": [],
+            "invokes": [],
+            "tags": [],
+            "meta": null
+          }
+        },
+        {
+          "type": "node",
+          "id": "parse",
+          "parentId": "layered-long-edges:root",
+          "initialNodeId": null,
+          "label": "parse",
+          "position": {
+            "x": 216,
+            "y": 24
+          },
+          "x": 216,
+          "y": 24,
+          "dx": 0,
+          "dy": 0,
+          "width": 116,
+          "height": 56,
+          "data": {
+            "nodeId": "parse",
+            "parentId": "layered-long-edges:root",
+            "key": "parse",
+            "type": "normal",
+            "initialId": null,
+            "history": false,
+            "entry": [],
+            "exit": [],
+            "invokes": [],
+            "tags": [],
+            "meta": null
+          }
+        },
+        {
+          "type": "node",
+          "id": "validate",
+          "parentId": "layered-long-edges:root",
+          "initialNodeId": null,
+          "label": "validate",
+          "position": {
+            "x": 408,
+            "y": 24
+          },
+          "x": 408,
+          "y": 24,
+          "dx": 0,
+          "dy": 0,
+          "width": 116,
+          "height": 56,
+          "data": {
+            "nodeId": "validate",
+            "parentId": "layered-long-edges:root",
+            "key": "validate",
+            "type": "normal",
+            "initialId": null,
+            "history": false,
+            "entry": [],
+            "exit": [],
+            "invokes": [],
+            "tags": [],
+            "meta": null
+          }
+        },
+        {
+          "type": "node",
+          "id": "transform",
+          "parentId": "layered-long-edges:root",
+          "initialNodeId": null,
+          "label": "transform",
+          "position": {
+            "x": 600,
+            "y": 24
+          },
+          "x": 600,
+          "y": 24,
+          "dx": 0,
+          "dy": 0,
+          "width": 116,
+          "height": 56,
+          "data": {
+            "nodeId": "transform",
+            "parentId": "layered-long-edges:root",
+            "key": "transform",
+            "type": "normal",
+            "initialId": null,
+            "history": false,
+            "entry": [],
+            "exit": [],
+            "invokes": [],
+            "tags": [],
+            "meta": null
+          }
+        },
+        {
+          "type": "node",
+          "id": "persist",
+          "parentId": "layered-long-edges:root",
+          "initialNodeId": null,
+          "label": "persist",
+          "position": {
+            "x": 792,
+            "y": 24
+          },
+          "x": 792,
+          "y": 24,
+          "dx": 0,
+          "dy": 0,
+          "width": 116,
+          "height": 56,
+          "data": {
+            "nodeId": "persist",
+            "parentId": "layered-long-edges:root",
+            "key": "persist",
+            "type": "normal",
+            "initialId": null,
+            "history": false,
+            "entry": [],
+            "exit": [],
+            "invokes": [],
+            "tags": [],
+            "meta": null
+          }
+        },
+        {
+          "type": "node",
+          "id": "notify",
+          "parentId": "layered-long-edges:root",
+          "initialNodeId": null,
+          "label": "notify",
+          "position": {
+            "x": 984,
+            "y": 24
+          },
+          "x": 984,
+          "y": 24,
+          "dx": 0,
+          "dy": 0,
+          "width": 116,
+          "height": 56,
+          "data": {
+            "nodeId": "notify",
+            "parentId": "layered-long-edges:root",
+            "key": "notify",
+            "type": "normal",
+            "initialId": null,
+            "history": false,
+            "entry": [],
+            "exit": [],
+            "invokes": [],
+            "tags": [],
+            "meta": null
+          }
+        }
+      ],
+      "edges": [
+        {
+          "type": "edge",
+          "id": "parse",
+          "sourceId": "source",
+          "targetId": "parse",
+          "position": {
+            "x": 165,
+            "y": 36
+          },
+          "x": 165,
+          "y": 36,
+          "dx": 0,
+          "dy": 0,
+          "width": 64,
+          "height": 32,
+          "data": {
+            "eventType": "parse",
+            "transitionType": "normal",
+            "guard": null,
+            "actions": [],
+            "description": null,
+            "meta": null
+          }
+        },
+        {
+          "type": "edge",
+          "id": "validate",
+          "sourceId": "parse",
+          "targetId": "validate",
+          "position": {
+            "x": 345,
+            "y": 36
+          },
+          "x": 345,
+          "y": 36,
+          "dx": 0,
+          "dy": 0,
+          "width": 88,
+          "height": 32,
+          "data": {
+            "eventType": "validate",
+            "transitionType": "normal",
+            "guard": null,
+            "actions": [],
+            "description": null,
+            "meta": null
+          }
+        },
+        {
+          "type": "edge",
+          "id": "transform",
+          "sourceId": "validate",
+          "targetId": "transform",
+          "position": {
+            "x": 533,
+            "y": 36
+          },
+          "x": 533,
+          "y": 36,
+          "dx": 0,
+          "dy": 0,
+          "width": 96,
+          "height": 32,
+          "data": {
+            "eventType": "transform",
+            "transitionType": "normal",
+            "guard": null,
+            "actions": [],
+            "description": null,
+            "meta": null
+          }
+        },
+        {
+          "type": "edge",
+          "id": "persist",
+          "sourceId": "transform",
+          "targetId": "persist",
+          "position": {
+            "x": 733,
+            "y": 36
+          },
+          "x": 733,
+          "y": 36,
+          "dx": 0,
+          "dy": 0,
+          "width": 80,
+          "height": 32,
+          "data": {
+            "eventType": "persist",
+            "transitionType": "normal",
+            "guard": null,
+            "actions": [],
+            "description": null,
+            "meta": null
+          }
+        },
+        {
+          "type": "edge",
+          "id": "notify",
+          "sourceId": "persist",
+          "targetId": "notify",
+          "position": {
+            "x": 929,
+            "y": 36
+          },
+          "x": 929,
+          "y": 36,
+          "dx": 0,
+          "dy": 0,
+          "width": 72,
+          "height": 32,
+          "data": {
+            "eventType": "notify",
+            "transitionType": "normal",
+            "guard": null,
+            "actions": [],
+            "description": null,
+            "meta": null
+          }
+        },
+        {
+          "type": "edge",
+          "id": "fast-path",
+          "sourceId": "source",
+          "targetId": "persist",
+          "position": {
+            "x": 581,
+            "y": 36
+          },
+          "x": 581,
+          "y": 36,
+          "dx": 0,
+          "dy": 0,
+          "width": 96,
+          "height": 32,
+          "data": {
+            "eventType": "fast-path",
+            "transitionType": "normal",
+            "guard": null,
+            "actions": [],
+            "description": null,
+            "meta": null
+          }
+        },
+        {
+          "type": "edge",
+          "id": "audit",
+          "sourceId": "validate",
+          "targetId": "notify",
+          "position": {
+            "x": 837,
+            "y": 36
+          },
+          "x": 837,
+          "y": 36,
+          "dx": 0,
+          "dy": 0,
+          "width": 64,
+          "height": 32,
+          "data": {
+            "eventType": "audit",
+            "transitionType": "normal",
+            "guard": null,
+            "actions": [],
+            "description": null,
+            "meta": null
+          }
+        }
+      ],
+      "data": {
+        "profile": "xstate-v5",
+        "implementations": {
+          "actions": [],
+          "guards": [],
+          "actors": [],
+          "delays": [],
+          "tags": []
+        },
+        "schemas": {
+          "context": null,
+          "events": {},
+          "input": null,
+          "output": null,
+          "actions": {},
+          "guards": {},
+          "actors": {},
+          "tags": {},
+          "delays": {}
+        }
+      }
+    }
+  },
+  {
+    "id": "layered-compound",
+    "name": "Layered · compound",
+    "description": "Oracle reference for nested nodes and child-to-parent routing.",
+    "algorithm": "layered",
+    "engine": "elkjs-oracle",
+    "graph": {
+      "id": "layered-compound",
+      "mode": "directed",
+      "type": "directed",
+      "initialNodeId": "layered-compound:root",
+      "parentId": null,
+      "direction": "right",
+      "layout": {
+        "status": "complete",
+        "direction": "RIGHT"
+      },
+      "annotations": [],
+      "nodes": [
+        {
+          "type": "node",
+          "id": "layered-compound:root",
+          "parentId": null,
+          "initialNodeId": "frontend",
+          "label": "Layered · compound",
+          "position": {
+            "x": 0,
+            "y": 0
+          },
+          "x": 0,
+          "y": 0,
+          "dx": 0,
+          "dy": 0,
+          "width": 464,
+          "height": 190,
+          "data": {
+            "nodeId": "layered-compound:root",
+            "parentId": null,
+            "key": "layered-compound:root",
+            "type": "normal",
+            "initialId": "frontend",
+            "history": false,
+            "entry": [],
+            "exit": [],
+            "invokes": [],
+            "tags": [],
+            "meta": null
+          }
+        },
+        {
+          "type": "node",
+          "id": "frontend",
+          "parentId": "layered-compound:root",
+          "initialNodeId": "form",
+          "label": "frontend",
+          "position": {
+            "x": 12,
+            "y": 12
+          },
+          "x": 12,
+          "y": 12,
+          "dx": 0,
+          "dy": 0,
+          "width": 124,
+          "height": 156,
+          "data": {
+            "nodeId": "frontend",
+            "parentId": "layered-compound:root",
+            "key": "frontend",
+            "type": "normal",
+            "initialId": "form",
+            "history": false,
+            "entry": [],
+            "exit": [],
+            "invokes": [],
+            "tags": [],
+            "meta": null
+          }
+        },
+        {
+          "type": "node",
+          "id": "form",
+          "parentId": "frontend",
+          "initialNodeId": null,
+          "label": "form",
+          "position": {
+            "x": 12,
+            "y": 88
+          },
+          "x": 12,
+          "y": 88,
+          "dx": 0,
+          "dy": 0,
+          "width": 100,
+          "height": 56,
+          "data": {
+            "nodeId": "form",
+            "parentId": "frontend",
+            "key": "form",
+            "type": "normal",
+            "initialId": null,
+            "history": false,
+            "entry": [],
+            "exit": [],
+            "invokes": [],
+            "tags": [],
+            "meta": null
+          }
+        },
+        {
+          "type": "node",
+          "id": "preview",
+          "parentId": "frontend",
+          "initialNodeId": null,
+          "label": "preview",
+          "position": {
+            "x": 12,
+            "y": 12
+          },
+          "x": 12,
+          "y": 12,
+          "dx": 0,
+          "dy": 0,
+          "width": 100,
+          "height": 56,
+          "data": {
+            "nodeId": "preview",
+            "parentId": "frontend",
+            "key": "preview",
+            "type": "normal",
+            "initialId": null,
+            "history": false,
+            "entry": [],
+            "exit": [],
+            "invokes": [],
+            "tags": [],
+            "meta": null
+          }
+        },
+        {
+          "type": "node",
+          "id": "backend",
+          "parentId": "layered-compound:root",
+          "initialNodeId": "validate",
+          "label": "backend",
+          "position": {
+            "x": 208,
+            "y": 98
+          },
+          "x": 208,
+          "y": 98,
+          "dx": 0,
+          "dy": 0,
+          "width": 244,
+          "height": 80,
+          "data": {
+            "nodeId": "backend",
+            "parentId": "layered-compound:root",
+            "key": "backend",
+            "type": "normal",
+            "initialId": "validate",
+            "history": false,
+            "entry": [],
+            "exit": [],
+            "invokes": [],
+            "tags": [],
+            "meta": null
+          }
+        },
+        {
+          "type": "node",
+          "id": "validate",
+          "parentId": "backend",
+          "initialNodeId": null,
+          "label": "validate",
+          "position": {
+            "x": 12,
+            "y": 12
+          },
+          "x": 12,
+          "y": 12,
+          "dx": 0,
+          "dy": 0,
+          "width": 100,
+          "height": 56,
+          "data": {
+            "nodeId": "validate",
+            "parentId": "backend",
+            "key": "validate",
+            "type": "normal",
+            "initialId": null,
+            "history": false,
+            "entry": [],
+            "exit": [],
+            "invokes": [],
+            "tags": [],
+            "meta": null
+          }
+        },
+        {
+          "type": "node",
+          "id": "store",
+          "parentId": "backend",
+          "initialNodeId": null,
+          "label": "store",
+          "position": {
+            "x": 132,
+            "y": 12
+          },
+          "x": 132,
+          "y": 12,
+          "dx": 0,
+          "dy": 0,
+          "width": 100,
+          "height": 56,
+          "data": {
+            "nodeId": "store",
+            "parentId": "backend",
+            "key": "store",
+            "type": "normal",
+            "initialId": null,
+            "history": false,
+            "entry": [],
+            "exit": [],
+            "invokes": [],
+            "tags": [],
+            "meta": null
+          }
+        }
+      ],
+      "edges": [
+        {
+          "type": "edge",
+          "id": "return",
+          "sourceId": "form",
+          "targetId": "frontend",
+          "position": {
+            "x": 82,
+            "y": 100
+          },
+          "x": 82,
+          "y": 100,
+          "dx": 0,
+          "dy": 0,
+          "width": 72,
+          "height": 32,
+          "data": {
+            "eventType": "return",
+            "transitionType": "normal",
+            "guard": null,
+            "actions": [],
+            "description": null,
+            "meta": null
+          }
+        },
+        {
+          "type": "edge",
+          "id": "save",
+          "sourceId": "validate",
+          "targetId": "store",
+          "position": {
+            "x": 90,
+            "y": 24
+          },
+          "x": 90,
+          "y": 24,
+          "dx": 0,
+          "dy": 0,
+          "width": 64,
+          "height": 32,
+          "data": {
+            "eventType": "save",
+            "transitionType": "normal",
+            "guard": null,
+            "actions": [],
+            "description": null,
+            "meta": null
+          }
+        },
+        {
+          "type": "edge",
+          "id": "submit",
+          "sourceId": "frontend",
+          "targetId": "backend",
+          "position": {
+            "x": 136,
+            "y": 122
+          },
+          "x": 136,
+          "y": 122,
+          "dx": 0,
+          "dy": 0,
+          "width": 72,
+          "height": 32,
+          "data": {
+            "eventType": "submit",
+            "transitionType": "normal",
+            "guard": null,
+            "actions": [],
+            "description": null,
+            "meta": null
+          }
+        }
+      ],
+      "data": {
+        "profile": "xstate-v5",
+        "implementations": {
+          "actions": [],
+          "guards": [],
+          "actors": [],
+          "delays": [],
+          "tags": []
+        },
+        "schemas": {
+          "context": null,
+          "events": {},
+          "input": null,
+          "output": null,
+          "actions": {},
+          "guards": {},
+          "actors": {},
+          "tags": {},
+          "delays": {}
+        }
+      }
+    }
+  },
+  {
+    "id": "fixed-authored",
+    "name": "Fixed · authored",
+    "description": "Preserves authored geometry and completes routes.",
+    "algorithm": "fixed",
+    "engine": "native",
+    "graph": {
+      "id": "fixed-authored",
+      "mode": "directed",
+      "type": "directed",
+      "initialNodeId": "fixed-authored:root",
+      "parentId": null,
+      "direction": "right",
+      "layout": {
+        "status": "complete",
+        "direction": "RIGHT"
+      },
+      "annotations": [],
+      "nodes": [
+        {
+          "type": "node",
+          "id": "fixed-authored:root",
+          "parentId": null,
+          "initialNodeId": "one",
+          "label": "Fixed · authored",
+          "position": {
+            "x": 0,
+            "y": 0
+          },
+          "x": 0,
+          "y": 0,
+          "dx": 0,
+          "dy": 0,
+          "width": 394,
+          "height": 306,
+          "data": {
+            "nodeId": "fixed-authored:root",
+            "parentId": null,
+            "key": "fixed-authored:root",
+            "type": "normal",
+            "initialId": "one",
+            "history": false,
+            "entry": [],
+            "exit": [],
+            "invokes": [],
+            "tags": [],
+            "meta": null
+          }
+        },
+        {
+          "type": "node",
+          "id": "one",
+          "parentId": "fixed-authored:root",
+          "initialNodeId": null,
+          "label": "one",
+          "position": {
+            "x": 20,
+            "y": 30
+          },
+          "x": 20,
+          "y": 30,
+          "dx": 0,
+          "dy": 0,
+          "width": 110,
+          "height": 60,
+          "data": {
+            "nodeId": "one",
+            "parentId": "fixed-authored:root",
+            "key": "one",
+            "type": "normal",
+            "initialId": null,
+            "history": false,
+            "entry": [],
+            "exit": [],
+            "invokes": [],
+            "tags": [],
+            "meta": null
+          }
+        },
+        {
+          "type": "node",
+          "id": "two",
+          "parentId": "fixed-authored:root",
+          "initialNodeId": null,
+          "label": "two",
+          "position": {
+            "x": 250,
+            "y": 80
+          },
+          "x": 250,
+          "y": 80,
+          "dx": 0,
+          "dy": 0,
+          "width": 120,
+          "height": 68,
+          "data": {
+            "nodeId": "two",
+            "parentId": "fixed-authored:root",
+            "key": "two",
+            "type": "normal",
+            "initialId": null,
+            "history": false,
+            "entry": [],
+            "exit": [],
+            "invokes": [],
+            "tags": [],
+            "meta": null
+          }
+        },
+        {
+          "type": "node",
+          "id": "three",
+          "parentId": "fixed-authored:root",
+          "initialNodeId": null,
+          "label": "three",
+          "position": {
+            "x": 110,
+            "y": 220
+          },
+          "x": 110,
+          "y": 220,
+          "dx": 0,
+          "dy": 0,
+          "width": 130,
+          "height": 62,
+          "data": {
+            "nodeId": "three",
+            "parentId": "fixed-authored:root",
+            "key": "three",
+            "type": "normal",
+            "initialId": null,
+            "history": false,
+            "entry": [],
+            "exit": [],
+            "invokes": [],
+            "tags": [],
+            "meta": null
+          }
+        }
+      ],
+      "edges": [
+        {
+          "type": "edge",
+          "id": "one-two",
+          "sourceId": "one",
+          "targetId": "two",
+          "position": {
+            "x": 152.5,
+            "y": 71
+          },
+          "x": 152.5,
+          "y": 71,
+          "dx": 0,
+          "dy": 0,
+          "width": 80,
+          "height": 32,
+          "data": {
+            "eventType": "one-two",
+            "transitionType": "normal",
+            "guard": null,
+            "actions": [],
+            "description": null,
+            "meta": null
+          }
+        },
+        {
+          "type": "edge",
+          "id": "two-three",
+          "sourceId": "two",
+          "targetId": "three",
+          "position": {
+            "x": 194.5,
+            "y": 166.5
+          },
+          "x": 194.5,
+          "y": 166.5,
+          "dx": 0,
+          "dy": 0,
+          "width": 96,
+          "height": 32,
+          "data": {
+            "eventType": "two-three",
+            "transitionType": "normal",
+            "guard": null,
+            "actions": [],
+            "description": null,
+            "meta": null
+          }
+        }
+      ],
+      "data": {
+        "profile": "xstate-v5",
+        "implementations": {
+          "actions": [],
+          "guards": [],
+          "actors": [],
+          "delays": [],
+          "tags": []
+        },
+        "schemas": {
+          "context": null,
+          "events": {},
+          "input": null,
+          "output": null,
+          "actions": {},
+          "guards": {},
+          "actors": {},
+          "tags": {},
+          "delays": {}
+        }
+      }
+    }
+  },
+  {
+    "id": "rectangle-packing",
+    "name": "Rectangle packing",
+    "description": "Variable-size cards packed into deterministic shelves.",
+    "algorithm": "rectpacking",
+    "engine": "native",
+    "graph": {
+      "id": "rectangle-packing",
+      "mode": "directed",
+      "type": "directed",
+      "initialNodeId": "rectangle-packing:root",
+      "parentId": null,
+      "direction": "right",
+      "layout": {
+        "status": "complete",
+        "direction": "RIGHT"
+      },
+      "annotations": [],
+      "nodes": [
+        {
+          "type": "node",
+          "id": "rectangle-packing:root",
+          "parentId": null,
+          "initialNodeId": "auth",
+          "label": "Rectangle packing",
+          "position": {
+            "x": 0,
+            "y": 0
+          },
+          "x": 0,
+          "y": 0,
+          "dx": 0,
+          "dy": 0,
+          "width": 496,
+          "height": 320,
+          "data": {
+            "nodeId": "rectangle-packing:root",
+            "parentId": null,
+            "key": "rectangle-packing:root",
+            "type": "normal",
+            "initialId": "auth",
+            "history": false,
+            "entry": [],
+            "exit": [],
+            "invokes": [],
+            "tags": [],
+            "meta": null
+          }
+        },
+        {
+          "type": "node",
+          "id": "auth",
+          "parentId": "rectangle-packing:root",
+          "initialNodeId": null,
+          "label": "Authentication",
+          "position": {
+            "x": 24,
+            "y": 24
+          },
+          "x": 24,
+          "y": 24,
+          "dx": 0,
+          "dy": 0,
+          "width": 150,
+          "height": 72,
+          "data": {
+            "nodeId": "auth",
+            "parentId": "rectangle-packing:root",
+            "key": "auth",
+            "type": "normal",
+            "initialId": null,
+            "history": false,
+            "entry": [],
+            "exit": [],
+            "invokes": [],
+            "tags": [],
+            "meta": null
+          }
+        },
+        {
+          "type": "node",
+          "id": "api",
+          "parentId": "rectangle-packing:root",
+          "initialNodeId": null,
+          "label": "Public API",
+          "position": {
+            "x": 202,
+            "y": 24
+          },
+          "x": 202,
+          "y": 24,
+          "dx": 0,
+          "dy": 0,
+          "width": 110,
+          "height": 64,
+          "data": {
+            "nodeId": "api",
+            "parentId": "rectangle-packing:root",
+            "key": "api",
+            "type": "normal",
+            "initialId": null,
+            "history": false,
+            "entry": [],
+            "exit": [],
+            "invokes": [],
+            "tags": [],
+            "meta": null
+          }
+        },
+        {
+          "type": "node",
+          "id": "worker",
+          "parentId": "rectangle-packing:root",
+          "initialNodeId": null,
+          "label": "Worker pool",
+          "position": {
+            "x": 340,
+            "y": 24
+          },
+          "x": 340,
+          "y": 24,
+          "dx": 0,
+          "dy": 0,
+          "width": 132,
+          "height": 88,
+          "data": {
+            "nodeId": "worker",
+            "parentId": "rectangle-packing:root",
+            "key": "worker",
+            "type": "normal",
+            "initialId": null,
+            "history": false,
+            "entry": [],
+            "exit": [],
+            "invokes": [],
+            "tags": [],
+            "meta": null
+          }
+        },
+        {
+          "type": "node",
+          "id": "cache",
+          "parentId": "rectangle-packing:root",
+          "initialNodeId": null,
+          "label": "Cache",
+          "position": {
+            "x": 24,
+            "y": 140
+          },
+          "x": 24,
+          "y": 140,
+          "dx": 0,
+          "dy": 0,
+          "width": 90,
+          "height": 58,
+          "data": {
+            "nodeId": "cache",
+            "parentId": "rectangle-packing:root",
+            "key": "cache",
+            "type": "normal",
+            "initialId": null,
+            "history": false,
+            "entry": [],
+            "exit": [],
+            "invokes": [],
+            "tags": [],
+            "meta": null
+          }
+        },
+        {
+          "type": "node",
+          "id": "database",
+          "parentId": "rectangle-packing:root",
+          "initialNodeId": null,
+          "label": "Database",
+          "position": {
+            "x": 142,
+            "y": 140
+          },
+          "x": 142,
+          "y": 140,
+          "dx": 0,
+          "dy": 0,
+          "width": 124,
+          "height": 74,
+          "data": {
+            "nodeId": "database",
+            "parentId": "rectangle-packing:root",
+            "key": "database",
+            "type": "normal",
+            "initialId": null,
+            "history": false,
+            "entry": [],
+            "exit": [],
+            "invokes": [],
+            "tags": [],
+            "meta": null
+          }
+        },
+        {
+          "type": "node",
+          "id": "events",
+          "parentId": "rectangle-packing:root",
+          "initialNodeId": null,
+          "label": "Event stream",
+          "position": {
+            "x": 294,
+            "y": 140
+          },
+          "x": 294,
+          "y": 140,
+          "dx": 0,
+          "dy": 0,
+          "width": 142,
+          "height": 66,
+          "data": {
+            "nodeId": "events",
+            "parentId": "rectangle-packing:root",
+            "key": "events",
+            "type": "normal",
+            "initialId": null,
+            "history": false,
+            "entry": [],
+            "exit": [],
+            "invokes": [],
+            "tags": [],
+            "meta": null
+          }
+        },
+        {
+          "type": "node",
+          "id": "metrics",
+          "parentId": "rectangle-packing:root",
+          "initialNodeId": null,
+          "label": "Metrics",
+          "position": {
+            "x": 24,
+            "y": 242
+          },
+          "x": 24,
+          "y": 242,
+          "dx": 0,
+          "dy": 0,
+          "width": 96,
+          "height": 54,
+          "data": {
+            "nodeId": "metrics",
+            "parentId": "rectangle-packing:root",
+            "key": "metrics",
+            "type": "normal",
+            "initialId": null,
+            "history": false,
+            "entry": [],
+            "exit": [],
+            "invokes": [],
+            "tags": [],
+            "meta": null
+          }
+        }
+      ],
+      "edges": [
+        {
+          "type": "edge",
+          "id": "next-1",
+          "sourceId": "auth",
+          "targetId": "api",
+          "position": {
+            "x": 178,
+            "y": 58
+          },
+          "x": 178,
+          "y": 58,
+          "dx": 0,
+          "dy": 0,
+          "width": 0,
+          "height": 0,
+          "data": {
+            "eventType": "",
+            "transitionType": "normal",
+            "guard": null,
+            "actions": [],
+            "description": null,
+            "meta": null
+          }
+        },
+        {
+          "type": "edge",
+          "id": "next-2",
+          "sourceId": "api",
+          "targetId": "worker",
+          "position": {
+            "x": 331.5,
+            "y": 62
+          },
+          "x": 331.5,
+          "y": 62,
+          "dx": 0,
+          "dy": 0,
+          "width": 0,
+          "height": 0,
+          "data": {
+            "eventType": "",
+            "transitionType": "normal",
+            "guard": null,
+            "actions": [],
+            "description": null,
+            "meta": null
+          }
+        },
+        {
+          "type": "edge",
+          "id": "next-3",
+          "sourceId": "worker",
+          "targetId": "cache",
+          "position": {
+            "x": 237.5,
+            "y": 118.5
+          },
+          "x": 237.5,
+          "y": 118.5,
+          "dx": 0,
+          "dy": 0,
+          "width": 0,
+          "height": 0,
+          "data": {
+            "eventType": "",
+            "transitionType": "normal",
+            "guard": null,
+            "actions": [],
+            "description": null,
+            "meta": null
+          }
+        },
+        {
+          "type": "edge",
+          "id": "next-4",
+          "sourceId": "cache",
+          "targetId": "database",
+          "position": {
+            "x": 136.5,
+            "y": 173
+          },
+          "x": 136.5,
+          "y": 173,
+          "dx": 0,
+          "dy": 0,
+          "width": 0,
+          "height": 0,
+          "data": {
+            "eventType": "",
+            "transitionType": "normal",
+            "guard": null,
+            "actions": [],
+            "description": null,
+            "meta": null
+          }
+        },
+        {
+          "type": "edge",
+          "id": "next-5",
+          "sourceId": "database",
+          "targetId": "events",
+          "position": {
+            "x": 284.5,
+            "y": 175
+          },
+          "x": 284.5,
+          "y": 175,
+          "dx": 0,
+          "dy": 0,
+          "width": 0,
+          "height": 0,
+          "data": {
+            "eventType": "",
+            "transitionType": "normal",
+            "guard": null,
+            "actions": [],
+            "description": null,
+            "meta": null
+          }
+        },
+        {
+          "type": "edge",
+          "id": "next-6",
+          "sourceId": "events",
+          "targetId": "metrics",
+          "position": {
+            "x": 218.5,
+            "y": 221
+          },
+          "x": 218.5,
+          "y": 221,
+          "dx": 0,
+          "dy": 0,
+          "width": 0,
+          "height": 0,
+          "data": {
+            "eventType": "",
+            "transitionType": "normal",
+            "guard": null,
+            "actions": [],
+            "description": null,
+            "meta": null
+          }
+        }
+      ],
+      "data": {
+        "profile": "xstate-v5",
+        "implementations": {
+          "actions": [],
+          "guards": [],
+          "actors": [],
+          "delays": [],
+          "tags": []
+        },
+        "schemas": {
+          "context": null,
+          "events": {},
+          "input": null,
+          "output": null,
+          "actions": {},
+          "guards": {},
+          "actors": {},
+          "tags": {},
+          "delays": {}
+        }
+      }
+    }
+  },
+  {
+    "id": "spore-compaction",
+    "name": "SPOrE · compaction",
+    "description": "Compacts sparse authored positions while preserving directions.",
+    "algorithm": "sporeCompaction",
+    "engine": "native",
+    "graph": {
+      "id": "spore-compaction",
+      "mode": "directed",
+      "type": "directed",
+      "initialNodeId": "spore-compaction:root",
+      "parentId": null,
+      "direction": "right",
+      "layout": {
+        "status": "complete",
+        "direction": "RIGHT"
+      },
+      "annotations": [],
+      "nodes": [
+        {
+          "type": "node",
+          "id": "spore-compaction:root",
+          "parentId": null,
+          "initialNodeId": "auth",
+          "label": "SPOrE · compaction",
+          "position": {
+            "x": 0,
+            "y": 0
+          },
+          "x": 0,
+          "y": 0,
+          "dx": 0,
+          "dy": 0,
+          "width": 766,
+          "height": 230,
+          "data": {
+            "nodeId": "spore-compaction:root",
+            "parentId": null,
+            "key": "spore-compaction:root",
+            "type": "normal",
+            "initialId": "auth",
+            "history": false,
+            "entry": [],
+            "exit": [],
+            "invokes": [],
+            "tags": [],
+            "meta": null
+          }
+        },
+        {
+          "type": "node",
+          "id": "auth",
+          "parentId": "spore-compaction:root",
+          "initialNodeId": null,
+          "label": "Authentication",
+          "position": {
+            "x": 24,
+            "y": 24
+          },
+          "x": 24,
+          "y": 24,
+          "dx": 0,
+          "dy": 0,
+          "width": 150,
+          "height": 72,
+          "data": {
+            "nodeId": "auth",
+            "parentId": "spore-compaction:root",
+            "key": "auth",
+            "type": "normal",
+            "initialId": null,
+            "history": false,
+            "entry": [],
+            "exit": [],
+            "invokes": [],
+            "tags": [],
+            "meta": null
+          }
+        },
+        {
+          "type": "node",
+          "id": "api",
+          "parentId": "spore-compaction:root",
+          "initialNodeId": null,
+          "label": "Public API",
+          "position": {
+            "x": 202,
+            "y": 124
+          },
+          "x": 202,
+          "y": 124,
+          "dx": 0,
+          "dy": 0,
+          "width": 110,
+          "height": 64,
+          "data": {
+            "nodeId": "api",
+            "parentId": "spore-compaction:root",
+            "key": "api",
+            "type": "normal",
+            "initialId": null,
+            "history": false,
+            "entry": [],
+            "exit": [],
+            "invokes": [],
+            "tags": [],
+            "meta": null
+          }
+        },
+        {
+          "type": "node",
+          "id": "worker",
+          "parentId": "spore-compaction:root",
+          "initialNodeId": null,
+          "label": "Worker pool",
+          "position": {
+            "x": 340,
+            "y": 32
+          },
+          "x": 340,
+          "y": 32,
+          "dx": 0,
+          "dy": 0,
+          "width": 132,
+          "height": 88,
+          "data": {
+            "nodeId": "worker",
+            "parentId": "spore-compaction:root",
+            "key": "worker",
+            "type": "normal",
+            "initialId": null,
+            "history": false,
+            "entry": [],
+            "exit": [],
+            "invokes": [],
+            "tags": [],
+            "meta": null
+          }
+        },
+        {
+          "type": "node",
+          "id": "cache",
+          "parentId": "spore-compaction:root",
+          "initialNodeId": null,
+          "label": "Cache",
+          "position": {
+            "x": 500,
+            "y": 148
+          },
+          "x": 500,
+          "y": 148,
+          "dx": 0,
+          "dy": 0,
+          "width": 90,
+          "height": 58,
+          "data": {
+            "nodeId": "cache",
+            "parentId": "spore-compaction:root",
+            "key": "cache",
+            "type": "normal",
+            "initialId": null,
+            "history": false,
+            "entry": [],
+            "exit": [],
+            "invokes": [],
+            "tags": [],
+            "meta": null
+          }
+        },
+        {
+          "type": "node",
+          "id": "database",
+          "parentId": "spore-compaction:root",
+          "initialNodeId": null,
+          "label": "Database",
+          "position": {
+            "x": 618,
+            "y": 62
+          },
+          "x": 618,
+          "y": 62,
+          "dx": 0,
+          "dy": 0,
+          "width": 124,
+          "height": 74,
+          "data": {
+            "nodeId": "database",
+            "parentId": "spore-compaction:root",
+            "key": "database",
+            "type": "normal",
+            "initialId": null,
+            "history": false,
+            "entry": [],
+            "exit": [],
+            "invokes": [],
+            "tags": [],
+            "meta": null
+          }
+        }
+      ],
+      "edges": [
+        {
+          "type": "edge",
+          "id": "next-1",
+          "sourceId": "auth",
+          "targetId": "api",
+          "position": {
+            "x": 178,
+            "y": 108
+          },
+          "x": 178,
+          "y": 108,
+          "dx": 0,
+          "dy": 0,
+          "width": 0,
+          "height": 0,
+          "data": {
+            "eventType": "",
+            "transitionType": "normal",
+            "guard": null,
+            "actions": [],
+            "description": null,
+            "meta": null
+          }
+        },
+        {
+          "type": "edge",
+          "id": "next-2",
+          "sourceId": "api",
+          "targetId": "worker",
+          "position": {
+            "x": 331.5,
+            "y": 116
+          },
+          "x": 331.5,
+          "y": 116,
+          "dx": 0,
+          "dy": 0,
+          "width": 0,
+          "height": 0,
+          "data": {
+            "eventType": "",
+            "transitionType": "normal",
+            "guard": null,
+            "actions": [],
+            "description": null,
+            "meta": null
+          }
+        },
+        {
+          "type": "edge",
+          "id": "next-3",
+          "sourceId": "worker",
+          "targetId": "cache",
+          "position": {
+            "x": 475.5,
+            "y": 126.5
+          },
+          "x": 475.5,
+          "y": 126.5,
+          "dx": 0,
+          "dy": 0,
+          "width": 0,
+          "height": 0,
+          "data": {
+            "eventType": "",
+            "transitionType": "normal",
+            "guard": null,
+            "actions": [],
+            "description": null,
+            "meta": null
+          }
+        },
+        {
+          "type": "edge",
+          "id": "next-4",
+          "sourceId": "cache",
+          "targetId": "database",
+          "position": {
+            "x": 612.5,
+            "y": 138
+          },
+          "x": 612.5,
+          "y": 138,
+          "dx": 0,
+          "dy": 0,
+          "width": 0,
+          "height": 0,
+          "data": {
+            "eventType": "",
+            "transitionType": "normal",
+            "guard": null,
+            "actions": [],
+            "description": null,
+            "meta": null
+          }
+        }
+      ],
+      "data": {
+        "profile": "xstate-v5",
+        "implementations": {
+          "actions": [],
+          "guards": [],
+          "actors": [],
+          "delays": [],
+          "tags": []
+        },
+        "schemas": {
+          "context": null,
+          "events": {},
+          "input": null,
+          "output": null,
+          "actions": {},
+          "guards": {},
+          "actors": {},
+          "tags": {},
+          "delays": {}
+        }
+      }
+    }
+  },
+  {
+    "id": "spore-overlap",
+    "name": "SPOrE · overlap removal",
+    "description": "Separates overlapping nodes without collapsing existing gaps.",
+    "algorithm": "sporeOverlap",
+    "engine": "native",
+    "graph": {
+      "id": "spore-overlap",
+      "mode": "directed",
+      "type": "directed",
+      "initialNodeId": "spore-overlap:root",
+      "parentId": null,
+      "direction": "right",
+      "layout": {
+        "status": "complete",
+        "direction": "RIGHT"
+      },
+      "annotations": [],
+      "nodes": [
+        {
+          "type": "node",
+          "id": "spore-overlap:root",
+          "parentId": null,
+          "initialNodeId": "auth",
+          "label": "SPOrE · overlap removal",
+          "position": {
+            "x": 0,
+            "y": 0
+          },
+          "x": 0,
+          "y": 0,
+          "dx": 0,
+          "dy": 0,
+          "width": 766,
+          "height": 516,
+          "data": {
+            "nodeId": "spore-overlap:root",
+            "parentId": null,
+            "key": "spore-overlap:root",
+            "type": "normal",
+            "initialId": "auth",
+            "history": false,
+            "entry": [],
+            "exit": [],
+            "invokes": [],
+            "tags": [],
+            "meta": null
+          }
+        },
+        {
+          "type": "node",
+          "id": "auth",
+          "parentId": "spore-overlap:root",
+          "initialNodeId": null,
+          "label": "Authentication",
+          "position": {
+            "x": 24,
+            "y": 24
+          },
+          "x": 24,
+          "y": 24,
+          "dx": 0,
+          "dy": 0,
+          "width": 150,
+          "height": 72,
+          "data": {
+            "nodeId": "auth",
+            "parentId": "spore-overlap:root",
+            "key": "auth",
+            "type": "normal",
+            "initialId": null,
+            "history": false,
+            "entry": [],
+            "exit": [],
+            "invokes": [],
+            "tags": [],
+            "meta": null
+          }
+        },
+        {
+          "type": "node",
+          "id": "api",
+          "parentId": "spore-overlap:root",
+          "initialNodeId": null,
+          "label": "Public API",
+          "position": {
+            "x": 202,
+            "y": 124
+          },
+          "x": 202,
+          "y": 124,
+          "dx": 0,
+          "dy": 0,
+          "width": 110,
+          "height": 64,
+          "data": {
+            "nodeId": "api",
+            "parentId": "spore-overlap:root",
+            "key": "api",
+            "type": "normal",
+            "initialId": null,
+            "history": false,
+            "entry": [],
+            "exit": [],
+            "invokes": [],
+            "tags": [],
+            "meta": null
+          }
+        },
+        {
+          "type": "node",
+          "id": "worker",
+          "parentId": "spore-overlap:root",
+          "initialNodeId": null,
+          "label": "Worker pool",
+          "position": {
+            "x": 340,
+            "y": 216
+          },
+          "x": 340,
+          "y": 216,
+          "dx": 0,
+          "dy": 0,
+          "width": 132,
+          "height": 88,
+          "data": {
+            "nodeId": "worker",
+            "parentId": "spore-overlap:root",
+            "key": "worker",
+            "type": "normal",
+            "initialId": null,
+            "history": false,
+            "entry": [],
+            "exit": [],
+            "invokes": [],
+            "tags": [],
+            "meta": null
+          }
+        },
+        {
+          "type": "node",
+          "id": "cache",
+          "parentId": "spore-overlap:root",
+          "initialNodeId": null,
+          "label": "Cache",
+          "position": {
+            "x": 500,
+            "y": 332
+          },
+          "x": 500,
+          "y": 332,
+          "dx": 0,
+          "dy": 0,
+          "width": 90,
+          "height": 58,
+          "data": {
+            "nodeId": "cache",
+            "parentId": "spore-overlap:root",
+            "key": "cache",
+            "type": "normal",
+            "initialId": null,
+            "history": false,
+            "entry": [],
+            "exit": [],
+            "invokes": [],
+            "tags": [],
+            "meta": null
+          }
+        },
+        {
+          "type": "node",
+          "id": "database",
+          "parentId": "spore-overlap:root",
+          "initialNodeId": null,
+          "label": "Database",
+          "position": {
+            "x": 618,
+            "y": 418
+          },
+          "x": 618,
+          "y": 418,
+          "dx": 0,
+          "dy": 0,
+          "width": 124,
+          "height": 74,
+          "data": {
+            "nodeId": "database",
+            "parentId": "spore-overlap:root",
+            "key": "database",
+            "type": "normal",
+            "initialId": null,
+            "history": false,
+            "entry": [],
+            "exit": [],
+            "invokes": [],
+            "tags": [],
+            "meta": null
+          }
+        }
+      ],
+      "edges": [
+        {
+          "type": "edge",
+          "id": "next-1",
+          "sourceId": "auth",
+          "targetId": "api",
+          "position": {
+            "x": 178,
+            "y": 108
+          },
+          "x": 178,
+          "y": 108,
+          "dx": 0,
+          "dy": 0,
+          "width": 0,
+          "height": 0,
+          "data": {
+            "eventType": "",
+            "transitionType": "normal",
+            "guard": null,
+            "actions": [],
+            "description": null,
+            "meta": null
+          }
+        },
+        {
+          "type": "edge",
+          "id": "next-2",
+          "sourceId": "api",
+          "targetId": "worker",
+          "position": {
+            "x": 331.5,
+            "y": 208
+          },
+          "x": 331.5,
+          "y": 208,
+          "dx": 0,
+          "dy": 0,
+          "width": 0,
+          "height": 0,
+          "data": {
+            "eventType": "",
+            "transitionType": "normal",
+            "guard": null,
+            "actions": [],
+            "description": null,
+            "meta": null
+          }
+        },
+        {
+          "type": "edge",
+          "id": "next-3",
+          "sourceId": "worker",
+          "targetId": "cache",
+          "position": {
+            "x": 475.5,
+            "y": 310.5
+          },
+          "x": 475.5,
+          "y": 310.5,
+          "dx": 0,
+          "dy": 0,
+          "width": 0,
+          "height": 0,
+          "data": {
+            "eventType": "",
+            "transitionType": "normal",
+            "guard": null,
+            "actions": [],
+            "description": null,
+            "meta": null
+          }
+        },
+        {
+          "type": "edge",
+          "id": "next-4",
+          "sourceId": "cache",
+          "targetId": "database",
+          "position": {
+            "x": 612.5,
+            "y": 408
+          },
+          "x": 612.5,
+          "y": 408,
+          "dx": 0,
+          "dy": 0,
+          "width": 0,
+          "height": 0,
+          "data": {
+            "eventType": "",
+            "transitionType": "normal",
+            "guard": null,
+            "actions": [],
+            "description": null,
+            "meta": null
+          }
+        }
+      ],
+      "data": {
+        "profile": "xstate-v5",
+        "implementations": {
+          "actions": [],
+          "guards": [],
+          "actors": [],
+          "delays": [],
+          "tags": []
+        },
+        "schemas": {
+          "context": null,
+          "events": {},
+          "input": null,
+          "output": null,
+          "actions": {},
+          "guards": {},
+          "actors": {},
+          "tags": {},
+          "delays": {}
+        }
+      }
+    }
+  },
+  {
+    "id": "box-grid",
+    "name": "Box · grid",
+    "description": "Java-compatible ELK Box SIMPLE packing.",
+    "algorithm": "box",
+    "engine": "native",
+    "graph": {
+      "id": "box-grid",
+      "mode": "directed",
+      "type": "directed",
+      "initialNodeId": "box-grid:root",
+      "parentId": null,
+      "direction": "right",
+      "layout": {
+        "status": "complete",
+        "direction": "RIGHT"
+      },
+      "annotations": [],
+      "nodes": [
+        {
+          "type": "node",
+          "id": "box-grid:root",
+          "parentId": null,
+          "initialNodeId": "auth",
+          "label": "Box · grid",
+          "position": {
+            "x": 0,
+            "y": 0
+          },
+          "x": 0,
+          "y": 0,
+          "dx": 0,
+          "dy": 0,
+          "width": 365,
+          "height": 295,
+          "data": {
+            "nodeId": "box-grid:root",
+            "parentId": null,
+            "key": "box-grid:root",
+            "type": "normal",
+            "initialId": "auth",
+            "history": false,
+            "entry": [],
+            "exit": [],
+            "invokes": [],
+            "tags": [],
+            "meta": null
+          }
+        },
+        {
+          "type": "node",
+          "id": "auth",
+          "parentId": "box-grid:root",
+          "initialNodeId": null,
+          "label": "Authentication",
+          "position": {
+            "x": 15,
+            "y": 183
+          },
+          "x": 15,
+          "y": 183,
+          "dx": 0,
+          "dy": 0,
+          "width": 150,
+          "height": 72,
+          "data": {
+            "nodeId": "auth",
+            "parentId": "box-grid:root",
+            "key": "auth",
+            "type": "normal",
+            "initialId": null,
+            "history": false,
+            "entry": [],
+            "exit": [],
+            "invokes": [],
+            "tags": [],
+            "meta": null
+          }
+        },
+        {
+          "type": "node",
+          "id": "api",
+          "parentId": "box-grid:root",
+          "initialNodeId": null,
+          "label": "Public API",
+          "position": {
+            "x": 231,
+            "y": 15
+          },
+          "x": 231,
+          "y": 15,
+          "dx": 0,
+          "dy": 0,
+          "width": 110,
+          "height": 64,
+          "data": {
+            "nodeId": "api",
+            "parentId": "box-grid:root",
+            "key": "api",
+            "type": "normal",
+            "initialId": null,
+            "history": false,
+            "entry": [],
+            "exit": [],
+            "invokes": [],
+            "tags": [],
+            "meta": null
+          }
+        },
+        {
+          "type": "node",
+          "id": "worker",
+          "parentId": "box-grid:root",
+          "initialNodeId": null,
+          "label": "Worker pool",
+          "position": {
+            "x": 180,
+            "y": 183
+          },
+          "x": 180,
+          "y": 183,
+          "dx": 0,
+          "dy": 0,
+          "width": 132,
+          "height": 88,
+          "data": {
+            "nodeId": "worker",
+            "parentId": "box-grid:root",
+            "key": "worker",
+            "type": "normal",
+            "initialId": null,
+            "history": false,
+            "entry": [],
+            "exit": [],
+            "invokes": [],
+            "tags": [],
+            "meta": null
+          }
+        },
+        {
+          "type": "node",
+          "id": "cache",
+          "parentId": "box-grid:root",
+          "initialNodeId": null,
+          "label": "Cache",
+          "position": {
+            "x": 126,
+            "y": 15
+          },
+          "x": 126,
+          "y": 15,
+          "dx": 0,
+          "dy": 0,
+          "width": 90,
+          "height": 58,
+          "data": {
+            "nodeId": "cache",
+            "parentId": "box-grid:root",
+            "key": "cache",
+            "type": "normal",
+            "initialId": null,
+            "history": false,
+            "entry": [],
+            "exit": [],
+            "invokes": [],
+            "tags": [],
+            "meta": null
+          }
+        },
+        {
+          "type": "node",
+          "id": "database",
+          "parentId": "box-grid:root",
+          "initialNodeId": null,
+          "label": "Database",
+          "position": {
+            "x": 15,
+            "y": 94
+          },
+          "x": 15,
+          "y": 94,
+          "dx": 0,
+          "dy": 0,
+          "width": 124,
+          "height": 74,
+          "data": {
+            "nodeId": "database",
+            "parentId": "box-grid:root",
+            "key": "database",
+            "type": "normal",
+            "initialId": null,
+            "history": false,
+            "entry": [],
+            "exit": [],
+            "invokes": [],
+            "tags": [],
+            "meta": null
+          }
+        },
+        {
+          "type": "node",
+          "id": "events",
+          "parentId": "box-grid:root",
+          "initialNodeId": null,
+          "label": "Event stream",
+          "position": {
+            "x": 154,
+            "y": 94
+          },
+          "x": 154,
+          "y": 94,
+          "dx": 0,
+          "dy": 0,
+          "width": 142,
+          "height": 66,
+          "data": {
+            "nodeId": "events",
+            "parentId": "box-grid:root",
+            "key": "events",
+            "type": "normal",
+            "initialId": null,
+            "history": false,
+            "entry": [],
+            "exit": [],
+            "invokes": [],
+            "tags": [],
+            "meta": null
+          }
+        },
+        {
+          "type": "node",
+          "id": "metrics",
+          "parentId": "box-grid:root",
+          "initialNodeId": null,
+          "label": "Metrics",
+          "position": {
+            "x": 15,
+            "y": 15
+          },
+          "x": 15,
+          "y": 15,
+          "dx": 0,
+          "dy": 0,
+          "width": 96,
+          "height": 54,
+          "data": {
+            "nodeId": "metrics",
+            "parentId": "box-grid:root",
+            "key": "metrics",
+            "type": "normal",
+            "initialId": null,
+            "history": false,
+            "entry": [],
+            "exit": [],
+            "invokes": [],
+            "tags": [],
+            "meta": null
+          }
+        }
+      ],
+      "edges": [
+        {
+          "type": "edge",
+          "id": "next-1",
+          "sourceId": "auth",
+          "targetId": "api",
+          "position": {
+            "x": 188,
+            "y": 133
+          },
+          "x": 188,
+          "y": 133,
+          "dx": 0,
+          "dy": 0,
+          "width": 0,
+          "height": 0,
+          "data": {
+            "eventType": "",
+            "transitionType": "normal",
+            "guard": null,
+            "actions": [],
+            "description": null,
+            "meta": null
+          }
+        },
+        {
+          "type": "edge",
+          "id": "next-2",
+          "sourceId": "api",
+          "targetId": "worker",
+          "position": {
+            "x": 266,
+            "y": 137
+          },
+          "x": 266,
+          "y": 137,
+          "dx": 0,
+          "dy": 0,
+          "width": 0,
+          "height": 0,
+          "data": {
+            "eventType": "",
+            "transitionType": "normal",
+            "guard": null,
+            "actions": [],
+            "description": null,
+            "meta": null
+          }
+        },
+        {
+          "type": "edge",
+          "id": "next-3",
+          "sourceId": "worker",
+          "targetId": "cache",
+          "position": {
+            "x": 208.5,
+            "y": 135.5
+          },
+          "x": 208.5,
+          "y": 135.5,
+          "dx": 0,
+          "dy": 0,
+          "width": 0,
+          "height": 0,
+          "data": {
+            "eventType": "",
+            "transitionType": "normal",
+            "guard": null,
+            "actions": [],
+            "description": null,
+            "meta": null
+          }
+        },
+        {
+          "type": "edge",
+          "id": "next-4",
+          "sourceId": "cache",
+          "targetId": "database",
+          "position": {
+            "x": 124,
+            "y": 87.5
+          },
+          "x": 124,
+          "y": 87.5,
+          "dx": 0,
+          "dy": 0,
+          "width": 0,
+          "height": 0,
+          "data": {
+            "eventType": "",
+            "transitionType": "normal",
+            "guard": null,
+            "actions": [],
+            "description": null,
+            "meta": null
+          }
+        },
+        {
+          "type": "edge",
+          "id": "next-5",
+          "sourceId": "database",
+          "targetId": "events",
+          "position": {
+            "x": 151,
+            "y": 129
+          },
+          "x": 151,
+          "y": 129,
+          "dx": 0,
+          "dy": 0,
+          "width": 0,
+          "height": 0,
+          "data": {
+            "eventType": "",
+            "transitionType": "normal",
+            "guard": null,
+            "actions": [],
+            "description": null,
+            "meta": null
+          }
+        },
+        {
+          "type": "edge",
+          "id": "next-6",
+          "sourceId": "events",
+          "targetId": "metrics",
+          "position": {
+            "x": 144,
+            "y": 84.5
+          },
+          "x": 144,
+          "y": 84.5,
+          "dx": 0,
+          "dy": 0,
+          "width": 0,
+          "height": 0,
+          "data": {
+            "eventType": "",
+            "transitionType": "normal",
+            "guard": null,
+            "actions": [],
+            "description": null,
+            "meta": null
+          }
+        }
+      ],
+      "data": {
+        "profile": "xstate-v5",
+        "implementations": {
+          "actions": [],
+          "guards": [],
+          "actors": [],
+          "delays": [],
+          "tags": []
+        },
+        "schemas": {
+          "context": null,
+          "events": {},
+          "input": null,
+          "output": null,
+          "actions": {},
+          "guards": {},
+          "actors": {},
+          "tags": {},
+          "delays": {}
+        }
+      }
+    }
+  },
+  {
+    "id": "random-scatter",
+    "name": "Random · scatter",
+    "description": "Seeded Java-compatible random distribution.",
+    "algorithm": "random",
+    "engine": "native",
+    "graph": {
+      "id": "random-scatter",
+      "mode": "directed",
+      "type": "directed",
+      "initialNodeId": "random-scatter:root",
+      "parentId": null,
+      "direction": "right",
+      "layout": {
+        "status": "complete",
+        "direction": "RIGHT"
+      },
+      "annotations": [],
+      "nodes": [
+        {
+          "type": "node",
+          "id": "random-scatter:root",
+          "parentId": null,
+          "initialNodeId": "auth",
+          "label": "Random · scatter",
+          "position": {
+            "x": 0,
+            "y": 0
+          },
+          "x": 0,
+          "y": 0,
+          "dx": 0,
+          "dy": 0,
+          "width": 466.3843783831166,
+          "height": 214.11656898740085,
+          "data": {
+            "nodeId": "random-scatter:root",
+            "parentId": null,
+            "key": "random-scatter:root",
+            "type": "normal",
+            "initialId": "auth",
+            "history": false,
+            "entry": [],
+            "exit": [],
+            "invokes": [],
+            "tags": [],
+            "meta": null
+          }
+        },
+        {
+          "type": "node",
+          "id": "auth",
+          "parentId": "random-scatter:root",
+          "initialNodeId": null,
+          "label": "Authentication",
+          "position": {
+            "x": 197.00570754363608,
+            "y": 118.11656898740084
+          },
+          "x": 197.00570754363608,
+          "y": 118.11656898740084,
+          "dx": 0,
+          "dy": 0,
+          "width": 150,
+          "height": 72,
+          "data": {
+            "nodeId": "auth",
+            "parentId": "random-scatter:root",
+            "key": "auth",
+            "type": "normal",
+            "initialId": null,
+            "history": false,
+            "entry": [],
+            "exit": [],
+            "invokes": [],
+            "tags": [],
+            "meta": null
+          }
+        },
+        {
+          "type": "node",
+          "id": "api",
+          "parentId": "random-scatter:root",
+          "initialNodeId": null,
+          "label": "Public API",
+          "position": {
+            "x": 250.7102602855302,
+            "y": 111.16890896282483
+          },
+          "x": 250.7102602855302,
+          "y": 111.16890896282483,
+          "dx": 0,
+          "dy": 0,
+          "width": 110,
+          "height": 64,
+          "data": {
+            "nodeId": "api",
+            "parentId": "random-scatter:root",
+            "key": "api",
+            "type": "normal",
+            "initialId": null,
+            "history": false,
+            "entry": [],
+            "exit": [],
+            "invokes": [],
+            "tags": [],
+            "meta": null
+          }
+        },
+        {
+          "type": "node",
+          "id": "worker",
+          "parentId": "random-scatter:root",
+          "initialNodeId": null,
+          "label": "Worker pool",
+          "position": {
+            "x": 310.3843783831166,
+            "y": 60.8132807818971
+          },
+          "x": 310.3843783831166,
+          "y": 60.8132807818971,
+          "dx": 0,
+          "dy": 0,
+          "width": 132,
+          "height": 88,
+          "data": {
+            "nodeId": "worker",
+            "parentId": "random-scatter:root",
+            "key": "worker",
+            "type": "normal",
+            "initialId": null,
+            "history": false,
+            "entry": [],
+            "exit": [],
+            "invokes": [],
+            "tags": [],
+            "meta": null
+          }
+        },
+        {
+          "type": "node",
+          "id": "cache",
+          "parentId": "random-scatter:root",
+          "initialNodeId": null,
+          "label": "Cache",
+          "position": {
+            "x": 211.00310827414327,
+            "y": 102.67008520599231
+          },
+          "x": 211.00310827414327,
+          "y": 102.67008520599231,
+          "dx": 0,
+          "dy": 0,
+          "width": 90,
+          "height": 58,
+          "data": {
+            "nodeId": "cache",
+            "parentId": "random-scatter:root",
+            "key": "cache",
+            "type": "normal",
+            "initialId": null,
+            "history": false,
+            "entry": [],
+            "exit": [],
+            "invokes": [],
+            "tags": [],
+            "meta": null
+          }
+        },
+        {
+          "type": "node",
+          "id": "database",
+          "parentId": "random-scatter:root",
+          "initialNodeId": null,
+          "label": "Database",
+          "position": {
+            "x": 35.266103019548765,
+            "y": 97.95641731944592
+          },
+          "x": 35.266103019548765,
+          "y": 97.95641731944592,
+          "dx": 0,
+          "dy": 0,
+          "width": 124,
+          "height": 74,
+          "data": {
+            "nodeId": "database",
+            "parentId": "random-scatter:root",
+            "key": "database",
+            "type": "normal",
+            "initialId": null,
+            "history": false,
+            "entry": [],
+            "exit": [],
+            "invokes": [],
+            "tags": [],
+            "meta": null
+          }
+        },
+        {
+          "type": "node",
+          "id": "events",
+          "parentId": "random-scatter:root",
+          "initialNodeId": null,
+          "label": "Event stream",
+          "position": {
+            "x": 110.28328039500202,
+            "y": 32.523373639993565
+          },
+          "x": 110.28328039500202,
+          "y": 32.523373639993565,
+          "dx": 0,
+          "dy": 0,
+          "width": 142,
+          "height": 66,
+          "data": {
+            "nodeId": "events",
+            "parentId": "random-scatter:root",
+            "key": "events",
+            "type": "normal",
+            "initialId": null,
+            "history": false,
+            "entry": [],
+            "exit": [],
+            "invokes": [],
+            "tags": [],
+            "meta": null
+          }
+        },
+        {
+          "type": "node",
+          "id": "metrics",
+          "parentId": "random-scatter:root",
+          "initialNodeId": null,
+          "label": "Metrics",
+          "position": {
+            "x": 139.66478318852904,
+            "y": 119.03145243659463
+          },
+          "x": 139.66478318852904,
+          "y": 119.03145243659463,
+          "dx": 0,
+          "dy": 0,
+          "width": 96,
+          "height": 54,
+          "data": {
+            "nodeId": "metrics",
+            "parentId": "random-scatter:root",
+            "key": "metrics",
+            "type": "normal",
+            "initialId": null,
+            "history": false,
+            "entry": [],
+            "exit": [],
+            "invokes": [],
+            "tags": [],
+            "meta": null
+          }
+        }
+      ],
+      "edges": [
+        {
+          "type": "edge",
+          "id": "next-1",
+          "sourceId": "auth",
+          "targetId": "api",
+          "position": {
+            "x": 295.6158197469024,
+            "y": 144.22392235955283
+          },
+          "x": 295.6158197469024,
+          "y": 144.22392235955283,
+          "dx": 0,
+          "dy": 0,
+          "width": 0,
+          "height": 0,
+          "data": {
+            "eventType": "",
+            "transitionType": "normal",
+            "guard": null,
+            "actions": [],
+            "description": null,
+            "meta": null
+          }
+        },
+        {
+          "type": "edge",
+          "id": "next-2",
+          "sourceId": "api",
+          "targetId": "worker",
+          "position": {
+            "x": 332.41631351482613,
+            "y": 124.37427141142173
+          },
+          "x": 332.41631351482613,
+          "y": 124.37427141142173,
+          "dx": 0,
+          "dy": 0,
+          "width": 0,
+          "height": 0,
+          "data": {
+            "eventType": "",
+            "transitionType": "normal",
+            "guard": null,
+            "actions": [],
+            "description": null,
+            "meta": null
+          }
+        },
+        {
+          "type": "edge",
+          "id": "next-3",
+          "sourceId": "worker",
+          "targetId": "cache",
+          "position": {
+            "x": 305.6937433286299,
+            "y": 120.58421058314298
+          },
+          "x": 305.6937433286299,
+          "y": 120.58421058314298,
+          "dx": 0,
+          "dy": 0,
+          "width": 0,
+          "height": 0,
+          "data": {
+            "eventType": "",
+            "transitionType": "normal",
+            "guard": null,
+            "actions": [],
+            "description": null,
+            "meta": null
+          }
+        },
+        {
+          "type": "edge",
+          "id": "next-4",
+          "sourceId": "cache",
+          "targetId": "database",
+          "position": {
+            "x": 186.75434818010126,
+            "y": 132.21889915408383
+          },
+          "x": 186.75434818010126,
+          "y": 132.21889915408383,
+          "dx": 0,
+          "dy": 0,
+          "width": 0,
+          "height": 0,
+          "data": {
+            "eventType": "",
+            "transitionType": "normal",
+            "guard": null,
+            "actions": [],
+            "description": null,
+            "meta": null
+          }
+        },
+        {
+          "type": "edge",
+          "id": "next-5",
+          "sourceId": "database",
+          "targetId": "events",
+          "position": {
+            "x": 141.69148039109572,
+            "y": 98.20759702282695
+          },
+          "x": 141.69148039109572,
+          "y": 98.20759702282695,
+          "dx": 0,
+          "dy": 0,
+          "width": 0,
+          "height": 0,
+          "data": {
+            "eventType": "",
+            "transitionType": "normal",
+            "guard": null,
+            "actions": [],
+            "description": null,
+            "meta": null
+          }
+        },
+        {
+          "type": "edge",
+          "id": "next-6",
+          "sourceId": "events",
+          "targetId": "metrics",
+          "position": {
+            "x": 184.72345045949262,
+            "y": 114.85282380368233
+          },
+          "x": 184.72345045949262,
+          "y": 114.85282380368233,
+          "dx": 0,
+          "dy": 0,
+          "width": 0,
+          "height": 0,
+          "data": {
+            "eventType": "",
+            "transitionType": "normal",
+            "guard": null,
+            "actions": [],
+            "description": null,
+            "meta": null
+          }
+        }
+      ],
+      "data": {
+        "profile": "xstate-v5",
+        "implementations": {
+          "actions": [],
+          "guards": [],
+          "actors": [],
+          "delays": [],
+          "tags": []
+        },
+        "schemas": {
+          "context": null,
+          "events": {},
+          "input": null,
+          "output": null,
+          "actions": {},
+          "guards": {},
+          "actors": {},
+          "tags": {},
+          "delays": {}
+        }
+      }
+    }
+  },
+  {
+    "id": "stress-mesh",
+    "name": "Stress · mesh",
+    "description": "Oracle reference for stress-minimizing undirected layout.",
+    "algorithm": "stress",
+    "engine": "elkjs-oracle",
+    "graph": {
+      "id": "stress-mesh",
+      "mode": "directed",
+      "type": "directed",
+      "initialNodeId": "stress-mesh:root",
+      "parentId": null,
+      "direction": "right",
+      "layout": {
+        "status": "complete",
+        "direction": "RIGHT"
+      },
+      "annotations": [],
+      "nodes": [
+        {
+          "type": "node",
+          "id": "stress-mesh:root",
+          "parentId": null,
+          "initialNodeId": "a",
+          "label": "Stress · mesh",
+          "position": {
+            "x": 0,
+            "y": 0
+          },
+          "x": 0,
+          "y": 0,
+          "dx": 0,
+          "dy": 0,
+          "width": 454.5143739449095,
+          "height": 427.6955429666297,
+          "data": {
+            "nodeId": "stress-mesh:root",
+            "parentId": null,
+            "key": "stress-mesh:root",
+            "type": "normal",
+            "initialId": "a",
+            "history": false,
+            "entry": [],
+            "exit": [],
+            "invokes": [],
+            "tags": [],
+            "meta": null
+          }
+        },
+        {
+          "type": "node",
+          "id": "a",
+          "parentId": "stress-mesh:root",
+          "initialNodeId": null,
+          "label": "a",
+          "position": {
+            "x": 299.1681928213686,
+            "y": 318.7500143760224
+          },
+          "x": 299.1681928213686,
+          "y": 318.7500143760224,
+          "dx": 0,
+          "dy": 0,
+          "width": 82,
+          "height": 52,
+          "data": {
+            "nodeId": "a",
+            "parentId": "stress-mesh:root",
+            "key": "a",
+            "type": "normal",
+            "initialId": null,
+            "history": false,
+            "entry": [],
+            "exit": [],
+            "invokes": [],
+            "tags": [],
+            "meta": null
+          }
+        },
+        {
+          "type": "node",
+          "id": "b",
+          "parentId": "stress-mesh:root",
+          "initialNodeId": null,
+          "label": "b",
+          "position": {
+            "x": 322.5143739449095,
+            "y": 209.84013556497638
+          },
+          "x": 322.5143739449095,
+          "y": 209.84013556497638,
+          "dx": 0,
+          "dy": 0,
+          "width": 82,
+          "height": 52,
+          "data": {
+            "nodeId": "b",
+            "parentId": "stress-mesh:root",
+            "key": "b",
+            "type": "normal",
+            "initialId": null,
+            "history": false,
+            "entry": [],
+            "exit": [],
+            "invokes": [],
+            "tags": [],
+            "meta": null
+          }
+        },
+        {
+          "type": "node",
+          "id": "c",
+          "parentId": "stress-mesh:root",
+          "initialNodeId": null,
+          "label": "c",
+          "position": {
+            "x": 188.53794401700802,
+            "y": 325.6955429666297
+          },
+          "x": 188.53794401700802,
+          "y": 325.6955429666297,
+          "dx": 0,
+          "dy": 0,
+          "width": 82,
+          "height": 52,
+          "data": {
+            "nodeId": "c",
+            "parentId": "stress-mesh:root",
+            "key": "c",
+            "type": "normal",
+            "initialId": null,
+            "history": false,
+            "entry": [],
+            "exit": [],
+            "invokes": [],
+            "tags": [],
+            "meta": null
+          }
+        },
+        {
+          "type": "node",
+          "id": "d",
+          "parentId": "stress-mesh:root",
+          "initialNodeId": null,
+          "label": "d",
+          "position": {
+            "x": 231.1528682241228,
+            "y": 148.45752128216225
+          },
+          "x": 231.1528682241228,
+          "y": 148.45752128216225,
+          "dx": 0,
+          "dy": 0,
+          "width": 82,
+          "height": 52,
+          "data": {
+            "nodeId": "d",
+            "parentId": "stress-mesh:root",
+            "key": "d",
+            "type": "normal",
+            "initialId": null,
+            "history": false,
+            "entry": [],
+            "exit": [],
+            "invokes": [],
+            "tags": [],
+            "meta": null
+          }
+        },
+        {
+          "type": "node",
+          "id": "e",
+          "parentId": "stress-mesh:root",
+          "initialNodeId": null,
+          "label": "e",
+          "position": {
+            "x": 143.8335272105503,
+            "y": 225.23615581797793
+          },
+          "x": 143.8335272105503,
+          "y": 225.23615581797793,
+          "dx": 0,
+          "dy": 0,
+          "width": 82,
+          "height": 52,
+          "data": {
+            "nodeId": "e",
+            "parentId": "stress-mesh:root",
+            "key": "e",
+            "type": "normal",
+            "initialId": null,
+            "history": false,
+            "entry": [],
+            "exit": [],
+            "invokes": [],
+            "tags": [],
+            "meta": null
+          }
+        },
+        {
+          "type": "node",
+          "id": "f",
+          "parentId": "stress-mesh:root",
+          "initialNodeId": null,
+          "label": "f",
+          "position": {
+            "x": 182.1591082103756,
+            "y": 50
+          },
+          "x": 182.1591082103756,
+          "y": 50,
+          "dx": 0,
+          "dy": 0,
+          "width": 82,
+          "height": 52,
+          "data": {
+            "nodeId": "f",
+            "parentId": "stress-mesh:root",
+            "key": "f",
+            "type": "normal",
+            "initialId": null,
+            "history": false,
+            "entry": [],
+            "exit": [],
+            "invokes": [],
+            "tags": [],
+            "meta": null
+          }
+        },
+        {
+          "type": "node",
+          "id": "g",
+          "parentId": "stress-mesh:root",
+          "initialNodeId": null,
+          "label": "g",
+          "position": {
+            "x": 50,
+            "y": 167.9140179833808
+          },
+          "x": 50,
+          "y": 167.9140179833808,
+          "dx": 0,
+          "dy": 0,
+          "width": 82,
+          "height": 52,
+          "data": {
+            "nodeId": "g",
+            "parentId": "stress-mesh:root",
+            "key": "g",
+            "type": "normal",
+            "initialId": null,
+            "history": false,
+            "entry": [],
+            "exit": [],
+            "invokes": [],
+            "tags": [],
+            "meta": null
+          }
+        },
+        {
+          "type": "node",
+          "id": "h",
+          "parentId": "stress-mesh:root",
+          "initialNodeId": null,
+          "label": "h",
+          "position": {
+            "x": 71.17610319104122,
+            "y": 58.94158459240586
+          },
+          "x": 71.17610319104122,
+          "y": 58.94158459240586,
+          "dx": 0,
+          "dy": 0,
+          "width": 82,
+          "height": 52,
+          "data": {
+            "nodeId": "h",
+            "parentId": "stress-mesh:root",
+            "key": "h",
+            "type": "normal",
+            "initialId": null,
+            "history": false,
+            "entry": [],
+            "exit": [],
+            "invokes": [],
+            "tags": [],
+            "meta": null
+          }
+        }
+      ],
+      "edges": [
+        {
+          "type": "edge",
+          "id": "ab",
+          "sourceId": "a",
+          "targetId": "b",
+          "position": {
+            "x": 319.84128338313906,
+            "y": 274.2950749704994
+          },
+          "x": 319.84128338313906,
+          "y": 274.2950749704994,
+          "dx": 0,
+          "dy": 0,
+          "width": 64,
+          "height": 32,
+          "data": {
+            "eventType": "ab",
+            "transitionType": "normal",
+            "guard": null,
+            "actions": [],
+            "description": null,
+            "meta": null
+          }
+        },
+        {
+          "type": "edge",
+          "id": "ac",
+          "sourceId": "a",
+          "targetId": "c",
+          "position": {
+            "x": 252.85306841918833,
+            "y": 332.22277867132607
+          },
+          "x": 252.85306841918833,
+          "y": 332.22277867132607,
+          "dx": 0,
+          "dy": 0,
+          "width": 64,
+          "height": 32,
+          "data": {
+            "eventType": "ac",
+            "transitionType": "normal",
+            "guard": null,
+            "actions": [],
+            "description": null,
+            "meta": null
+          }
+        },
+        {
+          "type": "edge",
+          "id": "bd",
+          "sourceId": "b",
+          "targetId": "d",
+          "position": {
+            "x": 285.83362108451615,
+            "y": 189.1488284235693
+          },
+          "x": 285.83362108451615,
+          "y": 189.1488284235693,
+          "dx": 0,
+          "dy": 0,
+          "width": 64,
+          "height": 32,
+          "data": {
+            "eventType": "bd",
+            "transitionType": "normal",
+            "guard": null,
+            "actions": [],
+            "description": null,
+            "meta": null
+          }
+        },
+        {
+          "type": "edge",
+          "id": "ce",
+          "sourceId": "c",
+          "targetId": "e",
+          "position": {
+            "x": 175.18573561377914,
+            "y": 285.4658493923038
+          },
+          "x": 175.18573561377914,
+          "y": 285.4658493923038,
+          "dx": 0,
+          "dy": 0,
+          "width": 64,
+          "height": 32,
+          "data": {
+            "eventType": "ce",
+            "transitionType": "normal",
+            "guard": null,
+            "actions": [],
+            "description": null,
+            "meta": null
+          }
+        },
+        {
+          "type": "edge",
+          "id": "de",
+          "sourceId": "d",
+          "targetId": "e",
+          "position": {
+            "x": 196.49319771733656,
+            "y": 196.8468385500701
+          },
+          "x": 196.49319771733656,
+          "y": 196.8468385500701,
+          "dx": 0,
+          "dy": 0,
+          "width": 64,
+          "height": 32,
+          "data": {
+            "eventType": "de",
+            "transitionType": "normal",
+            "guard": null,
+            "actions": [],
+            "description": null,
+            "meta": null
+          }
+        },
+        {
+          "type": "edge",
+          "id": "df",
+          "sourceId": "d",
+          "targetId": "f",
+          "position": {
+            "x": 215.65598821724916,
+            "y": 109.22876064108112
+          },
+          "x": 215.65598821724916,
+          "y": 109.22876064108112,
+          "dx": 0,
+          "dy": 0,
+          "width": 64,
+          "height": 32,
+          "data": {
+            "eventType": "df",
+            "transitionType": "normal",
+            "guard": null,
+            "actions": [],
+            "description": null,
+            "meta": null
+          }
+        },
+        {
+          "type": "edge",
+          "id": "eg",
+          "sourceId": "e",
+          "targetId": "g",
+          "position": {
+            "x": 105.91676360527515,
+            "y": 206.57508690067937
+          },
+          "x": 105.91676360527515,
+          "y": 206.57508690067937,
+          "dx": 0,
+          "dy": 0,
+          "width": 64,
+          "height": 32,
+          "data": {
+            "eventType": "eg",
+            "transitionType": "normal",
+            "guard": null,
+            "actions": [],
+            "description": null,
+            "meta": null
+          }
+        },
+        {
+          "type": "edge",
+          "id": "fh",
+          "sourceId": "f",
+          "targetId": "h",
+          "position": {
+            "x": 135.6676057007084,
+            "y": 64.47079229620293
+          },
+          "x": 135.6676057007084,
+          "y": 64.47079229620293,
+          "dx": 0,
+          "dy": 0,
+          "width": 64,
+          "height": 32,
+          "data": {
+            "eventType": "fh",
+            "transitionType": "normal",
+            "guard": null,
+            "actions": [],
+            "description": null,
+            "meta": null
+          }
+        },
+        {
+          "type": "edge",
+          "id": "gh",
+          "sourceId": "g",
+          "targetId": "h",
+          "position": {
+            "x": 69.58805159552061,
+            "y": 123.42780128789332
+          },
+          "x": 69.58805159552061,
+          "y": 123.42780128789332,
+          "dx": 0,
+          "dy": 0,
+          "width": 64,
+          "height": 32,
+          "data": {
+            "eventType": "gh",
+            "transitionType": "normal",
+            "guard": null,
+            "actions": [],
+            "description": null,
+            "meta": null
+          }
+        }
+      ],
+      "data": {
+        "profile": "xstate-v5",
+        "implementations": {
+          "actions": [],
+          "guards": [],
+          "actors": [],
+          "delays": [],
+          "tags": []
+        },
+        "schemas": {
+          "context": null,
+          "events": {},
+          "input": null,
+          "output": null,
+          "actions": {},
+          "guards": {},
+          "actors": {},
+          "tags": {},
+          "delays": {}
+        }
+      }
+    }
+  },
+  {
+    "id": "mr-tree",
+    "name": "Mr. Tree",
+    "description": "Oracle reference for multi-rooted tree layout.",
+    "algorithm": "mrtree",
+    "engine": "elkjs-oracle",
+    "graph": {
+      "id": "mr-tree",
+      "mode": "directed",
+      "type": "directed",
+      "initialNodeId": "mr-tree:root",
+      "parentId": null,
+      "direction": "right",
+      "layout": {
+        "status": "complete",
+        "direction": "RIGHT"
+      },
+      "annotations": [],
+      "nodes": [
+        {
+          "type": "node",
+          "id": "mr-tree:root",
+          "parentId": null,
+          "initialNodeId": "root-state",
+          "label": "Mr. Tree",
+          "position": {
+            "x": 0,
+            "y": 0
+          },
+          "x": 0,
+          "y": 0,
+          "dx": 0,
+          "dy": 0,
+          "width": 384,
+          "height": 366,
+          "data": {
+            "nodeId": "mr-tree:root",
+            "parentId": null,
+            "key": "mr-tree:root",
+            "type": "normal",
+            "initialId": "root-state",
+            "history": false,
+            "entry": [],
+            "exit": [],
+            "invokes": [],
+            "tags": [],
+            "meta": null
+          }
+        },
+        {
+          "type": "node",
+          "id": "root-state",
+          "parentId": "mr-tree:root",
+          "initialNodeId": null,
+          "label": "root-state",
+          "position": {
+            "x": 20,
+            "y": 155
+          },
+          "x": 20,
+          "y": 155,
+          "dx": 0,
+          "dy": 0,
+          "width": 92,
+          "height": 56,
+          "data": {
+            "nodeId": "root-state",
+            "parentId": "mr-tree:root",
+            "key": "root-state",
+            "type": "normal",
+            "initialId": null,
+            "history": false,
+            "entry": [],
+            "exit": [],
+            "invokes": [],
+            "tags": [],
+            "meta": null
+          }
+        },
+        {
+          "type": "node",
+          "id": "a",
+          "parentId": "mr-tree:root",
+          "initialNodeId": null,
+          "label": "a",
+          "position": {
+            "x": 146,
+            "y": 65
+          },
+          "x": 146,
+          "y": 65,
+          "dx": 0,
+          "dy": 0,
+          "width": 92,
+          "height": 56,
+          "data": {
+            "nodeId": "a",
+            "parentId": "mr-tree:root",
+            "key": "a",
+            "type": "normal",
+            "initialId": null,
+            "history": false,
+            "entry": [],
+            "exit": [],
+            "invokes": [],
+            "tags": [],
+            "meta": null
+          }
+        },
+        {
+          "type": "node",
+          "id": "b",
+          "parentId": "mr-tree:root",
+          "initialNodeId": null,
+          "label": "b",
+          "position": {
+            "x": 146,
+            "y": 245
+          },
+          "x": 146,
+          "y": 245,
+          "dx": 0,
+          "dy": 0,
+          "width": 92,
+          "height": 56,
+          "data": {
+            "nodeId": "b",
+            "parentId": "mr-tree:root",
+            "key": "b",
+            "type": "normal",
+            "initialId": null,
+            "history": false,
+            "entry": [],
+            "exit": [],
+            "invokes": [],
+            "tags": [],
+            "meta": null
+          }
+        },
+        {
+          "type": "node",
+          "id": "c",
+          "parentId": "mr-tree:root",
+          "initialNodeId": null,
+          "label": "c",
+          "position": {
+            "x": 272,
+            "y": 20
+          },
+          "x": 272,
+          "y": 20,
+          "dx": 0,
+          "dy": 0,
+          "width": 92,
+          "height": 56,
+          "data": {
+            "nodeId": "c",
+            "parentId": "mr-tree:root",
+            "key": "c",
+            "type": "normal",
+            "initialId": null,
+            "history": false,
+            "entry": [],
+            "exit": [],
+            "invokes": [],
+            "tags": [],
+            "meta": null
+          }
+        },
+        {
+          "type": "node",
+          "id": "d",
+          "parentId": "mr-tree:root",
+          "initialNodeId": null,
+          "label": "d",
+          "position": {
+            "x": 272,
+            "y": 110
+          },
+          "x": 272,
+          "y": 110,
+          "dx": 0,
+          "dy": 0,
+          "width": 92,
+          "height": 56,
+          "data": {
+            "nodeId": "d",
+            "parentId": "mr-tree:root",
+            "key": "d",
+            "type": "normal",
+            "initialId": null,
+            "history": false,
+            "entry": [],
+            "exit": [],
+            "invokes": [],
+            "tags": [],
+            "meta": null
+          }
+        },
+        {
+          "type": "node",
+          "id": "e",
+          "parentId": "mr-tree:root",
+          "initialNodeId": null,
+          "label": "e",
+          "position": {
+            "x": 272,
+            "y": 200
+          },
+          "x": 272,
+          "y": 200,
+          "dx": 0,
+          "dy": 0,
+          "width": 92,
+          "height": 56,
+          "data": {
+            "nodeId": "e",
+            "parentId": "mr-tree:root",
+            "key": "e",
+            "type": "normal",
+            "initialId": null,
+            "history": false,
+            "entry": [],
+            "exit": [],
+            "invokes": [],
+            "tags": [],
+            "meta": null
+          }
+        },
+        {
+          "type": "node",
+          "id": "f",
+          "parentId": "mr-tree:root",
+          "initialNodeId": null,
+          "label": "f",
+          "position": {
+            "x": 272,
+            "y": 290
+          },
+          "x": 272,
+          "y": 290,
+          "dx": 0,
+          "dy": 0,
+          "width": 92,
+          "height": 56,
+          "data": {
+            "nodeId": "f",
+            "parentId": "mr-tree:root",
+            "key": "f",
+            "type": "normal",
+            "initialId": null,
+            "history": false,
+            "entry": [],
+            "exit": [],
+            "invokes": [],
+            "tags": [],
+            "meta": null
+          }
+        }
+      ],
+      "edges": [
+        {
+          "type": "edge",
+          "id": "root-a",
+          "sourceId": "root-state",
+          "targetId": "a",
+          "position": {
+            "x": 94.5,
+            "y": 117.33333333333331
+          },
+          "x": 94.5,
+          "y": 117.33333333333331,
+          "dx": 0,
+          "dy": 0,
+          "width": 72,
+          "height": 32,
+          "data": {
+            "eventType": "root-a",
+            "transitionType": "normal",
+            "guard": null,
+            "actions": [],
+            "description": null,
+            "meta": null
+          }
+        },
+        {
+          "type": "edge",
+          "id": "root-b",
+          "sourceId": "root-state",
+          "targetId": "b",
+          "position": {
+            "x": 94.5,
+            "y": 216.66666666666666
+          },
+          "x": 94.5,
+          "y": 216.66666666666666,
+          "dx": 0,
+          "dy": 0,
+          "width": 72,
+          "height": 32,
+          "data": {
+            "eventType": "root-b",
+            "transitionType": "normal",
+            "guard": null,
+            "actions": [],
+            "description": null,
+            "meta": null
+          }
+        },
+        {
+          "type": "edge",
+          "id": "a-c",
+          "sourceId": "a",
+          "targetId": "c",
+          "position": {
+            "x": 224.5,
+            "y": 49.83333333333333
+          },
+          "x": 224.5,
+          "y": 49.83333333333333,
+          "dx": 0,
+          "dy": 0,
+          "width": 64,
+          "height": 32,
+          "data": {
+            "eventType": "a-c",
+            "transitionType": "normal",
+            "guard": null,
+            "actions": [],
+            "description": null,
+            "meta": null
+          }
+        },
+        {
+          "type": "edge",
+          "id": "a-d",
+          "sourceId": "a",
+          "targetId": "d",
+          "position": {
+            "x": 224.5,
+            "y": 104.16666666666666
+          },
+          "x": 224.5,
+          "y": 104.16666666666666,
+          "dx": 0,
+          "dy": 0,
+          "width": 64,
+          "height": 32,
+          "data": {
+            "eventType": "a-d",
+            "transitionType": "normal",
+            "guard": null,
+            "actions": [],
+            "description": null,
+            "meta": null
+          }
+        },
+        {
+          "type": "edge",
+          "id": "b-e",
+          "sourceId": "b",
+          "targetId": "e",
+          "position": {
+            "x": 224.5,
+            "y": 229.83333333333331
+          },
+          "x": 224.5,
+          "y": 229.83333333333331,
+          "dx": 0,
+          "dy": 0,
+          "width": 64,
+          "height": 32,
+          "data": {
+            "eventType": "b-e",
+            "transitionType": "normal",
+            "guard": null,
+            "actions": [],
+            "description": null,
+            "meta": null
+          }
+        },
+        {
+          "type": "edge",
+          "id": "b-f",
+          "sourceId": "b",
+          "targetId": "f",
+          "position": {
+            "x": 224.5,
+            "y": 284.16666666666663
+          },
+          "x": 224.5,
+          "y": 284.16666666666663,
+          "dx": 0,
+          "dy": 0,
+          "width": 64,
+          "height": 32,
+          "data": {
+            "eventType": "b-f",
+            "transitionType": "normal",
+            "guard": null,
+            "actions": [],
+            "description": null,
+            "meta": null
+          }
+        }
+      ],
+      "data": {
+        "profile": "xstate-v5",
+        "implementations": {
+          "actions": [],
+          "guards": [],
+          "actors": [],
+          "delays": [],
+          "tags": []
+        },
+        "schemas": {
+          "context": null,
+          "events": {},
+          "input": null,
+          "output": null,
+          "actions": {},
+          "guards": {},
+          "actors": {},
+          "tags": {},
+          "delays": {}
+        }
+      }
+    }
+  },
+  {
+    "id": "radial-tree",
+    "name": "Radial · tree",
+    "description": "Oracle reference for concentric radial tree layout.",
+    "algorithm": "radial",
+    "engine": "elkjs-oracle",
+    "graph": {
+      "id": "radial-tree",
+      "mode": "directed",
+      "type": "directed",
+      "initialNodeId": "radial-tree:root",
+      "parentId": null,
+      "direction": "right",
+      "layout": {
+        "status": "complete",
+        "direction": "RIGHT"
+      },
+      "annotations": [],
+      "nodes": [
+        {
+          "type": "node",
+          "id": "radial-tree:root",
+          "parentId": null,
+          "initialNodeId": "root-state",
+          "label": "Radial · tree",
+          "position": {
+            "x": 0,
+            "y": 0
+          },
+          "x": 0,
+          "y": 0,
+          "dx": 0,
+          "dy": 0,
+          "width": 420.63092423455635,
+          "height": 384.63092423455635,
+          "data": {
+            "nodeId": "radial-tree:root",
+            "parentId": null,
+            "key": "radial-tree:root",
+            "type": "normal",
+            "initialId": "root-state",
+            "history": false,
+            "entry": [],
+            "exit": [],
+            "invokes": [],
+            "tags": [],
+            "meta": null
+          }
+        },
+        {
+          "type": "node",
+          "id": "root-state",
+          "parentId": "radial-tree:root",
+          "initialNodeId": null,
+          "label": "root-state",
+          "position": {
+            "x": 164.3154621172782,
+            "y": 164.3154621172782
+          },
+          "x": 164.3154621172782,
+          "y": 164.3154621172782,
+          "dx": 0,
+          "dy": 0,
+          "width": 92,
+          "height": 56,
+          "data": {
+            "nodeId": "root-state",
+            "parentId": "radial-tree:root",
+            "key": "root-state",
+            "type": "normal",
+            "initialId": null,
+            "history": false,
+            "entry": [],
+            "exit": [],
+            "invokes": [],
+            "tags": [],
+            "meta": null
+          }
+        },
+        {
+          "type": "node",
+          "id": "a",
+          "parentId": "radial-tree:root",
+          "initialNodeId": null,
+          "label": "a",
+          "position": {
+            "x": 164.3154621172782,
+            "y": 272.0187582599683
+          },
+          "x": 164.3154621172782,
+          "y": 272.0187582599683,
+          "dx": 0,
+          "dy": 0,
+          "width": 92,
+          "height": 56,
+          "data": {
+            "nodeId": "a",
+            "parentId": "radial-tree:root",
+            "key": "a",
+            "type": "normal",
+            "initialId": null,
+            "history": false,
+            "entry": [],
+            "exit": [],
+            "invokes": [],
+            "tags": [],
+            "meta": null
+          }
+        },
+        {
+          "type": "node",
+          "id": "b",
+          "parentId": "radial-tree:root",
+          "initialNodeId": null,
+          "label": "b",
+          "position": {
+            "x": 164.31546211727817,
+            "y": 56.61216597458812
+          },
+          "x": 164.31546211727817,
+          "y": 56.61216597458812,
+          "dx": 0,
+          "dy": 0,
+          "width": 92,
+          "height": 56,
+          "data": {
+            "nodeId": "b",
+            "parentId": "radial-tree:root",
+            "key": "b",
+            "type": "normal",
+            "initialId": null,
+            "history": false,
+            "entry": [],
+            "exit": [],
+            "invokes": [],
+            "tags": [],
+            "meta": null
+          }
+        },
+        {
+          "type": "node",
+          "id": "c",
+          "parentId": "radial-tree:root",
+          "initialNodeId": null,
+          "label": "c",
+          "position": {
+            "x": 316.63092423455635,
+            "y": 316.63092423455635
+          },
+          "x": 316.63092423455635,
+          "y": 316.63092423455635,
+          "dx": 0,
+          "dy": 0,
+          "width": 92,
+          "height": 56,
+          "data": {
+            "nodeId": "c",
+            "parentId": "radial-tree:root",
+            "key": "c",
+            "type": "normal",
+            "initialId": null,
+            "history": false,
+            "entry": [],
+            "exit": [],
+            "invokes": [],
+            "tags": [],
+            "meta": null
+          }
+        },
+        {
+          "type": "node",
+          "id": "d",
+          "parentId": "radial-tree:root",
+          "initialNodeId": null,
+          "label": "d",
+          "position": {
+            "x": 12.000000000000057,
+            "y": 316.63092423455635
+          },
+          "x": 12.000000000000057,
+          "y": 316.63092423455635,
+          "dx": 0,
+          "dy": 0,
+          "width": 92,
+          "height": 56,
+          "data": {
+            "nodeId": "d",
+            "parentId": "radial-tree:root",
+            "key": "d",
+            "type": "normal",
+            "initialId": null,
+            "history": false,
+            "entry": [],
+            "exit": [],
+            "invokes": [],
+            "tags": [],
+            "meta": null
+          }
+        },
+        {
+          "type": "node",
+          "id": "e",
+          "parentId": "radial-tree:root",
+          "initialNodeId": null,
+          "label": "e",
+          "position": {
+            "x": 12,
+            "y": 12.000000000000057
+          },
+          "x": 12,
+          "y": 12.000000000000057,
+          "dx": 0,
+          "dy": 0,
+          "width": 92,
+          "height": 56,
+          "data": {
+            "nodeId": "e",
+            "parentId": "radial-tree:root",
+            "key": "e",
+            "type": "normal",
+            "initialId": null,
+            "history": false,
+            "entry": [],
+            "exit": [],
+            "invokes": [],
+            "tags": [],
+            "meta": null
+          }
+        },
+        {
+          "type": "node",
+          "id": "f",
+          "parentId": "radial-tree:root",
+          "initialNodeId": null,
+          "label": "f",
+          "position": {
+            "x": 316.63092423455635,
+            "y": 12
+          },
+          "x": 316.63092423455635,
+          "y": 12,
+          "dx": 0,
+          "dy": 0,
+          "width": 92,
+          "height": 56,
+          "data": {
+            "nodeId": "f",
+            "parentId": "radial-tree:root",
+            "key": "f",
+            "type": "normal",
+            "initialId": null,
+            "history": false,
+            "entry": [],
+            "exit": [],
+            "invokes": [],
+            "tags": [],
+            "meta": null
+          }
+        }
+      ],
+      "edges": [
+        {
+          "type": "edge",
+          "id": "root-a",
+          "sourceId": "root-state",
+          "targetId": "a",
+          "position": {
+            "x": 174.3154621172782,
+            "y": 230.16711018862327
+          },
+          "x": 174.3154621172782,
+          "y": 230.16711018862327,
+          "dx": 0,
+          "dy": 0,
+          "width": 72,
+          "height": 32,
+          "data": {
+            "eventType": "root-a",
+            "transitionType": "normal",
+            "guard": null,
+            "actions": [],
+            "description": null,
+            "meta": null
+          }
+        },
+        {
+          "type": "edge",
+          "id": "root-b",
+          "sourceId": "root-state",
+          "targetId": "b",
+          "position": {
+            "x": 174.3154621172782,
+            "y": 122.46381404593316
+          },
+          "x": 174.3154621172782,
+          "y": 122.46381404593316,
+          "dx": 0,
+          "dy": 0,
+          "width": 72,
+          "height": 32,
+          "data": {
+            "eventType": "root-b",
+            "transitionType": "normal",
+            "guard": null,
+            "actions": [],
+            "description": null,
+            "meta": null
+          }
+        },
+        {
+          "type": "edge",
+          "id": "a-c",
+          "sourceId": "a",
+          "targetId": "c",
+          "position": {
+            "x": 254.4731931759173,
+            "y": 306.32484124726227
+          },
+          "x": 254.4731931759173,
+          "y": 306.32484124726227,
+          "dx": 0,
+          "dy": 0,
+          "width": 64,
+          "height": 32,
+          "data": {
+            "eventType": "a-c",
+            "transitionType": "normal",
+            "guard": null,
+            "actions": [],
+            "description": null,
+            "meta": null
+          }
+        },
+        {
+          "type": "edge",
+          "id": "a-d",
+          "sourceId": "a",
+          "targetId": "d",
+          "position": {
+            "x": 102.15773105863911,
+            "y": 306.32484124726227
+          },
+          "x": 102.15773105863911,
+          "y": 306.32484124726227,
+          "dx": 0,
+          "dy": 0,
+          "width": 64,
+          "height": 32,
+          "data": {
+            "eventType": "a-d",
+            "transitionType": "normal",
+            "guard": null,
+            "actions": [],
+            "description": null,
+            "meta": null
+          }
+        },
+        {
+          "type": "edge",
+          "id": "b-e",
+          "sourceId": "b",
+          "targetId": "e",
+          "position": {
+            "x": 102.15773105863909,
+            "y": 46.30608298729409
+          },
+          "x": 102.15773105863909,
+          "y": 46.30608298729409,
+          "dx": 0,
+          "dy": 0,
+          "width": 64,
+          "height": 32,
+          "data": {
+            "eventType": "b-e",
+            "transitionType": "normal",
+            "guard": null,
+            "actions": [],
+            "description": null,
+            "meta": null
+          }
+        },
+        {
+          "type": "edge",
+          "id": "b-f",
+          "sourceId": "b",
+          "targetId": "f",
+          "position": {
+            "x": 254.47319317591723,
+            "y": 46.30608298729406
+          },
+          "x": 254.47319317591723,
+          "y": 46.30608298729406,
+          "dx": 0,
+          "dy": 0,
+          "width": 64,
+          "height": 32,
+          "data": {
+            "eventType": "b-f",
+            "transitionType": "normal",
+            "guard": null,
+            "actions": [],
+            "description": null,
+            "meta": null
+          }
+        }
+      ],
+      "data": {
+        "profile": "xstate-v5",
+        "implementations": {
+          "actions": [],
+          "guards": [],
+          "actors": [],
+          "delays": [],
+          "tags": []
+        },
+        "schemas": {
+          "context": null,
+          "events": {},
+          "input": null,
+          "output": null,
+          "actions": {},
+          "guards": {},
+          "actors": {},
+          "tags": {},
+          "delays": {}
+        }
+      }
+    }
+  },
+  {
+    "id": "force-network",
+    "name": "Force · network",
+    "description": "Oracle reference for ELK's force-directed layouter.",
+    "algorithm": "force",
+    "engine": "elkjs-oracle",
+    "graph": {
+      "id": "force-network",
+      "mode": "directed",
+      "type": "directed",
+      "initialNodeId": "force-network:root",
+      "parentId": null,
+      "direction": "right",
+      "layout": {
+        "status": "complete",
+        "direction": "RIGHT"
+      },
+      "annotations": [],
+      "nodes": [
+        {
+          "type": "node",
+          "id": "force-network:root",
+          "parentId": null,
+          "initialNodeId": "api",
+          "label": "Force · network",
+          "position": {
+            "x": 0,
+            "y": 0
+          },
+          "x": 0,
+          "y": 0,
+          "dx": 0,
+          "dy": 0,
+          "width": 699.0310187467508,
+          "height": 651.7656458456477,
+          "data": {
+            "nodeId": "force-network:root",
+            "parentId": null,
+            "key": "force-network:root",
+            "type": "normal",
+            "initialId": "api",
+            "history": false,
+            "entry": [],
+            "exit": [],
+            "invokes": [],
+            "tags": [],
+            "meta": null
+          }
+        },
+        {
+          "type": "node",
+          "id": "api",
+          "parentId": "force-network:root",
+          "initialNodeId": null,
+          "label": "api",
+          "position": {
+            "x": 253.64836706926758,
+            "y": 545.7656458456477
+          },
+          "x": 253.64836706926758,
+          "y": 545.7656458456477,
+          "dx": 0,
+          "dy": 0,
+          "width": 104,
+          "height": 56,
+          "data": {
+            "nodeId": "api",
+            "parentId": "force-network:root",
+            "key": "api",
+            "type": "normal",
+            "initialId": null,
+            "history": false,
+            "entry": [],
+            "exit": [],
+            "invokes": [],
+            "tags": [],
+            "meta": null
+          }
+        },
+        {
+          "type": "node",
+          "id": "queue",
+          "parentId": "force-network:root",
+          "initialNodeId": null,
+          "label": "queue",
+          "position": {
+            "x": 304.52428783879634,
+            "y": 267.30253172896215
+          },
+          "x": 304.52428783879634,
+          "y": 267.30253172896215,
+          "dx": 0,
+          "dy": 0,
+          "width": 104,
+          "height": 56,
+          "data": {
+            "nodeId": "queue",
+            "parentId": "force-network:root",
+            "key": "queue",
+            "type": "normal",
+            "initialId": null,
+            "history": false,
+            "entry": [],
+            "exit": [],
+            "invokes": [],
+            "tags": [],
+            "meta": null
+          }
+        },
+        {
+          "type": "node",
+          "id": "worker-a",
+          "parentId": "force-network:root",
+          "initialNodeId": null,
+          "label": "worker-a",
+          "position": {
+            "x": 545.0310187467508,
+            "y": 83.61543479607556
+          },
+          "x": 545.0310187467508,
+          "y": 83.61543479607556,
+          "dx": 0,
+          "dy": 0,
+          "width": 104,
+          "height": 56,
+          "data": {
+            "nodeId": "worker-a",
+            "parentId": "force-network:root",
+            "key": "worker-a",
+            "type": "normal",
+            "initialId": null,
+            "history": false,
+            "entry": [],
+            "exit": [],
+            "invokes": [],
+            "tags": [],
+            "meta": null
+          }
+        },
+        {
+          "type": "node",
+          "id": "worker-b",
+          "parentId": "force-network:root",
+          "initialNodeId": null,
+          "label": "worker-b",
+          "position": {
+            "x": 50,
+            "y": 269.9196093432992
+          },
+          "x": 50,
+          "y": 269.9196093432992,
+          "dx": 0,
+          "dy": 0,
+          "width": 104,
+          "height": 56,
+          "data": {
+            "nodeId": "worker-b",
+            "parentId": "force-network:root",
+            "key": "worker-b",
+            "type": "normal",
+            "initialId": null,
+            "history": false,
+            "entry": [],
+            "exit": [],
+            "invokes": [],
+            "tags": [],
+            "meta": null
+          }
+        },
+        {
+          "type": "node",
+          "id": "worker-c",
+          "parentId": "force-network:root",
+          "initialNodeId": null,
+          "label": "worker-c",
+          "position": {
+            "x": 148.28788803109,
+            "y": 84.68155740124683
+          },
+          "x": 148.28788803109,
+          "y": 84.68155740124683,
+          "dx": 0,
+          "dy": 0,
+          "width": 104,
+          "height": 56,
+          "data": {
+            "nodeId": "worker-c",
+            "parentId": "force-network:root",
+            "key": "worker-c",
+            "type": "normal",
+            "initialId": null,
+            "history": false,
+            "entry": [],
+            "exit": [],
+            "invokes": [],
+            "tags": [],
+            "meta": null
+          }
+        },
+        {
+          "type": "node",
+          "id": "db",
+          "parentId": "force-network:root",
+          "initialNodeId": null,
+          "label": "db",
+          "position": {
+            "x": 310.41059468540755,
+            "y": 50
+          },
+          "x": 310.41059468540755,
+          "y": 50,
+          "dx": 0,
+          "dy": 0,
+          "width": 104,
+          "height": 56,
+          "data": {
+            "nodeId": "db",
+            "parentId": "force-network:root",
+            "key": "db",
+            "type": "normal",
+            "initialId": null,
+            "history": false,
+            "entry": [],
+            "exit": [],
+            "invokes": [],
+            "tags": [],
+            "meta": null
+          }
+        },
+        {
+          "type": "node",
+          "id": "cache",
+          "parentId": "force-network:root",
+          "initialNodeId": null,
+          "label": "cache",
+          "position": {
+            "x": 103.98105186697705,
+            "y": 382.8168797653708
+          },
+          "x": 103.98105186697705,
+          "y": 382.8168797653708,
+          "dx": 0,
+          "dy": 0,
+          "width": 104,
+          "height": 56,
+          "data": {
+            "nodeId": "cache",
+            "parentId": "force-network:root",
+            "key": "cache",
+            "type": "normal",
+            "initialId": null,
+            "history": false,
+            "entry": [],
+            "exit": [],
+            "invokes": [],
+            "tags": [],
+            "meta": null
+          }
+        }
+      ],
+      "edges": [
+        {
+          "type": "edge",
+          "id": "api-queue",
+          "sourceId": "api",
+          "targetId": "queue",
+          "position": {
+            "x": 283.08632745403196,
+            "y": 418.5340887873049
+          },
+          "x": 283.08632745403196,
+          "y": 418.5340887873049,
+          "dx": 0,
+          "dy": 0,
+          "width": 96,
+          "height": 32,
+          "data": {
+            "eventType": "api-queue",
+            "transitionType": "normal",
+            "guard": null,
+            "actions": [],
+            "description": null,
+            "meta": null
+          }
+        },
+        {
+          "type": "edge",
+          "id": "queue-a",
+          "sourceId": "queue",
+          "targetId": "worker-a",
+          "position": {
+            "x": 436.7776532927735,
+            "y": 187.45898326251887
+          },
+          "x": 436.7776532927735,
+          "y": 187.45898326251887,
+          "dx": 0,
+          "dy": 0,
+          "width": 80,
+          "height": 32,
+          "data": {
+            "eventType": "queue-a",
+            "transitionType": "normal",
+            "guard": null,
+            "actions": [],
+            "description": null,
+            "meta": null
+          }
+        },
+        {
+          "type": "edge",
+          "id": "queue-b",
+          "sourceId": "queue",
+          "targetId": "worker-b",
+          "position": {
+            "x": 189.26214391939817,
+            "y": 280.6110705361307
+          },
+          "x": 189.26214391939817,
+          "y": 280.6110705361307,
+          "dx": 0,
+          "dy": 0,
+          "width": 80,
+          "height": 32,
+          "data": {
+            "eventType": "queue-b",
+            "transitionType": "normal",
+            "guard": null,
+            "actions": [],
+            "description": null,
+            "meta": null
+          }
+        },
+        {
+          "type": "edge",
+          "id": "queue-c",
+          "sourceId": "queue",
+          "targetId": "worker-c",
+          "position": {
+            "x": 238.40608793494317,
+            "y": 187.9920445651045
+          },
+          "x": 238.40608793494317,
+          "y": 187.9920445651045,
+          "dx": 0,
+          "dy": 0,
+          "width": 80,
+          "height": 32,
+          "data": {
+            "eventType": "queue-c",
+            "transitionType": "normal",
+            "guard": null,
+            "actions": [],
+            "description": null,
+            "meta": null
+          }
+        },
+        {
+          "type": "edge",
+          "id": "a-db",
+          "sourceId": "worker-a",
+          "targetId": "db",
+          "position": {
+            "x": 447.72080671607915,
+            "y": 78.80771739803778
+          },
+          "x": 447.72080671607915,
+          "y": 78.80771739803778,
+          "dx": 0,
+          "dy": 0,
+          "width": 64,
+          "height": 32,
+          "data": {
+            "eventType": "a-db",
+            "transitionType": "normal",
+            "guard": null,
+            "actions": [],
+            "description": null,
+            "meta": null
+          }
+        },
+        {
+          "type": "edge",
+          "id": "b-db",
+          "sourceId": "worker-b",
+          "targetId": "db",
+          "position": {
+            "x": 200.20529734270377,
+            "y": 171.9598046716496
+          },
+          "x": 200.20529734270377,
+          "y": 171.9598046716496,
+          "dx": 0,
+          "dy": 0,
+          "width": 64,
+          "height": 32,
+          "data": {
+            "eventType": "b-db",
+            "transitionType": "normal",
+            "guard": null,
+            "actions": [],
+            "description": null,
+            "meta": null
+          }
+        },
+        {
+          "type": "edge",
+          "id": "c-cache",
+          "sourceId": "worker-c",
+          "targetId": "cache",
+          "position": {
+            "x": 138.13446994903353,
+            "y": 245.7492185833088
+          },
+          "x": 138.13446994903353,
+          "y": 245.7492185833088,
+          "dx": 0,
+          "dy": 0,
+          "width": 80,
+          "height": 32,
+          "data": {
+            "eventType": "c-cache",
+            "transitionType": "normal",
+            "guard": null,
+            "actions": [],
+            "description": null,
+            "meta": null
+          }
+        },
+        {
+          "type": "edge",
+          "id": "cache-api",
+          "sourceId": "cache",
+          "targetId": "api",
+          "position": {
+            "x": 182.81470946812235,
+            "y": 476.29126280550923
+          },
+          "x": 182.81470946812235,
+          "y": 476.29126280550923,
+          "dx": 0,
+          "dy": 0,
+          "width": 96,
+          "height": 32,
+          "data": {
+            "eventType": "cache-api",
+            "transitionType": "normal",
+            "guard": null,
+            "actions": [],
+            "description": null,
+            "meta": null
+          }
+        }
+      ],
+      "data": {
+        "profile": "xstate-v5",
+        "implementations": {
+          "actions": [],
+          "guards": [],
+          "actors": [],
+          "delays": [],
+          "tags": []
+        },
+        "schemas": {
+          "context": null,
+          "events": {},
+          "input": null,
+          "output": null,
+          "actions": {},
+          "guards": {},
+          "actors": {},
+          "tags": {},
+          "delays": {}
+        }
+      }
+    }
+  }
+]

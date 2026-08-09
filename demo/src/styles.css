@@ -1,0 +1,246 @@
+:root {
+  font-family:
+    Inter,
+    ui-sans-serif,
+    system-ui,
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    sans-serif;
+  color: #f7f6fb;
+  background: #0b0b0f;
+  font-synthesis: none;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  min-width: 1000px;
+  min-height: 100vh;
+  margin: 0;
+  background:
+    radial-gradient(circle at 13% -10%, rgb(108 65 255 / 24%), transparent 30rem),
+    radial-gradient(circle at 88% 4%, rgb(56 189 248 / 12%), transparent 26rem), #0b0b0f;
+}
+
+.shell {
+  display: grid;
+  grid-template-rows: auto auto minmax(620px, 1fr);
+  gap: 16px;
+  width: min(1800px, calc(100vw - 40px));
+  min-height: 100vh;
+  margin: 0 auto;
+  padding: 24px 0 28px;
+}
+
+.masthead,
+.toolbar,
+.canvas-frame {
+  border: 1px solid rgb(255 255 255 / 10%);
+  background: rgb(18 18 24 / 82%);
+  box-shadow: 0 24px 80px rgb(0 0 0 / 22%);
+  backdrop-filter: blur(18px);
+}
+
+.masthead {
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: 32px;
+  padding: 22px 24px;
+  border-radius: 18px;
+}
+
+.eyebrow {
+  margin: 0 0 6px;
+  color: #9e8cff;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+
+h1 {
+  margin: 0;
+  font-size: clamp(28px, 3vw, 44px);
+  line-height: 1;
+  letter-spacing: -0.045em;
+}
+
+.lede {
+  margin: 9px 0 0;
+  color: #a8a5b2;
+  font-size: 14px;
+}
+
+.status-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 330px;
+  padding: 12px 14px;
+  border: 1px solid rgb(255 255 255 / 8%);
+  border-radius: 12px;
+  background: rgb(255 255 255 / 4%);
+}
+
+.status-card div {
+  display: grid;
+  gap: 2px;
+}
+
+.status-card strong {
+  font-size: 13px;
+}
+
+.status-card span:last-child {
+  color: #8f8c98;
+  font-size: 11px;
+}
+
+.status-dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: #fbbf24;
+  box-shadow: 0 0 18px #fbbf24;
+}
+
+.status-dot[data-ready="true"] {
+  background: #34d399;
+  box-shadow: 0 0 18px #34d399;
+}
+
+.status-dot[data-error="true"] {
+  background: #fb7185;
+  box-shadow: 0 0 18px #fb7185;
+}
+
+.toolbar {
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  padding: 12px 16px;
+  border-radius: 14px;
+}
+
+label {
+  display: grid;
+  gap: 6px;
+  color: #8f8c98;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+select {
+  min-width: 280px;
+  padding: 10px 38px 10px 12px;
+  border: 1px solid rgb(255 255 255 / 12%);
+  border-radius: 9px;
+  color: #f7f6fb;
+  background: #1a1920;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 650;
+  letter-spacing: normal;
+  text-transform: none;
+}
+
+.metrics {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  color: #aaa7b2;
+  font-size: 12px;
+}
+
+.metrics span {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.swatch {
+  width: 8px;
+  height: 8px;
+  border-radius: 2px;
+}
+
+.swatch.native {
+  background: #8b5cf6;
+}
+
+.swatch.oracle {
+  background: #38bdf8;
+}
+
+.canvas-frame {
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+  min-height: 620px;
+  overflow: hidden;
+  border-radius: 18px;
+}
+
+.canvas-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  padding: 12px 16px;
+  border-bottom: 1px solid rgb(255 255 255 / 8%);
+}
+
+.canvas-heading div {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+}
+
+.canvas-heading strong {
+  font-size: 13px;
+}
+
+.canvas-heading span {
+  color: #8f8c98;
+  font-size: 11px;
+}
+
+.engine-badge {
+  padding: 5px 8px;
+  border: 1px solid rgb(139 92 246 / 35%);
+  border-radius: 999px;
+  color: #c4b5fd !important;
+  background: rgb(139 92 246 / 12%);
+  font-weight: 750;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.engine-badge[data-engine="elkjs-oracle"] {
+  border-color: rgb(56 189 248 / 35%);
+  color: #7dd3fc !important;
+  background: rgb(56 189 248 / 10%);
+}
+
+.embed,
+.embed iframe {
+  width: 100%;
+  height: 100%;
+  min-height: 570px;
+  border: 0;
+}
+
+@media (max-width: 1100px) {
+  .shell {
+    width: calc(100vw - 24px);
+  }
+
+  .status-card {
+    min-width: 280px;
+  }
+}

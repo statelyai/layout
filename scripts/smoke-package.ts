@@ -76,11 +76,13 @@ async function main(): Promise<void> {
       runtimePath,
       `import assert from "node:assert/strict";
 import { createGraph } from "@statelyai/graph";
-import { getLayeredLayout } from "@statelyai/layout";
+import { getBoxLayout, getLayeredLayout, getRandomLayout } from "@statelyai/layout";
 import ELK from "@statelyai/layout/elkjs";
 import { getLayeredLayout as getLayeredLayoutFromSubpath } from "@statelyai/layout/layered";
 const graph = createGraph({ nodes: [{ id: "a" }, { id: "b" }], edges: [{ id: "ab", sourceId: "a", targetId: "b" }] });
 assert.equal(getLayeredLayout(graph).nodes.length, 2);
+assert.equal(getBoxLayout(graph).nodes.length, 2);
+assert.equal(getRandomLayout(graph, { seed: 1 }).nodes.length, 2);
 assert.equal(getLayeredLayoutFromSubpath(graph).edges.length, 1);
 const legacy = await new ELK().layout({ id: "root", children: [{ id: "a" }, { id: "b" }], edges: [{ id: "ab", sources: ["a"], targets: ["b"] }] });
 assert.equal(legacy.children?.length, 2);
@@ -92,12 +94,14 @@ assert.equal(legacy.children?.length, 2);
     await writeFile(
       typesPath,
       `import { createGraph } from "@statelyai/graph";
-import { getLayeredLayout, type LayoutResult } from "@statelyai/layout";
+import { getBoxLayout, getLayeredLayout, getRandomLayout, type LayoutResult } from "@statelyai/layout";
 import ELK, { type ElkNode } from "@statelyai/layout/elkjs";
 import { type LayeredLayoutOptions } from "@statelyai/layout/layered";
 const graph = createGraph({ nodes: [{ id: "a" }], edges: [] });
 const options: LayeredLayoutOptions = { direction: "right" };
 getLayeredLayout(graph, options).nodes[0]?.id;
+getBoxLayout(graph, { aspectRatio: 1.3 }).nodes[0]?.id;
+getRandomLayout(graph, { seed: 1 }).nodes[0]?.id;
 const request: Promise<ElkNode> = new ELK().layout({ id: "root" });
 void request;
 const result = undefined as unknown as LayoutResult;

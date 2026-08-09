@@ -1,8 +1,12 @@
 export { LayoutError, UnsupportedLayoutError } from "./errors";
+export { boxAlgorithm, getBoxLayout } from "./box";
+export type { BoxLayoutOptions } from "./box";
 export { fixedAlgorithm, getFixedLayout } from "./fixed";
 export type { FixedLayoutOptions } from "./fixed";
 export { getRectanglePackingLayout, rectanglePackingAlgorithm } from "./packing";
 export type { RectanglePackingLayoutOptions } from "./packing";
+export { getRandomLayout, randomAlgorithm } from "./random";
+export type { RandomLayoutOptions } from "./random";
 export {
   getSporeCompactionLayout,
   getSporeOverlapRemovalLayout,

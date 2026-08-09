@@ -41,8 +41,8 @@
 
 - elkjs constructor and JSON compatibility adapter
 - Option migration with diagnostics
-- Fixed, box, and random algorithms
-- Stress, tree, radial, force, packing, and component layout as justified by
+- Fixed plus Java-derived Box SIMPLE and seeded Random placement
+- Stress, tree, radial, force, and component layout as justified by
   usage and benchmarks
 
 ## Evaluation

@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="color-scheme" content="dark" />
+    <title>Stately Layout Parity Lab</title>
+  </head>
+  <body>
+    <main class="shell">
+      <header class="masthead">
+        <div>
+          <p class="eyebrow">@statelyai/layout</p>
+          <h1>Layout parity lab</h1>
+          <p class="lede">
+            Pre-laid representative graphs, rendered through the Stately SDK project view.
+          </p>
+        </div>
+        <div class="status-card">
+          <span class="status-dot" data-status-dot></span>
+          <div>
+            <strong data-status>Connecting to project view…</strong>
+            <span data-detail>Waiting for @statelyai/sdk</span>
+          </div>
+        </div>
+      </header>
+      <section class="toolbar" aria-label="Corpus controls">
+        <label>
+          <span>Representative graph</span>
+          <select data-scenario></select>
+        </label>
+        <div class="metrics">
+          <span><b data-count></b> graphs</span>
+          <span><i class="swatch native"></i> native TypeScript</span>
+          <span><i class="swatch oracle"></i> elkjs oracle reference</span>
+        </div>
+      </section>
+      <section class="canvas-frame">
+        <div class="canvas-heading">
+          <div>
+            <strong data-name></strong>
+            <span data-description></span>
+          </div>
+          <span class="engine-badge" data-engine></span>
+        </div>
+        <div class="embed" data-embed></div>
+      </section>
+    </main>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>
