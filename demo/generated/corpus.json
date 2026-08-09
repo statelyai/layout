@@ -185,6 +185,21 @@
           "dy": 0,
           "width": 72,
           "height": 32,
+          "points": [
+            {
+              "x": 136,
+              "y": 104
+            },
+            {
+              "x": 174,
+              "y": 104
+            },
+            {
+              "x": 212,
+              "y": 104
+            }
+          ],
+          "routing": "orthogonal",
           "data": {
             "eventType": "submit",
             "transitionType": "normal",
@@ -209,6 +224,25 @@
           "dy": 0,
           "width": 80,
           "height": 32,
+          "points": [
+            {
+              "x": 324,
+              "y": 104
+            },
+            {
+              "x": 362,
+              "y": 104
+            },
+            {
+              "x": 362,
+              "y": 54
+            },
+            {
+              "x": 400,
+              "y": 54
+            }
+          ],
+          "routing": "orthogonal",
           "data": {
             "eventType": "changes",
             "transitionType": "normal",
@@ -233,6 +267,25 @@
           "dy": 0,
           "width": 80,
           "height": 32,
+          "points": [
+            {
+              "x": 324,
+              "y": 104
+            },
+            {
+              "x": 362,
+              "y": 104
+            },
+            {
+              "x": 362,
+              "y": 154
+            },
+            {
+              "x": 400,
+              "y": 154
+            }
+          ],
+          "routing": "orthogonal",
           "data": {
             "eventType": "approve",
             "transitionType": "normal",
@@ -257,6 +310,25 @@
           "dy": 0,
           "width": 88,
           "height": 32,
+          "points": [
+            {
+              "x": 512,
+              "y": 54
+            },
+            {
+              "x": 362,
+              "y": 54
+            },
+            {
+              "x": 362,
+              "y": 104
+            },
+            {
+              "x": 212,
+              "y": 104
+            }
+          ],
+          "routing": "orthogonal",
           "data": {
             "eventType": "resubmit",
             "transitionType": "normal",
@@ -476,6 +548,21 @@
           "dy": 0,
           "width": 64,
           "height": 32,
+          "points": [
+            {
+              "x": 132,
+              "y": 102
+            },
+            {
+              "x": 170,
+              "y": 102
+            },
+            {
+              "x": 208,
+              "y": 102
+            }
+          ],
+          "routing": "orthogonal",
           "data": {
             "eventType": "start",
             "transitionType": "normal",
@@ -500,6 +587,25 @@
           "dy": 0,
           "width": 64,
           "height": 32,
+          "points": [
+            {
+              "x": 316,
+              "y": 102
+            },
+            {
+              "x": 354,
+              "y": 102
+            },
+            {
+              "x": 354,
+              "y": 53
+            },
+            {
+              "x": 392,
+              "y": 53
+            }
+          ],
+          "routing": "orthogonal",
           "data": {
             "eventType": "pause",
             "transitionType": "normal",
@@ -524,6 +630,25 @@
           "dy": 0,
           "width": 72,
           "height": 32,
+          "points": [
+            {
+              "x": 500,
+              "y": 53
+            },
+            {
+              "x": 354,
+              "y": 53
+            },
+            {
+              "x": 354,
+              "y": 102
+            },
+            {
+              "x": 208,
+              "y": 102
+            }
+          ],
+          "routing": "orthogonal",
           "data": {
             "eventType": "resume",
             "transitionType": "normal",
@@ -548,6 +673,25 @@
           "dy": 0,
           "width": 64,
           "height": 32,
+          "points": [
+            {
+              "x": 500,
+              "y": 151
+            },
+            {
+              "x": 354,
+              "y": 151
+            },
+            {
+              "x": 354,
+              "y": 102
+            },
+            {
+              "x": 208,
+              "y": 102
+            }
+          ],
+          "routing": "orthogonal",
           "data": {
             "eventType": "retry",
             "transitionType": "normal",
@@ -572,6 +716,25 @@
           "dy": 0,
           "width": 64,
           "height": 32,
+          "points": [
+            {
+              "x": 316,
+              "y": 102
+            },
+            {
+              "x": 354,
+              "y": 102
+            },
+            {
+              "x": 354,
+              "y": 151
+            },
+            {
+              "x": 392,
+              "y": 151
+            }
+          ],
+          "routing": "orthogonal",
           "data": {
             "eventType": "fail",
             "transitionType": "normal",
@@ -596,6 +759,25 @@
           "dy": 0,
           "width": 64,
           "height": 32,
+          "points": [
+            {
+              "x": 316,
+              "y": 102
+            },
+            {
+              "x": 340,
+              "y": 102
+            },
+            {
+              "x": 340,
+              "y": 78
+            },
+            {
+              "x": 316,
+              "y": 78
+            }
+          ],
+          "routing": "orthogonal",
           "data": {
             "eventType": "tick",
             "transitionType": "normal",
@@ -875,6 +1057,21 @@
           "dy": 0,
           "width": 64,
           "height": 32,
+          "points": [
+            {
+              "x": 140,
+              "y": 52
+            },
+            {
+              "x": 178,
+              "y": 52
+            },
+            {
+              "x": 216,
+              "y": 52
+            }
+          ],
+          "routing": "orthogonal",
           "data": {
             "eventType": "parse",
             "transitionType": "normal",
@@ -899,6 +1096,21 @@
           "dy": 0,
           "width": 88,
           "height": 32,
+          "points": [
+            {
+              "x": 332,
+              "y": 52
+            },
+            {
+              "x": 370,
+              "y": 52
+            },
+            {
+              "x": 408,
+              "y": 52
+            }
+          ],
+          "routing": "orthogonal",
           "data": {
             "eventType": "validate",
             "transitionType": "normal",
@@ -923,6 +1135,21 @@
           "dy": 0,
           "width": 96,
           "height": 32,
+          "points": [
+            {
+              "x": 524,
+              "y": 52
+            },
+            {
+              "x": 562,
+              "y": 52
+            },
+            {
+              "x": 600,
+              "y": 52
+            }
+          ],
+          "routing": "orthogonal",
           "data": {
             "eventType": "transform",
             "transitionType": "normal",
@@ -947,6 +1174,21 @@
           "dy": 0,
           "width": 80,
           "height": 32,
+          "points": [
+            {
+              "x": 716,
+              "y": 52
+            },
+            {
+              "x": 754,
+              "y": 52
+            },
+            {
+              "x": 792,
+              "y": 52
+            }
+          ],
+          "routing": "orthogonal",
           "data": {
             "eventType": "persist",
             "transitionType": "normal",
@@ -971,6 +1213,21 @@
           "dy": 0,
           "width": 72,
           "height": 32,
+          "points": [
+            {
+              "x": 908,
+              "y": 52
+            },
+            {
+              "x": 946,
+              "y": 52
+            },
+            {
+              "x": 984,
+              "y": 52
+            }
+          ],
+          "routing": "orthogonal",
           "data": {
             "eventType": "notify",
             "transitionType": "normal",
@@ -995,6 +1252,21 @@
           "dy": 0,
           "width": 96,
           "height": 32,
+          "points": [
+            {
+              "x": 140,
+              "y": 52
+            },
+            {
+              "x": 466,
+              "y": 52
+            },
+            {
+              "x": 792,
+              "y": 52
+            }
+          ],
+          "routing": "orthogonal",
           "data": {
             "eventType": "fast-path",
             "transitionType": "normal",
@@ -1019,8 +1291,476 @@
           "dy": 0,
           "width": 64,
           "height": 32,
+          "points": [
+            {
+              "x": 524,
+              "y": 52
+            },
+            {
+              "x": 754,
+              "y": 52
+            },
+            {
+              "x": 984,
+              "y": 52
+            }
+          ],
+          "routing": "orthogonal",
           "data": {
             "eventType": "audit",
+            "transitionType": "normal",
+            "guard": null,
+            "actions": [],
+            "description": null,
+            "meta": null
+          }
+        }
+      ],
+      "data": {
+        "profile": "xstate-v5",
+        "implementations": {
+          "actions": [],
+          "guards": [],
+          "actors": [],
+          "delays": [],
+          "tags": []
+        },
+        "schemas": {
+          "context": null,
+          "events": {},
+          "input": null,
+          "output": null,
+          "actions": {},
+          "guards": {},
+          "actors": {},
+          "tags": {},
+          "delays": {}
+        }
+      }
+    }
+  },
+  {
+    "id": "layered-ports",
+    "name": "Layered · named ports",
+    "description": "Multiple named ports, exact attachment points, labels, and orthogonal bends.",
+    "algorithm": "layered",
+    "engine": "native",
+    "graph": {
+      "id": "layered-ports",
+      "mode": "directed",
+      "type": "directed",
+      "initialNodeId": "layered-ports:root",
+      "parentId": null,
+      "direction": "right",
+      "layout": {
+        "status": "complete",
+        "direction": "RIGHT"
+      },
+      "annotations": [],
+      "nodes": [
+        {
+          "type": "node",
+          "id": "layered-ports:root",
+          "parentId": null,
+          "initialNodeId": "ingest",
+          "label": "Layered · named ports",
+          "position": {
+            "x": 0,
+            "y": 0
+          },
+          "x": 0,
+          "y": 0,
+          "dx": 0,
+          "dy": 0,
+          "width": 614,
+          "height": 244,
+          "data": {
+            "nodeId": "layered-ports:root",
+            "parentId": null,
+            "key": "layered-ports:root",
+            "type": "normal",
+            "initialId": "ingest",
+            "history": false,
+            "entry": [],
+            "exit": [],
+            "invokes": [],
+            "tags": [],
+            "meta": null
+          }
+        },
+        {
+          "type": "node",
+          "id": "ingest",
+          "parentId": "layered-ports:root",
+          "initialNodeId": null,
+          "label": "Event ingest",
+          "position": {
+            "x": 24,
+            "y": 76
+          },
+          "x": 24,
+          "y": 76,
+          "dx": 0,
+          "dy": 0,
+          "width": 144,
+          "height": 92,
+          "ports": [
+            {
+              "name": "accepted",
+              "direction": "out",
+              "label": "accepted",
+              "x": 138,
+              "y": 24.666666666666664,
+              "width": 12,
+              "height": 12,
+              "data": null
+            },
+            {
+              "name": "rejected",
+              "direction": "out",
+              "label": "rejected",
+              "x": 138,
+              "y": 55.33333333333333,
+              "width": 12,
+              "height": 12,
+              "data": null
+            }
+          ],
+          "data": {
+            "nodeId": "ingest",
+            "parentId": "layered-ports:root",
+            "key": "ingest",
+            "type": "normal",
+            "initialId": null,
+            "history": false,
+            "entry": [],
+            "exit": [],
+            "invokes": [],
+            "tags": [],
+            "meta": null
+          }
+        },
+        {
+          "type": "node",
+          "id": "process",
+          "parentId": "layered-ports:root",
+          "initialNodeId": null,
+          "label": "Processor",
+          "position": {
+            "x": 244,
+            "y": 70
+          },
+          "x": 244,
+          "y": 70,
+          "dx": 0,
+          "dy": 0,
+          "width": 138,
+          "height": 104,
+          "ports": [
+            {
+              "name": "input",
+              "direction": "in",
+              "label": "input",
+              "x": -6,
+              "y": 20,
+              "width": 12,
+              "height": 12,
+              "data": null
+            },
+            {
+              "name": "result",
+              "direction": "out",
+              "label": "result",
+              "x": 132,
+              "y": 46,
+              "width": 12,
+              "height": 12,
+              "data": null
+            },
+            {
+              "name": "error",
+              "direction": "out",
+              "label": "error",
+              "x": 132,
+              "y": 72,
+              "width": 12,
+              "height": 12,
+              "data": null
+            }
+          ],
+          "data": {
+            "nodeId": "process",
+            "parentId": "layered-ports:root",
+            "key": "process",
+            "type": "normal",
+            "initialId": null,
+            "history": false,
+            "entry": [],
+            "exit": [],
+            "invokes": [],
+            "tags": [],
+            "meta": null
+          }
+        },
+        {
+          "type": "node",
+          "id": "store",
+          "parentId": "layered-ports:root",
+          "initialNodeId": null,
+          "label": "Event store",
+          "position": {
+            "x": 458,
+            "y": 24
+          },
+          "x": 458,
+          "y": 24,
+          "dx": 0,
+          "dy": 0,
+          "width": 132,
+          "height": 78,
+          "ports": [
+            {
+              "name": "write",
+              "direction": "in",
+              "label": "write",
+              "x": -6,
+              "y": 33,
+              "width": 12,
+              "height": 12,
+              "data": null
+            }
+          ],
+          "data": {
+            "nodeId": "store",
+            "parentId": "layered-ports:root",
+            "key": "store",
+            "type": "normal",
+            "initialId": null,
+            "history": false,
+            "entry": [],
+            "exit": [],
+            "invokes": [],
+            "tags": [],
+            "meta": null
+          }
+        },
+        {
+          "type": "node",
+          "id": "dead-letter",
+          "parentId": "layered-ports:root",
+          "initialNodeId": null,
+          "label": "Dead letter",
+          "position": {
+            "x": 458,
+            "y": 142
+          },
+          "x": 458,
+          "y": 142,
+          "dx": 0,
+          "dy": 0,
+          "width": 132,
+          "height": 78,
+          "ports": [
+            {
+              "name": "capture",
+              "direction": "in",
+              "label": "capture",
+              "x": -6,
+              "y": 33,
+              "width": 12,
+              "height": 12,
+              "data": null
+            }
+          ],
+          "data": {
+            "nodeId": "dead-letter",
+            "parentId": "layered-ports:root",
+            "key": "dead-letter",
+            "type": "normal",
+            "initialId": null,
+            "history": false,
+            "entry": [],
+            "exit": [],
+            "invokes": [],
+            "tags": [],
+            "meta": null
+          }
+        }
+      ],
+      "edges": [
+        {
+          "type": "edge",
+          "id": "accepted",
+          "sourceId": "ingest",
+          "targetId": "process",
+          "position": {
+            "x": 162,
+            "y": 85.33333333333333
+          },
+          "x": 162,
+          "y": 85.33333333333333,
+          "dx": 0,
+          "dy": 0,
+          "width": 88,
+          "height": 32,
+          "sourcePort": "accepted",
+          "targetPort": "input",
+          "points": [
+            {
+              "x": 168,
+              "y": 106.66666666666666
+            },
+            {
+              "x": 206,
+              "y": 106.66666666666666
+            },
+            {
+              "x": 206,
+              "y": 96
+            },
+            {
+              "x": 244,
+              "y": 96
+            }
+          ],
+          "routing": "orthogonal",
+          "data": {
+            "eventType": "accepted",
+            "transitionType": "normal",
+            "guard": null,
+            "actions": [],
+            "description": null,
+            "meta": null
+          }
+        },
+        {
+          "type": "edge",
+          "id": "persist",
+          "sourceId": "process",
+          "targetId": "store",
+          "position": {
+            "x": 380,
+            "y": 76.5
+          },
+          "x": 380,
+          "y": 76.5,
+          "dx": 0,
+          "dy": 0,
+          "width": 80,
+          "height": 32,
+          "sourcePort": "result",
+          "targetPort": "write",
+          "points": [
+            {
+              "x": 382,
+              "y": 122
+            },
+            {
+              "x": 420,
+              "y": 122
+            },
+            {
+              "x": 420,
+              "y": 63
+            },
+            {
+              "x": 458,
+              "y": 63
+            }
+          ],
+          "routing": "orthogonal",
+          "data": {
+            "eventType": "persist",
+            "transitionType": "normal",
+            "guard": null,
+            "actions": [],
+            "description": null,
+            "meta": null
+          }
+        },
+        {
+          "type": "edge",
+          "id": "reject",
+          "sourceId": "ingest",
+          "targetId": "dead-letter",
+          "position": {
+            "x": 277,
+            "y": 143.16666666666666
+          },
+          "x": 277,
+          "y": 143.16666666666666,
+          "dx": 0,
+          "dy": 0,
+          "width": 72,
+          "height": 32,
+          "sourcePort": "rejected",
+          "targetPort": "capture",
+          "points": [
+            {
+              "x": 168,
+              "y": 137.33333333333331
+            },
+            {
+              "x": 313,
+              "y": 137.33333333333331
+            },
+            {
+              "x": 313,
+              "y": 181
+            },
+            {
+              "x": 458,
+              "y": 181
+            }
+          ],
+          "routing": "orthogonal",
+          "data": {
+            "eventType": "reject",
+            "transitionType": "normal",
+            "guard": null,
+            "actions": [],
+            "description": null,
+            "meta": null
+          }
+        },
+        {
+          "type": "edge",
+          "id": "fail",
+          "sourceId": "process",
+          "targetId": "dead-letter",
+          "position": {
+            "x": 388,
+            "y": 148.5
+          },
+          "x": 388,
+          "y": 148.5,
+          "dx": 0,
+          "dy": 0,
+          "width": 64,
+          "height": 32,
+          "sourcePort": "error",
+          "targetPort": "capture",
+          "points": [
+            {
+              "x": 382,
+              "y": 148
+            },
+            {
+              "x": 420,
+              "y": 148
+            },
+            {
+              "x": 420,
+              "y": 181
+            },
+            {
+              "x": 458,
+              "y": 181
+            }
+          ],
+          "routing": "orthogonal",
+          "data": {
+            "eventType": "fail",
             "transitionType": "normal",
             "guard": null,
             "actions": [],
@@ -1289,15 +2029,26 @@
           "sourceId": "form",
           "targetId": "frontend",
           "position": {
-            "x": 82,
-            "y": 100
+            "x": 94,
+            "y": 112
           },
-          "x": 82,
-          "y": 100,
+          "x": 94,
+          "y": 112,
           "dx": 0,
           "dy": 0,
           "width": 72,
           "height": 32,
+          "points": [
+            {
+              "x": 124,
+              "y": 128
+            },
+            {
+              "x": 136,
+              "y": 128
+            }
+          ],
+          "routing": "orthogonal",
           "data": {
             "eventType": "return",
             "transitionType": "normal",
@@ -1313,15 +2064,26 @@
           "sourceId": "validate",
           "targetId": "store",
           "position": {
-            "x": 90,
-            "y": 24
+            "x": 298,
+            "y": 122
           },
-          "x": 90,
-          "y": 24,
+          "x": 298,
+          "y": 122,
           "dx": 0,
           "dy": 0,
           "width": 64,
           "height": 32,
+          "points": [
+            {
+              "x": 320,
+              "y": 138
+            },
+            {
+              "x": 340,
+              "y": 138
+            }
+          ],
+          "routing": "orthogonal",
           "data": {
             "eventType": "save",
             "transitionType": "normal",
@@ -1346,6 +2108,17 @@
           "dy": 0,
           "width": 72,
           "height": 32,
+          "points": [
+            {
+              "x": 136,
+              "y": 138
+            },
+            {
+              "x": 208,
+              "y": 138
+            }
+          ],
+          "routing": "orthogonal",
           "data": {
             "eventType": "submit",
             "transitionType": "normal",
@@ -1535,6 +2308,17 @@
           "dy": 0,
           "width": 80,
           "height": 32,
+          "points": [
+            {
+              "x": 75,
+              "y": 60
+            },
+            {
+              "x": 310,
+              "y": 114
+            }
+          ],
+          "routing": "polyline",
           "data": {
             "eventType": "one-two",
             "transitionType": "normal",
@@ -1559,6 +2343,17 @@
           "dy": 0,
           "width": 96,
           "height": 32,
+          "points": [
+            {
+              "x": 310,
+              "y": 114
+            },
+            {
+              "x": 175,
+              "y": 251
+            }
+          ],
+          "routing": "polyline",
           "data": {
             "eventType": "two-three",
             "transitionType": "normal",
@@ -1868,6 +2663,17 @@
           "dy": 0,
           "width": 0,
           "height": 0,
+          "points": [
+            {
+              "x": 99,
+              "y": 60
+            },
+            {
+              "x": 257,
+              "y": 56
+            }
+          ],
+          "routing": "polyline",
           "data": {
             "eventType": "",
             "transitionType": "normal",
@@ -1892,6 +2698,17 @@
           "dy": 0,
           "width": 0,
           "height": 0,
+          "points": [
+            {
+              "x": 257,
+              "y": 56
+            },
+            {
+              "x": 406,
+              "y": 68
+            }
+          ],
+          "routing": "polyline",
           "data": {
             "eventType": "",
             "transitionType": "normal",
@@ -1916,6 +2733,17 @@
           "dy": 0,
           "width": 0,
           "height": 0,
+          "points": [
+            {
+              "x": 406,
+              "y": 68
+            },
+            {
+              "x": 69,
+              "y": 169
+            }
+          ],
+          "routing": "polyline",
           "data": {
             "eventType": "",
             "transitionType": "normal",
@@ -1940,6 +2768,17 @@
           "dy": 0,
           "width": 0,
           "height": 0,
+          "points": [
+            {
+              "x": 69,
+              "y": 169
+            },
+            {
+              "x": 204,
+              "y": 177
+            }
+          ],
+          "routing": "polyline",
           "data": {
             "eventType": "",
             "transitionType": "normal",
@@ -1964,6 +2803,17 @@
           "dy": 0,
           "width": 0,
           "height": 0,
+          "points": [
+            {
+              "x": 204,
+              "y": 177
+            },
+            {
+              "x": 365,
+              "y": 173
+            }
+          ],
+          "routing": "polyline",
           "data": {
             "eventType": "",
             "transitionType": "normal",
@@ -1988,6 +2838,17 @@
           "dy": 0,
           "width": 0,
           "height": 0,
+          "points": [
+            {
+              "x": 365,
+              "y": 173
+            },
+            {
+              "x": 72,
+              "y": 269
+            }
+          ],
+          "routing": "polyline",
           "data": {
             "eventType": "",
             "transitionType": "normal",
@@ -2237,6 +3098,17 @@
           "dy": 0,
           "width": 0,
           "height": 0,
+          "points": [
+            {
+              "x": 99,
+              "y": 60
+            },
+            {
+              "x": 257,
+              "y": 156
+            }
+          ],
+          "routing": "polyline",
           "data": {
             "eventType": "",
             "transitionType": "normal",
@@ -2261,6 +3133,17 @@
           "dy": 0,
           "width": 0,
           "height": 0,
+          "points": [
+            {
+              "x": 257,
+              "y": 156
+            },
+            {
+              "x": 406,
+              "y": 76
+            }
+          ],
+          "routing": "polyline",
           "data": {
             "eventType": "",
             "transitionType": "normal",
@@ -2285,6 +3168,17 @@
           "dy": 0,
           "width": 0,
           "height": 0,
+          "points": [
+            {
+              "x": 406,
+              "y": 76
+            },
+            {
+              "x": 545,
+              "y": 177
+            }
+          ],
+          "routing": "polyline",
           "data": {
             "eventType": "",
             "transitionType": "normal",
@@ -2309,6 +3203,17 @@
           "dy": 0,
           "width": 0,
           "height": 0,
+          "points": [
+            {
+              "x": 545,
+              "y": 177
+            },
+            {
+              "x": 680,
+              "y": 99
+            }
+          ],
+          "routing": "polyline",
           "data": {
             "eventType": "",
             "transitionType": "normal",
@@ -2558,6 +3463,17 @@
           "dy": 0,
           "width": 0,
           "height": 0,
+          "points": [
+            {
+              "x": 99,
+              "y": 60
+            },
+            {
+              "x": 257,
+              "y": 156
+            }
+          ],
+          "routing": "polyline",
           "data": {
             "eventType": "",
             "transitionType": "normal",
@@ -2582,6 +3498,17 @@
           "dy": 0,
           "width": 0,
           "height": 0,
+          "points": [
+            {
+              "x": 257,
+              "y": 156
+            },
+            {
+              "x": 406,
+              "y": 260
+            }
+          ],
+          "routing": "polyline",
           "data": {
             "eventType": "",
             "transitionType": "normal",
@@ -2606,6 +3533,17 @@
           "dy": 0,
           "width": 0,
           "height": 0,
+          "points": [
+            {
+              "x": 406,
+              "y": 260
+            },
+            {
+              "x": 545,
+              "y": 361
+            }
+          ],
+          "routing": "polyline",
           "data": {
             "eventType": "",
             "transitionType": "normal",
@@ -2630,6 +3568,17 @@
           "dy": 0,
           "width": 0,
           "height": 0,
+          "points": [
+            {
+              "x": 545,
+              "y": 361
+            },
+            {
+              "x": 680,
+              "y": 455
+            }
+          ],
+          "routing": "polyline",
           "data": {
             "eventType": "",
             "transitionType": "normal",
@@ -2939,6 +3888,17 @@
           "dy": 0,
           "width": 0,
           "height": 0,
+          "points": [
+            {
+              "x": 90,
+              "y": 219
+            },
+            {
+              "x": 286,
+              "y": 47
+            }
+          ],
+          "routing": "polyline",
           "data": {
             "eventType": "",
             "transitionType": "normal",
@@ -2963,6 +3923,17 @@
           "dy": 0,
           "width": 0,
           "height": 0,
+          "points": [
+            {
+              "x": 286,
+              "y": 47
+            },
+            {
+              "x": 246,
+              "y": 227
+            }
+          ],
+          "routing": "polyline",
           "data": {
             "eventType": "",
             "transitionType": "normal",
@@ -2987,6 +3958,17 @@
           "dy": 0,
           "width": 0,
           "height": 0,
+          "points": [
+            {
+              "x": 246,
+              "y": 227
+            },
+            {
+              "x": 171,
+              "y": 44
+            }
+          ],
+          "routing": "polyline",
           "data": {
             "eventType": "",
             "transitionType": "normal",
@@ -3011,6 +3993,17 @@
           "dy": 0,
           "width": 0,
           "height": 0,
+          "points": [
+            {
+              "x": 171,
+              "y": 44
+            },
+            {
+              "x": 77,
+              "y": 131
+            }
+          ],
+          "routing": "polyline",
           "data": {
             "eventType": "",
             "transitionType": "normal",
@@ -3035,6 +4028,17 @@
           "dy": 0,
           "width": 0,
           "height": 0,
+          "points": [
+            {
+              "x": 77,
+              "y": 131
+            },
+            {
+              "x": 225,
+              "y": 127
+            }
+          ],
+          "routing": "polyline",
           "data": {
             "eventType": "",
             "transitionType": "normal",
@@ -3059,6 +4063,17 @@
           "dy": 0,
           "width": 0,
           "height": 0,
+          "points": [
+            {
+              "x": 225,
+              "y": 127
+            },
+            {
+              "x": 63,
+              "y": 42
+            }
+          ],
+          "routing": "polyline",
           "data": {
             "eventType": "",
             "transitionType": "normal",
@@ -3368,6 +4383,33 @@
           "dy": 0,
           "width": 0,
           "height": 0,
+          "points": [
+            {
+              "x": 347.00570754363605,
+              "y": 129.7556315161073
+            },
+            {
+              "x": 332.81901082058675,
+              "y": 131.44910053585176
+            },
+            {
+              "x": 310.8827257658901,
+              "y": 136.4282811380014
+            },
+            {
+              "x": 280.3489137279147,
+              "y": 152.01956358110425
+            },
+            {
+              "x": 261.76778920915,
+              "y": 152.7447749045488
+            },
+            {
+              "x": 250.71026028553024,
+              "y": 161.03359644177345
+            }
+          ],
+          "routing": "polyline",
           "data": {
             "eventType": "",
             "transitionType": "normal",
@@ -3392,6 +4434,25 @@
           "dy": 0,
           "width": 0,
           "height": 0,
+          "points": [
+            {
+              "x": 360.71026028553024,
+              "y": 113.3197986132884
+            },
+            {
+              "x": 339.7979341000565,
+              "y": 121.91005749669932
+            },
+            {
+              "x": 325.03469292959574,
+              "y": 126.83848532614414
+            },
+            {
+              "x": 310.3843783831166,
+              "y": 140.63221320134085
+            }
+          ],
+          "routing": "polyline",
           "data": {
             "eventType": "",
             "transitionType": "normal",
@@ -3416,6 +4477,17 @@
           "dy": 0,
           "width": 0,
           "height": 0,
+          "points": [
+            {
+              "x": 310.3843783831166,
+              "y": 119.53773991400055
+            },
+            {
+              "x": 301.0031082741433,
+              "y": 121.63068125228541
+            }
+          ],
+          "routing": "polyline",
           "data": {
             "eventType": "",
             "transitionType": "normal",
@@ -3440,6 +4512,25 @@
           "dy": 0,
           "width": 0,
           "height": 0,
+          "points": [
+            {
+              "x": 211.0031082741433,
+              "y": 132.6017201758484
+            },
+            {
+              "x": 198.25687186623563,
+              "y": 132.1124047608372
+            },
+            {
+              "x": 175.25182449396692,
+              "y": 132.32539354733046
+            },
+            {
+              "x": 159.26610301954878,
+              "y": 133.6728313609775
+            }
+          ],
+          "routing": "polyline",
           "data": {
             "eventType": "",
             "transitionType": "normal",
@@ -3464,6 +4555,25 @@
           "dy": 0,
           "width": 0,
           "height": 0,
+          "points": [
+            {
+              "x": 142.03780534104334,
+              "y": 97.9564173194459
+            },
+            {
+              "x": 141.8319591819045,
+              "y": 98.11921058436567
+            },
+            {
+              "x": 141.55100160028695,
+              "y": 98.2959834612882
+            },
+            {
+              "x": 141.3517621082636,
+              "y": 98.52337363999357
+            }
+          ],
+          "routing": "polyline",
           "data": {
             "eventType": "",
             "transitionType": "normal",
@@ -3488,6 +4598,21 @@
           "dy": 0,
           "width": 0,
           "height": 0,
+          "points": [
+            {
+              "x": 183.89903766227496,
+              "y": 98.52337363999357
+            },
+            {
+              "x": 183.9222827673159,
+              "y": 110.67419517077
+            },
+            {
+              "x": 185.52461815166936,
+              "y": 119.03145243659463
+            }
+          ],
+          "routing": "polyline",
           "data": {
             "eventType": "",
             "transitionType": "normal",
@@ -3827,6 +4952,17 @@
           "dy": 0,
           "width": 64,
           "height": 32,
+          "points": [
+            {
+              "x": 345.74161477205485,
+              "y": 318.7500143760224
+            },
+            {
+              "x": 357.94095199422327,
+              "y": 261.8401355649764
+            }
+          ],
+          "routing": "polyline",
           "data": {
             "eventType": "ab",
             "transitionType": "normal",
@@ -3851,6 +4987,17 @@
           "dy": 0,
           "width": 64,
           "height": 32,
+          "points": [
+            {
+              "x": 299.1681928213686,
+              "y": 347.32405425474025
+            },
+            {
+              "x": 270.53794401700804,
+              "y": 349.1215030879119
+            }
+          ],
+          "routing": "polyline",
           "data": {
             "eventType": "ac",
             "transitionType": "normal",
@@ -3875,6 +5022,17 @@
           "dy": 0,
           "width": 64,
           "height": 32,
+          "points": [
+            {
+              "x": 324.8161337918257,
+              "y": 209.84013556497638
+            },
+            {
+              "x": 310.85110837720663,
+              "y": 200.45752128216225
+            }
+          ],
+          "routing": "polyline",
           "data": {
             "eventType": "bd",
             "transitionType": "normal",
@@ -3899,6 +5057,17 @@
           "dy": 0,
           "width": 64,
           "height": 32,
+          "points": [
+            {
+              "x": 217.96794672797418,
+              "y": 325.6955429666297
+            },
+            {
+              "x": 196.4035244995841,
+              "y": 277.23615581797793
+            }
+          ],
+          "routing": "polyline",
           "data": {
             "eventType": "ce",
             "transitionType": "normal",
@@ -3923,6 +5092,17 @@
           "dy": 0,
           "width": 64,
           "height": 32,
+          "points": [
+            {
+              "x": 242.58340687490025,
+              "y": 200.45752128216225
+            },
+            {
+              "x": 214.40298855977287,
+              "y": 225.23615581797793
+            }
+          ],
+          "routing": "polyline",
           "data": {
             "eventType": "de",
             "transitionType": "normal",
@@ -3947,6 +5127,17 @@
           "dy": 0,
           "width": 64,
           "height": 32,
+          "points": [
+            {
+              "x": 259.21492560918705,
+              "y": 148.45752128216225
+            },
+            {
+              "x": 236.0970508253113,
+              "y": 102
+            }
+          ],
+          "routing": "polyline",
           "data": {
             "eventType": "df",
             "transitionType": "normal",
@@ -3971,6 +5162,17 @@
           "dy": 0,
           "width": 64,
           "height": 32,
+          "points": [
+            {
+              "x": 143.8335272105503,
+              "y": 226.1895896162735
+            },
+            {
+              "x": 132,
+              "y": 218.96058418508522
+            }
+          ],
+          "routing": "polyline",
           "data": {
             "eventType": "eg",
             "transitionType": "normal",
@@ -3995,6 +5197,17 @@
           "dy": 0,
           "width": 64,
           "height": 32,
+          "points": [
+            {
+              "x": 182.1591082103756,
+              "y": 79.30325321633501
+            },
+            {
+              "x": 153.17610319104122,
+              "y": 81.63833137607085
+            }
+          ],
+          "routing": "polyline",
           "data": {
             "eventType": "fh",
             "transitionType": "normal",
@@ -4019,6 +5232,17 @@
           "dy": 0,
           "width": 64,
           "height": 32,
+          "points": [
+            {
+              "x": 96.05245836799557,
+              "y": 167.9140179833808
+            },
+            {
+              "x": 107.12364482304565,
+              "y": 110.94158459240586
+            }
+          ],
+          "routing": "polyline",
           "data": {
             "eventType": "gh",
             "transitionType": "normal",
@@ -4328,6 +5552,21 @@
           "dy": 0,
           "width": 72,
           "height": 32,
+          "points": [
+            {
+              "x": 112,
+              "y": 173.66666666666666
+            },
+            {
+              "x": 115,
+              "y": 173.66666666666666
+            },
+            {
+              "x": 146,
+              "y": 93
+            }
+          ],
+          "routing": "polyline",
           "data": {
             "eventType": "root-a",
             "transitionType": "normal",
@@ -4352,6 +5591,21 @@
           "dy": 0,
           "width": 72,
           "height": 32,
+          "points": [
+            {
+              "x": 112,
+              "y": 192.33333333333331
+            },
+            {
+              "x": 115,
+              "y": 192.33333333333331
+            },
+            {
+              "x": 146,
+              "y": 273
+            }
+          ],
+          "routing": "polyline",
           "data": {
             "eventType": "root-b",
             "transitionType": "normal",
@@ -4376,6 +5630,21 @@
           "dy": 0,
           "width": 64,
           "height": 32,
+          "points": [
+            {
+              "x": 238,
+              "y": 83.66666666666666
+            },
+            {
+              "x": 241,
+              "y": 83.66666666666666
+            },
+            {
+              "x": 272,
+              "y": 48
+            }
+          ],
+          "routing": "polyline",
           "data": {
             "eventType": "a-c",
             "transitionType": "normal",
@@ -4400,6 +5669,21 @@
           "dy": 0,
           "width": 64,
           "height": 32,
+          "points": [
+            {
+              "x": 238,
+              "y": 102.33333333333333
+            },
+            {
+              "x": 241,
+              "y": 102.33333333333333
+            },
+            {
+              "x": 272,
+              "y": 138
+            }
+          ],
+          "routing": "polyline",
           "data": {
             "eventType": "a-d",
             "transitionType": "normal",
@@ -4424,6 +5708,21 @@
           "dy": 0,
           "width": 64,
           "height": 32,
+          "points": [
+            {
+              "x": 238,
+              "y": 263.66666666666663
+            },
+            {
+              "x": 241,
+              "y": 263.66666666666663
+            },
+            {
+              "x": 272,
+              "y": 228
+            }
+          ],
+          "routing": "polyline",
           "data": {
             "eventType": "b-e",
             "transitionType": "normal",
@@ -4448,6 +5747,21 @@
           "dy": 0,
           "width": 64,
           "height": 32,
+          "points": [
+            {
+              "x": 238,
+              "y": 282.3333333333333
+            },
+            {
+              "x": 241,
+              "y": 282.3333333333333
+            },
+            {
+              "x": 272,
+              "y": 318
+            }
+          ],
+          "routing": "polyline",
           "data": {
             "eventType": "b-f",
             "transitionType": "normal",
@@ -4757,6 +6071,17 @@
           "dy": 0,
           "width": 72,
           "height": 32,
+          "points": [
+            {
+              "x": 210.3154621172782,
+              "y": 220.3154621172782
+            },
+            {
+              "x": 210.3154621172782,
+              "y": 272.0187582599683
+            }
+          ],
+          "routing": "polyline",
           "data": {
             "eventType": "root-a",
             "transitionType": "normal",
@@ -4781,6 +6106,17 @@
           "dy": 0,
           "width": 72,
           "height": 32,
+          "points": [
+            {
+              "x": 210.3154621172782,
+              "y": 164.3154621172782
+            },
+            {
+              "x": 210.3154621172782,
+              "y": 112.61216597458812
+            }
+          ],
+          "routing": "polyline",
           "data": {
             "eventType": "root-b",
             "transitionType": "normal",
@@ -4805,6 +6141,17 @@
           "dy": 0,
           "width": 64,
           "height": 32,
+          "points": [
+            {
+              "x": 256.31546211727823,
+              "y": 313.4918463253871
+            },
+            {
+              "x": 316.63092423455635,
+              "y": 331.1578361691375
+            }
+          ],
+          "routing": "polyline",
           "data": {
             "eventType": "a-c",
             "transitionType": "normal",
@@ -4829,6 +6176,17 @@
           "dy": 0,
           "width": 64,
           "height": 32,
+          "points": [
+            {
+              "x": 164.3154621172782,
+              "y": 313.4918463253871
+            },
+            {
+              "x": 104.00000000000006,
+              "y": 331.1578361691375
+            }
+          ],
+          "routing": "polyline",
           "data": {
             "eventType": "a-d",
             "transitionType": "normal",
@@ -4853,6 +6211,17 @@
           "dy": 0,
           "width": 64,
           "height": 32,
+          "points": [
+            {
+              "x": 164.31546211727817,
+              "y": 71.13907790916932
+            },
+            {
+              "x": 104,
+              "y": 53.473088065418864
+            }
+          ],
+          "routing": "polyline",
           "data": {
             "eventType": "b-e",
             "transitionType": "normal",
@@ -4877,6 +6246,17 @@
           "dy": 0,
           "width": 64,
           "height": 32,
+          "points": [
+            {
+              "x": 256.3154621172782,
+              "y": 71.1390779091693
+            },
+            {
+              "x": 316.63092423455635,
+              "y": 53.47308806541883
+            }
+          ],
+          "routing": "polyline",
           "data": {
             "eventType": "b-f",
             "transitionType": "normal",
@@ -5186,6 +6566,17 @@
           "dy": 0,
           "width": 96,
           "height": 32,
+          "points": [
+            {
+              "x": 310.7640384430707,
+              "y": 545.7656458456477
+            },
+            {
+              "x": 351.4086164649932,
+              "y": 323.30253172896215
+            }
+          ],
+          "routing": "polyline",
           "data": {
             "eventType": "api-queue",
             "transitionType": "normal",
@@ -5210,6 +6601,17 @@
           "dy": 0,
           "width": 80,
           "height": 32,
+          "points": [
+            {
+              "x": 393.18548276139444,
+              "y": 267.30253172896215
+            },
+            {
+              "x": 560.3698238241526,
+              "y": 139.61543479607556
+            }
+          ],
+          "routing": "polyline",
           "data": {
             "eventType": "queue-a",
             "transitionType": "normal",
@@ -5234,6 +6636,17 @@
           "dy": 0,
           "width": 80,
           "height": 32,
+          "points": [
+            {
+              "x": 304.52428783879634,
+              "y": 295.83720775969016
+            },
+            {
+              "x": 154,
+              "y": 297.38493331257115
+            }
+          ],
+          "routing": "polyline",
           "data": {
             "eventType": "queue-b",
             "transitionType": "normal",
@@ -5258,6 +6671,17 @@
           "dy": 0,
           "width": 80,
           "height": 32,
+          "points": [
+            {
+              "x": 332.56965058685904,
+              "y": 267.30253172896215
+            },
+            {
+              "x": 224.2425252830273,
+              "y": 140.68155740124683
+            }
+          ],
+          "routing": "polyline",
           "data": {
             "eventType": "queue-c",
             "transitionType": "normal",
@@ -5282,6 +6706,17 @@
           "dy": 0,
           "width": 64,
           "height": 32,
+          "points": [
+            {
+              "x": 545.0310187467508,
+              "y": 104.16509190120934
+            },
+            {
+              "x": 414.41059468540755,
+              "y": 85.45034289486622
+            }
+          ],
+          "routing": "polyline",
           "data": {
             "eventType": "a-db",
             "transitionType": "normal",
@@ -5306,6 +6741,17 @@
           "dy": 0,
           "width": 64,
           "height": 32,
+          "points": [
+            {
+              "x": 135.15528193672458,
+              "y": 269.9196093432992
+            },
+            {
+              "x": 329.25531274868297,
+              "y": 106
+            }
+          ],
+          "routing": "polyline",
           "data": {
             "eventType": "b-db",
             "transitionType": "normal",
@@ -5330,6 +6776,17 @@
           "dy": 0,
           "width": 80,
           "height": 32,
+          "points": [
+            {
+              "x": 196.12671919420865,
+              "y": 140.68155740124683
+            },
+            {
+              "x": 160.1422207038584,
+              "y": 382.8168797653708
+            }
+          ],
+          "routing": "polyline",
           "data": {
             "eventType": "c-cache",
             "transitionType": "normal",
@@ -5354,6 +6811,17 @@
           "dy": 0,
           "width": 96,
           "height": 32,
+          "points": [
+            {
+              "x": 181.69885830682205,
+              "y": 438.8168797653708
+            },
+            {
+              "x": 279.93056062942264,
+              "y": 545.7656458456477
+            }
+          ],
+          "routing": "polyline",
           "data": {
             "eventType": "cache-api",
             "transitionType": "normal",

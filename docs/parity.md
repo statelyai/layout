@@ -50,10 +50,12 @@ and the Java algorithm suites remain open.
 
 <!-- representative graph count and engines from demo/scenarios.ts -->
 
-The SDK project-view corpus contains 14 pre-laid graphs across the 11 layout
-families available in elkjs 0.11.1. Nine currently run through native
+The two-renderer corpus contains 15 pre-laid graphs across the 11 layout
+families available in elkjs 0.11.1. Ten currently run through native
 TypeScript; five remain elkjs oracle snapshots (`stress`, `mrtree`, `radial`,
-`force`, and compound layered). Corpus generation is offline, so the browser
+`force`, and compound layered). Its SVG geometry layer exposes exact bounds,
+label rectangles, route points, and ports; its SDK project-view layer exercises
+the same graph as a Viz consumer. Corpus generation is offline, so the browser
 bundle contains the resulting Stately graphs but not elkjs.
 
 ## Definition of full parity

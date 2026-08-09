@@ -22,7 +22,9 @@ export interface ElkLabel extends ElkShape {
   text?: string;
 }
 
-export interface ElkPort extends ElkShape {}
+export interface ElkPort extends ElkShape {
+  labels?: ElkLabel[];
+}
 
 export interface ElkEdgeSection extends ElkGraphElement {
   startPoint: ElkPoint;

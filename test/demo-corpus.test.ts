@@ -35,7 +35,25 @@ describe("Stately SDK layout demonstrator corpus", () => {
   });
 
   it("labels native and oracle-backed cases honestly", () => {
-    expect(corpus.filter((entry) => entry.engine === "native")).toHaveLength(9);
+    expect(corpus.filter((entry) => entry.engine === "native")).toHaveLength(10);
     expect(corpus.filter((entry) => entry.engine === "elkjs-oracle")).toHaveLength(5);
+  });
+
+  it("preserves native route geometry and named ports for renderer comparison", () => {
+    const portCase = corpus.find((entry) => entry.id === "layered-ports");
+    expect(portCase).toBeDefined();
+    expect(
+      portCase?.graph.nodes.flatMap((node) => ("ports" in node ? (node.ports ?? []) : [])),
+    ).toHaveLength(7);
+    expect(portCase?.graph.edges.every((edge) => edge.routing === "orthogonal")).toBe(true);
+    expect(portCase?.graph.edges.every((edge) => edge.points.length >= 2)).toBe(true);
+    expect(
+      portCase?.graph.edges.every(
+        (edge) =>
+          "sourcePort" in edge &&
+          "targetPort" in edge &&
+          Boolean(edge.sourcePort && edge.targetPort),
+      ),
+    ).toBe(true);
   });
 });

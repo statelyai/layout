@@ -1,7 +1,13 @@
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
-import { createGraph, type Point, type VisualGraph } from "@statelyai/graph";
+import {
+  createGraph,
+  type EdgeRouting,
+  type Point,
+  type PortDirection,
+  type VisualGraph,
+} from "@statelyai/graph";
 import ELK from "elkjs/lib/elk.bundled.js";
 import { demoScenarios, type DemoNodeSpec, type DemoScenario } from "../demo/scenarios";
 import { getBoxLayout } from "../src/box";
@@ -25,7 +31,19 @@ type EmbedNode = {
   dy: number;
   width: number;
   height: number;
+  ports?: EmbedPort[];
   data: Record<string, unknown>;
+};
+
+type EmbedPort = {
+  name: string;
+  direction: PortDirection;
+  label?: string;
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+  data: null;
 };
 
 type EmbedEdge = {
@@ -40,6 +58,10 @@ type EmbedEdge = {
   dy: number;
   width: number;
   height: number;
+  sourcePort?: string;
+  targetPort?: string;
+  points: Point[];
+  routing: EdgeRouting;
   data: Record<string, unknown>;
 };
 
@@ -81,9 +103,14 @@ function midpoint(points: readonly Point[]): Point {
   return { x: (first.x + second.x) / 2, y: (first.y + second.y) / 2 };
 }
 
-function elkEdgePoints(edge: ElkEdge): Point[] {
+function elkEdgePoints(edge: ElkEdge, offset: Point): Point[] {
   const section = edge.sections?.[0];
-  return section ? [section.startPoint, ...(section.bendPoints ?? []), section.endPoint] : [];
+  return section
+    ? [section.startPoint, ...(section.bendPoints ?? []), section.endPoint].map((point) => ({
+        x: point.x + offset.x,
+        y: point.y + offset.y,
+      }))
+    : [];
 }
 
 function toEmbedGraph(scenario: DemoScenario, graph: ElkNode) {
@@ -91,11 +118,22 @@ function toEmbedGraph(scenario: DemoScenario, graph: ElkNode) {
   const edges: EmbedEdge[] = [];
   const syntheticRootId = `${scenario.id}:root`;
 
-  const visitNode = (node: ElkNode, parentId: string): void => {
+  const visitNode = (node: ElkNode, parentId: string, parentOffset: Point): void => {
     const id = String(node.id);
     const childIds = (node.children ?? []).map((child) => String(child.id));
     const x = node.x ?? 0;
     const y = node.y ?? 0;
+    const absoluteOffset = { x: parentOffset.x + x, y: parentOffset.y + y };
+    const ports = node.ports?.map((port) => ({
+      name: String(port.id),
+      direction: String(port.properties?.["stately.direction"] ?? "inout") as PortDirection,
+      ...(port.labels?.[0]?.text ? { label: port.labels[0].text } : {}),
+      x: port.x ?? 0,
+      y: port.y ?? 0,
+      width: port.width ?? 10,
+      height: port.height ?? 10,
+      data: null,
+    }));
     nodes.push({
       type: "node",
       id,
@@ -109,14 +147,15 @@ function toEmbedGraph(scenario: DemoScenario, graph: ElkNode) {
       dy: 0,
       width: node.width ?? 100,
       height: node.height ?? 56,
+      ...(ports?.length ? { ports } : {}),
       data: stateData(id, parentId, childIds[0] ?? null),
     });
-    for (const child of node.children ?? []) visitNode(child, id);
-    for (const edge of node.edges ?? []) visitEdge(edge);
+    for (const child of node.children ?? []) visitNode(child, id, absoluteOffset);
+    for (const edge of node.edges ?? []) visitEdge(edge, absoluteOffset);
   };
 
-  const visitEdge = (edge: ElkEdge): void => {
-    const points = elkEdgePoints(edge);
+  const visitEdge = (edge: ElkEdge, offset: Point): void => {
+    const points = elkEdgePoints(edge, offset);
     const center = midpoint(points);
     const unlabeled = ["box", "random", "rectpacking", "sporeCompaction", "sporeOverlap"].includes(
       scenario.algorithm,
@@ -135,6 +174,13 @@ function toEmbedGraph(scenario: DemoScenario, graph: ElkNode) {
       dy: 0,
       width,
       height,
+      ...(edge.sourcePort === undefined ? {} : { sourcePort: String(edge.sourcePort) }),
+      ...(edge.targetPort === undefined ? {} : { targetPort: String(edge.targetPort) }),
+      points,
+      routing: String(
+        edge.properties?.["stately.routing"] ??
+          (scenario.algorithm === "layered" ? "orthogonal" : "polyline"),
+      ) as EdgeRouting,
       data: transitionData(unlabeled ? "" : String(edge.id)),
     });
   };
@@ -155,8 +201,8 @@ function toEmbedGraph(scenario: DemoScenario, graph: ElkNode) {
     height: graph.height ?? 100,
     data: stateData(syntheticRootId, null, topLevelIds[0] ?? null),
   });
-  for (const child of graph.children ?? []) visitNode(child, syntheticRootId);
-  for (const edge of graph.edges ?? []) visitEdge(edge);
+  for (const child of graph.children ?? []) visitNode(child, syntheticRootId, { x: 0, y: 0 });
+  for (const edge of graph.edges ?? []) visitEdge(edge, { x: 0, y: 0 });
 
   return {
     id: scenario.id,
@@ -195,12 +241,25 @@ function toElkNode(node: DemoNodeSpec): ElkNode {
     ...(node.children
       ? { children: node.children.map(toElkNode) }
       : { width: node.width ?? 100, height: node.height ?? 56 }),
+    ...(node.ports
+      ? {
+          ports: node.ports.map((port) => ({
+            id: port.name,
+            width: port.width ?? 10,
+            height: port.height ?? 10,
+            labels: port.label ? [{ text: port.label }] : undefined,
+            properties: { "stately.direction": port.direction },
+          })),
+        }
+      : {}),
     ...(node.edges
       ? {
           edges: node.edges.map((edge) => ({
             id: edge.id,
             sources: [edge.sourceId],
             targets: [edge.targetId],
+            sourcePort: edge.sourcePort,
+            targetPort: edge.targetPort,
           })),
         }
       : {}),
@@ -222,6 +281,8 @@ function toElkInput(scenario: DemoScenario): ElkNode {
       id: edge.id,
       sources: [edge.sourceId],
       targets: [edge.targetId],
+      sourcePort: edge.sourcePort,
+      targetPort: edge.targetPort,
       ...(scenario.id === "layered-compound"
         ? {}
         : {
@@ -242,6 +303,14 @@ function nativeLayout(scenario: DemoScenario): ElkNode {
       x: node.x,
       y: node.y,
       data: null,
+      ports: node.ports?.map((port) => ({
+        name: port.name,
+        direction: port.direction,
+        label: port.label,
+        width: port.width ?? 10,
+        height: port.height ?? 10,
+        data: null,
+      })),
     })),
     edges: scenario.edges.map((edge) => ({
       id: edge.id,
@@ -251,6 +320,8 @@ function nativeLayout(scenario: DemoScenario): ElkNode {
       width: Math.max(48, edge.id.length * 7),
       height: 20,
       data: null,
+      sourcePort: edge.sourcePort,
+      targetPort: edge.targetPort,
     })),
   });
   const visual: VisualGraph =
@@ -286,11 +357,23 @@ function nativeLayout(scenario: DemoScenario): ElkNode {
       y: node.y,
       width: node.width,
       height: node.height,
+      ports: node.ports?.map((port) => ({
+        id: port.name,
+        x: port.x,
+        y: port.y,
+        width: port.width,
+        height: port.height,
+        labels: port.label ? [{ text: port.label }] : undefined,
+        properties: { "stately.direction": port.direction },
+      })),
     })),
     edges: visual.edges.map((edge) => ({
       id: edge.id,
       sources: [edge.sourceId],
       targets: [edge.targetId],
+      sourcePort: edge.sourcePort,
+      targetPort: edge.targetPort,
+      properties: { "stately.routing": edge.routing ?? "polyline" },
       sections:
         edge.points && edge.points.length >= 2
           ? [

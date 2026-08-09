@@ -20,12 +20,23 @@ export interface DemoNodeSpec {
   y?: number;
   children?: DemoNodeSpec[];
   edges?: DemoEdgeSpec[];
+  ports?: DemoPortSpec[];
+}
+
+export interface DemoPortSpec {
+  name: string;
+  direction: "in" | "out" | "inout";
+  label?: string;
+  width?: number;
+  height?: number;
 }
 
 export interface DemoEdgeSpec {
   id: string;
   sourceId: string;
   targetId: string;
+  sourcePort?: string;
+  targetPort?: string;
 }
 
 export interface DemoScenario {
@@ -121,6 +132,80 @@ export const demoScenarios: readonly DemoScenario[] = [
       { id: "notify", sourceId: "persist", targetId: "notify" },
       { id: "fast-path", sourceId: "source", targetId: "persist" },
       { id: "audit", sourceId: "validate", targetId: "notify" },
+    ],
+  },
+  {
+    id: "layered-ports",
+    name: "Layered · named ports",
+    description: "Multiple named ports, exact attachment points, labels, and orthogonal bends.",
+    algorithm: "layered",
+    engine: "native",
+    nodes: [
+      {
+        id: "ingest",
+        label: "Event ingest",
+        width: 144,
+        height: 92,
+        ports: [
+          { name: "accepted", direction: "out", label: "accepted", width: 12, height: 12 },
+          { name: "rejected", direction: "out", label: "rejected", width: 12, height: 12 },
+        ],
+      },
+      {
+        id: "process",
+        label: "Processor",
+        width: 138,
+        height: 104,
+        ports: [
+          { name: "input", direction: "in", label: "input", width: 12, height: 12 },
+          { name: "result", direction: "out", label: "result", width: 12, height: 12 },
+          { name: "error", direction: "out", label: "error", width: 12, height: 12 },
+        ],
+      },
+      {
+        id: "store",
+        label: "Event store",
+        width: 132,
+        height: 78,
+        ports: [{ name: "write", direction: "in", label: "write", width: 12, height: 12 }],
+      },
+      {
+        id: "dead-letter",
+        label: "Dead letter",
+        width: 132,
+        height: 78,
+        ports: [{ name: "capture", direction: "in", label: "capture", width: 12, height: 12 }],
+      },
+    ],
+    edges: [
+      {
+        id: "accepted",
+        sourceId: "ingest",
+        sourcePort: "accepted",
+        targetId: "process",
+        targetPort: "input",
+      },
+      {
+        id: "persist",
+        sourceId: "process",
+        sourcePort: "result",
+        targetId: "store",
+        targetPort: "write",
+      },
+      {
+        id: "reject",
+        sourceId: "ingest",
+        sourcePort: "rejected",
+        targetId: "dead-letter",
+        targetPort: "capture",
+      },
+      {
+        id: "fail",
+        sourceId: "process",
+        sourcePort: "error",
+        targetId: "dead-letter",
+        targetPort: "capture",
+      },
     ],
   },
   {

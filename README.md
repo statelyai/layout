@@ -73,11 +73,17 @@ Native algorithms never consume ELK JSON directly.
 
 <!-- representative graph count and engines from demo/scenarios.ts -->
 
-The browser lab sends 14 already-laid-out graphs through the
-`@statelyai/sdk` project embed. It covers all 11 algorithm families exposed by
-the elkjs 0.11.1 demonstrator surface plus cycle, long-edge, and compound
-layered cases. Native and oracle-backed graphs are labeled separately; elkjs is
-never bundled into the browser.
+The browser lab compares 15 already-laid-out graphs in two renderers: a
+coordinate-faithful SVG geometry inspector and the `@statelyai/sdk` project
+embed. It covers all 11 algorithm families exposed by the elkjs 0.11.1
+demonstrator surface plus cycle, long-edge, named-port, and compound layered
+cases. Native and oracle-backed graphs are labeled separately; elkjs is never
+bundled into the browser.
+
+The SVG layer displays exact node dimensions and coordinates, edge label
+rectangles, route points, routing modes, and node-relative ports. The SDK layer
+then shows how the same serialized `@statelyai/graph` value appears in the Viz
+project view.
 
 ```bash
 pnpm demo:generate
