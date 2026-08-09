@@ -1,0 +1,43 @@
+{
+  "name": "@statelyai/layout",
+  "version": "0.0.0",
+  "description": "Extensible, graph-native layout algorithms for @statelyai/graph",
+  "license": "EPL-2.0 OR GPL-3.0-or-later",
+  "type": "module",
+  "sideEffects": false,
+  "packageManager": "pnpm@10.28.2",
+  "exports": {
+    ".": "./dist/index.mjs",
+    "./layered": "./dist/layered/index.mjs",
+    "./package.json": "./package.json"
+  },
+  "main": "./dist/index.mjs",
+  "module": "./dist/index.mjs",
+  "types": "./dist/index.d.mts",
+  "files": [
+    "dist",
+    "LICENSE.md",
+    "NOTICE.md"
+  ],
+  "scripts": {
+    "build": "tsdown",
+    "bench": "vitest bench --run",
+    "test": "vitest",
+    "typecheck": "tsc --noEmit",
+    "verify": "tsc --noEmit && vitest --run && tsdown && publint --pack npm",
+    "validate:package": "publint --pack npm"
+  },
+  "dependencies": {
+    "@statelyai/graph": "^2.1.0"
+  },
+  "devDependencies": {
+    "elkjs": "^0.11.1",
+    "publint": "^0.3.15",
+    "tsdown": "^0.18.1",
+    "typescript": "^5.9.3",
+    "vitest": "^4.0.18"
+  },
+  "peerDependencies": {
+    "@statelyai/graph": "^2.1.0"
+  }
+}
