@@ -1,7 +1,7 @@
-import { createGraph } from '@statelyai/graph';
-import { getElkLayout } from '@statelyai/graph/layout/elk';
-import { bench, describe } from 'vitest';
-import { getLayeredLayout } from '../src';
+import { createGraph } from "@statelyai/graph";
+import { getElkLayout } from "@statelyai/graph/layout/elk";
+import { bench, describe } from "vitest";
+import { getLayeredLayout } from "../src";
 
 function createLayeredFixture(size: number) {
   return createGraph({
@@ -21,12 +21,12 @@ function createLayeredFixture(size: number) {
 
 const graph = createLayeredFixture(100);
 
-describe('100-node layered chain', () => {
-  bench('native TypeScript', () => {
-    getLayeredLayout(graph, { direction: 'right' });
+describe("100-node layered chain", () => {
+  bench("native TypeScript", () => {
+    getLayeredLayout(graph, { direction: "right" });
   });
 
-  bench('elkjs oracle', async () => {
-    await getElkLayout(graph, { direction: 'right' });
+  bench("elkjs oracle", async () => {
+    await getElkLayout(graph, { direction: "right" });
   });
 });

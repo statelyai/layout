@@ -1,9 +1,9 @@
-import { defineConfig } from 'tsdown';
+import { defineConfig } from "tsdown";
 
 export default defineConfig({
-  entry: ['src/index.ts', 'src/layered/index.ts'],
+  entry: ["src/index.ts", "src/elkjs/index.ts", "src/layered/index.ts"],
   dts: true,
-  format: ['esm'],
+  format: ["esm"],
   clean: true,
-  external: ['@statelyai/graph', '@statelyai/graph/layout'],
+  external: ["@statelyai/graph", "@statelyai/graph/layout"],
 });

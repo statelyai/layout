@@ -1,10 +1,6 @@
-import type {
-  EntityRect,
-  Graph,
-  GraphNode,
-  Point,
-} from '@statelyai/graph';
-import type { LayoutDirection } from '../types';
+import type { EntityRect, Graph, GraphNode, Point } from "@statelyai/graph";
+import type { LayoutConstraints } from "@statelyai/graph/layout";
+import type { LayoutDirection } from "../types";
 
 export interface NodeSize {
   width: number;
@@ -16,11 +12,20 @@ export interface LayeredSpacing {
   layer: number;
 }
 
+export interface LayoutPadding {
+  top: number;
+  right: number;
+  bottom: number;
+  left: number;
+}
+
 export interface LayeredPhaseInput {
   graph: Graph<unknown, unknown, unknown, unknown>;
   sizes: ReadonlyMap<string, NodeSize>;
   direction: LayoutDirection;
   spacing: LayeredSpacing;
+  padding: LayoutPadding;
+  constrainedLayerByNodeId: ReadonlyMap<string, number>;
 }
 
 export interface AcyclicOrientation {
@@ -43,9 +48,7 @@ export interface EdgeRoutes {
   pointsByEdgeId: ReadonlyMap<string, readonly Point[]>;
 }
 
-export type CycleBreaker = (
-  input: LayeredPhaseInput,
-) => AcyclicOrientation;
+export type CycleBreaker = (input: LayeredPhaseInput) => AcyclicOrientation;
 
 export type LayerAssigner = (
   input: LayeredPhaseInput,
@@ -58,10 +61,7 @@ export type CrossingMinimizer = (
   assignment: LayerAssignment,
 ) => LayerOrder;
 
-export type NodePlacer = (
-  input: LayeredPhaseInput,
-  order: LayerOrder,
-) => NodePlacement;
+export type NodePlacer = (input: LayeredPhaseInput, order: LayerOrder) => NodePlacement;
 
 export type EdgeRouter = (
   input: LayeredPhaseInput,
@@ -80,6 +80,8 @@ export interface LayeredStrategies {
 export interface LayeredLayoutOptions {
   direction?: LayoutDirection;
   spacing?: Partial<LayeredSpacing>;
+  padding?: number | Partial<LayoutPadding>;
+  constraints?: LayoutConstraints;
   measure?: (node: GraphNode) => NodeSize;
   crossingSweeps?: number;
   strategies?: LayeredStrategies;

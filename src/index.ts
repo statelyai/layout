@@ -1,9 +1,16 @@
-export { LayoutError, UnsupportedLayoutError } from './errors';
+export { LayoutError, UnsupportedLayoutError } from "./errors";
+export { fixedAlgorithm, getFixedLayout } from "./fixed";
+export type { FixedLayoutOptions } from "./fixed";
+export { getRectanglePackingLayout, rectanglePackingAlgorithm } from "./packing";
+export type { RectanglePackingLayoutOptions } from "./packing";
 export {
-  getLayout,
-  getLayoutAlgorithm,
-  registerLayoutAlgorithm,
-} from './layout';
+  getSporeCompactionLayout,
+  getSporeOverlapRemovalLayout,
+  sporeCompactionAlgorithm,
+  sporeOverlapRemovalAlgorithm,
+} from "./spore";
+export type { SporeLayoutOptions } from "./spore";
+export { getLayout, getLayoutAlgorithm, registerLayoutAlgorithm } from "./layout";
 export {
   assignLayersByLongestPath,
   breakCyclesWithDepthFirstSearch,
@@ -12,7 +19,7 @@ export {
   minimizeCrossingsWithBarycenter,
   placeNodesInLayers,
   routeEdgesOrthogonally,
-} from './layered';
+} from "./layered";
 export type {
   AnyGraph,
   LayoutAlgorithm,
@@ -25,7 +32,7 @@ export type {
   LayoutRequest,
   LayoutResult,
   LayoutScope,
-} from './types';
+} from "./types";
 export type {
   AcyclicOrientation,
   CrossingMinimizer,
@@ -38,8 +45,9 @@ export type {
   LayeredPhaseInput,
   LayeredSpacing,
   LayeredStrategies,
+  LayoutPadding,
   LayerOrder,
   NodePlacement,
   NodePlacer,
   NodeSize,
-} from './layered';
+} from "./layered";

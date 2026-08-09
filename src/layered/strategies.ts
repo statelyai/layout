@@ -1,10 +1,5 @@
-import type {
-  EntityRect,
-  GraphEdge,
-  GraphNode,
-  GraphPort,
-  Point,
-} from '@statelyai/graph';
+import type { EntityRect, GraphEdge, GraphNode, GraphPort, Point } from "@statelyai/graph";
+import { LayoutError } from "../errors";
 import type {
   AcyclicOrientation,
   CrossingMinimizer,
@@ -12,9 +7,8 @@ import type {
   EdgeRouter,
   LayerAssigner,
   LayeredPhaseInput,
-  LayerOrder,
   NodePlacer,
-} from './types';
+} from "./types";
 
 function getOrientedEndpoints(
   edge: GraphEdge,
@@ -32,15 +26,13 @@ export const breakCyclesWithDepthFirstSearch: CycleBreaker = (input) => {
     outgoing.get(edge.sourceId)?.push(edge);
   }
 
-  const state = new Map<string, 'active' | 'done'>();
+  const state = new Map<string, "active" | "done">();
   const reversedEdgeIds = new Set<string>();
 
   for (const node of input.graph.nodes) {
     if (state.get(node.id) !== undefined) continue;
-    state.set(node.id, 'active');
-    const stack: Array<{ nodeId: string; edgeIndex: number }> = [
-      { nodeId: node.id, edgeIndex: 0 },
-    ];
+    state.set(node.id, "active");
+    const stack: Array<{ nodeId: string; edgeIndex: number }> = [{ nodeId: node.id, edgeIndex: 0 }];
 
     while (stack.length > 0) {
       const frame = stack.at(-1);
@@ -48,17 +40,17 @@ export const breakCyclesWithDepthFirstSearch: CycleBreaker = (input) => {
       const edges = outgoing.get(frame.nodeId) ?? [];
       const edge = edges[frame.edgeIndex];
       if (!edge) {
-        state.set(frame.nodeId, 'done');
+        state.set(frame.nodeId, "done");
         stack.pop();
         continue;
       }
       frame.edgeIndex++;
       if (edge.sourceId === edge.targetId) continue;
       const targetState = state.get(edge.targetId);
-      if (targetState === 'active') {
+      if (targetState === "active") {
         reversedEdgeIds.add(edge.id);
       } else if (targetState === undefined) {
-        state.set(edge.targetId, 'active');
+        state.set(edge.targetId, "active");
         stack.push({ nodeId: edge.targetId, edgeIndex: 0 });
       }
     }
@@ -67,10 +59,7 @@ export const breakCyclesWithDepthFirstSearch: CycleBreaker = (input) => {
   return { reversedEdgeIds };
 };
 
-export const assignLayersByLongestPath: LayerAssigner = (
-  input,
-  orientation,
-) => {
+export const assignLayersByLongestPath: LayerAssigner = (input, orientation) => {
   const indegree = new Map<string, number>();
   const successors = new Map<string, string[]>();
   const layerByNodeId = new Map<string, number>();
@@ -78,12 +67,24 @@ export const assignLayersByLongestPath: LayerAssigner = (
   for (const node of input.graph.nodes) {
     indegree.set(node.id, 0);
     successors.set(node.id, []);
-    layerByNodeId.set(node.id, 0);
+    layerByNodeId.set(node.id, input.constrainedLayerByNodeId.get(node.id) ?? 0);
   }
 
   for (const edge of input.graph.edges) {
     const [sourceId, targetId] = getOrientedEndpoints(edge, orientation);
     if (sourceId === targetId) continue;
+    const sourceConstraint = input.constrainedLayerByNodeId.get(sourceId);
+    const targetConstraint = input.constrainedLayerByNodeId.get(targetId);
+    if (
+      sourceConstraint !== undefined &&
+      targetConstraint !== undefined &&
+      targetConstraint <= sourceConstraint
+    ) {
+      throw new LayoutError(
+        `Layer constraints conflict on edge ${edge.id}`,
+        "UNSATISFIABLE_CONSTRAINTS",
+      );
+    }
     successors.get(sourceId)?.push(targetId);
     indegree.set(targetId, (indegree.get(targetId) ?? 0) + 1);
   }
@@ -97,9 +98,16 @@ export const assignLayersByLongestPath: LayerAssigner = (
     if (sourceId === undefined) continue;
     const sourceLayer = layerByNodeId.get(sourceId) ?? 0;
     for (const targetId of successors.get(sourceId) ?? []) {
+      const targetConstraint = input.constrainedLayerByNodeId.get(targetId);
+      if (targetConstraint !== undefined && targetConstraint < sourceLayer + 1) {
+        throw new LayoutError(
+          `Layer constraint conflicts at node ${targetId}`,
+          "UNSATISFIABLE_CONSTRAINTS",
+        );
+      }
       layerByNodeId.set(
         targetId,
-        Math.max(layerByNodeId.get(targetId) ?? 0, sourceLayer + 1),
+        targetConstraint ?? Math.max(layerByNodeId.get(targetId) ?? 0, sourceLayer + 1),
       );
       const nextIndegree = (indegree.get(targetId) ?? 1) - 1;
       indegree.set(targetId, nextIndegree);
@@ -115,12 +123,8 @@ function sortLayerByBarycenter(
   adjacentLayer: readonly string[],
   neighbors: ReadonlyMap<string, readonly string[]>,
 ): void {
-  const adjacentIndex = new Map(
-    adjacentLayer.map((nodeId, index) => [nodeId, index] as const),
-  );
-  const originalIndex = new Map(
-    layer.map((nodeId, index) => [nodeId, index] as const),
-  );
+  const adjacentIndex = new Map(adjacentLayer.map((nodeId, index) => [nodeId, index] as const));
+  const originalIndex = new Map(layer.map((nodeId, index) => [nodeId, index] as const));
 
   layer.sort((a, b) => {
     const barycenter = (nodeId: string): number => {
@@ -131,15 +135,12 @@ function sortLayerByBarycenter(
       return positions.reduce((sum, value) => sum + value, 0) / positions.length;
     };
     return (
-      barycenter(a) - barycenter(b) ||
-      (originalIndex.get(a) ?? 0) - (originalIndex.get(b) ?? 0)
+      barycenter(a) - barycenter(b) || (originalIndex.get(a) ?? 0) - (originalIndex.get(b) ?? 0)
     );
   });
 }
 
-export function minimizeCrossingsWithBarycenter(
-  sweeps = 4,
-): CrossingMinimizer {
+export function minimizeCrossingsWithBarycenter(sweeps = 4): CrossingMinimizer {
   return (input, orientation, assignment) => {
     let maximumLayer = 0;
     for (const layer of assignment.layerByNodeId.values()) {
@@ -186,66 +187,58 @@ export function minimizeCrossingsWithBarycenter(
 function sumWithSpacing(
   ids: readonly string[],
   input: LayeredPhaseInput,
-  axis: 'width' | 'height',
+  axis: "width" | "height",
 ): number {
   return ids.reduce(
     (total, id, index) =>
-      total +
-      (input.sizes.get(id)?.[axis] ?? 0) +
-      (index === 0 ? 0 : input.spacing.node),
+      total + (input.sizes.get(id)?.[axis] ?? 0) + (index === 0 ? 0 : input.spacing.node),
     0,
   );
 }
 
 export const placeNodesInLayers: NodePlacer = (input, order) => {
-  const horizontal =
-    input.direction === 'left' || input.direction === 'right';
+  const horizontal = input.direction === "left" || input.direction === "right";
   const layerFlowSizes = order.layers.map((layer) =>
     Math.max(
       0,
       ...layer.map((id) =>
-        horizontal
-          ? (input.sizes.get(id)?.width ?? 0)
-          : (input.sizes.get(id)?.height ?? 0),
+        horizontal ? (input.sizes.get(id)?.width ?? 0) : (input.sizes.get(id)?.height ?? 0),
       ),
     ),
   );
   const layerCrossSizes = order.layers.map((layer) =>
-    sumWithSpacing(layer, input, horizontal ? 'height' : 'width'),
+    sumWithSpacing(layer, input, horizontal ? "height" : "width"),
   );
   let maxCrossSize = 0;
   for (const size of layerCrossSizes) maxCrossSize = Math.max(maxCrossSize, size);
   const rectByNodeId = new Map<string, EntityRect>();
-  let flow = 0;
+  let flow = horizontal ? input.padding.left : input.padding.top;
 
   order.layers.forEach((layer, layerIndex) => {
-    let cross = (maxCrossSize - (layerCrossSizes[layerIndex] ?? 0)) / 2;
+    let cross =
+      (horizontal ? input.padding.top : input.padding.left) +
+      (maxCrossSize - (layerCrossSizes[layerIndex] ?? 0)) / 2;
     for (const id of layer) {
       const size = input.sizes.get(id) ?? { width: 0, height: 0 };
-      const rect = horizontal
-        ? { x: flow, y: cross, ...size }
-        : { x: cross, y: flow, ...size };
+      const rect = horizontal ? { x: flow, y: cross, ...size } : { x: cross, y: flow, ...size };
       rectByNodeId.set(id, rect);
-      cross +=
-        (horizontal ? size.height : size.width) + input.spacing.node;
+      cross += (horizontal ? size.height : size.width) + input.spacing.node;
     }
     flow += (layerFlowSizes[layerIndex] ?? 0) + input.spacing.layer;
   });
 
-  if (input.direction === 'up' || input.direction === 'left') {
-    let extent = 0;
+  if (input.direction === "up" || input.direction === "left") {
+    let contentEnd = 0;
     for (const rect of rectByNodeId.values()) {
-      extent = Math.max(
-        extent,
-        horizontal ? rect.x + rect.width : rect.y + rect.height,
-      );
+      contentEnd = Math.max(contentEnd, horizontal ? rect.x + rect.width : rect.y + rect.height);
     }
+    const leadingPadding = horizontal ? input.padding.left : input.padding.top;
     for (const [id, rect] of rectByNodeId) {
       rectByNodeId.set(
         id,
         horizontal
-          ? { ...rect, x: extent - rect.x - rect.width }
-          : { ...rect, y: extent - rect.y - rect.height },
+          ? { ...rect, x: contentEnd - rect.x + leadingPadding - rect.width }
+          : { ...rect, y: contentEnd - rect.y + leadingPadding - rect.height },
       );
     }
   }
@@ -258,7 +251,7 @@ function getPortPoint(
   portName: string | undefined,
   rect: EntityRect,
   fallback: Point,
-  direction: LayeredPhaseInput['direction'],
+  direction: LayeredPhaseInput["direction"],
 ): Point {
   if (portName === undefined) return fallback;
   const port = placePorts(node.ports, rect, direction)?.find(
@@ -274,18 +267,15 @@ function getPortPoint(
 function removeDuplicatePoints(points: readonly Point[]): Point[] {
   return points.filter(
     (point, index) =>
-      index === 0 ||
-      point.x !== points[index - 1]?.x ||
-      point.y !== points[index - 1]?.y,
+      index === 0 || point.x !== points[index - 1]?.x || point.y !== points[index - 1]?.y,
   );
 }
 
 export const routeEdgesOrthogonally: EdgeRouter = (input, _orientation, placement) => {
   const nodeById = new Map(input.graph.nodes.map((node) => [node.id, node]));
   const pointsByEdgeId = new Map<string, readonly Point[]>();
-  const horizontal =
-    input.direction === 'left' || input.direction === 'right';
-  const reverse = input.direction === 'up' || input.direction === 'left';
+  const horizontal = input.direction === "left" || input.direction === "right";
+  const reverse = input.direction === "up" || input.direction === "left";
 
   for (const edge of input.graph.edges) {
     const source = nodeById.get(edge.sourceId);
@@ -331,13 +321,7 @@ export const routeEdgesOrthogonally: EdgeRouter = (input, _orientation, placemen
       sourceFallback,
       input.direction,
     );
-    const end = getPortPoint(
-      target,
-      edge.targetPort,
-      targetRect,
-      targetFallback,
-      input.direction,
-    );
+    const end = getPortPoint(target, edge.targetPort, targetRect, targetFallback, input.direction);
     const middle = horizontal
       ? [
           { x: (start.x + end.x) / 2, y: start.y },
@@ -347,10 +331,7 @@ export const routeEdgesOrthogonally: EdgeRouter = (input, _orientation, placemen
           { x: start.x, y: (start.y + end.y) / 2 },
           { x: end.x, y: (start.y + end.y) / 2 },
         ];
-    pointsByEdgeId.set(
-      edge.id,
-      removeDuplicatePoints([start, ...middle, end]),
-    );
+    pointsByEdgeId.set(edge.id, removeDuplicatePoints([start, ...middle, end]));
   }
 
   return { pointsByEdgeId };
@@ -359,18 +340,18 @@ export const routeEdgesOrthogonally: EdgeRouter = (input, _orientation, placemen
 export function placePorts<P>(
   ports: readonly GraphPort<P>[] | undefined,
   rect: EntityRect,
-  direction: LayeredPhaseInput['direction'],
+  direction: LayeredPhaseInput["direction"],
 ): GraphPort<P>[] | undefined {
   if (!ports) return undefined;
-  const horizontal = direction === 'left' || direction === 'right';
-  const reverse = direction === 'up' || direction === 'left';
+  const horizontal = direction === "left" || direction === "right";
+  const reverse = direction === "up" || direction === "left";
   return ports.map((port, index) => {
     const size = { width: port.width ?? 8, height: port.height ?? 8 };
     if (port.x !== undefined && port.y !== undefined) {
       return { ...port, ...size };
     }
     const ratio = (index + 1) / (ports.length + 1);
-    const outgoing = port.direction !== 'in';
+    const outgoing = port.direction !== "in";
     const farSide = reverse ? !outgoing : outgoing;
     return {
       ...port,

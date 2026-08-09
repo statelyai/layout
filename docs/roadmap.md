@@ -19,6 +19,14 @@
 - Edge labels, port ordering, parallel edges
 - Compound graphs and cross-hierarchy edges
 
+## Current compatibility checkpoint
+
+- elkjs-compatible `/elkjs` entry
+- 37 of 43 upstream elkjs 0.11.1 behaviors covered
+- Original elkjs#7 and ChangeAwareArrayList fixtures
+- Legacy option aliases, padding, fixed vectors/routes, logging, labels
+- Compatibility-only recursive compound-parent regression handling
+
 ## M2: interactive layout
 
 - Previous-layout objective

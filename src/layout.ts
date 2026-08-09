@@ -1,11 +1,9 @@
-import {
-  getGraphIssues,
-  type Graph,
-  type GraphPatch,
-  type VisualGraph,
-} from '@statelyai/graph';
-import { LayoutError, UnsupportedLayoutError } from './errors';
-import { layeredAlgorithm } from './layered';
+import { getGraphIssues, type Graph, type GraphPatch, type VisualGraph } from "@statelyai/graph";
+import { LayoutError, UnsupportedLayoutError } from "./errors";
+import { fixedAlgorithm } from "./fixed";
+import { layeredAlgorithm } from "./layered";
+import { rectanglePackingAlgorithm } from "./packing";
+import { sporeCompactionAlgorithm, sporeOverlapRemovalAlgorithm } from "./spore";
 import type {
   LayoutAlgorithm,
   LayoutDiagnostic,
@@ -14,24 +12,25 @@ import type {
   LayoutRequest,
   LayoutResult,
   LayoutScope,
-} from './types';
+} from "./types";
 
 const algorithms = new Map<string, LayoutAlgorithm<never>>([
-  ['layered', layeredAlgorithm as LayoutAlgorithm<never>],
+  ["layered", layeredAlgorithm as LayoutAlgorithm<never>],
+  ["fixed", fixedAlgorithm as LayoutAlgorithm<never>],
+  ["rectpacking", rectanglePackingAlgorithm as LayoutAlgorithm<never>],
+  ["sporeCompaction", sporeCompactionAlgorithm as LayoutAlgorithm<never>],
+  ["sporeOverlap", sporeOverlapRemovalAlgorithm as LayoutAlgorithm<never>],
 ]);
 
-function supportsScope(
-  algorithm: LayoutAlgorithm<unknown>,
-  scope: LayoutScope,
-): boolean {
+function supportsScope(algorithm: LayoutAlgorithm<unknown>, scope: LayoutScope): boolean {
   switch (scope.mode) {
-    case 'full':
+    case "full":
       return algorithm.capabilities.full;
-    case 'incremental':
+    case "incremental":
       return algorithm.capabilities.incremental;
-    case 'partial':
+    case "partial":
       return algorithm.capabilities.partial;
-    case 'route-only':
+    case "route-only":
       return algorithm.capabilities.routeOnly;
   }
 }
@@ -67,7 +66,7 @@ function getLayoutPatches<N, E, G, P>(
       node.ports !== next.ports
     ) {
       patches.push({
-        op: 'updateNode',
+        op: "updateNode",
         id: node.id,
         data: {
           x: next.x,
@@ -76,7 +75,7 @@ function getLayoutPatches<N, E, G, P>(
           height: next.height,
           ...(next.ports === undefined ? {} : { ports: next.ports }),
         },
-        description: 'Apply layout geometry',
+        description: "Apply layout geometry",
       });
     }
   }
@@ -92,7 +91,7 @@ function getLayoutPatches<N, E, G, P>(
       !samePoints(edge.points, next.points)
     ) {
       patches.push({
-        op: 'updateEdge',
+        op: "updateEdge",
         id: edge.id,
         data: {
           x: next.x,
@@ -102,7 +101,7 @@ function getLayoutPatches<N, E, G, P>(
           ...(next.routing === undefined ? {} : { routing: next.routing }),
           ...(next.points === undefined ? {} : { points: next.points }),
         },
-        description: 'Apply layout geometry',
+        description: "Apply layout geometry",
       });
     }
   }
@@ -110,9 +109,7 @@ function getLayoutPatches<N, E, G, P>(
 }
 
 /** Register or replace a layout algorithm for subsequent `getLayout` calls. */
-export function registerLayoutAlgorithm<O>(
-  algorithm: LayoutAlgorithm<O>,
-): () => void {
+export function registerLayoutAlgorithm<O>(algorithm: LayoutAlgorithm<O>): () => void {
   const previous = algorithms.get(algorithm.id);
   algorithms.set(algorithm.id, algorithm as LayoutAlgorithm<never>);
   return () => {
@@ -121,9 +118,7 @@ export function registerLayoutAlgorithm<O>(
   };
 }
 
-export function getLayoutAlgorithm(
-  id: string,
-): LayoutAlgorithm<unknown> | undefined {
+export function getLayoutAlgorithm(id: string): LayoutAlgorithm<unknown> | undefined {
   return algorithms.get(id) as LayoutAlgorithm<unknown> | undefined;
 }
 
@@ -135,32 +130,27 @@ export async function getLayout<N, E, G, P, O = unknown>(
   request: LayoutRequest<N, E, G, P, O>,
 ): Promise<LayoutResult<N, E, G, P>> {
   const startedAt = performance.now();
-  const scope = request.scope ?? { mode: 'full' };
+  const scope = request.scope ?? { mode: "full" };
   const diagnostics: LayoutDiagnostic[] = [];
   const phases: LayoutPhaseMetrics[] = [];
   const algorithm =
-    typeof request.algorithm === 'object'
+    typeof request.algorithm === "object"
       ? request.algorithm
-      : getLayoutAlgorithm(request.algorithm ?? 'layered');
+      : getLayoutAlgorithm(request.algorithm ?? "layered");
 
   if (!algorithm) {
     throw new LayoutError(
-      `Unknown layout algorithm: ${request.algorithm ?? 'layered'}`,
-      'UNKNOWN_ALGORITHM',
+      `Unknown layout algorithm: ${request.algorithm ?? "layered"}`,
+      "UNKNOWN_ALGORITHM",
     );
   }
   if (!supportsScope(algorithm as LayoutAlgorithm<unknown>, scope)) {
-    throw new UnsupportedLayoutError(
-      `${algorithm.id} does not support ${scope.mode} layout yet`,
-    );
+    throw new UnsupportedLayoutError(`${algorithm.id} does not support ${scope.mode} layout yet`);
   }
 
   const issues = getGraphIssues(request.graph as Graph);
   if (issues.length > 0) {
-    throw new LayoutError(
-      issues.map((issue) => issue.message).join('; '),
-      'INVALID_GRAPH',
-    );
+    throw new LayoutError(issues.map((issue) => issue.message).join("; "), "INVALID_GRAPH");
   }
 
   const context: LayoutExecutionContext = {
@@ -186,16 +176,12 @@ export async function getLayout<N, E, G, P, O = unknown>(
     },
     throwIfAborted() {
       if (request.signal?.aborted) {
-        throw request.signal.reason ?? new Error('Layout aborted');
+        throw request.signal.reason ?? new Error("Layout aborted");
       }
     },
   };
   context.throwIfAborted();
-  const graph = await algorithm.layout(
-    request.graph,
-    request.options as O,
-    context,
-  );
+  const graph = await algorithm.layout(request.graph, request.options as O, context);
   context.throwIfAborted();
 
   return {

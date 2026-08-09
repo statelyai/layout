@@ -8,6 +8,10 @@
 - Runtime oracle: `elkjs` 0.11.x
 - Algorithm reference: Eclipse Layout Kernel
 
+The elkjs 0.11.1 compatibility baseline contains 43 Mocha behaviors across 14
+test files. Adapted tests retain their source path, release tag, copyright, and
+SPDX header.
+
 The initial tracer bullet is an independent implementation of standard layered
 graph techniques. It does not copy ELK source. When an ELK implementation is
 ported, the commit, Java source path, original notices, and corresponding

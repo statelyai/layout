@@ -9,11 +9,11 @@ return `VisualGraph`; positions remain node fields and routes remain
 
 ## Status
 
-The first vertical slice implements deterministic layered layout for flat
-graphs, including cycles, ports, self-loops, four directions, orthogonal edge
-routing, and replaceable phase strategies. Hierarchy and partial, incremental,
-and route-only execution are explicit API capabilities but are not implemented
-yet.
+The native layered implementation currently supports flat graphs, cycles,
+ports, self-loops, four directions, typed constraints, padding, orthogonal
+routes, and replaceable phases. Native fixed, rectangle-packing, and initial
+SPOrE implementations are also available. Partial, incremental, route-only,
+and native compound layout remain explicit unimplemented capabilities.
 
 ## Install
 
@@ -28,20 +28,20 @@ pnpm add @statelyai/layout @statelyai/graph
 <!-- primary layout functions exported from src/index.ts -->
 
 ```ts
-import { createGraph } from '@statelyai/graph';
-import { getLayeredLayout, getLayout } from '@statelyai/layout';
+import { createGraph } from "@statelyai/graph";
+import { getLayeredLayout, getLayout } from "@statelyai/layout";
 
 const graph = createGraph({
-  nodes: [{ id: 'a' }, { id: 'b' }],
-  edges: [{ id: 'ab', sourceId: 'a', targetId: 'b' }],
+  nodes: [{ id: "a" }, { id: "b" }],
+  edges: [{ id: "ab", sourceId: "a", targetId: "b" }],
 });
 
-const visualGraph = getLayeredLayout(graph, { direction: 'right' });
+const visualGraph = getLayeredLayout(graph, { direction: "right" });
 
 const result = await getLayout({
   graph,
-  algorithm: 'layered',
-  options: { direction: 'right' },
+  algorithm: "layered",
+  options: { direction: "right" },
 });
 
 result.graph;
@@ -49,6 +49,23 @@ result.patches;
 result.diagnostics;
 result.metrics;
 ```
+
+## elkjs compatibility
+
+<!-- elkjs-compatible entry point exported from package.json#exports -->
+
+Legacy consumers can migrate through an isolated compatibility entry point:
+
+```ts
+import ELK from "@statelyai/layout/elkjs";
+
+const elk = new ELK();
+const legacyResult = await elk.layout(elkJsonGraph);
+```
+
+The adapter accepts ELK JSON and option aliases, translates to
+`@statelyai/graph`, runs native algorithms, and translates the result back.
+Native algorithms never consume ELK JSON directly.
 
 ## Extensibility
 
@@ -76,7 +93,8 @@ const result = getLayeredLayout(graph, {
 ```
 
 See [Architecture](./docs/architecture.md), [Roadmap](./docs/roadmap.md), and
-[Upstream and provenance](./docs/upstream.md).
+[Upstream and provenance](./docs/upstream.md). [Parity](./docs/parity.md) tracks
+API coverage separately from native algorithm fidelity.
 
 ## Development
 
@@ -87,3 +105,6 @@ pnpm install
 pnpm verify
 pnpm bench
 ```
+
+`pnpm verify` checks Oxfmt, Oxlint, source and repository TypeScript projects,
+tests, declarations/runtime builds, and the packed package surface.

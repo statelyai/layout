@@ -4,13 +4,13 @@ export class LayoutError extends Error {
     readonly code: string,
   ) {
     super(message);
-    this.name = 'LayoutError';
+    this.name = "LayoutError";
   }
 }
 
 export class UnsupportedLayoutError extends LayoutError {
   constructor(message: string) {
-    super(message, 'UNSUPPORTED_LAYOUT');
-    this.name = 'UnsupportedLayoutError';
+    super(message, "UNSUPPORTED_LAYOUT");
+    this.name = "UnsupportedLayoutError";
   }
 }

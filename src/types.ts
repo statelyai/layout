@@ -1,32 +1,28 @@
-import type {
-  Graph,
-  GraphPatch,
-  VisualGraph,
-} from '@statelyai/graph';
+import type { Graph, GraphPatch, VisualGraph } from "@statelyai/graph";
 
 export type AnyGraph = Graph<unknown, unknown, unknown, unknown>;
 
-export type LayoutDirection = 'up' | 'down' | 'left' | 'right';
+export type LayoutDirection = "up" | "down" | "left" | "right";
 
 export type LayoutScope =
-  | { mode: 'full' }
+  | { mode: "full" }
   | {
-      mode: 'incremental';
+      mode: "incremental";
       previous: VisualGraph;
     }
   | {
-      mode: 'partial';
+      mode: "partial";
       previous: VisualGraph;
       nodeIds: readonly string[];
     }
   | {
-      mode: 'route-only';
+      mode: "route-only";
       previous: VisualGraph;
       edgeIds?: readonly string[];
     };
 
 export interface LayoutDiagnostic {
-  severity: 'info' | 'warning' | 'error';
+  severity: "info" | "warning" | "error";
   code: string;
   message: string;
   entityIds?: readonly string[];
@@ -72,13 +68,7 @@ export interface LayoutExecutionContext {
   throwIfAborted(): void;
 }
 
-export interface LayoutRequest<
-  N = unknown,
-  E = unknown,
-  G = unknown,
-  P = unknown,
-  O = unknown,
-> {
+export interface LayoutRequest<N = unknown, E = unknown, G = unknown, P = unknown, O = unknown> {
   graph: Graph<N, E, G, P> | VisualGraph<N, E, G, P>;
   algorithm?: string | LayoutAlgorithm<O>;
   options?: O;

@@ -1,14 +1,6 @@
-import type {
-  Graph,
-  GraphNode,
-  VisualGraph,
-  VisualNode,
-} from '@statelyai/graph';
-import { UnsupportedLayoutError } from '../errors';
-import type {
-  LayoutAlgorithm,
-  LayoutExecutionContext,
-} from '../types';
+import type { Graph, GraphNode, VisualGraph, VisualNode } from "@statelyai/graph";
+import { UnsupportedLayoutError } from "../errors";
+import type { LayoutAlgorithm, LayoutExecutionContext } from "../types";
 import {
   assignLayersByLongestPath,
   breakCyclesWithDepthFirstSearch,
@@ -17,12 +9,8 @@ import {
   placeNodesInLayers,
   placePorts,
   routeEdgesOrthogonally,
-} from './strategies';
-import type {
-  LayeredLayoutOptions,
-  LayeredPhaseInput,
-  NodeSize,
-} from './types';
+} from "./strategies";
+import type { LayeredLayoutOptions, LayeredPhaseInput, NodeSize } from "./types";
 
 export type {
   AcyclicOrientation,
@@ -36,11 +24,12 @@ export type {
   LayeredPhaseInput,
   LayeredSpacing,
   LayeredStrategies,
+  LayoutPadding,
   LayerOrder,
   NodePlacement,
   NodePlacer,
   NodeSize,
-} from './types';
+} from "./types";
 
 export {
   assignLayersByLongestPath,
@@ -48,25 +37,16 @@ export {
   minimizeCrossingsWithBarycenter,
   placeNodesInLayers,
   routeEdgesOrthogonally,
-} from './strategies';
+} from "./strategies";
 
 const DEFAULT_NODE_SIZE: NodeSize = { width: 100, height: 50 };
 
-function getNodeSize(
-  node: GraphNode,
-  options: LayeredLayoutOptions,
-): NodeSize {
+function getNodeSize(node: GraphNode, options: LayeredLayoutOptions): NodeSize {
   const measured = options.measure?.(node);
   if (measured) return measured;
   return {
-    width:
-      node.width !== undefined && node.width > 0
-        ? node.width
-        : DEFAULT_NODE_SIZE.width,
-    height:
-      node.height !== undefined && node.height > 0
-        ? node.height
-        : DEFAULT_NODE_SIZE.height,
+    width: node.width !== undefined && node.width > 0 ? node.width : DEFAULT_NODE_SIZE.width,
+    height: node.height !== undefined && node.height > 0 ? node.height : DEFAULT_NODE_SIZE.height,
   };
 }
 
@@ -76,7 +56,7 @@ function assertFlatGraph(graph: Graph): void {
     .map((node) => node.id);
   if (compoundNodeIds.length > 0) {
     throw new UnsupportedLayoutError(
-      `The first layered milestone supports flat graphs only; nested nodes: ${compoundNodeIds.join(', ')}`,
+      `The first layered milestone supports flat graphs only; nested nodes: ${compoundNodeIds.join(", ")}`,
     );
   }
 }
@@ -87,47 +67,59 @@ function runLayeredPipeline<N, E, G, P>(
   context?: LayoutExecutionContext,
 ): VisualGraph<N, E, G, P> {
   assertFlatGraph(graph);
-  const direction = options.direction ?? graph.direction ?? 'down';
+  const direction = options.direction ?? graph.direction ?? "down";
+  const padding =
+    typeof options.padding === "number"
+      ? {
+          top: options.padding,
+          right: options.padding,
+          bottom: options.padding,
+          left: options.padding,
+        }
+      : {
+          top: options.padding?.top ?? 0,
+          right: options.padding?.right ?? 0,
+          bottom: options.padding?.bottom ?? 0,
+          left: options.padding?.left ?? 0,
+        };
   const input: LayeredPhaseInput = {
     graph: graph as Graph<unknown, unknown, unknown, unknown>,
-    sizes: new Map(
-      graph.nodes.map((node) => [node.id, getNodeSize(node, options)]),
-    ),
+    sizes: new Map(graph.nodes.map((node) => [node.id, getNodeSize(node, options)])),
     direction,
     spacing: {
       node: options.spacing?.node ?? 40,
       layer: options.spacing?.layer ?? 60,
     },
+    padding,
+    constrainedLayerByNodeId: new Map(
+      graph.nodes.flatMap((node) => {
+        const layer = options.constraints?.layer?.(node);
+        return layer === undefined ? [] : [[node.id, layer] as const];
+      }),
+    ),
   };
   const measure = <T>(id: string, run: () => T): T => {
     context?.throwIfAborted();
     return context ? context.measurePhase(id, run) : run();
   };
 
-  const orientation = measure('cycle-breaking', () =>
+  const orientation = measure("cycle-breaking", () =>
     (options.strategies?.breakCycles ?? breakCyclesWithDepthFirstSearch)(input),
   );
-  const assignment = measure('layer-assignment', () =>
-    (options.strategies?.assignLayers ?? assignLayersByLongestPath)(
-      input,
-      orientation,
-    ),
+  const assignment = measure("layer-assignment", () =>
+    (options.strategies?.assignLayers ?? assignLayersByLongestPath)(input, orientation),
   );
-  const order = measure('crossing-minimization', () =>
+  const order = measure("crossing-minimization", () =>
     (
       options.strategies?.minimizeCrossings ??
       minimizeCrossingsWithBarycenter(options.crossingSweeps)
     )(input, orientation, assignment),
   );
-  const placement = measure('node-placement', () =>
+  const placement = measure("node-placement", () =>
     (options.strategies?.placeNodes ?? placeNodesInLayers)(input, order),
   );
-  const routes = measure('edge-routing', () =>
-    (options.strategies?.routeEdges ?? routeEdgesOrthogonally)(
-      input,
-      orientation,
-      placement,
-    ),
+  const routes = measure("edge-routing", () =>
+    (options.strategies?.routeEdges ?? routeEdgesOrthogonally)(input, orientation, placement),
   );
 
   const nodes = graph.nodes.map((node): VisualNode<N, P> => {
@@ -154,7 +146,7 @@ function runLayeredPipeline<N, E, G, P>(
       width,
       height,
       points,
-      routing: 'orthogonal' as const,
+      routing: "orthogonal" as const,
     };
   });
 
@@ -180,7 +172,7 @@ export function getLayeredLayout<N, E, G, P>(
 }
 
 export const layeredAlgorithm: LayoutAlgorithm<LayeredLayoutOptions> = {
-  id: 'layered',
+  id: "layered",
   capabilities: {
     full: true,
     incremental: false,
