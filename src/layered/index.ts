@@ -22,6 +22,7 @@ import {
   minimizeCrossingsWithMedian,
   minimizeCrossingsInteractively,
   minimizeCrossingsWithModelOrder,
+  normalizePlacementForPortExtents,
   placeNodesInLayers,
   placeNodesInteractively,
   placePorts,
@@ -284,6 +285,7 @@ function runLayeredPipeline<N, E, G, P>(
     settings: options.settings ?? {},
     ...(options.nodeSettings === undefined ? {} : { nodeSettings: options.nodeSettings }),
     ...(options.edgeSettings === undefined ? {} : { edgeSettings: options.edgeSettings }),
+    ...(options.portSettings === undefined ? {} : { portSettings: options.portSettings }),
   };
   const measure = <T>(id: string, run: () => T): T => {
     context?.throwIfAborted();
@@ -365,6 +367,9 @@ function runLayeredPipeline<N, E, G, P>(
     return placeNodesInLayers;
   })();
   const placement = measure("node-placement", () => nodePlacer(expanded.input, order));
+  measure("port-margin-normalization", () =>
+    normalizePlacementForPortExtents(expanded.input, placement, order),
+  );
   const edgeRouting = options.settings?.edgeRouting ?? "ORTHOGONAL";
   const edgeRouter =
     options.strategies?.routeEdges ??
@@ -385,7 +390,13 @@ function runLayeredPipeline<N, E, G, P>(
     if (!rect) {
       throw new Error(`Node placement missing for ${node.id}`);
     }
-    const ports = placePorts(node.ports, rect, direction);
+    const ports = placePorts(
+      node.ports,
+      rect,
+      direction,
+      (port) => options.portSettings?.(port, node),
+      options.nodeSettings?.(node),
+    );
     return {
       ...node,
       ...rect,

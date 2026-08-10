@@ -1,4 +1,4 @@
-import type { EntityRect, Graph, GraphEdge, GraphNode, Point } from "@statelyai/graph";
+import type { EntityRect, Graph, GraphEdge, GraphNode, GraphPort, Point } from "@statelyai/graph";
 import type { LayoutConstraints } from "@statelyai/graph/layout";
 import type { LayoutDirection } from "../types";
 import type { ElkLayeredOptionValueByName, LayeredAdvancedOptions } from "./elk-options";
@@ -30,6 +30,7 @@ export interface LayeredPhaseInput {
   settings: LayeredAdvancedOptions;
   nodeSettings?: (node: GraphNode) => ElkLayeredOptionValueByName | undefined;
   edgeSettings?: (edge: GraphEdge) => ElkLayeredOptionValueByName | undefined;
+  portSettings?: (port: GraphPort, node: GraphNode) => ElkLayeredOptionValueByName | undefined;
 }
 
 export interface AcyclicOrientation {
@@ -95,4 +96,6 @@ export interface LayeredLayoutOptions {
   nodeSettings?: (node: GraphNode) => ElkLayeredOptionValueByName | undefined;
   /** Per-edge settings for ELK options whose target is an edge. */
   edgeSettings?: (edge: GraphEdge) => ElkLayeredOptionValueByName | undefined;
+  /** Per-port settings for ELK options whose target is a port. */
+  portSettings?: (port: GraphPort, node: GraphNode) => ElkLayeredOptionValueByName | undefined;
 }

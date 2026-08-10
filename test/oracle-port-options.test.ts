@@ -1,0 +1,159 @@
+import OracleELK from "elkjs/lib/elk.bundled.js";
+import { describe, expect, it } from "vitest";
+import NativeELK, { type ElkNode, type ElkPort } from "../src/elkjs";
+
+function expectPortGeometry(actual: ElkNode, expected: ElkNode) {
+  const expectedNode = expected.children?.[0];
+  const actualNode = actual.children?.[0];
+  expect(actualNode?.x).toBeCloseTo(expectedNode?.x ?? Number.NaN, 12);
+  expect(actualNode?.y).toBeCloseTo(expectedNode?.y ?? Number.NaN, 12);
+  expect(actualNode?.width).toBeCloseTo(expectedNode?.width ?? Number.NaN, 12);
+  expect(actualNode?.height).toBeCloseTo(expectedNode?.height ?? Number.NaN, 12);
+  for (const expectedPort of expectedNode?.ports ?? []) {
+    const actualPort = actualNode?.ports?.find(
+      (candidate) => String(candidate.id) === String(expectedPort.id),
+    );
+    expect(actualPort, String(expectedPort.id)).toBeDefined();
+    for (const property of ["x", "y", "width", "height"] as const) {
+      expect(actualPort?.[property], `${String(expectedPort.id)}.${property}`).toBeCloseTo(
+        expectedPort[property] ?? Number.NaN,
+        12,
+      );
+    }
+  }
+}
+
+async function compare(graph: ElkNode) {
+  const expected = (await new OracleELK().layout(
+    structuredClone(graph) as never,
+  )) as unknown as ElkNode;
+  const actual = await new NativeELK().layout(structuredClone(graph));
+  expect(actual.width).toBeCloseTo(expected.width ?? Number.NaN, 12);
+  expect(actual.height).toBeCloseTo(expected.height ?? Number.NaN, 12);
+  expectPortGeometry(actual, expected);
+}
+
+function port(
+  id: string,
+  side: "NORTH" | "SOUTH" | "WEST" | "EAST",
+  options: Readonly<Record<string, string>> = {},
+): ElkPort {
+  return {
+    id,
+    width: 8,
+    height: 8,
+    layoutOptions: { "elk.port.side": side, ...options },
+  };
+}
+
+describe("ELK port-option parity", () => {
+  for (const side of ["NORTH", "SOUTH", "WEST", "EAST"] as const) {
+    it(`matches a fixed ${side} port`, async () => {
+      await compare({
+        id: "root",
+        layoutOptions: { "elk.algorithm": "layered" },
+        children: [
+          {
+            id: "node",
+            width: 100,
+            height: 60,
+            layoutOptions: { "elk.portConstraints": "FIXED_SIDE" },
+            ports: [port("p", side)],
+          },
+        ],
+      });
+    });
+  }
+
+  for (const borderOffset of [-4, 5]) {
+    it(`matches port border offset ${borderOffset}`, async () => {
+      await compare({
+        id: "root",
+        layoutOptions: { "elk.algorithm": "layered" },
+        children: [
+          {
+            id: "node",
+            width: 100,
+            height: 60,
+            layoutOptions: { "elk.portConstraints": "FIXED_SIDE" },
+            ports: [port("p", "EAST", { "elk.port.borderOffset": String(borderOffset) })],
+          },
+        ],
+      });
+    });
+  }
+
+  for (const alignment of ["BEGIN", "CENTER", "END", "JUSTIFIED"] as const) {
+    it(`matches ${alignment} side alignment`, async () => {
+      await compare({
+        id: "root",
+        layoutOptions: { "elk.algorithm": "layered" },
+        children: [
+          {
+            id: "node",
+            width: 100,
+            height: 80,
+            layoutOptions: {
+              "elk.portConstraints": "FIXED_ORDER",
+              "elk.portAlignment.east": alignment,
+            },
+            ports: [port("p0", "EAST"), port("p1", "EAST"), port("p2", "EAST")],
+          },
+        ],
+      });
+    });
+  }
+
+  it("matches explicit port indexes", async () => {
+    await compare({
+      id: "root",
+      layoutOptions: { "elk.algorithm": "layered" },
+      children: [
+        {
+          id: "node",
+          width: 100,
+          height: 80,
+          layoutOptions: { "elk.portConstraints": "FIXED_ORDER" },
+          ports: [
+            port("p0", "EAST", { "elk.port.index": "2" }),
+            port("p1", "EAST", { "elk.port.index": "0" }),
+            port("p2", "EAST", { "elk.port.index": "1" }),
+          ],
+        },
+      ],
+    });
+  });
+
+  it("matches port anchors, protrusion spacing, and edge endpoints", async () => {
+    const graph: ElkNode = {
+      id: "root",
+      layoutOptions: { "elk.algorithm": "layered" },
+      children: [
+        {
+          id: "source",
+          width: 40,
+          height: 30,
+          layoutOptions: { "elk.portConstraints": "FIXED_SIDE" },
+          ports: [port("sourcePort", "EAST", { "elk.port.anchor": "(2,4)" })],
+        },
+        {
+          id: "target",
+          width: 40,
+          height: 30,
+          layoutOptions: { "elk.portConstraints": "FIXED_SIDE" },
+          ports: [port("targetPort", "WEST", { "elk.port.anchor": "(6,4)" })],
+        },
+      ],
+      edges: [{ id: "edge", sources: ["sourcePort"], targets: ["targetPort"] }],
+    };
+    const expected = (await new OracleELK().layout(
+      structuredClone(graph) as never,
+    )) as unknown as ElkNode;
+    const actual = await new NativeELK().layout(structuredClone(graph));
+    expectPortGeometry(actual, expected);
+    const expectedSection = expected.edges?.[0]?.sections?.[0];
+    const actualSection = actual.edges?.[0]?.sections?.[0];
+    expect(actualSection?.startPoint).toEqual(expectedSection?.startPoint);
+    expect(actualSection?.endPoint).toEqual(expectedSection?.endPoint);
+  });
+});

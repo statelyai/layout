@@ -258,6 +258,15 @@ export default class ELK {
                         );
                         return getElementLayeredSettings(elkEdge?.layoutOptions ?? {});
                       },
+                      portSettings: (port, node) => {
+                        const child = graph.children?.find(
+                          (candidate) => String(candidate.id) === node.id,
+                        );
+                        const elkPort = child?.ports?.find(
+                          (candidate) => String(candidate.id) === port.name,
+                        );
+                        return getElementLayeredSettings(elkPort?.layoutOptions ?? {});
+                      },
                     });
     applyLayout(graph, laidOut, padding, layoutOptions);
     if (arguments_.logging || arguments_.measureExecutionTime) {
@@ -326,7 +335,15 @@ function getElementLayeredSettings(
       .map((key) => options[key])
       .find((candidate) => candidate !== undefined);
     if (value === undefined) continue;
-    settings[definition.name] = coerceLayeredOptionValue(value, definition.type) as never;
+    const vectorMatch =
+      definition.name === "port.anchor" && typeof value === "string"
+        ? value.match(/^\s*\(\s*(-?\d+(?:\.\d+)?)\s*,\s*(-?\d+(?:\.\d+)?)\s*\)\s*$/)
+        : undefined;
+    settings[definition.name] = (
+      vectorMatch
+        ? { x: Number(vectorMatch[1]), y: Number(vectorMatch[2]) }
+        : coerceLayeredOptionValue(value, definition.type)
+    ) as never;
   }
   return settings;
 }
@@ -502,8 +519,22 @@ function applyLayout(
       label.height = laidOutEdge.height;
     }
   }
-  root.width = Math.max(0, ...graph.nodes.map((node) => node.x + node.width)) + padding.right;
-  root.height = Math.max(0, ...graph.nodes.map((node) => node.y + node.height)) + padding.bottom;
+  root.width =
+    Math.max(
+      0,
+      ...graph.nodes.flatMap((node) => [
+        node.x + node.width,
+        ...(node.ports ?? []).map((port) => node.x + (port.x ?? 0) + (port.width ?? 0)),
+      ]),
+    ) + padding.right;
+  root.height =
+    Math.max(
+      0,
+      ...graph.nodes.flatMap((node) => [
+        node.y + node.height,
+        ...(node.ports ?? []).map((port) => node.y + (port.y ?? 0) + (port.height ?? 0)),
+      ]),
+    ) + padding.bottom;
 }
 
 function getParentEdgeSection(root: ElkNode, edge: ElkEdge) {

@@ -102,10 +102,8 @@ describe("getLayeredLayout", () => {
     const sourcePort = source?.ports?.[0];
     const routeStart = result.edges[0]?.points?.[0];
 
-    expect((sourcePort?.x ?? 0) + (sourcePort?.width ?? 0) / 2).toBe(source?.width);
-    expect(routeStart?.x).toBe(
-      (source?.x ?? 0) + (sourcePort?.x ?? 0) + (sourcePort?.width ?? 0) / 2,
-    );
+    expect(sourcePort?.x).toBe(source?.width);
+    expect(routeStart?.x).toBe((source?.x ?? 0) + (sourcePort?.x ?? 0));
   });
 
   it("accepts a custom routing strategy", () => {
@@ -248,6 +246,7 @@ describe("getLayout", () => {
       "long-edge-splitting",
       "crossing-minimization",
       "node-placement",
+      "port-margin-normalization",
       "edge-routing",
       "long-edge-joining",
     ]);

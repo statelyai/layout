@@ -8,10 +8,12 @@ import type {
   EdgeRouter,
   LayerAssigner,
   LayerAssignment,
+  LayerOrder,
   LayeredPhaseInput,
   NodePlacement,
   NodePlacer,
 } from "./types";
+import type { ElkLayeredOptionValueByName } from "./elk-options";
 
 function getOrientedEndpoints(
   edge: GraphEdge,
@@ -1282,15 +1284,26 @@ function getPortPoint(
   rect: EntityRect,
   fallback: Point,
   direction: LayeredPhaseInput["direction"],
+  input: LayeredPhaseInput,
 ): Point {
   if (portName === undefined) return fallback;
-  const port = placePorts(node.ports, rect, direction)?.find(
-    (candidate) => candidate.name === portName,
-  );
+  const port = placePorts(
+    node.ports,
+    rect,
+    direction,
+    (candidate) => input.portSettings?.(candidate, node),
+    input.nodeSettings?.(node),
+  )?.find((candidate) => candidate.name === portName);
   if (port?.x === undefined || port.y === undefined) return fallback;
+  const settings = input.portSettings?.(port, node);
+  const configuredAnchor = settings?.["port.anchor"] as { x?: number; y?: number } | undefined;
+  const width = port.width ?? 0;
+  const height = port.height ?? 0;
+  const defaultAnchorX = port.x >= rect.width ? 0 : port.x + width <= 0 ? width : width / 2;
+  const defaultAnchorY = port.y >= rect.height ? 0 : port.y + height <= 0 ? height : height / 2;
   return {
-    x: rect.x + port.x + (port.width ?? 0) / 2,
-    y: rect.y + port.y + (port.height ?? 0) / 2,
+    x: rect.x + port.x + (configuredAnchor?.x ?? defaultAnchorX),
+    y: rect.y + port.y + (configuredAnchor?.y ?? defaultAnchorY),
   };
 }
 
@@ -1561,6 +1574,7 @@ function routeEdges(style: "ORTHOGONAL" | "POLYLINE" | "SPLINES"): EdgeRouter {
         sourceRect,
         sourceFallback,
         input.direction,
+        input,
       );
       const end = getPortPoint(
         target,
@@ -1568,6 +1582,7 @@ function routeEdges(style: "ORTHOGONAL" | "POLYLINE" | "SPLINES"): EdgeRouter {
         targetRect,
         targetFallback,
         input.direction,
+        input,
       );
       const sourceLayer = flowLayerByNodeId.get(edge.sourceId) ?? 0;
       const targetLayer = flowLayerByNodeId.get(edge.targetId) ?? 0;
@@ -1655,33 +1670,193 @@ export function placePorts<P>(
   ports: readonly GraphPort<P>[] | undefined,
   rect: EntityRect,
   direction: LayeredPhaseInput["direction"],
+  portSettings?: (port: GraphPort<P>) => ElkLayeredOptionValueByName | undefined,
+  nodeSettings?: ElkLayeredOptionValueByName,
 ): GraphPort<P>[] | undefined {
   if (!ports) return undefined;
   const horizontal = direction === "left" || direction === "right";
   const reverse = direction === "up" || direction === "left";
-  return ports.map((port, index) => {
+  const sideByPort = new Map<GraphPort<P>, "NORTH" | "SOUTH" | "WEST" | "EAST">();
+  for (const port of ports) {
+    const configured = portSettings?.(port)?.["port.side"];
+    if (
+      configured === "NORTH" ||
+      configured === "SOUTH" ||
+      configured === "WEST" ||
+      configured === "EAST"
+    ) {
+      sideByPort.set(port, configured);
+      continue;
+    }
+    const outgoing = port.direction !== "in";
+    const farSide = reverse ? !outgoing : outgoing;
+    sideByPort.set(port, horizontal ? (farSide ? "EAST" : "WEST") : farSide ? "SOUTH" : "NORTH");
+  }
+  const grouped = new Map<string, GraphPort<P>[]>();
+  for (const port of ports) {
+    const side = sideByPort.get(port)!;
+    const group = grouped.get(side) ?? [];
+    group.push(port);
+    grouped.set(side, group);
+  }
+  for (const group of grouped.values()) {
+    group.sort(
+      (left, right) =>
+        Number(portSettings?.(left)?.["port.index"] ?? ports.indexOf(left)) -
+        Number(portSettings?.(right)?.["port.index"] ?? ports.indexOf(right)),
+    );
+  }
+  return ports.map((port) => {
     const size = { width: port.width ?? 8, height: port.height ?? 8 };
     if (port.x !== undefined && port.y !== undefined) {
       return { ...port, ...size };
     }
-    const ratio = (index + 1) / (ports.length + 1);
-    const outgoing = port.direction !== "in";
-    const farSide = reverse ? !outgoing : outgoing;
+    const side = sideByPort.get(port)!;
+    const group = grouped.get(side) ?? [port];
+    const index = group.indexOf(port);
+    const alignmentName =
+      nodeSettings?.[
+        side === "NORTH"
+          ? "portAlignment.north"
+          : side === "SOUTH"
+            ? "portAlignment.south"
+            : side === "WEST"
+              ? "portAlignment.west"
+              : "portAlignment.east"
+      ] ?? nodeSettings?.["portAlignment.default"];
+    const axisSize = side === "NORTH" || side === "SOUTH" ? rect.width : rect.height;
+    const portAxisSize = side === "NORTH" || side === "SOUTH" ? size.width : size.height;
+    const spacing = Number(nodeSettings?.["spacing.portPort"] ?? 10);
+    const occupied = group.length * portAxisSize + Math.max(0, group.length - 1) * spacing;
+    const axisPosition =
+      alignmentName === "BEGIN"
+        ? index * (portAxisSize + spacing) + portAxisSize / 2
+        : alignmentName === "END"
+          ? axisSize - occupied + index * (portAxisSize + spacing) + portAxisSize / 2
+          : alignmentName === "CENTER"
+            ? (axisSize - occupied) / 2 + index * (portAxisSize + spacing) + portAxisSize / 2
+            : alignmentName === "JUSTIFIED"
+              ? group.length === 1
+                ? axisSize / 2
+                : portAxisSize / 2 + (index * (axisSize - portAxisSize)) / (group.length - 1)
+              : portAxisSize / 2 +
+                ((index + 1) * (axisSize - group.length * portAxisSize)) / (group.length + 1) +
+                index * portAxisSize;
+    const ratio = axisSize === 0 ? 0.5 : axisPosition / axisSize;
+    const borderOffset = Number(portSettings?.(port)?.["port.borderOffset"] ?? 0);
     return {
       ...port,
       ...size,
-      x: horizontal
-        ? farSide
-          ? rect.width - size.width / 2
-          : -size.width / 2
-        : ratio * rect.width - size.width / 2,
-      y: horizontal
-        ? ratio * rect.height - size.height / 2
-        : farSide
-          ? rect.height - size.height / 2
-          : -size.height / 2,
+      x:
+        side === "EAST"
+          ? rect.width + borderOffset
+          : side === "WEST"
+            ? -size.width - borderOffset
+            : ratio * rect.width - size.width / 2,
+      y:
+        side === "SOUTH"
+          ? rect.height + borderOffset
+          : side === "NORTH"
+            ? -size.height - borderOffset
+            : ratio * rect.height - size.height / 2,
     };
   });
+}
+
+/** Account for port extents in ELK's graph-padding normalization. */
+export function normalizePlacementForPortExtents(
+  input: LayeredPhaseInput,
+  placement: NodePlacement,
+  order: LayerOrder,
+): void {
+  const horizontal = input.direction === "left" || input.direction === "right";
+  const physicalLayers = order.layers
+    .map((layer) => layer.flatMap((id) => (placement.rectByNodeId.has(id) ? [id] : [])))
+    .filter((layer) => layer.length > 0)
+    .sort((left, right) => {
+      const leftRect = placement.rectByNodeId.get(left[0]!);
+      const rightRect = placement.rectByNodeId.get(right[0]!);
+      return horizontal
+        ? (leftRect?.x ?? 0) - (rightRect?.x ?? 0)
+        : (leftRect?.y ?? 0) - (rightRect?.y ?? 0);
+    });
+  let accumulatedShift = 0;
+  for (let layerIndex = 0; layerIndex < physicalLayers.length; layerIndex++) {
+    const layer = physicalLayers[layerIndex]!;
+    if (accumulatedShift !== 0) {
+      const mutable = placement.rectByNodeId as Map<string, EntityRect>;
+      for (const id of layer) {
+        const rect = mutable.get(id);
+        if (!rect) continue;
+        mutable.set(
+          id,
+          horizontal
+            ? { ...rect, x: rect.x + accumulatedShift }
+            : { ...rect, y: rect.y + accumulatedShift },
+        );
+      }
+    }
+    const nextLayer = physicalLayers[layerIndex + 1];
+    if (!nextLayer) continue;
+    let trailingExtent = 0;
+    let leadingExtent = 0;
+    for (const [ids, trailing] of [
+      [layer, true],
+      [nextLayer, false],
+    ] as const) {
+      for (const id of ids) {
+        const node = input.graph.nodes.find((candidate) => candidate.id === id);
+        const rect = placement.rectByNodeId.get(id);
+        if (!node || !rect) continue;
+        const ports = placePorts(
+          node.ports,
+          rect,
+          input.direction,
+          (port) => input.portSettings?.(port, node),
+          input.nodeSettings?.(node),
+        );
+        for (const port of ports ?? []) {
+          const extent = horizontal
+            ? trailing
+              ? Math.max(0, (port.x ?? 0) + (port.width ?? 0) - rect.width)
+              : Math.max(0, -(port.x ?? 0))
+            : trailing
+              ? Math.max(0, (port.y ?? 0) + (port.height ?? 0) - rect.height)
+              : Math.max(0, -(port.y ?? 0));
+          if (trailing) trailingExtent = Math.max(trailingExtent, extent);
+          else leadingExtent = Math.max(leadingExtent, extent);
+        }
+      }
+    }
+    accumulatedShift += trailingExtent + leadingExtent;
+  }
+
+  let minimumX = Number.POSITIVE_INFINITY;
+  let minimumY = Number.POSITIVE_INFINITY;
+  for (const node of input.graph.nodes) {
+    const rect = placement.rectByNodeId.get(node.id);
+    if (!rect) continue;
+    minimumX = Math.min(minimumX, rect.x);
+    minimumY = Math.min(minimumY, rect.y);
+    const ports = placePorts(
+      node.ports,
+      rect,
+      input.direction,
+      (port) => input.portSettings?.(port, node),
+      input.nodeSettings?.(node),
+    );
+    for (const port of ports ?? []) {
+      minimumX = Math.min(minimumX, rect.x + (port.x ?? 0));
+      minimumY = Math.min(minimumY, rect.y + (port.y ?? 0));
+    }
+  }
+  const shiftX = Number.isFinite(minimumX) ? input.padding.left - minimumX : 0;
+  const shiftY = Number.isFinite(minimumY) ? input.padding.top - minimumY : 0;
+  if (shiftX === 0 && shiftY === 0) return;
+  const mutable = placement.rectByNodeId as Map<string, EntityRect>;
+  for (const [id, rect] of mutable) {
+    mutable.set(id, { ...rect, x: rect.x + shiftX, y: rect.y + shiftY });
+  }
 }
 
 export function getPolylineMidpoint(points: readonly Point[]): Point {
