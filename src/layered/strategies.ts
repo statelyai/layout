@@ -9,6 +9,7 @@ import type {
   LayerAssigner,
   LayerAssignment,
   LayeredPhaseInput,
+  NodePlacement,
   NodePlacer,
 } from "./types";
 
@@ -1130,6 +1131,32 @@ function sumWithSpacing(
   );
 }
 
+function nodeFlowOffset(
+  input: LayeredPhaseInput,
+  id: string,
+  layerFlowSize: number,
+  nodeFlowSize: number,
+): number {
+  const node = input.graph.nodes.find((candidate) => candidate.id === id);
+  const alignment = node
+    ? (input.nodeSettings?.(node)?.alignment ?? input.settings.alignment)
+    : input.settings.alignment;
+  let ratio: number;
+  if (alignment === "LEFT" || alignment === "TOP") ratio = 0;
+  else if (alignment === "RIGHT" || alignment === "BOTTOM") ratio = 1;
+  else if (alignment === "CENTER") ratio = 0.5;
+  else {
+    let incoming = 0;
+    let outgoing = 0;
+    for (const edge of input.graph.edges) {
+      if (edge.sourceId === id) outgoing++;
+      if (edge.targetId === id) incoming++;
+    }
+    ratio = incoming + outgoing === 0 ? 0.5 : outgoing / (incoming + outgoing);
+  }
+  return (layerFlowSize - nodeFlowSize) * ratio;
+}
+
 export const placeNodesInLayers: NodePlacer = (input, order) => {
   const horizontal = input.direction === "left" || input.direction === "right";
   const layerFlowSizes = order.layers.map((layer) =>
@@ -1155,7 +1182,13 @@ export const placeNodesInLayers: NodePlacer = (input, order) => {
     for (const id of layer) {
       const size = input.sizes.get(id) ?? { width: 0, height: 0 };
       const centeredFlow =
-        flow + (layerFlowSizes[layerIndex] ?? 0) - (horizontal ? size.width : size.height);
+        flow +
+        nodeFlowOffset(
+          input,
+          id,
+          layerFlowSizes[layerIndex] ?? 0,
+          horizontal ? size.width : size.height,
+        );
       const rect = horizontal
         ? { x: centeredFlow, y: cross, ...size }
         : { x: cross, y: centeredFlow, ...size };
@@ -1222,8 +1255,12 @@ export const placeNodesInteractively: NodePlacer = (input, order) => {
       );
       let nodeFlow =
         (flowByLayer[layerIndex] ?? leadingPadding) +
-        (layerFlowSizes[layerIndex] ?? 0) -
-        (horizontal ? size.width : size.height);
+        nodeFlowOffset(
+          input,
+          id,
+          layerFlowSizes[layerIndex] ?? 0,
+          horizontal ? size.width : size.height,
+        );
       if (reverse) {
         const flowSize = horizontal ? size.width : size.height;
         nodeFlow = contentEnd - nodeFlow + leadingPadding - flowSize;
@@ -1258,19 +1295,84 @@ function getPortPoint(
 }
 
 function simplifyRoute(points: readonly Point[]): Point[] {
+  const equal = (left: number, right: number) => Math.abs(left - right) < 1e-9;
   const unique = points.filter(
     (point, index) =>
-      index === 0 || point.x !== points[index - 1]?.x || point.y !== points[index - 1]?.y,
+      index === 0 ||
+      !equal(point.x, points[index - 1]?.x ?? Number.NaN) ||
+      !equal(point.y, points[index - 1]?.y ?? Number.NaN),
   );
   return unique.filter((point, index) => {
     const previous = unique[index - 1];
     const next = unique[index + 1];
     if (!previous || !next) return true;
     return !(
-      (previous.x === point.x && point.x === next.x) ||
-      (previous.y === point.y && point.y === next.y)
+      (equal(previous.x, point.x) && equal(point.x, next.x)) ||
+      (equal(previous.y, point.y) && equal(point.y, next.y))
     );
   });
+}
+
+function implicitEdgeEndpoints(
+  input: LayeredPhaseInput,
+  placement: NodePlacement,
+): ReadonlyMap<string, { source: Point; target: Point }> {
+  const horizontal = input.direction === "left" || input.direction === "right";
+  const groups = new Map<string, Array<{ edge: GraphEdge; endpoint: "source" | "target" }>>();
+  for (const edge of input.graph.edges) {
+    const sourceRect = placement.rectByNodeId.get(edge.sourceId);
+    const targetRect = placement.rectByNodeId.get(edge.targetId);
+    if (!sourceRect || !targetRect) continue;
+    const sourceFlow = horizontal ? sourceRect.x : sourceRect.y;
+    const targetFlow = horizontal ? targetRect.x : targetRect.y;
+    const forward = sourceFlow <= targetFlow;
+    const sourceSide = forward ? "after" : "before";
+    const targetSide = forward ? "before" : "after";
+    const sourceKey = `${edge.sourceId}:${sourceSide}`;
+    const targetKey = `${edge.targetId}:${targetSide}`;
+    const sourceGroup = groups.get(sourceKey) ?? [];
+    sourceGroup.push({ edge, endpoint: "source" });
+    groups.set(sourceKey, sourceGroup);
+    const targetGroup = groups.get(targetKey) ?? [];
+    targetGroup.push({ edge, endpoint: "target" });
+    groups.set(targetKey, targetGroup);
+  }
+
+  const result = new Map<string, { source: Point; target: Point }>();
+  for (const [key, entries] of groups) {
+    const split = key.lastIndexOf(":");
+    const nodeId = key.slice(0, split);
+    const side = key.slice(split + 1);
+    const rect = placement.rectByNodeId.get(nodeId);
+    if (!rect) continue;
+    entries.sort((left, right) => {
+      const leftOther = left.endpoint === "source" ? left.edge.targetId : left.edge.sourceId;
+      const rightOther = right.endpoint === "source" ? right.edge.targetId : right.edge.sourceId;
+      const leftRect = placement.rectByNodeId.get(leftOther);
+      const rightRect = placement.rectByNodeId.get(rightOther);
+      const leftCross = horizontal ? (leftRect?.y ?? 0) : (leftRect?.x ?? 0);
+      const rightCross = horizontal ? (rightRect?.y ?? 0) : (rightRect?.x ?? 0);
+      return leftCross - rightCross;
+    });
+    entries.forEach(({ edge, endpoint }, index) => {
+      const reversedCrossOrder = side === "before";
+      const ordinal = reversedCrossOrder ? entries.length - index : index + 1;
+      const ratio = ordinal / (entries.length + 1);
+      const point = horizontal
+        ? {
+            x: side === "after" ? rect.x + rect.width : rect.x,
+            y: rect.y + ratio * rect.height,
+          }
+        : {
+            x: rect.x + ratio * rect.width,
+            y: side === "after" ? rect.y + rect.height : rect.y,
+          };
+      const pair = result.get(edge.id) ?? { source: point, target: point };
+      pair[endpoint] = point;
+      result.set(edge.id, pair);
+    });
+  }
+  return result;
 }
 
 function routeEdges(style: "ORTHOGONAL" | "POLYLINE" | "SPLINES"): EdgeRouter {
@@ -1279,6 +1381,88 @@ function routeEdges(style: "ORTHOGONAL" | "POLYLINE" | "SPLINES"): EdgeRouter {
     const pointsByEdgeId = new Map<string, readonly Point[]>();
     const horizontal = input.direction === "left" || input.direction === "right";
     const reverse = input.direction === "up" || input.direction === "left";
+    let implicitEndpoints = implicitEdgeEndpoints(input, placement);
+    const flowIntervals = [...placement.rectByNodeId.entries()]
+      .map(([id, rect]) => ({
+        id,
+        start: horizontal ? rect.x : rect.y,
+        end: horizontal ? rect.x + rect.width : rect.y + rect.height,
+      }))
+      .sort((left, right) => left.start - right.start || left.end - right.end);
+    const flowLayerByNodeId = new Map<string, number>();
+    const flowLayers: Array<{ start: number; end: number }> = [];
+    for (const interval of flowIntervals) {
+      const current = flowLayers.at(-1);
+      if (!current || interval.start > current.end) {
+        flowLayers.push({ start: interval.start, end: interval.end });
+      } else {
+        current.start = Math.min(current.start, interval.start);
+        current.end = Math.max(current.end, interval.end);
+      }
+      flowLayerByNodeId.set(interval.id, flowLayers.length - 1);
+    }
+
+    if (style === "POLYLINE" || style === "SPLINES") {
+      const mutableRects = placement.rectByNodeId as Map<string, EntityRect>;
+      const edgeSpacing = Number(input.settings["spacing.edgeEdgeBetweenLayers"] ?? 10);
+      const nodeSpacing = input.spacing.layer;
+      const edgeSpaceFactor = Math.min(1, edgeSpacing / nodeSpacing);
+      const extraByGap = flowLayers.slice(0, -1).map(() => 0);
+      const nonStraightByGap = flowLayers.slice(0, -1).map(() => 0);
+      for (const edge of input.graph.edges) {
+        const sourceLayer = flowLayerByNodeId.get(edge.sourceId);
+        const targetLayer = flowLayerByNodeId.get(edge.targetId);
+        const endpoints = implicitEndpoints.get(edge.id);
+        if (sourceLayer === undefined || targetLayer === undefined || !endpoints) continue;
+        if (Math.abs(sourceLayer - targetLayer) !== 1) continue;
+        const gap = Math.min(sourceLayer, targetLayer);
+        const crossDifference = Math.abs(
+          horizontal
+            ? endpoints.target.y - endpoints.source.y
+            : endpoints.target.x - endpoints.source.x,
+        );
+        if (style === "POLYLINE") {
+          extraByGap[gap] = Math.max(extraByGap[gap] ?? 0, 0.4 * edgeSpaceFactor * crossDifference);
+        } else if (crossDifference >= 0.2) {
+          nonStraightByGap[gap] = (nonStraightByGap[gap] ?? 0) + 1;
+          const sloppyFactor = Number(
+            input.settings["edgeRouting.splines.sloppy.layerSpacingFactor"] ?? 0.2,
+          );
+          extraByGap[gap] = Math.max(
+            extraByGap[gap] ?? 0,
+            sloppyFactor * edgeSpaceFactor * crossDifference,
+          );
+        }
+      }
+      let nextStart = flowLayers[0]?.start ?? 0;
+      for (const [layerNo, bounds] of flowLayers.entries()) {
+        const shift = nextStart - bounds.start;
+        for (const [id, rect] of placement.rectByNodeId) {
+          if (flowLayerByNodeId.get(id) !== layerNo) continue;
+          mutableRects.set(
+            id,
+            horizontal ? { ...rect, x: rect.x + shift } : { ...rect, y: rect.y + shift },
+          );
+        }
+        const size = bounds.end - bounds.start;
+        bounds.start = nextStart;
+        bounds.end = nextStart + size;
+        const splineSlots = nonStraightByGap[layerNo] ?? 0;
+        const splineSpacing =
+          splineSlots === 0
+            ? nodeSpacing
+            : Math.max(
+                nodeSpacing,
+                Number(input.settings["spacing.edgeNodeBetweenLayers"] ?? 10) * 2 +
+                  (splineSlots - 1) * edgeSpacing,
+                extraByGap[layerNo] ?? 0,
+              );
+        nextStart =
+          bounds.end +
+          (style === "POLYLINE" ? nodeSpacing + (extraByGap[layerNo] ?? 0) : splineSpacing);
+      }
+      implicitEndpoints = implicitEdgeEndpoints(input, placement);
+    }
 
     for (const edge of input.graph.edges) {
       const source = nodeById.get(edge.sourceId);
@@ -1299,24 +1483,28 @@ function routeEdges(style: "ORTHOGONAL" | "POLYLINE" | "SPLINES"): EdgeRouter {
         continue;
       }
 
-      const sourceFallback = horizontal
-        ? {
-            x: sourceRect.x + (reverse ? 0 : sourceRect.width),
-            y: sourceRect.y + sourceRect.height / 2,
-          }
-        : {
-            x: sourceRect.x + sourceRect.width / 2,
-            y: sourceRect.y + (reverse ? 0 : sourceRect.height),
-          };
-      const targetFallback = horizontal
-        ? {
-            x: targetRect.x + (reverse ? targetRect.width : 0),
-            y: targetRect.y + targetRect.height / 2,
-          }
-        : {
-            x: targetRect.x + targetRect.width / 2,
-            y: targetRect.y + (reverse ? targetRect.height : 0),
-          };
+      const sourceFallback =
+        implicitEndpoints.get(edge.id)?.source ??
+        (horizontal
+          ? {
+              x: sourceRect.x + (reverse ? 0 : sourceRect.width),
+              y: sourceRect.y + sourceRect.height / 2,
+            }
+          : {
+              x: sourceRect.x + sourceRect.width / 2,
+              y: sourceRect.y + (reverse ? 0 : sourceRect.height),
+            });
+      const targetFallback =
+        implicitEndpoints.get(edge.id)?.target ??
+        (horizontal
+          ? {
+              x: targetRect.x + (reverse ? targetRect.width : 0),
+              y: targetRect.y + targetRect.height / 2,
+            }
+          : {
+              x: targetRect.x + targetRect.width / 2,
+              y: targetRect.y + (reverse ? targetRect.height : 0),
+            });
       const start = getPortPoint(
         source,
         edge.sourcePort,
@@ -1331,19 +1519,78 @@ function routeEdges(style: "ORTHOGONAL" | "POLYLINE" | "SPLINES"): EdgeRouter {
         targetFallback,
         input.direction,
       );
+      const sourceLayer = flowLayerByNodeId.get(edge.sourceId) ?? 0;
+      const targetLayer = flowLayerByNodeId.get(edge.targetId) ?? 0;
+      const earlierLayer = Math.min(sourceLayer, targetLayer);
+      const laterLayer = Math.max(sourceLayer, targetLayer);
+      const earlier = flowLayers[earlierLayer];
+      const later = flowLayers[laterLayer];
+      const track =
+        earlier && later && earlierLayer !== laterLayer
+          ? (earlier.end + later.start) / 2
+          : horizontal
+            ? (start.x + end.x) / 2
+            : (start.y + end.y) / 2;
+      const polylineMiddle: Point[] = [];
+      if (style === "POLYLINE" && earlier && later && earlierLayer !== laterLayer) {
+        const slopedZone = Number(input.settings["edgeRouting.polyline.slopedEdgeZoneWidth"] ?? 2);
+        const sourceBounds = flowLayers[sourceLayer];
+        const targetBounds = flowLayers[targetLayer];
+        if (sourceBounds && targetBounds) {
+          const sourceBoundary = sourceLayer < targetLayer ? sourceBounds.end : sourceBounds.start;
+          const targetBoundary = sourceLayer < targetLayer ? targetBounds.start : targetBounds.end;
+          const sourceFlow = horizontal ? start.x : start.y;
+          const targetFlow = horizontal ? end.x : end.y;
+          const crossDifference = horizontal
+            ? Math.abs(end.y - start.y)
+            : Math.abs(end.x - start.x);
+          if (crossDifference > 1 && Math.abs(sourceFlow - sourceBoundary) > slopedZone) {
+            polylineMiddle.push(
+              horizontal ? { x: sourceBoundary, y: start.y } : { x: start.x, y: sourceBoundary },
+            );
+          }
+          if (crossDifference > 1 && Math.abs(targetFlow - targetBoundary) > slopedZone) {
+            polylineMiddle.push(
+              horizontal ? { x: targetBoundary, y: end.y } : { x: end.x, y: targetBoundary },
+            );
+          }
+        }
+      }
+      const splineMiddle: Point[] = [];
+      if (style === "SPLINES") {
+        const sourceOutgoing = input.graph.edges.filter(
+          (candidate) => candidate.sourceId === edge.sourceId,
+        ).length;
+        const targetIncoming = input.graph.edges.filter(
+          (candidate) => candidate.targetId === edge.targetId,
+        ).length;
+        const degreeDifference = Math.sign(sourceOutgoing - targetIncoming);
+        const sourceCross = horizontal ? start.y : start.x;
+        const targetCross = horizontal ? end.y : end.x;
+        const centerCross =
+          (sourceCross + targetCross) / 2 + (targetCross - sourceCross) * 0.4 * degreeDifference;
+        const centerFlow = track;
+        splineMiddle.push(
+          start,
+          horizontal ? { x: centerFlow, y: centerCross } : { x: centerCross, y: centerFlow },
+        );
+      }
       const middle =
         style === "POLYLINE"
-          ? []
-          : horizontal
-            ? [
-                { x: (start.x + end.x) / 2, y: start.y },
-                { x: (start.x + end.x) / 2, y: end.y },
-              ]
-            : [
-                { x: start.x, y: (start.y + end.y) / 2 },
-                { x: end.x, y: (start.y + end.y) / 2 },
-              ];
-      pointsByEdgeId.set(edge.id, simplifyRoute([start, ...middle, end]));
+          ? polylineMiddle
+          : style === "SPLINES"
+            ? splineMiddle
+            : horizontal
+              ? [
+                  { x: track, y: start.y },
+                  { x: track, y: end.y },
+                ]
+              : [
+                  { x: start.x, y: track },
+                  { x: end.x, y: track },
+                ];
+      const routedPoints = [start, ...middle, end];
+      pointsByEdgeId.set(edge.id, style === "SPLINES" ? routedPoints : simplifyRoute(routedPoints));
     }
 
     return { pointsByEdgeId };

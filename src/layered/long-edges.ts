@@ -98,10 +98,19 @@ export function splitLongEdges(
   };
 }
 
-function appendPoints(target: Point[], points: readonly Point[]): void {
-  for (const point of points) {
+function appendPoints(
+  target: Point[],
+  points: readonly Point[],
+  preserveInternalDuplicates: boolean,
+): void {
+  for (const [index, point] of points.entries()) {
     const previous = target.at(-1);
-    if (previous?.x === point.x && previous.y === point.y) continue;
+    if (
+      previous?.x === point.x &&
+      previous.y === point.y &&
+      (!preserveInternalDuplicates || index === 0)
+    )
+      continue;
     target.push(point);
   }
 }
@@ -110,12 +119,13 @@ function appendPoints(target: Point[], points: readonly Point[]): void {
 export function joinLongEdgeRoutes(
   routes: EdgeRoutes,
   segmentIdsByEdgeId: ReadonlyMap<string, readonly string[]>,
+  preserveInternalDuplicates = false,
 ): EdgeRoutes {
   const pointsByEdgeId = new Map<string, readonly Point[]>();
   for (const [edgeId, segmentIds] of segmentIdsByEdgeId) {
     const points: Point[] = [];
     for (const segmentId of segmentIds) {
-      appendPoints(points, routes.pointsByEdgeId.get(segmentId) ?? []);
+      appendPoints(points, routes.pointsByEdgeId.get(segmentId) ?? [], preserveInternalDuplicates);
     }
     pointsByEdgeId.set(edgeId, points);
   }

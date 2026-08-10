@@ -256,7 +256,7 @@ function runLayeredPipeline<N, E, G, P>(
     edgeRouter(expanded.input, expanded.orientation, placement),
   );
   const routes = measure("long-edge-joining", () =>
-    joinLongEdgeRoutes(expandedRoutes, expanded.segmentIdsByEdgeId),
+    joinLongEdgeRoutes(expandedRoutes, expanded.segmentIdsByEdgeId, edgeRouting === "SPLINES"),
   );
 
   const nodes = graph.nodes.map((node): VisualNode<N, P> => {
