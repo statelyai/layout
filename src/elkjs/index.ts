@@ -473,6 +473,16 @@ function toGraph(root: ElkNode, globalOptions: Readonly<Record<string, unknown>>
       if (port.id !== undefined) portOwnerById.set(String(port.id), String(child.id));
     }
   }
+  const sourcePortIds = new Set(
+    (root.edges ?? []).flatMap((edge) =>
+      (edge.sources ?? (edge.source === undefined ? [] : [edge.source])).map(String),
+    ),
+  );
+  const targetPortIds = new Set(
+    (root.edges ?? []).flatMap((edge) =>
+      (edge.targets ?? (edge.target === undefined ? [] : [edge.target])).map(String),
+    ),
+  );
 
   return createGraph({
     id: String(root.id),
@@ -486,7 +496,13 @@ function toGraph(root: ElkNode, globalOptions: Readonly<Record<string, unknown>>
       label: child.labels?.[0]?.text,
       ports: child.ports?.map((port) => ({
         name: String(port.id),
-        direction: "inout" as const,
+        direction: sourcePortIds.has(String(port.id))
+          ? targetPortIds.has(String(port.id))
+            ? ("inout" as const)
+            : ("out" as const)
+          : targetPortIds.has(String(port.id))
+            ? ("in" as const)
+            : ("inout" as const),
         x: port.x,
         y: port.y,
         width: port.width,

@@ -45,6 +45,7 @@ import { joinLongEdgeRoutes, splitLongEdges } from "./long-edges";
 import { placeNodesWithBrandesKoepf } from "./bk-node-placement";
 import { placeNodesWithLinearSegments } from "./linear-segments-node-placement";
 import { placeNodesWithNetworkSimplex } from "./network-simplex-node-placement";
+import { applyHighDegreeNodeTreatment } from "./high-degree";
 
 export type {
   AcyclicOrientation,
@@ -870,7 +871,11 @@ function runLayeredPipeline<N, E, G, P>(
     );
   })();
   const assignment = measure("layer-assignment", () =>
-    applyPartitions(input, applyLayerConstraints(input, layerAssigner(input, orientation))),
+    applyHighDegreeNodeTreatment(
+      input,
+      orientation,
+      applyPartitions(input, applyLayerConstraints(input, layerAssigner(input, orientation))),
+    ),
   );
   const expanded = measure("long-edge-splitting", () =>
     splitLongEdges(input, orientation, assignment),

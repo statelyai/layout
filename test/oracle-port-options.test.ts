@@ -47,6 +47,46 @@ function port(
 }
 
 describe("ELK port-option parity", () => {
+  for (const constraints of [
+    "UNDEFINED",
+    "FREE",
+    "FIXED_SIDE",
+    "FIXED_ORDER",
+    "FIXED_RATIO",
+    "FIXED_POS",
+  ] as const) {
+    it(`matches ${constraints} port constraints`, async () => {
+      await compare({
+        id: "root",
+        layoutOptions: {
+          "elk.algorithm": "layered",
+          "elk.direction": "RIGHT",
+          "elk.separateConnectedComponents": "false",
+        },
+        children: [
+          {
+            id: "source",
+            width: 100,
+            height: 80,
+            layoutOptions: { "elk.portConstraints": constraints },
+            ports: [
+              {
+                ...port("p0", "NORTH", { "elk.port.index": "1" }),
+                x: 17,
+                y: 23,
+              },
+              {
+                ...port("p1", "SOUTH", { "elk.port.index": "0" }),
+                x: 71,
+                y: 41,
+              },
+            ],
+          },
+        ],
+      });
+    });
+  }
+
   for (const side of ["NORTH", "SOUTH", "WEST", "EAST"] as const) {
     it(`matches a fixed ${side} port`, async () => {
       await compare({

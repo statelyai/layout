@@ -2295,19 +2295,26 @@ export function placePorts<P>(
   if (!ports) return undefined;
   const horizontal = direction === "left" || direction === "right";
   const reverse = direction === "up" || direction === "left";
+  const constraints = String(nodeSettings?.portConstraints ?? "UNDEFINED");
+  const sideFixed =
+    constraints === "FIXED_SIDE" ||
+    constraints === "FIXED_ORDER" ||
+    constraints === "FIXED_RATIO" ||
+    constraints === "FIXED_POS";
   const sideByPort = new Map<GraphPort<P>, "NORTH" | "SOUTH" | "WEST" | "EAST">();
   for (const port of ports) {
     const configured = portSettings?.(port)?.["port.side"];
     if (
-      configured === "NORTH" ||
-      configured === "SOUTH" ||
-      configured === "WEST" ||
-      configured === "EAST"
+      sideFixed &&
+      (configured === "NORTH" ||
+        configured === "SOUTH" ||
+        configured === "WEST" ||
+        configured === "EAST")
     ) {
       sideByPort.set(port, configured);
       continue;
     }
-    const outgoing = port.direction !== "in";
+    const outgoing = port.direction === "out";
     const farSide = reverse ? !outgoing : outgoing;
     sideByPort.set(port, horizontal ? (farSide ? "EAST" : "WEST") : farSide ? "SOUTH" : "NORTH");
   }
@@ -2327,8 +2334,18 @@ export function placePorts<P>(
   }
   return ports.map((port) => {
     const size = { width: port.width ?? 8, height: port.height ?? 8 };
-    if (port.x !== undefined && port.y !== undefined) {
-      return { ...port, ...size };
+    if (
+      (constraints === "FIXED_POS" || constraints === "FIXED_RATIO") &&
+      port.x !== undefined &&
+      port.y !== undefined
+    ) {
+      const side = sideByPort.get(port)!;
+      return {
+        ...port,
+        ...size,
+        x: side === "EAST" ? rect.width : side === "WEST" ? -size.width : port.x,
+        y: side === "SOUTH" ? rect.height : side === "NORTH" ? -size.height : port.y,
+      };
     }
     const side = sideByPort.get(port)!;
     const group = grouped.get(side) ?? [port];
