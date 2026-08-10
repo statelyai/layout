@@ -7,6 +7,7 @@
 import type { EntityRect, GraphEdge } from "@statelyai/graph";
 import { placeNodesInLayers } from "./strategies";
 import type { LayerOrder, LayeredPhaseInput, NodePlacement } from "./types";
+import { nodeNodeSpacing } from "./spacing";
 
 interface Segment {
   ids: string[];
@@ -144,7 +145,9 @@ export function placeNodesWithLinearSegments(
       uppermost = Math.max(
         uppermost,
         (layerExtent[layerNo] ?? 0) +
-          (recent[layerNo] === undefined ? edgeSpacing : input.spacing.node),
+          (recent[layerNo] === undefined
+            ? edgeSpacing
+            : nodeNodeSpacing(input, recent[layerNo]!, id)),
       );
     }
     for (const id of segment.ids) {
@@ -218,9 +221,9 @@ export function placeNodesWithLinearSegments(
             (y.get(upperId) ?? 0) +
             crossSize(input, upperId) +
             upper.deflection +
-            input.spacing.node;
+            nodeNodeSpacing(input, upperId, lowerId);
           const lowerExtent = (y.get(lowerId) ?? 0) + lower.deflection;
-          if (upperExtent > lowerExtent + 0.0001 * input.spacing.node) {
+          if (upperExtent > lowerExtent + 0.0001 * nodeNodeSpacing(input, upperId, lowerId)) {
             const weight = upper.weight + lower.weight;
             if (weight > 0) {
               lower.deflection =
@@ -268,13 +271,15 @@ export function placeNodesWithLinearSegments(
         roomAbove,
         upper === undefined
           ? (y.get(id) ?? 0)
-          : (y.get(id) ?? 0) - ((y.get(upper) ?? 0) + crossSize(input, upper) + input.spacing.node),
+          : (y.get(id) ?? 0) -
+              ((y.get(upper) ?? 0) + crossSize(input, upper) + nodeNodeSpacing(input, upper, id)),
       );
       roomBelow = Math.min(
         roomBelow,
         lower === undefined
           ? 2 * (y.get(id) ?? 0)
-          : (y.get(lower) ?? 0) - ((y.get(id) ?? 0) + crossSize(input, id) + input.spacing.node),
+          : (y.get(lower) ?? 0) -
+              ((y.get(id) ?? 0) + crossSize(input, id) + nodeNodeSpacing(input, id, lower)),
       );
     }
     let displacement = Number.POSITIVE_INFINITY;

@@ -402,6 +402,31 @@ function coerceLayeredOptionValue(value: unknown, type: string): unknown {
   return value;
 }
 
+function parseIndividualSpacing(value: unknown): unknown {
+  if (typeof value === "object" && value !== null) return value;
+  if (typeof value !== "string") return value;
+  const result: Record<string, number> = {};
+  for (const entry of value.split(/;,;|;/)) {
+    const match = entry.match(
+      /^\s*(?:org\.eclipse\.elk\.)?(?:layered\.)?([^:]+)\s*:\s*(-?\d+(?:\.\d+)?)\s*$/,
+    );
+    if (!match) continue;
+    const sourceName = match[1]!;
+    const definition = elkLayeredOptionDefinitions.find((candidate) => {
+      const suffix = candidate.elkId.replace(/^org\.eclipse\.elk\./, "");
+      return candidate.name === sourceName || suffix === sourceName;
+    });
+    if (definition) result[definition.name] = Number(match[2]);
+  }
+  return result;
+}
+
+function parseMargin(value: unknown): unknown {
+  if (typeof value === "object" && value !== null) return value;
+  if (typeof value !== "string") return value;
+  return parsePadding(value, 0);
+}
+
 function getElementLayeredSettings(
   options: Readonly<Record<string, unknown>>,
 ): ElkLayeredOptionValueByName {
@@ -419,7 +444,11 @@ function getElementLayeredSettings(
     settings[definition.name] = (
       vectorMatch
         ? { x: Number(vectorMatch[1]), y: Number(vectorMatch[2]) }
-        : coerceLayeredOptionValue(value, definition.type)
+        : definition.name === "spacing.individual"
+          ? parseIndividualSpacing(value)
+          : definition.name === "spacing.portsSurrounding"
+            ? parseMargin(value)
+            : coerceLayeredOptionValue(value, definition.type)
     ) as never;
   }
   return settings;

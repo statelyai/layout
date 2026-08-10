@@ -13,6 +13,7 @@ import type {
   NodePlacement,
   NodePlacer,
 } from "./types";
+import { nodeNodeSpacing } from "./spacing";
 import type { ElkLayeredOptionValueByName } from "./elk-options";
 import { conservativeSpline } from "./spline-bezier";
 import { getFlexiblePortPosition } from "./flexible-ports";
@@ -1457,11 +1458,14 @@ function sumWithSpacing(
   input: LayeredPhaseInput,
   axis: "width" | "height",
 ): number {
-  return ids.reduce(
-    (total, id, index) =>
-      total + (input.sizes.get(id)?.[axis] ?? 0) + (index === 0 ? 0 : input.spacing.node),
-    0,
-  );
+  return ids.reduce((total, id, index) => {
+    const previous = ids[index - 1];
+    return (
+      total +
+      (input.sizes.get(id)?.[axis] ?? 0) +
+      (previous === undefined ? 0 : nodeNodeSpacing(input, previous, id))
+    );
+  }, 0);
 }
 
 function nodeFlowOffset(
@@ -1512,7 +1516,7 @@ export const placeNodesInLayers: NodePlacer = (input, order) => {
     let cross =
       (horizontal ? input.padding.top : input.padding.left) +
       (maxCrossSize - (layerCrossSizes[layerIndex] ?? 0)) / 2;
-    for (const id of layer) {
+    for (const [nodeIndex, id] of layer.entries()) {
       const size = input.sizes.get(id) ?? { width: 0, height: 0 };
       const centeredFlow =
         flow +
@@ -1526,7 +1530,10 @@ export const placeNodesInLayers: NodePlacer = (input, order) => {
         ? { x: centeredFlow, y: cross, ...size }
         : { x: cross, y: centeredFlow, ...size };
       rectByNodeId.set(id, rect);
-      cross += (horizontal ? size.height : size.width) + input.spacing.node;
+      const next = layer[nodeIndex + 1];
+      cross +=
+        (horizontal ? size.height : size.width) +
+        (next === undefined ? 0 : nodeNodeSpacing(input, id, next));
     }
     flow += (layerFlowSizes[layerIndex] ?? 0) + input.spacing.layer;
   });
@@ -1584,7 +1591,7 @@ export const placeNodesInteractively: NodePlacer = (input, order) => {
         originalCross,
         minimumCross === Number.NEGATIVE_INFINITY
           ? originalCross
-          : minimumCross + input.spacing.node,
+          : minimumCross + nodeNodeSpacing(input, layer[Math.max(0, layer.indexOf(id) - 1)]!, id),
       );
       let nodeFlow =
         (flowByLayer[layerIndex] ?? leadingPadding) +
@@ -1623,7 +1630,7 @@ function getPortPoint(
     rect,
     direction,
     (candidate) => input.portSettings?.(candidate, node),
-    input.nodeSettings?.(node),
+    { ...input.settings, ...input.nodeSettings?.(node) },
   )?.find((candidate) => candidate.name === portName);
   if (port?.x === undefined || port.y === undefined) return fallback;
   const settings = input.portSettings?.(port, node);
@@ -2315,6 +2322,9 @@ export function placePorts<P>(
   const horizontal = direction === "left" || direction === "right";
   const reverse = direction === "up" || direction === "left";
   const constraints = String(nodeSettings?.portConstraints ?? "UNDEFINED");
+  const surrounding = (nodeSettings?.["spacing.portsSurrounding"] ?? {}) as Partial<
+    Record<"top" | "right" | "bottom" | "left", number>
+  >;
   const sideFixed =
     constraints === "FIXED_SIDE" ||
     constraints === "FIXED_ORDER" ||
@@ -2390,22 +2400,40 @@ export function placePorts<P>(
               : "portAlignment.east"
       ] ?? nodeSettings?.["portAlignment.default"];
     const axisSize = side === "NORTH" || side === "SOUTH" ? rect.width : rect.height;
+    const axisStart = Number(
+      side === "NORTH" || side === "SOUTH" ? (surrounding.left ?? 0) : (surrounding.top ?? 0),
+    );
+    const axisEnd = Number(
+      side === "NORTH" || side === "SOUTH" ? (surrounding.right ?? 0) : (surrounding.bottom ?? 0),
+    );
+    const availableAxisSize = Math.max(0, axisSize - axisStart - axisEnd);
     const portAxisSize = side === "NORTH" || side === "SOUTH" ? size.width : size.height;
     const spacing = Number(nodeSettings?.["spacing.portPort"] ?? 10);
     const occupied = group.length * portAxisSize + Math.max(0, group.length - 1) * spacing;
     const axisPosition =
       alignmentName === "BEGIN"
-        ? index * (portAxisSize + spacing) + portAxisSize / 2
+        ? axisStart + index * (portAxisSize + spacing) + portAxisSize / 2
         : alignmentName === "END"
-          ? axisSize - occupied + index * (portAxisSize + spacing) + portAxisSize / 2
+          ? axisStart +
+            availableAxisSize -
+            occupied +
+            index * (portAxisSize + spacing) +
+            portAxisSize / 2
           : alignmentName === "CENTER"
-            ? (axisSize - occupied) / 2 + index * (portAxisSize + spacing) + portAxisSize / 2
+            ? axisStart +
+              (availableAxisSize - occupied) / 2 +
+              index * (portAxisSize + spacing) +
+              portAxisSize / 2
             : alignmentName === "JUSTIFIED"
               ? group.length === 1
-                ? axisSize / 2
-                : portAxisSize / 2 + (index * (axisSize - portAxisSize)) / (group.length - 1)
-              : portAxisSize / 2 +
-                ((index + 1) * (axisSize - group.length * portAxisSize)) / (group.length + 1) +
+                ? axisStart + availableAxisSize / 2
+                : axisStart +
+                  portAxisSize / 2 +
+                  (index * (availableAxisSize - portAxisSize)) / (group.length - 1)
+              : axisStart +
+                portAxisSize / 2 +
+                ((index + 1) * (availableAxisSize - group.length * portAxisSize)) /
+                  (group.length + 1) +
                 index * portAxisSize;
     const ratio = axisSize === 0 ? 0.5 : axisPosition / axisSize;
     const borderOffset = Number(portSettings?.(port)?.["port.borderOffset"] ?? 0);
@@ -2478,7 +2506,7 @@ export function normalizePlacementForPortExtents(
           rect,
           input.direction,
           (port) => input.portSettings?.(port, node),
-          input.nodeSettings?.(node),
+          { ...input.settings, ...input.nodeSettings?.(node) },
         );
         for (const port of ports ?? []) {
           const extent = horizontal
@@ -2508,7 +2536,7 @@ export function normalizePlacementForPortExtents(
       rect,
       input.direction,
       (port) => input.portSettings?.(port, node),
-      input.nodeSettings?.(node),
+      { ...input.settings, ...input.nodeSettings?.(node) },
     );
     for (const port of ports ?? []) {
       minimumX = Math.min(minimumX, rect.x + (port.x ?? 0));

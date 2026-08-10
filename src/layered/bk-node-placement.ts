@@ -7,6 +7,7 @@
 import type { EntityRect } from "@statelyai/graph";
 import { placeNodesInLayers } from "./strategies";
 import type { LayerOrder, LayeredPhaseInput, NodePlacement } from "./types";
+import { nodeNodeSpacing } from "./spacing";
 
 type HDirection = "LEFT" | "RIGHT";
 type VDirection = "UP" | "DOWN";
@@ -202,7 +203,7 @@ function compact(
           bal.sink.set(root, bal.sink.get(neighborRoot) ?? neighborRoot);
         const rootSink = bal.sink.get(root) ?? root;
         const neighborSink = bal.sink.get(neighborRoot) ?? neighborRoot;
-        const spacing = input.spacing.node;
+        const spacing = nodeNodeSpacing(input, current, neighbor);
         if (rootSink === neighborSink) {
           const candidate =
             bal.vdir === "UP"

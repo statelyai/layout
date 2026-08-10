@@ -9,6 +9,7 @@ import { runNetworkSimplex } from "./network-simplex";
 import type { SimplexEdge, SimplexNode } from "./network-simplex";
 import { placeNodesInLayers } from "./strategies";
 import type { LayerOrder, LayeredPhaseInput, NodePlacement } from "./types";
+import { nodeNodeSpacing } from "./spacing";
 import { setFlexiblePortPosition } from "./flexible-ports";
 
 function crossSize(input: LayeredPhaseInput, id: string): number {
@@ -118,7 +119,7 @@ export function placeNodesWithNetworkSimplex(
         edges,
         nodeById.get(upperId)!,
         nodeById.get(lowerId)!,
-        Math.ceil(crossSize(input, upperId) + input.spacing.node),
+        Math.ceil(crossSize(input, upperId) + nodeNodeSpacing(input, upperId, lowerId)),
         0,
       );
     }

@@ -1149,7 +1149,7 @@ function runLayeredPipeline<N, E, G, P>(
       rect,
       direction,
       (port) => options.portSettings?.(port, node),
-      options.nodeSettings?.(node),
+      { ...options.settings, ...options.nodeSettings?.(node) },
     );
     return {
       ...node,
@@ -1169,18 +1169,21 @@ function runLayeredPipeline<N, E, G, P>(
     const lastPoint = points.at(-1) ?? midpoint;
     const labelSpacing = Number(options.settings?.["spacing.edgeLabel"] ?? 2);
     const edgeThickness = Number(edgeSettings?.["edge.thickness"] ?? 1);
+    const labelDummyRect = placement.rectByNodeId.get(
+      expanded.labelDummyIdByEdgeId.get(edge.id) ?? "",
+    );
     const edgeLabelSideSelection = options.settings?.["edgeLabels.sideSelection"] ?? "SMART_DOWN";
     const placeLabelUp =
       edgeLabelSideSelection === "ALWAYS_UP" ||
       edgeLabelSideSelection === "SMART_UP" ||
       edgeLabelSideSelection === "DIRECTION_UP";
-    const x =
+    const routeX =
       labelPlacement === "TAIL"
         ? firstPoint.x + labelSpacing
         : labelPlacement === "HEAD"
           ? lastPoint.x - width - labelSpacing
           : midpoint.x - width / 2;
-    const y =
+    const routeY =
       labelPlacement === "CENTER" && inlineLabel
         ? midpoint.y - height / 2 - 0.5
         : labelPlacement === "CENTER" && placeLabelUp
@@ -1188,6 +1191,11 @@ function runLayeredPipeline<N, E, G, P>(
           : (labelPlacement === "CENTER" ? midpoint.y : (firstPoint.y + lastPoint.y) / 2) +
             labelSpacing +
             Math.round(edgeThickness / 2);
+    const horizontal = direction === "left" || direction === "right";
+    const x =
+      labelPlacement === "CENTER" && horizontal && labelDummyRect ? labelDummyRect.x : routeX;
+    const y =
+      labelPlacement === "CENTER" && !horizontal && labelDummyRect ? labelDummyRect.y : routeY;
     return {
       ...edge,
       x,

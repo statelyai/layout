@@ -12,6 +12,7 @@ export interface LongEdgeExpansion {
   orientation: AcyclicOrientation;
   assignment: LayerAssignment;
   segmentIdsByEdgeId: ReadonlyMap<string, readonly string[]>;
+  labelDummyIdByEdgeId: ReadonlyMap<string, string>;
 }
 
 function uniqueDummyId(usedIds: Set<string>, edgeId: string, layer: number): string {
@@ -35,6 +36,7 @@ export function splitLongEdges(
   const layerByNodeId = new Map(assignment.layerByNodeId);
   const reversedEdgeIds = new Set<string>();
   const segmentIdsByEdgeId = new Map<string, readonly string[]>();
+  const labelDummyIdByEdgeId = new Map<string, string>();
   const originalEdgeBySegmentId = new Map<string, GraphEdge>();
   const usedNodeIds = new Set(nodes.map((node) => node.id));
 
@@ -52,14 +54,63 @@ export function splitLongEdges(
 
     const step = targetLayer > sourceLayer ? 1 : -1;
     const chain = [edge.sourceId];
+    const dummyIds: string[] = [];
+    const dummyLayers: number[] = [];
     for (let layer = sourceLayer + step; layer !== targetLayer; layer += step) {
       const id = uniqueDummyId(usedNodeIds, edge.id, layer);
       nodes.push({ type: "node", id, data: undefined, width: 0, height: 0 });
       sizes.set(id, { width: 0, height: 0 });
       layerByNodeId.set(id, layer);
       chain.push(id);
+      dummyIds.push(id);
+      dummyLayers.push(layer);
     }
     chain.push(edge.targetId);
+
+    if ((edge.width ?? 0) > 0 || (edge.height ?? 0) > 0) {
+      const strategy = String(
+        input.edgeSettings?.(edge)?.["edgeLabels.centerLabelPlacementStrategy"] ??
+          input.settings["edgeLabels.centerLabelPlacementStrategy"] ??
+          "MEDIAN_LAYER",
+      );
+      const horizontal = input.direction === "left" || input.direction === "right";
+      const layerWidth = (layer: number): number =>
+        Math.max(
+          0,
+          ...input.graph.nodes
+            .filter((node) => assignment.layerByNodeId.get(node.id) === layer)
+            .map((node) => {
+              const size = input.sizes.get(node.id);
+              return horizontal ? (size?.width ?? 0) : (size?.height ?? 0);
+            }),
+        );
+      let labelIndex = Math.floor((dummyIds.length - 1) / 2);
+      if (strategy === "TAIL_LAYER") labelIndex = 0;
+      else if (strategy === "HEAD_LAYER") labelIndex = dummyIds.length - 1;
+      else if (strategy === "WIDEST_LAYER" || strategy === "SPACE_EFFICIENT_LAYER") {
+        labelIndex = 0;
+        for (let index = 1; index < dummyLayers.length; index++) {
+          if (layerWidth(dummyLayers[index]!) > layerWidth(dummyLayers[labelIndex]!)) {
+            labelIndex = index;
+          }
+        }
+      } else if (strategy === "CENTER_LAYER") {
+        const spacing = input.spacing.layer;
+        const accumulated = dummyLayers.map((_, index) =>
+          dummyLayers
+            .slice(0, index + 1)
+            .reduce((sum, layer) => sum + layerWidth(layer) + spacing, -spacing),
+        );
+        const half = (accumulated.at(-1) ?? 0) / 2;
+        labelIndex = Math.max(
+          0,
+          accumulated.findIndex((value) => value >= half),
+        );
+      }
+      const labelId = dummyIds[labelIndex]!;
+      sizes.set(labelId, { width: edge.width ?? 0, height: edge.height ?? 0 });
+      labelDummyIdByEdgeId.set(edge.id, labelId);
+    }
 
     const segmentIds: string[] = [];
     for (let index = 0; index < chain.length - 1; index++) {
@@ -72,6 +123,8 @@ export function splitLongEdges(
         sourcePort: index === 0 ? edge.sourcePort : undefined,
         targetPort: index === chain.length - 2 ? edge.targetPort : undefined,
         points: undefined,
+        width: 0,
+        height: 0,
       };
       edges.push(segment);
       segmentIds.push(id);
@@ -91,10 +144,36 @@ export function splitLongEdges(
         const original = originalEdgeBySegmentId.get(edge.id) ?? edge;
         return input.edgeSettings?.(original);
       },
+      nodeSettings: (node) => {
+        const original = input.nodeSettings?.(node);
+        const edgeId = [...labelDummyIdByEdgeId].find(([, id]) => id === node.id)?.[0];
+        if (!edgeId) return original;
+        const edge = input.graph.edges.find((candidate) => candidate.id === edgeId);
+        const strategy = String(
+          (edge && input.edgeSettings?.(edge)?.["edgeLabels.centerLabelPlacementStrategy"]) ??
+            input.settings["edgeLabels.centerLabelPlacementStrategy"] ??
+            "MEDIAN_LAYER",
+        );
+        return {
+          ...original,
+          ...(strategy === "TAIL_LAYER"
+            ? {
+                alignment:
+                  input.direction === "left" || input.direction === "up" ? "RIGHT" : "LEFT",
+              }
+            : strategy === "HEAD_LAYER"
+              ? {
+                  alignment:
+                    input.direction === "left" || input.direction === "up" ? "LEFT" : "RIGHT",
+                }
+              : {}),
+        };
+      },
     },
     orientation: { reversedEdgeIds },
     assignment: { layerByNodeId },
     segmentIdsByEdgeId,
+    labelDummyIdByEdgeId,
   };
 }
 

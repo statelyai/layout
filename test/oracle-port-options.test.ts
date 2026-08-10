@@ -47,6 +47,25 @@ function port(
 }
 
 describe("ELK port-option parity", () => {
+  it("matches additional surrounding space for horizontal-side ports", async () => {
+    await compare({
+      id: "root",
+      layoutOptions: {
+        "elk.algorithm": "layered",
+        "elk.spacing.portsSurrounding": "[top=20,right=30,bottom=10,left=15]",
+      },
+      children: [
+        {
+          id: "node",
+          width: 100,
+          height: 100,
+          layoutOptions: { "elk.portConstraints": "FIXED_ORDER" },
+          ports: [port("n0", "NORTH"), port("n1", "NORTH")],
+        },
+      ],
+    });
+  });
+
   for (const constraints of [
     "UNDEFINED",
     "FREE",
