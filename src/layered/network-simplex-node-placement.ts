@@ -9,6 +9,7 @@ import { runNetworkSimplex } from "./network-simplex";
 import type { SimplexEdge, SimplexNode } from "./network-simplex";
 import { placeNodesInLayers } from "./strategies";
 import type { LayerOrder, LayeredPhaseInput, NodePlacement } from "./types";
+import { setFlexiblePortPosition } from "./flexible-ports";
 
 function crossSize(input: LayeredPhaseInput, id: string): number {
   const size = input.sizes.get(id);
@@ -163,6 +164,66 @@ export function placeNodesWithNetworkSimplex(
         ? { ...rect, y: cross }
         : { ...rect, x: cross },
     );
+  }
+
+  const horizontal = input.direction === "left" || input.direction === "right";
+  for (const node of input.graph.nodes) {
+    const flexibility = String(
+      input.nodeSettings?.(node)?.["nodePlacement.networkSimplex.nodeFlexibility"] ??
+        input.settings["nodePlacement.networkSimplex.nodeFlexibility.default"] ??
+        "NONE",
+    );
+    if (flexibility === "NONE") continue;
+    const constraints = String(input.nodeSettings?.(node)?.portConstraints ?? "UNDEFINED");
+    if (constraints === "FIXED_RATIO" || constraints === "FIXED_POS") continue;
+    const rect = rectByNodeId.get(node.id);
+    if (!rect) continue;
+    const desired = (node.ports ?? []).flatMap((port) => {
+      const connected = input.graph.edges.find(
+        (edge) =>
+          (edge.sourceId === node.id && edge.sourcePort === port.name) ||
+          (edge.targetId === node.id && edge.targetPort === port.name),
+      );
+      if (!connected) return [];
+      const oppositeId = connected.sourceId === node.id ? connected.targetId : connected.sourceId;
+      const oppositeRect = rectByNodeId.get(oppositeId);
+      if (!oppositeRect) return [];
+      const portSize = horizontal ? (port.height ?? 8) : (port.width ?? 8);
+      const center = horizontal
+        ? oppositeRect.y + oppositeRect.height / 2
+        : oppositeRect.x + oppositeRect.width / 2;
+      return [{ port, center, portSize }];
+    });
+    if (desired.length === 0) continue;
+    const minimumCenter = Math.min(...desired.map((entry) => entry.center));
+    const maximumCenter = Math.max(...desired.map((entry) => entry.center));
+    const endSize = Math.max(...desired.map((entry) => entry.portSize));
+    const requiredSize = maximumCenter - minimumCenter + endSize;
+    const mayResize =
+      flexibility === "NODE_SIZE" || flexibility === "NODE_SIZE_WHERE_SPACE_PERMITS";
+    const currentCrossSize = horizontal ? rect.height : rect.width;
+    if (!mayResize && requiredSize > currentCrossSize) continue;
+    const resultSize = mayResize ? Math.max(currentCrossSize, requiredSize) : currentCrossSize;
+    const crossStart =
+      requiredSize <= currentCrossSize
+        ? horizontal
+          ? rect.y
+          : rect.x
+        : minimumCenter - endSize / 2;
+    rectByNodeId.set(
+      node.id,
+      horizontal
+        ? { ...rect, y: crossStart, height: resultSize }
+        : { ...rect, x: crossStart, width: resultSize },
+    );
+    for (const { port, center, portSize } of desired) {
+      const axis = center - crossStart - portSize / 2;
+      setFlexiblePortPosition(
+        port,
+        horizontal ? (port.x ?? 0) : axis,
+        horizontal ? axis : (port.y ?? 0),
+      );
+    }
   }
   return { rectByNodeId };
 }

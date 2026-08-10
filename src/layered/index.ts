@@ -167,11 +167,83 @@ function runWrappedPathPipeline<N, E, G, P>(
   }
   const aspectRatio = Number(options.settings?.aspectRatio ?? 1.6);
   const correctionFactor = Number(options.settings?.["wrapping.correctionFactor"] ?? 1);
-  const columns = Math.min(
+  const layerSpacing = options.spacing?.layer ?? options.settings?.["spacing.baseValue"] ?? 20;
+  const nodeSpacing = options.spacing?.node ?? options.settings?.["spacing.baseValue"] ?? 20;
+  const additionalSpacing = Number(options.settings?.["wrapping.additionalEdgeSpacing"] ?? 10);
+  const estimatedRowStep = maximumHeight + nodeSpacing + 1 + additionalSpacing * 2;
+  const automaticColumns = Math.min(
     orderedIds.length,
     Math.max(1, Math.ceil(Math.sqrt(orderedIds.length * aspectRatio * correctionFactor))),
   );
-  if (columns >= orderedIds.length) return undefined;
+  const cuttingStrategy = String(options.settings?.["wrapping.cutting.strategy"] ?? "MSD");
+  const initialRows = Math.ceil(orderedIds.length / automaticColumns);
+  const freedom = Math.max(0, Number(options.settings?.["wrapping.cutting.msd.freedom"] ?? 1));
+  let automaticRows = initialRows;
+  if (cuttingStrategy === "MSD") {
+    let bestScore = Number.POSITIVE_INFINITY;
+    for (
+      let rows = Math.max(1, initialRows - freedom);
+      rows <= Math.min(orderedIds.length, initialRows + freedom);
+      rows++
+    ) {
+      const score = Math.max(
+        Math.ceil(orderedIds.length / rows) * (maximumWidth + layerSpacing),
+        aspectRatio * correctionFactor * rows * estimatedRowStep,
+      );
+      if (score < bestScore) {
+        bestScore = score;
+        automaticRows = rows;
+      }
+    }
+  }
+  let cuts =
+    cuttingStrategy === "MANUAL" && Array.isArray(options.settings?.["wrapping.cutting.cuts"])
+      ? (options.settings["wrapping.cutting.cuts"] as unknown[])
+          .map(Number)
+          .filter((cut) => Number.isInteger(cut) && cut > 0 && cut < orderedIds.length)
+          .sort((left, right) => left - right)
+      : Array.from({ length: Math.max(0, automaticRows - 1) }, (_, index) =>
+          cuttingStrategy === "ARD"
+            ? Math.round(((index + 1) * orderedIds.length) / automaticRows)
+            : Math.min(
+                orderedIds.length - 1,
+                (index + 1) * Math.ceil(orderedIds.length / automaticRows),
+              ),
+        );
+  cuts = [...new Set(cuts)];
+  const forbidden = new Set(
+    Array.isArray(options.settings?.["wrapping.validify.forbiddenIndices"])
+      ? (options.settings["wrapping.validify.forbiddenIndices"] as unknown[]).map(Number)
+      : [],
+  );
+  const validify = String(options.settings?.["wrapping.validify.strategy"] ?? "GREEDY");
+  if (validify !== "NO" && forbidden.size > 0) {
+    const adjusted: number[] = [];
+    let offset = 0;
+    for (const desired of cuts) {
+      const current = desired + offset;
+      let upper = current;
+      while (upper < orderedIds.length && forbidden.has(upper)) upper++;
+      let selected = upper;
+      if (validify === "LOOK_BACK") {
+        let lower = current;
+        while (lower > 0 && forbidden.has(lower)) lower--;
+        if (current - lower <= upper - current && lower > (adjusted.at(-1) ?? 0)) selected = lower;
+      }
+      if (selected >= orderedIds.length) break;
+      if (selected > (adjusted.at(-1) ?? 0)) adjusted.push(selected);
+      offset += selected - current;
+    }
+    cuts = adjusted;
+  }
+  if (cuts.length === 0) return undefined;
+  const boundaries = [0, ...cuts, orderedIds.length];
+  const rowByIndex = new Map<number, { row: number; column: number }>();
+  for (let row = 0; row + 1 < boundaries.length; row++) {
+    for (let index = boundaries[row]!; index < boundaries[row + 1]!; index++) {
+      rowByIndex.set(index, { row, column: index - boundaries[row]! });
+    }
+  }
   const padding =
     typeof options.padding === "number"
       ? {
@@ -186,20 +258,18 @@ function runWrappedPathPipeline<N, E, G, P>(
           bottom: options.padding?.bottom ?? 12,
           left: options.padding?.left ?? 12,
         };
-  const layerSpacing = options.spacing?.layer ?? options.settings?.["spacing.baseValue"] ?? 20;
-  const nodeSpacing = options.spacing?.node ?? options.settings?.["spacing.baseValue"] ?? 20;
-  const additionalSpacing = Number(options.settings?.["wrapping.additionalEdgeSpacing"] ?? 10);
   const structuralMargin = strategy === "MULTI_EDGE" ? 30 : 10;
-  const rowStep = maximumHeight + nodeSpacing + 1 + additionalSpacing * 2;
+  const rowStep = estimatedRowStep;
   const nodeById = new Map(graph.nodes.map((node) => [node.id, node]));
   const visualNodeById = new Map<string, VisualNode<N, P>>();
   for (const [index, id] of orderedIds.entries()) {
     const node = nodeById.get(id)!;
     const size = sizes.get(id)!;
+    const cell = rowByIndex.get(index) ?? { row: 0, column: index };
     visualNodeById.set(id, {
       ...node,
-      x: padding.left + structuralMargin + (index % columns) * (maximumWidth + layerSpacing),
-      y: padding.top + Math.floor(index / columns) * rowStep,
+      x: padding.left + structuralMargin + cell.column * (maximumWidth + layerSpacing),
+      y: padding.top + cell.row * rowStep,
       ...size,
     } as VisualNode<N, P>);
   }
@@ -218,7 +288,7 @@ function runWrappedPathPipeline<N, E, G, P>(
       x: targetNode.x ?? 0,
       y: (targetNode.y ?? 0) + (targetNode.height ?? 0) / 2,
     };
-    const wraps = index % columns === columns - 1;
+    const wraps = cuts.includes(index + 1);
     const points = wraps
       ? [
           start,

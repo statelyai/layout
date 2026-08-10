@@ -15,6 +15,7 @@ import type {
 } from "./types";
 import type { ElkLayeredOptionValueByName } from "./elk-options";
 import { conservativeSpline } from "./spline-bezier";
+import { getFlexiblePortPosition } from "./flexible-ports";
 
 function getOrientedEndpoints(
   edge: GraphEdge,
@@ -2352,6 +2353,16 @@ export function placePorts<P>(
   }
   return ports.map((port) => {
     const size = { width: port.width ?? 8, height: port.height ?? 8 };
+    const flexiblePosition = getFlexiblePortPosition(port);
+    if (flexiblePosition) {
+      const side = sideByPort.get(port)!;
+      return {
+        ...port,
+        ...size,
+        x: side === "EAST" ? rect.width : side === "WEST" ? -size.width : flexiblePosition.x,
+        y: side === "SOUTH" ? rect.height : side === "NORTH" ? -size.height : flexiblePosition.y,
+      };
+    }
     if (
       (constraints === "FIXED_POS" || constraints === "FIXED_RATIO") &&
       port.x !== undefined &&

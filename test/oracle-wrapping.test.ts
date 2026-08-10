@@ -73,3 +73,78 @@ it("matches ELK wrapping correction factor", async () => {
   );
   expect([actual.width, actual.height]).toEqual([expected.width, expected.height]);
 });
+
+for (const [cuttingStrategy, freedom] of [
+  ["ARD", 1],
+  ["MSD", 0],
+  ["MSD", 2],
+] as const) {
+  it(`matches ELK ${cuttingStrategy} cutting with freedom ${freedom}`, async () => {
+    const graph: ElkNode = {
+      id: "root",
+      layoutOptions: {
+        "elk.algorithm": "layered",
+        "elk.aspectRatio": "1",
+        "elk.layered.layering.strategy": "LONGEST_PATH",
+        "elk.layered.wrapping.strategy": "SINGLE_EDGE",
+        "elk.layered.wrapping.cutting.strategy": cuttingStrategy,
+        "elk.layered.wrapping.cutting.msd.freedom": String(freedom),
+      },
+      children: Array.from({ length: 10 }, (_, index) => ({
+        id: `node-${index}`,
+        width: 20,
+        height: 20,
+      })),
+      edges: Array.from({ length: 9 }, (_, index) => ({
+        id: `edge-${index}`,
+        sources: [`node-${index}`],
+        targets: [`node-${index + 1}`],
+      })),
+    };
+    const expected = (await new OracleELK().layout(
+      structuredClone(graph) as never,
+    )) as unknown as ElkNode;
+    const actual = await new NativeELK().layout(structuredClone(graph));
+    expect(actual.children?.map((node) => [node.x, node.y])).toEqual(
+      expected.children?.map((node) => [node.x, node.y]),
+    );
+    expect(actual.edges?.map((edge) => edge.sections)).toEqual(
+      expected.edges?.map((edge) => edge.sections),
+    );
+  });
+}
+
+for (const [validify, expectedRows] of [
+  ["NO", [0, 0, 1, 1, 1, 2, 2, 2]],
+  ["GREEDY", [0, 0, 0, 1, 1, 1, 2, 2]],
+  ["LOOK_BACK", [0, 1, 1, 1, 2, 2, 2, 2]],
+] as const) {
+  it(`applies source-equivalent MANUAL cuts with ${validify} validification`, async () => {
+    const graph: ElkNode = {
+      id: "root",
+      layoutOptions: {
+        "elk.algorithm": "layered",
+        "elk.layered.wrapping.strategy": "SINGLE_EDGE",
+        "elk.layered.wrapping.cutting.strategy": "MANUAL",
+        "elk.layered.wrapping.cutting.cuts": [2, 5],
+        "elk.layered.wrapping.validify.strategy": validify,
+        "elk.layered.wrapping.validify.forbiddenIndices": [2],
+      },
+      children: Array.from({ length: 8 }, (_, index) => ({
+        id: `node-${index}`,
+        width: 20,
+        height: 20,
+      })),
+      edges: Array.from({ length: 7 }, (_, index) => ({
+        id: `edge-${index}`,
+        sources: [`node-${index}`],
+        targets: [`node-${index + 1}`],
+      })),
+    };
+    const actual = await new NativeELK().layout(structuredClone(graph));
+    const rowCoordinates = [...new Set(actual.children?.map((node) => node.y) ?? [])].sort(
+      (left, right) => (left ?? 0) - (right ?? 0),
+    );
+    expect(actual.children?.map((node) => rowCoordinates.indexOf(node.y))).toEqual(expectedRows);
+  });
+}
