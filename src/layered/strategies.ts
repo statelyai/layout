@@ -1647,8 +1647,25 @@ function routeEdges(style: "ORTHOGONAL" | "POLYLINE" | "SPLINES"): EdgeRouter {
       const rect = mutableRects.get(id);
       if (!rect) continue;
       const spacing = Number(input.settings["spacing.nodeSelfLoop"] ?? 10);
-      const reserve = loops.length * spacing + (style === "SPLINES" ? 1 : 0);
-      mutableRects.set(id, { ...rect, y: rect.y + reserve });
+      const node = nodeById.get(id);
+      const nodeSettings = node ? input.nodeSettings?.(node) : undefined;
+      const distribution = nodeSettings?.["edgeRouting.selfLoopDistribution"] ?? "NORTH";
+      const ordering = nodeSettings?.["edgeRouting.selfLoopOrdering"] ?? "STACKED";
+      const splineOffset = style === "SPLINES" ? 1 : 0;
+      if (distribution === "EQUALLY") {
+        mutableRects.set(id, {
+          ...rect,
+          x: rect.x + spacing,
+          y: rect.y + spacing + splineOffset,
+        });
+      } else {
+        const sideLoopCount =
+          distribution === "NORTH_SOUTH" ? Math.ceil(loops.length / 2) : loops.length;
+        const reserve =
+          (ordering === "SEQUENCED" ? Math.min(1, sideLoopCount) : sideLoopCount) * spacing +
+          splineOffset;
+        mutableRects.set(id, { ...rect, y: rect.y + reserve });
+      }
     }
     const edgeLabelSideSelection = input.settings["edgeLabels.sideSelection"] ?? "SMART_DOWN";
     const placeEdgeLabelsUp =
@@ -1844,6 +1861,94 @@ function routeEdges(style: "ORTHOGONAL" | "POLYLINE" | "SPLINES"): EdgeRouter {
         const loops = selfLoopsByNodeId.get(source.id) ?? [edge];
         const loopIndex = loops.indexOf(edge);
         const spacing = Number(input.settings["spacing.nodeSelfLoop"] ?? 10);
+        const nodeSettings = input.nodeSettings?.(source);
+        const distribution = nodeSettings?.["edgeRouting.selfLoopDistribution"] ?? "NORTH";
+        const ordering = nodeSettings?.["edgeRouting.selfLoopOrdering"] ?? "STACKED";
+        if (style === "ORTHOGONAL") {
+          const routeHorizontalSide = (
+            side: "NORTH" | "SOUTH",
+            indexOnSide: number,
+            countOnSide: number,
+          ): readonly Point[] => {
+            const denominator = countOnSide * 2 + 1;
+            const sequenced = ordering === "SEQUENCED";
+            const nestingIndex =
+              ordering === "REVERSE_STACKED" ? countOnSide - indexOnSide - 1 : indexOnSide;
+            const trackIndex = sequenced ? 1 : nestingIndex + 1;
+            let startRatio: number;
+            let endRatio: number;
+            if (sequenced) {
+              if (side === "NORTH") {
+                startRatio = (2 * indexOnSide + 2) / denominator;
+                endRatio = (2 * indexOnSide + 1) / denominator;
+              } else {
+                startRatio = (denominator - 2 * indexOnSide - 2) / denominator;
+                endRatio = (denominator - 2 * indexOnSide - 1) / denominator;
+              }
+            } else if (side === "NORTH") {
+              startRatio = (countOnSide - nestingIndex) / denominator;
+              endRatio = (countOnSide + nestingIndex + 1) / denominator;
+            } else {
+              startRatio = (countOnSide + nestingIndex + 1) / denominator;
+              endRatio = (countOnSide - nestingIndex) / denominator;
+            }
+            const y =
+              side === "NORTH"
+                ? sourceRect.y - spacing * trackIndex
+                : sourceRect.y + sourceRect.height + spacing * trackIndex;
+            const start = {
+              x: sourceRect.x + sourceRect.width * startRatio,
+              y: side === "NORTH" ? sourceRect.y : sourceRect.y + sourceRect.height,
+            };
+            const end = {
+              x: sourceRect.x + sourceRect.width * endRatio,
+              y: start.y,
+            };
+            return [start, { x: start.x, y }, { x: end.x, y }, end];
+          };
+          const routeVerticalSide = (
+            side: "EAST" | "WEST",
+            indexOnSide: number,
+            countOnSide: number,
+          ): readonly Point[] => {
+            const denominator = countOnSide * 2 + 1;
+            const sequenced = ordering === "SEQUENCED";
+            const firstRatio = sequenced ? 2 / denominator : 1 / denominator;
+            const secondRatio = sequenced ? 1 / denominator : 2 / denominator;
+            const startRatio = side === "EAST" ? firstRatio : secondRatio;
+            const endRatio = side === "EAST" ? secondRatio : firstRatio;
+            const x =
+              side === "EAST"
+                ? sourceRect.x + sourceRect.width + spacing * (indexOnSide + 1)
+                : sourceRect.x - spacing * (indexOnSide + 1);
+            const start = {
+              x: side === "EAST" ? sourceRect.x + sourceRect.width : sourceRect.x,
+              y: sourceRect.y + sourceRect.height * startRatio,
+            };
+            const end = { x: start.x, y: sourceRect.y + sourceRect.height * endRatio };
+            return [start, { x, y: start.y }, { x, y: end.y }, end];
+          };
+          if (distribution === "NORTH_SOUTH") {
+            const side = loopIndex % 2 === 0 ? "NORTH" : "SOUTH";
+            const indexOnSide = Math.floor(loopIndex / 2);
+            const countOnSide = Math.ceil((loops.length - (side === "SOUTH" ? 1 : 0)) / 2);
+            pointsByEdgeId.set(edge.id, routeHorizontalSide(side, indexOnSide, countOnSide));
+          } else if (distribution === "EQUALLY") {
+            const sides = ["NORTH", "SOUTH", "EAST", "WEST"] as const;
+            const side = sides[loopIndex % sides.length]!;
+            const indexOnSide = Math.floor(loopIndex / sides.length);
+            const countOnSide = Math.ceil((loops.length - sides.indexOf(side)) / sides.length);
+            pointsByEdgeId.set(
+              edge.id,
+              side === "NORTH" || side === "SOUTH"
+                ? routeHorizontalSide(side, indexOnSide, countOnSide)
+                : routeVerticalSide(side, indexOnSide, countOnSide),
+            );
+          } else {
+            pointsByEdgeId.set(edge.id, routeHorizontalSide("NORTH", loopIndex, loops.length));
+          }
+          continue;
+        }
         const loopTop = sourceRect.y - spacing * (loopIndex + 1) - (style === "SPLINES" ? 1 : 0);
         const start = {
           x:
@@ -1856,14 +1961,7 @@ function routeEdges(style: "ORTHOGONAL" | "POLYLINE" | "SPLINES"): EdgeRouter {
             (sourceRect.width * (loops.length + 1 + loopIndex)) / (loops.length * 2 + 1),
           y: sourceRect.y,
         };
-        if (style === "ORTHOGONAL") {
-          pointsByEdgeId.set(edge.id, [
-            start,
-            { x: start.x, y: loopTop },
-            { x: end.x, y: loopTop },
-            end,
-          ]);
-        } else if (style === "POLYLINE") {
+        if (style === "POLYLINE") {
           const chamfer = Math.min(5, spacing / 2);
           pointsByEdgeId.set(edge.id, [
             start,

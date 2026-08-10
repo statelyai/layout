@@ -463,7 +463,9 @@ function endpoint(
 }
 
 function toGraph(root: ElkNode, globalOptions: Readonly<Record<string, unknown>> = {}): Graph {
-  const children = root.children ?? [];
+  const children = (root.children ?? []).filter(
+    (child) => getBooleanOption(child.layoutOptions ?? {}, "noLayout") !== true,
+  );
   const nodeIds = new Set(children.map((child) => String(child.id)));
   const portOwnerById = new Map<string, string>();
   for (const child of children) {
@@ -492,6 +494,7 @@ function toGraph(root: ElkNode, globalOptions: Readonly<Record<string, unknown>>
       })),
     })),
     edges: (root.edges ?? []).flatMap((edge) => {
+      if (getBooleanOption(edge.layoutOptions ?? {}, "noLayout") === true) return [];
       const source = endpoint(edge.sources?.[0] ?? edge.source, portOwnerById);
       const target = endpoint(edge.targets?.[0] ?? edge.target, portOwnerById);
       const labels = (edge.labels ?? []).filter((label) => Boolean(label.text));
@@ -566,6 +569,7 @@ function applyLayout(
     child.height = node.height;
     placeNodeLabels(child, layoutOptions);
     for (const port of child.ports ?? []) {
+      if (getBooleanOption(port.layoutOptions ?? {}, "noLayout") === true) continue;
       const laidOutPort = node.ports?.find((candidate) => candidate.name === String(port.id));
       if (!laidOutPort) continue;
       port.x = laidOutPort.x;
@@ -578,6 +582,13 @@ function applyLayout(
   for (const edge of root.edges ?? []) {
     const laidOutEdge = edgeById.get(String(edge.id));
     if (!laidOutEdge) {
+      if (getBooleanOption(edge.layoutOptions ?? {}, "noLayout") === true) {
+        for (const section of edge.sections ?? []) {
+          section.incomingShape ??= edge.sources?.[0] ?? edge.source;
+          section.outgoingShape ??= edge.targets?.[0] ?? edge.target;
+        }
+        continue;
+      }
       const section = getParentEdgeSection(root, edge);
       if (section) edge.sections = [section];
       continue;
@@ -607,16 +618,23 @@ function applyLayout(
       labelY += (label.height ?? 0) + labelLabelSpacing;
     }
   }
-  normalizeElkGraphBounds(root, padding);
+  normalizeElkGraphBounds(root, padding, layoutOptions);
 }
 
 function normalizeElkGraphBounds(
   root: ElkNode,
   padding: { top: number; right: number; bottom: number; left: number },
+  layoutOptions: Readonly<Record<string, unknown>> = {},
 ): void {
+  const authoredWidth = root.width;
+  const authoredHeight = root.height;
+  const fixedGraphSize = getBooleanOption(layoutOptions, "nodeSize.fixedGraphSize") === true;
+  const layoutChildren = (root.children ?? []).filter(
+    (node) => getBooleanOption(node.layoutOptions ?? {}, "noLayout") !== true,
+  );
   let minimumX = Number.POSITIVE_INFINITY;
   let minimumY = Number.POSITIVE_INFINITY;
-  for (const node of root.children ?? []) {
+  for (const node of layoutChildren) {
     minimumX = Math.min(
       minimumX,
       node.x ?? 0,
@@ -639,11 +657,20 @@ function normalizeElkGraphBounds(
   for (const edge of root.edges ?? []) {
     minimumX = Math.min(minimumX, ...(edge.labels ?? []).map((label) => label.x ?? 0));
     minimumY = Math.min(minimumY, ...(edge.labels ?? []).map((label) => label.y ?? 0));
+    if (getBooleanOption(edge.layoutOptions ?? {}, "noLayout") !== true) {
+      const points = (edge.sections ?? []).flatMap((section) => [
+        section.startPoint,
+        ...(section.bendPoints ?? []),
+        section.endPoint,
+      ]);
+      minimumX = Math.min(minimumX, ...points.map((point) => point.x));
+      minimumY = Math.min(minimumY, ...points.map((point) => point.y));
+    }
   }
   const shiftX = Number.isFinite(minimumX) ? Math.max(0, padding.left - minimumX) : 0;
   const shiftY = Number.isFinite(minimumY) ? Math.max(0, padding.top - minimumY) : 0;
   if (shiftX !== 0 || shiftY !== 0) {
-    for (const node of root.children ?? []) {
+    for (const node of layoutChildren) {
       node.x = (node.x ?? 0) + shiftX;
       node.y = (node.y ?? 0) + shiftY;
     }
@@ -660,10 +687,10 @@ function normalizeElkGraphBounds(
       }
     }
   }
-  root.width =
+  const calculatedWidth =
     Math.max(
       0,
-      ...(root.children ?? []).flatMap((node) => [
+      ...layoutChildren.flatMap((node) => [
         (node.x ?? 0) + (node.width ?? 0),
         ...(node.labels ?? []).map((label) => (node.x ?? 0) + (label.x ?? 0) + (label.width ?? 0)),
         ...(node.ports ?? []).map((port) => (node.x ?? 0) + (port.x ?? 0) + (port.width ?? 0)),
@@ -676,11 +703,20 @@ function normalizeElkGraphBounds(
       ...(root.edges ?? []).flatMap((edge) =>
         (edge.labels ?? []).map((label) => (label.x ?? 0) + (label.width ?? 0)),
       ),
+      ...(root.edges ?? []).flatMap((edge) =>
+        getBooleanOption(edge.layoutOptions ?? {}, "noLayout") === true
+          ? []
+          : (edge.sections ?? []).flatMap((section) => [
+              section.startPoint.x,
+              ...(section.bendPoints ?? []).map((point) => point.x),
+              section.endPoint.x,
+            ]),
+      ),
     ) + padding.right;
-  root.height =
+  const calculatedHeight =
     Math.max(
       0,
-      ...(root.children ?? []).flatMap((node) => [
+      ...layoutChildren.flatMap((node) => [
         (node.y ?? 0) + (node.height ?? 0),
         ...(node.labels ?? []).map((label) => (node.y ?? 0) + (label.y ?? 0) + (label.height ?? 0)),
         ...(node.ports ?? []).map((port) => (node.y ?? 0) + (port.y ?? 0) + (port.height ?? 0)),
@@ -701,7 +737,18 @@ function normalizeElkGraphBounds(
               : 0),
         ),
       ),
+      ...(root.edges ?? []).flatMap((edge) =>
+        getBooleanOption(edge.layoutOptions ?? {}, "noLayout") === true
+          ? []
+          : (edge.sections ?? []).flatMap((section) => [
+              section.startPoint.y,
+              ...(section.bendPoints ?? []).map((point) => point.y),
+              section.endPoint.y,
+            ]),
+      ),
     ) + padding.bottom;
+  root.width = fixedGraphSize && authoredWidth !== undefined ? authoredWidth : calculatedWidth;
+  root.height = fixedGraphSize && authoredHeight !== undefined ? authoredHeight : calculatedHeight;
 }
 
 function getParentEdgeSection(root: ElkNode, edge: ElkEdge) {
@@ -739,6 +786,7 @@ function placeNodeLabels(node: ElkNode, globalOptions: Readonly<Record<string, u
   const labelPadding = parsePadding(getOption(globalOptions, "nodeLabels.padding"), 5);
   for (const label of node.labels ?? []) {
     if (!label.text) continue;
+    if (getBooleanOption(label.layoutOptions ?? {}, "noLayout") === true) continue;
     const placement = String(
       getOption(
         { ...globalOptions, ...node.layoutOptions, ...label.layoutOptions },
@@ -776,8 +824,14 @@ function placePortLabels(node: ElkNode, globalOptions: Readonly<Record<string, u
   const inside = placement === "INSIDE";
   const horizontalSpacing = getNumberOption(globalOptions, "spacing.labelPortHorizontal") ?? 1;
   const verticalSpacing = getNumberOption(globalOptions, "spacing.labelPortVertical") ?? 1;
+  const labelSpacing = getNumberOption(globalOptions, "spacing.labelLabel") ?? 0;
+  const treatAsGroup =
+    getBooleanOption(node.layoutOptions ?? {}, "portLabels.treatAsGroup") ?? false;
+  const placeNextToPort =
+    getOption(node.layoutOptions ?? {}, "portLabels.nextToPortIfPossible") !== undefined;
   const nodeWidth = node.width ?? 0;
   for (const port of node.ports ?? []) {
+    if (getBooleanOption(port.layoutOptions ?? {}, "noLayout") === true) continue;
     const portWidth = port.width ?? 0;
     const portHeight = port.height ?? 0;
     const side =
@@ -788,16 +842,31 @@ function placePortLabels(node: ElkNode, globalOptions: Readonly<Record<string, u
           : (port.y ?? 0) < 0
             ? "NORTH"
             : "SOUTH";
-    for (const label of port.labels ?? []) {
+    const labels = (port.labels ?? []).filter(
+      (label) =>
+        Boolean(label.text) && getBooleanOption(label.layoutOptions ?? {}, "noLayout") !== true,
+    );
+    const totalLabelHeight =
+      labels.reduce((sum, label) => sum + (label.height ?? 0), 0) +
+      Math.max(0, labels.length - 1) * labelSpacing;
+    let stackedY =
+      labels.length > 1
+        ? inside || placeNextToPort
+          ? treatAsGroup
+            ? (portHeight - totalLabelHeight) / 2
+            : (portHeight - (labels[0]?.height ?? 0)) / 2
+          : portHeight + verticalSpacing
+        : undefined;
+    for (const label of labels) {
       if (!label.text) continue;
       const width = label.width ?? 0;
       const height = label.height ?? 0;
       if (side === "EAST") {
         label.x = inside ? -width - horizontalSpacing : portWidth + horizontalSpacing;
-        label.y = inside ? (portHeight - height) / 2 : portHeight + verticalSpacing;
+        label.y = stackedY ?? (inside ? (portHeight - height) / 2 : portHeight + verticalSpacing);
       } else if (side === "WEST") {
         label.x = inside ? portWidth + horizontalSpacing : -width - horizontalSpacing;
-        label.y = inside ? (portHeight - height) / 2 : portHeight + verticalSpacing;
+        label.y = stackedY ?? (inside ? (portHeight - height) / 2 : portHeight + verticalSpacing);
       } else if (side === "NORTH") {
         label.x = inside ? (portWidth - width) / 2 : portWidth + horizontalSpacing;
         label.y = inside ? portHeight + verticalSpacing : -height - verticalSpacing;
@@ -805,6 +874,7 @@ function placePortLabels(node: ElkNode, globalOptions: Readonly<Record<string, u
         label.x = inside ? (portWidth - width) / 2 : portWidth + horizontalSpacing;
         label.y = inside ? -height - verticalSpacing : portHeight + verticalSpacing;
       }
+      if (stackedY !== undefined) stackedY += height + labelSpacing;
     }
   }
 }
