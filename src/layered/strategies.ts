@@ -1591,6 +1591,37 @@ function routeEdges(style: "ORTHOGONAL" | "POLYLINE" | "SPLINES"): EdgeRouter {
       const reserve = loops.length * spacing + (style === "SPLINES" ? 1 : 0);
       mutableRects.set(id, { ...rect, y: rect.y + reserve });
     }
+    const edgeLabelSideSelection = input.settings["edgeLabels.sideSelection"] ?? "SMART_DOWN";
+    const placeEdgeLabelsUp =
+      edgeLabelSideSelection === "ALWAYS_UP" ||
+      edgeLabelSideSelection === "SMART_UP" ||
+      edgeLabelSideSelection === "DIRECTION_UP";
+    if (placeEdgeLabelsUp) {
+      let crossShift = 0;
+      for (const edge of input.graph.edges) {
+        const settings = input.edgeSettings?.(edge);
+        if (
+          (edge.height ?? 0) <= 0 ||
+          (settings?.["edgeLabels.placement"] ?? "CENTER") !== "CENTER" ||
+          settings?.["edgeLabels.inline"] === true
+        ) {
+          continue;
+        }
+        const thickness = Number(settings?.["edge.thickness"] ?? 1);
+        crossShift = Math.max(
+          crossShift,
+          Number(input.settings["spacing.edgeLabel"] ?? 2) + Math.round(thickness / 2),
+        );
+      }
+      if (crossShift > 0) {
+        for (const [id, rect] of mutableRects) {
+          mutableRects.set(
+            id,
+            horizontal ? { ...rect, y: rect.y + crossShift } : { ...rect, x: rect.x + crossShift },
+          );
+        }
+      }
+    }
     let implicitEndpoints = implicitEdgeEndpoints(input, placement);
     const flowIntervals = [...placement.rectByNodeId.entries()]
       .map(([id, rect]) => ({
@@ -1611,6 +1642,38 @@ function routeEdges(style: "ORTHOGONAL" | "POLYLINE" | "SPLINES"): EdgeRouter {
       }
       flowLayerByNodeId.set(interval.id, flowLayers.length - 1);
     }
+
+    const labelExtraByGap = flowLayers.slice(0, -1).map(() => 0);
+    for (const edge of input.graph.edges) {
+      if ((edge.width ?? 0) <= 0) continue;
+      const sourceLayer = flowLayerByNodeId.get(edge.sourceId);
+      const targetLayer = flowLayerByNodeId.get(edge.targetId);
+      if (sourceLayer === undefined || targetLayer === undefined) continue;
+      if (Math.abs(sourceLayer - targetLayer) !== 1) continue;
+      const placement = input.edgeSettings?.(edge)?.["edgeLabels.placement"] ?? "CENTER";
+      const extra =
+        placement === "CENTER"
+          ? (edge.width ?? 0) + input.spacing.layer
+          : (edge.width ?? 0) + Number(input.settings["spacing.edgeLabel"] ?? 2);
+      const gap = Math.min(sourceLayer, targetLayer);
+      labelExtraByGap[gap] = Math.max(labelExtraByGap[gap] ?? 0, extra);
+    }
+    let labelShift = 0;
+    for (const [layerNo, bounds] of flowLayers.entries()) {
+      if (labelShift !== 0) {
+        for (const [id, rect] of placement.rectByNodeId) {
+          if (flowLayerByNodeId.get(id) !== layerNo) continue;
+          mutableRects.set(
+            id,
+            horizontal ? { ...rect, x: rect.x + labelShift } : { ...rect, y: rect.y + labelShift },
+          );
+        }
+        bounds.start += labelShift;
+        bounds.end += labelShift;
+      }
+      labelShift += labelExtraByGap[layerNo] ?? 0;
+    }
+    if (labelShift !== 0) implicitEndpoints = implicitEdgeEndpoints(input, placement);
 
     if (style === "POLYLINE" || style === "SPLINES") {
       const edgeSpacing = Number(input.settings["spacing.edgeEdgeBetweenLayers"] ?? 10);

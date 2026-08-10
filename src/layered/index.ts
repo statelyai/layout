@@ -122,6 +122,161 @@ function hasNestedNodes(graph: Graph): boolean {
   return graph.nodes.some((node) => node.parentId != null);
 }
 
+function runSeparatedComponents<N, E, G, P>(
+  graph: Graph<N, E, G, P> | VisualGraph<N, E, G, P>,
+  options: LayeredLayoutOptions,
+  context?: LayoutExecutionContext,
+): VisualGraph<N, E, G, P> | undefined {
+  if (graph.nodes.length < 2) return undefined;
+
+  const nodeById = new Map(graph.nodes.map((node) => [node.id, node]));
+  const neighbors = new Map(graph.nodes.map((node) => [node.id, new Set<string>()]));
+  for (const edge of graph.edges) {
+    if (edge.sourceId === edge.targetId) continue;
+    if (!nodeById.has(edge.sourceId) || !nodeById.has(edge.targetId)) continue;
+    neighbors.get(edge.sourceId)!.add(edge.targetId);
+    neighbors.get(edge.targetId)!.add(edge.sourceId);
+  }
+
+  const visited = new Set<string>();
+  const componentNodeIds: string[][] = [];
+  for (const node of graph.nodes) {
+    if (visited.has(node.id)) continue;
+    const ids: string[] = [];
+    const pending = [node.id];
+    visited.add(node.id);
+    while (pending.length > 0) {
+      const id = pending.pop()!;
+      ids.push(id);
+      for (const neighbor of neighbors.get(id) ?? []) {
+        if (visited.has(neighbor)) continue;
+        visited.add(neighbor);
+        pending.push(neighbor);
+      }
+    }
+    componentNodeIds.push(ids);
+  }
+  if (componentNodeIds.length < 2) return undefined;
+
+  const boundsOf = (result: VisualGraph<N, E, G, P>) => {
+    let left = Number.POSITIVE_INFINITY;
+    let top = Number.POSITIVE_INFINITY;
+    let right = Number.NEGATIVE_INFINITY;
+    let bottom = Number.NEGATIVE_INFINITY;
+    const include = (x: number, y: number, width = 0, height = 0): void => {
+      left = Math.min(left, x);
+      top = Math.min(top, y);
+      right = Math.max(right, x + width);
+      bottom = Math.max(bottom, y + height);
+    };
+    for (const node of result.nodes) {
+      include(node.x ?? 0, node.y ?? 0, node.width ?? 0, node.height ?? 0);
+      for (const port of node.ports ?? []) {
+        include(
+          (node.x ?? 0) + (port.x ?? 0),
+          (node.y ?? 0) + (port.y ?? 0),
+          port.width ?? 0,
+          port.height ?? 0,
+        );
+      }
+    }
+    for (const edge of result.edges) {
+      for (const point of edge.points ?? []) include(point.x, point.y);
+      if ((edge.width ?? 0) > 0 || (edge.height ?? 0) > 0) {
+        include(edge.x ?? 0, edge.y ?? 0, edge.width ?? 0, edge.height ?? 0);
+      }
+    }
+    return {
+      left,
+      top,
+      width: Math.max(0, right - left),
+      height: Math.max(0, bottom - top),
+    };
+  };
+
+  const components = componentNodeIds.map((ids, modelOrder) => {
+    const idSet = new Set(ids);
+    const result = runLayeredPipeline(
+      {
+        ...graph,
+        nodes: graph.nodes.filter((node) => idSet.has(node.id)),
+        edges: graph.edges.filter((edge) => idSet.has(edge.sourceId) && idSet.has(edge.targetId)),
+      },
+      {
+        ...options,
+        padding: 0,
+        settings: { ...options.settings, separateConnectedComponents: false },
+      },
+      context,
+    );
+    const bounds = boundsOf(result);
+    return { result, bounds, modelOrder, area: bounds.width * bounds.height };
+  });
+
+  if ((options.settings?.["considerModelOrder.components"] ?? "NONE") === "NONE") {
+    components.sort((left, right) => left.area - right.area || left.modelOrder - right.modelOrder);
+  }
+  const componentSpacing = Number(
+    options.settings?.["spacing.componentComponent"] ??
+      options.settings?.["spacing.baseValue"] ??
+      20,
+  );
+  const aspectRatio = Number(options.settings?.aspectRatio ?? 1.6);
+  const totalArea = components.reduce((sum, component) => sum + component.area, 0);
+  const maxRowWidth = Math.max(
+    ...components.map((component) => component.bounds.width),
+    Math.sqrt(totalArea) * aspectRatio,
+  );
+  const padding =
+    typeof options.padding === "number"
+      ? {
+          top: options.padding,
+          right: options.padding,
+          bottom: options.padding,
+          left: options.padding,
+        }
+      : {
+          top: options.padding?.top ?? 12,
+          right: options.padding?.right ?? 12,
+          bottom: options.padding?.bottom ?? 12,
+          left: options.padding?.left ?? 12,
+        };
+  let x = 0;
+  let y = 0;
+  let rowHeight = 0;
+  const nodeResults = new Map<string, VisualNode<N, P>>();
+  const edgeResults = new Map<string, (typeof components)[number]["result"]["edges"][number]>();
+  for (const component of components) {
+    if (x > 0 && x + component.bounds.width > maxRowWidth) {
+      x = 0;
+      y += rowHeight + componentSpacing;
+      rowHeight = 0;
+    }
+    const dx = padding.left + x - component.bounds.left;
+    const dy = padding.top + y - component.bounds.top;
+    for (const node of component.result.nodes) {
+      nodeResults.set(node.id, { ...node, x: (node.x ?? 0) + dx, y: (node.y ?? 0) + dy });
+    }
+    for (const edge of component.result.edges) {
+      edgeResults.set(edge.id, {
+        ...edge,
+        x: (edge.x ?? 0) + dx,
+        y: (edge.y ?? 0) + dy,
+        points: edge.points?.map((point) => ({ x: point.x + dx, y: point.y + dy })),
+      });
+    }
+    x += component.bounds.width + componentSpacing;
+    rowHeight = Math.max(rowHeight, component.bounds.height);
+  }
+
+  return {
+    ...graph,
+    direction: options.direction ?? graph.direction ?? "right",
+    nodes: graph.nodes.map((node) => nodeResults.get(node.id)!),
+    edges: graph.edges.map((edge) => edgeResults.get(edge.id)!),
+  } as VisualGraph<N, E, G, P>;
+}
+
 function runCompoundPipeline<N, E, G, P>(
   graph: Graph<N, E, G, P> | VisualGraph<N, E, G, P>,
   options: LayeredLayoutOptions,
@@ -256,6 +411,10 @@ function runLayeredPipeline<N, E, G, P>(
     } as VisualGraph<N, E, G, P>;
   }
   if (hasNestedNodes(graph)) return runCompoundPipeline(graph, options, context);
+  if (options.settings?.separateConnectedComponents !== false) {
+    const separated = runSeparatedComponents(graph, options, context);
+    if (separated) return separated;
+  }
   const direction = options.direction ?? graph.direction ?? "right";
   const padding =
     typeof options.padding === "number"
@@ -428,10 +587,36 @@ function runLayeredPipeline<N, E, G, P>(
     const midpoint = getPolylineMidpoint(points);
     const width = edge.width ?? 0;
     const height = edge.height ?? 0;
+    const edgeSettings = options.edgeSettings?.(edge);
+    const labelPlacement = edgeSettings?.["edgeLabels.placement"] ?? "CENTER";
+    const inlineLabel = edgeSettings?.["edgeLabels.inline"] === true;
+    const firstPoint = points[0] ?? midpoint;
+    const lastPoint = points.at(-1) ?? midpoint;
+    const labelSpacing = Number(options.settings?.["spacing.edgeLabel"] ?? 2);
+    const edgeThickness = Number(edgeSettings?.["edge.thickness"] ?? 1);
+    const edgeLabelSideSelection = options.settings?.["edgeLabels.sideSelection"] ?? "SMART_DOWN";
+    const placeLabelUp =
+      edgeLabelSideSelection === "ALWAYS_UP" ||
+      edgeLabelSideSelection === "SMART_UP" ||
+      edgeLabelSideSelection === "DIRECTION_UP";
+    const x =
+      labelPlacement === "TAIL"
+        ? firstPoint.x + labelSpacing
+        : labelPlacement === "HEAD"
+          ? lastPoint.x - width - labelSpacing
+          : midpoint.x - width / 2;
+    const y =
+      labelPlacement === "CENTER" && inlineLabel
+        ? midpoint.y - height / 2 - 0.5
+        : labelPlacement === "CENTER" && placeLabelUp
+          ? midpoint.y - height - labelSpacing - Math.round(edgeThickness / 2)
+          : (labelPlacement === "CENTER" ? midpoint.y : (firstPoint.y + lastPoint.y) / 2) +
+            labelSpacing +
+            Math.round(edgeThickness / 2);
     return {
       ...edge,
-      x: midpoint.x - width / 2,
-      y: midpoint.y - height / 2,
+      x,
+      y,
       width,
       height,
       points,

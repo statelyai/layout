@@ -169,11 +169,16 @@ export default class ELK {
         });
       }
     }
+    applyNodeMicroLayout(graph, layoutOptions);
     const graph_ = toGraph(graph);
     const layerConstraintByNodeId = new Map(
       (graph.children ?? []).map((node) => [
         String(node.id),
-        String(getOption(node.layoutOptions ?? {}, "layerConstraint") ?? "NONE"),
+        String(
+          getOption(node.layoutOptions ?? {}, "layered.layering.layerConstraint") ??
+            getOption(node.layoutOptions ?? {}, "layerConstraint") ??
+            "NONE",
+        ),
       ]),
     );
     if (
@@ -258,7 +263,10 @@ export default class ELK {
                         const elkEdge = graph.edges?.find(
                           (candidate) => String(candidate.id) === edge.id,
                         );
-                        return getElementLayeredSettings(elkEdge?.layoutOptions ?? {});
+                        return {
+                          ...getElementLayeredSettings(elkEdge?.layoutOptions ?? {}),
+                          ...getElementLayeredSettings(elkEdge?.labels?.[0]?.layoutOptions ?? {}),
+                        };
                       },
                       portSettings: (port, node) => {
                         const child = graph.children?.find(
@@ -299,13 +307,69 @@ function parsePadding(value: unknown, fallback = 0) {
   return padding;
 }
 
+function parseVector(value: unknown): ElkPoint | undefined {
+  if (typeof value === "object" && value !== null && "x" in value && "y" in value) {
+    return { x: Number(value.x), y: Number(value.y) };
+  }
+  if (typeof value !== "string") return undefined;
+  const match = value.match(/^\s*\(\s*(-?\d+(?:\.\d+)?)\s*,\s*(-?\d+(?:\.\d+)?)\s*\)\s*$/);
+  return match ? { x: Number(match[1]), y: Number(match[2]) } : undefined;
+}
+
+function applyNodeMicroLayout(
+  graph: ElkNode,
+  globalOptions: Readonly<Record<string, unknown>>,
+): void {
+  const labelPadding = parsePadding(getOption(globalOptions, "nodeLabels.padding"), 5);
+  for (const node of graph.children ?? []) {
+    const constraints = String(getOption(node.layoutOptions ?? {}, "nodeSize.constraints") ?? "");
+    if (!constraints) continue;
+    let width = 0;
+    let height = 0;
+    if (constraints.includes("NODE_LABELS")) {
+      for (const label of node.labels ?? []) {
+        if (!label.text) continue;
+        const placement = String(
+          getOption(
+            { ...globalOptions, ...node.layoutOptions, ...label.layoutOptions },
+            "nodeLabels.placement",
+          ) ?? "",
+        );
+        if (!placement) continue;
+        const labelWidth = label.width ?? 0;
+        const labelHeight = label.height ?? 0;
+        if (placement.includes("OUTSIDE")) {
+          width = Math.max(width, labelWidth);
+        } else {
+          width = Math.max(width, labelWidth + labelPadding.left + labelPadding.right);
+          height = Math.max(
+            height,
+            labelHeight * (placement.includes("V_CENTER") ? 1 : 2) +
+              labelPadding.top +
+              labelPadding.bottom,
+          );
+        }
+      }
+    }
+    if (constraints.includes("MINIMUM_SIZE")) {
+      const minimum = parseVector(getOption(node.layoutOptions ?? {}, "nodeSize.minimum")) ?? {
+        x: 20,
+        y: 20,
+      };
+      width = Math.max(width, minimum.x);
+      height = Math.max(height, minimum.y);
+    }
+    node.width = width;
+    node.height = height;
+  }
+}
+
 function getOption(options: Readonly<Record<string, unknown>>, suffix: string): unknown {
   const exactKeys = [suffix, `elk.${suffix}`, `org.eclipse.elk.${suffix}`];
   for (const key of exactKeys) {
     if (options[key] !== undefined) return options[key];
   }
-  const match = Object.entries(options).find(([key]) => key.endsWith(`.${suffix}`));
-  return match?.[1];
+  return undefined;
 }
 
 const ergonomicallyMappedLayeredSettings = new Set<keyof ElkLayeredOptionValueByName>([
@@ -521,20 +585,61 @@ function applyLayout(
       label.height = laidOutEdge.height;
     }
   }
+  normalizeElkGraphBounds(root, padding);
+}
+
+function normalizeElkGraphBounds(
+  root: ElkNode,
+  padding: { top: number; right: number; bottom: number; left: number },
+): void {
+  let minimumX = Number.POSITIVE_INFINITY;
+  let minimumY = Number.POSITIVE_INFINITY;
+  for (const node of root.children ?? []) {
+    minimumX = Math.min(
+      minimumX,
+      node.x ?? 0,
+      ...(node.labels ?? []).map((label) => (node.x ?? 0) + (label.x ?? 0)),
+      ...(node.ports ?? []).map((port) => (node.x ?? 0) + (port.x ?? 0)),
+    );
+    minimumY = Math.min(
+      minimumY,
+      node.y ?? 0,
+      ...(node.labels ?? []).map((label) => (node.y ?? 0) + (label.y ?? 0)),
+      ...(node.ports ?? []).map((port) => (node.y ?? 0) + (port.y ?? 0)),
+    );
+  }
+  const shiftX = Number.isFinite(minimumX) ? Math.max(0, padding.left - minimumX) : 0;
+  const shiftY = Number.isFinite(minimumY) ? Math.max(0, padding.top - minimumY) : 0;
+  if (shiftX !== 0 || shiftY !== 0) {
+    for (const node of root.children ?? []) {
+      node.x = (node.x ?? 0) + shiftX;
+      node.y = (node.y ?? 0) + shiftY;
+    }
+    for (const edge of root.edges ?? []) {
+      for (const section of edge.sections ?? []) {
+        for (const point of [section.startPoint, ...(section.bendPoints ?? []), section.endPoint]) {
+          point.x += shiftX;
+          point.y += shiftY;
+        }
+      }
+    }
+  }
   root.width =
     Math.max(
       0,
-      ...graph.nodes.flatMap((node) => [
-        node.x + node.width,
-        ...(node.ports ?? []).map((port) => node.x + (port.x ?? 0) + (port.width ?? 0)),
+      ...(root.children ?? []).flatMap((node) => [
+        (node.x ?? 0) + (node.width ?? 0),
+        ...(node.labels ?? []).map((label) => (node.x ?? 0) + (label.x ?? 0) + (label.width ?? 0)),
+        ...(node.ports ?? []).map((port) => (node.x ?? 0) + (port.x ?? 0) + (port.width ?? 0)),
       ]),
     ) + padding.right;
   root.height =
     Math.max(
       0,
-      ...graph.nodes.flatMap((node) => [
-        node.y + node.height,
-        ...(node.ports ?? []).map((port) => node.y + (port.y ?? 0) + (port.height ?? 0)),
+      ...(root.children ?? []).flatMap((node) => [
+        (node.y ?? 0) + (node.height ?? 0),
+        ...(node.labels ?? []).map((label) => (node.y ?? 0) + (label.y ?? 0) + (label.height ?? 0)),
+        ...(node.ports ?? []).map((port) => (node.y ?? 0) + (port.y ?? 0) + (port.height ?? 0)),
       ]),
     ) + padding.bottom;
 }
@@ -571,7 +676,9 @@ function getParentEdgeSection(root: ElkNode, edge: ElkEdge) {
 }
 
 function placeNodeLabels(node: ElkNode, globalOptions: Readonly<Record<string, unknown>>): void {
+  const labelPadding = parsePadding(getOption(globalOptions, "nodeLabels.padding"), 5);
   for (const label of node.labels ?? []) {
+    if (!label.text) continue;
     const placement = String(
       getOption(
         { ...globalOptions, ...node.layoutOptions, ...label.layoutOptions },
@@ -584,20 +691,20 @@ function placeNodeLabels(node: ElkNode, globalOptions: Readonly<Record<string, u
     const nodeWidth = node.width ?? 0;
     const nodeHeight = node.height ?? 0;
     label.x = placement.includes("H_CENTER")
-      ? (nodeWidth - width) / 2
+      ? (nodeWidth - width + labelPadding.left - labelPadding.right) / 2
       : placement.includes("H_RIGHT")
-        ? nodeWidth - width
-        : 0;
+        ? nodeWidth - width - labelPadding.right
+        : labelPadding.left;
     if (placement.includes("OUTSIDE") && placement.includes("V_TOP")) {
-      label.y = -height - 5;
+      label.y = -height - Number(getOption(globalOptions, "spacing.labelNode") ?? 5);
     } else if (placement.includes("OUTSIDE") && placement.includes("V_BOTTOM")) {
-      label.y = nodeHeight + 5;
+      label.y = nodeHeight + Number(getOption(globalOptions, "spacing.labelNode") ?? 5);
     } else if (placement.includes("V_CENTER")) {
-      label.y = (nodeHeight - height) / 2;
+      label.y = (nodeHeight - height + labelPadding.top - labelPadding.bottom) / 2;
     } else if (placement.includes("V_BOTTOM")) {
-      label.y = nodeHeight - height;
+      label.y = nodeHeight - height - labelPadding.bottom;
     } else {
-      label.y = 0;
+      label.y = labelPadding.top;
     }
   }
 }
