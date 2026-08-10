@@ -170,7 +170,7 @@ export default class ELK {
       }
     }
     applyNodeMicroLayout(graph, layoutOptions);
-    const graph_ = toGraph(graph);
+    const graph_ = toGraph(graph, layoutOptions);
     const layerConstraintByNodeId = new Map(
       (graph.children ?? []).map((node) => [
         String(node.id),
@@ -462,7 +462,7 @@ function endpoint(
   return ownerId === undefined ? { nodeId: id } : { nodeId: ownerId, port: id };
 }
 
-function toGraph(root: ElkNode): Graph {
+function toGraph(root: ElkNode, globalOptions: Readonly<Record<string, unknown>> = {}): Graph {
   const children = root.children ?? [];
   const nodeIds = new Set(children.map((child) => String(child.id)));
   const portOwnerById = new Map<string, string>();
@@ -494,6 +494,12 @@ function toGraph(root: ElkNode): Graph {
     edges: (root.edges ?? []).flatMap((edge) => {
       const source = endpoint(edge.sources?.[0] ?? edge.source, portOwnerById);
       const target = endpoint(edge.targets?.[0] ?? edge.target, portOwnerById);
+      const labels = (edge.labels ?? []).filter((label) => Boolean(label.text));
+      const labelLabelSpacing = getNumberOption(globalOptions, "spacing.labelLabel") ?? 0;
+      const labelWidth = Math.max(0, ...labels.map((label) => label.width ?? 0));
+      const labelHeight =
+        labels.reduce((sum, label) => sum + (label.height ?? 0), 0) +
+        Math.max(0, labels.length - 1) * labelLabelSpacing;
       return nodeIds.has(source.nodeId) && nodeIds.has(target.nodeId)
         ? [
             {
@@ -503,8 +509,8 @@ function toGraph(root: ElkNode): Graph {
               sourcePort: source.port,
               targetPort: target.port,
               label: edge.labels?.[0]?.text,
-              width: edge.labels?.[0]?.width,
-              height: edge.labels?.[0]?.height,
+              width: labelWidth,
+              height: labelHeight,
               points: parsePoints(getOption(edge.layoutOptions ?? {}, "bendPoints")),
             },
           ]
@@ -567,6 +573,7 @@ function applyLayout(
       port.width = laidOutPort.width;
       port.height = laidOutPort.height;
     }
+    placePortLabels(child, layoutOptions);
   }
   for (const edge of root.edges ?? []) {
     const laidOutEdge = edgeById.get(String(edge.id));
@@ -577,12 +584,27 @@ function applyLayout(
     }
     const section = toSection(edge, laidOutEdge.points ?? []);
     edge.sections = section ? [section] : [];
-    const label = edge.labels?.[0];
-    if (label) {
-      label.x = laidOutEdge.x;
-      label.y = laidOutEdge.y;
-      label.width = laidOutEdge.width;
-      label.height = laidOutEdge.height;
+    let labelY = laidOutEdge.y ?? 0;
+    const points = laidOutEdge.points ?? [];
+    const firstPoint = points[0] ?? { x: laidOutEdge.x ?? 0, y: laidOutEdge.y ?? 0 };
+    const lastPoint = points.at(-1) ?? firstPoint;
+    const midpointX = (laidOutEdge.x ?? 0) + (laidOutEdge.width ?? 0) / 2;
+    const edgeLabelSpacing = getNumberOption(layoutOptions, "spacing.edgeLabel") ?? 2;
+    const labelLabelSpacing = getNumberOption(layoutOptions, "spacing.labelLabel") ?? 0;
+    for (const label of edge.labels ?? []) {
+      if (!label.text) continue;
+      const placement = String(
+        getOption(label.layoutOptions ?? {}, "edgeLabels.placement") ?? "CENTER",
+      );
+      const width = label.width ?? 0;
+      label.x =
+        placement === "TAIL"
+          ? firstPoint.x + edgeLabelSpacing
+          : placement === "HEAD"
+            ? lastPoint.x - width - edgeLabelSpacing
+            : midpointX - width / 2;
+      label.y = labelY;
+      labelY += (label.height ?? 0) + labelLabelSpacing;
     }
   }
   normalizeElkGraphBounds(root, padding);
@@ -600,13 +622,23 @@ function normalizeElkGraphBounds(
       node.x ?? 0,
       ...(node.labels ?? []).map((label) => (node.x ?? 0) + (label.x ?? 0)),
       ...(node.ports ?? []).map((port) => (node.x ?? 0) + (port.x ?? 0)),
+      ...(node.ports ?? []).flatMap((port) =>
+        (port.labels ?? []).map((label) => (node.x ?? 0) + (port.x ?? 0) + (label.x ?? 0)),
+      ),
     );
     minimumY = Math.min(
       minimumY,
       node.y ?? 0,
       ...(node.labels ?? []).map((label) => (node.y ?? 0) + (label.y ?? 0)),
       ...(node.ports ?? []).map((port) => (node.y ?? 0) + (port.y ?? 0)),
+      ...(node.ports ?? []).flatMap((port) =>
+        (port.labels ?? []).map((label) => (node.y ?? 0) + (port.y ?? 0) + (label.y ?? 0)),
+      ),
     );
+  }
+  for (const edge of root.edges ?? []) {
+    minimumX = Math.min(minimumX, ...(edge.labels ?? []).map((label) => label.x ?? 0));
+    minimumY = Math.min(minimumY, ...(edge.labels ?? []).map((label) => label.y ?? 0));
   }
   const shiftX = Number.isFinite(minimumX) ? Math.max(0, padding.left - minimumX) : 0;
   const shiftY = Number.isFinite(minimumY) ? Math.max(0, padding.top - minimumY) : 0;
@@ -622,6 +654,10 @@ function normalizeElkGraphBounds(
           point.y += shiftY;
         }
       }
+      for (const label of edge.labels ?? []) {
+        label.x = (label.x ?? 0) + shiftX;
+        label.y = (label.y ?? 0) + shiftY;
+      }
     }
   }
   root.width =
@@ -631,7 +667,15 @@ function normalizeElkGraphBounds(
         (node.x ?? 0) + (node.width ?? 0),
         ...(node.labels ?? []).map((label) => (node.x ?? 0) + (label.x ?? 0) + (label.width ?? 0)),
         ...(node.ports ?? []).map((port) => (node.x ?? 0) + (port.x ?? 0) + (port.width ?? 0)),
+        ...(node.ports ?? []).flatMap((port) =>
+          (port.labels ?? []).map(
+            (label) => (node.x ?? 0) + (port.x ?? 0) + (label.x ?? 0) + (label.width ?? 0),
+          ),
+        ),
       ]),
+      ...(root.edges ?? []).flatMap((edge) =>
+        (edge.labels ?? []).map((label) => (label.x ?? 0) + (label.width ?? 0)),
+      ),
     ) + padding.right;
   root.height =
     Math.max(
@@ -640,7 +684,23 @@ function normalizeElkGraphBounds(
         (node.y ?? 0) + (node.height ?? 0),
         ...(node.labels ?? []).map((label) => (node.y ?? 0) + (label.y ?? 0) + (label.height ?? 0)),
         ...(node.ports ?? []).map((port) => (node.y ?? 0) + (port.y ?? 0) + (port.height ?? 0)),
+        ...(node.ports ?? []).flatMap((port) =>
+          (port.labels ?? []).map(
+            (label) => (node.y ?? 0) + (port.y ?? 0) + (label.y ?? 0) + (label.height ?? 0),
+          ),
+        ),
       ]),
+      ...(root.edges ?? []).flatMap((edge) =>
+        (edge.labels ?? []).map(
+          (label) =>
+            (label.y ?? 0) +
+            (label.height ?? 0) +
+            (String(getOption(label.layoutOptions ?? {}, "edgeLabels.placement") ?? "CENTER") ===
+            "CENTER"
+              ? 1
+              : 0),
+        ),
+      ),
     ) + padding.bottom;
 }
 
@@ -705,6 +765,46 @@ function placeNodeLabels(node: ElkNode, globalOptions: Readonly<Record<string, u
       label.y = nodeHeight - height - labelPadding.bottom;
     } else {
       label.y = labelPadding.top;
+    }
+  }
+}
+
+function placePortLabels(node: ElkNode, globalOptions: Readonly<Record<string, unknown>>): void {
+  const placement = String(
+    getOption({ ...globalOptions, ...node.layoutOptions }, "portLabels.placement") ?? "OUTSIDE",
+  );
+  const inside = placement === "INSIDE";
+  const horizontalSpacing = getNumberOption(globalOptions, "spacing.labelPortHorizontal") ?? 1;
+  const verticalSpacing = getNumberOption(globalOptions, "spacing.labelPortVertical") ?? 1;
+  const nodeWidth = node.width ?? 0;
+  for (const port of node.ports ?? []) {
+    const portWidth = port.width ?? 0;
+    const portHeight = port.height ?? 0;
+    const side =
+      (port.x ?? 0) < 0
+        ? "WEST"
+        : (port.x ?? 0) >= nodeWidth
+          ? "EAST"
+          : (port.y ?? 0) < 0
+            ? "NORTH"
+            : "SOUTH";
+    for (const label of port.labels ?? []) {
+      if (!label.text) continue;
+      const width = label.width ?? 0;
+      const height = label.height ?? 0;
+      if (side === "EAST") {
+        label.x = inside ? -width - horizontalSpacing : portWidth + horizontalSpacing;
+        label.y = inside ? (portHeight - height) / 2 : portHeight + verticalSpacing;
+      } else if (side === "WEST") {
+        label.x = inside ? portWidth + horizontalSpacing : -width - horizontalSpacing;
+        label.y = inside ? (portHeight - height) / 2 : portHeight + verticalSpacing;
+      } else if (side === "NORTH") {
+        label.x = inside ? (portWidth - width) / 2 : portWidth + horizontalSpacing;
+        label.y = inside ? portHeight + verticalSpacing : -height - verticalSpacing;
+      } else {
+        label.x = inside ? (portWidth - width) / 2 : portWidth + horizontalSpacing;
+        label.y = inside ? -height - verticalSpacing : portHeight + verticalSpacing;
+      }
     }
   }
 }

@@ -135,3 +135,53 @@ for (const thickness of [1, 4, 10]) {
     expect(actual.edges?.[0]?.labels?.[0]?.y).toEqual(expected.edges?.[0]?.labels?.[0]?.y);
   });
 }
+
+for (const placement of ["CENTER", "HEAD", "TAIL"] as const) {
+  it(`matches ELK stacked ${placement} edge labels`, async () => {
+    const graph: ElkNode = {
+      id: "root",
+      layoutOptions: {
+        "elk.algorithm": "layered",
+        "elk.spacing.labelLabel": "4",
+      },
+      children: [
+        { id: "source", width: 30, height: 20 },
+        { id: "target", width: 30, height: 20 },
+      ],
+      edges: [
+        {
+          id: "edge",
+          sources: ["source"],
+          targets: ["target"],
+          labels: [
+            {
+              id: "first",
+              text: "first",
+              width: 20,
+              height: 10,
+              layoutOptions: { "elk.edgeLabels.placement": placement },
+            },
+            {
+              id: "second",
+              text: "second",
+              width: 30,
+              height: 8,
+              layoutOptions: { "elk.edgeLabels.placement": placement },
+            },
+          ],
+        },
+      ],
+    };
+    const expected = (await new OracleELK().layout(
+      structuredClone(graph) as never,
+    )) as unknown as ElkNode;
+    const actual = await new NativeELK().layout(structuredClone(graph));
+    expect(actual.children?.map((node) => [node.x, node.y])).toEqual(
+      expected.children?.map((node) => [node.x, node.y]),
+    );
+    expect(actual.edges?.[0]?.labels?.map((label) => [label.x, label.y])).toEqual(
+      expected.edges?.[0]?.labels?.map((label) => [label.x, label.y]),
+    );
+    expect([actual.width, actual.height]).toEqual([expected.width, expected.height]);
+  });
+}

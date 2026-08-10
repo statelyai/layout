@@ -592,6 +592,65 @@ export function applyLayerConstraints(
   };
 }
 
+/** Keep activated ELK partitions in ascending, contiguous layer blocks. */
+export function applyPartitions(
+  input: LayeredPhaseInput,
+  assignment: LayerAssignment,
+): LayerAssignment {
+  if (input.settings["partitioning.activate"] !== true) return assignment;
+  const partitionByNodeId = new Map(
+    input.graph.nodes.map((node) => [
+      node.id,
+      Number(input.nodeSettings?.(node)?.["partitioning.partition"] ?? 0),
+    ]),
+  );
+  const partitions = [...new Set(partitionByNodeId.values())].sort((left, right) => left - right);
+  const offsetByPartition = new Map<number, number>();
+  let offset = 0;
+  for (const partition of partitions) {
+    const layers = input.graph.nodes
+      .filter((node) => partitionByNodeId.get(node.id) === partition)
+      .map((node) => assignment.layerByNodeId.get(node.id) ?? 0);
+    const minimum = Math.min(...layers);
+    const maximum = Math.max(...layers);
+    offsetByPartition.set(partition, offset - minimum);
+    offset += maximum - minimum + 1;
+  }
+  return {
+    layerByNodeId: new Map(
+      input.graph.nodes.map((node) => {
+        const partition = partitionByNodeId.get(node.id) ?? 0;
+        return [
+          node.id,
+          (assignment.layerByNodeId.get(node.id) ?? 0) + (offsetByPartition.get(partition) ?? 0),
+        ];
+      }),
+    ),
+  };
+}
+
+/** Orient inter-partition edges from lower to higher partitions. */
+export function applyPartitionOrientation(
+  input: LayeredPhaseInput,
+  orientation: AcyclicOrientation,
+): AcyclicOrientation {
+  if (input.settings["partitioning.activate"] !== true) return orientation;
+  const partitionByNodeId = new Map(
+    input.graph.nodes.map((node) => [
+      node.id,
+      Number(input.nodeSettings?.(node)?.["partitioning.partition"] ?? 0),
+    ]),
+  );
+  const reversedEdgeIds = new Set(orientation.reversedEdgeIds);
+  for (const edge of input.graph.edges) {
+    const sourcePartition = partitionByNodeId.get(edge.sourceId) ?? 0;
+    const targetPartition = partitionByNodeId.get(edge.targetId) ?? 0;
+    if (sourcePartition > targetPartition) reversedEdgeIds.add(edge.id);
+    else if (sourcePartition < targetPartition) reversedEdgeIds.delete(edge.id);
+  }
+  return { reversedEdgeIds };
+}
+
 /** Restore FIRST/LAST nodes at the end of their constrained layer, as ELK does. */
 export function applyLayerConstraintOrder(input: LayeredPhaseInput, order: LayerOrder): LayerOrder {
   const constrained = new Set(

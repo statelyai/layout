@@ -9,6 +9,8 @@ import {
   assignLayersInteractively,
   assignLayersWithCoffmanGraham,
   applyLayerConstraints,
+  applyPartitionOrientation,
+  applyPartitions,
   applyLayerConstraintOrder,
   applyGreedySwitch,
   applySemiInteractiveOrder,
@@ -481,7 +483,9 @@ function runLayeredPipeline<N, E, G, P>(
       `Cycle-breaking strategy ${cycleBreakingStrategy} is not implemented yet`,
     );
   })();
-  const orientation = measure("cycle-breaking", () => cycleBreaker(input));
+  const orientation = measure("cycle-breaking", () =>
+    applyPartitionOrientation(input, cycleBreaker(input)),
+  );
   const layeringStrategy = options.settings?.["layering.strategy"] ?? "NETWORK_SIMPLEX";
   const layerAssigner = (() => {
     if (options.strategies?.assignLayers) return options.strategies.assignLayers;
@@ -499,7 +503,7 @@ function runLayeredPipeline<N, E, G, P>(
     );
   })();
   const assignment = measure("layer-assignment", () =>
-    applyLayerConstraints(input, layerAssigner(input, orientation)),
+    applyPartitions(input, applyLayerConstraints(input, layerAssigner(input, orientation))),
   );
   const expanded = measure("long-edge-splitting", () =>
     splitLongEdges(input, orientation, assignment),
