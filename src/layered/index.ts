@@ -15,6 +15,7 @@ import {
   applyLayerUnzipping,
   applyGreedySwitch,
   applyDirectionCongruency,
+  applyForcedModelOrder,
   applySemiInteractiveOrder,
   breakCyclesByModelOrder,
   breakCyclesByStronglyConnectedConnectivity,
@@ -983,7 +984,11 @@ function runLayeredPipeline<N, E, G, P>(
             expanded.orientation,
             applySemiInteractiveOrder(
               expanded.input,
-              crossingMinimizer(expanded.input, expanded.orientation, expanded.assignment),
+              applyForcedModelOrder(
+                expanded.input,
+                expanded.orientation,
+                crossingMinimizer(expanded.input, expanded.orientation, expanded.assignment),
+              ),
             ),
           ),
         ),

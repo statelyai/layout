@@ -867,6 +867,118 @@ export function applySemiInteractiveOrder(input: LayeredPhaseInput, order: Layer
   };
 }
 
+/**
+ * ELK's forced input-model ordering for the layer-sweep crossing minimizer.
+ *
+ * The fixed layer is ordered by the authored node order. Earlier layers are
+ * then swept backwards using their successors, which preserves model order
+ * where possible without deliberately retaining crossings.
+ */
+export function applyForcedModelOrder(
+  input: LayeredPhaseInput,
+  orientation: AcyclicOrientation,
+  order: LayerOrder,
+): LayerOrder {
+  const strategy = input.settings["considerModelOrder.strategy"] ?? "NONE";
+  if (strategy === "NONE") return order;
+  const forceNodeOrder =
+    input.settings["crossingMinimization.forceNodeModelOrder"] === true &&
+    (strategy === "NODES_AND_EDGES" || strategy === "PREFER_NODES");
+
+  const layers = order.layers.map((layer) => [...layer]);
+  const nodeById = new Map(input.graph.nodes.map((node) => [node.id, node]));
+  const modelOrder = new Map(input.graph.nodes.map((node, index) => [node.id, index]));
+  const groupById = new Map(
+    input.graph.nodes.map((node) => [
+      node.id,
+      Number(
+        input.nodeSettings?.(node)?.["considerModelOrder.groupModelOrder.crossingMinimizationId"] ??
+          0,
+      ),
+    ]),
+  );
+  const groupStrategy =
+    input.settings["considerModelOrder.groupModelOrder.cmGroupOrderStrategy"] ??
+    "ONLY_WITHIN_GROUP";
+  const configuredEnforced =
+    input.settings["considerModelOrder.groupModelOrder.cmEnforcedGroupOrders"];
+  const enforcedGroups = new Set<number>(
+    Array.isArray(configuredEnforced)
+      ? configuredEnforced.map(Number)
+      : typeof configuredEnforced === "string"
+        ? (configuredEnforced.match(/-?\d+/g) ?? []).map(Number)
+        : [1, 2, 6, 7, 10, 11],
+  );
+  const mayUseModelOrder = (id: string): boolean => {
+    const node = nodeById.get(id);
+    return (
+      node === undefined || input.nodeSettings?.(node)?.["considerModelOrder.noModelOrder"] !== true
+    );
+  };
+  const compareModelOrder = (left: string, right: string): number => {
+    const leftGroup = groupById.get(left) ?? 0;
+    const rightGroup = groupById.get(right) ?? 0;
+    if (groupStrategy === "ONLY_WITHIN_GROUP" && leftGroup !== rightGroup) return 0;
+    if (
+      groupStrategy === "ENFORCED" &&
+      leftGroup !== rightGroup &&
+      enforcedGroups.has(leftGroup) &&
+      enforcedGroups.has(rightGroup)
+    ) {
+      return leftGroup - rightGroup;
+    }
+    return (modelOrder.get(left) ?? Infinity) - (modelOrder.get(right) ?? Infinity);
+  };
+
+  const edgeModelOrder = new Map<string, number>();
+  for (const [edgeIndex, edge] of input.graph.edges.entries()) {
+    const [, targetId] = getOrientedEndpoints(edge, orientation);
+    if (!edgeModelOrder.has(targetId)) edgeModelOrder.set(targetId, edgeIndex);
+  }
+  const compareFixedLayer = (left: string, right: string): number => {
+    const leftGroup = groupById.get(left) ?? 0;
+    const rightGroup = groupById.get(right) ?? 0;
+    const useEdgeOrder =
+      !forceNodeOrder ||
+      !mayUseModelOrder(left) ||
+      !mayUseModelOrder(right) ||
+      (groupStrategy === "ONLY_WITHIN_GROUP" && leftGroup !== rightGroup);
+    return useEdgeOrder
+      ? (edgeModelOrder.get(left) ?? Infinity) - (edgeModelOrder.get(right) ?? Infinity)
+      : compareModelOrder(left, right);
+  };
+
+  const fixedLayer = layers.at(-1);
+  if (fixedLayer) fixedLayer.sort(compareFixedLayer);
+
+  const successors = new Map(input.graph.nodes.map((node) => [node.id, [] as string[]]));
+  for (const edge of input.graph.edges) {
+    const [sourceId, targetId] = getOrientedEndpoints(edge, orientation);
+    if (sourceId !== targetId) successors.get(sourceId)?.push(targetId);
+  }
+  for (let layerIndex = layers.length - 2; layerIndex >= 0; layerIndex--) {
+    const nextPositions = new Map(
+      (layers[layerIndex + 1] ?? []).map((id, index) => [id, index] as const),
+    );
+    const originalPosition = new Map(
+      (layers[layerIndex] ?? []).map((id, index) => [id, index] as const),
+    );
+    layers[layerIndex]?.sort((left, right) => {
+      const average = (id: string): number => {
+        const positions = (successors.get(id) ?? []).flatMap((successor) => {
+          const position = nextPositions.get(successor);
+          return position === undefined ? [] : [position];
+        });
+        return positions.length === 0
+          ? (originalPosition.get(id) ?? 0)
+          : positions.reduce((sum, position) => sum + position, 0) / positions.length;
+      };
+      return average(left) - average(right) || compareModelOrder(left, right);
+    });
+  }
+  return { layers };
+}
+
 /** ELK LONGEST_PATH: align sinks on the final layer. */
 export const assignLayersByLongestPathToSink: LayerAssigner = (input, orientation) => {
   const outdegree = new Map(input.graph.nodes.map((node) => [node.id, 0]));
