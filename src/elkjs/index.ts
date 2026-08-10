@@ -595,6 +595,15 @@ function applyLayout(
     }
     const section = toSection(edge, laidOutEdge.points ?? []);
     edge.sections = section ? [section] : [];
+    const target = root.children?.find(
+      (child) => String(child.id) === String(edge.targets?.[0] ?? edge.target),
+    );
+    if (
+      getBooleanOption(target?.layoutOptions ?? {}, "hypernode") === true &&
+      (section?.bendPoints?.length ?? 0) > 0
+    ) {
+      edge.junctionPoints = [section!.bendPoints!.at(-1)!];
+    }
     let labelY = laidOutEdge.y ?? 0;
     const points = laidOutEdge.points ?? [];
     const firstPoint = points[0] ?? { x: laidOutEdge.x ?? 0, y: laidOutEdge.y ?? 0 };

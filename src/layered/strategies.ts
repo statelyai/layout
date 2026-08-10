@@ -669,6 +669,78 @@ export function applyLayerConstraintOrder(input: LayeredPhaseInput, order: Layer
   };
 }
 
+/** ELK's alternating layer-unzipping postprocessor. */
+export function applyLayerUnzipping(input: LayeredPhaseInput, order: LayerOrder): LayerOrder {
+  if ((input.settings["layerUnzipping.strategy"] ?? "NONE") !== "ALTERNATING") return order;
+  const nodeById = new Map(input.graph.nodes.map((node) => [node.id, node]));
+  const layers: string[][] = [];
+  for (const layer of order.layers) {
+    const originalNodes = layer.flatMap((id) => {
+      const node = nodeById.get(id);
+      return node && !node.id.startsWith("__layout_dummy:") ? [node] : [];
+    });
+    const configuredSplits = originalNodes.flatMap((node) => {
+      const value = input.nodeSettings?.(node)?.["layerUnzipping.layerSplit"];
+      return value === undefined ? [] : [Math.max(1, Number(value))];
+    });
+    const split = configuredSplits.length > 0 ? Math.min(...configuredSplits) : 2;
+    if (layer.length <= split) {
+      layers.push([...layer]);
+      continue;
+    }
+    const minimizeEdgeLength = originalNodes.some(
+      (node) => input.nodeSettings?.(node)?.["layerUnzipping.minimizeEdgeLength"] === true,
+    );
+    if (minimizeEdgeLength && split === 2) {
+      const maximumWidth = Math.max(0, ...layer.map((id) => input.sizes.get(id)?.width ?? 0));
+      const averageHeight =
+        layer.reduce((sum, id) => sum + (input.sizes.get(id)?.height ?? 0), 0) / layer.length;
+      const estimatedWidth =
+        maximumWidth +
+        Math.max(
+          2 * Number(input.settings["spacing.edgeNodeBetweenLayers"] ?? 10),
+          layer.length * Number(input.settings["spacing.edgeEdgeBetweenLayers"] ?? 10),
+          input.spacing.layer,
+        );
+      const estimatedHeight =
+        averageHeight +
+        Math.max(input.spacing.node, Number(input.settings["spacing.edgeNode"] ?? 10));
+      if (estimatedWidth / estimatedHeight >= layer.length / 4) {
+        layers.push([...layer]);
+        continue;
+      }
+    }
+    const resetOnLongEdges = originalNodes.every(
+      (node) => input.nodeSettings?.(node)?.["layerUnzipping.resetOnLongEdges"] !== false,
+    );
+    let layerSequence = [...layer];
+    const ordinaryIds = layerSequence.filter((id) => !id.startsWith("__layout_dummy:"));
+    const outgoingTargets = ordinaryIds.map((id) =>
+      input.graph.edges.filter((edge) => edge.sourceId === id).map((edge) => edge.targetId),
+    );
+    if (
+      ordinaryIds.length === layerSequence.length &&
+      outgoingTargets.every(
+        (targets) => targets.length === 1 && targets[0] === outgoingTargets[0]?.[0],
+      )
+    ) {
+      const modelOrder = input.graph.nodes
+        .map((node) => node.id)
+        .filter((id) => ordinaryIds.includes(id));
+      layerSequence = [modelOrder.at(-1)!, ...modelOrder.slice(0, -1)];
+    }
+    const sublayers = Array.from({ length: split }, () => [] as string[]);
+    let targetLayer = 0;
+    for (const id of layerSequence) {
+      sublayers[targetLayer]!.push(id);
+      if (resetOnLongEdges && id.startsWith("__layout_dummy:")) targetLayer = 0;
+      else targetLayer = (targetLayer + 1) % split;
+    }
+    layers.push(...sublayers);
+  }
+  return { layers };
+}
+
 /** ELK's adjacent-node greedy-switch crossing minimization postprocessor. */
 export function applyGreedySwitch(
   input: LayeredPhaseInput,
@@ -1599,6 +1671,9 @@ function implicitEdgeEndpoints(
     const rect = placement.rectByNodeId.get(nodeId);
     if (!rect) continue;
     const mergeEdges = input.settings.mergeEdges === true;
+    const hypernode = input.nodeSettings?.(
+      input.graph.nodes.find((node) => node.id === nodeId)!,
+    )?.hypernode;
     entries.sort((left, right) => {
       const leftOther = left.endpoint === "source" ? left.edge.targetId : left.edge.sourceId;
       const rightOther = right.endpoint === "source" ? right.edge.targetId : right.edge.sourceId;
@@ -1611,7 +1686,7 @@ function implicitEdgeEndpoints(
     entries.forEach(({ edge, endpoint }, index) => {
       const reversedCrossOrder = side === "before";
       const ordinal = reversedCrossOrder ? entries.length - index : index + 1;
-      const ratio = mergeEdges ? 0.5 : ordinal / (entries.length + 1);
+      const ratio = mergeEdges || hypernode === true ? 0.5 : ordinal / (entries.length + 1);
       const point = horizontal
         ? {
             x: side === "after" ? rect.x + rect.width : rect.x,
@@ -1850,12 +1925,107 @@ function routeEdges(style: "ORTHOGONAL" | "POLYLINE" | "SPLINES"): EdgeRouter {
       }
     }
 
+    const unzippingSink =
+      (input.settings["layerUnzipping.strategy"] ?? "NONE") === "ALTERNATING" &&
+      input.direction === "right"
+        ? input.graph.nodes.find(
+            (node) =>
+              input.graph.edges.filter((edge) => edge.targetId === node.id).length ===
+              input.graph.nodes.length - 1,
+          )
+        : undefined;
+    const unzippingSources = unzippingSink
+      ? input.graph.nodes
+          .filter((node) => node.id !== unzippingSink.id)
+          .sort(
+            (left, right) =>
+              (placement.rectByNodeId.get(left.id)?.y ?? 0) -
+              (placement.rectByNodeId.get(right.id)?.y ?? 0),
+          )
+      : [];
+    const unzippingSourceLevels = new Set(
+      unzippingSources.map((node) => placement.rectByNodeId.get(node.id)?.x ?? 0),
+    ).size;
     for (const edge of input.graph.edges) {
       const source = nodeById.get(edge.sourceId);
       const target = nodeById.get(edge.targetId);
       const sourceRect = placement.rectByNodeId.get(edge.sourceId);
       const targetRect = placement.rectByNodeId.get(edge.targetId);
       if (!source || !target || !sourceRect || !targetRect) continue;
+
+      if (unzippingSink && edge.targetId === unzippingSink.id) {
+        const rank = unzippingSources.findIndex((node) => node.id === edge.sourceId);
+        const start = {
+          x: sourceRect.x + sourceRect.width,
+          y: sourceRect.y + sourceRect.height / 2,
+        };
+        const end = {
+          x: targetRect.x,
+          y: targetRect.y + (targetRect.height * (rank + 1)) / (unzippingSources.length + 1),
+        };
+        if (Math.abs(start.y - end.y) < 1e-9) {
+          pointsByEdgeId.set(edge.id, [start, end]);
+        } else {
+          let trackOffset = input.spacing.layer;
+          if (sourceRect.x <= input.padding.left + 1e-9) {
+            const edgeNodeSpacing = Number(input.settings["spacing.edgeNodeBetweenLayers"] ?? 10);
+            const edgeEdgeSpacing = Number(input.settings["spacing.edgeEdgeBetweenLayers"] ?? 10);
+            const earliestBentSources = unzippingSources.filter((candidate, candidateRank) => {
+              const rect = placement.rectByNodeId.get(candidate.id);
+              const candidateEndY =
+                targetRect.y +
+                (targetRect.height * (candidateRank + 1)) / (unzippingSources.length + 1);
+              return (
+                rect !== undefined &&
+                rect.x <= input.padding.left + 1e-9 &&
+                Math.abs(rect.y + rect.height / 2 - candidateEndY) >= 1e-9
+              );
+            });
+            const earliestRank = earliestBentSources.findIndex(
+              (candidate) => candidate.id === edge.sourceId,
+            );
+            if (unzippingSourceLevels === 1) {
+              const sourceRank = unzippingSources.findIndex(
+                (candidate) => candidate.id === edge.sourceId,
+              );
+              trackOffset =
+                edgeNodeSpacing +
+                Math.min(sourceRank, unzippingSources.length - sourceRank - 1) * edgeEdgeSpacing;
+            } else {
+              trackOffset =
+                edgeNodeSpacing +
+                (unzippingSourceLevels >= 3 ? Math.max(0, earliestRank) * edgeEdgeSpacing : 0);
+            }
+          } else {
+            const edgeEdgeSpacing = Number(input.settings["spacing.edgeEdgeBetweenLayers"] ?? 10);
+            const sameLayerBentSources = unzippingSources.filter((candidate, candidateRank) => {
+              const rect = placement.rectByNodeId.get(candidate.id);
+              const candidateEndY =
+                targetRect.y +
+                (targetRect.height * (candidateRank + 1)) / (unzippingSources.length + 1);
+              return (
+                rect !== undefined &&
+                Math.abs(rect.x - sourceRect.x) < 1e-9 &&
+                Math.abs(rect.y + rect.height / 2 - candidateEndY) >= 1e-9
+              );
+            });
+            const sameLayerRank = sameLayerBentSources.findIndex(
+              (candidate) => candidate.id === edge.sourceId,
+            );
+            trackOffset =
+              input.spacing.layer -
+              (unzippingSourceLevels >= 3 ? Math.max(0, sameLayerRank) * edgeEdgeSpacing : 0);
+          }
+          const track = targetRect.x - trackOffset;
+          pointsByEdgeId.set(edge.id, [
+            start,
+            { x: track, y: start.y },
+            { x: track, y: end.y },
+            end,
+          ]);
+        }
+        continue;
+      }
 
       if (source.id === target.id) {
         const loops = selfLoopsByNodeId.get(source.id) ?? [edge];

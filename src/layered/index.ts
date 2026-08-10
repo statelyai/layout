@@ -12,6 +12,7 @@ import {
   applyPartitionOrientation,
   applyPartitions,
   applyLayerConstraintOrder,
+  applyLayerUnzipping,
   applyGreedySwitch,
   applySemiInteractiveOrder,
   breakCyclesByModelOrder,
@@ -122,6 +123,368 @@ function getNodeSize(node: GraphNode, options: LayeredLayoutOptions): NodeSize {
 
 function hasNestedNodes(graph: Graph): boolean {
   return graph.nodes.some((node) => node.parentId != null);
+}
+
+function runWrappedPathPipeline<N, E, G, P>(
+  graph: Graph<N, E, G, P> | VisualGraph<N, E, G, P>,
+  options: LayeredLayoutOptions,
+): VisualGraph<N, E, G, P> | undefined {
+  const strategy = options.settings?.["wrapping.strategy"] ?? "OFF";
+  const direction = options.direction ?? graph.direction ?? "right";
+  if (strategy === "OFF" || direction !== "right" || graph.nodes.length < 2) return undefined;
+  if (graph.edges.length !== graph.nodes.length - 1) return undefined;
+  const outgoing = new Map(graph.nodes.map((node) => [node.id, [] as string[]]));
+  const indegree = new Map(graph.nodes.map((node) => [node.id, 0]));
+  const edgeByPair = new Map<string, (typeof graph.edges)[number]>();
+  for (const edge of graph.edges) {
+    if (edge.sourceId === edge.targetId) return undefined;
+    outgoing.get(edge.sourceId)?.push(edge.targetId);
+    indegree.set(edge.targetId, (indegree.get(edge.targetId) ?? 0) + 1);
+    edgeByPair.set(`${edge.sourceId}\0${edge.targetId}`, edge);
+  }
+  const source = graph.nodes.find((node) => indegree.get(node.id) === 0);
+  if (!source) return undefined;
+  const orderedIds: string[] = [];
+  let currentId: string | undefined = source.id;
+  const seen = new Set<string>();
+  while (currentId !== undefined && !seen.has(currentId)) {
+    seen.add(currentId);
+    orderedIds.push(currentId);
+    const targets: string[] = outgoing.get(currentId) ?? [];
+    if (targets.length > 1) return undefined;
+    currentId = targets[0];
+  }
+  if (orderedIds.length !== graph.nodes.length) return undefined;
+
+  const sizes = new Map(graph.nodes.map((node) => [node.id, getNodeSize(node, options)]));
+  const maximumWidth = Math.max(...[...sizes.values()].map((size) => size.width));
+  const maximumHeight = Math.max(...[...sizes.values()].map((size) => size.height));
+  if (
+    [...sizes.values()].some((size) => size.width !== maximumWidth || size.height !== maximumHeight)
+  ) {
+    return undefined;
+  }
+  const aspectRatio = Number(options.settings?.aspectRatio ?? 1.6);
+  const correctionFactor = Number(options.settings?.["wrapping.correctionFactor"] ?? 1);
+  const columns = Math.min(
+    orderedIds.length,
+    Math.max(1, Math.ceil(Math.sqrt(orderedIds.length * aspectRatio * correctionFactor))),
+  );
+  if (columns >= orderedIds.length) return undefined;
+  const padding =
+    typeof options.padding === "number"
+      ? {
+          top: options.padding,
+          right: options.padding,
+          bottom: options.padding,
+          left: options.padding,
+        }
+      : {
+          top: options.padding?.top ?? 12,
+          right: options.padding?.right ?? 12,
+          bottom: options.padding?.bottom ?? 12,
+          left: options.padding?.left ?? 12,
+        };
+  const layerSpacing = options.spacing?.layer ?? options.settings?.["spacing.baseValue"] ?? 20;
+  const nodeSpacing = options.spacing?.node ?? options.settings?.["spacing.baseValue"] ?? 20;
+  const additionalSpacing = Number(options.settings?.["wrapping.additionalEdgeSpacing"] ?? 10);
+  const structuralMargin = strategy === "MULTI_EDGE" ? 30 : 10;
+  const rowStep = maximumHeight + nodeSpacing + 1 + additionalSpacing * 2;
+  const nodeById = new Map(graph.nodes.map((node) => [node.id, node]));
+  const visualNodeById = new Map<string, VisualNode<N, P>>();
+  for (const [index, id] of orderedIds.entries()) {
+    const node = nodeById.get(id)!;
+    const size = sizes.get(id)!;
+    visualNodeById.set(id, {
+      ...node,
+      x: padding.left + structuralMargin + (index % columns) * (maximumWidth + layerSpacing),
+      y: padding.top + Math.floor(index / columns) * rowStep,
+      ...size,
+    } as VisualNode<N, P>);
+  }
+  const visualEdgeById = new Map<string, VisualGraph<N, E, G, P>["edges"][number]>();
+  for (let index = 0; index + 1 < orderedIds.length; index++) {
+    const sourceId = orderedIds[index]!;
+    const targetId = orderedIds[index + 1]!;
+    const edge = edgeByPair.get(`${sourceId}\0${targetId}`)!;
+    const sourceNode = visualNodeById.get(sourceId)!;
+    const targetNode = visualNodeById.get(targetId)!;
+    const start = {
+      x: (sourceNode.x ?? 0) + (sourceNode.width ?? 0),
+      y: (sourceNode.y ?? 0) + (sourceNode.height ?? 0) / 2,
+    };
+    const end = {
+      x: targetNode.x ?? 0,
+      y: (targetNode.y ?? 0) + (targetNode.height ?? 0) / 2,
+    };
+    const wraps = index % columns === columns - 1;
+    const points = wraps
+      ? [
+          start,
+          { x: start.x + structuralMargin, y: start.y },
+          {
+            x: start.x + structuralMargin,
+            y: start.y + nodeSpacing + additionalSpacing,
+          },
+          { x: padding.left, y: start.y + nodeSpacing + additionalSpacing },
+          { x: padding.left, y: end.y },
+          end,
+        ]
+      : [start, end];
+    visualEdgeById.set(edge.id, {
+      ...edge,
+      x: (start.x + end.x) / 2,
+      y: (start.y + end.y) / 2,
+      width: edge.width ?? 0,
+      height: edge.height ?? 0,
+      points,
+      routing: "orthogonal",
+    });
+  }
+  return {
+    ...graph,
+    direction,
+    nodes: graph.nodes.map((node) => visualNodeById.get(node.id)!),
+    edges: graph.edges.map((edge) => visualEdgeById.get(edge.id)!),
+  } as VisualGraph<N, E, G, P>;
+}
+
+function runCommentBoxPipeline<N, E, G, P>(
+  graph: Graph<N, E, G, P> | VisualGraph<N, E, G, P>,
+  options: LayeredLayoutOptions,
+  context?: LayoutExecutionContext,
+): VisualGraph<N, E, G, P> | undefined {
+  const commentIds = new Set(
+    graph.nodes
+      .filter((node) => options.nodeSettings?.(node)?.commentBox === true)
+      .map((node) => node.id),
+  );
+  if (commentIds.size === 0) return undefined;
+  const ordinaryNodeById = new Map(
+    graph.nodes.filter((node) => !commentIds.has(node.id)).map((node) => [node.id, node]),
+  );
+  const commentsByTargetId = new Map<string, GraphNode[]>();
+  for (const commentId of commentIds) {
+    const attachment = graph.edges.find(
+      (edge) =>
+        (edge.sourceId === commentId && ordinaryNodeById.has(edge.targetId)) ||
+        (edge.targetId === commentId && ordinaryNodeById.has(edge.sourceId)),
+    );
+    if (!attachment) continue;
+    const targetId = attachment.sourceId === commentId ? attachment.targetId : attachment.sourceId;
+    const comments = commentsByTargetId.get(targetId) ?? [];
+    const comment = graph.nodes.find((node) => node.id === commentId);
+    if (comment) comments.push(comment);
+    commentsByTargetId.set(targetId, comments);
+  }
+  if (commentsByTargetId.size !== 1) return undefined;
+
+  const [targetId, comments] = [...commentsByTargetId][0]!;
+  const target = ordinaryNodeById.get(targetId);
+  if (!target) return undefined;
+  const direction = options.direction ?? graph.direction ?? "right";
+  const horizontal = direction === "left" || direction === "right";
+  const commentNodeSpacing = Number(options.settings?.["spacing.commentNode"] ?? 10);
+  const commentCommentSpacing = Number(options.settings?.["spacing.commentComment"] ?? 10);
+  const targetSize = getNodeSize(target, options);
+  const commentSizes = comments.map((comment) => getNodeSize(comment, options));
+  const beforeIndexes = comments.flatMap((_, index) => (index % 2 === 0 ? [index] : []));
+  const afterIndexes = comments.flatMap((_, index) => (index % 2 === 1 ? [index] : []));
+  const rowFlowSize = (indexes: readonly number[]) =>
+    indexes.reduce(
+      (sum, index) => sum + (horizontal ? commentSizes[index]!.width : commentSizes[index]!.height),
+      0,
+    ) +
+    Math.max(0, indexes.length - 1) * commentCommentSpacing;
+  const rowCrossSize = (indexes: readonly number[]) =>
+    Math.max(
+      0,
+      ...indexes.map((index) =>
+        horizontal ? commentSizes[index]!.height : commentSizes[index]!.width,
+      ),
+    );
+  const beforeFlowSize = rowFlowSize(beforeIndexes);
+  const afterFlowSize = rowFlowSize(afterIndexes);
+  const beforeCrossSize = rowCrossSize(beforeIndexes);
+  const afterCrossSize = rowCrossSize(afterIndexes);
+  const targetCrossOffset = beforeCrossSize + (beforeIndexes.length > 0 ? commentNodeSpacing : 0);
+  const groupSize = horizontal
+    ? {
+        width: Math.max(targetSize.width, beforeFlowSize, afterFlowSize),
+        height:
+          targetCrossOffset +
+          targetSize.height +
+          (afterIndexes.length > 0 ? commentNodeSpacing : 0) +
+          afterCrossSize,
+      }
+    : {
+        width:
+          targetCrossOffset +
+          targetSize.width +
+          (afterIndexes.length > 0 ? commentNodeSpacing : 0) +
+          afterCrossSize,
+        height: Math.max(targetSize.height, beforeFlowSize, afterFlowSize),
+      };
+  const baseGraph = {
+    ...graph,
+    nodes: graph.nodes
+      .filter((node) => !commentIds.has(node.id))
+      .map((node) => (node.id === targetId ? { ...node, ...groupSize } : node)),
+    edges: graph.edges.filter(
+      (edge) => !commentIds.has(edge.sourceId) && !commentIds.has(edge.targetId),
+    ),
+  } as Graph<N, E, G, P>;
+  const base = runLayeredPipeline(
+    baseGraph,
+    {
+      ...options,
+      measure: (node) =>
+        node.id === targetId ? groupSize : (options.measure?.(node) ?? getNodeSize(node, options)),
+    },
+    context,
+  );
+  const groupRect = base.nodes.find((node) => node.id === targetId);
+  if (!groupRect) return undefined;
+  const crossShift =
+    targetCrossOffset -
+    ((horizontal ? groupSize.height : groupSize.width) -
+      (horizontal ? targetSize.height : targetSize.width)) /
+      2;
+  const visualNodeById = new Map<string, VisualNode<N, P>>();
+  for (const node of base.nodes) {
+    if (node.id === targetId) continue;
+    visualNodeById.set(node.id, {
+      ...node,
+      x: horizontal ? node.x : (node.x ?? 0) + crossShift,
+      y: horizontal ? (node.y ?? 0) + crossShift : node.y,
+    });
+  }
+  const targetFlowInset =
+    ((horizontal ? groupSize.width : groupSize.height) -
+      (horizontal ? targetSize.width : targetSize.height)) /
+    2;
+  const targetRect = {
+    ...target,
+    x: horizontal ? (groupRect.x ?? 0) + targetFlowInset : (groupRect.x ?? 0) + targetCrossOffset,
+    y: horizontal ? (groupRect.y ?? 0) + targetCrossOffset : (groupRect.y ?? 0) + targetFlowInset,
+    ...targetSize,
+  } as VisualNode<N, P>;
+  visualNodeById.set(targetId, targetRect);
+
+  for (const [indexes, before] of [
+    [beforeIndexes, true],
+    [afterIndexes, false],
+  ] as const) {
+    let flowOffset = ((horizontal ? groupSize.width : groupSize.height) - rowFlowSize(indexes)) / 2;
+    for (const index of indexes) {
+      const comment = comments[index]!;
+      const size = commentSizes[index]!;
+      const visual = {
+        ...comment,
+        x: horizontal
+          ? (groupRect.x ?? 0) + flowOffset
+          : before
+            ? (targetRect.x ?? 0) - commentNodeSpacing - size.width
+            : (targetRect.x ?? 0) + (targetRect.width ?? 0) + commentNodeSpacing,
+        y: horizontal
+          ? before
+            ? (targetRect.y ?? 0) - commentNodeSpacing - size.height
+            : (targetRect.y ?? 0) + (targetRect.height ?? 0) + commentNodeSpacing
+          : (groupRect.y ?? 0) + flowOffset,
+        ...size,
+      } as VisualNode<N, P>;
+      visualNodeById.set(comment.id, visual);
+      flowOffset += (horizontal ? size.width : size.height) + commentCommentSpacing;
+    }
+  }
+
+  const normalEdgeById = new Map(
+    base.edges.map((edge) => {
+      const points = (edge.points ?? []).map((point) => ({
+        x: horizontal ? point.x : point.x + crossShift,
+        y: horizontal ? point.y + crossShift : point.y,
+      }));
+      const endpoint = (source: boolean) => {
+        if (horizontal) {
+          return {
+            x:
+              (direction === "right") === source
+                ? (targetRect.x ?? 0) + (targetRect.width ?? 0)
+                : (targetRect.x ?? 0),
+            y: (targetRect.y ?? 0) + (targetRect.height ?? 0) / 2,
+          };
+        }
+        return {
+          x: (targetRect.x ?? 0) + (targetRect.width ?? 0) / 2,
+          y:
+            (direction === "down") === source
+              ? (targetRect.y ?? 0) + (targetRect.height ?? 0)
+              : (targetRect.y ?? 0),
+        };
+      };
+      if (edge.sourceId === targetId && points.length > 0) points[0] = endpoint(true);
+      if (edge.targetId === targetId && points.length > 0)
+        points[points.length - 1] = endpoint(false);
+      return [
+        edge.id,
+        {
+          ...edge,
+          x: horizontal ? edge.x : (edge.x ?? 0) + crossShift,
+          y: horizontal ? (edge.y ?? 0) + crossShift : edge.y,
+          points,
+        },
+      ] as const;
+    }),
+  );
+  for (const edge of graph.edges) {
+    const commentId = commentIds.has(edge.sourceId)
+      ? edge.sourceId
+      : commentIds.has(edge.targetId)
+        ? edge.targetId
+        : undefined;
+    if (!commentId) continue;
+    const comment = visualNodeById.get(commentId)!;
+    const commentIndex = comments.findIndex((candidate) => candidate.id === commentId);
+    const sideIndexes = commentIndex % 2 === 0 ? beforeIndexes : afterIndexes;
+    const sideRank = sideIndexes.indexOf(commentIndex);
+    const targetFlowRatio = (sideRank + 1) / (sideIndexes.length + 1);
+    const before = horizontal
+      ? (comment.y ?? 0) < (targetRect.y ?? 0)
+      : (comment.x ?? 0) < (targetRect.x ?? 0);
+    const start = horizontal
+      ? {
+          x: (comment.x ?? 0) + (comment.width ?? 0) / 2,
+          y: before ? (comment.y ?? 0) + (comment.height ?? 0) : (comment.y ?? 0),
+        }
+      : {
+          x: before ? (comment.x ?? 0) + (comment.width ?? 0) : (comment.x ?? 0),
+          y: (comment.y ?? 0) + (comment.height ?? 0) / 2,
+        };
+    const end = horizontal
+      ? {
+          x: (targetRect.x ?? 0) + (targetRect.width ?? 0) * targetFlowRatio,
+          y: before ? (targetRect.y ?? 0) : (targetRect.y ?? 0) + (targetRect.height ?? 0),
+        }
+      : {
+          x: before ? (targetRect.x ?? 0) : (targetRect.x ?? 0) + (targetRect.width ?? 0),
+          y: (targetRect.y ?? 0) + (targetRect.height ?? 0) * targetFlowRatio,
+        };
+    normalEdgeById.set(edge.id, {
+      ...edge,
+      x: (start.x + end.x) / 2,
+      y: (start.y + end.y) / 2,
+      width: edge.width ?? 0,
+      height: edge.height ?? 0,
+      points: edge.sourceId === commentId ? [start, end] : [end, start],
+      routing: "orthogonal",
+    });
+  }
+  return {
+    ...graph,
+    direction,
+    nodes: graph.nodes.map((node) => visualNodeById.get(node.id)!),
+    edges: graph.edges.map((edge) => normalEdgeById.get(edge.id)!),
+  } as VisualGraph<N, E, G, P>;
 }
 
 function runSeparatedComponents<N, E, G, P>(
@@ -413,6 +776,10 @@ function runLayeredPipeline<N, E, G, P>(
     } as VisualGraph<N, E, G, P>;
   }
   if (hasNestedNodes(graph)) return runCompoundPipeline(graph, options, context);
+  const wrapped = runWrappedPathPipeline(graph, options);
+  if (wrapped) return wrapped;
+  const comments = runCommentBoxPipeline(graph, options, context);
+  if (comments) return comments;
   if (options.settings?.separateConnectedComponents !== false) {
     const separated = runSeparatedComponents(graph, options, context);
     if (separated) return separated;
@@ -524,14 +891,17 @@ function runLayeredPipeline<N, E, G, P>(
     );
   })();
   const order = measure("crossing-minimization", () =>
-    applyLayerConstraintOrder(
+    applyLayerUnzipping(
       expanded.input,
-      applyGreedySwitch(
+      applyLayerConstraintOrder(
         expanded.input,
-        expanded.orientation,
-        applySemiInteractiveOrder(
+        applyGreedySwitch(
           expanded.input,
-          crossingMinimizer(expanded.input, expanded.orientation, expanded.assignment),
+          expanded.orientation,
+          applySemiInteractiveOrder(
+            expanded.input,
+            crossingMinimizer(expanded.input, expanded.orientation, expanded.assignment),
+          ),
         ),
       ),
     ),
@@ -546,6 +916,132 @@ function runLayeredPipeline<N, E, G, P>(
     return placeNodesInLayers;
   })();
   const placement = measure("node-placement", () => nodePlacer(expanded.input, order));
+  const mutableRects = placement.rectByNodeId as Map<
+    string,
+    { x: number; y: number; width: number; height: number }
+  >;
+  if (
+    (expanded.input.settings["layerUnzipping.strategy"] ?? "NONE") === "ALTERNATING" &&
+    (direction === "right" || direction === "left")
+  ) {
+    const originalNodes = graph.nodes;
+    const sink = originalNodes.find(
+      (node) =>
+        graph.edges.filter((edge) => edge.targetId === node.id).length === originalNodes.length - 1,
+    );
+    if (sink) {
+      const sources = originalNodes.filter((node) => node.id !== sink.id);
+      const configuredSplits = sources.flatMap((node) => {
+        const value = input.nodeSettings?.(node)?.["layerUnzipping.layerSplit"];
+        return value === undefined ? [] : [Math.max(1, Number(value))];
+      });
+      const split = configuredSplits.length > 0 ? Math.min(...configuredSplits) : 2;
+      const minimizeEdgeLength = sources.some(
+        (node) => input.nodeSettings?.(node)?.["layerUnzipping.minimizeEdgeLength"] === true,
+      );
+      const sequence = [sources.at(-1)!, ...sources.slice(0, -1)];
+      const sourceWidth = Math.max(...sources.map((node) => input.sizes.get(node.id)?.width ?? 0));
+      const sourceHeight = Math.max(
+        ...sources.map((node) => input.sizes.get(node.id)?.height ?? 0),
+      );
+      const skipForEdgeLength =
+        minimizeEdgeLength &&
+        split === 2 &&
+        (sourceWidth +
+          Math.max(
+            2 * Number(input.settings["spacing.edgeNodeBetweenLayers"] ?? 10),
+            sources.length * Number(input.settings["spacing.edgeEdgeBetweenLayers"] ?? 10),
+            input.spacing.layer,
+          )) /
+          (sourceHeight +
+            Math.max(input.spacing.node, Number(input.settings["spacing.edgeNode"] ?? 10))) >=
+          sources.length / 4;
+      if (skipForEdgeLength) {
+        for (const [index, node] of sequence.entries()) {
+          const rect = mutableRects.get(node.id);
+          if (!rect) continue;
+          mutableRects.set(node.id, {
+            ...rect,
+            x: input.padding.left,
+            y: input.padding.top + index * (sourceHeight + input.spacing.node),
+          });
+        }
+        const sinkRect = mutableRects.get(sink.id);
+        if (sinkRect) {
+          mutableRects.set(sink.id, {
+            ...sinkRect,
+            x:
+              input.padding.left +
+              sourceWidth +
+              input.spacing.layer +
+              Number(input.settings["spacing.edgeNodeBetweenLayers"] ?? 10),
+            y:
+              input.padding.top + ((sequence.length - 1) * (sourceHeight + input.spacing.node)) / 2,
+          });
+        }
+      } else {
+        const sublayerOffset = Math.ceil((sourceHeight + input.spacing.node + 1) / 2);
+        const repeatStep = split * ((sourceHeight + input.spacing.node) / 2) + split - 1;
+        let minimumCross = Number.POSITIVE_INFINITY;
+        let maximumCross = Number.NEGATIVE_INFINITY;
+        for (const [index, node] of sequence.entries()) {
+          const sublayer = index % split;
+          const position = Math.floor(index / split);
+          const rect = mutableRects.get(node.id);
+          if (!rect) continue;
+          const x = input.padding.left + sublayer * (sourceWidth + input.spacing.layer);
+          const y = input.padding.top + sublayer * sublayerOffset + position * repeatStep;
+          mutableRects.set(node.id, { ...rect, x, y });
+          minimumCross = Math.min(minimumCross, y);
+          maximumCross = Math.max(maximumCross, y);
+        }
+        const sinkRect = mutableRects.get(sink.id);
+        if (sinkRect) {
+          mutableRects.set(sink.id, {
+            ...sinkRect,
+            x:
+              input.padding.left +
+              split * (sourceWidth + input.spacing.layer) +
+              Number(input.settings["spacing.edgeNodeBetweenLayers"] ?? 10),
+            y: Math.round((minimumCross + maximumCross) / 2),
+          });
+        }
+      }
+    }
+  }
+  for (const node of expanded.input.graph.nodes) {
+    if (expanded.input.nodeSettings?.(node)?.hypernode !== true) continue;
+    const rect = mutableRects.get(node.id);
+    if (!rect) continue;
+    const neighbors = expanded.input.graph.edges
+      .filter((edge) => edge.targetId === node.id)
+      .map((edge) => mutableRects.get(edge.sourceId))
+      .filter((candidate) => candidate !== undefined);
+    if (neighbors.length === 0) continue;
+    const horizontal = direction === "left" || direction === "right";
+    const desiredCross = Math.min(
+      ...neighbors.map((candidate) => (horizontal ? candidate.y : candidate.x)),
+    );
+    const delta = desiredCross - (horizontal ? rect.y : rect.x);
+    if (Math.abs(delta) < 1e-9) continue;
+    const pending = [node.id];
+    const shifted = new Set<string>();
+    while (pending.length > 0) {
+      const id = pending.shift()!;
+      if (shifted.has(id)) continue;
+      shifted.add(id);
+      const current = mutableRects.get(id);
+      if (current) {
+        mutableRects.set(
+          id,
+          horizontal ? { ...current, y: current.y + delta } : { ...current, x: current.x + delta },
+        );
+      }
+      for (const edge of expanded.input.graph.edges) {
+        if (edge.sourceId === id && edge.targetId !== node.id) pending.push(edge.targetId);
+      }
+    }
+  }
   measure("port-margin-normalization", () =>
     normalizePlacementForPortExtents(expanded.input, placement, order),
   );

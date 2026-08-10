@@ -43,6 +43,7 @@ export interface ElkEdge extends ElkGraphElement {
   targetPort?: ElkId;
   labels?: ElkLabel[];
   sections?: ElkEdgeSection[];
+  junctionPoints?: ElkPoint[];
 }
 
 export interface ElkNode extends ElkShape {
