@@ -44,6 +44,27 @@ describe("elkjs compatibility: regressions", () => {
     expect(result.edges?.find((edge) => edge.id === "e3")?.sections).toHaveLength(1);
   });
 
+  it("forwards exact layered graph options into the native pipeline", async () => {
+    const elk = new ELK();
+    const result = await elk.layout({
+      id: "root",
+      layoutOptions: {
+        "org.eclipse.elk.algorithm": "layered",
+        "org.eclipse.elk.direction": "RIGHT",
+        "org.eclipse.elk.layered.layering.strategy": "COFFMAN_GRAHAM",
+        "org.eclipse.elk.layered.layering.coffmanGraham.layerBound": "1",
+      },
+      children: ["a", "b", "c", "d"].map((id) => ({ id, width: 20, height: 20 })),
+      edges: [
+        { id: "ab", sources: ["a"], targets: ["b"] },
+        { id: "ac", sources: ["a"], targets: ["c"] },
+        { id: "bd", sources: ["b"], targets: ["d"] },
+      ],
+    });
+
+    expect(new Set(result.children?.map((node) => node.x))).toHaveLength(4);
+  });
+
   it("accepts existing edge sections with unspecified bend points", async () => {
     const elk = new ELK();
     await expect(

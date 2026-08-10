@@ -2,6 +2,11 @@ import { createGraph, type Graph } from "@statelyai/graph";
 import { getBoxLayout } from "../box";
 import { getFixedLayout } from "../fixed";
 import { getLayeredLayout } from "../layered";
+import {
+  elkLayeredOptionDefinitions,
+  type ElkLayeredOptionValueByName,
+  type LayeredAdvancedOptions,
+} from "../layered/elk-options";
 import { getRectanglePackingLayout } from "../packing";
 import { getRandomLayout } from "../random";
 import { getSporeCompactionLayout, getSporeOverlapRemovalLayout } from "../spore";
@@ -56,7 +61,7 @@ export default class ELK {
 
   async knownLayoutAlgorithms(): Promise<ElkLayoutAlgorithmDescription[]> {
     return [...this.#algorithmIds].map((id) => ({
-      id,
+      id: id === "layered" ? "org.eclipse.elk.layered" : id,
       name: {
         layered: "Layered",
         box: "Box",
@@ -69,12 +74,7 @@ export default class ELK {
       category: id === "layered" ? "layered" : "other",
       knownOptions:
         id === "layered"
-          ? [
-              "elk.direction",
-              "elk.padding",
-              "elk.spacing.nodeNode",
-              "elk.layered.spacing.nodeNodeBetweenLayers",
-            ]
+          ? elkLayeredOptionDefinitions.map((definition) => definition.elkId)
           : id === "box"
             ? ["padding", "spacing.nodeNode", "aspectRatio", "box.packingMode"]
             : id === "random"
@@ -85,17 +85,13 @@ export default class ELK {
 
   async knownLayoutOptions(): Promise<ElkLayoutOptionDescription[]> {
     return [
-      { id: "elk.algorithm", name: "Layout Algorithm", type: "STRING" },
-      { id: "elk.direction", name: "Direction", type: "ENUM" },
-      { id: "elk.padding", name: "Padding", type: "OBJECT" },
-      { id: "elk.aspectRatio", name: "Aspect Ratio", type: "DOUBLE" },
-      { id: "elk.randomSeed", name: "Random Seed", type: "INT" },
-      { id: "elk.spacing.nodeNode", name: "Node Spacing", type: "DOUBLE" },
-      {
-        id: "elk.layered.spacing.nodeNodeBetweenLayers",
-        name: "Layer Spacing",
-        type: "DOUBLE",
-      },
+      { id: "org.eclipse.elk.algorithm", name: "Layout Algorithm", type: "STRING" },
+      ...elkLayeredOptionDefinitions.map((definition) => ({
+        id: definition.elkId,
+        name: definition.name,
+        type: definition.type,
+        targets: [...definition.targets],
+      })),
     ];
   }
 
@@ -174,7 +170,10 @@ export default class ELK {
       }
     }
     const graph_ = toGraph(graph);
-    const padding = parsePadding(getOption(layoutOptions, "padding"));
+    const padding = parsePadding(
+      getOption(layoutOptions, "padding"),
+      algorithm === "layered" ? 12 : 0,
+    );
     const constrainedLayerByNodeId = new Map(
       (graph.children ?? []).flatMap((node) =>
         getOption(node.layoutOptions ?? {}, "layerConstraint") === "FIRST"
@@ -246,6 +245,19 @@ export default class ELK {
                       constraints: {
                         layer: (node) => constrainedLayerByNodeId.get(node.id),
                       },
+                      settings: getLayeredSettings(layoutOptions),
+                      nodeSettings: (node) => {
+                        const child = graph.children?.find(
+                          (candidate) => String(candidate.id) === node.id,
+                        );
+                        return getElementLayeredSettings(child?.layoutOptions ?? {});
+                      },
+                      edgeSettings: (edge) => {
+                        const elkEdge = graph.edges?.find(
+                          (candidate) => String(candidate.id) === edge.id,
+                        );
+                        return getElementLayeredSettings(elkEdge?.layoutOptions ?? {});
+                      },
                     });
     applyLayout(graph, laidOut, padding, layoutOptions);
     if (arguments_.logging || arguments_.measureExecutionTime) {
@@ -261,12 +273,12 @@ export default class ELK {
   }
 }
 
-function parsePadding(value: unknown) {
+function parsePadding(value: unknown, fallback = 0) {
   if (typeof value === "number") {
     return { top: value, right: value, bottom: value, left: value };
   }
   if (typeof value !== "string") {
-    return { top: 0, right: 0, bottom: 0, left: 0 };
+    return { top: fallback, right: fallback, bottom: fallback, left: fallback };
   }
   const padding = { top: 0, right: 0, bottom: 0, left: 0 };
   for (const match of value.matchAll(/(top|right|bottom|left)\s*=\s*(-?\d+(?:\.\d+)?)/g)) {
@@ -283,6 +295,46 @@ function getOption(options: Readonly<Record<string, unknown>>, suffix: string): 
   }
   const match = Object.entries(options).find(([key]) => key.endsWith(`.${suffix}`));
   return match?.[1];
+}
+
+const ergonomicallyMappedLayeredSettings = new Set<keyof ElkLayeredOptionValueByName>([
+  "direction",
+  "padding",
+  "spacing.node",
+  "spacing.layer",
+]);
+
+function coerceLayeredOptionValue(value: unknown, type: string): unknown {
+  if (type === "BOOLEAN") {
+    if (typeof value === "boolean") return value;
+    if (typeof value === "string") return value.toLowerCase() === "true";
+  }
+  if (type === "DOUBLE" || type === "INT") {
+    if (typeof value === "number") return value;
+    if (typeof value === "string" && value.trim() !== "") return Number(value);
+  }
+  return value;
+}
+
+function getElementLayeredSettings(
+  options: Readonly<Record<string, unknown>>,
+): ElkLayeredOptionValueByName {
+  const settings: ElkLayeredOptionValueByName = {};
+  for (const definition of elkLayeredOptionDefinitions) {
+    const suffix = definition.elkId.replace(/^org\.eclipse\.elk\./, "");
+    const value = [definition.name, suffix, `elk.${suffix}`, definition.elkId]
+      .map((key) => options[key])
+      .find((candidate) => candidate !== undefined);
+    if (value === undefined) continue;
+    settings[definition.name] = coerceLayeredOptionValue(value, definition.type) as never;
+  }
+  return settings;
+}
+
+function getLayeredSettings(options: Readonly<Record<string, unknown>>): LayeredAdvancedOptions {
+  const settings = getElementLayeredSettings(options);
+  for (const name of ergonomicallyMappedLayeredSettings) delete settings[name];
+  return settings as LayeredAdvancedOptions;
 }
 
 function getNumberOption(
@@ -314,8 +366,8 @@ function getBooleanOption(
 function getDirection(
   options: Readonly<Record<string, unknown>>,
 ): "up" | "down" | "left" | "right" {
-  const direction = String(getOption(options, "direction") ?? "DOWN").toLowerCase();
-  return direction === "up" || direction === "left" || direction === "right" ? direction : "down";
+  const direction = String(getOption(options, "direction") ?? "RIGHT").toLowerCase();
+  return direction === "up" || direction === "left" || direction === "down" ? direction : "right";
 }
 
 function endpoint(
@@ -400,6 +452,8 @@ function toSection(edge: ElkEdge, points: readonly ElkPoint[]) {
     id: `${String(edge.id)}_s0`,
     startPoint: { ...startPoint },
     endPoint: { ...endPoint },
+    incomingShape: edge.sources?.[0] ?? edge.source,
+    outgoingShape: edge.targets?.[0] ?? edge.target,
     ...(points.length > 2
       ? { bendPoints: points.slice(1, -1).map((point) => ({ ...point })) }
       : {}),

@@ -4,6 +4,7 @@ import { describe, expect, it } from "vitest";
 import {
   getLayeredLayout,
   getLayout,
+  breakCyclesGreedily,
   breakCyclesWithDepthFirstSearch,
   routeEdgesOrthogonally,
   UnsupportedLayoutError,
@@ -116,6 +117,45 @@ describe("getLayeredLayout", () => {
     expect(result.edges[0]?.points?.length).toBeGreaterThan(1);
   });
 
+  it("splits long edges for ordering and joins their routes", () => {
+    const graph = createGraph({
+      nodes: [{ id: "a" }, { id: "b" }, { id: "c" }],
+      edges: [
+        { id: "ab", sourceId: "a", targetId: "b" },
+        { id: "bc", sourceId: "b", targetId: "c" },
+        { id: "ac", sourceId: "a", targetId: "c" },
+      ],
+    });
+
+    const result = getLayeredLayout(graph, { direction: "right" });
+    const longEdge = result.edges.find((edge) => edge.id === "ac");
+    const middleLayerX = result.nodes.find((node) => node.id === "b")?.x ?? 0;
+
+    expect(longEdge?.points?.some((point) => point.x === middleLayerX)).toBe(true);
+    expect(result.nodes.some((node) => node.id.startsWith("__layout_dummy:"))).toBe(false);
+  });
+
+  it("selects orthogonal, polyline, and spline routing", () => {
+    const graph = createGraph({
+      nodes: [{ id: "a" }, { id: "b" }],
+      edges: [{ id: "ab", sourceId: "a", targetId: "b" }],
+    });
+
+    const polyline = getLayeredLayout(graph, {
+      direction: "right",
+      settings: { edgeRouting: "POLYLINE" },
+    });
+    const splines = getLayeredLayout(graph, {
+      direction: "right",
+      settings: { edgeRouting: "SPLINES" },
+    });
+
+    expect(polyline.edges[0]?.routing).toBe("polyline");
+    expect(polyline.edges[0]?.points).toHaveLength(2);
+    expect(splines.edges[0]?.routing).toBe("splines");
+    expect(splines.edges[0]?.points?.length).toBeGreaterThanOrEqual(2);
+  });
+
   it("rejects hierarchy until the compound-graph milestone", () => {
     const graph = createGraph({
       nodes: [{ id: "parent" }, { id: "child", parentId: "parent" }],
@@ -143,9 +183,57 @@ describe("getLayeredLayout", () => {
       spacing: { node: 40, layer: 60 },
       padding: { top: 0, right: 0, bottom: 0, left: 0 },
       constrainedLayerByNodeId: new Map(),
+      settings: {},
     });
 
     expect(result.reversedEdgeIds.size).toBe(1);
+  });
+
+  it("matches ELK greedy cycle breaking for the seeded feedback-edge fixture", () => {
+    const graph = createGraph({
+      nodes: ["a", "b", "c", "d"].map((id) => ({ id })),
+      edges: [
+        { id: "ab", sourceId: "a", targetId: "b" },
+        { id: "bc", sourceId: "b", targetId: "c" },
+        { id: "ca", sourceId: "c", targetId: "a" },
+        { id: "cd", sourceId: "c", targetId: "d" },
+        { id: "db", sourceId: "d", targetId: "b" },
+      ],
+    });
+
+    const result = breakCyclesGreedily({
+      graph,
+      sizes: new Map(),
+      direction: "right",
+      spacing: { node: 40, layer: 60 },
+      padding: { top: 0, right: 0, bottom: 0, left: 0 },
+      constrainedLayerByNodeId: new Map(),
+      settings: { randomSeed: 1 },
+    });
+
+    // elkjs 0.11.1 with feedbackEdges=true routes only bc against the flow.
+    expect([...result.reversedEdgeIds]).toEqual(["bc"]);
+  });
+
+  it("uses ELK's GREEDY default and accepts DEPTH_FIRST explicitly", () => {
+    const graph = createGraph({
+      nodes: ["a", "b", "c", "d"].map((id) => ({ id })),
+      edges: [
+        { id: "ab", sourceId: "a", targetId: "b" },
+        { id: "bc", sourceId: "b", targetId: "c" },
+        { id: "ca", sourceId: "c", targetId: "a" },
+        { id: "cd", sourceId: "c", targetId: "d" },
+        { id: "db", sourceId: "d", targetId: "b" },
+      ],
+    });
+
+    const greedy = getLayeredLayout(graph, { direction: "right" });
+    const depthFirst = getLayeredLayout(graph, {
+      direction: "right",
+      settings: { "cycleBreaking.strategy": "DEPTH_FIRST" },
+    });
+
+    expect(greedy).not.toEqual(depthFirst);
   });
 });
 
@@ -158,9 +246,11 @@ describe("getLayout", () => {
     expect(result.metrics.phases.map((phase) => phase.id)).toEqual([
       "cycle-breaking",
       "layer-assignment",
+      "long-edge-splitting",
       "crossing-minimization",
       "node-placement",
       "edge-routing",
+      "long-edge-joining",
     ]);
   });
 

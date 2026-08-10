@@ -30,6 +30,8 @@ export interface ElkEdgeSection extends ElkGraphElement {
   startPoint: ElkPoint;
   endPoint: ElkPoint;
   bendPoints?: ElkPoint[];
+  incomingShape?: ElkId;
+  outgoingShape?: ElkId;
 }
 
 export interface ElkEdge extends ElkGraphElement {

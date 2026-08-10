@@ -3,14 +3,37 @@ import { UnsupportedLayoutError } from "../errors";
 import type { LayoutAlgorithm, LayoutExecutionContext } from "../types";
 import {
   assignLayersByLongestPath,
+  assignLayersByLongestPathToSink,
+  assignLayersByBreadthFirstModelOrder,
+  assignLayersByDepthFirstModelOrder,
+  assignLayersInteractively,
+  assignLayersWithCoffmanGraham,
+  breakCyclesByModelOrder,
+  breakCyclesByStronglyConnectedConnectivity,
+  breakCyclesByStronglyConnectedNodeType,
+  breakCyclesGreedily,
+  breakCyclesGreedilyByModelOrder,
+  breakCyclesInteractively,
+  breakCyclesWithModelOrderDepthFirstSearch,
+  breakCyclesWithModelOrderBreadthFirstSearch,
   breakCyclesWithDepthFirstSearch,
   getPolylineMidpoint,
   minimizeCrossingsWithBarycenter,
+  minimizeCrossingsWithMedian,
+  minimizeCrossingsInteractively,
+  minimizeCrossingsWithModelOrder,
   placeNodesInLayers,
+  placeNodesInteractively,
   placePorts,
   routeEdgesOrthogonally,
+  routeEdgesWithPolylines,
+  routeEdgesWithSplines,
 } from "./strategies";
 import type { LayeredLayoutOptions, LayeredPhaseInput, NodeSize } from "./types";
+import { assignLayersWithNetworkSimplex } from "./network-simplex";
+import { assignLayersWithMinWidth } from "./min-width";
+import { assignLayersWithStretchWidth } from "./stretch-width";
+import { joinLongEdgeRoutes, splitLongEdges } from "./long-edges";
 
 export type {
   AcyclicOrientation,
@@ -33,20 +56,54 @@ export type {
 
 export {
   assignLayersByLongestPath,
+  assignLayersByLongestPathToSink,
+  assignLayersByBreadthFirstModelOrder,
+  assignLayersByDepthFirstModelOrder,
+  assignLayersInteractively,
+  assignLayersWithCoffmanGraham,
+  breakCyclesByModelOrder,
+  breakCyclesByStronglyConnectedConnectivity,
+  breakCyclesByStronglyConnectedNodeType,
   breakCyclesWithDepthFirstSearch,
+  breakCyclesGreedily,
+  breakCyclesGreedilyByModelOrder,
+  breakCyclesInteractively,
+  breakCyclesWithModelOrderDepthFirstSearch,
+  breakCyclesWithModelOrderBreadthFirstSearch,
   minimizeCrossingsWithBarycenter,
+  minimizeCrossingsWithMedian,
+  minimizeCrossingsInteractively,
+  minimizeCrossingsWithModelOrder,
   placeNodesInLayers,
+  placeNodesInteractively,
   routeEdgesOrthogonally,
+  routeEdgesWithPolylines,
+  routeEdgesWithSplines,
 } from "./strategies";
+export { assignLayersWithNetworkSimplex } from "./network-simplex";
+export { assignLayersWithMinWidth } from "./min-width";
+export { assignLayersWithStretchWidth } from "./stretch-width";
+export { fromElkLayeredOptionId, toElkLayeredOptions } from "./elk-options";
+export type {
+  CycleBreakingStrategy,
+  CrossingMinimizationStrategy,
+  EdgeRoutingStyle,
+  ElkLayeredOptionId,
+  ElkLayeredOptionName,
+  ElkLayeredOptionValueByName,
+  LayeredAdvancedOptions,
+  LayeringStrategy,
+  NodePlacementStrategy,
+} from "./elk-options";
 
-const DEFAULT_NODE_SIZE: NodeSize = { width: 100, height: 50 };
+const DEFAULT_NODE_SIZE: NodeSize = { width: 0, height: 0 };
 
 function getNodeSize(node: GraphNode, options: LayeredLayoutOptions): NodeSize {
   const measured = options.measure?.(node);
   if (measured) return measured;
   return {
-    width: node.width !== undefined && node.width > 0 ? node.width : DEFAULT_NODE_SIZE.width,
-    height: node.height !== undefined && node.height > 0 ? node.height : DEFAULT_NODE_SIZE.height,
+    width: node.width !== undefined && node.width >= 0 ? node.width : DEFAULT_NODE_SIZE.width,
+    height: node.height !== undefined && node.height >= 0 ? node.height : DEFAULT_NODE_SIZE.height,
   };
 }
 
@@ -67,7 +124,7 @@ function runLayeredPipeline<N, E, G, P>(
   context?: LayoutExecutionContext,
 ): VisualGraph<N, E, G, P> {
   assertFlatGraph(graph);
-  const direction = options.direction ?? graph.direction ?? "down";
+  const direction = options.direction ?? graph.direction ?? "right";
   const padding =
     typeof options.padding === "number"
       ? {
@@ -77,18 +134,18 @@ function runLayeredPipeline<N, E, G, P>(
           left: options.padding,
         }
       : {
-          top: options.padding?.top ?? 0,
-          right: options.padding?.right ?? 0,
-          bottom: options.padding?.bottom ?? 0,
-          left: options.padding?.left ?? 0,
+          top: options.padding?.top ?? 12,
+          right: options.padding?.right ?? 12,
+          bottom: options.padding?.bottom ?? 12,
+          left: options.padding?.left ?? 12,
         };
   const input: LayeredPhaseInput = {
     graph: graph as Graph<unknown, unknown, unknown, unknown>,
     sizes: new Map(graph.nodes.map((node) => [node.id, getNodeSize(node, options)])),
     direction,
     spacing: {
-      node: options.spacing?.node ?? 40,
-      layer: options.spacing?.layer ?? 60,
+      node: options.spacing?.node ?? options.settings?.["spacing.baseValue"] ?? 20,
+      layer: options.spacing?.layer ?? options.settings?.["spacing.baseValue"] ?? 20,
     },
     padding,
     constrainedLayerByNodeId: new Map(
@@ -97,29 +154,102 @@ function runLayeredPipeline<N, E, G, P>(
         return layer === undefined ? [] : [[node.id, layer] as const];
       }),
     ),
+    settings: options.settings ?? {},
+    ...(options.nodeSettings === undefined ? {} : { nodeSettings: options.nodeSettings }),
+    ...(options.edgeSettings === undefined ? {} : { edgeSettings: options.edgeSettings }),
   };
   const measure = <T>(id: string, run: () => T): T => {
     context?.throwIfAborted();
     return context ? context.measurePhase(id, run) : run();
   };
 
-  const orientation = measure("cycle-breaking", () =>
-    (options.strategies?.breakCycles ?? breakCyclesWithDepthFirstSearch)(input),
+  const cycleBreakingStrategy = options.settings?.["cycleBreaking.strategy"] ?? "GREEDY";
+  const cycleBreaker = (() => {
+    if (options.strategies?.breakCycles) return options.strategies.breakCycles;
+    if (cycleBreakingStrategy === "GREEDY") return breakCyclesGreedily;
+    if (cycleBreakingStrategy === "DEPTH_FIRST") return breakCyclesWithDepthFirstSearch;
+    if (cycleBreakingStrategy === "INTERACTIVE") return breakCyclesInteractively;
+    if (cycleBreakingStrategy === "MODEL_ORDER") return breakCyclesByModelOrder;
+    if (cycleBreakingStrategy === "GREEDY_MODEL_ORDER") {
+      return breakCyclesGreedilyByModelOrder;
+    }
+    if (cycleBreakingStrategy === "DFS_NODE_ORDER") {
+      return breakCyclesWithModelOrderDepthFirstSearch;
+    }
+    if (cycleBreakingStrategy === "BFS_NODE_ORDER") {
+      return breakCyclesWithModelOrderBreadthFirstSearch;
+    }
+    if (cycleBreakingStrategy === "SCC_CONNECTIVITY") {
+      return breakCyclesByStronglyConnectedConnectivity;
+    }
+    if (cycleBreakingStrategy === "SCC_NODE_TYPE") {
+      return breakCyclesByStronglyConnectedNodeType;
+    }
+    throw new UnsupportedLayoutError(
+      `Cycle-breaking strategy ${cycleBreakingStrategy} is not implemented yet`,
+    );
+  })();
+  const orientation = measure("cycle-breaking", () => cycleBreaker(input));
+  const layeringStrategy = options.settings?.["layering.strategy"] ?? "NETWORK_SIMPLEX";
+  const layerAssigner = (() => {
+    if (options.strategies?.assignLayers) return options.strategies.assignLayers;
+    if (layeringStrategy === "LONGEST_PATH_SOURCE") return assignLayersByLongestPath;
+    if (layeringStrategy === "LONGEST_PATH") return assignLayersByLongestPathToSink;
+    if (layeringStrategy === "INTERACTIVE") return assignLayersInteractively;
+    if (layeringStrategy === "BF_MODEL_ORDER") return assignLayersByBreadthFirstModelOrder;
+    if (layeringStrategy === "DF_MODEL_ORDER") return assignLayersByDepthFirstModelOrder;
+    if (layeringStrategy === "COFFMAN_GRAHAM") return assignLayersWithCoffmanGraham;
+    if (layeringStrategy === "NETWORK_SIMPLEX") return assignLayersWithNetworkSimplex;
+    if (layeringStrategy === "MIN_WIDTH") return assignLayersWithMinWidth;
+    if (layeringStrategy === "STRETCH_WIDTH") return assignLayersWithStretchWidth;
+    throw new UnsupportedLayoutError(
+      `Layering strategy ${layeringStrategy} is not implemented yet`,
+    );
+  })();
+  const assignment = measure("layer-assignment", () => layerAssigner(input, orientation));
+  const expanded = measure("long-edge-splitting", () =>
+    splitLongEdges(input, orientation, assignment),
   );
-  const assignment = measure("layer-assignment", () =>
-    (options.strategies?.assignLayers ?? assignLayersByLongestPath)(input, orientation),
-  );
+  const crossingStrategy = options.settings?.["crossingMinimization.strategy"] ?? "LAYER_SWEEP";
+  const crossingMinimizer = (() => {
+    if (options.strategies?.minimizeCrossings) return options.strategies.minimizeCrossings;
+    if (crossingStrategy === "LAYER_SWEEP") {
+      return minimizeCrossingsWithBarycenter(options.crossingSweeps);
+    }
+    if (crossingStrategy === "MEDIAN_LAYER_SWEEP") {
+      return minimizeCrossingsWithMedian(options.crossingSweeps);
+    }
+    if (crossingStrategy === "INTERACTIVE") return minimizeCrossingsInteractively;
+    if (crossingStrategy === "NONE") return minimizeCrossingsWithModelOrder;
+    throw new UnsupportedLayoutError(
+      `Crossing-minimization strategy ${crossingStrategy} is not implemented`,
+    );
+  })();
   const order = measure("crossing-minimization", () =>
-    (
-      options.strategies?.minimizeCrossings ??
-      minimizeCrossingsWithBarycenter(options.crossingSweeps)
-    )(input, orientation, assignment),
+    crossingMinimizer(expanded.input, expanded.orientation, expanded.assignment),
   );
-  const placement = measure("node-placement", () =>
-    (options.strategies?.placeNodes ?? placeNodesInLayers)(input, order),
+  const nodePlacementStrategy = options.settings?.["nodePlacement.strategy"] ?? "BRANDES_KOEPF";
+  const nodePlacer = (() => {
+    if (options.strategies?.placeNodes) return options.strategies.placeNodes;
+    if (nodePlacementStrategy === "INTERACTIVE") return placeNodesInteractively;
+    // SIMPLE is exact for normal flat nodes. The remaining placers currently
+    // share its collision-safe baseline while their straightening passes run.
+    return placeNodesInLayers;
+  })();
+  const placement = measure("node-placement", () => nodePlacer(expanded.input, order));
+  const edgeRouting = options.settings?.edgeRouting ?? "ORTHOGONAL";
+  const edgeRouter =
+    options.strategies?.routeEdges ??
+    (edgeRouting === "POLYLINE"
+      ? routeEdgesWithPolylines
+      : edgeRouting === "SPLINES"
+        ? routeEdgesWithSplines
+        : routeEdgesOrthogonally);
+  const expandedRoutes = measure("edge-routing", () =>
+    edgeRouter(expanded.input, expanded.orientation, placement),
   );
-  const routes = measure("edge-routing", () =>
-    (options.strategies?.routeEdges ?? routeEdgesOrthogonally)(input, orientation, placement),
+  const routes = measure("long-edge-joining", () =>
+    joinLongEdgeRoutes(expandedRoutes, expanded.segmentIdsByEdgeId),
   );
 
   const nodes = graph.nodes.map((node): VisualNode<N, P> => {
@@ -146,7 +276,12 @@ function runLayeredPipeline<N, E, G, P>(
       width,
       height,
       points,
-      routing: "orthogonal" as const,
+      routing:
+        edgeRouting === "POLYLINE"
+          ? ("polyline" as const)
+          : edgeRouting === "SPLINES"
+            ? ("splines" as const)
+            : ("orthogonal" as const),
     };
   });
 
