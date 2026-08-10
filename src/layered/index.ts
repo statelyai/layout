@@ -34,6 +34,7 @@ import { assignLayersWithNetworkSimplex } from "./network-simplex";
 import { assignLayersWithMinWidth } from "./min-width";
 import { assignLayersWithStretchWidth } from "./stretch-width";
 import { joinLongEdgeRoutes, splitLongEdges } from "./long-edges";
+import { placeNodesWithBrandesKoepf } from "./bk-node-placement";
 
 export type {
   AcyclicOrientation,
@@ -83,6 +84,7 @@ export {
 export { assignLayersWithNetworkSimplex } from "./network-simplex";
 export { assignLayersWithMinWidth } from "./min-width";
 export { assignLayersWithStretchWidth } from "./stretch-width";
+export { placeNodesWithBrandesKoepf } from "./bk-node-placement";
 export { fromElkLayeredOptionId, toElkLayeredOptions } from "./elk-options";
 export type {
   CycleBreakingStrategy,
@@ -232,8 +234,7 @@ function runLayeredPipeline<N, E, G, P>(
   const nodePlacer = (() => {
     if (options.strategies?.placeNodes) return options.strategies.placeNodes;
     if (nodePlacementStrategy === "INTERACTIVE") return placeNodesInteractively;
-    // SIMPLE is exact for normal flat nodes. The remaining placers currently
-    // share its collision-safe baseline while their straightening passes run.
+    if (nodePlacementStrategy === "BRANDES_KOEPF") return placeNodesWithBrandesKoepf;
     return placeNodesInLayers;
   })();
   const placement = measure("node-placement", () => nodePlacer(expanded.input, order));
