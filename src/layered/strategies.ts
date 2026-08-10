@@ -1381,6 +1381,21 @@ function routeEdges(style: "ORTHOGONAL" | "POLYLINE" | "SPLINES"): EdgeRouter {
     const pointsByEdgeId = new Map<string, readonly Point[]>();
     const horizontal = input.direction === "left" || input.direction === "right";
     const reverse = input.direction === "up" || input.direction === "left";
+    const mutableRects = placement.rectByNodeId as Map<string, EntityRect>;
+    const selfLoopsByNodeId = new Map<string, GraphEdge[]>();
+    for (const edge of input.graph.edges) {
+      if (edge.sourceId !== edge.targetId) continue;
+      const loops = selfLoopsByNodeId.get(edge.sourceId) ?? [];
+      loops.push(edge);
+      selfLoopsByNodeId.set(edge.sourceId, loops);
+    }
+    for (const [id, loops] of selfLoopsByNodeId) {
+      const rect = mutableRects.get(id);
+      if (!rect) continue;
+      const spacing = Number(input.settings["spacing.nodeSelfLoop"] ?? 10);
+      const reserve = loops.length * spacing + (style === "SPLINES" ? 1 : 0);
+      mutableRects.set(id, { ...rect, y: rect.y + reserve });
+    }
     let implicitEndpoints = implicitEdgeEndpoints(input, placement);
     const flowIntervals = [...placement.rectByNodeId.entries()]
       .map(([id, rect]) => ({
@@ -1403,7 +1418,6 @@ function routeEdges(style: "ORTHOGONAL" | "POLYLINE" | "SPLINES"): EdgeRouter {
     }
 
     if (style === "POLYLINE" || style === "SPLINES") {
-      const mutableRects = placement.rectByNodeId as Map<string, EntityRect>;
       const edgeSpacing = Number(input.settings["spacing.edgeEdgeBetweenLayers"] ?? 10);
       const nodeSpacing = input.spacing.layer;
       const edgeSpaceFactor = Math.min(1, edgeSpacing / nodeSpacing);
@@ -1472,14 +1486,50 @@ function routeEdges(style: "ORTHOGONAL" | "POLYLINE" | "SPLINES"): EdgeRouter {
       if (!source || !target || !sourceRect || !targetRect) continue;
 
       if (source.id === target.id) {
-        const x = sourceRect.x + sourceRect.width;
-        const y = sourceRect.y + sourceRect.height / 2;
-        pointsByEdgeId.set(edge.id, [
-          { x, y },
-          { x: x + 24, y },
-          { x: x + 24, y: y - 24 },
-          { x, y: y - 24 },
-        ]);
+        const loops = selfLoopsByNodeId.get(source.id) ?? [edge];
+        const loopIndex = loops.indexOf(edge);
+        const spacing = Number(input.settings["spacing.nodeSelfLoop"] ?? 10);
+        const loopTop = sourceRect.y - spacing * (loopIndex + 1) - (style === "SPLINES" ? 1 : 0);
+        const start = {
+          x:
+            sourceRect.x + (sourceRect.width * (loops.length - loopIndex)) / (loops.length * 2 + 1),
+          y: sourceRect.y,
+        };
+        const end = {
+          x:
+            sourceRect.x +
+            (sourceRect.width * (loops.length + 1 + loopIndex)) / (loops.length * 2 + 1),
+          y: sourceRect.y,
+        };
+        if (style === "ORTHOGONAL") {
+          pointsByEdgeId.set(edge.id, [
+            start,
+            { x: start.x, y: loopTop },
+            { x: end.x, y: loopTop },
+            end,
+          ]);
+        } else if (style === "POLYLINE") {
+          const chamfer = Math.min(5, spacing / 2);
+          pointsByEdgeId.set(edge.id, [
+            start,
+            { x: start.x, y: loopTop + chamfer },
+            { x: start.x + chamfer, y: loopTop },
+            { x: end.x - chamfer, y: loopTop },
+            { x: end.x, y: loopTop + chamfer },
+            end,
+          ]);
+        } else {
+          const third = (end.x - start.x) / 4;
+          pointsByEdgeId.set(edge.id, [
+            start,
+            { x: start.x, y: loopTop + 1 },
+            { x: start.x + third, y: loopTop },
+            { x: (start.x + end.x) / 2, y: loopTop },
+            { x: end.x - third, y: loopTop },
+            { x: end.x, y: loopTop + 1 },
+            end,
+          ]);
+        }
         continue;
       }
 

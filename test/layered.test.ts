@@ -7,7 +7,6 @@ import {
   breakCyclesGreedily,
   breakCyclesWithDepthFirstSearch,
   routeEdgesOrthogonally,
-  UnsupportedLayoutError,
   type LayeredLayoutOptions,
 } from "../src";
 
@@ -33,6 +32,14 @@ function createDiamond() {
 }
 
 describe("getLayeredLayout", () => {
+  it("preserves authored geometry when noLayout is enabled", () => {
+    const graph = createGraph({
+      nodes: [{ id: "a", x: 100, y: 200, width: 30, height: 20 }],
+      edges: [],
+    });
+    const result = getLayeredLayout(graph, { settings: { noLayout: true } });
+    expect(result.nodes[0]).toMatchObject({ x: 100, y: 200, width: 30, height: 20 });
+  });
   it("lays out a graph without mutating it", () => {
     const graph = createDiamond();
     const before = structuredClone(graph);
@@ -154,14 +161,6 @@ describe("getLayeredLayout", () => {
     expect(polyline.edges[0]?.points).toHaveLength(2);
     expect(splines.edges[0]?.routing).toBe("splines");
     expect(splines.edges[0]?.points?.length).toBeGreaterThanOrEqual(2);
-  });
-
-  it("rejects hierarchy until the compound-graph milestone", () => {
-    const graph = createGraph({
-      nodes: [{ id: "parent" }, { id: "child", parentId: "parent" }],
-    });
-
-    expect(() => getLayeredLayout(graph)).toThrow(UnsupportedLayoutError);
   });
 
   it("breaks cycles without consuming the JavaScript call stack", () => {

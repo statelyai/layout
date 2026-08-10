@@ -65,3 +65,33 @@ for (const edgeRouting of ["ORTHOGONAL", "POLYLINE", "SPLINES"] as const) {
     }
   });
 }
+
+for (const edgeRouting of ["ORTHOGONAL", "POLYLINE", "SPLINES"] as const) {
+  it(`matches ELK ${edgeRouting} self-loop routing`, async () => {
+    const loopNodes = [{ id: "a", width: 40, height: 30 }];
+    const loopEdges = [{ id: "loop", sourceId: "a", targetId: "a" }];
+    const oracle = await new ELK().layout({
+      id: "root",
+      layoutOptions: { "elk.algorithm": "layered", "elk.edgeRouting": edgeRouting },
+      children: structuredClone(loopNodes),
+      edges: [{ id: "loop", sources: ["a"], targets: ["a"] }],
+    });
+    const native = getLayeredLayout(createGraph({ nodes: loopNodes, edges: loopEdges }), {
+      settings: { edgeRouting },
+    });
+    const oracleNode = oracle.children?.[0];
+    const nativeNode = native.nodes[0];
+    expect(nativeNode?.x).toBeCloseTo(oracleNode?.x ?? Number.NaN, 12);
+    expect(nativeNode?.y).toBeCloseTo(oracleNode?.y ?? Number.NaN, 12);
+    const section = (oracle.edges?.[0] as ElkExtendedEdge | undefined)?.sections?.[0];
+    const expected = section
+      ? [section.startPoint, ...(section.bendPoints ?? []), section.endPoint]
+      : [];
+    const actual = native.edges[0]?.points ?? [];
+    expect(actual).toHaveLength(expected.length);
+    actual.forEach((point, index) => {
+      expect(point.x).toBeCloseTo(expected[index]?.x ?? Number.NaN, 12);
+      expect(point.y).toBeCloseTo(expected[index]?.y ?? Number.NaN, 12);
+    });
+  });
+}
