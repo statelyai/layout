@@ -2,6 +2,7 @@ import { createGraph } from "@statelyai/graph";
 import ELK from "elkjs/lib/elk.bundled.js";
 import { describe, expect, it } from "vitest";
 import { getLayeredLayout, type CrossingMinimizationStrategy } from "../src";
+import NativeELK, { type ElkNode } from "../src/elkjs";
 
 const nodes = [
   { id: "a", width: 20, height: 20, y: 80 },
@@ -70,4 +71,40 @@ describe("ELK crossing-minimization oracle", () => {
       expect(layerOrders(native.nodes)).toEqual(layerOrders(oracle.children ?? []));
     });
   }
+});
+
+it("matches ELK semi-interactive authored ordering", async () => {
+  const positionedNode = (id: string, x: number, y: number) => ({
+    id,
+    width: 20,
+    height: 20,
+    layoutOptions: { "elk.position": `(${x},${y})` },
+  });
+  const graph: ElkNode = {
+    id: "root",
+    layoutOptions: {
+      "elk.algorithm": "layered",
+      "elk.separateConnectedComponents": "false",
+      "elk.layered.layering.strategy": "LONGEST_PATH_SOURCE",
+      "elk.layered.crossingMinimization.strategy": "LAYER_SWEEP",
+      "elk.layered.crossingMinimization.semiInteractive": "true",
+      "elk.layered.crossingMinimization.greedySwitch.type": "OFF",
+      "elk.layered.nodePlacement.strategy": "SIMPLE",
+    },
+    children: [
+      positionedNode("a", 0, 100),
+      positionedNode("b", 0, 0),
+      positionedNode("c", 100, 100),
+      positionedNode("d", 100, 0),
+    ],
+    edges: [
+      { id: "ac", sources: ["a"], targets: ["c"] },
+      { id: "bd", sources: ["b"], targets: ["d"] },
+    ],
+  };
+  const expected = (await new ELK().layout(structuredClone(graph) as never)) as unknown as ElkNode;
+  const actual = await new NativeELK().layout(structuredClone(graph));
+  expect(actual.children?.map((node) => [node.x, node.y])).toEqual(
+    expected.children?.map((node) => [node.x, node.y]),
+  );
 });

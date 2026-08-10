@@ -14,6 +14,7 @@ import type {
   NodePlacer,
 } from "./types";
 import type { ElkLayeredOptionValueByName } from "./elk-options";
+import { conservativeSpline } from "./spline-bezier";
 
 function getOrientedEndpoints(
   edge: GraphEdge,
@@ -265,7 +266,11 @@ function addDepthFirstBackEdges(
 
 /** ELK INTERACTIVE: honor authored x-order, then remove any remaining DFS back edges. */
 export const breakCyclesInteractively: CycleBreaker = (input) => {
-  const nodeById = new Map(input.graph.nodes.map((node) => [node.id, node]));
+  const nodeById = new Map(
+    input.graph.nodes
+      .filter((node) => !node.id.startsWith("__layout_dummy:"))
+      .map((node) => [node.id, node]),
+  );
   const initial = new Set(
     input.graph.edges
       .filter((edge) => {
@@ -547,6 +552,182 @@ export const assignLayersByLongestPath: LayerAssigner = (input, orientation) => 
 
   return { layerByNodeId };
 };
+
+/** Apply ELK's FIRST/FIRST_SEPARATE/LAST/LAST_SEPARATE layer constraints. */
+export function applyLayerConstraints(
+  input: LayeredPhaseInput,
+  assignment: LayerAssignment,
+): LayerAssignment {
+  const constraintByNodeId = new Map(
+    input.graph.nodes.map((node) => [
+      node.id,
+      input.nodeSettings?.(node)?.["layering.layerConstraint"] ?? "NONE",
+    ]),
+  );
+  const ordinaryNodes = input.graph.nodes.filter((node) => {
+    const constraint = constraintByNodeId.get(node.id);
+    return constraint !== "FIRST_SEPARATE" && constraint !== "LAST_SEPARATE";
+  });
+  const maximumOrdinaryLayer = Math.max(
+    0,
+    ...ordinaryNodes.map((node) => assignment.layerByNodeId.get(node.id) ?? 0),
+  );
+  const hasFirstSeparate = input.graph.nodes.some(
+    (node) => constraintByNodeId.get(node.id) === "FIRST_SEPARATE",
+  );
+  const leadingOffset = hasFirstSeparate ? 1 : 0;
+  return {
+    layerByNodeId: new Map(
+      input.graph.nodes.map((node) => {
+        const constraint = constraintByNodeId.get(node.id);
+        if (constraint === "FIRST_SEPARATE") return [node.id, 0];
+        if (constraint === "FIRST") return [node.id, leadingOffset];
+        if (constraint === "LAST") return [node.id, leadingOffset + maximumOrdinaryLayer];
+        if (constraint === "LAST_SEPARATE") {
+          return [node.id, leadingOffset + maximumOrdinaryLayer + 1];
+        }
+        return [node.id, leadingOffset + (assignment.layerByNodeId.get(node.id) ?? 0)];
+      }),
+    ),
+  };
+}
+
+/** Restore FIRST/LAST nodes at the end of their constrained layer, as ELK does. */
+export function applyLayerConstraintOrder(input: LayeredPhaseInput, order: LayerOrder): LayerOrder {
+  const constrained = new Set(
+    input.graph.nodes
+      .filter((node) => {
+        const value = input.nodeSettings?.(node)?.["layering.layerConstraint"];
+        return value === "FIRST" || value === "LAST";
+      })
+      .map((node) => node.id),
+  );
+  return {
+    layers: order.layers.map((layer) => [
+      ...layer.filter((id) => !constrained.has(id)),
+      ...layer.filter((id) => constrained.has(id)),
+    ]),
+  };
+}
+
+/** ELK's adjacent-node greedy-switch crossing minimization postprocessor. */
+export function applyGreedySwitch(
+  input: LayeredPhaseInput,
+  orientation: AcyclicOrientation,
+  order: LayerOrder,
+): LayerOrder {
+  if (input.settings["crossingMinimization.strategy"] === "INTERACTIVE") return order;
+  if (input.settings["crossingMinimization.semiInteractive"] === true) return order;
+  const type = input.settings["crossingMinimization.greedySwitch.type"] ?? "TWO_SIDED";
+  const threshold = input.settings["crossingMinimization.greedySwitch.activationThreshold"] ?? 40;
+  if (type === "OFF" || (threshold !== 0 && threshold <= input.graph.nodes.length)) {
+    return order;
+  }
+  const layers = order.layers.map((layer) => [...layer]);
+  const layerByNodeId = new Map<string, number>();
+  for (const [layerIndex, layer] of layers.entries()) {
+    for (const id of layer) layerByNodeId.set(id, layerIndex);
+  }
+  const between = Array.from({ length: Math.max(0, layers.length - 1) }, () => [] as string[][]);
+  for (const edge of input.graph.edges) {
+    const [sourceId, targetId] = getOrientedEndpoints(edge, orientation);
+    const sourceLayer = layerByNodeId.get(sourceId);
+    const targetLayer = layerByNodeId.get(targetId);
+    if (sourceLayer === undefined || targetLayer !== sourceLayer + 1) continue;
+    between[sourceLayer]?.push([sourceId, targetId]);
+  }
+  const countBoundary = (boundary: number): number => {
+    const edges = between[boundary] ?? [];
+    const sourcePositions = new Map(
+      (layers[boundary] ?? []).map((id, index) => [id, index] as const),
+    );
+    const targetPositions = new Map(
+      (layers[boundary + 1] ?? []).map((id, index) => [id, index] as const),
+    );
+    let crossings = 0;
+    for (let left = 0; left < edges.length; left++) {
+      const leftEdge = edges[left]!;
+      for (let right = left + 1; right < edges.length; right++) {
+        const rightEdge = edges[right]!;
+        if (leftEdge[0] === rightEdge[0] || leftEdge[1] === rightEdge[1]) continue;
+        const sourceDifference =
+          (sourcePositions.get(leftEdge[0]!) ?? 0) - (sourcePositions.get(rightEdge[0]!) ?? 0);
+        const targetDifference =
+          (targetPositions.get(leftEdge[1]!) ?? 0) - (targetPositions.get(rightEdge[1]!) ?? 0);
+        if (sourceDifference * targetDifference < 0) crossings++;
+      }
+    }
+    return crossings;
+  };
+  const countForLayer = (layerIndex: number, oneSidedBoundary?: number) => {
+    if (oneSidedBoundary !== undefined) return countBoundary(oneSidedBoundary);
+    return (
+      (layerIndex > 0 ? countBoundary(layerIndex - 1) : 0) +
+      (layerIndex + 1 < layers.length ? countBoundary(layerIndex) : 0)
+    );
+  };
+  const sweep = (forward: boolean): boolean => {
+    let changed = false;
+    const indices = forward
+      ? Array.from({ length: layers.length }, (_, index) => index)
+      : Array.from({ length: layers.length }, (_, index) => layers.length - index - 1);
+    for (const layerIndex of indices) {
+      const layer = layers[layerIndex]!;
+      let improved: boolean;
+      do {
+        improved = false;
+        for (let index = 0; index + 1 < layer.length; index++) {
+          const oneSidedBoundary =
+            type === "ONE_SIDED" ? (forward ? layerIndex - 1 : layerIndex) : undefined;
+          if (
+            oneSidedBoundary !== undefined &&
+            (oneSidedBoundary < 0 || oneSidedBoundary >= layers.length - 1)
+          ) {
+            continue;
+          }
+          const before = countForLayer(layerIndex, oneSidedBoundary);
+          [layer[index], layer[index + 1]] = [layer[index + 1]!, layer[index]!];
+          const after = countForLayer(layerIndex, oneSidedBoundary);
+          if (after < before) {
+            improved = true;
+            changed = true;
+          } else {
+            [layer[index], layer[index + 1]] = [layer[index + 1]!, layer[index]!];
+          }
+        }
+      } while (improved);
+    }
+    return changed;
+  };
+  while (sweep(true) || sweep(false)) {
+    // Repeat until every adjacent exchange is locally optimal.
+  }
+  return { layers };
+}
+
+/** Preserve authored in-layer order while leaving long-edge dummy slots available. */
+export function applySemiInteractiveOrder(input: LayeredPhaseInput, order: LayerOrder): LayerOrder {
+  if (input.settings["crossingMinimization.semiInteractive"] !== true) return order;
+  const nodeById = new Map(input.graph.nodes.map((node) => [node.id, node]));
+  const horizontal = input.direction === "left" || input.direction === "right";
+  return {
+    layers: order.layers.map((layer) => {
+      const sortedRegularNodes = layer
+        .flatMap((id) => (nodeById.has(id) ? [id] : []))
+        .sort((left, right) => {
+          const leftNode = nodeById.get(left)!;
+          const rightNode = nodeById.get(right)!;
+          return horizontal
+            ? (leftNode.y ?? 0) - (rightNode.y ?? 0)
+            : (leftNode.x ?? 0) - (rightNode.x ?? 0);
+        });
+      let regularIndex = 0;
+      return layer.map((id) =>
+        nodeById.has(id) ? (sortedRegularNodes[regularIndex++] ?? id) : id,
+      );
+    }),
+  };
+}
 
 /** ELK LONGEST_PATH: align sinks on the final layer. */
 export const assignLayersByLongestPathToSink: LayerAssigner = (input, orientation) => {
@@ -1358,6 +1539,7 @@ function implicitEdgeEndpoints(
     const side = key.slice(split + 1);
     const rect = placement.rectByNodeId.get(nodeId);
     if (!rect) continue;
+    const mergeEdges = input.settings.mergeEdges === true;
     entries.sort((left, right) => {
       const leftOther = left.endpoint === "source" ? left.edge.targetId : left.edge.sourceId;
       const rightOther = right.endpoint === "source" ? right.edge.targetId : right.edge.sourceId;
@@ -1370,7 +1552,7 @@ function implicitEdgeEndpoints(
     entries.forEach(({ edge, endpoint }, index) => {
       const reversedCrossOrder = side === "before";
       const ordinal = reversedCrossOrder ? entries.length - index : index + 1;
-      const ratio = ordinal / (entries.length + 1);
+      const ratio = mergeEdges ? 0.5 : ordinal / (entries.length + 1);
       const point = horizontal
         ? {
             x: side === "after" ? rect.x + rect.width : rect.x,
@@ -1452,13 +1634,15 @@ function routeEdges(style: "ORTHOGONAL" | "POLYLINE" | "SPLINES"): EdgeRouter {
           extraByGap[gap] = Math.max(extraByGap[gap] ?? 0, 0.4 * edgeSpaceFactor * crossDifference);
         } else if (crossDifference >= 0.2) {
           nonStraightByGap[gap] = (nonStraightByGap[gap] ?? 0) + 1;
-          const sloppyFactor = Number(
-            input.settings["edgeRouting.splines.sloppy.layerSpacingFactor"] ?? 0.2,
-          );
-          extraByGap[gap] = Math.max(
-            extraByGap[gap] ?? 0,
-            sloppyFactor * edgeSpaceFactor * crossDifference,
-          );
+          if ((input.settings["edgeRouting.splines.mode"] ?? "SLOPPY") === "SLOPPY") {
+            const sloppyFactor = Number(
+              input.settings["edgeRouting.splines.sloppy.layerSpacingFactor"] ?? 0.2,
+            );
+            extraByGap[gap] = Math.max(
+              extraByGap[gap] ?? 0,
+              sloppyFactor * edgeSpaceFactor * crossDifference,
+            );
+          }
         }
       }
       let nextStart = flowLayers[0]?.start ?? 0;
@@ -1489,6 +1673,42 @@ function routeEdges(style: "ORTHOGONAL" | "POLYLINE" | "SPLINES"): EdgeRouter {
           (style === "POLYLINE" ? nodeSpacing + (extraByGap[layerNo] ?? 0) : splineSpacing);
       }
       implicitEndpoints = implicitEdgeEndpoints(input, placement);
+    }
+
+    const conservativeSplineTrackByEdgeId = new Map<string, number>();
+    if (
+      style === "SPLINES" &&
+      (input.settings["edgeRouting.splines.mode"] ?? "SLOPPY") !== "SLOPPY"
+    ) {
+      const edgeNodeSpacing = Number(input.settings["spacing.edgeNodeBetweenLayers"] ?? 10);
+      const edgeEdgeSpacing = Number(input.settings["spacing.edgeEdgeBetweenLayers"] ?? 10);
+      for (let gap = 0; gap + 1 < flowLayers.length; gap++) {
+        const candidates = input.graph.edges
+          .flatMap((edge) => {
+            const sourceLayer = flowLayerByNodeId.get(edge.sourceId);
+            const targetLayer = flowLayerByNodeId.get(edge.targetId);
+            const endpoints = implicitEndpoints.get(edge.id);
+            if (
+              endpoints === undefined ||
+              sourceLayer === undefined ||
+              targetLayer === undefined ||
+              Math.min(sourceLayer, targetLayer) !== gap ||
+              Math.abs(sourceLayer - targetLayer) !== 1
+            ) {
+              return [];
+            }
+            const sourceCross = horizontal ? endpoints.source.y : endpoints.source.x;
+            const targetCross = horizontal ? endpoints.target.y : endpoints.target.x;
+            return Math.abs(sourceCross - targetCross) < 1e-6 ? [] : [{ edge, targetCross }];
+          })
+          .sort((left, right) => left.targetCross - right.targetCross);
+        for (const [rank, candidate] of candidates.entries()) {
+          conservativeSplineTrackByEdgeId.set(
+            candidate.edge.id,
+            (flowLayers[gap]?.end ?? 0) + edgeNodeSpacing + rank * edgeEdgeSpacing,
+          );
+        }
+      }
     }
 
     for (const edge of input.graph.edges) {
@@ -1591,11 +1811,12 @@ function routeEdges(style: "ORTHOGONAL" | "POLYLINE" | "SPLINES"): EdgeRouter {
       const earlier = flowLayers[earlierLayer];
       const later = flowLayers[laterLayer];
       const track =
-        earlier && later && earlierLayer !== laterLayer
+        conservativeSplineTrackByEdgeId.get(edge.id) ??
+        (earlier && later && earlierLayer !== laterLayer
           ? (earlier.end + later.start) / 2
           : horizontal
             ? (start.x + end.x) / 2
-            : (start.y + end.y) / 2;
+            : (start.y + end.y) / 2);
       const polylineMiddle: Point[] = [];
       if (style === "POLYLINE" && earlier && later && earlierLayer !== laterLayer) {
         const slopedZone = Number(input.settings["edgeRouting.polyline.slopedEdgeZoneWidth"] ?? 2);
@@ -1655,7 +1876,15 @@ function routeEdges(style: "ORTHOGONAL" | "POLYLINE" | "SPLINES"): EdgeRouter {
                   { x: end.x, y: track },
                 ];
       const routedPoints = [start, ...middle, end];
-      pointsByEdgeId.set(edge.id, style === "SPLINES" ? routedPoints : simplifyRoute(routedPoints));
+      const splineMode = input.settings["edgeRouting.splines.mode"] ?? "SLOPPY";
+      pointsByEdgeId.set(
+        edge.id,
+        style === "SPLINES"
+          ? splineMode === "SLOPPY"
+            ? routedPoints
+            : conservativeSpline(start, end, track, horizontal, splineMode === "CONSERVATIVE_SOFT")
+          : simplifyRoute(routedPoints),
+      );
     }
 
     return { pointsByEdgeId };

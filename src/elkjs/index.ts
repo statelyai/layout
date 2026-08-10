@@ -170,29 +170,31 @@ export default class ELK {
       }
     }
     const graph_ = toGraph(graph);
-    const padding = parsePadding(
-      getOption(layoutOptions, "padding"),
-      algorithm === "layered" ? 12 : 0,
-    );
-    const constrainedLayerByNodeId = new Map(
-      (graph.children ?? []).flatMap((node) =>
-        getOption(node.layoutOptions ?? {}, "layerConstraint") === "FIRST"
-          ? [[String(node.id), 0] as const]
-          : [],
-      ),
+    const layerConstraintByNodeId = new Map(
+      (graph.children ?? []).map((node) => [
+        String(node.id),
+        String(getOption(node.layoutOptions ?? {}, "layerConstraint") ?? "NONE"),
+      ]),
     );
     if (
       algorithm === "layered" &&
       graph_.edges.some((edge) => {
-        const sourceLayer = constrainedLayerByNodeId.get(edge.sourceId);
-        const targetLayer = constrainedLayerByNodeId.get(edge.targetId);
-        return sourceLayer !== undefined && targetLayer !== undefined && targetLayer <= sourceLayer;
+        const sourceConstraint = layerConstraintByNodeId.get(edge.sourceId);
+        const targetConstraint = layerConstraintByNodeId.get(edge.targetId);
+        return (
+          (sourceConstraint === "FIRST" || sourceConstraint === "FIRST_SEPARATE") &&
+          (targetConstraint === "FIRST" || targetConstraint === "FIRST_SEPARATE")
+        );
       })
     ) {
       throw new Error(
         "org.eclipse.elk.core.UnsupportedConfigurationException: Layer constraints conflict",
       );
     }
+    const padding = parsePadding(
+      getOption(layoutOptions, "padding"),
+      algorithm === "layered" ? 12 : 0,
+    );
     const laidOut =
       algorithm === "sporeCompaction"
         ? getSporeCompactionLayout(graph_, {
@@ -243,7 +245,7 @@ export default class ELK {
                       },
                       padding,
                       constraints: {
-                        layer: (node) => constrainedLayerByNodeId.get(node.id),
+                        layer: () => undefined,
                       },
                       settings: getLayeredSettings(layoutOptions),
                       nodeSettings: (node) => {

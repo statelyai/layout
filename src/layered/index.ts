@@ -8,6 +8,10 @@ import {
   assignLayersByDepthFirstModelOrder,
   assignLayersInteractively,
   assignLayersWithCoffmanGraham,
+  applyLayerConstraints,
+  applyLayerConstraintOrder,
+  applyGreedySwitch,
+  applySemiInteractiveOrder,
   breakCyclesByModelOrder,
   breakCyclesByStronglyConnectedConnectivity,
   breakCyclesByStronglyConnectedNodeType,
@@ -335,7 +339,9 @@ function runLayeredPipeline<N, E, G, P>(
       `Layering strategy ${layeringStrategy} is not implemented yet`,
     );
   })();
-  const assignment = measure("layer-assignment", () => layerAssigner(input, orientation));
+  const assignment = measure("layer-assignment", () =>
+    applyLayerConstraints(input, layerAssigner(input, orientation)),
+  );
   const expanded = measure("long-edge-splitting", () =>
     splitLongEdges(input, orientation, assignment),
   );
@@ -355,7 +361,17 @@ function runLayeredPipeline<N, E, G, P>(
     );
   })();
   const order = measure("crossing-minimization", () =>
-    crossingMinimizer(expanded.input, expanded.orientation, expanded.assignment),
+    applyLayerConstraintOrder(
+      expanded.input,
+      applyGreedySwitch(
+        expanded.input,
+        expanded.orientation,
+        applySemiInteractiveOrder(
+          expanded.input,
+          crossingMinimizer(expanded.input, expanded.orientation, expanded.assignment),
+        ),
+      ),
+    ),
   );
   const nodePlacementStrategy = options.settings?.["nodePlacement.strategy"] ?? "BRANDES_KOEPF";
   const nodePlacer = (() => {
@@ -382,7 +398,11 @@ function runLayeredPipeline<N, E, G, P>(
     edgeRouter(expanded.input, expanded.orientation, placement),
   );
   const routes = measure("long-edge-joining", () =>
-    joinLongEdgeRoutes(expandedRoutes, expanded.segmentIdsByEdgeId, true),
+    joinLongEdgeRoutes(
+      expandedRoutes,
+      expanded.segmentIdsByEdgeId,
+      edgeRouting === "SPLINES" || options.settings?.unnecessaryBendpoints === true,
+    ),
   );
 
   const nodes = graph.nodes.map((node): VisualNode<N, P> => {

@@ -132,7 +132,10 @@ describe("getLayeredLayout", () => {
       ],
     });
 
-    const result = getLayeredLayout(graph, { direction: "right" });
+    const result = getLayeredLayout(graph, {
+      direction: "right",
+      settings: { unnecessaryBendpoints: true },
+    });
     const longEdge = result.edges.find((edge) => edge.id === "ac");
     const middleLayerX = result.nodes.find((node) => node.id === "b")?.x ?? 0;
 

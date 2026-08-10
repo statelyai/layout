@@ -125,9 +125,26 @@ export function joinLongEdgeRoutes(
   for (const [edgeId, segmentIds] of segmentIdsByEdgeId) {
     const points: Point[] = [];
     for (const segmentId of segmentIds) {
-      appendPoints(points, routes.pointsByEdgeId.get(segmentId) ?? [], preserveInternalDuplicates);
+      appendPoints(
+        points,
+        routes.pointsByEdgeId.get(segmentId) ?? [],
+        preserveInternalDuplicates || segmentIds.length === 1,
+      );
     }
-    pointsByEdgeId.set(edgeId, points);
+    pointsByEdgeId.set(
+      edgeId,
+      preserveInternalDuplicates || segmentIds.length === 1
+        ? points
+        : points.filter((point, index) => {
+            const previous = points[index - 1];
+            const next = points[index + 1];
+            if (!previous || !next) return true;
+            return !(
+              (previous.x === point.x && point.x === next.x) ||
+              (previous.y === point.y && point.y === next.y)
+            );
+          }),
+    );
   }
   return { pointsByEdgeId };
 }
