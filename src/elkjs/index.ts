@@ -148,6 +148,12 @@ export default class ELK {
     const hasHierarchy = (graph.children ?? []).some((child) => (child.children?.length ?? 0) > 0);
     const insideSelfLoopBaseHeightByNodeId = new Map<string, number>();
     const hierarchyHandling = getOption(layoutOptions, "hierarchyHandling");
+    const topdownLayout = getBooleanOption(layoutOptions, "topdownLayout") === true;
+    if (hasHierarchy && topdownLayout && hierarchyHandling === "INCLUDE_CHILDREN") {
+      throw new Error(
+        "org.eclipse.elk.core.UnsupportedConfigurationException: Topdown layout cannot be used together with hierarchy handling.",
+      );
+    }
     if (
       hasHierarchy &&
       hierarchyHandling !== undefined &&
@@ -157,7 +163,24 @@ export default class ELK {
         "org.eclipse.elk.core.UnsupportedGraphException: Hierarchical edges require INCLUDE_CHILDREN",
       );
     }
-    if (hasHierarchy) {
+    if (hasHierarchy && topdownLayout) {
+      if (getOption(layoutOptions, "topdown.nodeType") === undefined) {
+        throw new Error(`${String(graph.id)} has not been assigned a top-down node type.`);
+      }
+      for (const child of graph.children ?? []) {
+        if ((child.children?.length ?? 0) === 0) continue;
+        const childOptions = { ...layoutOptions, ...child.layoutOptions };
+        const childPadding = parsePadding(getOption(childOptions, "padding"), 12);
+        const width = getNumberOption(childOptions, "topdown.hierarchicalNodeWidth") ?? 0;
+        const aspectRatio =
+          getNumberOption(childOptions, "topdown.hierarchicalNodeAspectRatio") ?? 1 / Math.sqrt(2);
+        child.width = Math.max(child.width ?? 0, width + childPadding.left + childPadding.right);
+        child.height = Math.max(
+          child.height ?? 0,
+          width / aspectRatio + childPadding.top + childPadding.bottom,
+        );
+      }
+    } else if (hasHierarchy) {
       for (const child of graph.children ?? []) {
         if ((child.children?.length ?? 0) === 0) continue;
         await this.layout(child, {
@@ -285,10 +308,33 @@ export default class ELK {
                         const elkPort = child?.ports?.find(
                           (candidate) => String(candidate.id) === port.name,
                         );
-                        return getElementLayeredSettings(elkPort?.layoutOptions ?? {});
+                        return {
+                          ...getElementLayeredSettings(elkPort?.layoutOptions ?? {}),
+                          "port.labelWidth": Math.max(
+                            0,
+                            ...(elkPort?.labels ?? []).map((label) => label.width ?? 0),
+                          ),
+                          "port.labelHeight": Math.max(
+                            0,
+                            ...(elkPort?.labels ?? []).map((label) => label.height ?? 0),
+                          ),
+                        } as ElkLayeredOptionValueByName;
                       },
                     });
     applyLayout(graph, laidOut, padding, layoutOptions);
+    if (hasHierarchy && topdownLayout) {
+      for (const child of graph.children ?? []) {
+        if ((child.children?.length ?? 0) === 0) continue;
+        const position = { x: child.x, y: child.y };
+        await this.layout(child, {
+          ...arguments_,
+          logging: false,
+          measureExecutionTime: false,
+        });
+        child.x = position.x;
+        child.y = position.y;
+      }
+    }
     applyInsideSelfLoops(graph, insideSelfLoopBaseHeightByNodeId);
     if (arguments_.logging || arguments_.measureExecutionTime) {
       graph.logging = {
@@ -335,8 +381,23 @@ function applyNodeMicroLayout(
   for (const node of graph.children ?? []) {
     const constraints = String(getOption(node.layoutOptions ?? {}, "nodeSize.constraints") ?? "");
     if (!constraints) continue;
-    let width = 0;
-    let height = 0;
+    const configuredSizeOptions = getOption(node.layoutOptions ?? {}, "nodeSize.options");
+    const sizeOptions = new Set(
+      configuredSizeOptions === undefined
+        ? ["DEFAULT_MINIMUM_SIZE"]
+        : String(configuredSizeOptions)
+            .split(/[\s,;]+/)
+            .filter(Boolean),
+    );
+    const effectivelyFixedPortLabelSize =
+      constraints.includes("PORT_LABELS") &&
+      !constraints.includes("NODE_LABELS") &&
+      !constraints.includes("MINIMUM_SIZE");
+    let width = effectivelyFixedPortLabelSize ? (node.width ?? 0) : 0;
+    let height = effectivelyFixedPortLabelSize ? (node.height ?? 0) : 0;
+    let insideHorizontalInset = 0;
+    let insideVerticalInset = 0;
+    const insideLabelCells = new Map<string, { width: number; height: number }>();
     if (constraints.includes("NODE_LABELS")) {
       for (const label of node.labels ?? []) {
         if (!label.text) continue;
@@ -350,26 +411,98 @@ function applyNodeMicroLayout(
         const labelWidth = label.width ?? 0;
         const labelHeight = label.height ?? 0;
         if (placement.includes("OUTSIDE")) {
-          width = Math.max(width, labelWidth);
+          if (!sizeOptions.has("OUTSIDE_NODE_LABELS_OVERHANG")) {
+            width = Math.max(width, labelWidth);
+          }
         } else {
           width = Math.max(width, labelWidth + labelPadding.left + labelPadding.right);
-          height = Math.max(
-            height,
+          const verticalInset =
             labelHeight * (placement.includes("V_CENTER") ? 1 : 2) +
-              labelPadding.top +
-              labelPadding.bottom,
+            labelPadding.top +
+            labelPadding.bottom;
+          height = Math.max(height, verticalInset);
+          insideHorizontalInset = Math.max(
+            insideHorizontalInset,
+            labelPadding.left + labelPadding.right,
           );
+          insideVerticalInset = Math.max(insideVerticalInset, verticalInset);
+          const row = placement.includes("V_CENTER")
+            ? "center"
+            : placement.includes("V_BOTTOM")
+              ? "bottom"
+              : "top";
+          const column = placement.includes("H_CENTER")
+            ? "center"
+            : placement.includes("H_RIGHT")
+              ? "right"
+              : "left";
+          const key = `${row}:${column}`;
+          const cell = insideLabelCells.get(key) ?? { width: 0, height: 0 };
+          cell.width = Math.max(cell.width, labelWidth);
+          cell.height += labelHeight;
+          insideLabelCells.set(key, cell);
         }
+      }
+      if (insideLabelCells.size > 0) {
+        const rows = ["top", "center", "bottom"] as const;
+        const columns = ["left", "center", "right"] as const;
+        const cellWidth = (row: string, column: string) =>
+          insideLabelCells.get(`${row}:${column}`)?.width ?? 0;
+        const forceTabular = sizeOptions.has("FORCE_TABULAR_NODE_LABELS");
+        const asymmetrical = sizeOptions.has("ASYMMETRICAL");
+        const globalColumns = columns.map((column) =>
+          Math.max(...rows.map((row) => cellWidth(row, column))),
+        );
+        const labelGridWidth = forceTabular
+          ? globalColumns.reduce((sum, value) => sum + value, 0)
+          : Math.max(
+              ...rows.map((row) => {
+                const left = cellWidth(row, "left");
+                const center = cellWidth(row, "center");
+                const right = cellWidth(row, "right");
+                return asymmetrical ? left + center + right : 2 * Math.max(left, right) + center;
+              }),
+            );
+        const labelGridHeight = rows.reduce(
+          (sum, row) =>
+            sum +
+            Math.max(
+              ...columns.map((column) => insideLabelCells.get(`${row}:${column}`)?.height ?? 0),
+            ),
+          0,
+        );
+        width = Math.max(width, labelGridWidth + labelPadding.left + labelPadding.right);
+        height = Math.max(height, labelGridHeight + labelPadding.top + labelPadding.bottom);
       }
     }
     if (constraints.includes("MINIMUM_SIZE")) {
-      const minimum = parseVector(getOption(node.layoutOptions ?? {}, "nodeSize.minimum")) ?? {
-        x: 20,
-        y: 20,
+      const configuredMinimum = parseVector(
+        getOption(node.layoutOptions ?? {}, "nodeSize.minimum"),
+      );
+      const minimum = {
+        x:
+          configuredMinimum?.x && configuredMinimum.x > 0
+            ? configuredMinimum.x
+            : sizeOptions.has("DEFAULT_MINIMUM_SIZE")
+              ? 20
+              : 0,
+        y:
+          configuredMinimum?.y && configuredMinimum.y > 0
+            ? configuredMinimum.y
+            : sizeOptions.has("DEFAULT_MINIMUM_SIZE")
+              ? 20
+              : 0,
       };
-      width = Math.max(width, minimum.x);
-      height = Math.max(height, minimum.y);
+      if (sizeOptions.has("MINIMUM_SIZE_ACCOUNTS_FOR_PADDING")) {
+        width = Math.max(width, minimum.x + insideHorizontalInset);
+        height = Math.max(height, minimum.y + insideVerticalInset);
+      } else {
+        width = Math.max(width, minimum.x);
+        height = Math.max(height, minimum.y);
+      }
     }
+    // Reading COMPUTE_PADDING is intentional: elkjs does not serialize the computed padding property.
+    void sizeOptions.has("COMPUTE_PADDING");
     node.width = width;
     node.height = height;
   }

@@ -2410,6 +2410,42 @@ export function placePorts<P>(
     const portAxisSize = side === "NORTH" || side === "SOUTH" ? size.width : size.height;
     const spacing = Number(nodeSettings?.["spacing.portPort"] ?? 10);
     const occupied = group.length * portAxisSize + Math.max(0, group.length - 1) * spacing;
+    const portLabelsInside = String(nodeSettings?.["portLabels.placement"] ?? "OUTSIDE").includes(
+      "INSIDE",
+    );
+    const accountForPortLabels =
+      String(nodeSettings?.["nodeSize.constraints"] ?? "").includes("PORT_LABELS") &&
+      portLabelsInside;
+    const margins = group.map((candidate) => {
+      if (!accountForPortLabels) return 0;
+      const candidateSettings = portSettings?.(candidate) as
+        | (ElkLayeredOptionValueByName & {
+            "port.labelWidth"?: number;
+            "port.labelHeight"?: number;
+          })
+        | undefined;
+      const labelAxisSize =
+        side === "NORTH" || side === "SOUTH"
+          ? (candidateSettings?.["port.labelWidth"] ?? 0)
+          : (candidateSettings?.["port.labelHeight"] ?? 0);
+      const candidateAxisSize =
+        side === "NORTH" || side === "SOUTH" ? (candidate.width ?? 8) : (candidate.height ?? 8);
+      return Math.max(0, (labelAxisSize - candidateAxisSize) / 2);
+    });
+    if (String(nodeSettings?.["nodeSize.options"] ?? "").includes("UNIFORM_PORT_SPACING")) {
+      const maximum = Math.max(0, ...margins);
+      margins.fill(maximum);
+    }
+    const occupiedWithLabels = group.reduce(
+      (total, candidate, candidateIndex) =>
+        total +
+        (side === "NORTH" || side === "SOUTH" ? (candidate.width ?? 8) : (candidate.height ?? 8)) +
+        2 * margins[candidateIndex]!,
+      Math.max(0, group.length - 1) * spacing,
+    );
+    const portsOverhang = String(nodeSettings?.["nodeSize.options"] ?? "")
+      .split(/[\s,;]+/)
+      .includes("PORTS_OVERHANG");
     const axisPosition =
       alignmentName === "BEGIN"
         ? axisStart + index * (portAxisSize + spacing) + portAxisSize / 2
@@ -2430,11 +2466,33 @@ export function placePorts<P>(
                 : axisStart +
                   portAxisSize / 2 +
                   (index * (availableAxisSize - portAxisSize)) / (group.length - 1)
-              : axisStart +
-                portAxisSize / 2 +
-                ((index + 1) * (availableAxisSize - group.length * portAxisSize)) /
-                  (group.length + 1) +
-                index * portAxisSize;
+              : accountForPortLabels
+                ? (() => {
+                    const minimum = occupiedWithLabels + 2 * spacing;
+                    const distributedSpacing =
+                      spacing + (availableAxisSize - minimum) / (group.length + 1);
+                    let current = axisStart + distributedSpacing;
+                    for (let candidateIndex = 0; candidateIndex < index; candidateIndex++) {
+                      const candidate = group[candidateIndex]!;
+                      current +=
+                        2 * margins[candidateIndex]! +
+                        (side === "NORTH" || side === "SOUTH"
+                          ? (candidate.width ?? 8)
+                          : (candidate.height ?? 8)) +
+                        distributedSpacing;
+                    }
+                    return current + margins[index]! + portAxisSize / 2;
+                  })()
+                : portsOverhang && availableAxisSize < occupied + 2 * spacing
+                  ? axisStart +
+                    (availableAxisSize - occupied) / 2 +
+                    index * (portAxisSize + spacing) +
+                    portAxisSize / 2
+                  : axisStart +
+                    portAxisSize / 2 +
+                    ((index + 1) * (availableAxisSize - group.length * portAxisSize)) /
+                      (group.length + 1) +
+                    index * portAxisSize;
     const ratio = axisSize === 0 ? 0.5 : axisPosition / axisSize;
     const borderOffset = Number(portSettings?.(port)?.["port.borderOffset"] ?? 0);
     return {
