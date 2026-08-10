@@ -275,8 +275,13 @@ export const breakCyclesInteractively: CycleBreaker = (input) => {
     input.graph.edges
       .filter((edge) => {
         if (edge.sourceId === edge.targetId) return false;
-        const sourceX = nodeById.get(edge.sourceId)?.x ?? 0;
-        const targetX = nodeById.get(edge.targetId)?.x ?? 0;
+        const source = nodeById.get(edge.sourceId);
+        const target = nodeById.get(edge.targetId);
+        const center = input.settings.interactiveReferencePoint !== "TOP_LEFT";
+        const sourceX =
+          (source?.x ?? 0) + (center ? (input.sizes.get(edge.sourceId)?.width ?? 0) / 2 : 0);
+        const targetX =
+          (target?.x ?? 0) + (center ? (input.sizes.get(edge.targetId)?.width ?? 0) / 2 : 0);
         return targetX < sourceX;
       })
       .map((edge) => edge.id),
@@ -1419,12 +1424,25 @@ export const minimizeCrossingsInteractively: CrossingMinimizer = (
   const modelOrder = new Map(input.graph.nodes.map((node, index) => [node.id, index]));
   const nodeById = new Map(input.graph.nodes.map((node) => [node.id, node]));
   const layers = layersFromAssignment(input, assignment);
+  const center = input.settings.interactiveReferencePoint !== "TOP_LEFT";
   for (const layer of layers) {
     layer.sort((left, right) => {
       const leftNode = nodeById.get(left);
       const rightNode = nodeById.get(right);
-      const leftPosition = horizontal ? (leftNode?.y ?? 0) : (leftNode?.x ?? 0);
-      const rightPosition = horizontal ? (rightNode?.y ?? 0) : (rightNode?.x ?? 0);
+      const leftPosition =
+        (horizontal ? (leftNode?.y ?? 0) : (leftNode?.x ?? 0)) +
+        (center
+          ? (horizontal
+              ? (input.sizes.get(left)?.height ?? 0)
+              : (input.sizes.get(left)?.width ?? 0)) / 2
+          : 0);
+      const rightPosition =
+        (horizontal ? (rightNode?.y ?? 0) : (rightNode?.x ?? 0)) +
+        (center
+          ? (horizontal
+              ? (input.sizes.get(right)?.height ?? 0)
+              : (input.sizes.get(right)?.width ?? 0)) / 2
+          : 0);
       return (
         leftPosition - rightPosition || (modelOrder.get(left) ?? 0) - (modelOrder.get(right) ?? 0)
       );

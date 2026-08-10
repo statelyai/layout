@@ -164,6 +164,78 @@ describe("ELK port-option parity", () => {
     });
   });
 
+  it("matches reversed input order on west and south sides", async () => {
+    await compare({
+      id: "root",
+      layoutOptions: { "elk.algorithm": "layered" },
+      children: [
+        {
+          id: "node",
+          width: 100,
+          height: 100,
+          layoutOptions: { "elk.portConstraints": "FIXED_SIDE" },
+          ports: [
+            port("w0", "WEST"),
+            port("w1", "WEST"),
+            port("w2", "WEST"),
+            port("s0", "SOUTH"),
+            port("s1", "SOUTH"),
+            port("s2", "SOUTH"),
+          ],
+        },
+      ],
+    });
+  });
+
+  for (const strategy of ["INPUT_ORDER", "PORT_DEGREE"] as const) {
+    it(`matches ${strategy} port sorting`, async () => {
+      const graph: ElkNode = {
+        id: "root",
+        layoutOptions: {
+          "elk.algorithm": "layered",
+          "elk.direction": "RIGHT",
+          "elk.separateConnectedComponents": "false",
+          "elk.layered.crossingMinimization.strategy": "NONE",
+          "elk.layered.crossingMinimization.greedySwitch.type": "OFF",
+          "elk.layered.portSortingStrategy": strategy,
+        },
+        children: [
+          {
+            id: "source",
+            width: 80,
+            height: 100,
+            layoutOptions: { "elk.portConstraints": "FIXED_SIDE" },
+            ports: [port("p0", "EAST"), port("p1", "EAST"), port("p2", "EAST")],
+          },
+          ...Array.from({ length: 6 }, (_, index) => ({
+            id: `t${index}`,
+            width: 20,
+            height: 20,
+          })),
+        ],
+        edges: [
+          ["p0", "t0"],
+          ["p1", "t1"],
+          ["p1", "t2"],
+          ["p1", "t3"],
+          ["p2", "t4"],
+          ["p2", "t5"],
+        ].map(([source, target], index) => ({
+          id: `degree-${index}`,
+          sources: [source!],
+          targets: [target!],
+        })),
+      };
+      const expected = (await new OracleELK().layout(
+        structuredClone(graph) as never,
+      )) as unknown as ElkNode;
+      const actual = await new NativeELK().layout(structuredClone(graph));
+      expect(actual.children?.[0]?.ports?.map(({ id, x, y }) => ({ id, x, y }))).toEqual(
+        expected.children?.[0]?.ports?.map(({ id, x, y }) => ({ id, x, y })),
+      );
+    });
+  }
+
   it("matches port anchors, protrusion spacing, and edge endpoints", async () => {
     const graph: ElkNode = {
       id: "root",

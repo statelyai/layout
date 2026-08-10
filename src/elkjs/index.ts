@@ -19,6 +19,7 @@ import type {
   ElkLayoutOptionDescription,
   ElkNode,
   ElkPoint,
+  ElkPort,
   LaidOutElkNode,
 } from "./types";
 
@@ -145,6 +146,7 @@ export default class ELK {
       );
     }
     const hasHierarchy = (graph.children ?? []).some((child) => (child.children?.length ?? 0) > 0);
+    const insideSelfLoopBaseHeightByNodeId = new Map<string, number>();
     const hierarchyHandling = getOption(layoutOptions, "hierarchyHandling");
     if (
       hasHierarchy &&
@@ -167,6 +169,14 @@ export default class ELK {
           logging: false,
           measureExecutionTime: false,
         });
+        const insideLoopCount = (graph.edges ?? []).filter((edge) =>
+          isInsideSelfLoop(graph, edge, String(child.id)),
+        ).length;
+        if (insideLoopCount > 0) {
+          const baseHeight = child.height ?? 0;
+          insideSelfLoopBaseHeightByNodeId.set(String(child.id), baseHeight);
+          child.height = baseHeight + insideLoopCount * 11;
+        }
       }
     }
     applyNodeMicroLayout(graph, layoutOptions);
@@ -279,6 +289,7 @@ export default class ELK {
                       },
                     });
     applyLayout(graph, laidOut, padding, layoutOptions);
+    applyInsideSelfLoops(graph, insideSelfLoopBaseHeightByNodeId);
     if (arguments_.logging || arguments_.measureExecutionTime) {
       graph.logging = {
         name: "Native TypeScript layout",
@@ -462,6 +473,44 @@ function endpoint(
   return ownerId === undefined ? { nodeId: id } : { nodeId: ownerId, port: id };
 }
 
+function isInsideSelfLoop(root: ElkNode, edge: ElkEdge, expectedNodeId?: string): boolean {
+  const source = String(edge.sources?.[0] ?? edge.source);
+  const target = String(edge.targets?.[0] ?? edge.target);
+  if (source !== target || (expectedNodeId !== undefined && source !== expectedNodeId))
+    return false;
+  const node = root.children?.find((child) => String(child.id) === source);
+  return (
+    getBooleanOption(node?.layoutOptions ?? {}, "insideSelfLoops.activate") === true &&
+    getBooleanOption(edge.layoutOptions ?? {}, "insideSelfLoops.yo") === true
+  );
+}
+
+function applyInsideSelfLoops(
+  root: ElkNode,
+  baseHeightByNodeId: ReadonlyMap<string, number>,
+): void {
+  const indexByNodeId = new Map<string, number>();
+  for (const edge of root.edges ?? []) {
+    if (!isInsideSelfLoop(root, edge)) continue;
+    const nodeId = String(edge.sources?.[0] ?? edge.source);
+    const node = root.children?.find((child) => String(child.id) === nodeId);
+    const baseHeight = baseHeightByNodeId.get(nodeId);
+    if (!node || baseHeight === undefined) continue;
+    const index = indexByNodeId.get(nodeId) ?? 0;
+    indexByNodeId.set(nodeId, index + 1);
+    const y = (node.y ?? 0) + baseHeight - 2 + index * 11;
+    edge.sections = [
+      {
+        id: `${String(edge.id)}_s0`,
+        startPoint: { x: node.x ?? 0, y },
+        endPoint: { x: (node.x ?? 0) + (node.width ?? 0), y },
+        incomingShape: edge.sources?.[0] ?? edge.source,
+        outgoingShape: edge.targets?.[0] ?? edge.target,
+      },
+    ];
+  }
+}
+
 function toGraph(root: ElkNode, globalOptions: Readonly<Record<string, unknown>> = {}): Graph {
   const children = (root.children ?? []).filter(
     (child) => getBooleanOption(child.layoutOptions ?? {}, "noLayout") !== true,
@@ -483,6 +532,49 @@ function toGraph(root: ElkNode, globalOptions: Readonly<Record<string, unknown>>
       (edge.targets ?? (edge.target === undefined ? [] : [edge.target])).map(String),
     ),
   );
+  const sourcePortDegree = new Map<string, number>();
+  const targetPortDegree = new Map<string, number>();
+  for (const edge of root.edges ?? []) {
+    for (const source of edge.sources ?? (edge.source === undefined ? [] : [edge.source])) {
+      const id = String(source);
+      sourcePortDegree.set(id, (sourcePortDegree.get(id) ?? 0) + 1);
+    }
+    for (const target of edge.targets ?? (edge.target === undefined ? [] : [edge.target])) {
+      const id = String(target);
+      targetPortDegree.set(id, (targetPortDegree.get(id) ?? 0) + 1);
+    }
+  }
+  const orderedPorts = (child: ElkNode) => {
+    const ports = [...(child.ports ?? [])];
+    if (String(getOption(child.layoutOptions ?? {}, "portConstraints")) !== "FIXED_SIDE") {
+      return ports;
+    }
+    const side = (port: ElkPort) => String(getOption(port.layoutOptions ?? {}, "port.side"));
+    const sideOrder = ["NORTH", "EAST", "SOUTH", "WEST"];
+    ports.sort((left, right) => {
+      const leftSide = side(left);
+      const rightSide = side(right);
+      const sideDifference = sideOrder.indexOf(leftSide) - sideOrder.indexOf(rightSide);
+      if (sideDifference !== 0) return sideDifference;
+      if (String(getOption(globalOptions, "layered.portSortingStrategy")) === "PORT_DEGREE") {
+        if (leftSide === "EAST") {
+          return (
+            (sourcePortDegree.get(String(right.id)) ?? 0) -
+            (sourcePortDegree.get(String(left.id)) ?? 0)
+          );
+        }
+        if (leftSide === "WEST") {
+          return (
+            (targetPortDegree.get(String(left.id)) ?? 0) -
+            (targetPortDegree.get(String(right.id)) ?? 0)
+          );
+        }
+      }
+      const direction = leftSide === "WEST" ? -1 : 1;
+      return direction * ((child.ports?.indexOf(left) ?? 0) - (child.ports?.indexOf(right) ?? 0));
+    });
+    return ports;
+  };
 
   return createGraph({
     id: String(root.id),
@@ -494,7 +586,7 @@ function toGraph(root: ElkNode, globalOptions: Readonly<Record<string, unknown>>
       width: child.width,
       height: child.height,
       label: child.labels?.[0]?.text,
-      ports: child.ports?.map((port) => ({
+      ports: orderedPorts(child).map((port) => ({
         name: String(port.id),
         direction: sourcePortIds.has(String(port.id))
           ? targetPortIds.has(String(port.id))
@@ -511,6 +603,7 @@ function toGraph(root: ElkNode, globalOptions: Readonly<Record<string, unknown>>
     })),
     edges: (root.edges ?? []).flatMap((edge) => {
       if (getBooleanOption(edge.layoutOptions ?? {}, "noLayout") === true) return [];
+      if (isInsideSelfLoop(root, edge)) return [];
       const source = endpoint(edge.sources?.[0] ?? edge.source, portOwnerById);
       const target = endpoint(edge.targets?.[0] ?? edge.target, portOwnerById);
       const labels = (edge.labels ?? []).filter((label) => Boolean(label.text));
