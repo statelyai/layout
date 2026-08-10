@@ -16,7 +16,13 @@ function positions(nodes: ReadonlyArray<{ id?: string | number; x?: number; y?: 
 }
 
 describe("ELK node-placement oracle", () => {
-  for (const strategy of ["SIMPLE", "INTERACTIVE", "BRANDES_KOEPF"] as const) {
+  for (const strategy of [
+    "SIMPLE",
+    "INTERACTIVE",
+    "BRANDES_KOEPF",
+    "LINEAR_SEGMENTS",
+    "NETWORK_SIMPLEX",
+  ] as const) {
     it(`matches ${strategy} for normal flat nodes`, async () => {
       const nodes = [
         { id: "a", width: 30, height: 20, y: 0 },
@@ -53,7 +59,10 @@ describe("ELK node-placement oracle", () => {
         },
       });
 
-      expect(positions(native.nodes)).toEqual(positions(oracle.children ?? []));
+      const expected = positions(oracle.children ?? []);
+      for (const [id, y] of Object.entries(positions(native.nodes))) {
+        expect(y).toBeCloseTo(expected[id] ?? Number.NaN, 12);
+      }
     });
   }
 

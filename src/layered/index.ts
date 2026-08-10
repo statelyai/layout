@@ -35,6 +35,8 @@ import { assignLayersWithMinWidth } from "./min-width";
 import { assignLayersWithStretchWidth } from "./stretch-width";
 import { joinLongEdgeRoutes, splitLongEdges } from "./long-edges";
 import { placeNodesWithBrandesKoepf } from "./bk-node-placement";
+import { placeNodesWithLinearSegments } from "./linear-segments-node-placement";
+import { placeNodesWithNetworkSimplex } from "./network-simplex-node-placement";
 
 export type {
   AcyclicOrientation,
@@ -85,6 +87,8 @@ export { assignLayersWithNetworkSimplex } from "./network-simplex";
 export { assignLayersWithMinWidth } from "./min-width";
 export { assignLayersWithStretchWidth } from "./stretch-width";
 export { placeNodesWithBrandesKoepf } from "./bk-node-placement";
+export { placeNodesWithLinearSegments } from "./linear-segments-node-placement";
+export { placeNodesWithNetworkSimplex } from "./network-simplex-node-placement";
 export { fromElkLayeredOptionId, toElkLayeredOptions } from "./elk-options";
 export type {
   CycleBreakingStrategy,
@@ -235,6 +239,8 @@ function runLayeredPipeline<N, E, G, P>(
     if (options.strategies?.placeNodes) return options.strategies.placeNodes;
     if (nodePlacementStrategy === "INTERACTIVE") return placeNodesInteractively;
     if (nodePlacementStrategy === "BRANDES_KOEPF") return placeNodesWithBrandesKoepf;
+    if (nodePlacementStrategy === "LINEAR_SEGMENTS") return placeNodesWithLinearSegments;
+    if (nodePlacementStrategy === "NETWORK_SIMPLEX") return placeNodesWithNetworkSimplex;
     return placeNodesInLayers;
   })();
   const placement = measure("node-placement", () => nodePlacer(expanded.input, order));

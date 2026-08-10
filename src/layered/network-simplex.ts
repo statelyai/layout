@@ -8,7 +8,7 @@
 import type { GraphEdge } from "@statelyai/graph";
 import type { AcyclicOrientation, LayerAssigner, LayeredPhaseInput } from "./types";
 
-interface SimplexNode {
+export interface SimplexNode {
   id: string;
   order: number;
   layer: number;
@@ -17,7 +17,7 @@ interface SimplexNode {
   treeNode: boolean;
 }
 
-interface SimplexEdge {
+export interface SimplexEdge {
   id: string;
   order: number;
   source: SimplexNode;
@@ -279,11 +279,12 @@ function normalizeAndBalance(
   return filling;
 }
 
-function runNetworkSimplex(
+export function runNetworkSimplex(
   nodes: SimplexNode[],
   edges: SimplexEdge[],
   iterationLimit: number,
   previousLayerCounts: readonly number[] | undefined,
+  balance = true,
 ): number[] {
   assignInitialLayers(nodes);
   if (edges.length > 0) {
@@ -318,7 +319,15 @@ function runNetworkSimplex(
       for (const node of nodes) if (!head.has(node)) node.layer += delta;
     }
   }
-  return normalizeAndBalance(nodes, previousLayerCounts);
+  if (balance) return normalizeAndBalance(nodes, previousLayerCounts);
+  const lowest = Math.min(...nodes.map((node) => node.layer));
+  const highest = Math.max(...nodes.map((node) => node.layer));
+  const filling = Array.from({ length: highest - lowest + 1 }, () => 0);
+  for (const node of nodes) {
+    node.layer -= lowest;
+    filling[node.layer] = (filling[node.layer] ?? 0) + 1;
+  }
+  return filling;
 }
 
 export const assignLayersWithNetworkSimplex: LayerAssigner = (input, orientation) => {
