@@ -992,7 +992,12 @@ function normalizeElkGraphBounds(
               section.endPoint.x,
             ]),
       ),
-    ) + padding.right;
+    ) +
+    padding.right +
+    (getBooleanOption(layoutOptions, "layered.feedbackEdges") === true &&
+    (getDirection(layoutOptions) === "down" || getDirection(layoutOptions) === "up")
+      ? 1
+      : 0);
   const calculatedHeight =
     Math.max(
       0,
@@ -1026,7 +1031,12 @@ function normalizeElkGraphBounds(
               section.endPoint.y,
             ]),
       ),
-    ) + padding.bottom;
+    ) +
+    padding.bottom +
+    (getBooleanOption(layoutOptions, "layered.feedbackEdges") === true &&
+    (getDirection(layoutOptions) === "right" || getDirection(layoutOptions) === "left")
+      ? 1
+      : 0);
   root.width = fixedGraphSize && authoredWidth !== undefined ? authoredWidth : calculatedWidth;
   root.height = fixedGraphSize && authoredHeight !== undefined ? authoredHeight : calculatedHeight;
 }

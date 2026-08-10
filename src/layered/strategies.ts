@@ -1453,6 +1453,16 @@ export const minimizeCrossingsInteractively: CrossingMinimizer = (
   return { layers };
 };
 
+export function applyDirectionCongruency(input: LayeredPhaseInput, order: LayerOrder): LayerOrder {
+  if (
+    input.settings.directionCongruency !== "ROTATION" ||
+    (input.direction !== "left" && input.direction !== "down")
+  ) {
+    return order;
+  }
+  return { layers: order.layers.map((layer) => [...layer].reverse()) };
+}
+
 function sumWithSpacing(
   ids: readonly string[],
   input: LayeredPhaseInput,
@@ -1667,6 +1677,7 @@ function simplifyRoute(points: readonly Point[]): Point[] {
 function implicitEdgeEndpoints(
   input: LayeredPhaseInput,
   placement: NodePlacement,
+  orientation?: AcyclicOrientation,
 ): ReadonlyMap<string, { source: Point; target: Point }> {
   const horizontal = input.direction === "left" || input.direction === "right";
   const groups = new Map<string, Array<{ edge: GraphEdge; endpoint: "source" | "target" }>>();
@@ -1677,8 +1688,23 @@ function implicitEdgeEndpoints(
     const sourceFlow = horizontal ? sourceRect.x : sourceRect.y;
     const targetFlow = horizontal ? targetRect.x : targetRect.y;
     const forward = sourceFlow <= targetFlow;
-    const sourceSide = forward ? "after" : "before";
-    const targetSide = forward ? "before" : "after";
+    const feedback =
+      input.settings.feedbackEdges === true && orientation?.reversedEdgeIds.has(edge.id) === true;
+    const directionReversed = input.direction === "left" || input.direction === "up";
+    const sourceSide = feedback
+      ? directionReversed
+        ? "before"
+        : "after"
+      : forward
+        ? "after"
+        : "before";
+    const targetSide = feedback
+      ? directionReversed
+        ? "after"
+        : "before"
+      : forward
+        ? "before"
+        : "after";
     const sourceKey = `${edge.sourceId}:${sourceSide}`;
     const targetKey = `${edge.targetId}:${targetSide}`;
     const sourceGroup = groups.get(sourceKey) ?? [];
@@ -1731,7 +1757,7 @@ function implicitEdgeEndpoints(
 }
 
 function routeEdges(style: "ORTHOGONAL" | "POLYLINE" | "SPLINES"): EdgeRouter {
-  return (input, _orientation, placement) => {
+  return (input, orientation, placement) => {
     const nodeById = new Map(input.graph.nodes.map((node) => [node.id, node]));
     const pointsByEdgeId = new Map<string, readonly Point[]>();
     const horizontal = input.direction === "left" || input.direction === "right";
@@ -1799,7 +1825,7 @@ function routeEdges(style: "ORTHOGONAL" | "POLYLINE" | "SPLINES"): EdgeRouter {
         }
       }
     }
-    let implicitEndpoints = implicitEdgeEndpoints(input, placement);
+    let implicitEndpoints = implicitEdgeEndpoints(input, placement, orientation);
     const flowIntervals = [...placement.rectByNodeId.entries()]
       .map(([id, rect]) => ({
         id,
@@ -1850,7 +1876,7 @@ function routeEdges(style: "ORTHOGONAL" | "POLYLINE" | "SPLINES"): EdgeRouter {
       }
       labelShift += labelExtraByGap[layerNo] ?? 0;
     }
-    if (labelShift !== 0) implicitEndpoints = implicitEdgeEndpoints(input, placement);
+    if (labelShift !== 0) implicitEndpoints = implicitEdgeEndpoints(input, placement, orientation);
 
     if (style === "POLYLINE" || style === "SPLINES") {
       const edgeSpacing = Number(input.settings["spacing.edgeEdgeBetweenLayers"] ?? 10);
@@ -1978,6 +2004,54 @@ function routeEdges(style: "ORTHOGONAL" | "POLYLINE" | "SPLINES"): EdgeRouter {
       const sourceRect = placement.rectByNodeId.get(edge.sourceId);
       const targetRect = placement.rectByNodeId.get(edge.targetId);
       if (!source || !target || !sourceRect || !targetRect) continue;
+
+      if (input.settings.feedbackEdges === true && orientation.reversedEdgeIds.has(edge.id)) {
+        const spacing = Number(input.settings["spacing.edgeNode"] ?? 10);
+        if (horizontal) {
+          const sign = reverse ? -1 : 1;
+          const start = {
+            x: sign > 0 ? sourceRect.x + sourceRect.width : sourceRect.x,
+            y: sourceRect.y + sourceRect.height / 2,
+          };
+          const end = {
+            x: sign > 0 ? targetRect.x : targetRect.x + targetRect.width,
+            y: targetRect.y + targetRect.height / 2,
+          };
+          const outerCross =
+            Math.max(...[...placement.rectByNodeId.values()].map((rect) => rect.y + rect.height)) +
+            spacing;
+          pointsByEdgeId.set(edge.id, [
+            start,
+            { x: start.x + sign * spacing, y: start.y },
+            { x: start.x + sign * spacing, y: outerCross },
+            { x: end.x - sign * spacing, y: outerCross },
+            { x: end.x - sign * spacing, y: end.y },
+            end,
+          ]);
+        } else {
+          const sign = reverse ? -1 : 1;
+          const start = {
+            x: sourceRect.x + sourceRect.width / 2,
+            y: sign > 0 ? sourceRect.y + sourceRect.height : sourceRect.y,
+          };
+          const end = {
+            x: targetRect.x + targetRect.width / 2,
+            y: sign > 0 ? targetRect.y : targetRect.y + targetRect.height,
+          };
+          const outerCross =
+            Math.max(...[...placement.rectByNodeId.values()].map((rect) => rect.x + rect.width)) +
+            spacing;
+          pointsByEdgeId.set(edge.id, [
+            start,
+            { x: start.x, y: start.y + sign * spacing },
+            { x: outerCross, y: start.y + sign * spacing },
+            { x: outerCross, y: end.y - sign * spacing },
+            { x: end.x, y: end.y - sign * spacing },
+            end,
+          ]);
+        }
+        continue;
+      }
 
       if (unzippingSink && edge.targetId === unzippingSink.id) {
         const rank = unzippingSources.findIndex((node) => node.id === edge.sourceId);

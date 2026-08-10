@@ -44,7 +44,11 @@ export function splitLongEdges(
     const sourceLayer = layerByNodeId.get(edge.sourceId) ?? 0;
     const targetLayer = layerByNodeId.get(edge.targetId) ?? 0;
     const span = Math.abs(targetLayer - sourceLayer);
-    if (span <= 1 || edge.sourceId === edge.targetId) {
+    if (
+      span <= 1 ||
+      edge.sourceId === edge.targetId ||
+      (input.settings.feedbackEdges === true && orientation.reversedEdgeIds.has(edge.id))
+    ) {
       edges.push(edge);
       originalEdgeBySegmentId.set(edge.id, edge);
       if (orientation.reversedEdgeIds.has(edge.id)) reversedEdgeIds.add(edge.id);

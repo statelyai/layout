@@ -14,6 +14,7 @@ import {
   applyLayerConstraintOrder,
   applyLayerUnzipping,
   applyGreedySwitch,
+  applyDirectionCongruency,
   applySemiInteractiveOrder,
   breakCyclesByModelOrder,
   breakCyclesByStronglyConnectedConnectivity,
@@ -46,6 +47,7 @@ import { placeNodesWithBrandesKoepf } from "./bk-node-placement";
 import { placeNodesWithLinearSegments } from "./linear-segments-node-placement";
 import { placeNodesWithNetworkSimplex } from "./network-simplex-node-placement";
 import { applyHighDegreeNodeTreatment } from "./high-degree";
+import { applyNodePromotion } from "./node-promotion";
 
 export type {
   AcyclicOrientation,
@@ -944,7 +946,11 @@ function runLayeredPipeline<N, E, G, P>(
     applyHighDegreeNodeTreatment(
       input,
       orientation,
-      applyPartitions(input, applyLayerConstraints(input, layerAssigner(input, orientation))),
+      applyNodePromotion(
+        input,
+        orientation,
+        applyPartitions(input, applyLayerConstraints(input, layerAssigner(input, orientation))),
+      ),
     ),
   );
   const expanded = measure("long-edge-splitting", () =>
@@ -966,16 +972,19 @@ function runLayeredPipeline<N, E, G, P>(
     );
   })();
   const order = measure("crossing-minimization", () =>
-    applyLayerUnzipping(
+    applyDirectionCongruency(
       expanded.input,
-      applyLayerConstraintOrder(
+      applyLayerUnzipping(
         expanded.input,
-        applyGreedySwitch(
+        applyLayerConstraintOrder(
           expanded.input,
-          expanded.orientation,
-          applySemiInteractiveOrder(
+          applyGreedySwitch(
             expanded.input,
-            crossingMinimizer(expanded.input, expanded.orientation, expanded.assignment),
+            expanded.orientation,
+            applySemiInteractiveOrder(
+              expanded.input,
+              crossingMinimizer(expanded.input, expanded.orientation, expanded.assignment),
+            ),
           ),
         ),
       ),
@@ -985,6 +994,7 @@ function runLayeredPipeline<N, E, G, P>(
   const nodePlacer = (() => {
     if (options.strategies?.placeNodes) return options.strategies.placeNodes;
     if (nodePlacementStrategy === "INTERACTIVE") return placeNodesInteractively;
+    if (expanded.input.settings.feedbackEdges === true) return placeNodesInLayers;
     if (nodePlacementStrategy === "BRANDES_KOEPF") return placeNodesWithBrandesKoepf;
     if (nodePlacementStrategy === "LINEAR_SEGMENTS") return placeNodesWithLinearSegments;
     if (nodePlacementStrategy === "NETWORK_SIMPLEX") return placeNodesWithNetworkSimplex;
