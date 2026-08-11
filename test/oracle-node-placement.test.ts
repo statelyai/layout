@@ -2,6 +2,7 @@ import { createGraph } from "@statelyai/graph";
 import ELK from "elkjs/lib/elk.bundled.js";
 import { describe, expect, it } from "vitest";
 import { getLayeredLayout } from "../src";
+import NativeELK from "../src/elkjs";
 
 const edges = [
   { id: "ac", sourceId: "a", targetId: "c" },
@@ -116,5 +117,77 @@ describe("ELK node-placement oracle", () => {
         expect(y).toBeCloseTo(expected[id] ?? Number.NaN, 12);
       }
     });
+  }
+
+  const configurableNodes = [
+    { id: "a", width: 30, height: 20 },
+    { id: "b", width: 20, height: 50 },
+    { id: "c", width: 40, height: 25 },
+    { id: "d", width: 20, height: 30 },
+    { id: "e", width: 30, height: 15 },
+  ];
+  const comparePlacementOption = async (
+    strategy: "LINEAR_SEGMENTS" | "BRANDES_KOEPF",
+    option: string,
+    value: string,
+  ) => {
+    const layoutOptions = {
+      "elk.algorithm": "layered",
+      "elk.direction": "RIGHT",
+      "elk.separateConnectedComponents": "false",
+      "elk.layered.layering.strategy": "LONGEST_PATH_SOURCE",
+      "elk.layered.crossingMinimization.strategy": "NONE",
+      "elk.layered.crossingMinimization.greedySwitch.type": "OFF",
+      "elk.layered.nodePlacement.strategy": strategy,
+      [option]: value,
+    };
+    const graph = {
+      id: "root",
+      layoutOptions,
+      children: structuredClone(configurableNodes),
+      edges: edges.map((edge) => ({
+        id: edge.id,
+        sources: [edge.sourceId],
+        targets: [edge.targetId],
+      })),
+    };
+    const oracle = await new ELK().layout(structuredClone(graph));
+    const native = await new NativeELK().layout(structuredClone(graph));
+    const expected = positions(oracle.children ?? []);
+    for (const [id, y] of Object.entries(positions(native.children ?? []))) {
+      expect(y).toBeCloseTo(expected[id] ?? Number.NaN, 12);
+    }
+  };
+
+  for (const dampening of [0, 0.3, 1]) {
+    it(`matches LINEAR_SEGMENTS deflection dampening ${dampening}`, () =>
+      comparePlacementOption(
+        "LINEAR_SEGMENTS",
+        "elk.layered.nodePlacement.linearSegments.deflectionDampening",
+        String(dampening),
+      ));
+  }
+
+  for (const thoroughness of [1, 7, 20]) {
+    it(`matches LINEAR_SEGMENTS thoroughness ${thoroughness}`, () =>
+      comparePlacementOption("LINEAR_SEGMENTS", "elk.layered.thoroughness", String(thoroughness)));
+  }
+
+  for (const straightening of ["NONE", "IMPROVE_STRAIGHTNESS"] as const) {
+    it(`matches BRANDES_KOEPF ${straightening} edge straightening`, () =>
+      comparePlacementOption(
+        "BRANDES_KOEPF",
+        "elk.layered.nodePlacement.bk.edgeStraightening",
+        straightening,
+      ));
+  }
+
+  for (const favorStraightEdges of [false, true]) {
+    it(`matches BRANDES_KOEPF favor-straight-edges ${favorStraightEdges}`, () =>
+      comparePlacementOption(
+        "BRANDES_KOEPF",
+        "elk.layered.nodePlacement.favorStraightEdges",
+        String(favorStraightEdges),
+      ));
   }
 });
