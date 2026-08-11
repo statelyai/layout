@@ -44,6 +44,31 @@ function addEdge(
   target.incoming.push(edge);
 }
 
+/** Mirrors NGraph.makeConnected(): network simplex tie-breaking observes these zero edges. */
+function makeConnected(nodes: SimplexNode[], edges: SimplexEdge[]): void {
+  const visited = new Set<SimplexNode>();
+  const representatives: SimplexNode[] = [];
+  for (const node of nodes) {
+    if (visited.has(node)) continue;
+    representatives.push(node);
+    visited.add(node);
+    const stack = [node];
+    while (stack.length > 0) {
+      const current = stack.pop()!;
+      for (const edge of [...current.incoming, ...current.outgoing]) {
+        const other = edge.source === current ? edge.target : edge.source;
+        if (visited.has(other)) continue;
+        visited.add(other);
+        stack.push(other);
+      }
+    }
+  }
+  if (representatives.length < 2) return;
+  const root = makeNode("__network_simplex_root", nodes.length);
+  nodes.push(root);
+  for (const representative of representatives) addEdge(edges, root, representative, 0, 0);
+}
+
 function endpointAnchors(input: LayeredPhaseInput, order: LayerOrder) {
   const layer = new Map<string, number>();
   const index = new Map<string, number>();
@@ -74,7 +99,12 @@ function endpointAnchors(input: LayeredPhaseInput, order: LayerOrder) {
     edge.sourceId === id ? edge.targetId : edge.sourceId;
   const anchors = new Map<string, number>();
   for (const [id, edges] of after) {
-    edges.sort((a, b) => (index.get(other(a, id)) ?? 0) - (index.get(other(b, id)) ?? 0));
+    const sweptOrder = order.outputPortOrderByNodeId?.get(id);
+    edges.sort((a, b) =>
+      sweptOrder
+        ? sweptOrder.indexOf(a.id) - sweptOrder.indexOf(b.id)
+        : (index.get(other(a, id)) ?? 0) - (index.get(other(b, id)) ?? 0),
+    );
     edges.forEach((edge, edgeNo) =>
       anchors.set(
         `${edge.id}:${id}`,
@@ -83,11 +113,29 @@ function endpointAnchors(input: LayeredPhaseInput, order: LayerOrder) {
     );
   }
   for (const [id, edges] of before) {
-    edges.sort((a, b) => (index.get(other(a, id)) ?? 0) - (index.get(other(b, id)) ?? 0));
+    const sweptOrder = order.inputPortOrderByNodeId?.get(id);
+    edges.sort((a, b) =>
+      sweptOrder
+        ? sweptOrder.indexOf(b.id) - sweptOrder.indexOf(a.id)
+        : (index.get(other(a, id)) ?? 0) - (index.get(other(b, id)) ?? 0),
+    );
+    const crossingStrategy = input.settings["crossingMinimization.strategy"] ?? "LAYER_SWEEP";
+    const layerOrdered =
+      sweptOrder !== undefined ||
+      crossingStrategy === "LAYER_SWEEP" ||
+      crossingStrategy === "MEDIAN_LAYER_SWEEP" ||
+      (crossingStrategy === "INTERACTIVE" &&
+        edges.some((edge) => other(edge, id).startsWith("__layout_dummy:"))) ||
+      (crossingStrategy === "NONE" &&
+        (input.direction === "left" || input.direction === "right") &&
+        edges.some((edge) => other(edge, id).startsWith("__layout_dummy:")));
     edges.forEach((edge, edgeNo) =>
       anchors.set(
         `${edge.id}:${id}`,
-        Math.round((crossSize(input, id) * (edges.length - edgeNo)) / (edges.length + 1)),
+        Math.round(
+          (crossSize(input, id) * (layerOrdered ? edgeNo + 1 : edges.length - edgeNo)) /
+            (edges.length + 1),
+        ),
       ),
     );
   }
@@ -126,7 +174,16 @@ export function placeNodesWithNetworkSimplex(
       );
     }
   }
-  for (const graphEdge of input.graph.edges) {
+  const graphEdgesInLayerOrder = order.layers.flatMap((layer) =>
+    layer.flatMap((id) => {
+      const outgoing = input.graph.edges.filter((edge) => edge.sourceId === id);
+      const portOrder = order.outputPortOrderByNodeId?.get(id);
+      return portOrder === undefined
+        ? outgoing
+        : outgoing.sort((left, right) => portOrder.indexOf(left.id) - portOrder.indexOf(right.id));
+    }),
+  );
+  for (const graphEdge of graphEdgesInLayerOrder) {
     if (graphEdge.sourceId === graphEdge.targetId) continue;
     const source = nodeById.get(graphEdge.sourceId);
     const target = nodeById.get(graphEdge.targetId);
@@ -145,6 +202,7 @@ export function placeNodesWithNetworkSimplex(
     addEdge(edges, dummy, source, Math.max(0, targetOffset - sourceOffset), priority * typeWeight);
     addEdge(edges, dummy, target, Math.max(0, sourceOffset - targetOffset), priority * typeWeight);
   }
+  makeConnected(nodes, edges);
   runNetworkSimplex(
     nodes,
     edges,

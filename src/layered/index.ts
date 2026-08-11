@@ -1686,6 +1686,8 @@ function runLayeredPipeline<N, E, G, P>(
       expandedRoutes,
       expanded.segmentIdsByEdgeId,
       edgeRouting === "SPLINES" || options.settings?.unnecessaryBendpoints === true,
+      edgeRouting === "SPLINES",
+      Number(options.settings?.["spacing.edgeNodeBetweenLayers"] ?? 10),
     ),
   );
   if (

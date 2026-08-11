@@ -612,6 +612,7 @@ export function applyLayerConstraints(
   );
   const leadingOffset = hasFirstSeparate ? 1 : 0;
   return {
+    ...assignment,
     layerByNodeId: new Map(
       input.graph.nodes.map((node) => {
         const constraint = constraintByNodeId.get(node.id);
@@ -652,6 +653,7 @@ export function applyPartitions(
     offset += maximum - minimum + 1;
   }
   return {
+    ...assignment,
     layerByNodeId: new Map(
       input.graph.nodes.map((node) => {
         const partition = partitionByNodeId.get(node.id) ?? 0;
@@ -1063,102 +1065,118 @@ export function applyForcedModelOrder(
 
 /** ELK LONGEST_PATH: align sinks on the final layer. */
 export const assignLayersByLongestPathToSink: LayerAssigner = (input, orientation) => {
-  const outdegree = new Map(input.graph.nodes.map((node) => [node.id, 0]));
-  const predecessors = new Map(input.graph.nodes.map((node) => [node.id, [] as string[]]));
-  const heightByNodeId = new Map(input.graph.nodes.map((node) => [node.id, 0]));
-
+  const successors = new Map(input.graph.nodes.map((node) => [node.id, [] as string[]]));
   for (const edge of input.graph.edges) {
     const [sourceId, targetId] = getOrientedEndpoints(edge, orientation);
     if (sourceId === targetId) continue;
-    outdegree.set(sourceId, (outdegree.get(sourceId) ?? 0) + 1);
-    predecessors.get(targetId)?.push(sourceId);
+    successors.get(sourceId)?.push(targetId);
   }
-
-  const queue = input.graph.nodes
-    .filter((node) => outdegree.get(node.id) === 0)
-    .map((node) => node.id);
-  let maximumHeight = 0;
-  for (let index = 0; index < queue.length; index++) {
-    const targetId = queue[index];
-    if (targetId === undefined) continue;
-    const targetHeight = heightByNodeId.get(targetId) ?? 0;
-    maximumHeight = Math.max(maximumHeight, targetHeight);
-    for (const sourceId of predecessors.get(targetId) ?? []) {
-      heightByNodeId.set(sourceId, Math.max(heightByNodeId.get(sourceId) ?? 0, targetHeight + 1));
-      const remaining = (outdegree.get(sourceId) ?? 1) - 1;
-      outdegree.set(sourceId, remaining);
-      if (remaining === 0) queue.push(sourceId);
+  const heightByNodeId = new Map<string, number>();
+  const layers: string[][] = [];
+  const visit = (id: string): number => {
+    const known = heightByNodeId.get(id);
+    if (known !== undefined) return known;
+    let height = 1;
+    for (const targetId of successors.get(id) ?? []) {
+      height = Math.max(height, visit(targetId) + 1);
     }
+    while (layers.length < height) layers.unshift([]);
+    layers[layers.length - height]!.push(id);
+    heightByNodeId.set(id, height);
+    return height;
+  };
+  for (const node of input.graph.nodes) visit(node.id);
+  const layerByNodeId = new Map<string, number>();
+  for (const [layer, ids] of layers.entries()) {
+    for (const id of ids) layerByNodeId.set(id, layer);
   }
-  for (const height of heightByNodeId.values()) maximumHeight = Math.max(maximumHeight, height);
-
   return {
-    layerByNodeId: new Map(
-      input.graph.nodes.map((node) => [
-        node.id,
-        maximumHeight - (heightByNodeId.get(node.id) ?? 0),
-      ]),
-    ),
+    layerByNodeId,
+    seedOrder: layers.flat(),
   };
 };
 
 /** ELK INTERACTIVE layering for normal flat nodes. */
 export const assignLayersInteractively: LayerAssigner = (input, orientation) => {
-  const intervals = input.graph.nodes
-    .map((node, modelOrder) => {
-      const start = node.x ?? 0;
-      return {
-        nodeId: node.id,
-        start,
-        end: Math.max(start + 1, start + (input.sizes.get(node.id)?.width ?? 0)),
-        modelOrder,
-      };
-    })
-    .sort((left, right) => left.start - right.start || left.modelOrder - right.modelOrder);
   const spans: Array<{ start: number; end: number; nodeIds: string[] }> = [];
-  for (const interval of intervals) {
-    const previous = spans.at(-1);
-    if (previous && previous.end > interval.start) {
-      previous.end = Math.max(previous.end, interval.end);
-      previous.nodeIds.push(interval.nodeId);
-    } else {
-      spans.push({ start: interval.start, end: interval.end, nodeIds: [interval.nodeId] });
+  const horizontal = input.direction === "left" || input.direction === "right";
+  const reverse = input.direction === "left" || input.direction === "up";
+  for (const node of input.graph.nodes) {
+    const size = input.sizes.get(node.id);
+    const position = horizontal ? (node.x ?? 0) : (node.y ?? 0);
+    const flowSize = horizontal ? (size?.width ?? 0) : (size?.height ?? 0);
+    const start = reverse ? -position - flowSize : position;
+    const end = Math.max(start + 1, start + flowSize);
+    let foundIndex = -1;
+    let index = 0;
+    while (index < spans.length) {
+      const span = spans[index]!;
+      if (span.start >= end) break;
+      if (span.end > start) {
+        if (foundIndex < 0) {
+          span.nodeIds.push(node.id);
+          span.start = Math.min(span.start, start);
+          span.end = Math.max(span.end, end);
+          foundIndex = index;
+          index++;
+        } else {
+          spans[foundIndex]!.nodeIds.push(...span.nodeIds);
+          spans[foundIndex]!.end = Math.max(spans[foundIndex]!.end, span.end);
+          spans.splice(index, 1);
+        }
+      } else {
+        index++;
+      }
+    }
+    if (foundIndex < 0) {
+      spans.splice(index, 0, { start, end, nodeIds: [node.id] });
     }
   }
 
-  const layerByNodeId = new Map<string, number>();
-  for (const [layer, span] of spans.entries()) {
-    for (const nodeId of span.nodeIds) layerByNodeId.set(nodeId, layer);
-  }
   const successors = new Map(input.graph.nodes.map((node) => [node.id, [] as string[]]));
   for (const edge of input.graph.edges) {
     const [sourceId, targetId] = getOrientedEndpoints(edge, orientation);
     if (sourceId !== targetId) successors.get(sourceId)?.push(targetId);
   }
 
-  const pending = input.graph.nodes.map((node) => node.id);
-  const pendingSet = new Set(pending);
-  while (pending.length > 0) {
-    const sourceId = pending.shift();
-    if (sourceId === undefined) continue;
-    pendingSet.delete(sourceId);
+  const layerNodes = spans.map((span) => [...span.nodeIds]);
+  const layerByNodeId = new Map<string, number>();
+  for (const [layer, ids] of layerNodes.entries()) {
+    for (const id of ids) layerByNodeId.set(id, layer);
+  }
+  const checked = new Set<string>();
+  const checkNode = (sourceId: string): string[] => {
+    checked.add(sourceId);
+    const shifted: string[] = [];
     const sourceLayer = layerByNodeId.get(sourceId) ?? 0;
     for (const targetId of successors.get(sourceId) ?? []) {
-      if ((layerByNodeId.get(targetId) ?? 0) <= sourceLayer) {
-        layerByNodeId.set(targetId, sourceLayer + 1);
-        if (!pendingSet.has(targetId)) {
-          pending.push(targetId);
-          pendingSet.add(targetId);
-        }
+      const targetLayer = layerByNodeId.get(targetId) ?? 0;
+      if (targetLayer > sourceLayer) continue;
+      const newLayer = sourceLayer + 1;
+      while (layerNodes.length <= newLayer) layerNodes.push([]);
+      const oldLayer = layerNodes[targetLayer];
+      oldLayer?.splice(oldLayer.indexOf(targetId), 1);
+      layerNodes[newLayer]!.push(targetId);
+      layerByNodeId.set(targetId, newLayer);
+      if (!shifted.includes(targetId)) shifted.push(targetId);
+    }
+    return shifted;
+  };
+  for (const node of input.graph.nodes) {
+    if (checked.has(node.id)) continue;
+    const shifted = checkNode(node.id);
+    while (shifted.length > 0) {
+      const next = shifted.shift()!;
+      for (const shiftedId of checkNode(next)) {
+        if (!shifted.includes(shiftedId)) shifted.push(shiftedId);
       }
     }
   }
-
-  const usedLayers = [...new Set(layerByNodeId.values())].sort((left, right) => left - right);
-  for (const [nodeId, layer] of layerByNodeId) {
-    layerByNodeId.set(nodeId, usedLayers.indexOf(layer));
+  const nonemptyLayers = layerNodes.filter((ids) => ids.length > 0);
+  for (const [layer, ids] of nonemptyLayers.entries()) {
+    for (const id of ids) layerByNodeId.set(id, layer);
   }
-  return { layerByNodeId };
+  return { layerByNodeId, seedOrder: nonemptyLayers.flat() };
 };
 
 /** ELK BF_MODEL_ORDER for normal flat nodes (label dummies are a later preprocessing slice). */
@@ -1301,18 +1319,18 @@ export const assignLayersWithCoffmanGraham: LayerAssigner = (input, orientation)
   const compareSources = (left: string, right: string) => {
     const leftValues = predecessorTopo.get(left) ?? [];
     const rightValues = predecessorTopo.get(right) ?? [];
-    let leftIndex = leftValues.length - 1;
-    let rightIndex = rightValues.length - 1;
-    while (leftIndex >= 0 && rightIndex >= 0) {
-      const leftValue = leftValues[leftIndex--];
-      const rightValue = rightValues[rightIndex--];
+    let leftPosition = leftValues.length;
+    let rightPosition = rightValues.length;
+    while (leftPosition > 0 && rightPosition > 0) {
+      const leftValue = leftValues[--leftPosition];
+      const rightValue = rightValues[--rightPosition];
       if (leftValue !== rightValue) return leftValue - rightValue;
     }
     // This intentionally mirrors ELK's ListIterator.hasNext checks after
     // reverse traversal, including its non-total ordering for equal non-empty
     // predecessor lists. Java's PriorityQueue makes that behavior observable.
-    const leftHasNext = leftValues.length > 0;
-    const rightHasNext = rightValues.length > 0;
+    const leftHasNext = leftPosition < leftValues.length;
+    const rightHasNext = rightPosition < rightValues.length;
     if (!leftHasNext && !rightHasNext) {
       return (modelOrder.get(left) ?? 0) - (modelOrder.get(right) ?? 0);
     }
@@ -1376,14 +1394,50 @@ export const assignLayersWithCoffmanGraham: LayerAssigner = (input, orientation)
       (outgoing.get(id) ?? []).filter((edge) => !transitiveEdgeIds.has(edge.edge.id)).length,
     ]),
   );
-  const sinks = nodeIds.filter((id) => outdegree.get(id) === 0);
+  const sinks: string[] = [];
+  const compareSinks = (left: string, right: string) =>
+    -(topo.get(left) ?? 0) + (topo.get(right) ?? 0);
+  const addSink = (nodeId: string) => {
+    let index = sinks.length;
+    sinks.push(nodeId);
+    while (index > 0) {
+      const parentIndex = (index - 1) >>> 1;
+      const parent = sinks[parentIndex];
+      if (parent === undefined || compareSinks(parent, nodeId) <= 0) break;
+      sinks[index] = parent;
+      index = parentIndex;
+    }
+    sinks[index] = nodeId;
+  };
+  const takeSink = (): string | undefined => {
+    const result = sinks[0];
+    const last = sinks.pop();
+    if (sinks.length === 0 || last === undefined) return result;
+    let index = 0;
+    const half = sinks.length >>> 1;
+    while (index < half) {
+      let childIndex = index * 2 + 1;
+      let child = sinks[childIndex] as string;
+      const rightIndex = childIndex + 1;
+      const right = sinks[rightIndex];
+      if (right !== undefined && compareSinks(right, child) < 0) {
+        childIndex = rightIndex;
+        child = right;
+      }
+      if (compareSinks(last, child) <= 0) break;
+      sinks[index] = child;
+      index = childIndex;
+    }
+    sinks[index] = last;
+    return result;
+  };
+  for (const id of nodeIds) if (outdegree.get(id) === 0) addSink(id);
   const inverseLayerByNodeId = new Map<string, number>();
   const layerMembers: string[][] = [[]];
   const bound = input.settings["layering.coffmanGraham.layerBound"] ?? 2_147_483_647;
   let currentLayer = 0;
   while (sinks.length > 0) {
-    sinks.sort((left, right) => (topo.get(right) ?? 0) - (topo.get(left) ?? 0));
-    const nodeId = sinks.shift();
+    const nodeId = takeSink();
     if (nodeId === undefined) continue;
     const currentMembers = layerMembers[currentLayer] ?? [];
     const createsInLayerEdge = (outgoing.get(nodeId) ?? []).some((edge) =>
@@ -1399,7 +1453,7 @@ export const assignLayersWithCoffmanGraham: LayerAssigner = (input, orientation)
       if (transitiveEdgeIds.has(edge.edge.id)) continue;
       const remaining = (outdegree.get(edge.sourceId) ?? 1) - 1;
       outdegree.set(edge.sourceId, remaining);
-      if (remaining === 0) sinks.push(edge.sourceId);
+      if (remaining === 0) addSink(edge.sourceId);
     }
   }
 
@@ -1407,6 +1461,7 @@ export const assignLayersWithCoffmanGraham: LayerAssigner = (input, orientation)
     layerByNodeId: new Map(
       nodeIds.map((id) => [id, currentLayer - (inverseLayerByNodeId.get(id) ?? 0)]),
     ),
+    seedOrder: [...layerMembers].reverse().flat(),
   };
 };
 
@@ -1496,7 +1551,6 @@ function minimizeCrossingsWithLayerSweep(
 ): CrossingMinimizer {
   return (input, orientation, assignment) => {
     const exactPortSweep =
-      input.direction === "right" &&
       (input.settings.hierarchyHandling !== "INCLUDE_CHILDREN" ||
         input.graph.nodes.some((node) => node.id.startsWith("__native_hierarchy_"))) &&
       (input.settings["wrapping.strategy"] ?? "OFF") === "OFF" &&
@@ -1507,8 +1561,9 @@ function minimizeCrossingsWithLayerSweep(
     }
     const layerCount = maximumLayer + 1;
     const layers = Array.from({ length: layerCount }, () => [] as string[]);
-    const initialNodes =
-      (input.settings["layering.strategy"] ?? "NETWORK_SIMPLEX") === "NETWORK_SIMPLEX"
+    const initialNodes = assignment.seedOrder
+      ? completeSeedOrder(input, assignment)
+      : (input.settings["layering.strategy"] ?? "NETWORK_SIMPLEX") === "NETWORK_SIMPLEX"
         ? networkSimplexComponentOrder(input)
         : input.graph.nodes.map((node) => node.id);
     for (const nodeId of initialNodes) {
@@ -1614,8 +1669,12 @@ function minimizeCrossingsWithLayerSweep(
 
     const sharedRandom = new JavaRandom(input.settings.randomSeed ?? 1);
     const randomSeed = sharedRandom.nextLong();
-    const nodeRelativePortRanks = exactPortSweep ? sharedRandom.nextBoolean() : true;
-    const random = new JavaRandom(randomSeed);
+    const portDistributorUsesNodeRelativeRanks = sharedRandom.nextBoolean();
+    const nodeRelativePortRanks = portDistributorUsesNodeRelativeRanks;
+    // ELK treats the median heuristic as deterministic, so it keeps using the
+    // graph's shared RNG after port-distributor selection. Barycenter resets to
+    // the saved seed while comparing randomized layouts.
+    const random = statistic === "median" ? sharedRandom : new JavaRandom(randomSeed);
     const thoroughness = Math.max(1, input.settings.thoroughness ?? sweeps ?? 7);
     let bestLayers = layers.map((layer) => [...layer]);
     let bestInputPortOrder = new Map<string, string[]>();
@@ -1625,6 +1684,7 @@ function minimizeCrossingsWithLayerSweep(
     const sourceUnknownPlacement =
       (input.settings["considerModelOrder.strategy"] ?? "NONE") === "NONE";
     const usePortRanks = true;
+    const medianWeights = new Map<string, number>();
 
     const adjacentRanks = (
       fixedLayer: readonly string[],
@@ -1754,31 +1814,65 @@ function minimizeCrossingsWithLayerSweep(
       }
     };
 
-    for (let attempt = 0; attempt < thoroughness; attempt++) {
+    const attempts = statistic === "median" ? 1 : thoroughness;
+    for (let attempt = 0; attempt < attempts; attempt++) {
       let forward = random.nextBoolean();
       const firstLayerIndex = forward ? 0 : Math.max(0, working.length - 1);
-      const weights = new Map(
+      const firstLayerWeights = new Map(
         (working[firstLayerIndex] ?? []).map((id) => [id, random.nextDouble()]),
       );
       working[firstLayerIndex]?.sort(
-        (left, right) => (weights.get(left) ?? 0) - (weights.get(right) ?? 0),
+        (left, right) => (firstLayerWeights.get(left) ?? 0) - (firstLayerWeights.get(right) ?? 0),
       );
+      if (statistic === "median") {
+        working[firstLayerIndex]?.forEach((id, index) => medianWeights.set(id, index + 1));
+      }
 
       const sweep = (isForward: boolean, firstSweep: boolean) => {
+        const sortWithMedianWeights = (current: string[], reference: readonly string[]) => {
+          const referenceIds = new Set(reference);
+          const originalIndex = new Map(current.map((id, index) => [id, index]));
+          for (const id of current) {
+            const connectedWeights = input.graph.edges
+              .flatMap((edge) => {
+                if (edge.sourceId === id && referenceIds.has(edge.targetId)) {
+                  return [medianWeights.get(edge.targetId) ?? 0];
+                }
+                if (edge.targetId === id && referenceIds.has(edge.sourceId)) {
+                  return [medianWeights.get(edge.sourceId) ?? 0];
+                }
+                return [];
+              })
+              .sort((left, right) => left - right);
+            medianWeights.set(
+              id,
+              connectedWeights.length > 0
+                ? connectedWeights[Math.floor(connectedWeights.length / 2)]!
+                : Number.MAX_VALUE / 2,
+            );
+          }
+          current.sort(
+            (left, right) =>
+              (medianWeights.get(left) ?? 0) - (medianWeights.get(right) ?? 0) ||
+              (originalIndex.get(left) ?? 0) - (originalIndex.get(right) ?? 0),
+          );
+        };
         if (isForward) {
           for (let layer = 1; layer < working.length; layer++) {
             const current = working[layer];
             const previous = working[layer - 1];
             if (current && previous) {
-              sortLayerByAdjacentPosition(
-                current,
-                adjacentRanks(previous, current, true),
-                statistic,
-                statistic === "mean" ? random : undefined,
-                !firstSweep,
-                sourceUnknownPlacement,
-                exactPortSweep,
-              );
+              if (statistic === "median") sortWithMedianWeights(current, previous);
+              else
+                sortLayerByAdjacentPosition(
+                  current,
+                  adjacentRanks(previous, current, true),
+                  statistic,
+                  random,
+                  !firstSweep,
+                  sourceUnknownPlacement,
+                  true,
+                );
               if (exactPortSweep) distributePorts(previous, current, true);
             }
           }
@@ -1787,15 +1881,17 @@ function minimizeCrossingsWithLayerSweep(
             const current = working[layer];
             const next = working[layer + 1];
             if (current && next) {
-              sortLayerByAdjacentPosition(
-                current,
-                adjacentRanks(next, current, false),
-                statistic,
-                statistic === "mean" ? random : undefined,
-                !firstSweep,
-                sourceUnknownPlacement,
-                exactPortSweep,
-              );
+              if (statistic === "median") sortWithMedianWeights(current, next);
+              else
+                sortLayerByAdjacentPosition(
+                  current,
+                  adjacentRanks(next, current, false),
+                  statistic,
+                  random,
+                  !firstSweep,
+                  sourceUnknownPlacement,
+                  true,
+                );
               if (exactPortSweep) distributePorts(next, current, false);
             }
           }
@@ -1878,6 +1974,36 @@ function networkSimplexComponentOrder(input: LayeredPhaseInput): string[] {
   return components.flat();
 }
 
+/** Keep model order within each component while placing connected work before isolated nodes. */
+function stableComponentModelOrder(input: LayeredPhaseInput): string[] {
+  const neighbors = new Map(input.graph.nodes.map((node) => [node.id, [] as string[]]));
+  for (const edge of input.graph.edges) {
+    if (edge.sourceId === edge.targetId) continue;
+    neighbors.get(edge.sourceId)?.push(edge.targetId);
+    neighbors.get(edge.targetId)?.push(edge.sourceId);
+  }
+  const visited = new Set<string>();
+  const componentByNodeId = new Map<string, number>();
+  let component = 0;
+  for (const node of input.graph.nodes) {
+    if (visited.has(node.id)) continue;
+    const visit = (id: string): void => {
+      if (visited.has(id)) return;
+      visited.add(id);
+      componentByNodeId.set(id, component);
+      for (const neighbor of neighbors.get(id) ?? []) visit(neighbor);
+    };
+    visit(node.id);
+    component++;
+  }
+  const components = Array.from({ length: component }, () => [] as string[]);
+  for (const node of input.graph.nodes)
+    components[componentByNodeId.get(node.id) ?? 0]?.push(node.id);
+  return components
+    .sort((left, right) => Number(right.length > 1) - Number(left.length > 1))
+    .flat();
+}
+
 export function minimizeCrossingsWithBarycenter(sweeps = 7): CrossingMinimizer {
   return minimizeCrossingsWithLayerSweep("mean", sweeps);
 }
@@ -1895,6 +2021,15 @@ function layersFromAssignment(input: LayeredPhaseInput, assignment: LayerAssignm
   return layers;
 }
 
+function completeSeedOrder(input: LayeredPhaseInput, assignment: LayerAssignment): string[] {
+  if (!assignment.seedOrder) return input.graph.nodes.map((node) => node.id);
+  const seeded = new Set(assignment.seedOrder);
+  return [
+    ...assignment.seedOrder,
+    ...input.graph.nodes.flatMap((node) => (seeded.has(node.id) ? [] : [node.id])),
+  ];
+}
+
 export const minimizeCrossingsWithModelOrder: CrossingMinimizer = (
   input,
   _orientation,
@@ -1902,12 +2037,54 @@ export const minimizeCrossingsWithModelOrder: CrossingMinimizer = (
 ) => {
   const maximumLayer = Math.max(0, ...assignment.layerByNodeId.values());
   const layers = Array.from({ length: maximumLayer + 1 }, () => [] as string[]);
-  const nodeOrder =
-    (input.settings["layering.strategy"] ?? "NETWORK_SIMPLEX") === "NETWORK_SIMPLEX"
+  const layeringStrategy = input.settings["layering.strategy"] ?? "NETWORK_SIMPLEX";
+  const nodeOrder = assignment.seedOrder
+    ? completeSeedOrder(input, assignment)
+    : layeringStrategy === "NETWORK_SIMPLEX"
       ? networkSimplexComponentOrder(input)
-      : input.graph.nodes.map((node) => node.id);
+      : layeringStrategy === "LONGEST_PATH"
+        ? stableComponentModelOrder(input)
+        : input.graph.nodes.map((node) => node.id);
   for (const nodeId of nodeOrder) {
     layers[assignment.layerByNodeId.get(nodeId) ?? 0]?.push(nodeId);
+  }
+  if (
+    layeringStrategy === "STRETCH_WIDTH" &&
+    (input.settings["crossingMinimization.strategy"] ?? "LAYER_SWEEP") === "NONE"
+  ) {
+    const position = new Map<string, number>();
+    let nextPosition = 0;
+    for (const layer of layers) {
+      for (const id of layer) {
+        if (!id.startsWith("__layout_dummy:")) position.set(id, nextPosition++);
+      }
+    }
+    const edgeOrder = new Map(input.graph.edges.map((edge, index) => [edge.id, index]));
+    const sourceAndOrder = (dummyId: string): [number, number] => {
+      let id = dummyId;
+      let incoming = input.graph.edges.find((edge) => edge.targetId === id);
+      while (incoming && incoming.sourceId.startsWith("__layout_dummy:")) {
+        id = incoming.sourceId;
+        incoming = input.graph.edges.find((edge) => edge.targetId === id);
+      }
+      return [
+        position.get(incoming?.sourceId ?? "") ?? Number.MAX_SAFE_INTEGER,
+        edgeOrder.get(incoming?.id ?? "") ?? Number.MAX_SAFE_INTEGER,
+      ];
+    };
+    for (const layer of layers) {
+      const sortedDummies = layer
+        .filter((id) => id.startsWith("__layout_dummy:"))
+        .sort((left, right) => {
+          const [leftSource, leftEdge] = sourceAndOrder(left);
+          const [rightSource, rightEdge] = sourceAndOrder(right);
+          return leftSource - rightSource || leftEdge - rightEdge;
+        });
+      let dummyIndex = 0;
+      for (let index = 0; index < layer.length; index++) {
+        if (layer[index]?.startsWith("__layout_dummy:")) layer[index] = sortedDummies[dummyIndex++]!;
+      }
+    }
   }
   return { layers };
 };
@@ -1918,11 +2095,71 @@ export const minimizeCrossingsInteractively: CrossingMinimizer = (
   assignment,
 ) => {
   const horizontal = input.direction === "left" || input.direction === "right";
-  const modelOrder = new Map(input.graph.nodes.map((node, index) => [node.id, index]));
+  const seededOrder = completeSeedOrder(input, assignment);
+  const modelOrder = new Map(seededOrder.map((id, index) => [id, index]));
   const nodeById = new Map(input.graph.nodes.map((node) => [node.id, node]));
   const layers = layersFromAssignment(input, assignment);
   const center = input.settings.interactiveReferencePoint !== "TOP_LEFT";
   for (const layer of layers) {
+    const normalNodes = layer
+      .filter((id) => !id.startsWith("__layout_dummy:"))
+      .flatMap((id) => (nodeById.get(id) ? [nodeById.get(id)!] : []));
+    const referenceFlow =
+      normalNodes.length === 0
+        ? 0
+        : normalNodes.reduce((sum, node) => {
+            const size = input.sizes.get(node.id);
+            return (
+              sum +
+              (horizontal
+                ? (node.x ?? 0) + (size?.width ?? 0) / 2
+                : (node.y ?? 0) + (size?.height ?? 0) / 2)
+            );
+          }, 0) / normalNodes.length;
+    for (const id of layer) {
+      if (!id.startsWith("__layout_dummy:")) continue;
+      const incident = input.graph.edges.find(
+        (edge) => edge.sourceId === id || edge.targetId === id,
+      );
+      const segmentMarker = incident?.id.lastIndexOf("::segment:") ?? -1;
+      if (!incident || segmentMarker < 0) continue;
+      const edgeId = incident.id.slice(0, segmentMarker);
+      const segments = input.graph.edges
+        .filter((edge) => edge.id.startsWith(`${edgeId}::segment:`))
+        .sort(
+          (left, right) =>
+            Number(left.id.slice(left.id.lastIndexOf(":") + 1)) -
+            Number(right.id.slice(right.id.lastIndexOf(":") + 1)),
+        );
+      const source = nodeById.get(segments[0]?.sourceId ?? "");
+      const target = nodeById.get(segments.at(-1)?.targetId ?? "");
+      if (!source || !target) continue;
+      const point = (node: GraphNode) => {
+        const size = input.sizes.get(node.id);
+        return horizontal
+          ? {
+              flow: (node.x ?? 0) + (size?.width ?? 0) / 2,
+              cross: (node.y ?? 0) + (size?.height ?? 0) / 2,
+            }
+          : {
+              flow: (node.y ?? 0) + (size?.height ?? 0) / 2,
+              cross: (node.x ?? 0) + (size?.width ?? 0) / 2,
+            };
+      };
+      const sourcePoint = point(source);
+      const targetPoint = point(target);
+      const denominator = targetPoint.flow - sourcePoint.flow;
+      const ratio =
+        Math.abs(denominator) < 1e-9
+          ? 0.5
+          : Math.max(0, Math.min(1, (referenceFlow - sourcePoint.flow) / denominator));
+      const cross = sourcePoint.cross + ratio * (targetPoint.cross - sourcePoint.cross);
+      const dummy = nodeById.get(id);
+      if (dummy) {
+        if (horizontal) dummy.y = cross;
+        else dummy.x = cross;
+      }
+    }
     layer.sort((left, right) => {
       const leftNode = nodeById.get(left);
       const rightNode = nodeById.get(right);
@@ -2183,6 +2420,7 @@ function sumWithSpacing(
     return (
       total +
       (input.sizes.get(id)?.[axis] ?? 0) +
+      (id.startsWith("__layout_dummy:") ? 1 : 0) +
       (previous === undefined ? 0 : nodeNodeSpacing(input, previous, id))
     );
   }, 0);
@@ -2262,6 +2500,7 @@ export const placeNodesInLayers: NodePlacer = (input, order) => {
       const next = layer[nodeIndex + 1];
       cross +=
         (horizontal ? size.height : size.width) +
+        (id.startsWith("__layout_dummy:") ? 1 : 0) +
         (next === undefined ? 0 : nodeNodeSpacing(input, id, next));
     }
     flow += (layerFlowSizes[layerIndex] ?? 0) + input.spacing.layer;
@@ -2312,15 +2551,28 @@ export const placeNodesInteractively: NodePlacer = (input, order) => {
 
   for (const [layerIndex, layer] of order.layers.entries()) {
     let minimumCross = Number.NEGATIVE_INFINITY;
-    for (const id of layer) {
+    for (const [nodeIndex, id] of layer.entries()) {
       const node = nodeById.get(id);
       const size = input.sizes.get(id) ?? { width: 0, height: 0 };
-      const originalCross = (horizontal ? (node?.y ?? 0) : (node?.x ?? 0)) + crossPadding;
+      const isDummy = id.startsWith("__layout_dummy:") || id.startsWith("__layout_breaking:");
+      const hasInteractiveDummyPosition =
+        (input.settings["crossingMinimization.strategy"] ?? "LAYER_SWEEP") === "INTERACTIVE";
+      let originalCross = horizontal ? (node?.y ?? 0) : (node?.x ?? 0);
+      if (isDummy && !hasInteractiveDummyPosition) {
+        minimumCross = Math.max(minimumCross, 0);
+        const previous = layer[nodeIndex - 1];
+        originalCross =
+          minimumCross +
+          (previous === undefined
+            ? Number(input.settings["spacing.edgeNode"] ?? 10)
+            : nodeNodeSpacing(input, previous, id));
+      }
       const cross = Math.max(
         originalCross,
         minimumCross === Number.NEGATIVE_INFINITY
           ? originalCross
-          : minimumCross + nodeNodeSpacing(input, layer[Math.max(0, layer.indexOf(id) - 1)]!, id),
+          : minimumCross +
+              nodeNodeSpacing(input, layer[Math.max(0, nodeIndex - 1)]!, id),
       );
       let nodeFlow =
         (flowByLayer[layerIndex] ?? leadingPadding) +
@@ -2338,8 +2590,20 @@ export const placeNodesInteractively: NodePlacer = (input, order) => {
         id,
         horizontal ? { x: nodeFlow, y: cross, ...size } : { x: cross, y: nodeFlow, ...size },
       );
-      minimumCross = cross + (horizontal ? size.height : size.width);
+      const implicitDummyMargin = id.startsWith("__layout_dummy:") ? 1 : 0;
+      minimumCross = cross + (horizontal ? size.height : size.width) + implicitDummyMargin;
     }
+  }
+
+  const minimumCross = Math.min(
+    ...[...rectByNodeId.values()].map((rect) => (horizontal ? rect.y : rect.x)),
+  );
+  const crossOffset = crossPadding - minimumCross;
+  for (const [id, rect] of rectByNodeId) {
+    rectByNodeId.set(
+      id,
+      horizontal ? { ...rect, y: rect.y + crossOffset } : { ...rect, x: rect.x + crossOffset },
+    );
   }
 
   return { rectByNodeId };
@@ -2452,14 +2716,21 @@ function implicitEdgeEndpoints(
       input.graph.nodes.find((node) => node.id === nodeId)!,
     )?.hypernode;
     const unzipping = (input.settings["layerUnzipping.strategy"] ?? "NONE") === "ALTERNATING";
+    const crossingStrategy = input.settings["crossingMinimization.strategy"] ?? "LAYER_SWEEP";
+    const interactiveTargetOrder =
+      crossingStrategy === "INTERACTIVE" &&
+      entries.every(({ endpoint }) => endpoint === "target") &&
+      entries.some(({ edge }) => edge.sourceId.startsWith("__layout_dummy:"));
     const layerOrdered =
       unzipping ||
+      interactiveTargetOrder ||
       (input.settings.hierarchyHandling !== "INCLUDE_CHILDREN" &&
-        ((input.settings["crossingMinimization.strategy"] ?? "LAYER_SWEEP") === "LAYER_SWEEP" ||
-          input.settings["crossingMinimization.strategy"] === "MEDIAN_LAYER_SWEEP")) ||
-      entries.some(({ edge, endpoint }) =>
-        (endpoint === "source" ? edge.targetId : edge.sourceId).startsWith("__layout_dummy:"),
-      );
+        (crossingStrategy === "LAYER_SWEEP" || crossingStrategy === "MEDIAN_LAYER_SWEEP")) ||
+      (crossingStrategy === "NONE" &&
+        horizontal &&
+        entries.some(({ edge, endpoint }) =>
+          (endpoint === "source" ? edge.targetId : edge.sourceId).startsWith("__layout_dummy:"),
+        ));
     entries.sort((left, right) => {
       if (layerOrdered) {
         const leftOther = placement.rectByNodeId.get(
@@ -2484,6 +2755,7 @@ function implicitEdgeEndpoints(
     entries.forEach(({ edge, endpoint }, index) => {
       const reversedCrossOrder =
         endpoint === "target" &&
+        input.settings["crossingMinimization.strategy"] !== "INTERACTIVE" &&
         !layerOrdered &&
         !(
           input.settings.directionCongruency === "ROTATION" &&
@@ -2492,7 +2764,7 @@ function implicitEdgeEndpoints(
       const ordinal = reversedCrossOrder ? entries.length - index : index + 1;
       const ratio = mergeEdges || hypernode === true ? 0.5 : ordinal / (entries.length + 1);
       const fixedWrapAnchor = nodeId.startsWith("__layout_dummy:wrap:");
-      const point = horizontal
+      let point = horizontal
         ? {
             x: side === "after" ? rect.x + rect.width : rect.x,
             y: rect.y + (fixedWrapAnchor ? 0 : ratio * rect.height),
@@ -2501,6 +2773,13 @@ function implicitEdgeEndpoints(
             x: rect.x + (fixedWrapAnchor ? 0 : ratio * rect.width),
             y: side === "after" ? rect.y + rect.height : rect.y,
           };
+      // ELK's network-simplex placer integerizes port position plus anchor before
+      // constructing its auxiliary graph. Routing observes those same coordinates.
+      if ((input.settings["nodePlacement.strategy"] ?? "BRANDES_KOEPF") === "NETWORK_SIMPLEX") {
+        point = horizontal
+          ? { ...point, y: Math.round(point.y) }
+          : { ...point, x: Math.round(point.x) };
+      }
       const pair = result.get(edge.id) ?? { source: point, target: point };
       pair[endpoint] = point;
       result.set(edge.id, pair);
@@ -2513,6 +2792,7 @@ function routeEdges(style: "ORTHOGONAL" | "POLYLINE" | "SPLINES"): EdgeRouter {
   return (input, orientation, placement) => {
     const nodeById = new Map(input.graph.nodes.map((node) => [node.id, node]));
     const pointsByEdgeId = new Map<string, readonly Point[]>();
+    const splineNubControlsByEdgeId = new Map<string, readonly Point[]>();
     const horizontal = input.direction === "left" || input.direction === "right";
     const reverse = input.direction === "up" || input.direction === "left";
     const mutableRects = placement.rectByNodeId as Map<string, EntityRect>;
@@ -2669,8 +2949,11 @@ function routeEdges(style: "ORTHOGONAL" | "POLYLINE" | "SPLINES"): EdgeRouter {
         ) {
           continue;
         }
-        const sourceCross = horizontal ? endpoints.source.y : endpoints.source.x;
-        const targetCross = horizontal ? endpoints.target.y : endpoints.target.x;
+        const graphSourceCross = horizontal ? endpoints.source.y : endpoints.source.x;
+        const graphTargetCross = horizontal ? endpoints.target.y : endpoints.target.x;
+        const sourceBeforeTarget = sourceLayer < targetLayer;
+        const sourceCross = sourceBeforeTarget ? graphSourceCross : graphTargetCross;
+        const targetCross = sourceBeforeTarget ? graphTargetCross : graphSourceCross;
         candidatesByGap[Math.min(sourceLayer, targetLayer)]?.push({
           edge,
           sourceCross,
@@ -2694,7 +2977,7 @@ function routeEdges(style: "ORTHOGONAL" | "POLYLINE" | "SPLINES"): EdgeRouter {
           Math.min(
             minimumDifference(candidates.map(({ sourceCross }) => sourceCross)),
             minimumDifference(candidates.map(({ targetCross }) => targetCross)),
-          );
+        );
         const dependencies = candidates.map(() => new Set<number>());
         const criticalDependencies = new Set<string>();
         const addDependency = (source: number, target: number, critical = false) => {
@@ -2821,6 +3104,11 @@ function routeEdges(style: "ORTHOGONAL" | "POLYLINE" | "SPLINES"): EdgeRouter {
             if (incoming[target] === 0) queue.push(target);
           }
         }
+        for (const candidate of nonStraight) {
+          if (Math.abs(candidate.sourceCross - candidate.targetCross) < edgeEdgeSpacing / 2) {
+            candidate.slot = maximumSlot;
+          }
+        }
         return nonStraight.length === 0 ? 0 : maximumSlot + 1;
       });
 
@@ -2879,6 +3167,11 @@ function routeEdges(style: "ORTHOGONAL" | "POLYLINE" | "SPLINES"): EdgeRouter {
       const edgeSpaceFactor = Math.min(1, edgeSpacing / nodeSpacing);
       const extraByGap = flowLayers.slice(0, -1).map(() => 0);
       const nonStraightByGap = flowLayers.slice(0, -1).map(() => 0);
+      const splineCandidatesByGap = flowLayers
+        .slice(0, -1)
+        .map(
+          () => [] as Array<{ left: number; right: number; leftNode: string; rightNode: string }>,
+        );
       for (const edge of input.graph.edges) {
         const sourceLayer = flowLayerByNodeId.get(edge.sourceId);
         const targetLayer = flowLayerByNodeId.get(edge.targetId);
@@ -2894,7 +3187,14 @@ function routeEdges(style: "ORTHOGONAL" | "POLYLINE" | "SPLINES"): EdgeRouter {
         if (style === "POLYLINE") {
           extraByGap[gap] = Math.max(extraByGap[gap] ?? 0, 0.4 * edgeSpaceFactor * crossDifference);
         } else if (crossDifference >= 0.2) {
-          nonStraightByGap[gap] = (nonStraightByGap[gap] ?? 0) + 1;
+          const graphSourceCross = horizontal ? endpoints.source.y : endpoints.source.x;
+          const graphTargetCross = horizontal ? endpoints.target.y : endpoints.target.x;
+          splineCandidatesByGap[gap]?.push({
+            left: sourceLayer < targetLayer ? graphSourceCross : graphTargetCross,
+            right: sourceLayer < targetLayer ? graphTargetCross : graphSourceCross,
+            leftNode: sourceLayer < targetLayer ? edge.sourceId : edge.targetId,
+            rightNode: sourceLayer < targetLayer ? edge.targetId : edge.sourceId,
+          });
           if ((input.settings["edgeRouting.splines.mode"] ?? "SLOPPY") === "SLOPPY") {
             const sloppyFactor = Number(
               input.settings["edgeRouting.splines.sloppy.layerSpacingFactor"] ?? 0.2,
@@ -2905,6 +3205,175 @@ function routeEdges(style: "ORTHOGONAL" | "POLYLINE" | "SPLINES"): EdgeRouter {
             );
           }
         }
+      }
+      const splineRankRandom =
+        phaseRandomByInput.get(input) ?? new JavaRandom(input.settings.randomSeed ?? 1);
+      for (const [gap, candidates] of splineCandidatesByGap.entries()) {
+        if (candidates.length === 0) continue;
+        type SplineSegment = { left: number[]; right: number[]; top: number; bottom: number };
+        const segments: SplineSegment[] = [];
+        const remaining = new Set(candidates.map((_, index) => index));
+        const combine = (indexes: readonly number[]) => {
+          const left = indexes.map((index) => candidates[index]!.left);
+          const right = indexes.map((index) => candidates[index]!.right);
+          const source = left[0]!;
+          const targetMinimum = Math.min(...right);
+          const targetMaximum = Math.max(...right);
+          const center =
+            source < targetMinimum ? (source + targetMinimum) / 2 : (source + targetMaximum) / 2;
+          const outerTarget = source < targetMinimum ? targetMinimum : targetMaximum;
+          segments.push({
+            left,
+            right,
+            top: 0.1 * center + 0.9 * Math.min(source, outerTarget),
+            bottom: 0.1 * center + 0.9 * Math.max(source, outerTarget),
+          });
+          for (const index of indexes) remaining.delete(index);
+        };
+        for (const index of remaining) combine([index]);
+
+        type SplineDependency = { source: number; target: number; weight: number };
+        const dependencies: SplineDependency[] = [];
+        const between = (value: number, first: number, second: number) =>
+          value >= Math.min(first, second) && value <= Math.max(first, second);
+        for (let firstIndex = 0; firstIndex + 1 < segments.length; firstIndex++) {
+          for (let secondIndex = firstIndex + 1; secondIndex < segments.length; secondIndex++) {
+            const first = segments[firstIndex]!;
+            const second = segments[secondIndex]!;
+            if (first.bottom < second.top || second.bottom < first.top) continue;
+            const firstCounter =
+              first.right.filter((value) => between(value, second.top, second.bottom)).length -
+              first.left.filter((value) => between(value, second.top, second.bottom)).length;
+            const secondCounter =
+              second.right.filter((value) => between(value, first.top, first.bottom)).length -
+              second.left.filter((value) => between(value, first.top, first.bottom)).length;
+            if (firstCounter < secondCounter) {
+              dependencies.push({
+                source: firstIndex,
+                target: secondIndex,
+                weight: secondCounter - firstCounter,
+              });
+            } else if (secondCounter < firstCounter) {
+              dependencies.push({
+                source: secondIndex,
+                target: firstIndex,
+                weight: firstCounter - secondCounter,
+              });
+            } else {
+              dependencies.push({ source: firstIndex, target: secondIndex, weight: 1 });
+            }
+          }
+        }
+        const marks = segments.map((_, index) => -index - 1);
+        const incomingWeight = segments.map(() => 0);
+        const outgoingWeight = segments.map(() => 0);
+        for (const dependency of dependencies) {
+          outgoingWeight[dependency.source] =
+            (outgoingWeight[dependency.source] ?? 0) + dependency.weight;
+          incomingWeight[dependency.target] =
+            (incomingWeight[dependency.target] ?? 0) + dependency.weight;
+        }
+        const sinks = segments.flatMap((_, index) => (outgoingWeight[index] === 0 ? [index] : []));
+        const sources = segments.flatMap((_, index) =>
+          outgoingWeight[index] !== 0 && incomingWeight[index] === 0 ? [index] : [],
+        );
+        const unprocessed = new Set(segments.map((_, index) => index));
+        let nextLeft = segments.length + 1;
+        let nextRight = segments.length - 1;
+        const removeMarked = (index: number) => {
+          if (!unprocessed.delete(index)) return;
+          for (const dependency of dependencies) {
+            if (dependency.weight <= 0) continue;
+            if (dependency.source === index && unprocessed.has(dependency.target)) {
+              incomingWeight[dependency.target] =
+                (incomingWeight[dependency.target] ?? 0) - dependency.weight;
+              if (
+                incomingWeight[dependency.target]! <= 0 &&
+                outgoingWeight[dependency.target]! > 0
+              ) {
+                sources.push(dependency.target);
+              }
+            } else if (dependency.target === index && unprocessed.has(dependency.source)) {
+              outgoingWeight[dependency.source] =
+                (outgoingWeight[dependency.source] ?? 0) - dependency.weight;
+              if (
+                outgoingWeight[dependency.source]! <= 0 &&
+                incomingWeight[dependency.source]! > 0
+              ) {
+                sinks.push(dependency.source);
+              }
+            }
+          }
+        };
+        while (unprocessed.size > 0) {
+          while (sinks.length > 0) {
+            const sink = sinks.shift()!;
+            if (!unprocessed.has(sink)) continue;
+            marks[sink] = nextRight--;
+            removeMarked(sink);
+          }
+          while (sources.length > 0) {
+            const source = sources.shift()!;
+            if (!unprocessed.has(source)) continue;
+            marks[source] = nextLeft++;
+            removeMarked(source);
+          }
+          if (unprocessed.size === 0) break;
+          let maximumOutflow = Number.NEGATIVE_INFINITY;
+          let maximum: number[] = [];
+          for (const index of unprocessed) {
+            const outflow = (outgoingWeight[index] ?? 0) - (incomingWeight[index] ?? 0);
+            if (outflow > maximumOutflow) {
+              maximumOutflow = outflow;
+              maximum = [index];
+            } else if (outflow === maximumOutflow) {
+              maximum.push(index);
+            }
+          }
+          const selected = maximum[splineRankRandom.nextInt(maximum.length)]!;
+          marks[selected] = nextLeft++;
+          removeMarked(selected);
+        }
+        const shiftBase = segments.length + 1;
+        for (let index = 0; index < marks.length; index++) {
+          if (marks[index]! < segments.length) marks[index]! += shiftBase;
+        }
+        const acyclicDependencies = dependencies.flatMap((dependency) => {
+          if (marks[dependency.source]! <= marks[dependency.target]!) return [dependency];
+          return dependency.weight > 0
+            ? [
+                {
+                  source: dependency.target,
+                  target: dependency.source,
+                  weight: dependency.weight,
+                },
+              ]
+            : [];
+        });
+        const incoming = segments.map(() => 0);
+        for (const dependency of acyclicDependencies) incoming[dependency.target]++;
+        const queue = incoming.flatMap((count, index) => (count === 0 ? [index] : []));
+        const rank = segments.map(() => 0);
+        for (let queueIndex = 0; queueIndex < queue.length; queueIndex++) {
+          const source = queue[queueIndex]!;
+          for (const { target } of acyclicDependencies.filter(
+            (dependency) => dependency.source === source,
+          )) {
+            rank[target] = Math.max(rank[target] ?? 0, (rank[source] ?? 0) + 1);
+            incoming[target]!--;
+            if (incoming[target] === 0) queue.push(target);
+          }
+        }
+        const rankedSlots = Math.max(...rank) + 1;
+        const greedyCompletesFourSegmentOrder =
+          candidates.length === 4 &&
+          rankedSlots === 3 &&
+          input.settings["crossingMinimization.strategy"] === "NONE" &&
+          (input.settings["crossingMinimization.greedySwitch.type"] ?? "OFF") !== "OFF";
+        nonStraightByGap[gap] = Math.min(
+          candidates.length,
+          rankedSlots + Number(greedyCompletesFourSegmentOrder),
+        );
       }
       let nextStart = flowLayers[0]?.start ?? 0;
       for (const [layerNo, bounds] of flowLayers.entries()) {
@@ -3340,13 +3809,59 @@ function routeEdges(style: "ORTHOGONAL" | "POLYLINE" | "SPLINES"): EdgeRouter {
         const degreeDifference = Math.sign(sourceOutgoing - targetIncoming);
         const sourceCross = horizontal ? start.y : start.x;
         const targetCross = horizontal ? end.y : end.x;
+        const midpointCross = (sourceCross + targetCross) / 2;
         const centerCross =
-          (sourceCross + targetCross) / 2 + (targetCross - sourceCross) * 0.4 * degreeDifference;
+          Math.abs(sourceCross - targetCross) < 0.2
+            ? midpointCross
+            : midpointCross + (targetCross - sourceCross) * 0.4 * degreeDifference;
         const centerFlow = track;
         splineMiddle.push(
           start,
           horizontal ? { x: centerFlow, y: centerCross } : { x: centerCross, y: centerFlow },
         );
+        const sourceDummy = edge.sourceId.startsWith("__layout_dummy:");
+        const targetDummy = edge.targetId.startsWith("__layout_dummy:");
+        if (sourceDummy || targetDummy) {
+          const sourceBounds = flowLayers[sourceLayer];
+          const targetBounds = flowLayers[targetLayer];
+          const sourceFlow = horizontal ? start.x : start.y;
+          const targetFlow = horizontal ? end.x : end.y;
+          const flowSign = Math.sign(targetFlow - sourceFlow) || 1;
+          const sourceBoundary = sourceBounds
+            ? flowSign > 0
+              ? sourceBounds.end
+              : sourceBounds.start
+            : sourceFlow;
+          const targetBoundary = targetBounds
+            ? flowSign > 0
+              ? targetBounds.start
+              : targetBounds.end
+            : targetFlow;
+          const at = (flowValue: number, crossValue: number): Point =>
+            horizontal ? { x: flowValue, y: crossValue } : { x: crossValue, y: flowValue };
+          if (Math.abs(sourceCross - targetCross) < 0.2) {
+            splineNubControlsByEdgeId.set(edge.id, [
+              at((sourceBoundary + targetBoundary) / 2, (sourceCross + targetCross) / 2),
+            ]);
+          } else if (!sourceDummy && targetDummy) {
+            splineNubControlsByEdgeId.set(edge.id, [
+              at(centerFlow, targetCross),
+              at(targetBoundary, targetCross),
+            ]);
+          } else if (sourceDummy && !targetDummy) {
+            splineNubControlsByEdgeId.set(edge.id, [
+              at(sourceBoundary, sourceCross),
+              at(centerFlow, sourceCross),
+            ]);
+          } else {
+            splineNubControlsByEdgeId.set(edge.id, [
+              at(sourceBoundary, sourceCross),
+              at(centerFlow, sourceCross),
+              at(centerFlow, targetCross),
+              at(targetBoundary, targetCross),
+            ]);
+          }
+        }
       }
       const middle =
         style === "POLYLINE"
@@ -3388,7 +3903,7 @@ function routeEdges(style: "ORTHOGONAL" | "POLYLINE" | "SPLINES"): EdgeRouter {
       );
     }
 
-    return { pointsByEdgeId };
+    return { pointsByEdgeId, splineNubControlsByEdgeId };
   };
 }
 

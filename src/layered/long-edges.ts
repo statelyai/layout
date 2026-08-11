@@ -6,6 +6,7 @@ import type {
   LayeredPhaseInput,
   NodeSize,
 } from "./types";
+import { uniformCubicSplineToBezier } from "./spline-bezier";
 
 export interface LongEdgeExpansion {
   input: LayeredPhaseInput;
@@ -175,7 +176,7 @@ export function splitLongEdges(
       },
     },
     orientation: { reversedEdgeIds },
-    assignment: { layerByNodeId },
+    assignment: { ...assignment, layerByNodeId },
     segmentIdsByEdgeId,
     labelDummyIdByEdgeId,
   };
@@ -203,6 +204,8 @@ export function joinLongEdgeRoutes(
   routes: EdgeRoutes,
   segmentIdsByEdgeId: ReadonlyMap<string, readonly string[]>,
   preserveInternalDuplicates = false,
+  convertLongSplines = false,
+  longSplineEdgeNodeSpacing = 10,
 ): EdgeRoutes {
   const simplify = (points: readonly Point[]): Point[] => {
     const result: Point[] = [];
@@ -227,6 +230,69 @@ export function joinLongEdgeRoutes(
   };
   const pointsByEdgeId = new Map<string, readonly Point[]>();
   for (const [edgeId, segmentIds] of segmentIdsByEdgeId) {
+    if (convertLongSplines && segmentIds.length > 1) {
+      const segments = segmentIds
+        .map((segmentId) => routes.pointsByEdgeId.get(segmentId) ?? [])
+        .filter((points) => points.length >= 2);
+      if (segments.length > 1) {
+        const source = segments[0]![0]!;
+        const target = segments.at(-1)!.at(-1)!;
+        const horizontal = Math.abs(target.x - source.x) >= Math.abs(target.y - source.y);
+        const flow = (point: Point) => (horizontal ? point.x : point.y);
+        const cross = (point: Point) => (horizontal ? point.y : point.x);
+        const point = (flowValue: number, crossValue: number): Point =>
+          horizontal ? { x: flowValue, y: crossValue } : { x: crossValue, y: flowValue };
+        const controlsBySegment = segments.map((segment, index): Point[] => {
+          const retained = routes.splineNubControlsByEdgeId?.get(segmentIds[index]!);
+          if (retained) return [...retained];
+          const start = segment[0]!;
+          const end = segment.at(-1)!;
+          const center = segment.at(-2) ?? start;
+          if (index === 0) {
+            const centerFlow = flow(center);
+            return [point(centerFlow, cross(end)), point(2 * centerFlow - flow(start), cross(end))];
+          }
+          if (index === segments.length - 1) {
+            const centerFlow = flow(center);
+            return [
+              point(2 * centerFlow - flow(end), cross(start)),
+              point(centerFlow, cross(start)),
+            ];
+          }
+          if (Math.abs(cross(start) - cross(end)) >= 1e-6) {
+            const centerFlow = flow(center);
+            const sign = Math.sign(flow(end) - flow(start)) || 1;
+            return [
+              point(centerFlow - sign * longSplineEdgeNodeSpacing, cross(start)),
+              point(centerFlow, cross(start)),
+              point(centerFlow, cross(end)),
+              point(centerFlow + sign * longSplineEdgeNodeSpacing, cross(end)),
+            ];
+          }
+          return [point((flow(start) + flow(end)) / 2, (cross(start) + cross(end)) / 2)];
+        });
+        const nubControls: Point[] = [{ ...source }];
+        let lastControl: Point | undefined;
+        let addMidpoint = false;
+        for (const controls of controlsBySegment) {
+          if (controls.length === 0) continue;
+          if (addMidpoint && lastControl) {
+            nubControls.push({
+              x: (lastControl.x + controls[0]!.x) / 2,
+              y: (lastControl.y + controls[0]!.y) / 2,
+            });
+            addMidpoint = false;
+          } else {
+            addMidpoint = true;
+          }
+          nubControls.push(...controls);
+          lastControl = controls.at(-1);
+        }
+        nubControls.push({ ...target });
+        pointsByEdgeId.set(edgeId, uniformCubicSplineToBezier(nubControls));
+        continue;
+      }
+    }
     const points: Point[] = [];
     for (const segmentId of segmentIds) {
       appendPoints(

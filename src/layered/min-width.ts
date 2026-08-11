@@ -152,5 +152,8 @@ export const assignLayersWithMinWidth: LayerAssigner = (input, orientation) => {
   for (const [bottomUpLayer, layer] of winner.layers.entries()) {
     for (const node of layer) layerByNodeId.set(node.id, layerCount - bottomUpLayer - 1);
   }
-  return { layerByNodeId };
+  return {
+    layerByNodeId,
+    seedOrder: [...winner.layers].reverse().flatMap((layer) => layer.map((node) => node.id)),
+  };
 };

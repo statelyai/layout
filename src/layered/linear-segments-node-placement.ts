@@ -14,13 +14,26 @@ interface Segment {
   deflection: number;
   weight: number;
   ref?: Segment;
+  lastLayer: number;
+  indexInLastLayer: number;
 }
 
 function crossSize(input: LayeredPhaseInput, id: string): number {
   const size = input.sizes.get(id);
-  return input.direction === "left" || input.direction === "right"
+  const value = input.direction === "left" || input.direction === "right"
     ? (size?.height ?? 0)
     : (size?.width ?? 0);
+  if (value !== 0 || !id.startsWith("__layout_dummy:")) return value;
+  return Math.max(
+    1,
+    ...input.graph.edges
+      .filter((edge) => edge.sourceId === id || edge.targetId === id)
+      .map((edge) => Number(input.edgeSettings?.(edge)?.["edge.thickness"] ?? 1)),
+  );
+}
+
+function anchorCrossSize(input: LayeredPhaseInput, id: string): number {
+  return id.startsWith("__layout_dummy:") ? 0 : crossSize(input, id);
 }
 
 function endpointAnchors(input: LayeredPhaseInput, order: LayerOrder) {
@@ -53,17 +66,34 @@ function endpointAnchors(input: LayeredPhaseInput, order: LayerOrder) {
     edge.sourceId === id ? edge.targetId : edge.sourceId;
   const anchors = new Map<string, number>();
   for (const [id, edges] of after) {
-    edges.sort((a, b) => (index.get(other(a, id)) ?? 0) - (index.get(other(b, id)) ?? 0));
-    edges.forEach((edge, edgeNo) =>
-      anchors.set(`${edge.id}:${id}`, (crossSize(input, id) * (edgeNo + 1)) / (edges.length + 1)),
+    const sweptOrder = order.outputPortOrderByNodeId?.get(id);
+    edges.sort((a, b) =>
+      sweptOrder
+        ? sweptOrder.indexOf(a.id) - sweptOrder.indexOf(b.id)
+        : (index.get(other(a, id)) ?? 0) - (index.get(other(b, id)) ?? 0),
     );
-  }
-  for (const [id, edges] of before) {
-    edges.sort((a, b) => (index.get(other(a, id)) ?? 0) - (index.get(other(b, id)) ?? 0));
     edges.forEach((edge, edgeNo) =>
       anchors.set(
         `${edge.id}:${id}`,
-        (crossSize(input, id) * (edges.length - edgeNo)) / (edges.length + 1),
+        (anchorCrossSize(input, id) * (edgeNo + 1)) / (edges.length + 1),
+      ),
+    );
+  }
+  for (const [id, edges] of before) {
+    const sweptOrder = order.inputPortOrderByNodeId?.get(id);
+    edges.sort((a, b) =>
+      sweptOrder
+        ? sweptOrder.indexOf(b.id) - sweptOrder.indexOf(a.id)
+        : (index.get(other(a, id)) ?? 0) - (index.get(other(b, id)) ?? 0),
+    );
+    const forward =
+      sweptOrder !== undefined ||
+      (input.settings["crossingMinimization.strategy"] ?? "LAYER_SWEEP") !== "NONE";
+    edges.forEach((edge, edgeNo) =>
+      anchors.set(
+        `${edge.id}:${id}`,
+        (anchorCrossSize(input, id) * (forward ? edgeNo + 1 : edges.length - edgeNo)) /
+          (edges.length + 1),
       ),
     );
   }
@@ -90,16 +120,20 @@ export function placeNodesWithLinearSegments(
   for (const ids of order.layers) {
     for (const id of ids) {
       if (segmentById.has(id)) continue;
-      const segment: Segment = { ids: [id], deflection: 0, weight: 0 };
+      const segment: Segment = {
+        ids: [id],
+        deflection: 0,
+        weight: 0,
+        lastLayer: -1,
+        indexInLastLayer: -1,
+      };
       segmentById.set(id, segment);
       if (id.startsWith("__layout_dummy:")) {
         let current = id;
         while (true) {
-          const nextEdge = input.graph.edges.find(
-            (edge) => edge.sourceId === current || edge.targetId === current,
-          );
+          const nextEdge = input.graph.edges.find((edge) => edge.sourceId === current);
           if (!nextEdge) break;
-          const next = nextEdge.sourceId === current ? nextEdge.targetId : nextEdge.sourceId;
+          const next = nextEdge.targetId;
           if (!next.startsWith("__layout_dummy:") || segmentById.has(next)) break;
           segment.ids.push(next);
           segmentById.set(next, segment);
@@ -110,16 +144,60 @@ export function placeNodesWithLinearSegments(
     }
   }
 
-  // Topologically order segments by their within-layer ordering dependencies.
-  const outgoing = new Map<Segment, Set<Segment>>(segments.map((segment) => [segment, new Set()]));
+  // Build ELK's segment dependency graph, splitting a chain when its order changes
+  // between consecutive layers and would otherwise introduce a cycle.
+  const outgoing = new Map<Segment, Segment[]>(segments.map((segment) => [segment, []]));
   const indegree = new Map<Segment, number>(segments.map((segment) => [segment, 0]));
-  for (const ids of order.layers) {
-    for (let i = 1; i < ids.length; i++) {
-      const source = segmentById.get(ids[i - 1]!);
-      const target = segmentById.get(ids[i]!);
-      if (!source || !target || source === target || outgoing.get(source)?.has(target)) continue;
-      outgoing.get(source)?.add(target);
-      indegree.set(target, (indegree.get(target) ?? 0) + 1);
+  const addDependency = (source: Segment, target: Segment) => {
+    outgoing.get(source)?.push(target);
+    indegree.set(target, (indegree.get(target) ?? 0) + 1);
+  };
+  const removeDependency = (source: Segment, target: Segment) => {
+    const targets = outgoing.get(source);
+    const index = targets?.indexOf(target) ?? -1;
+    if (index < 0 || !targets) return;
+    targets.splice(index, 1);
+    indegree.set(target, (indegree.get(target) ?? 1) - 1);
+  };
+  for (const [layerNo, ids] of order.layers.entries()) {
+    let previous: Segment | undefined;
+    for (const [indexInLayer, id] of ids.entries()) {
+      let current = segmentById.get(id);
+      if (!current) continue;
+      if (current.indexInLastLayer >= 0) {
+        const cycle = ids.slice(indexInLayer + 1).some((laterId) => {
+          const later = segmentById.get(laterId);
+          return (
+            later !== undefined &&
+            later.lastLayer === current!.lastLayer &&
+            later.indexInLastLayer < current!.indexInLastLayer
+          );
+        });
+        if (cycle) {
+          if (previous) removeDependency(previous, current);
+          const splitIndex = current.ids.indexOf(id);
+          const movedIds = current.ids.splice(splitIndex);
+          const split: Segment = {
+            ids: movedIds,
+            deflection: 0,
+            weight: 0,
+            lastLayer: -1,
+            indexInLastLayer: -1,
+          };
+          for (const movedId of movedIds) segmentById.set(movedId, split);
+          segments.push(split);
+          outgoing.set(split, []);
+          indegree.set(split, 0);
+          if (previous) addDependency(previous, split);
+          current = split;
+        }
+      }
+      const nextId = ids[indexInLayer + 1];
+      const next = nextId === undefined ? undefined : segmentById.get(nextId);
+      if (next) addDependency(current, next);
+      current.lastLayer = layerNo;
+      current.indexInLastLayer = indexInLayer;
+      previous = current;
     }
   }
   const queue = segments.filter((segment) => indegree.get(segment) === 0);
@@ -283,8 +361,20 @@ export function placeNodesWithLinearSegments(
       );
     }
     let displacement = Number.POSITIVE_INFINITY;
-    for (const id of [segment.ids[0]!, segment.ids.at(-1)!]) {
-      for (const edge of incident.get(id) ?? []) {
+    const endpointEdges: Array<[string, readonly GraphEdge[]]> = [
+      [
+        segment.ids[0]!,
+        (incident.get(segment.ids[0]!) ?? []).filter((edge) => edge.targetId === segment.ids[0]),
+      ],
+      [
+        segment.ids.at(-1)!,
+        (incident.get(segment.ids.at(-1)!) ?? []).filter(
+          (edge) => edge.sourceId === segment.ids.at(-1),
+        ),
+      ],
+    ];
+    for (const [id, edges] of endpointEdges) {
+      for (const edge of edges) {
         const other = edge.sourceId === id ? edge.targetId : edge.sourceId;
         const delta =
           (y.get(other) ?? 0) +

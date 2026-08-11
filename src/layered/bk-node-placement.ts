@@ -396,6 +396,23 @@ function extent(input: LayeredPhaseInput, bal: Alignment): [number, number] {
   return [min, max];
 }
 
+function preservesLayerOrder(
+  input: LayeredPhaseInput,
+  order: LayerOrder,
+  positions: ReadonlyMap<string, number>,
+): boolean {
+  for (const layer of order.layers) {
+    let previousEnd = Number.NEGATIVE_INFINITY;
+    for (const id of layer) {
+      const start = positions.get(id) ?? 0;
+      const end = start + crossSize(input, id);
+      if (start <= previousEnd || end <= previousEnd) return false;
+      previousEnd = end;
+    }
+  }
+  return true;
+}
+
 function improveEdgeStraightness(
   input: LayeredPhaseInput,
   order: LayerOrder,
@@ -491,6 +508,20 @@ export function placeNodesWithBrandesKoepf(
     improveEdgeStraightness(input, order, layout, neighbors);
     return layout;
   });
+  const smallestFeasibleLayout = (): Alignment => {
+    let chosen: Alignment | undefined;
+    for (const layout of layouts) {
+      if (!preservesLayerOrder(input, order, layout.y)) continue;
+      if (chosen === undefined) {
+        chosen = layout;
+        continue;
+      }
+      const [min, max] = extent(input, layout);
+      const [chosenMin, chosenMax] = extent(input, chosen);
+      if (max - min < chosenMax - chosenMin) chosen = layout;
+    }
+    return chosen ?? layouts[0]!;
+  };
 
   let positions: Map<string, number>;
   const favorStraight =
@@ -509,21 +540,18 @@ export function placeNodesWithBrandesKoepf(
         ? extents[smallest]![0] - extents[index]![0]
         : extents[smallest]![1] - extents[index]![1],
     );
-    positions = new Map();
+    const balanced = new Map<string, number>();
     for (const id of neighbors.layerIndex.keys()) {
       const values = layouts
         .map((layout, index) => (layout.y.get(id) ?? 0) + shifts[index]!)
         .sort((a, b) => a - b);
-      positions.set(id, (values[1]! + values[2]!) / 2);
+      balanced.set(id, (values[1]! + values[2]!) / 2);
     }
+    positions = preservesLayerOrder(input, order, balanced)
+      ? balanced
+      : smallestFeasibleLayout().y;
   } else {
-    let chosen = layouts[0]!;
-    for (const layout of layouts.slice(1)) {
-      const [min, max] = extent(input, layout);
-      const [chosenMin, chosenMax] = extent(input, chosen);
-      if (max - min < chosenMax - chosenMin) chosen = layout;
-    }
-    positions = chosen.y;
+    positions = smallestFeasibleLayout().y;
   }
   const minimum = Math.min(...positions.values());
   const crossPadding =
