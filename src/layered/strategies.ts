@@ -2288,16 +2288,24 @@ export function applyPostCompaction(
     originalX: number;
     points?: [Point, Point];
   };
-  const compactables: ConstraintNode[] = [...rects].map(([id, rect]) => ({
-    id: `node:${id}`,
-    kind: "node",
-    nodeId: id,
-    x: rect.x,
-    y: rect.y,
-    width: rect.width,
-    height: rect.height,
-    originalX: rect.x,
-  }));
+  const compactables: ConstraintNode[] = [...rects].map(([id, rect]) => {
+    const longEdgeDummy = id.startsWith("__layout_dummy:") && rect.width === 0 && rect.height === 0;
+    const incidentEdge = longEdgeDummy
+      ? input.graph.edges.find((edge) => edge.sourceId === id || edge.targetId === id)
+      : undefined;
+    return {
+      id: `node:${id}`,
+      kind: longEdgeDummy ? "segment" : "node",
+      ...(longEdgeDummy
+        ? { edgeId: incidentEdge?.id.replace(/::segment:\d+$/, "") }
+        : { nodeId: id }),
+      x: rect.x,
+      y: rect.y,
+      width: rect.width,
+      height: rect.height,
+      originalX: rect.x,
+    };
+  });
   if (routes) {
     for (const [edgeId, readonlyPoints] of routes.pointsByEdgeId) {
       const points = readonlyPoints as Point[];

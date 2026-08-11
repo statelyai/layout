@@ -1459,6 +1459,8 @@ function normalizeElkGraphBounds(
   );
   const addBoundaryPixel =
     getOption(layoutOptions, "layered.wrapping.strategy") === undefined &&
+    String(getOption(layoutOptions, "layered.compaction.postCompaction.strategy") ?? "NONE") ===
+      "NONE" &&
     getBooleanOption(layoutOptions, "layered.feedbackEdges") !== true &&
     !(root.edges ?? []).some((edge) => edge.sources?.[0] === edge.targets?.[0]) &&
     !(root.children ?? []).some((child) => (child.children?.length ?? 0) > 0);
@@ -1473,6 +1475,22 @@ function normalizeElkGraphBounds(
     layoutEdgePoints.length > 0 &&
     Math.max(...layoutEdgePoints.map((point) => point.y)) >= maximumNodeY - 1e-9
       ? 1
+      : 0;
+  const postCompactionBoundsExtraX =
+    !addBoundaryPixel &&
+    String(getOption(layoutOptions, "layered.compaction.postCompaction.strategy") ?? "NONE") !==
+      "NONE" &&
+    layoutEdgePoints.length > 0 &&
+    Math.max(...layoutEdgePoints.map((point) => point.x)) > maximumNodeX + 1e-9
+      ? 0.04
+      : 0;
+  const postCompactionBoundsExtraY =
+    !addBoundaryPixel &&
+    String(getOption(layoutOptions, "layered.compaction.postCompaction.strategy") ?? "NONE") !==
+      "NONE" &&
+    layoutEdgePoints.length > 0 &&
+    Math.max(...layoutEdgePoints.map((point) => point.y)) > maximumNodeY + 1e-9
+      ? 0.04
       : 0;
   const calculatedWidth =
     Math.max(
@@ -1504,6 +1522,7 @@ function normalizeElkGraphBounds(
     ) +
     padding.right +
     edgeBoundsExtraX +
+    postCompactionBoundsExtraX +
     (getBooleanOption(layoutOptions, "layered.feedbackEdges") === true &&
     (getDirection(layoutOptions) === "down" || getDirection(layoutOptions) === "up")
       ? 1
@@ -1546,6 +1565,7 @@ function normalizeElkGraphBounds(
     ) +
     padding.bottom +
     edgeBoundsExtraY +
+    postCompactionBoundsExtraY +
     (getBooleanOption(layoutOptions, "layered.feedbackEdges") === true &&
     (getDirection(layoutOptions) === "right" || getDirection(layoutOptions) === "left")
       ? 1

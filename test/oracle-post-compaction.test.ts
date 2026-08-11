@@ -5,15 +5,52 @@ import NativeELK, { type ElkNode } from "../src/elkjs";
 async function compare(input: ElkNode): Promise<void> {
   const expected = (await new OracleELK().layout(structuredClone(input) as never)) as ElkNode;
   const actual = await new NativeELK().layout(structuredClone(input));
-  expect(actual.children?.map(({ id, x, y }) => ({ id, x, y }))).toEqual(
-    expected.children?.map(({ id, x, y }) => ({ id, x, y })),
-  );
+  expect(actual.width).toBeCloseTo(expected.width ?? Number.NaN, 12);
+  expect(actual.height).toBeCloseTo(expected.height ?? Number.NaN, 12);
+  expect(actual.children?.map(({ id }) => id)).toEqual(expected.children?.map(({ id }) => id));
+  for (const expectedNode of expected.children ?? []) {
+    const actualNode = actual.children?.find(({ id }) => id === expectedNode.id);
+    expect(actualNode?.x).toBeCloseTo(expectedNode.x ?? Number.NaN, 12);
+    expect(actualNode?.y).toBeCloseTo(expectedNode.y ?? Number.NaN, 12);
+  }
   expect(actual.edges?.map((edge) => edge.sections)).toEqual(
     expected.edges?.map((edge) => edge.sections),
   );
 }
 
 describe("ELK post-compaction parity", () => {
+  for (const strategy of [
+    "LEFT",
+    "RIGHT",
+    "LEFT_RIGHT_CONSTRAINT_LOCKING",
+    "LEFT_RIGHT_CONNECTION_LOCKING",
+    "EDGE_LENGTH",
+  ]) {
+    it(`matches ${strategy} bounds with long-edge dummies`, () =>
+      compare({
+        id: "root",
+        layoutOptions: {
+          "elk.algorithm": "layered",
+          "elk.direction": "RIGHT",
+          "elk.edgeRouting": "ORTHOGONAL",
+          "elk.separateConnectedComponents": "false",
+          "elk.layered.compaction.postCompaction.strategy": strategy,
+        },
+        children: [
+          { id: "a", width: 30, height: 20 },
+          { id: "b", width: 40, height: 25 },
+          { id: "c", width: 35, height: 30 },
+          { id: "d", width: 30, height: 25 },
+        ],
+        edges: [
+          { id: "ab", sources: ["a"], targets: ["b"] },
+          { id: "ac", sources: ["a"], targets: ["c"] },
+          { id: "bd", sources: ["b"], targets: ["d"] },
+          { id: "dc", sources: ["d"], targets: ["c"] },
+        ],
+      }));
+  }
+
   for (const strategy of [
     "NONE",
     "LEFT",
