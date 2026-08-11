@@ -118,7 +118,7 @@ describe("ELK node-placement oracle", () => {
       ].map(([id, source, target]) => ({ id, sources: [source], targets: [target] })),
     };
     const [oracle, native] = await Promise.all([
-      new ELK().layout(structuredClone(graph)),
+      new ELK().layout(structuredClone(graph) as never) as Promise<ElkNode>,
       new NativeELK().layout(structuredClone(graph)),
     ]);
     expect(positions(native.children ?? [])).toEqual(positions(oracle.children ?? []));
@@ -157,7 +157,7 @@ describe("ELK node-placement oracle", () => {
       ].map(([id, source, target]) => ({ id, sources: [source], targets: [target] })),
     };
     const [oracle, native] = await Promise.all([
-      new ELK().layout(structuredClone(graph)),
+      new ELK().layout(structuredClone(graph) as never) as Promise<ElkNode>,
       new NativeELK().layout(structuredClone(graph)),
     ]);
     expect(positions(native.children ?? [])).toEqual(positions(oracle.children ?? []));
@@ -190,7 +190,7 @@ describe("ELK node-placement oracle", () => {
       ],
     };
     const [oracle, native] = await Promise.all([
-      new ELK().layout(structuredClone(graph)),
+      new ELK().layout(structuredClone(graph) as never) as Promise<ElkNode>,
       new NativeELK().layout(structuredClone(graph)),
     ]);
     expect([native.width, native.height]).toEqual([oracle.width, oracle.height]);
@@ -240,7 +240,7 @@ describe("ELK node-placement oracle", () => {
       ],
     };
     const [oracle, native] = await Promise.all([
-      new ELK().layout(structuredClone(graph)),
+      new ELK().layout(structuredClone(graph) as never) as Promise<ElkNode>,
       new NativeELK().layout(structuredClone(graph)),
     ]);
     expect(native.children?.map(({ id, x, y }) => ({ id, x, y }))).toEqual(

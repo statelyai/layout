@@ -5,7 +5,7 @@
  *******************************************************************************/
 
 import type { EntityRect } from "@statelyai/graph";
-import { placeNodesInLayers } from "./strategies";
+import { placeNodesInLayers, placePorts } from "./strategies";
 import type { LayerOrder, LayeredPhaseInput, NodePlacement } from "./types";
 import { nodeNodeSpacing } from "./spacing";
 
@@ -55,6 +55,8 @@ function crossSize(input: LayeredPhaseInput, id: string): number {
 }
 
 function buildNeighbors(input: LayeredPhaseInput, order: LayerOrder) {
+  const nodeById = new Map(input.graph.nodes.map((node) => [node.id, node]));
+  const edgeById = new Map(input.graph.edges.map((edge) => [edge.id, edge]));
   const layerIndex = new Map<string, number>();
   const nodeIndex = new Map<string, number>();
   order.layers.forEach((layer, layerNo) =>
@@ -91,6 +93,117 @@ function buildNeighbors(input: LayeredPhaseInput, order: LayerOrder) {
   }
   const useLayerOrderPorts =
     (input.settings["layerUnzipping.strategy"] ?? "NONE") === "ALTERNATING";
+  const hasCenteredPorts = (id: string): boolean => {
+    const node = nodeById.get(id);
+    return (
+      input.settings.mergeEdges === true ||
+      (node !== undefined && input.nodeSettings?.(node)?.hypernode === true)
+    );
+  };
+  const portAnchor = (
+    id: string,
+    index: number,
+    count: number,
+    side: "north" | "south" | "west" | "east",
+  ): number => {
+    const size = anchorCrossSize(input, id);
+    if (hasCenteredPorts(id)) return size / 2;
+    const node = nodeById.get(id);
+    const settings = node === undefined ? undefined : input.nodeSettings?.(node);
+    const constraints = settings?.portConstraints;
+    if (constraints === "FIXED_RATIO" || constraints === "FIXED_POS") return 0;
+    const alignment =
+      settings?.[`portAlignment.${side}`] ??
+      settings?.["portAlignment.default"] ??
+      (String(settings?.["nodeSize.options"] ?? "")
+        .split(/[\s,;]+/)
+        .includes("PORTS_OVERHANG")
+        ? "CENTER"
+        : undefined);
+    const spacing = Number(input.settings["spacing.portPort"] ?? 10);
+    const surrounding = (
+      id.startsWith("__layout_dummy:") ? {} : (input.settings["spacing.portsSurrounding"] ?? {})
+    ) as Partial<Record<"top" | "right" | "bottom" | "left", number>>;
+    const startValue = side === "north" || side === "south" ? surrounding.left : surrounding.top;
+    const endValue = side === "north" || side === "south" ? surrounding.right : surrounding.bottom;
+    const start = Math.max(0, Number(startValue ?? 0) - (Number(startValue ?? 0) > 0 ? 1 : 0));
+    const end = Math.max(0, Number(endValue ?? 0) - (Number(endValue ?? 0) > 0 ? 1 : 0));
+    const available = Math.max(0, size - start - end);
+    if (alignment === "BEGIN") return start + index * spacing;
+    if (alignment === "END") return start + available - (count - index - 1) * spacing;
+    if (alignment === "CENTER")
+      return start + (available - (count - 1) * spacing) / 2 + index * spacing;
+    if (alignment === "JUSTIFIED")
+      return count === 1 ? start + available / 2 : start + (index * available) / (count - 1);
+    return start + (available * (index + 1)) / (count + 1);
+  };
+  const explicitPortAnchor = (id: string, edgeId: string): number | undefined => {
+    const node = nodeById.get(id);
+    const edge = edgeById.get(edgeId);
+    if (!node || !edge) return undefined;
+    const portName = edge.sourceId === id ? edge.sourcePort : edge.targetPort;
+    if (portName === undefined) return undefined;
+    const port = node.ports?.find((candidate) => candidate.name === portName);
+    if (!port) return undefined;
+    const size = input.sizes.get(id) ?? { width: 0, height: 0 };
+    const placed = placePorts(
+      node.ports,
+      { x: 0, y: 0, ...size },
+      input.direction,
+      (candidate) => input.portSettings?.(candidate, node),
+      { ...input.settings, ...input.nodeSettings?.(node) },
+    )?.find((candidate) => candidate.name === portName);
+    if (!placed) return undefined;
+    const anchor = input.portSettings?.(port, node)?.["port.anchor"] as
+      | { x?: number; y?: number }
+      | undefined;
+    const constraints = input.nodeSettings?.(node)?.portConstraints;
+    if (anchor === undefined && constraints !== "FIXED_RATIO" && constraints !== "FIXED_POS") {
+      return undefined;
+    }
+    if (input.direction === "left" || input.direction === "right") {
+      const y = placed.y ?? 0;
+      const height = placed.height ?? 0;
+      const defaultAnchor = y >= size.height ? height : y + height <= 0 ? 0 : height / 2;
+      return y + (anchor?.y ?? defaultAnchor);
+    }
+    const x = placed.x ?? 0;
+    const width = placed.width ?? 0;
+    const defaultAnchor = x >= size.width ? width : x + width <= 0 ? 0 : width / 2;
+    return x + (anchor?.x ?? defaultAnchor);
+  };
+  const afterSide =
+    input.direction === "right"
+      ? "east"
+      : input.direction === "left"
+        ? "west"
+        : input.direction === "down"
+          ? "south"
+          : "north";
+  const beforeSide =
+    input.direction === "right"
+      ? "west"
+      : input.direction === "left"
+        ? "east"
+        : input.direction === "down"
+          ? "north"
+          : "south";
+  const customPortAnchors =
+    input.nodeSettings !== undefined ||
+    input.settings.mergeEdges === true ||
+    input.settings["spacing.portPort"] !== undefined ||
+    input.settings["spacing.portsSurrounding"] !== undefined ||
+    input.graph.nodes.some((node) => (node.ports?.length ?? 0) > 0);
+  const neighborAnchor = (
+    id: string,
+    edgeId: string,
+    index: number,
+    count: number,
+    side: "north" | "south" | "west" | "east",
+  ): number =>
+    input.settings.hierarchyHandling === "INCLUDE_CHILDREN" || !customPortAnchors
+      ? (anchorCrossSize(input, id) * (index + 1)) / (count + 1)
+      : (explicitPortAnchor(id, edgeId) ?? portAnchor(id, index, count, side));
   for (const [id, entries] of right) {
     const sweptOrder = order.outputPortOrderByNodeId?.get(id);
     const interactiveForwardLongEdgeSource =
@@ -122,7 +235,7 @@ function buildNeighbors(input: LayeredPhaseInput, order: LayerOrder) {
     portOrder.forEach((entry, index) => {
       anchor.set(
         `${entry.edgeId}:${id}`,
-        (anchorCrossSize(input, id) * (index + 1)) / (entries.length + 1),
+        neighborAnchor(id, entry.edgeId, index, entries.length, afterSide),
       );
     });
   }
@@ -157,7 +270,7 @@ function buildNeighbors(input: LayeredPhaseInput, order: LayerOrder) {
     portOrder.forEach((entry, index) => {
       anchor.set(
         `${entry.edgeId}:${id}`,
-        (anchorCrossSize(input, id) * (index + 1)) / (entries.length + 1),
+        neighborAnchor(id, entry.edgeId, index, entries.length, beforeSide),
       );
     });
   }

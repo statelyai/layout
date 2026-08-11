@@ -2,6 +2,7 @@ import { createGraph } from "@statelyai/graph";
 import ELK from "elkjs/lib/elk.bundled.js";
 import { describe, expect, it } from "vitest";
 import { breakCyclesGreedily, getLayeredLayout, type CycleBreakingStrategy } from "../src";
+import type { ElkNode } from "../src/elkjs";
 
 interface EdgeFixture {
   id: string;
@@ -221,7 +222,7 @@ describe("ELK cycle-breaking strategy oracle", () => {
         { id: "dc", sources: ["d"], targets: ["c"] },
       ],
     };
-    const oracle = await new ELK().layout(input);
+    const oracle = (await new ELK().layout(input)) as unknown as ElkNode;
     const native = getLayeredLayout(
       createGraph({
         nodes: input.children,

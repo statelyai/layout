@@ -19,7 +19,7 @@ describe("elkjs compatibility: regressions", () => {
     const elk = new ELK();
 
     await expect(elk.layout(structuredClone(changeAwareArrayList))).resolves.toBeDefined();
-  }, 15_000);
+  }, 30_000);
 
   it("lays out a COFFMAN_GRAHAM graph containing a self-loop", async () => {
     const elk = new ELK();

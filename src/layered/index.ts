@@ -9,6 +9,7 @@ import {
   assignLayersInteractively,
   assignLayersWithCoffmanGraham,
   applyLayerConstraints,
+  applyLayerConstraintOrientation,
   applyPartitionOrientation,
   applyPartitions,
   applyLayerConstraintOrder,
@@ -108,7 +109,12 @@ export { assignLayersWithStretchWidth } from "./stretch-width";
 export { placeNodesWithBrandesKoepf } from "./bk-node-placement";
 export { placeNodesWithLinearSegments } from "./linear-segments-node-placement";
 export { placeNodesWithNetworkSimplex } from "./network-simplex-node-placement";
-export { fromElkLayeredOptionId, toElkLayeredOptions } from "./elk-options";
+export {
+  elkLayeredEnumValues,
+  elkLayeredOptionDefinitions,
+  fromElkLayeredOptionId,
+  toElkLayeredOptions,
+} from "./elk-options";
 export type {
   CycleBreakingStrategy,
   CrossingMinimizationStrategy,
@@ -755,7 +761,12 @@ function runCommentBoxPipeline<N, E, G, P>(
 ): VisualGraph<N, E, G, P> | undefined {
   const commentIds = new Set(
     graph.nodes
-      .filter((node) => options.nodeSettings?.(node)?.commentBox === true)
+      .filter(
+        (node) =>
+          options.nodeSettings?.(node)?.commentBox === true &&
+          graph.edges.filter((edge) => edge.sourceId === node.id || edge.targetId === node.id)
+            .length === 1,
+      )
       .map((node) => node.id),
   );
   if (commentIds.size === 0) return undefined;
@@ -1378,7 +1389,7 @@ function runLayeredPipeline<N, E, G, P>(
     );
   })();
   const orientation = measure("cycle-breaking", () =>
-    applyPartitionOrientation(input, cycleBreaker(input)),
+    applyPartitionOrientation(input, applyLayerConstraintOrientation(input, cycleBreaker(input))),
   );
   const layeringStrategy = options.settings?.["layering.strategy"] ?? "NETWORK_SIMPLEX";
   const layerAssigner = (() => {
@@ -1462,7 +1473,6 @@ function runLayeredPipeline<N, E, G, P>(
   const nodePlacer = (() => {
     if (options.strategies?.placeNodes) return options.strategies.placeNodes;
     if (nodePlacementStrategy === "INTERACTIVE") return placeNodesInteractively;
-    if (expanded.input.settings.feedbackEdges === true) return placeNodesInLayers;
     if (nodePlacementStrategy === "BRANDES_KOEPF") return placeNodesWithBrandesKoepf;
     if (nodePlacementStrategy === "LINEAR_SEGMENTS") return placeNodesWithLinearSegments;
     if (nodePlacementStrategy === "NETWORK_SIMPLEX") return placeNodesWithNetworkSimplex;
@@ -1616,6 +1626,39 @@ function runLayeredPipeline<N, E, G, P>(
       );
     }
   }
+  {
+    const horizontal = direction === "right" || direction === "left";
+    for (const edge of graph.edges) {
+      if (edge.sourcePort === undefined) continue;
+      const source = graph.nodes.find((node) => node.id === edge.sourceId);
+      const targetRect = mutableRects.get(edge.targetId);
+      const sourceRect = mutableRects.get(edge.sourceId);
+      const port = source?.ports?.find((candidate) => candidate.name === edge.sourcePort);
+      if (!source || !sourceRect || !targetRect || !port) continue;
+      const side = input.portSettings?.(port, source)?.["port.side"];
+      if (horizontal && side === "NORTH") {
+        mutableRects.set(edge.targetId, {
+          ...targetRect,
+          y: sourceRect.y - (port.height ?? 0) - targetRect.height,
+        });
+      } else if (horizontal && side === "SOUTH") {
+        mutableRects.set(edge.targetId, {
+          ...targetRect,
+          y: sourceRect.y + sourceRect.height + (port.height ?? 0),
+        });
+      } else if (!horizontal && side === "WEST") {
+        mutableRects.set(edge.targetId, {
+          ...targetRect,
+          x: sourceRect.x - (port.width ?? 0) - targetRect.width,
+        });
+      } else if (!horizontal && side === "EAST") {
+        mutableRects.set(edge.targetId, {
+          ...targetRect,
+          x: sourceRect.x + sourceRect.width + (port.width ?? 0),
+        });
+      }
+    }
+  }
   measure("port-margin-normalization", () =>
     normalizePlacementForPortExtents(expanded.input, placement, order),
   );
@@ -1690,6 +1733,101 @@ function runLayeredPipeline<N, E, G, P>(
       Number(options.settings?.["spacing.edgeNodeBetweenLayers"] ?? 10),
     ),
   );
+  if (options.settings?.["layering.nodePromotion.strategy"] === "MODEL_ORDER_LEFT_TO_RIGHT") {
+    const horizontal = direction === "right" || direction === "left";
+    const pointsByEdgeId = new Map(routes.pointsByEdgeId);
+    for (const [edgeId, points] of pointsByEdgeId) {
+      if (points.length <= 4) continue;
+      const start = points[0]!;
+      const firstBend = points[1]!;
+      const end = points.at(-1)!;
+      pointsByEdgeId.set(edgeId, [
+        start,
+        firstBend,
+        horizontal ? { x: firstBend.x, y: end.y } : { x: end.x, y: firstBend.y },
+        end,
+      ]);
+    }
+    routes = { ...routes, pointsByEdgeId };
+  }
+  if (edgeRouting === "ORTHOGONAL") {
+    const horizontal = direction === "right" || direction === "left";
+    const forwardSign = direction === "right" || direction === "down" ? 1 : -1;
+    const mutableRouteMap = routes.pointsByEdgeId as Map<string, readonly Point[]>;
+    for (const node of graph.nodes) {
+      if (options.nodeSettings?.(node)?.hypernode !== true || !horizontal) continue;
+      const incoming = graph.edges.filter((edge) => edge.targetId === node.id);
+      const outgoing = graph.edges.filter((edge) => edge.sourceId === node.id);
+      const moveForward = Number(incoming.length > 0) <= Number(outgoing.length > 0);
+      const incident = moveForward ? outgoing : incoming;
+      const candidates = incident.flatMap((edge) => {
+        const points = [...(mutableRouteMap.get(edge.id) ?? [])];
+        if (points.length < 3) return [];
+        const bendIndex = moveForward ? 1 : points.length - 2;
+        const secondIndex = moveForward ? 2 : points.length - 3;
+        return [{ edge, points, bendIndex, secondIndex }];
+      });
+      if (candidates.length === 0) continue;
+      const signedFlow = (point: Point) =>
+        forwardSign * (horizontal ? point.x : point.y) * (moveForward ? 1 : -1);
+      const joinFlow = Math.min(
+        ...candidates.map(({ points, bendIndex }) => signedFlow(points[bendIndex]!)),
+      );
+      const bendEdges = candidates.filter(
+        ({ points, bendIndex }) => Math.abs(signedFlow(points[bendIndex]!) - joinFlow) < 1e-9,
+      );
+      const rect = mutableRects.get(node.id);
+      if (!rect) continue;
+      const join = bendEdges[0]!.points[bendEdges[0]!.bendIndex]!;
+      const second = bendEdges[0]!.points[bendEdges[0]!.secondIndex]!;
+      const flowCenter = horizontal ? rect.x + rect.width / 2 : rect.y + rect.height / 2;
+      const joinCoordinate = horizontal ? join.x : join.y;
+      const crossDifference = horizontal
+        ? Math.abs(second.y - join.y)
+        : Math.abs(second.x - join.x);
+      const flowSize = horizontal ? rect.width : rect.height;
+      const crossSize = horizontal ? rect.height : rect.width;
+      if (
+        Math.abs(joinCoordinate - flowCenter) <= flowSize / 2 ||
+        crossDifference <= crossSize / 2
+      ) {
+        continue;
+      }
+      const delta = joinCoordinate - flowCenter;
+      mutableRects.set(
+        node.id,
+        horizontal ? { ...rect, x: rect.x + delta } : { ...rect, y: rect.y + delta },
+      );
+      for (const edge of [...incoming, ...outgoing]) {
+        const points = [...(mutableRouteMap.get(edge.id) ?? [])];
+        const endpointIndex = edge.sourceId === node.id ? 0 : points.length - 1;
+        const endpoint = points[endpointIndex];
+        if (!endpoint) continue;
+        points[endpointIndex] = horizontal
+          ? { ...endpoint, x: endpoint.x + delta }
+          : { ...endpoint, y: endpoint.y + delta };
+        mutableRouteMap.set(edge.id, points);
+      }
+      const movedRect = mutableRects.get(node.id)!;
+      for (const { edge, points: originalPoints, bendIndex, secondIndex } of bendEdges) {
+        const points = [...(mutableRouteMap.get(edge.id) ?? originalPoints)];
+        const originalBend = originalPoints[bendIndex]!;
+        const originalSecond = originalPoints[secondIndex]!;
+        points.splice(bendIndex, 1);
+        const endpointIndex = moveForward ? 0 : points.length - 1;
+        points[endpointIndex] = horizontal
+          ? {
+              x: movedRect.x + movedRect.width / 2,
+              y: originalSecond.y >= originalBend.y ? movedRect.y + movedRect.height : movedRect.y,
+            }
+          : {
+              x: originalSecond.x >= originalBend.x ? movedRect.x + movedRect.width : movedRect.x,
+              y: movedRect.y + movedRect.height / 2,
+            };
+        mutableRouteMap.set(edge.id, points);
+      }
+    }
+  }
   if (
     (options.settings?.["layerUnzipping.strategy"] ?? "NONE") === "ALTERNATING" &&
     !unzippingFanIn &&
@@ -1706,6 +1844,39 @@ function runLayeredPipeline<N, E, G, P>(
     };
   }
 
+  for (const edge of graph.edges) {
+    if (edge.sourcePort === undefined || edge.targetPort !== undefined) continue;
+    const source = expanded.input.graph.nodes.find((node) => node.id === edge.sourceId);
+    const port = source?.ports?.find((candidate) => candidate.name === edge.sourcePort);
+    const targetRect = mutableRects.get(edge.targetId);
+    if (!source || !port || !targetRect) continue;
+    const settings = expanded.input.portSettings?.(port, source);
+    const forwardSide =
+      direction === "right"
+        ? "EAST"
+        : direction === "left"
+          ? "WEST"
+          : direction === "down"
+            ? "SOUTH"
+            : "NORTH";
+    if (settings?.["port.anchor"] === undefined || settings["port.side"] !== forwardSide) continue;
+    const horizontal = direction === "right" || direction === "left";
+    const protrusion = horizontal ? (port.width ?? 0) : (port.height ?? 0);
+    const delta = (direction === "right" || direction === "down" ? 1 : -1) * protrusion;
+    mutableRects.set(
+      edge.targetId,
+      horizontal
+        ? { ...targetRect, x: targetRect.x + delta }
+        : { ...targetRect, y: targetRect.y + delta },
+    );
+    const points = [...(routes.pointsByEdgeId.get(edge.id) ?? [])];
+    const end = points.at(-1);
+    if (end)
+      points[points.length - 1] = horizontal
+        ? { ...end, x: end.x + delta }
+        : { ...end, y: end.y + delta };
+    (routes.pointsByEdgeId as Map<string, readonly Point[]>).set(edge.id, points);
+  }
   const nodes = graph.nodes.map((node): VisualNode<N, P> => {
     const rect = placement.rectByNodeId.get(node.id);
     if (!rect) {

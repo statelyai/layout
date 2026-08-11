@@ -54,6 +54,9 @@ routing. Worker execution and non-layered Java algorithm suites remain open.
 - Every option has an enforced elkjs differential-test reference, including
   parameterized enum, boolean, numeric, object, node, edge, port, and label
   cases.
+- The exhaustive target/value matrix contains 394 cases. Four ELK
+  `OBJECT`-typed properties rejected by the elkjs importer are instead guarded
+  by source-derived behavior tests.
 - Geometry comparisons cover bounds, nodes, ports, labels, edge endpoints, bend
   counts, and bend coordinates. Floating-point comparisons use 12 decimal
   digits where operation order can differ.

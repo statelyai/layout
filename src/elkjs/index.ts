@@ -829,6 +829,25 @@ function applyNodeMicroLayout(
     let insideHorizontalInset = 0;
     let insideVerticalInset = 0;
     const insideLabelCells = new Map<string, { width: number; height: number }>();
+    if (constraints.includes("PORTS")) {
+      const spacing = getNumberOption(globalOptions, "spacing.portPort") ?? 10;
+      const sideCounts = { NORTH: 0, EAST: 0, SOUTH: 0, WEST: 0 };
+      for (const port of node.ports ?? []) {
+        const side = String(getOption(port.layoutOptions ?? {}, "port.side") ?? "EAST");
+        if (side in sideCounts) sideCounts[side as keyof typeof sideCounts]++;
+      }
+      const nodeId = String(node.id);
+      for (const edge of graph.edges ?? []) {
+        const source = String(edge.sources?.[0] ?? edge.source);
+        const target = String(edge.targets?.[0] ?? edge.target);
+        if (source === nodeId) sideCounts.EAST++;
+        if (target === nodeId) sideCounts.WEST++;
+      }
+      width = Math.max(width, (Math.max(sideCounts.NORTH, sideCounts.SOUTH) + 1) * spacing);
+      height = Math.max(height, (Math.max(sideCounts.EAST, sideCounts.WEST) + 1) * spacing);
+      if (sideCounts.NORTH === 0 && sideCounts.SOUTH === 0) width = 0;
+      if (sideCounts.EAST === 0 && sideCounts.WEST === 0) height = 0;
+    }
     if (constraints.includes("NODE_LABELS")) {
       for (const label of node.labels ?? []) {
         if (!label.text) continue;
@@ -1216,27 +1235,32 @@ function toGraph(root: ElkNode, globalOptions: Readonly<Record<string, unknown>>
       width: child.width,
       height: child.height,
       label: child.labels?.[0]?.text,
-      ports: orderedPorts(child).map((port) => ({
-        name: String(port.id),
-        direction: sourcePortIds.has(String(port.id))
-          ? targetPortIds.has(String(port.id))
-            ? ("inout" as const)
-            : ("out" as const)
-          : targetPortIds.has(String(port.id))
-            ? ("in" as const)
-            : ("inout" as const),
-        x: port.x,
-        y: port.y,
-        width: port.width,
-        height: port.height,
-      })),
+      ports: orderedPorts(child)
+        .filter((port) => getBooleanOption(port.layoutOptions ?? {}, "noLayout") !== true)
+        .map((port) => ({
+          name: String(port.id),
+          direction: sourcePortIds.has(String(port.id))
+            ? targetPortIds.has(String(port.id))
+              ? ("inout" as const)
+              : ("out" as const)
+            : targetPortIds.has(String(port.id))
+              ? ("in" as const)
+              : ("inout" as const),
+          x: port.x,
+          y: port.y,
+          width: port.width,
+          height: port.height,
+        })),
     })),
     edges: (root.edges ?? []).flatMap((edge) => {
       if (getBooleanOption(edge.layoutOptions ?? {}, "noLayout") === true) return [];
       if (isInsideSelfLoop(root, edge)) return [];
       const source = endpoint(edge.sources?.[0] ?? edge.source, portOwnerById);
       const target = endpoint(edge.targets?.[0] ?? edge.target, portOwnerById);
-      const labels = (edge.labels ?? []).filter((label) => Boolean(label.text));
+      const labels = (edge.labels ?? []).filter(
+        (label) =>
+          Boolean(label.text) && getBooleanOption(label.layoutOptions ?? {}, "noLayout") !== true,
+      );
       const labelLabelSpacing = getNumberOption(globalOptions, "spacing.labelLabel") ?? 0;
       const labelWidth = Math.max(0, ...labels.map((label) => label.width ?? 0));
       const labelHeight =
@@ -1351,6 +1375,11 @@ function applyLayout(
     const edgeLabelSpacing = getNumberOption(layoutOptions, "spacing.edgeLabel") ?? 2;
     const labelLabelSpacing = getNumberOption(layoutOptions, "spacing.labelLabel") ?? 0;
     for (const label of edge.labels ?? []) {
+      if (getBooleanOption(label.layoutOptions ?? {}, "noLayout") === true) {
+        label.x ??= 0;
+        label.y ??= 0;
+        continue;
+      }
       if (!label.text) {
         label.x ??= 0;
         label.y ??= 0;
@@ -1407,7 +1436,10 @@ function normalizeElkGraphBounds(
     );
   }
   for (const edge of root.edges ?? []) {
-    const laidOutLabels = (edge.labels ?? []).filter((label) => Boolean(label.text));
+    const laidOutLabels = (edge.labels ?? []).filter(
+      (label) =>
+        Boolean(label.text) && getBooleanOption(label.layoutOptions ?? {}, "noLayout") !== true,
+    );
     minimumX = Math.min(minimumX, ...laidOutLabels.map((label) => label.x ?? 0));
     minimumY = Math.min(minimumY, ...laidOutLabels.map((label) => label.y ?? 0));
     if (getBooleanOption(edge.layoutOptions ?? {}, "noLayout") !== true) {
@@ -1479,6 +1511,8 @@ function normalizeElkGraphBounds(
     String(getOption(layoutOptions, "layered.compaction.postCompaction.strategy") ?? "NONE") ===
       "NONE" &&
     getBooleanOption(layoutOptions, "layered.feedbackEdges") !== true &&
+    String(getOption(layoutOptions, "layered.layering.nodePromotion.strategy") ?? "NONE") !==
+      "MODEL_ORDER_LEFT_TO_RIGHT" &&
     !(root.edges ?? []).some((edge) => edge.sources?.[0] === edge.targets?.[0]) &&
     !(root.children ?? []).some((child) => (child.children?.length ?? 0) > 0);
   const edgeBoundsExtraX =
@@ -1531,7 +1565,11 @@ function normalizeElkGraphBounds(
       ]),
       ...(root.edges ?? []).flatMap((edge) =>
         (edge.labels ?? [])
-          .filter((label) => Boolean(label.text))
+          .filter(
+            (label) =>
+              Boolean(label.text) &&
+              getBooleanOption(label.layoutOptions ?? {}, "noLayout") !== true,
+          )
           .map((label) => (label.x ?? 0) + (label.width ?? 0)),
       ),
       ...(root.edges ?? []).flatMap((edge) =>
@@ -1566,7 +1604,11 @@ function normalizeElkGraphBounds(
       ]),
       ...(root.edges ?? []).flatMap((edge) =>
         (edge.labels ?? [])
-          .filter((label) => Boolean(label.text))
+          .filter(
+            (label) =>
+              Boolean(label.text) &&
+              getBooleanOption(label.layoutOptions ?? {}, "noLayout") !== true,
+          )
           .map(
             (label) =>
               (label.y ?? 0) +

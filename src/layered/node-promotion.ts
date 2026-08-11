@@ -143,6 +143,17 @@ function applyModelOrderPromotion(
   const ranks = new Map(assignment.layerByNodeId);
   const order = new Map(input.graph.nodes.map((node, index) => [node.id, index]));
   const edges = input.graph.edges.map((edge) => endpoints(edge, orientation));
+  if (
+    leftToRight &&
+    (input.settings["layering.strategy"] ?? "NETWORK_SIMPLEX") === "NETWORK_SIMPLEX"
+  ) {
+    for (const [source, target] of edges) {
+      if ((order.get(source) ?? 0) <= (order.get(target) ?? 0)) continue;
+      ranks.set(target, ranks.get(source) ?? 0);
+    }
+    normalize(ranks);
+    return { layerByNodeId: ranks };
+  }
   let changed = true;
   while (changed) {
     changed = false;

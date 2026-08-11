@@ -53,7 +53,7 @@ result.metrics;
 
 ## elkjs compatibility
 
-<!-- elkjs-compatible entry point exported from package.json#exports -->
+<!-- elkjs-compatible entry point and layered mapping exports from package.json#exports and src/layered/index.ts -->
 
 Legacy consumers can migrate through an isolated compatibility entry point:
 
@@ -71,7 +71,9 @@ Native algorithms never consume ELK JSON directly.
 Advanced layered settings use shorter names such as
 `layering.strategy`, `spacing.edgeNode`, and `nodePlacement.strategy`.
 `toElkLayeredOptions` and `fromElkLayeredOptionId` provide the exact one-to-one
-mapping when migration tooling needs ELK IDs.
+mapping when migration tooling needs ELK IDs. `elkLayeredOptionDefinitions`
+exposes the complete mapping, value type, and valid graph-element targets;
+`elkLayeredEnumValues` exposes every accepted enum value.
 
 ## Parity lab
 

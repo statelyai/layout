@@ -108,3 +108,46 @@ it("matches ELK semi-interactive authored ordering", async () => {
     expected.children?.map((node) => [node.x, node.y]),
   );
 });
+
+it("matches ELK semi-interactive ordering around long-edge dummy slots", async () => {
+  const graph: ElkNode = {
+    id: "root",
+    layoutOptions: {
+      "elk.algorithm": "layered",
+      "elk.direction": "RIGHT",
+      "elk.edgeRouting": "ORTHOGONAL",
+      "elk.separateConnectedComponents": "false",
+      "elk.layered.crossingMinimization.semiInteractive": "true",
+    },
+    children: [
+      { id: "a", x: 10, y: 90, width: 30, height: 20 },
+      { id: "b", x: 100, y: 10, width: 40, height: 25 },
+      { id: "c", x: 180, y: 70, width: 35, height: 30 },
+      { id: "d", x: 70, y: 160, width: 30, height: 25 },
+    ],
+    edges: [
+      { id: "ab", sources: ["a"], targets: ["b"] },
+      { id: "ac", sources: ["a"], targets: ["c"] },
+      { id: "bd", sources: ["b"], targets: ["d"] },
+      { id: "dc", sources: ["d"], targets: ["c"] },
+    ],
+  };
+  const expected = (await new ELK().layout(structuredClone(graph) as never)) as unknown as ElkNode;
+  const actual = await new NativeELK().layout(structuredClone(graph));
+  const rounded = (value: number | undefined) =>
+    value === undefined ? undefined : Math.round(value * 1e12) / 1e12;
+  const point = ({ x, y }: { x: number; y: number }) => ({ x: rounded(x), y: rounded(y) });
+  const geometry = (layout: ElkNode) => ({
+    size: [rounded(layout.width), rounded(layout.height)],
+    nodes: layout.children?.map(({ id, x, y }) => [id, rounded(x), rounded(y)]),
+    edges: layout.edges?.map(({ id, sections }) => [
+      id,
+      sections?.map(({ startPoint, bendPoints, endPoint }) => [
+        point(startPoint),
+        ...(bendPoints ?? []).map(point),
+        point(endPoint),
+      ]),
+    ]),
+  });
+  expect(geometry(actual)).toEqual(geometry(expected));
+});

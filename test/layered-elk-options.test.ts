@@ -7,7 +7,7 @@ import {
   elkLayeredEnumValues,
   fromElkLayeredOptionId,
   toElkLayeredOptions,
-} from "../src/layered/elk-options";
+} from "../src";
 
 describe("ELK layered option inventory", () => {
   it("maps every elkjs 0.11.1 layered option exactly once", async () => {

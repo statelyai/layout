@@ -45,6 +45,8 @@ export {
   routeEdgesOrthogonally,
   routeEdgesWithPolylines,
   routeEdgesWithSplines,
+  elkLayeredEnumValues,
+  elkLayeredOptionDefinitions,
   fromElkLayeredOptionId,
   toElkLayeredOptions,
 } from "./layered";
