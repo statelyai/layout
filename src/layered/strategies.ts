@@ -2979,6 +2979,12 @@ function routeEdges(style: "ORTHOGONAL" | "POLYLINE" | "SPLINES"): EdgeRouter {
 
       const slotsByGap = candidatesByGap.map((candidates) => {
         if (candidates.length === 0) return 0;
+        // ELK creates hyperedge segments by walking layer nodes and their ports,
+        // so dependency-cycle tie breaking observes cross-axis order.
+        candidates.sort(
+          (left, right) =>
+            left.sourceCross - right.sourceCross || left.targetCross - right.targetCross,
+        );
         const minimumDifference = (values: readonly number[]) => {
           const distinct = [...new Set(values)].sort((left, right) => left - right);
           let minimum = Number.MAX_VALUE;
