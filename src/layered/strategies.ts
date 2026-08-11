@@ -2161,7 +2161,10 @@ export const minimizeCrossingsInteractively: CrossingMinimizer = (
             : Math.abs(denominator) < 1e-9
               ? 0.5
               : (internalReferenceFlow - internalSourceFlow) / denominator;
-      const cross = sourcePoint.cross + ratio * (targetPoint.cross - sourcePoint.cross);
+      const cross =
+        input.direction === "left"
+          ? sourcePoint.cross
+          : sourcePoint.cross + ratio * (targetPoint.cross - sourcePoint.cross);
       const dummy = nodeById.get(id);
       if (dummy) {
         if (horizontal) dummy.y = cross;
@@ -2746,10 +2749,10 @@ function implicitEdgeEndpoints(
         const leftDummy = left.edge.sourceId.startsWith("__layout_dummy:");
         const rightDummy = right.edge.sourceId.startsWith("__layout_dummy:");
         if (leftDummy !== rightDummy) return Number(leftDummy) - Number(rightDummy);
-        return (
+        const order =
           (edgeModelOrder.get(left.edge.id) ?? Number.MAX_SAFE_INTEGER) -
-          (edgeModelOrder.get(right.edge.id) ?? Number.MAX_SAFE_INTEGER)
-        );
+          (edgeModelOrder.get(right.edge.id) ?? Number.MAX_SAFE_INTEGER);
+        return input.direction === "left" && !leftDummy ? -order : order;
       }
       if (verticalNoneTargetOrder) {
         const leftOrder = edgeModelOrder.get(left.edge.id) ?? Number.MAX_SAFE_INTEGER;
@@ -3062,6 +3065,25 @@ function routeEdges(style: "ORTHOGONAL" | "POLYLINE" | "SPLINES"): EdgeRouter {
           }
         }
 
+        if (input.direction === "left") {
+          for (let left = 0; left < candidates.length - 1; left++) {
+            for (let right = left + 1; right < candidates.length; right++) {
+              const leftDummy = candidates[left]!.edge.id.includes("::segment:");
+              const rightDummy = candidates[right]!.edge.id.includes("::segment:");
+              if (leftDummy === rightDummy) continue;
+              const dummy = leftDummy ? left : right;
+              const ordinary = leftDummy ? right : left;
+              const candidate = candidates[dummy]!;
+              if (
+                Math.abs(candidate.sourceCross - candidate.targetCross) < edgeEdgeSpacing &&
+                dependencies[dummy]?.delete(ordinary)
+              ) {
+                dependencies[ordinary]?.add(dummy);
+              }
+            }
+          }
+        }
+
         const nonStraight = candidates.filter(({ straight }) => !straight);
         let splitCycle = false;
         for (let left = 0; left < candidates.length - 1 && !splitCycle; left++) {
@@ -3157,6 +3179,17 @@ function routeEdges(style: "ORTHOGONAL" | "POLYLINE" | "SPLINES"): EdgeRouter {
       const existingGapByLayer = flowLayers
         .slice(0, -1)
         .map((bounds, layerNo) => (flowLayers[layerNo + 1]?.start ?? bounds.end) - bounds.end);
+      const preservesNodeFlexibilityGap =
+        input.settings["nodePlacement.strategy"] === "NETWORK_SIMPLEX" &&
+        ((input.settings["nodePlacement.networkSimplex.nodeFlexibility.default"] ?? "NONE") !==
+          "NONE" ||
+          input.graph.nodes.some(
+            (node) =>
+              input.nodeSettings?.(node)?.["nodePlacement.networkSimplex.nodeFlexibility"] !==
+                undefined &&
+              input.nodeSettings?.(node)?.["nodePlacement.networkSimplex.nodeFlexibility"] !==
+                "NONE",
+          ));
       let nextStart = flowLayers[0]?.start ?? 0;
       for (const [layerNo, bounds] of flowLayers.entries()) {
         const shift = nextStart - bounds.start;
@@ -3175,7 +3208,9 @@ function routeEdges(style: "ORTHOGONAL" | "POLYLINE" | "SPLINES"): EdgeRouter {
           slots === 0
             ? (existingGapByLayer[layerNo] ?? input.spacing.layer)
             : Math.max(
-                existingGapByLayer[layerNo] ?? input.spacing.layer,
+                preservesNodeFlexibilityGap
+                  ? (existingGapByLayer[layerNo] ?? input.spacing.layer)
+                  : input.spacing.layer,
                 2 * edgeNodeSpacing + Math.max(0, slots - 1) * edgeEdgeSpacing,
               );
         nextStart = bounds.end + gapSpacing;
