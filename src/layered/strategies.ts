@@ -3119,8 +3119,14 @@ function routeEdges(style: "ORTHOGONAL" | "POLYLINE" | "SPLINES"): EdgeRouter {
             if (incoming[target] === 0) queue.push(target);
           }
         }
+        // ELK's topological numbering moves target-only hyperedge segments to
+        // the rightmost slot. Ordinary edges map to those segments here; long-
+        // edge dummy segments retain their dependency-derived rank.
         for (const candidate of nonStraight) {
-          if (Math.abs(candidate.sourceCross - candidate.targetCross) < edgeEdgeSpacing / 2) {
+          if (
+            !candidate.edge.id.includes("::segment:") &&
+            Math.abs(candidate.sourceCross - candidate.targetCross) < edgeEdgeSpacing / 2
+          ) {
             candidate.slot = maximumSlot;
           }
         }
