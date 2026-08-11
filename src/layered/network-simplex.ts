@@ -149,32 +149,25 @@ function growTightTree(
   if (nodes.length === 0) return [];
   const treeEdges: SimplexEdge[] = [];
   const visitTight = (start: SimplexNode): number => {
-    let count = 0;
     const visitedEdges = new Set<SimplexEdge>();
-    const stack = [start];
-    while (stack.length > 0) {
-      const node = stack.pop();
-      if (!node) continue;
-      if (!node.treeNode) {
-        node.treeNode = true;
-        count++;
-      }
-      const incident = connectedEdges(node);
-      for (let index = incident.length - 1; index >= 0; index--) {
-        const edge = incident[index];
-        if (!edge || visitedEdges.has(edge)) continue;
+    const visit = (node: SimplexNode): number => {
+      let count = 1;
+      node.treeNode = true;
+      for (const edge of connectedEdges(node)) {
+        if (visitedEdges.has(edge)) continue;
         visitedEdges.add(edge);
         const opposite = otherNode(edge, node);
         if (edge.treeEdge) {
-          stack.push(opposite);
+          count += visit(opposite);
         } else if (!opposite.treeNode && edge.target.layer - edge.source.layer === edge.delta) {
           edge.treeEdge = true;
           treeEdges.push(edge);
-          stack.push(opposite);
+          count += visit(opposite);
         }
       }
-    }
-    return nodes.filter((node) => node.treeNode).length;
+      return count;
+    };
+    return visit(start);
   };
 
   while (visitTight(nodes[0] as SimplexNode) < nodes.length) {
@@ -286,19 +279,23 @@ export function runNetworkSimplex(
   previousLayerCounts: readonly number[] | undefined,
   balance = true,
 ): number[] {
+  // ELK reindexes edges by walking each auxiliary node's outgoing list.
+  // This order decides deterministic ties in tight-tree growth and pivots.
+  const orderedEdges = nodes.flatMap((node) => node.outgoing);
+  orderedEdges.forEach((edge, index) => (edge.order = index));
   assignInitialLayers(nodes);
-  if (edges.length > 0) {
-    const orderedTreeEdges = growTightTree(nodes, edges);
+  if (orderedEdges.length > 0) {
+    const orderedTreeEdges = growTightTree(nodes, orderedEdges);
     const treeEdges = new Set(orderedTreeEdges);
     for (let iteration = 0; iteration < iterationLimit; iteration++) {
       const leave = orderedTreeEdges.find(
-        (edge) => edge.treeEdge && getCutValue(nodes, edges, treeEdges, edge) < -1e-10,
+        (edge) => edge.treeEdge && getCutValue(nodes, orderedEdges, treeEdges, edge) < -1e-10,
       );
       if (!leave) break;
       const head = getHeadComponent(nodes, treeEdges, leave);
       let entering: SimplexEdge | undefined;
       let minimumSlack = Number.POSITIVE_INFINITY;
-      for (const edge of edges) {
+      for (const edge of orderedEdges) {
         if (head.has(edge.source) && !head.has(edge.target)) {
           const slack = edge.target.layer - edge.source.layer - edge.delta;
           if (slack < minimumSlack) {

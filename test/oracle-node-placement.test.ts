@@ -190,4 +190,43 @@ describe("ELK node-placement oracle", () => {
         String(favorStraightEdges),
       ));
   }
+
+  for (const priority of [0, 1, 10, 100]) {
+    it(`matches NETWORK_SIMPLEX straightness priority ${priority}`, async () => {
+      const graph = {
+        id: "root",
+        layoutOptions: {
+          "elk.algorithm": "layered",
+          "elk.direction": "RIGHT",
+          "elk.separateConnectedComponents": "false",
+          "elk.layered.layering.strategy": "LONGEST_PATH_SOURCE",
+          "elk.layered.crossingMinimization.strategy": "NONE",
+          "elk.layered.crossingMinimization.greedySwitch.type": "OFF",
+          "elk.layered.nodePlacement.strategy": "NETWORK_SIMPLEX",
+        },
+        children: structuredClone(configurableNodes),
+        edges: edges.map((edge, index) => ({
+          id: edge.id,
+          sources: [edge.sourceId],
+          targets: [edge.targetId],
+          ...(index === 0
+            ? {
+                layoutOptions: {
+                  "elk.layered.priority.straightness": String(priority),
+                },
+              }
+            : {}),
+        })),
+      };
+      const [oracle, native] = await Promise.all([
+        new ELK().layout(structuredClone(graph)),
+        new NativeELK().layout(structuredClone(graph)),
+      ]);
+
+      const expected = positions(oracle.children ?? []);
+      for (const [id, y] of Object.entries(positions(native.children ?? []))) {
+        expect(y).toBeCloseTo(expected[id] ?? Number.NaN, 12);
+      }
+    });
+  }
 });

@@ -167,6 +167,82 @@ export function placeNodesWithNetworkSimplex(
     );
   }
 
+  if (
+    input.graph.edges.some(
+      (edge) => Number(input.edgeSettings?.(edge)?.["priority.straightness"] ?? 1) > 1,
+    )
+  ) {
+    const horizontal = input.direction === "left" || input.direction === "right";
+    const crossStart = (rect: EntityRect) => (horizontal ? rect.y : rect.x);
+    const setCrossStart = (rect: EntityRect, value: number): EntityRect =>
+      horizontal ? { ...rect, y: value } : { ...rect, x: value };
+    for (let pass = 0; pass < 2; pass++) {
+      for (const layer of order.layers) {
+        for (const [index, id] of layer.entries()) {
+          const rect = rectByNodeId.get(id);
+          if (!rect) continue;
+          const weightedTargets: Array<{ value: number; weight: number }> = [];
+          for (const edge of input.graph.edges) {
+            if (edge.sourceId !== id && edge.targetId !== id) continue;
+            const otherId = edge.sourceId === id ? edge.targetId : edge.sourceId;
+            const otherRect = rectByNodeId.get(otherId);
+            if (!otherRect) continue;
+            const ownAnchor = anchors.get(`${edge.id}:${id}`) ?? 0;
+            const otherAnchor = anchors.get(`${edge.id}:${otherId}`) ?? 0;
+            weightedTargets.push({
+              value: crossStart(otherRect) + otherAnchor - ownAnchor,
+              weight: Math.max(
+                1,
+                Number(input.edgeSettings?.(edge)?.["priority.straightness"] ?? 1),
+              ),
+            });
+          }
+          if (weightedTargets.length === 0) continue;
+          weightedTargets.sort((left, right) => left.value - right.value);
+          const totalWeight = weightedTargets.reduce((sum, target) => sum + target.weight, 0);
+          let cumulative = 0;
+          let lowerMedian = weightedTargets[0]!.value;
+          let upperMedian = weightedTargets.at(-1)!.value;
+          let lowerMedianFound = false;
+          for (const target of weightedTargets) {
+            cumulative += target.weight;
+            if (cumulative >= totalWeight / 2 && !lowerMedianFound) {
+              lowerMedian = target.value;
+              lowerMedianFound = true;
+            }
+            if (cumulative > totalWeight / 2) {
+              upperMedian = target.value;
+              break;
+            }
+          }
+          const upperId = layer[index - 1];
+          const lowerId = layer[index + 1];
+          const upperRect = upperId ? rectByNodeId.get(upperId) : undefined;
+          const lowerRect = lowerId ? rectByNodeId.get(lowerId) : undefined;
+          const minimum = upperRect
+            ? crossStart(upperRect) +
+              (horizontal ? upperRect.height : upperRect.width) +
+              nodeNodeSpacing(input, upperId!, id)
+            : Number.NEGATIVE_INFINITY;
+          const maximum = lowerRect
+            ? crossStart(lowerRect) -
+              (horizontal ? rect.height : rect.width) -
+              nodeNodeSpacing(input, id, lowerId!)
+            : Number.POSITIVE_INFINITY;
+          const median = input.graph.edges.some((edge) => edge.sourceId === id)
+            ? upperMedian
+            : lowerMedian;
+          rectByNodeId.set(id, setCrossStart(rect, Math.max(minimum, Math.min(maximum, median))));
+        }
+      }
+    }
+    const minimumCross = Math.min(...[...rectByNodeId.values()].map(crossStart));
+    const desiredMinimum = horizontal ? input.padding.top : input.padding.left;
+    for (const [id, rect] of rectByNodeId) {
+      rectByNodeId.set(id, setCrossStart(rect, crossStart(rect) + desiredMinimum - minimumCross));
+    }
+  }
+
   const horizontal = input.direction === "left" || input.direction === "right";
   for (const node of input.graph.nodes) {
     const flexibility = String(
