@@ -2,7 +2,7 @@ import { createGraph } from "@statelyai/graph";
 import ELK from "elkjs/lib/elk.bundled.js";
 import { describe, expect, it } from "vitest";
 import { getLayeredLayout } from "../src";
-import NativeELK from "../src/elkjs";
+import NativeELK, { type ElkNode } from "../src/elkjs";
 
 const edges = [
   { id: "ac", sourceId: "a", targetId: "c" },
@@ -261,10 +261,12 @@ describe("ELK node-placement oracle", () => {
         })),
       ],
     };
-    const [oracle, native] = await Promise.all([
+    const [oracleResult, nativeResult] = await Promise.all([
       new ELK().layout(structuredClone(graph)),
       new NativeELK().layout(structuredClone(graph)),
     ]);
+    const oracle = oracleResult as ElkNode;
+    const native = nativeResult as ElkNode;
     expect(native.width).toBeCloseTo(oracle.width ?? Number.NaN, 12);
     expect(native.height).toBeCloseTo(oracle.height ?? Number.NaN, 12);
     for (const expectedNode of oracle.children ?? []) {
