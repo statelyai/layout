@@ -1934,6 +1934,53 @@ function minimizeCrossingsWithLayerSweep(
       }
     }
 
+    if (statistic === "median" && input.direction === "left") {
+      const edgeOrder = new Map(input.graph.edges.map((edge, index) => [edge.id, index]));
+      for (const layer of bestLayers) {
+        const byTarget = new Map<string, Array<{ id: string; edgeId: string }>>();
+        for (const id of layer) {
+          if (!id.startsWith("__layout_dummy:")) continue;
+          const outgoing = input.graph.edges.find((edge) => edge.sourceId === id);
+          if (!outgoing || outgoing.targetId.startsWith("__layout_dummy:")) continue;
+          const entries = byTarget.get(outgoing.targetId) ?? [];
+          entries.push({ id, edgeId: outgoing.id });
+          byTarget.set(outgoing.targetId, entries);
+        }
+        for (const entries of byTarget.values()) {
+          if (entries.length < 2) continue;
+          const slots = entries.map(({ id }) => layer.indexOf(id)).sort((a, b) => a - b);
+          entries.sort(
+            (left, right) =>
+              (edgeOrder.get(right.edgeId) ?? 0) - (edgeOrder.get(left.edgeId) ?? 0),
+          );
+          for (const [index, slot] of slots.entries()) layer[slot] = entries[index]!.id;
+        }
+      }
+      const sourcePosition = new Map<string, number>();
+      for (const layer of bestLayers) {
+        for (const [index, id] of layer.entries()) sourcePosition.set(id, index);
+      }
+      for (const targetId of bestLayers.flat()) {
+        const incoming = input.graph.edges.filter((edge) => edge.targetId === targetId);
+        if (
+          incoming.length < 2 ||
+          !incoming.some((edge) => edge.sourceId.startsWith("__layout_dummy:"))
+        ) {
+          continue;
+        }
+        bestInputPortOrder.set(
+          targetId,
+          incoming
+            .sort(
+              (left, right) =>
+                (sourcePosition.get(right.sourceId) ?? 0) -
+                (sourcePosition.get(left.sourceId) ?? 0),
+            )
+            .map((edge) => edge.id),
+        );
+      }
+    }
+
     phaseRandomByInput.set(input, random);
     return exactPortSweep
       ? {

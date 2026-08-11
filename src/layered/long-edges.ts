@@ -294,12 +294,21 @@ export function joinLongEdgeRoutes(
       }
     }
     const points: Point[] = [];
-    for (const segmentId of segmentIds) {
-      appendPoints(
-        points,
-        routes.pointsByEdgeId.get(segmentId) ?? [],
-        preserveInternalDuplicates || segmentIds.length === 1,
-      );
+    if (!preserveInternalDuplicates && segmentIds.length > 1) {
+      const segments = segmentIds.map((segmentId) => routes.pointsByEdgeId.get(segmentId) ?? []);
+      const firstPoint = segments[0]?.[0];
+      if (firstPoint) points.push(firstPoint);
+      for (const segment of segments) points.push(...segment.slice(1, -1));
+      const lastPoint = segments.at(-1)?.at(-1);
+      if (lastPoint) points.push(lastPoint);
+    } else {
+      for (const segmentId of segmentIds) {
+        appendPoints(
+          points,
+          routes.pointsByEdgeId.get(segmentId) ?? [],
+          preserveInternalDuplicates || segmentIds.length === 1,
+        );
+      }
     }
     pointsByEdgeId.set(
       edgeId,

@@ -719,6 +719,76 @@ it("matches the minimum legal position for a RIGHT interactive long-edge spline"
   }
 });
 
+it("matches LEFT median-sweep long-edge ports and polyline joining", async () => {
+  const nodes = [
+    ["n0", 24, 15, 148, 143],
+    ["n1", 13, 16, 94, 105],
+    ["n2", 31, 31, 21, 113],
+    ["n3", 34, 24, 89, 2],
+    ["n4", 20, 40, 83, 181],
+  ].map(([id, width, height, x, y]) => ({
+    id: String(id),
+    width: Number(width),
+    height: Number(height),
+    x: Number(x),
+    y: Number(y),
+  }));
+  const edges = [
+    [0, 3],
+    [1, 3],
+    [2, 3],
+    [0, 4],
+    [1, 4],
+  ].map(([source, target]) => ({
+    id: `e${source}-${target}`,
+    sourceId: `n${source}`,
+    targetId: `n${target}`,
+  }));
+  const oracle = await new ELK().layout({
+    id: "root",
+    layoutOptions: {
+      "elk.algorithm": "layered",
+      "elk.direction": "LEFT",
+      "elk.edgeRouting": "POLYLINE",
+      "elk.randomSeed": "8",
+      "elk.separateConnectedComponents": "false",
+      "elk.layered.layering.strategy": "INTERACTIVE",
+      "elk.layered.crossingMinimization.strategy": "MEDIAN_LAYER_SWEEP",
+      "elk.layered.crossingMinimization.greedySwitch.type": "OFF",
+      "elk.layered.nodePlacement.strategy": "NETWORK_SIMPLEX",
+    },
+    children: structuredClone(nodes),
+    edges: edges.map(({ id, sourceId, targetId }) => ({
+      id,
+      sources: [sourceId],
+      targets: [targetId],
+    })),
+  });
+  const native = getLayeredLayout(createGraph({ nodes, edges }), {
+    direction: "left",
+    settings: {
+      edgeRouting: "POLYLINE",
+      randomSeed: 8,
+      separateConnectedComponents: false,
+      "layering.strategy": "INTERACTIVE",
+      "crossingMinimization.strategy": "MEDIAN_LAYER_SWEEP",
+      "crossingMinimization.greedySwitch.type": "OFF",
+      "nodePlacement.strategy": "NETWORK_SIMPLEX",
+    },
+  });
+  expect(native.nodes.map(({ x, y }) => [x, y])).toEqual(
+    oracle.children?.map(({ x, y }) => [x, y]),
+  );
+  for (const edge of oracle.edges ?? []) {
+    const section = (edge as ElkExtendedEdge).sections?.[0];
+    const expected = section
+      ? [section.startPoint, ...(section.bendPoints ?? []), section.endPoint]
+      : [];
+    const actual = native.edges.find(({ id }) => id === edge.id)?.points ?? [];
+    expect(actual).toEqual(expected);
+  }
+});
+
 it("uses pre-placement source coordinates for leftward interactive long edges", async () => {
   const nodes = [
     ["n0", 38, 32, 111, 74],

@@ -100,7 +100,11 @@ function endpointAnchors(input: LayeredPhaseInput, order: LayerOrder) {
   const anchors = new Map<string, number>();
   for (const [id, edges] of after) {
     const sweptOrder = order.outputPortOrderByNodeId?.get(id);
-    const direction = input.direction === "left" ? -1 : 1;
+    const direction =
+      input.direction === "left" &&
+      input.settings["crossingMinimization.strategy"] === "INTERACTIVE"
+        ? -1
+        : 1;
     edges.sort(
       (a, b) =>
         direction *
