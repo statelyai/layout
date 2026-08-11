@@ -1595,8 +1595,8 @@ function normalizeElkGraphBounds(
     (getDirection(layoutOptions) === "right" || getDirection(layoutOptions) === "left")
       ? 1
       : 0);
-  root.width = fixedGraphSize && authoredWidth !== undefined ? authoredWidth : calculatedWidth;
-  root.height = fixedGraphSize && authoredHeight !== undefined ? authoredHeight : calculatedHeight;
+  root.width = fixedGraphSize ? (authoredWidth ?? 0) : calculatedWidth;
+  root.height = fixedGraphSize ? (authoredHeight ?? 0) : calculatedHeight;
 }
 
 function getParentEdgeSection(root: ElkNode, edge: ElkEdge) {
