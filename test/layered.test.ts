@@ -103,7 +103,7 @@ describe("getLayeredLayout", () => {
     const routeStart = result.edges[0]?.points?.[0];
 
     expect(sourcePort?.x).toBe(source?.width);
-    expect(routeStart?.x).toBe((source?.x ?? 0) + (sourcePort?.x ?? 0));
+    expect(routeStart?.x).toBe((source?.x ?? 0) + (sourcePort?.x ?? 0) + (sourcePort?.width ?? 0));
   });
 
   it("accepts a custom routing strategy", () => {

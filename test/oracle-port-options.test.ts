@@ -386,4 +386,38 @@ describe("ELK port-option parity", () => {
     expect(actualSection?.startPoint).toEqual(expectedSection?.startPoint);
     expect(actualSection?.endPoint).toEqual(expectedSection?.endPoint);
   });
+
+  for (const side of ["NORTH", "EAST", "SOUTH", "WEST"] as const) {
+    it(`matches the default ${side} port anchor`, async () => {
+      const graph: ElkNode = {
+        id: "root",
+        layoutOptions: { "elk.algorithm": "layered", "elk.direction": "RIGHT" },
+        children: [
+          {
+            id: "source",
+            width: 80,
+            height: 60,
+            layoutOptions: { "elk.portConstraints": "FIXED_SIDE" },
+            ports: [port("sourcePort", side)],
+          },
+          { id: "target", width: 30, height: 20 },
+        ],
+        edges: [{ id: "edge", sources: ["sourcePort"], targets: ["target"] }],
+      };
+      const expected = (await new OracleELK().layout(
+        structuredClone(graph) as never,
+      )) as unknown as ElkNode;
+      const actual = await new NativeELK().layout(structuredClone(graph));
+      const relativeAnchor = (result: ElkNode) => {
+        const node = result.children![0]!;
+        const placedPort = node.ports![0]!;
+        const start = result.edges![0]!.sections![0]!.startPoint;
+        return {
+          x: start.x - (node.x! + placedPort.x!),
+          y: start.y - (node.y! + placedPort.y!),
+        };
+      };
+      expect(relativeAnchor(actual)).toEqual(relativeAnchor(expected));
+    });
+  }
 });

@@ -2709,8 +2709,8 @@ function getPortPoint(
   const configuredAnchor = settings?.["port.anchor"] as { x?: number; y?: number } | undefined;
   const width = port.width ?? 0;
   const height = port.height ?? 0;
-  const defaultAnchorX = port.x >= rect.width ? 0 : port.x + width <= 0 ? width : width / 2;
-  const defaultAnchorY = port.y >= rect.height ? 0 : port.y + height <= 0 ? height : height / 2;
+  const defaultAnchorX = port.x >= rect.width ? width : port.x + width <= 0 ? 0 : width / 2;
+  const defaultAnchorY = port.y >= rect.height ? height : port.y + height <= 0 ? 0 : height / 2;
   return {
     x: rect.x + port.x + (configuredAnchor?.x ?? defaultAnchorX),
     y: rect.y + port.y + (configuredAnchor?.y ?? defaultAnchorY),
