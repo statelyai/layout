@@ -232,8 +232,8 @@ function alignBlocks(
 
   const roots = new Set(bal.root.values());
   for (const root of roots) {
-    let above = crossSize(input, root) / 2;
-    let below = crossSize(input, root) / 2;
+    let above = 0;
+    let below = crossSize(input, root);
     bal.innerShift.set(root, 0);
     let current = root;
     let next = bal.align.get(current) ?? root;
@@ -247,8 +247,8 @@ function alignBlocks(
         : anchorCrossSize(input, next) / 2;
       const nextShift = (bal.innerShift.get(current) ?? 0) + currentAnchor - nextAnchor;
       bal.innerShift.set(next, nextShift);
-      above = Math.max(above, crossSize(input, next) / 2 - nextShift);
-      below = Math.max(below, nextShift + crossSize(input, next) / 2);
+      above = Math.max(above, -nextShift);
+      below = Math.max(below, nextShift + crossSize(input, next));
       current = next;
       next = bal.align.get(current) ?? root;
     }

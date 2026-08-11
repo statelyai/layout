@@ -17,6 +17,74 @@ function positions(nodes: ReadonlyArray<{ id?: string | number; x?: number; y?: 
 }
 
 describe("ELK node-placement oracle", () => {
+  for (const [title, graph] of [
+    [
+      "UP disconnected BK block offsets",
+      {
+        id: "root",
+        layoutOptions: {
+          "elk.algorithm": "layered",
+          "elk.direction": "UP",
+          "elk.edgeRouting": "SPLINES",
+          "elk.randomSeed": "6",
+          "elk.separateConnectedComponents": "false",
+          "elk.layered.layering.strategy": "INTERACTIVE",
+          "elk.layered.crossingMinimization.strategy": "LAYER_SWEEP",
+          "elk.layered.crossingMinimization.greedySwitch.type": "ONE_SIDED",
+          "elk.layered.nodePlacement.strategy": "BRANDES_KOEPF",
+        },
+        children: [
+          { id: "n0", width: 27, height: 22, x: 37, y: 142 },
+          { id: "n1", width: 12, height: 21, x: 93, y: 125 },
+          { id: "n2", width: 21, height: 14, x: 64, y: 57 },
+          { id: "n3", width: 16, height: 16, x: 8, y: 170 },
+          { id: "n4", width: 26, height: 27, x: 11, y: 40 },
+        ],
+        edges: [{ id: "e1-2", sources: ["n1"], targets: ["n2"] }],
+      },
+    ],
+    [
+      "RIGHT BK block offsets with long-edge dummies",
+      {
+        id: "root",
+        layoutOptions: {
+          "elk.algorithm": "layered",
+          "elk.direction": "RIGHT",
+          "elk.edgeRouting": "POLYLINE",
+          "elk.randomSeed": "5",
+          "elk.separateConnectedComponents": "false",
+          "elk.layered.layering.strategy": "STRETCH_WIDTH",
+          "elk.layered.crossingMinimization.strategy": "MEDIAN_LAYER_SWEEP",
+          "elk.layered.crossingMinimization.greedySwitch.type": "OFF",
+          "elk.layered.nodePlacement.strategy": "BRANDES_KOEPF",
+        },
+        children: [
+          { id: "n0", width: 32, height: 39, x: 140, y: 6 },
+          { id: "n1", width: 38, height: 31, x: 152, y: 44 },
+          { id: "n2", width: 19, height: 10, x: 178, y: 143 },
+          { id: "n3", width: 38, height: 32, x: 146, y: 53 },
+          { id: "n4", width: 27, height: 36, x: 72, y: 38 },
+          { id: "n5", width: 31, height: 21, x: 25, y: 127 },
+        ],
+        edges: [
+          { id: "e0-2", sources: ["n0"], targets: ["n2"] },
+          { id: "e2-4", sources: ["n2"], targets: ["n4"] },
+          { id: "e0-5", sources: ["n0"], targets: ["n5"] },
+        ],
+      },
+    ],
+  ] satisfies ReadonlyArray<readonly [string, ElkNode]>) {
+    it(`matches ${title}`, async () => {
+      const [oracle, native] = await Promise.all([
+        new ELK().layout(structuredClone(graph)),
+        new NativeELK().layout(structuredClone(graph)),
+      ]);
+      expect(native.children?.map(({ id, x, y }) => [id, x, y])).toEqual(
+        oracle.children?.map(({ id, x, y }) => [id, x, y]),
+      );
+    });
+  }
+
   it("matches network-simplex separation between adjacent long-edge dummies", async () => {
     const graph: ElkNode = {
       id: "root",
