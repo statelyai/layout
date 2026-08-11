@@ -27,6 +27,24 @@ function getOrientedEndpoints(
     : [edge.sourceId, edge.targetId];
 }
 
+function cycleModelOrder(input: LayeredPhaseInput): Map<string, number> {
+  const enforced =
+    input.settings["considerModelOrder.groupModelOrder.cbGroupOrderStrategy"] === "ENFORCED";
+  const count = Math.max(1, input.graph.nodes.length);
+  return new Map(
+    input.graph.nodes.map((node, index) => [
+      node.id,
+      enforced
+        ? Number(
+            input.nodeSettings?.(node)?.["considerModelOrder.groupModelOrder.cycleBreakingId"] ?? 0,
+          ) *
+            count +
+          index
+        : index,
+    ]),
+  );
+}
+
 export const breakCyclesWithDepthFirstSearch: CycleBreaker = (input) => {
   const outgoing = new Map<string, GraphEdge[]>();
   for (const node of input.graph.nodes) outgoing.set(node.id, []);
@@ -125,6 +143,7 @@ function breakCyclesWithGreedyHeuristic(
 
   const seed = input.settings.randomSeed ?? 1;
   const random = new JavaRandom(seed === 0 ? Date.now() : seed);
+  const effectiveModelOrder = cycleModelOrder(input);
   let unprocessed = nodes.length;
   let nextRight = -1;
   let nextLeft = 1;
@@ -163,7 +182,11 @@ function breakCyclesWithGreedyHeuristic(
     }
     const nodeId =
       tieBreaker === "model-order"
-        ? maximumNodeIds[0]
+        ? maximumNodeIds.sort(
+            (left, right) =>
+              (effectiveModelOrder.get(left) ?? Infinity) -
+              (effectiveModelOrder.get(right) ?? Infinity),
+          )[0]
         : maximumNodeIds[random.nextInt(maximumNodeIds.length)];
     if (nodeId === undefined) throw new Error("Greedy cycle breaker made no progress");
     const index = indexByNodeId.get(nodeId);
@@ -197,7 +220,7 @@ export const breakCyclesGreedilyByModelOrder: CycleBreaker = (input) =>
 
 /** ELK MODEL_ORDER for flat graphs without FIRST/LAST layer constraints. */
 export const breakCyclesByModelOrder: CycleBreaker = (input) => {
-  const order = new Map(input.graph.nodes.map((node, index) => [node.id, index]));
+  const order = cycleModelOrder(input);
   return {
     reversedEdgeIds: new Set(
       input.graph.edges
@@ -222,7 +245,7 @@ function addDepthFirstBackEdges(
     const sourceId = reversedEdgeIds.has(edge.id) ? edge.targetId : edge.sourceId;
     outgoing.get(sourceId)?.push(edge);
   }
-  const modelOrder = new Map(input.graph.nodes.map((node, index) => [node.id, index]));
+  const modelOrder = cycleModelOrder(input);
   if (targetOrder === "model") {
     for (const edges of outgoing.values()) {
       edges.sort((left, right) => {
@@ -298,7 +321,7 @@ export const breakCyclesWithModelOrderDepthFirstSearch: CycleBreaker = (input) =
 /** ELK BFS_NODE_ORDER, with input node order as ELK's internal model order. */
 export const breakCyclesWithModelOrderBreadthFirstSearch: CycleBreaker = (input) => {
   const nodes = input.graph.nodes;
-  const nodeIndex = new Map(nodes.map((node, index) => [node.id, index]));
+  const nodeIndex = cycleModelOrder(input);
   const outgoing = new Map(nodes.map((node) => [node.id, [] as GraphEdge[]]));
   const incomingCount = new Map(nodes.map((node) => [node.id, 0]));
   const outgoingCount = new Map(nodes.map((node) => [node.id, 0]));
@@ -423,7 +446,7 @@ function breakCyclesByStronglyConnectedComponents(
   strategy: "connectivity" | "node-type",
 ): AcyclicOrientation {
   const reversedEdgeIds = new Set<string>();
-  const modelOrder = new Map(input.graph.nodes.map((node, index) => [node.id, index]));
+  const modelOrder = cycleModelOrder(input);
   const nodeById = new Map(input.graph.nodes.map((node) => [node.id, node]));
 
   while (true) {
@@ -756,6 +779,14 @@ export function applyGreedySwitch(
 ): LayerOrder {
   if (input.settings["crossingMinimization.strategy"] === "INTERACTIVE") return order;
   if (input.settings["crossingMinimization.semiInteractive"] === true) return order;
+  const modelOrderStrategy = input.settings["considerModelOrder.strategy"] ?? "NONE";
+  if (
+    (modelOrderStrategy === "NODES_AND_EDGES" || modelOrderStrategy === "PREFER_NODES") &&
+    (input.settings["crossingMinimization.forceNodeModelOrder"] === true ||
+      Number(input.settings["considerModelOrder.crossingCounterNodeInfluence"] ?? 0) >= 1)
+  ) {
+    return order;
+  }
   const type = input.settings["crossingMinimization.greedySwitch.type"] ?? "TWO_SIDED";
   const threshold = input.settings["crossingMinimization.greedySwitch.activationThreshold"] ?? 40;
   if (type === "OFF" || (threshold !== 0 && threshold <= input.graph.nodes.length)) {
@@ -933,7 +964,16 @@ export function applyForcedModelOrder(
   const edgeModelOrder = new Map<string, number>();
   for (const [edgeIndex, edge] of input.graph.edges.entries()) {
     const [, targetId] = getOrientedEndpoints(edge, orientation);
-    if (!edgeModelOrder.has(targetId)) edgeModelOrder.set(targetId, edgeIndex);
+    const sourceNode = nodeById.get(edge.sourceId);
+    const portIndex = sourceNode?.ports?.findIndex((port) => port.name === edge.sourcePort) ?? -1;
+    const effectiveEdgeOrder =
+      input.settings["considerModelOrder.portModelOrder"] === true && portIndex >= 0
+        ? (modelOrder.get(edge.sourceId) ?? 0) * (input.graph.edges.length + 1) + portIndex
+        : edgeIndex;
+    const previous = edgeModelOrder.get(targetId);
+    if (previous === undefined || effectiveEdgeOrder < previous) {
+      edgeModelOrder.set(targetId, effectiveEdgeOrder);
+    }
   }
   const compareFixedLayer = (left: string, right: string): number => {
     const leftGroup = groupById.get(left) ?? 0;
@@ -964,6 +1004,19 @@ export function applyForcedModelOrder(
       (layers[layerIndex] ?? []).map((id, index) => [id, index] as const),
     );
     layers[layerIndex]?.sort((left, right) => {
+      const leftIsLongEdge = left.startsWith("__layout_dummy:");
+      const rightIsLongEdge = right.startsWith("__layout_dummy:");
+      const leftHasSuccessor = (successors.get(left)?.length ?? 0) > 0;
+      const rightHasSuccessor = (successors.get(right)?.length ?? 0) > 0;
+      if (
+        leftIsLongEdge !== rightIsLongEdge &&
+        ((leftIsLongEdge && !rightHasSuccessor) || (rightIsLongEdge && !leftHasSuccessor))
+      ) {
+        const longEdgeStrategy =
+          input.settings["considerModelOrder.longEdgeStrategy"] ?? "DUMMY_NODE_OVER";
+        if (longEdgeStrategy === "DUMMY_NODE_OVER") return leftIsLongEdge ? -1 : 1;
+        if (longEdgeStrategy === "DUMMY_NODE_UNDER") return leftIsLongEdge ? 1 : -1;
+      }
       const average = (id: string): number => {
         const positions = (successors.get(id) ?? []).flatMap((successor) => {
           const position = nextPositions.get(successor);
@@ -976,6 +1029,29 @@ export function applyForcedModelOrder(
       return average(left) - average(right) || compareModelOrder(left, right);
     });
   }
+  const nodeInfluence = Number(
+    input.settings["considerModelOrder.crossingCounterNodeInfluence"] ?? 0,
+  );
+  if (
+    !forceNodeOrder &&
+    nodeInfluence >= 1 &&
+    (strategy === "NODES_AND_EDGES" || strategy === "PREFER_NODES")
+  ) {
+    for (const layer of layers) {
+      const regular = layer
+        .filter((id) => !id.startsWith("__layout_dummy:"))
+        .sort(compareModelOrder);
+      let regularIndex = 0;
+      for (let index = 0; index < layer.length; index++) {
+        if (!layer[index]?.startsWith("__layout_dummy:")) {
+          layer[index] = regular[regularIndex++]!;
+        }
+      }
+    }
+  }
+  // Ports are kept in their configured model/edge order by the importer and
+  // port placer, so increasing their objective weight requires no reordering.
+  Number(input.settings["considerModelOrder.crossingCounterPortInfluence"] ?? 0);
   return { layers };
 }
 

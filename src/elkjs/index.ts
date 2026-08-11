@@ -696,14 +696,21 @@ function toGraph(root: ElkNode, globalOptions: Readonly<Record<string, unknown>>
   );
   const sourcePortDegree = new Map<string, number>();
   const targetPortDegree = new Map<string, number>();
-  for (const edge of root.edges ?? []) {
+  const edgeModelOrderByPortId = new Map<string, number>();
+  for (const [edgeIndex, edge] of (root.edges ?? []).entries()) {
     for (const source of edge.sources ?? (edge.source === undefined ? [] : [edge.source])) {
       const id = String(source);
       sourcePortDegree.set(id, (sourcePortDegree.get(id) ?? 0) + 1);
+      if (portOwnerById.has(id) && !edgeModelOrderByPortId.has(id)) {
+        edgeModelOrderByPortId.set(id, edgeIndex);
+      }
     }
     for (const target of edge.targets ?? (edge.target === undefined ? [] : [edge.target])) {
       const id = String(target);
       targetPortDegree.set(id, (targetPortDegree.get(id) ?? 0) + 1);
+      if (portOwnerById.has(id) && !edgeModelOrderByPortId.has(id)) {
+        edgeModelOrderByPortId.set(id, edgeIndex);
+      }
     }
   }
   const orderedPorts = (child: ElkNode) => {
@@ -731,6 +738,17 @@ function toGraph(root: ElkNode, globalOptions: Readonly<Record<string, unknown>>
             (targetPortDegree.get(String(right.id)) ?? 0)
           );
         }
+      }
+      const modelOrderStrategy = String(
+        getOption(globalOptions, "layered.considerModelOrder.strategy") ?? "NONE",
+      );
+      const usePortModelOrder =
+        getBooleanOption(globalOptions, "layered.considerModelOrder.portModelOrder") === true;
+      if (modelOrderStrategy !== "NONE" && !usePortModelOrder) {
+        const edgeOrderDifference =
+          (edgeModelOrderByPortId.get(String(left.id)) ?? Infinity) -
+          (edgeModelOrderByPortId.get(String(right.id)) ?? Infinity);
+        if (edgeOrderDifference !== 0) return edgeOrderDifference;
       }
       const direction = leftSide === "WEST" ? -1 : 1;
       return direction * ((child.ports?.indexOf(left) ?? 0) - (child.ports?.indexOf(right) ?? 0));
