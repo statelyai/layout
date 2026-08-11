@@ -242,6 +242,19 @@ export function placeNodesWithLinearSegments(
     incident.get(edge.sourceId)?.push(edge);
     incident.get(edge.targetId)?.push(edge);
   }
+  const inputPriorityById = new Map<string, number>();
+  const outputPriorityById = new Map<string, number>();
+  for (const id of layer.keys()) {
+    const priorities = (predicate: (edge: GraphEdge) => boolean) =>
+      Math.max(
+        Number.NEGATIVE_INFINITY,
+        ...input.graph.edges
+          .filter(predicate)
+          .map((edge) => Number(input.edgeSettings?.(edge)?.["priority.straightness"] ?? 0)),
+      );
+    inputPriorityById.set(id, priorities((edge) => edge.targetId === id));
+    outputPriorityById.set(id, priorities((edge) => edge.sourceId === id));
+  }
   const dampening = Number(
     input.settings["nodePlacement.linearSegments.deflectionDampening"] ?? 0.3,
   );
@@ -262,11 +275,25 @@ export function placeNodesWithLinearSegments(
       for (const id of segment.ids) {
         let nodeDeflection = 0;
         let edgeWeight = 0;
+        const minimumPriority = Math.max(
+          incoming ? (inputPriorityById.get(id) ?? Number.NEGATIVE_INFINITY) : Number.NEGATIVE_INFINITY,
+          outgoingEdges
+            ? (outputPriorityById.get(id) ?? Number.NEGATIVE_INFINITY)
+            : Number.NEGATIVE_INFINITY,
+        );
         for (const edge of incident.get(id) ?? []) {
           const source = edge.sourceId === id;
           if ((source && !outgoingEdges) || (!source && !incoming)) continue;
           const other = source ? edge.targetId : edge.sourceId;
           if (segmentById.get(other) === segment) continue;
+          const priority = Number(
+            input.edgeSettings?.(edge)?.["priority.straightness"] ?? 0,
+          );
+          const otherPriority = Math.max(
+            inputPriorityById.get(other) ?? Number.NEGATIVE_INFINITY,
+            outputPriorityById.get(other) ?? Number.NEGATIVE_INFINITY,
+          );
+          if (priority < minimumPriority || priority < otherPriority) continue;
           const here =
             (y.get(id) ?? 0) + (anchors.get(`${edge.id}:${id}`) ?? crossSize(input, id) / 2);
           const there =
@@ -350,7 +377,7 @@ export function placeNodesWithLinearSegments(
         upper === undefined
           ? (y.get(id) ?? 0)
           : (y.get(id) ?? 0) -
-              ((y.get(upper) ?? 0) + crossSize(input, upper) + nodeNodeSpacing(input, upper, id)),
+              ((y.get(upper) ?? 0) + crossSize(input, upper) + nodeNodeSpacing(input, id, upper)),
       );
       roomBelow = Math.min(
         roomBelow,

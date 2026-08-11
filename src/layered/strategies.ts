@@ -2152,15 +2152,23 @@ export const minimizeCrossingsInteractively: CrossingMinimizer = (
         ? (input.sizes.get(source.id)?.width ?? 0)
         : (input.sizes.get(source.id)?.height ?? 0);
       targetPoint.cross = horizontal ? (target.y ?? 0) : (target.x ?? 0);
-      const denominator = targetPoint.flow - sourcePoint.flow;
+      const internalFlowSign =
+        input.direction === "left" ||
+        (input.direction === "down" && input.settings.directionCongruency === "ROTATION")
+          ? -1
+          : 1;
+      const internalReferenceFlow = internalFlowSign * referenceFlow;
+      const internalSourceFlow = internalFlowSign * sourcePoint.flow;
+      const internalTargetFlow = internalFlowSign * targetPoint.flow;
+      const denominator = internalTargetFlow - internalSourceFlow;
       const ratio =
-        referenceFlow <= sourcePoint.flow
+        internalReferenceFlow <= internalSourceFlow
           ? 0
-          : targetPoint.flow <= referenceFlow
+          : internalTargetFlow <= internalReferenceFlow
             ? 1
             : Math.abs(denominator) < 1e-9
-          ? 0.5
-              : (referenceFlow - sourcePoint.flow) / denominator;
+              ? 0.5
+              : (internalReferenceFlow - internalSourceFlow) / denominator;
       const cross = sourcePoint.cross + ratio * (targetPoint.cross - sourcePoint.cross);
       const dummy = nodeById.get(id);
       if (dummy) {
@@ -2733,12 +2741,7 @@ function implicitEdgeEndpoints(
       unzipping ||
       interactiveTargetOrder ||
       (input.settings.hierarchyHandling !== "INCLUDE_CHILDREN" &&
-        (crossingStrategy === "LAYER_SWEEP" || crossingStrategy === "MEDIAN_LAYER_SWEEP")) ||
-      (crossingStrategy === "NONE" &&
-        horizontal &&
-        entries.some(({ edge, endpoint }) =>
-          (endpoint === "source" ? edge.targetId : edge.sourceId).startsWith("__layout_dummy:"),
-        ));
+        (crossingStrategy === "LAYER_SWEEP" || crossingStrategy === "MEDIAN_LAYER_SWEEP"));
     entries.sort((left, right) => {
       if (layerOrdered) {
         const leftOther = placement.rectByNodeId.get(
