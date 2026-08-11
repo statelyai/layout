@@ -2741,6 +2741,15 @@ function implicitEdgeEndpoints(
       (input.settings.hierarchyHandling !== "INCLUDE_CHILDREN" &&
         (crossingStrategy === "LAYER_SWEEP" || crossingStrategy === "MEDIAN_LAYER_SWEEP"));
     entries.sort((left, right) => {
+      if (interactiveTargetOrder) {
+        const leftDummy = left.edge.sourceId.startsWith("__layout_dummy:");
+        const rightDummy = right.edge.sourceId.startsWith("__layout_dummy:");
+        if (leftDummy !== rightDummy) return Number(leftDummy) - Number(rightDummy);
+        return (
+          (edgeModelOrder.get(left.edge.id) ?? Number.MAX_SAFE_INTEGER) -
+          (edgeModelOrder.get(right.edge.id) ?? Number.MAX_SAFE_INTEGER)
+        );
+      }
       if (verticalNoneTargetOrder) {
         const leftOrder = edgeModelOrder.get(left.edge.id) ?? Number.MAX_SAFE_INTEGER;
         const rightOrder = edgeModelOrder.get(right.edge.id) ?? Number.MAX_SAFE_INTEGER;
