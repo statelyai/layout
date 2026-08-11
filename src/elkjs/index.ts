@@ -589,7 +589,7 @@ export default class ELK {
                                   layoutOptions,
                                   "layered.crossingMinimization.greedySwitchHierarchical.type",
                                 ),
-                              ),
+                              ) as LayeredAdvancedOptions["crossingMinimization.greedySwitch.type"],
                             }
                           : {}),
                       },

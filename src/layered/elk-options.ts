@@ -5,6 +5,7 @@ import {
   type ElkLayeredOptionName,
   type ElkLayeredOptionValueByName,
 } from "./elk-options.generated";
+import { elkLayeredEnumValues } from "./elk-enum-values";
 import type { LayeredLayoutOptions, LayoutPadding } from "./types";
 export { elkLayeredEnumValues, type ElkLayeredEnumOptionName } from "./elk-enum-values";
 
@@ -15,45 +16,22 @@ export {
   type ElkLayeredOptionValueByName,
 };
 
-export type CycleBreakingStrategy =
-  | "GREEDY"
-  | "DEPTH_FIRST"
-  | "INTERACTIVE"
-  | "MODEL_ORDER"
-  | "GREEDY_MODEL_ORDER"
-  | "SCC_CONNECTIVITY"
-  | "SCC_NODE_TYPE"
-  | "DFS_NODE_ORDER"
-  | "BFS_NODE_ORDER";
-
-export type LayeringStrategy =
-  | "NETWORK_SIMPLEX"
-  | "LONGEST_PATH"
-  | "LONGEST_PATH_SOURCE"
-  | "COFFMAN_GRAHAM"
-  | "INTERACTIVE"
-  | "STRETCH_WIDTH"
-  | "MIN_WIDTH"
-  | "BF_MODEL_ORDER"
-  | "DF_MODEL_ORDER";
-
+export type CycleBreakingStrategy = (typeof elkLayeredEnumValues)["cycleBreaking.strategy"][number];
+export type LayeringStrategy = (typeof elkLayeredEnumValues)["layering.strategy"][number];
 export type CrossingMinimizationStrategy =
-  | "LAYER_SWEEP"
-  | "MEDIAN_LAYER_SWEEP"
-  | "INTERACTIVE"
-  | "NONE";
+  (typeof elkLayeredEnumValues)["crossingMinimization.strategy"][number];
+export type NodePlacementStrategy = (typeof elkLayeredEnumValues)["nodePlacement.strategy"][number];
+export type EdgeRoutingStyle = (typeof elkLayeredEnumValues)["edgeRouting"][number];
 
-export type NodePlacementStrategy =
-  | "SIMPLE"
-  | "INTERACTIVE"
-  | "LINEAR_SEGMENTS"
-  | "BRANDES_KOEPF"
-  | "NETWORK_SIMPLEX";
-
-export type EdgeRoutingStyle = "UNDEFINED" | "POLYLINE" | "ORTHOGONAL" | "SPLINES";
+type StrictElkLayeredOptionValueByName = Omit<
+  ElkLayeredOptionValueByName,
+  keyof typeof elkLayeredEnumValues
+> & {
+  [Name in keyof typeof elkLayeredEnumValues]?: (typeof elkLayeredEnumValues)[Name][number];
+};
 
 export type LayeredAdvancedOptions = Omit<
-  ElkLayeredOptionValueByName,
+  StrictElkLayeredOptionValueByName,
   | "direction"
   | "padding"
   | "spacing.node"
