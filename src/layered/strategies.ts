@@ -2139,6 +2139,7 @@ export const minimizeCrossingsInteractively: CrossingMinimizer = (
       };
       const sourcePoint = point(source);
       const targetPoint = point(target);
+      if (input.direction === "left") sourcePoint.cross = source.y ?? 0;
       sourcePoint.flow += horizontal
         ? (input.sizes.get(source.id)?.width ?? 0)
         : (input.sizes.get(source.id)?.height ?? 0);
