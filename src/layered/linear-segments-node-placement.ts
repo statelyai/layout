@@ -20,9 +20,10 @@ interface Segment {
 
 function crossSize(input: LayeredPhaseInput, id: string): number {
   const size = input.sizes.get(id);
-  const value = input.direction === "left" || input.direction === "right"
-    ? (size?.height ?? 0)
-    : (size?.width ?? 0);
+  const value =
+    input.direction === "left" || input.direction === "right"
+      ? (size?.height ?? 0)
+      : (size?.width ?? 0);
   if (value !== 0 || !id.startsWith("__layout_dummy:")) return value;
   return Math.max(
     1,
@@ -252,8 +253,14 @@ export function placeNodesWithLinearSegments(
           .filter(predicate)
           .map((edge) => Number(input.edgeSettings?.(edge)?.["priority.straightness"] ?? 0)),
       );
-    inputPriorityById.set(id, priorities((edge) => edge.targetId === id));
-    outputPriorityById.set(id, priorities((edge) => edge.sourceId === id));
+    inputPriorityById.set(
+      id,
+      priorities((edge) => edge.targetId === id),
+    );
+    outputPriorityById.set(
+      id,
+      priorities((edge) => edge.sourceId === id),
+    );
   }
   const dampening = Number(
     input.settings["nodePlacement.linearSegments.deflectionDampening"] ?? 0.3,
@@ -276,7 +283,9 @@ export function placeNodesWithLinearSegments(
         let nodeDeflection = 0;
         let edgeWeight = 0;
         const minimumPriority = Math.max(
-          incoming ? (inputPriorityById.get(id) ?? Number.NEGATIVE_INFINITY) : Number.NEGATIVE_INFINITY,
+          incoming
+            ? (inputPriorityById.get(id) ?? Number.NEGATIVE_INFINITY)
+            : Number.NEGATIVE_INFINITY,
           outgoingEdges
             ? (outputPriorityById.get(id) ?? Number.NEGATIVE_INFINITY)
             : Number.NEGATIVE_INFINITY,
@@ -286,9 +295,7 @@ export function placeNodesWithLinearSegments(
           if ((source && !outgoingEdges) || (!source && !incoming)) continue;
           const other = source ? edge.targetId : edge.sourceId;
           if (segmentById.get(other) === segment) continue;
-          const priority = Number(
-            input.edgeSettings?.(edge)?.["priority.straightness"] ?? 0,
-          );
+          const priority = Number(input.edgeSettings?.(edge)?.["priority.straightness"] ?? 0);
           const otherPriority = Math.max(
             inputPriorityById.get(other) ?? Number.NEGATIVE_INFINITY,
             outputPriorityById.get(other) ?? Number.NEGATIVE_INFINITY,
