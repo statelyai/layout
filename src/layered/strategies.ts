@@ -466,6 +466,7 @@ function breakCyclesByStronglyConnectedComponents(
 
       const incoming: GraphEdge[] = [];
       const outgoing: GraphEdge[] = [];
+      const allMaximumOutgoing: GraphEdge[] = [];
       let minimumIndegree = 0;
       let maximumOutdegree = 0;
       for (const edge of input.graph.edges) {
@@ -479,6 +480,7 @@ function breakCyclesByStronglyConnectedComponents(
         }
         if (sourceId === maximumId) {
           maximumOutdegree++;
+          allMaximumOutgoing.push(edge);
           if (members.has(targetId)) outgoing.push(edge);
         }
       }
@@ -503,7 +505,7 @@ function breakCyclesByStronglyConnectedComponents(
           input.settings["considerModelOrder.groupModelOrder.cbPreferredTargetId"];
         if (preferredSource !== undefined && minimumGroup === preferredSource) selected = incoming;
         else if (preferredTarget !== undefined && maximumGroup === preferredTarget)
-          selected = outgoing;
+          selected = allMaximumOutgoing;
         else selected = minimumIndegree > maximumOutdegree ? incoming : outgoing;
       } else {
         selected = minimumIndegree > maximumOutdegree ? incoming : outgoing;

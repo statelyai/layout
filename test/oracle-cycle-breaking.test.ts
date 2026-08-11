@@ -280,4 +280,69 @@ describe("ELK enforced cycle-breaking group order", () => {
       );
     });
   }
+
+  for (const [option, value] of [
+    ["cbPreferredSourceId", 2],
+    ["cbPreferredTargetId", 1],
+    ["cbPreferredSourceId", 99],
+    ["cbPreferredTargetId", 99],
+  ] as const) {
+    it(`matches SCC_NODE_TYPE ${option}=${value}`, async () => {
+      const rootOptions = {
+        "elk.algorithm": "layered",
+        "elk.direction": "RIGHT",
+        "elk.separateConnectedComponents": "false",
+        "elk.layered.cycleBreaking.strategy": "SCC_NODE_TYPE",
+        "elk.layered.feedbackEdges": "true",
+        [`elk.layered.considerModelOrder.groupModelOrder.${option}`]: String(value),
+      };
+      const expectedGraph = await new ELK().layout({
+        id: "root",
+        layoutOptions: rootOptions,
+        children: nodeIds.map((id) => ({
+          id,
+          width: 20,
+          height: 20,
+          layoutOptions: {
+            "elk.layered.considerModelOrder.groupModelOrder.cycleBreakingId": String(
+              groupById.get(id),
+            ),
+          },
+        })),
+        edges: edges.map((edge) => ({
+          id: edge.id,
+          sources: [edge.sourceId],
+          targets: [edge.targetId],
+        })),
+      });
+      const actualGraph = getLayeredLayout(
+        createGraph({ nodes: nodeIds.map((id) => ({ id })), edges }),
+        {
+          direction: "right",
+          settings: {
+            "cycleBreaking.strategy": "SCC_NODE_TYPE",
+            feedbackEdges: true,
+            [`considerModelOrder.groupModelOrder.${option}`]: value,
+          },
+          nodeSettings: (node) => ({
+            "considerModelOrder.groupModelOrder.cycleBreakingId": groupById.get(node.id),
+          }),
+        },
+      );
+      const feedback = (positions: ReadonlyMap<string, number>): Set<string> =>
+        new Set(
+          edges
+            .filter(
+              (edge) => (positions.get(edge.sourceId) ?? 0) > (positions.get(edge.targetId) ?? 0),
+            )
+            .map((edge) => edge.id),
+        );
+
+      expect(feedback(new Map(actualGraph.nodes.map((node) => [node.id, node.x])))).toEqual(
+        feedback(
+          new Map(expectedGraph.children?.map((node) => [String(node.id), node.x ?? 0]) ?? []),
+        ),
+      );
+    });
+  }
 });
