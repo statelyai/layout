@@ -560,7 +560,9 @@ export default class ELK {
                   : getLayeredLayout(graph_, {
                       direction: getDirection(layoutOptions),
                       spacing: {
-                        node: getNumberOption(layoutOptions, "spacing.nodeNode"),
+                        node:
+                          getNumberOption(layoutOptions, "spacing.nodeNode") ??
+                          getNumberOption(layoutOptions, "layered.spacing.baseValue"),
                         layer:
                           (getNumberOption(
                             layoutOptions,
@@ -1018,6 +1020,25 @@ function getElementLayeredSettings(
 
 function getLayeredSettings(options: Readonly<Record<string, unknown>>): LayeredAdvancedOptions {
   const settings = getElementLayeredSettings(options);
+  const baseValue = settings["spacing.baseValue"];
+  if (baseValue !== undefined) {
+    for (const [name, defaultValue] of [
+      ["spacing.componentComponent", 20],
+      ["spacing.edgeEdge", 10],
+      ["spacing.edgeLabel", 2],
+      ["spacing.edgeNode", 10],
+      ["spacing.labelLabel", 0],
+      ["spacing.labelNode", 5],
+      ["spacing.labelPortHorizontal", 1],
+      ["spacing.labelPortVertical", 1],
+      ["spacing.nodeSelfLoop", 10],
+      ["spacing.portPort", 10],
+      ["spacing.edgeEdgeBetweenLayers", 10],
+      ["spacing.edgeNodeBetweenLayers", 10],
+    ] as const) {
+      settings[name] ??= (baseValue * defaultValue) / 20;
+    }
+  }
   for (const name of ergonomicallyMappedLayeredSettings) delete settings[name];
   return settings as LayeredAdvancedOptions;
 }

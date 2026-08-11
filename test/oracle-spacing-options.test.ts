@@ -94,6 +94,30 @@ describe("ELK spacing-option parity", () => {
     }
   }
 
+  it("scales every dependent default from spacing.baseValue", () =>
+    compare({
+      id: "root",
+      layoutOptions: {
+        "elk.algorithm": "layered",
+        "elk.direction": "RIGHT",
+        "elk.edgeRouting": "ORTHOGONAL",
+        "elk.separateConnectedComponents": "false",
+        "elk.layered.spacing.baseValue": "0.5",
+      },
+      children: [
+        { id: "a", width: 30, height: 20 },
+        { id: "b", width: 40, height: 25 },
+        { id: "c", width: 35, height: 30 },
+        { id: "d", width: 30, height: 25 },
+      ],
+      edges: [
+        { id: "ab", sources: ["a"], targets: ["b"] },
+        { id: "ac", sources: ["a"], targets: ["c"] },
+        { id: "bd", sources: ["b"], targets: ["d"] },
+        { id: "dc", sources: ["d"], targets: ["c"] },
+      ],
+    }));
+
   for (const option of [
     "elk.spacing.edgeEdge",
     "elk.spacing.edgeNode",
