@@ -56,6 +56,32 @@ function midpoint(points: readonly Point[]): Point {
   return { x: (first.x + second.x) / 2, y: (first.y + second.y) / 2 };
 }
 
+function prepareExampleGraph(input: Example["graph"]): ElkNode {
+  const graph = structuredClone(input) as ElkNode;
+  const sizeNode = (node: ElkNode): void => {
+    for (const child of node.children ?? []) sizeNode(child);
+    for (const label of node.labels ?? []) {
+      if (!label.width) label.width = Math.max(12, (label.text?.length ?? 0) * 7);
+      if (!label.height) label.height = 16;
+    }
+    for (const port of node.ports ?? []) {
+      if (!port.width) port.width = 10;
+      if (!port.height) port.height = 10;
+      for (const label of port.labels ?? []) {
+        if (!label.width) label.width = Math.max(12, (label.text?.length ?? 0) * 7);
+        if (!label.height) label.height = 16;
+      }
+    }
+    if ((node.children?.length ?? 0) === 0) {
+      const label = node.labels?.[0]?.text ?? String(node.id ?? "");
+      if (!node.width) node.width = Math.max(48, label.length * 8 + 24);
+      if (!node.height) node.height = 36;
+    }
+  };
+  for (const child of graph.children ?? []) sizeNode(child);
+  return graph;
+}
+
 function toEmbedGraph(example: Example, graph: ElkNode) {
   const nodes: Array<Record<string, unknown>> = [];
   const edges: Array<Record<string, unknown>> = [];
@@ -223,7 +249,9 @@ async function main(): Promise<void> {
   const corpus = [];
   for (const example of examplesCatalog.examples) {
     console.log(`Laying out ${example.path}`);
-    const layout = (await oracle.layout(example.graph as never)) as unknown as ElkNode;
+    const layout = (await oracle.layout(
+      prepareExampleGraph(example.graph) as never,
+    )) as unknown as ElkNode;
     corpus.push({
       id: example.id,
       name: example.name,

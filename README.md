@@ -81,9 +81,10 @@ exposes the complete mapping, value type, and valid graph-element targets;
 
 The browser lab contains the same 45 categorized examples as ELK Live, sourced
 from the canonical `eclipse/elk-models` catalog. Each is pre-laid out with the
-elkjs oracle and shown in two renderers: a coordinate-faithful SVG geometry
-inspector and the `@statelyai/sdk` project embed. elkjs is never bundled into
-the browser.
+elkjs oracle after zero-sized nodes and ports receive consistent visual bounds,
+then shown in two renderers: a coordinate-faithful SVG geometry inspector and
+the `@statelyai/sdk` project embed. The canonical ELKT source remains unchanged;
+elkjs is never bundled into the browser.
 
 The searchable example browser opens each graph in a pannable, zoomable SVG.
 Its selection inspector and optional overlays expose exact node coordinates,

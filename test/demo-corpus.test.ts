@@ -29,8 +29,12 @@ describe("ELK Live example corpus", () => {
       expect(entry.graph.nodes.length).toBeGreaterThan(1);
       expect(entry.graph.nodes.every((node) => Number.isFinite(node.position.x))).toBe(true);
       expect(entry.graph.nodes.every((node) => Number.isFinite(node.position.y))).toBe(true);
-      // ELK Live intentionally includes point-sized nodes to demonstrate pure spacing behavior.
-      expect(entry.graph.nodes.every((node) => node.width >= 0 && node.height >= 0)).toBe(true);
+      expect(entry.graph.nodes.every((node) => node.width > 0 && node.height > 0)).toBe(true);
+      expect(
+        entry.graph.nodes
+          .flatMap((node) => ("ports" in node ? (node.ports ?? []) : []))
+          .every((port) => port.width > 0 && port.height > 0),
+      ).toBe(true);
     }
   });
 

@@ -70,10 +70,13 @@ routing. Worker execution and non-layered Java algorithm suites remain open.
 The two-renderer corpus contains the same 45 categorized examples as ELK Live,
 pinned from `eclipse/elk-models` and pre-laid out with the elkjs oracle. Its SVG
 geometry layer exposes exact bounds, label rectangles, route points, and ports;
-its SDK project-view layer exercises the same graph as a Viz consumer. Normal
-corpus generation is offline, so the browser bundle contains the resulting
-Stately graphs but not elkjs. `pnpm demo:sync` explicitly refreshes the upstream
-catalog and converted ELK JSON inputs.
+its SDK project-view layer exercises the same graph as a Viz consumer. Before
+layout, zero-sized nodes and ports receive consistent visual bounds so spacing
+and routing account for the shapes the browser displays. The stored canonical
+ELKT source remains unchanged. Normal corpus generation is offline, so the
+browser bundle contains the resulting Stately graphs but not elkjs. `pnpm
+demo:sync` explicitly refreshes the upstream catalog and converted ELK JSON
+inputs.
 
 ## Definition of full parity
 
