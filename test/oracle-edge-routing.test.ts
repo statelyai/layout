@@ -573,6 +573,78 @@ it("appends long-edge dummies after normal nodes with model-order crossing minim
   }
 });
 
+it("matches interactive target-port order with a long-edge spline", async () => {
+  const nodes = [
+    ["n0", 29, 18, 133, 73],
+    ["n1", 15, 17, 169, 142],
+    ["n2", 17, 27, 41, 147],
+    ["n3", 40, 25, 53, 22],
+    ["n4", 26, 27, 94, 100],
+    ["n5", 14, 31, 11, 104],
+  ].map(([id, width, height, x, y]) => ({
+    id: String(id),
+    width: Number(width),
+    height: Number(height),
+    x: Number(x),
+    y: Number(y),
+  }));
+  const edges = [
+    [0, 1],
+    [0, 3],
+    [1, 3],
+    [3, 4],
+  ].map(([source, target]) => ({
+    id: `e${source}-${target}`,
+    sourceId: `n${source}`,
+    targetId: `n${target}`,
+  }));
+  const oracle = await new ELK().layout({
+    id: "root",
+    layoutOptions: {
+      "elk.algorithm": "layered",
+      "elk.edgeRouting": "SPLINES",
+      "elk.randomSeed": "9",
+      "elk.separateConnectedComponents": "false",
+      "elk.layered.layering.strategy": "NETWORK_SIMPLEX",
+      "elk.layered.crossingMinimization.strategy": "INTERACTIVE",
+      "elk.layered.crossingMinimization.greedySwitch.type": "OFF",
+      "elk.layered.nodePlacement.strategy": "INTERACTIVE",
+    },
+    children: structuredClone(nodes),
+    edges: edges.map(({ id, sourceId, targetId }) => ({
+      id,
+      sources: [sourceId],
+      targets: [targetId],
+    })),
+  });
+  const native = getLayeredLayout(createGraph({ nodes, edges }), {
+    settings: {
+      edgeRouting: "SPLINES",
+      randomSeed: 9,
+      separateConnectedComponents: false,
+      "layering.strategy": "NETWORK_SIMPLEX",
+      "crossingMinimization.strategy": "INTERACTIVE",
+      "crossingMinimization.greedySwitch.type": "OFF",
+      "nodePlacement.strategy": "INTERACTIVE",
+    },
+  });
+  expect(native.nodes.map(({ x, y }) => [x, y])).toEqual(
+    oracle.children?.map(({ x, y }) => [x, y]),
+  );
+  for (const edge of oracle.edges ?? []) {
+    const section = (edge as ElkExtendedEdge).sections?.[0];
+    const expected = section
+      ? [section.startPoint, ...(section.bendPoints ?? []), section.endPoint]
+      : [];
+    const actual = native.edges.find(({ id }) => id === edge.id)?.points ?? [];
+    expect(actual).toHaveLength(expected.length);
+    actual.forEach((point, index) => {
+      expect(point.x).toBeCloseTo(expected[index]?.x ?? Number.NaN, 12);
+      expect(point.y).toBeCloseTo(expected[index]?.y ?? Number.NaN, 12);
+    });
+  }
+});
+
 for (const edgeRouting of ["ORTHOGONAL", "POLYLINE", "SPLINES"] as const) {
   it(`matches ELK ${edgeRouting} self-loop routing`, async () => {
     const loopNodes = [{ id: "a", width: 40, height: 30 }];
