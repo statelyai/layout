@@ -35,11 +35,30 @@ describe("ELK direction congruency parity", () => {
         expect(actual.children?.find((node) => node.id === "target")?.[flowCoordinate]).toEqual(
           expected.children?.find((node) => node.id === "target")?.[flowCoordinate],
         );
-        if (direction === "RIGHT" && congruency === "READING_DIRECTION") {
-          expect(actual.children?.find((node) => node.id === "target")?.y).toBeCloseTo(
-            expected.children?.find((node) => node.id === "target")?.y ?? Number.NaN,
-            12,
-          );
+        const crossCoordinate = flowCoordinate === "x" ? "y" : "x";
+        expect(
+          actual.children?.find((node) => node.id === "target")?.[crossCoordinate],
+        ).toBeCloseTo(
+          expected.children?.find((node) => node.id === "target")?.[crossCoordinate] ?? Number.NaN,
+          12,
+        );
+        for (const expectedEdge of expected.edges ?? []) {
+          const actualEdge = actual.edges?.find((edge) => edge.id === expectedEdge.id);
+          const expectedPoints = (expectedEdge.sections ?? []).flatMap((section) => [
+            section.startPoint,
+            ...(section.bendPoints ?? []),
+            section.endPoint,
+          ]);
+          const actualPoints = (actualEdge?.sections ?? []).flatMap((section) => [
+            section.startPoint,
+            ...(section.bendPoints ?? []),
+            section.endPoint,
+          ]);
+          expect(actualPoints).toHaveLength(expectedPoints.length);
+          for (const [index, expectedPoint] of expectedPoints.entries()) {
+            expect(actualPoints[index]?.x).toBeCloseTo(expectedPoint.x, 12);
+            expect(actualPoints[index]?.y).toBeCloseTo(expectedPoint.y, 12);
+          }
         }
       });
     }

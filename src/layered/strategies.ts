@@ -1998,6 +1998,7 @@ function implicitEdgeEndpoints(
   }
 
   const result = new Map<string, { source: Point; target: Point }>();
+  const edgeModelOrder = new Map(input.graph.edges.map((edge, index) => [edge.id, index]));
   for (const [key, entries] of groups) {
     const split = key.lastIndexOf(":");
     const nodeId = key.slice(0, split);
@@ -2009,16 +2010,18 @@ function implicitEdgeEndpoints(
       input.graph.nodes.find((node) => node.id === nodeId)!,
     )?.hypernode;
     entries.sort((left, right) => {
-      const leftOther = left.endpoint === "source" ? left.edge.targetId : left.edge.sourceId;
-      const rightOther = right.endpoint === "source" ? right.edge.targetId : right.edge.sourceId;
-      const leftRect = placement.rectByNodeId.get(leftOther);
-      const rightRect = placement.rectByNodeId.get(rightOther);
-      const leftCross = horizontal ? (leftRect?.y ?? 0) : (leftRect?.x ?? 0);
-      const rightCross = horizontal ? (rightRect?.y ?? 0) : (rightRect?.x ?? 0);
-      return leftCross - rightCross;
+      return (
+        (edgeModelOrder.get(left.edge.id) ?? Number.MAX_SAFE_INTEGER) -
+        (edgeModelOrder.get(right.edge.id) ?? Number.MAX_SAFE_INTEGER)
+      );
     });
     entries.forEach(({ edge, endpoint }, index) => {
-      const reversedCrossOrder = side === "before";
+      const reversedCrossOrder =
+        endpoint === "target" &&
+        !(
+          input.settings.directionCongruency === "ROTATION" &&
+          (input.direction === "down" || input.direction === "left")
+        );
       const ordinal = reversedCrossOrder ? entries.length - index : index + 1;
       const ratio = mergeEdges || hypernode === true ? 0.5 : ordinal / (entries.length + 1);
       const point = horizontal

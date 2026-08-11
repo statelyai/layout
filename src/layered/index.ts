@@ -1173,6 +1173,26 @@ function runLayeredPipeline<N, E, G, P>(
       }
     }
   }
+  if (
+    expanded.input.settings.directionCongruency === "ROTATION" &&
+    (direction === "left" || direction === "down")
+  ) {
+    const horizontal = direction === "left";
+    for (const node of expanded.input.graph.nodes) {
+      const incomingDegree = expanded.input.graph.edges.filter(
+        (edge) => edge.targetId === node.id && edge.sourceId !== node.id,
+      ).length;
+      if (incomingDegree < 2) continue;
+      const rect = mutableRects.get(node.id);
+      if (!rect) continue;
+      const crossSize = horizontal ? rect.height : rect.width;
+      const correction = crossSize / (incomingDegree + 1);
+      mutableRects.set(
+        node.id,
+        horizontal ? { ...rect, y: rect.y - correction } : { ...rect, x: rect.x - correction },
+      );
+    }
+  }
   measure("port-margin-normalization", () =>
     normalizePlacementForPortExtents(expanded.input, placement, order),
   );
