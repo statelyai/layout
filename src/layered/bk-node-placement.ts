@@ -66,12 +66,17 @@ function buildNeighbors(input: LayeredPhaseInput, order: LayerOrder) {
   const left = new Map<string, Neighbor[]>();
   const right = new Map<string, Neighbor[]>();
   const anchor = new Map<string, number>();
+  const edgeIdByNodePair = new Map<string, string>();
   const edgeModelOrder = new Map(input.graph.edges.map((edge, index) => [edge.id, index]));
   for (const id of layerIndex.keys()) {
     left.set(id, []);
     right.set(id, []);
   }
   for (const edge of input.graph.edges) {
+    const forwardPair = `${edge.sourceId}\0${edge.targetId}`;
+    const reversePair = `${edge.targetId}\0${edge.sourceId}`;
+    if (!edgeIdByNodePair.has(forwardPair)) edgeIdByNodePair.set(forwardPair, edge.id);
+    if (!edgeIdByNodePair.has(reversePair)) edgeIdByNodePair.set(reversePair, edge.id);
     const sourceLayer = layerIndex.get(edge.sourceId);
     const targetLayer = layerIndex.get(edge.targetId);
     if (sourceLayer === undefined || targetLayer === undefined || sourceLayer === targetLayer)
@@ -118,7 +123,7 @@ function buildNeighbors(input: LayeredPhaseInput, order: LayerOrder) {
       );
     });
   }
-  return { layerIndex, nodeIndex, left, right, anchor };
+  return { layerIndex, nodeIndex, left, right, anchor, edgeIdByNodePair };
 }
 
 function makeAlignment(hdir: HDirection, vdir: VDirection): Alignment {
@@ -221,16 +226,12 @@ function alignBlocks(
     let current = root;
     let next = bal.align.get(current) ?? root;
     while (next !== root) {
-      const edge = input.graph.edges.find(
-        (candidate) =>
-          (candidate.sourceId === current && candidate.targetId === next) ||
-          (candidate.sourceId === next && candidate.targetId === current),
-      );
-      const currentAnchor = edge
-        ? (neighbors.anchor.get(`${edge.id}:${current}`) ?? anchorCrossSize(input, current) / 2)
+      const edgeId = neighbors.edgeIdByNodePair.get(`${current}\0${next}`);
+      const currentAnchor = edgeId
+        ? (neighbors.anchor.get(`${edgeId}:${current}`) ?? anchorCrossSize(input, current) / 2)
         : anchorCrossSize(input, current) / 2;
-      const nextAnchor = edge
-        ? (neighbors.anchor.get(`${edge.id}:${next}`) ?? anchorCrossSize(input, next) / 2)
+      const nextAnchor = edgeId
+        ? (neighbors.anchor.get(`${edgeId}:${next}`) ?? anchorCrossSize(input, next) / 2)
         : anchorCrossSize(input, next) / 2;
       const nextShift = (bal.innerShift.get(current) ?? 0) + currentAnchor - nextAnchor;
       bal.innerShift.set(next, nextShift);
