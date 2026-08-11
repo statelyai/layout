@@ -86,10 +86,11 @@ demonstrator surface plus cycle, long-edge, named-port, and compound layered
 cases. Native and oracle-backed graphs are labeled separately; elkjs is never
 bundled into the browser.
 
-The SVG layer displays exact node dimensions and coordinates, edge label
-rectangles, route points, routing modes, and node-relative ports. The SDK layer
-then shows how the same serialized `@statelyai/graph` value appears in the Viz
-project view.
+The searchable example browser opens each graph in a pannable, zoomable SVG.
+Its selection inspector and optional overlays expose exact node coordinates,
+edge-label rectangles, route points, routing modes, and node-relative ports
+without crowding the diagram. The SDK layer shows how the same serialized
+`@statelyai/graph` value appears in the Viz project view.
 
 ```bash
 pnpm demo:generate
@@ -99,7 +100,7 @@ pnpm demo
 The embed target defaults to `http://localhost:3000`. Override it with
 `?editor=http://localhost:4864` when the Viz editor runs elsewhere.
 
-![Native layered graph in the SDK project view](./artifacts/screenshots/layout-parity-layered.png)
+![Named-port layout in the coordinate-faithful geometry viewer](./artifacts/screenshots/layout-parity-layered.png)
 
 ## Extensibility
 

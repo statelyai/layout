@@ -6,6 +6,7 @@ import {
   type GeometryGraph,
   type GeometryOptions,
   type GeometrySelection,
+  type GeometryViewport,
 } from "./geometry-renderer";
 import "./styles.css";
 
@@ -94,7 +95,6 @@ const initialId = params.get("graph") ?? corpus[0]?.id;
 let currentEntry = corpus.find((entry) => entry.id === initialId) ?? corpus[0];
 if (!currentEntry) throw new Error("The layout corpus is empty");
 
-const select = element<HTMLSelectElement>("[data-scenario]");
 const status = element<HTMLElement>("[data-status]");
 const detail = element<HTMLElement>("[data-detail]");
 const dot = element<HTMLElement>("[data-status-dot]");
@@ -105,27 +105,64 @@ const embedMount = element<HTMLElement>("[data-embed]");
 const geometryMount = element<HTMLElement>("[data-geometry]");
 const geometryView = element<HTMLElement>("[data-geometry-view]");
 const geometryControls = element<HTMLElement>("[data-geometry-controls]");
+const zoomControls = element<HTMLElement>("[data-zoom-controls]");
 const inspector = element<HTMLElement>("[data-inspector]");
+const scenarioList = element<HTMLElement>("[data-scenarios]");
+const empty = element<HTMLElement>("[data-empty]");
+const search = element<HTMLInputElement>("[data-search]");
 const viewButtons = [...document.querySelectorAll<HTMLButtonElement>("[data-view]")];
+const zoomButtons = [...document.querySelectorAll<HTMLButtonElement>("[data-zoom]")];
 const optionInputs = [...document.querySelectorAll<HTMLInputElement>("[data-option]")];
 element<HTMLElement>("[data-count]").textContent = String(corpus.length);
 
 const geometryOptions: GeometryOptions = {
-  grid: true,
-  bounds: true,
-  labels: true,
-  points: true,
+  grid: false,
+  bounds: false,
+  labels: false,
+  points: false,
   ports: true,
 };
 let currentView: View = params.get("view") === "sdk" ? "sdk" : "geometry";
 let embed: ReturnType<typeof createStatelyEmbed> | undefined;
+let viewport: GeometryViewport | undefined;
 
+const groups = new Map<string, CorpusEntry[]>();
 for (const entry of corpus) {
-  const option = document.createElement("option");
-  option.value = entry.id;
-  option.textContent = entry.name;
-  option.selected = entry.id === currentEntry.id;
-  select.append(option);
+  const group = groups.get(entry.algorithm) ?? [];
+  group.push(entry);
+  groups.set(entry.algorithm, group);
+}
+
+for (const [algorithm, entries] of groups) {
+  const section = document.createElement("section");
+  section.className = "scenario-group";
+  section.dataset.scenarioGroup = algorithm;
+  const heading = document.createElement("h2");
+  heading.textContent = algorithm;
+  const list = document.createElement("div");
+  list.className = "scenario-group-list";
+  for (const entry of entries) {
+    const button = document.createElement("button");
+    button.type = "button";
+    button.className = "scenario-button";
+    button.dataset.scenario = entry.id;
+    button.dataset.searchValue =
+      `${entry.name} ${entry.description} ${entry.algorithm}`.toLowerCase();
+    button.innerHTML = `<i class="scenario-engine${entry.engine === "native" ? "" : " oracle"}"></i><span></span>`;
+    const [, shortName] = entry.name.split(" · ", 2);
+    button.querySelector("span")!.textContent = shortName ?? entry.name;
+    button.addEventListener("click", () => selectEntry(entry));
+    list.append(button);
+  }
+  section.append(heading, list);
+  scenarioList.append(section);
+}
+
+function updateScenarioSelection(): void {
+  for (const button of document.querySelectorAll<HTMLButtonElement>("[data-scenario]")) {
+    if (button.dataset.scenario === currentEntry.id) button.setAttribute("aria-current", "page");
+    else button.removeAttribute("aria-current");
+  }
 }
 
 function showEntry(entry: CorpusEntry): void {
@@ -134,24 +171,33 @@ function showEntry(entry: CorpusEntry): void {
   description.textContent = entry.description;
   engine.textContent = entry.engine === "native" ? "Native TypeScript" : "elkjs oracle";
   engine.dataset.engine = entry.engine;
-  renderGeometry(
+  viewport = renderGeometry(
     geometryMount,
     entry.graph as unknown as GeometryGraph,
     geometryOptions,
     showSelection,
   );
+  updateScenarioSelection();
+}
+
+function selectEntry(entry: CorpusEntry): void {
+  showEntry(entry);
+  embed?.selectMachine(entry.id);
+  const url = new URL(window.location.href);
+  url.searchParams.set("graph", entry.id);
+  history.replaceState(null, "", url);
 }
 
 function ensureEmbed(): void {
   if (embed) return;
-  setStatus("Connecting to project view…", "Waiting for @statelyai/sdk", "waiting");
+  setStatus("Connecting to SDK view…", "Waiting for @statelyai/sdk", "waiting");
   embed = createStatelyEmbed({
     baseUrl: editorBaseUrl,
     apiKey: params.get("api_key") ?? "test",
     machines: corpus.map((entry) => ({ id: entry.id, name: entry.name, machine: entry.graph })),
     currentMachineId: currentEntry.id,
     mode: "viewing",
-    theme: "dark",
+    theme: "light",
     readOnly: true,
     depth: 1,
     panels: {
@@ -160,32 +206,26 @@ function ensureEmbed(): void {
     },
     onReady() {
       if (currentView === "sdk") {
-        setStatus(
-          "Project view connected",
-          `${corpus.length} pre-laid graphs loaded through @statelyai/sdk`,
-          "ready",
-        );
+        setStatus("SDK view connected", `${corpus.length} pre-laid graphs loaded`, "ready");
       }
     },
     onLoaded(graph) {
       if (currentView === "sdk") {
         setStatus(
-          "Project view connected",
-          `Rendered ${graph.nodes.length - 1} states and ${graph.edges.length} transitions`,
+          "SDK view connected",
+          `${graph.nodes.length - 1} nodes · ${graph.edges.length} edges`,
           "ready",
         );
       }
     },
     onError(error) {
-      if (currentView === "sdk") setStatus("Project view error", error.message, "error");
+      if (currentView === "sdk") setStatus("SDK view error", error.message, "error");
     },
   });
   embed.mount(embedMount);
   embed.on("machineSelected", ({ machineId }) => {
     const entry = corpus.find((candidate) => candidate.id === machineId);
-    if (!entry) return;
-    select.value = entry.id;
-    showEntry(entry);
+    if (entry) selectEntry(entry);
   });
 }
 
@@ -194,6 +234,7 @@ function showView(view: View): void {
   const geometryVisible = view === "geometry";
   geometryView.hidden = !geometryVisible;
   geometryControls.hidden = !geometryVisible;
+  zoomControls.hidden = !geometryVisible;
   embedMount.hidden = geometryVisible;
   for (const button of viewButtons) {
     const selected = button.dataset.view === view;
@@ -201,11 +242,7 @@ function showView(view: View): void {
     button.tabIndex = selected ? 0 : -1;
   }
   if (geometryVisible) {
-    setStatus(
-      "Geometry inspector ready",
-      "Authoritative routes, bounds, ports, and labels",
-      "ready",
-    );
+    setStatus("Geometry ready", "Exact graph geometry", "ready");
   } else {
     ensureEmbed();
     embed?.selectMachine(currentEntry.id);
@@ -215,21 +252,32 @@ function showView(view: View): void {
   history.replaceState(null, "", url);
 }
 
-showEntry(currentEntry);
-showView(currentView);
-
-select.addEventListener("change", () => {
-  const entry = corpus.find((candidate) => candidate.id === select.value);
-  if (!entry) return;
-  showEntry(entry);
-  embed?.selectMachine(entry.id);
-  const url = new URL(window.location.href);
-  url.searchParams.set("graph", entry.id);
-  history.replaceState(null, "", url);
+search.addEventListener("input", () => {
+  const query = search.value.trim().toLowerCase();
+  let visibleCount = 0;
+  for (const group of document.querySelectorAll<HTMLElement>("[data-scenario-group]")) {
+    let visibleInGroup = 0;
+    for (const button of group.querySelectorAll<HTMLButtonElement>("[data-scenario]")) {
+      const visible = !query || button.dataset.searchValue?.includes(query) === true;
+      button.hidden = !visible;
+      if (visible) visibleInGroup++;
+    }
+    group.hidden = visibleInGroup === 0;
+    visibleCount += visibleInGroup;
+  }
+  empty.hidden = visibleCount > 0;
 });
 
 for (const button of viewButtons) {
   button.addEventListener("click", () => showView(button.dataset.view as View));
+}
+
+for (const button of zoomButtons) {
+  button.addEventListener("click", () => {
+    if (button.dataset.zoom === "in") viewport?.zoomIn();
+    else if (button.dataset.zoom === "out") viewport?.zoomOut();
+    else viewport?.fit();
+  });
 }
 
 for (const input of optionInputs) {
@@ -239,3 +287,6 @@ for (const input of optionInputs) {
     showEntry(currentEntry);
   });
 }
+
+showEntry(currentEntry);
+showView(currentView);
