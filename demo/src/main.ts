@@ -128,17 +128,18 @@ let viewport: GeometryViewport | undefined;
 
 const groups = new Map<string, CorpusEntry[]>();
 for (const entry of corpus) {
-  const group = groups.get(entry.algorithm) ?? [];
+  const category = entry.category.join(" › ");
+  const group = groups.get(category) ?? [];
   group.push(entry);
-  groups.set(entry.algorithm, group);
+  groups.set(category, group);
 }
 
-for (const [algorithm, entries] of groups) {
+for (const [category, entries] of groups) {
   const section = document.createElement("section");
   section.className = "scenario-group";
-  section.dataset.scenarioGroup = algorithm;
+  section.dataset.scenarioGroup = category;
   const heading = document.createElement("h2");
-  heading.textContent = algorithm;
+  heading.textContent = category;
   const list = document.createElement("div");
   list.className = "scenario-group-list";
   for (const entry of entries) {
@@ -147,10 +148,9 @@ for (const [algorithm, entries] of groups) {
     button.className = "scenario-button";
     button.dataset.scenario = entry.id;
     button.dataset.searchValue =
-      `${entry.name} ${entry.description} ${entry.algorithm}`.toLowerCase();
+      `${entry.name} ${entry.description} ${entry.category.join(" ")} ${entry.sourcePath}`.toLowerCase();
     button.innerHTML = `<i class="scenario-engine${entry.engine === "native" ? "" : " oracle"}"></i><span></span>`;
-    const [, shortName] = entry.name.split(" · ", 2);
-    button.querySelector("span")!.textContent = shortName ?? entry.name;
+    button.querySelector("span")!.textContent = entry.name;
     button.addEventListener("click", () => selectEntry(entry));
     list.append(button);
   }
@@ -169,7 +169,7 @@ function showEntry(entry: CorpusEntry): void {
   currentEntry = entry;
   name.textContent = entry.name;
   description.textContent = entry.description;
-  engine.textContent = entry.engine === "native" ? "Native TypeScript" : "elkjs oracle";
+  engine.textContent = "ELK Live · elkjs";
   engine.dataset.engine = entry.engine;
   viewport = renderGeometry(
     geometryMount,

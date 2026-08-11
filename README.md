@@ -77,14 +77,13 @@ exposes the complete mapping, value type, and valid graph-element targets;
 
 ## Parity lab
 
-<!-- representative graph count and engines from demo/scenarios.ts -->
+<!-- ELK Live example count and source from demo/generated/elk-live-examples.json -->
 
-The browser lab compares 15 already-laid-out graphs in two renderers: a
-coordinate-faithful SVG geometry inspector and the `@statelyai/sdk` project
-embed. It covers all 11 algorithm families exposed by the elkjs 0.11.1
-demonstrator surface plus cycle, long-edge, named-port, and compound layered
-cases. Native and oracle-backed graphs are labeled separately; elkjs is never
-bundled into the browser.
+The browser lab contains the same 45 categorized examples as ELK Live, sourced
+from the canonical `eclipse/elk-models` catalog. Each is pre-laid out with the
+elkjs oracle and shown in two renderers: a coordinate-faithful SVG geometry
+inspector and the `@statelyai/sdk` project embed. elkjs is never bundled into
+the browser.
 
 The searchable example browser opens each graph in a pannable, zoomable SVG.
 Its selection inspector and optional overlays expose exact node coordinates,
@@ -97,10 +96,11 @@ pnpm demo:generate
 pnpm demo
 ```
 
+`pnpm demo:sync` refreshes the pinned ELK Live catalog and its converted ELK
+JSON inputs. Normal generation and browser use remain offline.
+
 The embed target defaults to `http://localhost:3000`. Override it with
 `?editor=http://localhost:4864` when the Viz editor runs elsewhere.
-
-![Named-port layout in the coordinate-faithful geometry viewer](./artifacts/screenshots/layout-parity-layered.png)
 
 ## Extensibility
 

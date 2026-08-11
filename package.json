@@ -26,6 +26,7 @@
     "demo:build": "vite build --config demo/vite.config.ts",
     "demo:check": "tsx scripts/generate-demo-corpus.ts --check",
     "demo:generate": "tsx scripts/generate-demo-corpus.ts",
+    "demo:sync": "tsx scripts/sync-elk-live-examples.ts && pnpm demo:generate",
     "demo:typecheck": "tsc --project demo/tsconfig.json",
     "generate:elk-layered-options": "tsx scripts/generate-elk-layered-options.ts",
     "generate:elk-layered-options:check": "tsx scripts/generate-elk-layered-options.ts --check",

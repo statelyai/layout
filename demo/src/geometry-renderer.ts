@@ -72,6 +72,7 @@ export interface GeometryViewport {
 interface AbsoluteNode extends GeometryNode {
   absoluteX: number;
   absoluteY: number;
+  isContainer: boolean;
   isRoot: boolean;
 }
 
@@ -88,6 +89,7 @@ function svgElement<K extends keyof SVGElementTagNameMap>(
 
 function absoluteNodes(graph: GeometryGraph): AbsoluteNode[] {
   const byId = new Map(graph.nodes.map((node) => [node.id, node]));
+  const parentIds = new Set(graph.nodes.flatMap((node) => (node.parentId ? [node.parentId] : [])));
   const cache = new Map<string, Point>();
 
   const position = (node: GeometryNode, seen = new Set<string>()): Point => {
@@ -108,6 +110,7 @@ function absoluteNodes(graph: GeometryGraph): AbsoluteNode[] {
       ...node,
       absoluteX: point.x,
       absoluteY: point.y,
+      isContainer: parentIds.has(node.id),
       isRoot: node.parentId == null,
     };
   });
@@ -216,8 +219,8 @@ function appendText(
 
 function paddedViewBox(bounds: GeometryBounds): GeometryBounds {
   const padding = 56;
-  const width = Math.max(900, bounds.width + padding * 2);
-  const height = Math.max(520, bounds.height + padding * 2);
+  const width = Math.max(360, bounds.width + padding * 2);
+  const height = Math.max(260, bounds.height + padding * 2);
   return {
     x: bounds.x + bounds.width / 2 - width / 2,
     y: bounds.y + bounds.height / 2 - height / 2,
@@ -359,7 +362,7 @@ export function renderGeometry(
       width: node.width,
       height: node.height,
       rx: 4,
-      class: "geometry-node-rect geometry-hit-target",
+      class: `geometry-node-rect${node.isContainer ? " geometry-container-rect" : ""} geometry-hit-target`,
     });
     makeInteractive(rect, `Node ${node.label ?? node.id}`, () =>
       onSelect({ kind: "node", node, x: node.absoluteX, y: node.absoluteY }),
@@ -368,10 +371,10 @@ export function renderGeometry(
     appendText(
       group,
       node.label ?? node.id,
-      node.absoluteX + node.width / 2,
-      node.absoluteY + node.height / 2 + 3.5,
-      "geometry-node-label",
-      "middle",
+      node.isContainer ? node.absoluteX + 4 : node.absoluteX + node.width / 2,
+      node.isContainer ? node.absoluteY - 6 : node.absoluteY + node.height / 2 + 3.5,
+      `geometry-node-label${node.isContainer ? " geometry-container-label" : ""}`,
+      node.isContainer ? "start" : "middle",
     );
     if (options.ports) {
       for (const port of node.ports ?? []) {

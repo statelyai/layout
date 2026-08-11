@@ -35,8 +35,9 @@
 
 body {
   min-width: 320px;
-  min-height: 100vh;
+  height: 100vh;
   margin: 0;
+  overflow: hidden;
   background: #f6f7f9;
 }
 
@@ -72,7 +73,7 @@ input:focus-visible,
 .app-shell {
   display: grid;
   grid-template-rows: 56px minmax(0, 1fr);
-  min-height: 100vh;
+  height: 100vh;
 }
 
 .topbar {
@@ -299,6 +300,7 @@ input:focus-visible,
 
 .workspace {
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
   grid-template-rows: auto minmax(0, 1fr);
   min-width: 0;
   min-height: 0;
@@ -425,8 +427,10 @@ h1 {
 .geometry-workspace {
   display: grid;
   grid-template-columns: minmax(0, 1fr) 272px;
+  width: 100%;
   min-width: 0;
   min-height: 0;
+  overflow: hidden;
 }
 
 .geometry-stage {
@@ -561,6 +565,10 @@ h1 {
   vector-effect: non-scaling-stroke;
 }
 
+.geometry-container-rect {
+  fill: rgb(244 243 255 / 35%);
+}
+
 .geometry-node-rect:hover,
 .geometry-node-rect:focus-visible {
   fill: #e9e7ff;
@@ -573,6 +581,12 @@ h1 {
   font-size: 10px;
   font-weight: 550;
   pointer-events: none;
+}
+
+.geometry-container-label {
+  fill: #555f6c;
+  font-size: 8px;
+  font-weight: 650;
 }
 
 .geometry-port {
@@ -725,7 +739,15 @@ h1 {
 }
 
 @media (max-width: 760px) {
+  body {
+    height: auto;
+    min-height: 100vh;
+    overflow: auto;
+  }
+
   .app-shell {
+    height: auto;
+    min-height: 100vh;
     grid-template-rows: auto auto;
   }
 
