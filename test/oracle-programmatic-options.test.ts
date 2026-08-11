@@ -24,6 +24,7 @@ it("matches ELK's non-serialized incremental metadata options", async () => {
           "elk.layered.layering.layerChoiceConstraint": "0",
           "elk.layered.crossingMinimization.positionChoiceConstraint": "0",
           "elk.layered.crossingMinimization.inLayerPredOf": "b",
+          "elk.layered.considerModelOrder.groupModelOrder.componentGroupId": "7",
           "elk.topdown.scaleFactor": "2",
         },
       },
@@ -40,7 +41,16 @@ it("matches ELK's non-serialized incremental metadata options", async () => {
         },
       },
     ],
-    edges: [{ id: "ab", sources: ["a"], targets: ["b"] }],
+    edges: [
+      {
+        id: "ab",
+        sources: ["a"],
+        targets: ["b"],
+        layoutOptions: {
+          "elk.layered.considerModelOrder.groupModelOrder.componentGroupId": "3",
+        },
+      },
+    ],
   };
   const expected = (await new OracleELK().layout(structuredClone(graph) as never)) as ElkNode;
   const actual = await new NativeELK().layout(structuredClone(graph));

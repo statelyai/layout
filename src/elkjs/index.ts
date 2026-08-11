@@ -138,6 +138,7 @@ export default class ELK {
     void getOption(layoutOptions, "interactiveLayout");
     void getOption(layoutOptions, "layered.generatePositionAndLayerIds");
     void getOption(layoutOptions, "topdown.scaleFactor");
+    void getOption(layoutOptions, "contentAlignment");
     for (const child of graph.children ?? []) {
       const childOptions = child.layoutOptions ?? {};
       void getOption(childOptions, "layered.layering.layerId");
@@ -147,6 +148,19 @@ export default class ELK {
       void getOption(childOptions, "layered.crossingMinimization.inLayerPredOf");
       void getOption(childOptions, "layered.crossingMinimization.inLayerSuccOf");
       void getOption(childOptions, "topdown.scaleFactor");
+      void getOption(childOptions, "layered.considerModelOrder.groupModelOrder.componentGroupId");
+      for (const port of child.ports ?? []) {
+        void getOption(
+          port.layoutOptions ?? {},
+          "layered.considerModelOrder.groupModelOrder.componentGroupId",
+        );
+      }
+    }
+    for (const edge of graph.edges ?? []) {
+      void getOption(
+        edge.layoutOptions ?? {},
+        "layered.considerModelOrder.groupModelOrder.componentGroupId",
+      );
     }
     const requestedAlgorithm = String(getOption(layoutOptions, "algorithm") ?? "layered");
     const algorithm = requestedAlgorithm.replace(/^(?:org\.eclipse\.)?elk\./, "");
