@@ -58,3 +58,21 @@ it("matches ELK when connected-component separation is disabled", async () => {
     ],
   });
 });
+
+for (const strategy of ["INSIDE_PORT_SIDE_GROUPS", "GROUP_MODEL_ORDER", "MODEL_ORDER"] as const) {
+  it(`matches ELK ${strategy} component model order`, async () => {
+    await expectOracleParity({
+      id: "root",
+      layoutOptions: {
+        "elk.algorithm": "layered",
+        "elk.layered.considerModelOrder.components": strategy,
+      },
+      children: [
+        { id: "a", width: 30, height: 30 },
+        { id: "b", width: 20, height: 20 },
+        { id: "c", width: 30, height: 25 },
+        { id: "d", width: 20, height: 27 },
+      ],
+    });
+  });
+}

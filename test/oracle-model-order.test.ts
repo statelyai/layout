@@ -231,4 +231,64 @@ describe("ELK model-order crossing parity", () => {
       expect(layerOrders(actual)).toEqual(layerOrders(expected));
     });
   }
+
+  for (const portInfluence of [0, 0.001, 0.5, 1, 2]) {
+    it(`matches port crossing-counter influence ${portInfluence}`, async () => {
+      const children: NonNullable<ElkNode["children"]> = [];
+      for (const prefix of ["s", "t"] as const) {
+        for (let index = 0; index < 4; index++) {
+          children.push({
+            id: `${prefix}${index}`,
+            width: 40,
+            height: 60,
+            layoutOptions: { "elk.portConstraints": "FIXED_SIDE" },
+            ports: [0, 1, 2].map((portIndex) => ({
+              id: `${prefix}${index}p${portIndex}`,
+              width: 8,
+              height: 8,
+              layoutOptions: { "elk.port.side": prefix === "s" ? "EAST" : "WEST" },
+            })),
+          });
+        }
+      }
+      const input: ElkNode = {
+        id: "root",
+        layoutOptions: {
+          "elk.algorithm": "layered",
+          "elk.direction": "RIGHT",
+          "elk.separateConnectedComponents": "false",
+          "elk.randomSeed": "1",
+          "elk.layered.considerModelOrder.strategy": "NODES_AND_EDGES",
+          "elk.layered.considerModelOrder.crossingCounterPortInfluence": String(portInfluence),
+        },
+        children,
+        edges: [
+          ["s0p1", "t3p1"],
+          ["s2p0", "t1p1"],
+          ["s1p1", "t0p0"],
+          ["s1p2", "t1p0"],
+          ["s3p1", "t3p2"],
+          ["s2p1", "t2p1"],
+          ["s2p1", "t1p2"],
+        ].map(([source, target], index) => ({
+          id: `port-influence-${index}`,
+          sources: [source!],
+          targets: [target!],
+        })),
+      };
+      const [expected, actual] = await Promise.all([
+        new OracleELK().layout(structuredClone(input) as never) as Promise<ElkNode>,
+        new NativeELK().layout(structuredClone(input)),
+      ]);
+      const layerOrder = (graph: ElkNode, prefix: string) =>
+        Array.from({ length: 4 }, (_, index) => `${prefix}${index}`).sort(
+          (left, right) =>
+            (graph.children?.find((node) => node.id === left)?.y ?? 0) -
+            (graph.children?.find((node) => node.id === right)?.y ?? 0),
+        );
+
+      expect(layerOrder(actual, "s")).toEqual(layerOrder(expected, "s"));
+      expect(layerOrder(actual, "t")).toEqual(layerOrder(expected, "t"));
+    });
+  }
 });
