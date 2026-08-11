@@ -216,6 +216,41 @@ describe("ELK node-placement oracle", () => {
     );
   });
 
+  it("matches network-simplex straight-path preference beside a long edge", async () => {
+    const graph: ElkNode = {
+      id: "root",
+      layoutOptions: {
+        "elk.algorithm": "layered",
+        "elk.direction": "RIGHT",
+        "elk.edgeRouting": "ORTHOGONAL",
+        "elk.separateConnectedComponents": "false",
+        "elk.layered.nodePlacement.strategy": "NETWORK_SIMPLEX",
+      },
+      children: [
+        { id: "a", width: 30, height: 20 },
+        { id: "b", width: 40, height: 25 },
+        { id: "c", width: 35, height: 30 },
+        { id: "d", width: 30, height: 25 },
+      ],
+      edges: [
+        { id: "ab", sources: ["a"], targets: ["b"] },
+        { id: "ac", sources: ["a"], targets: ["c"] },
+        { id: "bd", sources: ["b"], targets: ["d"] },
+        { id: "dc", sources: ["d"], targets: ["c"] },
+      ],
+    };
+    const [oracle, native] = await Promise.all([
+      new ELK().layout(structuredClone(graph)),
+      new NativeELK().layout(structuredClone(graph)),
+    ]);
+    expect(native.children?.map(({ id, x, y }) => ({ id, x, y }))).toEqual(
+      oracle.children?.map(({ id, x, y }) => ({ id, x, y })),
+    );
+    expect(native.edges?.map(({ sections }) => sections)).toEqual(
+      oracle.edges?.map(({ sections }) => sections),
+    );
+  });
+
   for (const strategy of [
     "SIMPLE",
     "INTERACTIVE",

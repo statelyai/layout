@@ -168,6 +168,56 @@ export function placeNodesWithNetworkSimplex(
   const horizontal = input.direction === "left" || input.direction === "right";
   const inputNodeById = new Map(input.graph.nodes.map((node) => [node.id, node]));
   const anchors = endpointAnchors(input, order);
+  const favorStraightEdges =
+    input.settings["nodePlacement.favorStraightEdges"] ??
+    (input.settings.edgeRouting ?? "ORTHOGONAL") === "ORTHOGONAL";
+  const preferredWeightByEdgeId = new Map<string, number>();
+  if (favorStraightEdges) {
+    const incoming = new Map(input.graph.nodes.map((node) => [node.id, [] as GraphEdge[]]));
+    const outgoing = new Map(input.graph.nodes.map((node) => [node.id, [] as GraphEdge[]]));
+    for (const edge of input.graph.edges) {
+      if (edge.sourceId === edge.targetId) continue;
+      outgoing.get(edge.sourceId)?.push(edge);
+      incoming.get(edge.targetId)?.push(edge);
+    }
+    const junction = (id: string): boolean => {
+      const incomingCount = incoming.get(id)?.length ?? 0;
+      const outgoingCount = outgoing.get(id)?.length ?? 0;
+      return incomingCount > 1 || outgoingCount > 1 || incomingCount + outgoingCount === 1;
+    };
+    for (const node of input.graph.nodes) {
+      if (!junction(node.id)) continue;
+      for (const first of outgoing.get(node.id) ?? []) {
+        const path = [first];
+        let currentId = first.targetId;
+        const seen = new Set([first.id]);
+        while (!junction(currentId)) {
+          const next = outgoing.get(currentId)?.[0];
+          if (!next || seen.has(next.id)) break;
+          path.push(next);
+          seen.add(next.id);
+          currentId = next.targetId;
+        }
+        if (
+          path.length <= 2 ||
+          path.some(
+            (edge) =>
+              edge.sourceId.startsWith("__layout_dummy:") ||
+              edge.targetId.startsWith("__layout_dummy:"),
+          )
+        ) {
+          continue;
+        }
+        path.forEach((edge, index) => {
+          const weight = index === 0 || index === path.length - 1 ? 16 : 64;
+          preferredWeightByEdgeId.set(
+            edge.id,
+            Math.max(preferredWeightByEdgeId.get(edge.id) ?? 0, weight),
+          );
+        });
+      }
+    }
+  }
   const nodes: SimplexNode[] = [];
   const nodeById = new Map<string, SimplexNode>();
   for (const layer of order.layers) {
@@ -229,8 +279,9 @@ export function placeNodesWithNetworkSimplex(
     const sourceDummy = graphEdge.sourceId.startsWith("__layout_dummy:");
     const targetDummy = graphEdge.targetId.startsWith("__layout_dummy:");
     const typeWeight = sourceDummy && targetDummy ? 32 : sourceDummy || targetDummy ? 8 : 4;
-    addEdge(edges, dummy, source, Math.max(0, targetOffset - sourceOffset), priority * typeWeight);
-    addEdge(edges, dummy, target, Math.max(0, sourceOffset - targetOffset), priority * typeWeight);
+    const weight = priority * (preferredWeightByEdgeId.get(graphEdge.id) ?? typeWeight);
+    addEdge(edges, dummy, source, Math.max(0, targetOffset - sourceOffset), weight);
+    addEdge(edges, dummy, target, Math.max(0, sourceOffset - targetOffset), weight);
   }
   makeConnected(nodes, edges);
   runNetworkSimplex(
