@@ -3253,6 +3253,7 @@ function routeEdges(style: "ORTHOGONAL" | "POLYLINE" | "SPLINES"): EdgeRouter {
             right: number;
             leftNode: string;
             rightNode: string;
+            straight: boolean;
           }>,
       );
       for (const edge of input.graph.edges) {
@@ -3269,7 +3270,7 @@ function routeEdges(style: "ORTHOGONAL" | "POLYLINE" | "SPLINES"): EdgeRouter {
         );
         if (style === "POLYLINE") {
           extraByGap[gap] = Math.max(extraByGap[gap] ?? 0, 0.4 * edgeSpaceFactor * crossDifference);
-        } else if (crossDifference >= 0.2) {
+        } else if (crossDifference >= 0.2 || input.direction === "left") {
           const graphSourceCross = horizontal ? endpoints.source.y : endpoints.source.x;
           const graphTargetCross = horizontal ? endpoints.target.y : endpoints.target.x;
           splineCandidatesByGap[gap]?.push({
@@ -3278,8 +3279,12 @@ function routeEdges(style: "ORTHOGONAL" | "POLYLINE" | "SPLINES"): EdgeRouter {
             right: sourceLayer < targetLayer ? graphTargetCross : graphSourceCross,
             leftNode: sourceLayer < targetLayer ? edge.sourceId : edge.targetId,
             rightNode: sourceLayer < targetLayer ? edge.targetId : edge.sourceId,
+            straight: crossDifference < 0.2,
           });
-          if ((input.settings["edgeRouting.splines.mode"] ?? "SLOPPY") === "SLOPPY") {
+          if (
+            crossDifference >= 0.2 &&
+            (input.settings["edgeRouting.splines.mode"] ?? "SLOPPY") === "SLOPPY"
+          ) {
             const sloppyFactor = Number(
               input.settings["edgeRouting.splines.sloppy.layerSpacingFactor"] ?? 0.2,
             );
@@ -3345,8 +3350,9 @@ function routeEdges(style: "ORTHOGONAL" | "POLYLINE" | "SPLINES"): EdgeRouter {
               });
             } else {
               if (
-                input.settings["layering.strategy"] === "STRETCH_WIDTH" &&
-                input.settings["crossingMinimization.strategy"] === "NONE"
+                input.direction === "left" ||
+                (input.settings["layering.strategy"] === "STRETCH_WIDTH" &&
+                  input.settings["crossingMinimization.strategy"] === "NONE")
               ) {
                 dependencies.push({ source: secondIndex, target: firstIndex, weight: 0 });
                 dependencies.push({ source: firstIndex, target: secondIndex, weight: 0 });
@@ -3464,7 +3470,12 @@ function routeEdges(style: "ORTHOGONAL" | "POLYLINE" | "SPLINES"): EdgeRouter {
           (input.settings["crossingMinimization.greedySwitch.type"] ?? "OFF") !== "OFF";
         nonStraightByGap[gap] = Math.min(
           candidates.length,
-          rankedSlots + Number(greedyCompletesFourSegmentOrder),
+          Math.max(
+            0,
+            ...candidates.map((candidate, index) =>
+              candidate.straight ? 0 : (rank[index] ?? 0) + 1,
+            ),
+          ) + Number(greedyCompletesFourSegmentOrder),
         );
         for (const [index, candidate] of candidates.entries()) {
           splineTrackRankByEdgeId.set(candidate.edgeId, {

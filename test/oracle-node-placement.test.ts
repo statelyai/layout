@@ -95,6 +95,59 @@ describe("ELK node-placement oracle", () => {
     expect(positions(native.children ?? [])).toEqual(positions(oracle.children ?? []));
   });
 
+  it("matches LEFT network-simplex source ports and spline slots", async () => {
+    const graph: ElkNode = {
+      id: "root",
+      layoutOptions: {
+        "elk.algorithm": "layered",
+        "elk.direction": "LEFT",
+        "elk.edgeRouting": "SPLINES",
+        "elk.randomSeed": "6",
+        "elk.separateConnectedComponents": "false",
+        "elk.layered.layering.strategy": "MIN_WIDTH",
+        "elk.layered.crossingMinimization.strategy": "INTERACTIVE",
+        "elk.layered.crossingMinimization.greedySwitch.type": "OFF",
+        "elk.layered.nodePlacement.strategy": "NETWORK_SIMPLEX",
+      },
+      children: [
+        { id: "n0", width: 24, height: 17, x: 111, y: 75 },
+        { id: "n1", width: 27, height: 31, x: 125, y: 143 },
+        { id: "n2", width: 39, height: 31, x: 34, y: 11 },
+        { id: "n3", width: 32, height: 25, x: 140, y: 76 },
+        { id: "n4", width: 30, height: 27, x: 185, y: 22 },
+      ],
+      edges: [
+        { id: "e0-1", sources: ["n0"], targets: ["n1"] },
+        { id: "e0-4", sources: ["n0"], targets: ["n4"] },
+      ],
+    };
+    const [oracle, native] = await Promise.all([
+      new ELK().layout(structuredClone(graph)),
+      new NativeELK().layout(structuredClone(graph)),
+    ]);
+    expect([native.width, native.height]).toEqual([oracle.width, oracle.height]);
+    expect(native.children?.map(({ id, x, y }) => [id, x, y])).toEqual(
+      oracle.children?.map(({ id, x, y }) => [id, x, y]),
+    );
+    expect(
+      native.edges?.map((edge) =>
+        edge.sections?.map((section) => [
+          section.startPoint,
+          ...(section.bendPoints ?? []),
+          section.endPoint,
+        ]),
+      ),
+    ).toEqual(
+      oracle.edges?.map((edge) =>
+        edge.sections?.map((section) => [
+          section.startPoint,
+          ...(section.bendPoints ?? []),
+          section.endPoint,
+        ]),
+      ),
+    );
+  });
+
   for (const strategy of [
     "SIMPLE",
     "INTERACTIVE",

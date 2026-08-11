@@ -100,10 +100,13 @@ function endpointAnchors(input: LayeredPhaseInput, order: LayerOrder) {
   const anchors = new Map<string, number>();
   for (const [id, edges] of after) {
     const sweptOrder = order.outputPortOrderByNodeId?.get(id);
-    edges.sort((a, b) =>
-      sweptOrder
-        ? sweptOrder.indexOf(a.id) - sweptOrder.indexOf(b.id)
-        : (index.get(other(a, id)) ?? 0) - (index.get(other(b, id)) ?? 0),
+    const direction = input.direction === "left" ? -1 : 1;
+    edges.sort(
+      (a, b) =>
+        direction *
+        (sweptOrder
+          ? sweptOrder.indexOf(a.id) - sweptOrder.indexOf(b.id)
+          : (index.get(other(a, id)) ?? 0) - (index.get(other(b, id)) ?? 0)),
     );
     edges.forEach((edge, edgeNo) =>
       anchors.set(
