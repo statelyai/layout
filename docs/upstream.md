@@ -37,10 +37,14 @@ The first direct Java translations use ELK v0.11.0 commit
 `54123e884b1ae743b453260f713b20c9bf5787f2`, matching the ELK baseline shipped
 through elkjs 0.11.1:
 
-| Java source                 | TypeScript source | Covered behavior                   |
-| --------------------------- | ----------------- | ---------------------------------- |
-| `BoxLayoutProvider.java`    | `src/box.ts`      | SIMPLE packing and priority order  |
-| `RandomLayoutProvider.java` | `src/random.ts`   | Java RNG and seeded node placement |
+| Java source/family                                | TypeScript source                                          | Covered behavior                      |
+| ------------------------------------------------- | ---------------------------------------------------------- | ------------------------------------- |
+| `BoxLayoutProvider.java`                          | `src/box.ts`                                               | SIMPLE packing and priority order     |
+| `RandomLayoutProvider.java`                       | `src/random.ts`                                            | Java RNG and seeded node placement    |
+| Network simplex and width layerers                | `src/layered/network-simplex.ts`, width layerers           | Layer assignment and width objectives |
+| BK, linear-segments, and network-simplex placers  | `src/layered/*node-placement.ts`                           | Layered node placement                |
+| Breaking-point wrapping and alternating unzipping | `src/layered/multi-edge-wrapping.ts`, `layer-unzipping.ts` | Graph mutation and route restoration  |
+| Spline Bézier control-point calculation           | `src/layered/spline-bezier.ts`                             | Native spline route geometry          |
 
 Translated files retain upstream copyright and SPDX headers. Differential
 tests compare their seeded geometry with elkjs.

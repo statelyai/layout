@@ -9,13 +9,12 @@ return `VisualGraph`; positions remain node fields and routes remain
 
 ## Status
 
-The native layered implementation currently supports flat graphs, cycles,
-ports, self-loops, four directions, typed constraints, padding, orthogonal
-routes, and replaceable phases. Native fixed, rectangle-packing, and initial
-SPOrE implementations are also available. ELK Box SIMPLE placement and seeded
-Random node placement are translated from Java. Partial, incremental,
-route-only, and native compound layout remain explicit unimplemented
-capabilities.
+The native layered implementation covers the complete 152-option elkjs 0.11.1
+layered inventory with one simplified typed name per ELK option. Flat and
+compound graphs, cross-hierarchy edges, ports, labels, self-loops, wrapping,
+four directions, constraints, and replaceable phases are differential-tested
+against elkjs. Partial, incremental, and route-only layout remain explicit
+unimplemented capabilities.
 
 ## Install
 
@@ -68,6 +67,11 @@ const legacyResult = await elk.layout(elkJsonGraph);
 The adapter accepts ELK JSON and option aliases, translates to
 `@statelyai/graph`, runs native algorithms, and translates the result back.
 Native algorithms never consume ELK JSON directly.
+
+Advanced layered settings use shorter names such as
+`layering.strategy`, `spacing.edgeNode`, and `nodePlacement.strategy`.
+`toElkLayeredOptions` and `fromElkLayeredOptionId` provide the exact one-to-one
+mapping when migration tooling needs ELK IDs.
 
 ## Parity lab
 
