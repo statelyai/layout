@@ -1950,8 +1950,7 @@ function minimizeCrossingsWithLayerSweep(
           if (entries.length < 2) continue;
           const slots = entries.map(({ id }) => layer.indexOf(id)).sort((a, b) => a - b);
           entries.sort(
-            (left, right) =>
-              (edgeOrder.get(right.edgeId) ?? 0) - (edgeOrder.get(left.edgeId) ?? 0),
+            (left, right) => (edgeOrder.get(right.edgeId) ?? 0) - (edgeOrder.get(left.edgeId) ?? 0),
           );
           for (const [index, slot] of slots.entries()) layer[slot] = entries[index]!.id;
         }
@@ -2796,7 +2795,7 @@ function implicitEdgeEndpoints(
       input.settings["layering.strategy"] === "STRETCH_WIDTH" &&
       entries.every(({ endpoint }) => endpoint === "target") &&
       !input.graph.edges.some(({ sourceId }) => sourceId === nodeId) &&
-        entries.some(({ edge }) => edge.sourceId.startsWith("__layout_dummy:"));
+      entries.some(({ edge }) => edge.sourceId.startsWith("__layout_dummy:"));
     const interactiveLeftSourceOrder =
       crossingStrategy === "INTERACTIVE" &&
       input.direction === "left" &&
@@ -2810,12 +2809,16 @@ function implicitEdgeEndpoints(
               const rightCross = (rightRect?.y ?? 0) + (rightRect?.height ?? 0) / 2;
               return (
                 rightCross - leftCross ||
-                (edgeModelOrder.get(left.edge.id) ?? 0) -
-                  (edgeModelOrder.get(right.edge.id) ?? 0)
+                (edgeModelOrder.get(left.edge.id) ?? 0) - (edgeModelOrder.get(right.edge.id) ?? 0)
               );
             })
             .map(({ edge }) => edge.id)
         : undefined;
+    const interactiveVerticalLongEdgeSource =
+      !horizontal &&
+      crossingStrategy === "INTERACTIVE" &&
+      entries.every(({ endpoint }) => endpoint === "source") &&
+      entries.some(({ edge }) => edge.targetId.startsWith("__layout_dummy:"));
     const layerOrdered =
       unzipping ||
       interactiveTargetOrder ||
@@ -2828,9 +2831,15 @@ function implicitEdgeEndpoints(
         const rightExtreme = interactiveLeftSourceOrder[0] === right.edge.id;
         return (
           Number(rightExtreme) - Number(leftExtreme) ||
-          (edgeModelOrder.get(left.edge.id) ?? 0) -
-            (edgeModelOrder.get(right.edge.id) ?? 0)
+          (edgeModelOrder.get(left.edge.id) ?? 0) - (edgeModelOrder.get(right.edge.id) ?? 0)
         );
+      }
+      if (interactiveVerticalLongEdgeSource) {
+        const leftOther = placement.rectByNodeId.get(left.edge.targetId);
+        const rightOther = placement.rectByNodeId.get(right.edge.targetId);
+        const leftCross = (leftOther?.x ?? 0) + (leftOther?.width ?? 0) / 2;
+        const rightCross = (rightOther?.x ?? 0) + (rightOther?.width ?? 0) / 2;
+        if (leftCross !== rightCross) return rightCross - leftCross;
       }
       if (interactiveTargetOrder) {
         const leftDummy = left.edge.sourceId.startsWith("__layout_dummy:");

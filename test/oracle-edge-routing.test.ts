@@ -688,8 +688,7 @@ it("matches the minimum legal position for a RIGHT interactive long-edge spline"
       "elk.randomSeed": String(options.randomSeed),
       "elk.separateConnectedComponents": String(options.separateConnectedComponents),
       "elk.layered.layering.strategy": options["layering.strategy"],
-      "elk.layered.crossingMinimization.strategy":
-        options["crossingMinimization.strategy"],
+      "elk.layered.crossingMinimization.strategy": options["crossingMinimization.strategy"],
       "elk.layered.crossingMinimization.greedySwitch.type":
         options["crossingMinimization.greedySwitch.type"],
       "elk.layered.nodePlacement.strategy": options["nodePlacement.strategy"],
@@ -1000,6 +999,75 @@ it("compacts leftward interactive routing gaps and ranks near-straight dummy seg
       expect(point.x).toBeCloseTo(expected[index]?.x ?? Number.NaN, 12);
       expect(point.y).toBeCloseTo(expected[index]?.y ?? Number.NaN, 12);
     });
+  }
+});
+
+it("matches vertical interactive spline source order across a long edge", async () => {
+  const nodes = [
+    ["n0", 18, 26, 103, 140],
+    ["n1", 16, 26, 36, 135],
+    ["n2", 10, 32, 93, 166],
+    ["n3", 15, 28, 80, 100],
+    ["n4", 24, 21, 185, 147],
+    ["n5", 37, 10, 153, 10],
+  ].map(([id, width, height, x, y]) => ({
+    id: String(id),
+    width: Number(width),
+    height: Number(height),
+    x: Number(x),
+    y: Number(y),
+  }));
+  const edges = [
+    [0, 1],
+    [0, 2],
+    [2, 4],
+    [3, 5],
+  ].map(([source, target]) => ({
+    id: `e${source}-${target}`,
+    sourceId: `n${source}`,
+    targetId: `n${target}`,
+  }));
+  const oracle = await new ELK().layout({
+    id: "root",
+    layoutOptions: {
+      "elk.algorithm": "layered",
+      "elk.direction": "DOWN",
+      "elk.edgeRouting": "SPLINES",
+      "elk.randomSeed": "7",
+      "elk.separateConnectedComponents": "false",
+      "elk.layered.layering.strategy": "STRETCH_WIDTH",
+      "elk.layered.crossingMinimization.strategy": "INTERACTIVE",
+      "elk.layered.crossingMinimization.greedySwitch.type": "OFF",
+      "elk.layered.nodePlacement.strategy": "BRANDES_KOEPF",
+    },
+    children: structuredClone(nodes),
+    edges: edges.map(({ id, sourceId, targetId }) => ({
+      id,
+      sources: [sourceId],
+      targets: [targetId],
+    })),
+  });
+  const native = getLayeredLayout(createGraph({ nodes, edges }), {
+    direction: "down",
+    settings: {
+      edgeRouting: "SPLINES",
+      randomSeed: 7,
+      separateConnectedComponents: false,
+      "layering.strategy": "STRETCH_WIDTH",
+      "crossingMinimization.strategy": "INTERACTIVE",
+      "crossingMinimization.greedySwitch.type": "OFF",
+      "nodePlacement.strategy": "BRANDES_KOEPF",
+    },
+  });
+  expect(native.nodes.map(({ x, y }) => [x, y])).toEqual(
+    oracle.children?.map(({ x, y }) => [x, y]),
+  );
+  for (const edge of oracle.edges ?? []) {
+    const section = (edge as ElkExtendedEdge).sections?.[0];
+    const expected = section
+      ? [section.startPoint, ...(section.bendPoints ?? []), section.endPoint]
+      : [];
+    expect(native.edges.find(({ id }) => id === edge.id)?.points).toEqual(expected);
   }
 });
 

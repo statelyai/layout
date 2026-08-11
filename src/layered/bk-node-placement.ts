@@ -93,19 +93,29 @@ function buildNeighbors(input: LayeredPhaseInput, order: LayerOrder) {
     (input.settings["layerUnzipping.strategy"] ?? "NONE") === "ALTERNATING";
   for (const [id, entries] of right) {
     const sweptOrder = order.outputPortOrderByNodeId?.get(id);
+    const interactiveVerticalLongEdgeSource =
+      input.direction !== "left" &&
+      input.direction !== "right" &&
+      input.settings["crossingMinimization.strategy"] === "INTERACTIVE" &&
+      entries.some((entry) => entry.id.startsWith("__layout_dummy:"));
     const portOrder =
       sweptOrder !== undefined
         ? [...entries].sort(
             (leftEntry, rightEntry) =>
               sweptOrder.indexOf(leftEntry.edgeId) - sweptOrder.indexOf(rightEntry.edgeId),
           )
-        : useLayerOrderPorts || entries.some((entry) => entry.id.startsWith("__layout_dummy:"))
-          ? entries
-          : [...entries].sort(
+        : interactiveVerticalLongEdgeSource
+          ? [...entries].sort(
               (leftEntry, rightEntry) =>
-                (edgeModelOrder.get(leftEntry.edgeId) ?? 0) -
-                (edgeModelOrder.get(rightEntry.edgeId) ?? 0),
-            );
+                (nodeIndex.get(rightEntry.id) ?? 0) - (nodeIndex.get(leftEntry.id) ?? 0),
+            )
+          : useLayerOrderPorts || entries.some((entry) => entry.id.startsWith("__layout_dummy:"))
+            ? entries
+            : [...entries].sort(
+                (leftEntry, rightEntry) =>
+                  (edgeModelOrder.get(leftEntry.edgeId) ?? 0) -
+                  (edgeModelOrder.get(rightEntry.edgeId) ?? 0),
+              );
     portOrder.forEach((entry, index) => {
       anchor.set(
         `${entry.edgeId}:${id}`,
@@ -325,12 +335,15 @@ function compact(
           );
           assigned = true;
         } else {
+          // ELK deliberately uses the global node-node spacing when it builds
+          // the class graph. Type-specific spacing only applies within a class.
+          const classSpacing = input.spacing.node;
           const separation =
             bal.vdir === "UP"
               ? (bal.y.get(root) ?? 0) +
                 (bal.innerShift.get(current) ?? 0) +
                 crossSize(input, current) +
-                spacing -
+                classSpacing -
                 (bal.y.get(neighborRoot) ?? 0) -
                 (bal.innerShift.get(neighbor) ?? 0)
               : (bal.y.get(root) ?? 0) +
@@ -338,7 +351,7 @@ function compact(
                 (bal.y.get(neighborRoot) ?? 0) -
                 (bal.innerShift.get(neighbor) ?? 0) -
                 crossSize(input, neighbor) -
-                spacing;
+                classSpacing;
           addClassEdge(rootSink, neighborSink, separation);
         }
       }
@@ -547,9 +560,7 @@ export function placeNodesWithBrandesKoepf(
         .sort((a, b) => a - b);
       balanced.set(id, (values[1]! + values[2]!) / 2);
     }
-    positions = preservesLayerOrder(input, order, balanced)
-      ? balanced
-      : smallestFeasibleLayout().y;
+    positions = preservesLayerOrder(input, order, balanced) ? balanced : smallestFeasibleLayout().y;
   } else {
     positions = smallestFeasibleLayout().y;
   }
