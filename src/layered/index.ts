@@ -16,6 +16,7 @@ import {
   applyGreedySwitch,
   applyDirectionCongruency,
   applyForcedModelOrder,
+  applyPostCompaction,
   applySemiInteractiveOrder,
   breakCyclesByModelOrder,
   breakCyclesByStronglyConnectedConnectivity,
@@ -693,6 +694,8 @@ function runSeparatedComponents<N, E, G, P>(
   let x = 0;
   let y = 0;
   let rowHeight = 0;
+  const compactConnectedComponents = options.settings?.["compaction.connectedComponents"] === true;
+  const placedShapes: Array<{ left: number; right: number; top: number; bottom: number }> = [];
   const nodeResults = new Map<string, VisualNode<N, P>>();
   const edgeResults = new Map<string, (typeof components)[number]["result"]["edges"][number]>();
   for (const component of components) {
@@ -701,10 +704,30 @@ function runSeparatedComponents<N, E, G, P>(
       y += rowHeight + componentSpacing;
       rowHeight = 0;
     }
+    let compactedY = y;
+    if (compactConnectedComponents && y > 0) {
+      let requiredY = 0;
+      for (const node of component.result.nodes) {
+        const localLeft = x + (node.x ?? 0) - component.bounds.left;
+        const localRight = localLeft + (node.width ?? 0);
+        const localTop = (node.y ?? 0) - component.bounds.top;
+        for (const placed of placedShapes) {
+          if (localRight <= placed.left || localLeft >= placed.right) continue;
+          requiredY = Math.max(requiredY, placed.bottom + componentSpacing - localTop);
+        }
+      }
+      compactedY = Math.min(y, requiredY);
+    }
     const dx = padding.left + x - component.bounds.left;
-    const dy = padding.top + y - component.bounds.top;
+    const dy = padding.top + compactedY - component.bounds.top;
     for (const node of component.result.nodes) {
       nodeResults.set(node.id, { ...node, x: (node.x ?? 0) + dx, y: (node.y ?? 0) + dy });
+      placedShapes.push({
+        left: x + (node.x ?? 0) - component.bounds.left,
+        right: x + (node.x ?? 0) - component.bounds.left + (node.width ?? 0),
+        top: compactedY + (node.y ?? 0) - component.bounds.top,
+        bottom: compactedY + (node.y ?? 0) - component.bounds.top + (node.height ?? 0),
+      });
     }
     for (const edge of component.result.edges) {
       edgeResults.set(edge.id, {
@@ -1021,7 +1044,9 @@ function runLayeredPipeline<N, E, G, P>(
     if (nodePlacementStrategy === "NETWORK_SIMPLEX") return placeNodesWithNetworkSimplex;
     return placeNodesInLayers;
   })();
-  const placement = measure("node-placement", () => nodePlacer(expanded.input, order));
+  const placement = measure("node-placement", () =>
+    applyPostCompaction(expanded.input, nodePlacer(expanded.input, order)),
+  );
   const mutableRects = placement.rectByNodeId as Map<
     string,
     { x: number; y: number; width: number; height: number }

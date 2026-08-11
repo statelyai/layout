@@ -1651,6 +1651,100 @@ export function applyDirectionCongruency(input: LayeredPhaseInput, order: LayerO
   return { layers: order.layers.map((layer) => [...layer].reverse()) };
 }
 
+/** ELK post-placement one-dimensional graph compaction. */
+export function applyPostCompaction(
+  input: LayeredPhaseInput,
+  placement: NodePlacement,
+): NodePlacement {
+  const strategy = input.settings["compaction.postCompaction.strategy"] ?? "NONE";
+  // Both source strategies construct the same constraint relation; only their
+  // asymptotic implementation differs.
+  const constraintStrategy = input.settings["compaction.postCompaction.constraints"] ?? "SCANLINE";
+  void constraintStrategy;
+  if (strategy === "NONE") return placement;
+  const horizontal = input.direction === "left" || input.direction === "right";
+  const rects = placement.rectByNodeId as Map<string, EntityRect>;
+  const crossStart = (rect: EntityRect) => (horizontal ? rect.y : rect.x);
+  const crossEnd = (rect: EntityRect) => crossStart(rect) + (horizontal ? rect.height : rect.width);
+  const flowStart = (rect: EntityRect) => (horizontal ? rect.x : rect.y);
+  const flowSize = (rect: EntityRect) => (horizontal ? rect.width : rect.height);
+  const setFlow = (rect: EntityRect, value: number): EntityRect =>
+    horizontal ? { ...rect, x: value } : { ...rect, y: value };
+  const leading = horizontal ? input.padding.left : input.padding.top;
+  const original = new Map([...rects].map(([id, rect]) => [id, { ...rect }]));
+
+  const compactLeft = (): void => {
+    const processed: string[] = [];
+    const ids = [...rects.keys()].sort(
+      (left, right) =>
+        flowStart(original.get(left)!) - flowStart(original.get(right)!) ||
+        crossStart(original.get(left)!) - crossStart(original.get(right)!),
+    );
+    for (const id of ids) {
+      const authored = original.get(id)!;
+      let candidate = leading;
+      for (const previousId of processed) {
+        const previousAuthored = original.get(previousId)!;
+        if (flowStart(previousAuthored) >= flowStart(authored)) continue;
+        const previous = rects.get(previousId)!;
+        if (
+          crossEnd(previous) <= crossStart(authored) ||
+          crossStart(previous) >= crossEnd(authored)
+        )
+          continue;
+        candidate = Math.max(
+          candidate,
+          flowStart(previous) + flowSize(previous) + input.spacing.layer,
+        );
+      }
+      rects.set(id, setFlow(rects.get(id)!, Math.min(flowStart(authored), candidate)));
+      processed.push(id);
+    }
+  };
+  compactLeft();
+  if (strategy === "RIGHT" || strategy === "LEFT_RIGHT_CONNECTION_LOCKING") {
+    const maximumEnd = Math.max(
+      ...[...original.values()].map((rect) => flowStart(rect) + flowSize(rect)),
+    );
+    const processed: string[] = [];
+    const degree = new Map(input.graph.nodes.map((node) => [node.id, 0]));
+    for (const edge of input.graph.edges) {
+      degree.set(edge.sourceId, (degree.get(edge.sourceId) ?? 0) + 1);
+      degree.set(edge.targetId, (degree.get(edge.targetId) ?? 0) + 1);
+    }
+    const rightmostFreeId = [...rects.keys()]
+      .filter((id) => (degree.get(id) ?? 0) === 0)
+      .sort((left, right) => crossStart(rects.get(left)!) - crossStart(rects.get(right)!))[0];
+    const ids = [...rects.keys()].sort(
+      (left, right) =>
+        flowStart(original.get(right)!) - flowStart(original.get(left)!) ||
+        crossStart(original.get(right)!) - crossStart(original.get(left)!),
+    );
+    for (const id of ids) {
+      if ((degree.get(id) ?? 0) === 0 && id !== rightmostFreeId) {
+        processed.push(id);
+        continue;
+      }
+      const authored = original.get(id)!;
+      let candidate = maximumEnd - flowSize(authored);
+      for (const nextId of processed) {
+        const nextAuthored = original.get(nextId)!;
+        if (flowStart(nextAuthored) <= flowStart(authored)) continue;
+        const next = rects.get(nextId)!;
+        if (crossEnd(next) <= crossStart(authored) || crossStart(next) >= crossEnd(authored))
+          continue;
+        candidate = Math.min(candidate, flowStart(next) - input.spacing.layer - flowSize(authored));
+      }
+      rects.set(id, setFlow(rects.get(id)!, Math.max(flowStart(rects.get(id)!), candidate)));
+      processed.push(id);
+    }
+    const minimum = Math.min(...[...rects.values()].map(flowStart));
+    for (const [id, rect] of rects)
+      rects.set(id, setFlow(rect, flowStart(rect) + leading - minimum));
+  }
+  return placement;
+}
+
 function sumWithSpacing(
   ids: readonly string[],
   input: LayeredPhaseInput,
