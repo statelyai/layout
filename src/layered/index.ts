@@ -334,6 +334,379 @@ function runWrappedPathPipeline<N, E, G, P>(
   } as VisualGraph<N, E, G, P>;
 }
 
+function runWrappedMultiEdgePipeline<N, E, G, P>(
+  graph: Graph<N, E, G, P> | VisualGraph<N, E, G, P>,
+  options: LayeredLayoutOptions,
+): VisualGraph<N, E, G, P> | undefined {
+  if (
+    (options.settings?.["wrapping.strategy"] ?? "OFF") !== "MULTI_EDGE" ||
+    (options.direction ?? graph.direction ?? "right") !== "right" ||
+    graph.nodes.length < 2
+  ) {
+    return undefined;
+  }
+  const nodeIndex = new Map(graph.nodes.map((node, index) => [node.id, index]));
+  const outgoing = new Map(graph.nodes.map((node) => [node.id, [] as string[]]));
+  const incoming = new Map(graph.nodes.map((node) => [node.id, [] as string[]]));
+  const indegree = new Map(graph.nodes.map((node) => [node.id, 0]));
+  for (const edge of graph.edges) {
+    if (
+      !nodeIndex.has(edge.sourceId) ||
+      !nodeIndex.has(edge.targetId) ||
+      edge.sourceId === edge.targetId
+    )
+      return undefined;
+    outgoing.get(edge.sourceId)!.push(edge.targetId);
+    incoming.get(edge.targetId)!.push(edge.sourceId);
+    indegree.set(edge.targetId, (indegree.get(edge.targetId) ?? 0) + 1);
+  }
+  const queue = graph.nodes
+    .filter((node) => indegree.get(node.id) === 0)
+    .sort((left, right) => nodeIndex.get(left.id)! - nodeIndex.get(right.id)!)
+    .map((node) => node.id);
+  const rank = new Map(graph.nodes.map((node) => [node.id, 0]));
+  const topological: string[] = [];
+  while (queue.length > 0) {
+    const id = queue.shift()!;
+    topological.push(id);
+    for (const targetId of outgoing.get(id) ?? []) {
+      rank.set(targetId, Math.max(rank.get(targetId) ?? 0, (rank.get(id) ?? 0) + 1));
+      indegree.set(targetId, (indegree.get(targetId) ?? 1) - 1);
+      if (indegree.get(targetId) === 0) {
+        queue.push(targetId);
+        queue.sort((left, right) => nodeIndex.get(left)! - nodeIndex.get(right)!);
+      }
+    }
+  }
+  if (topological.length !== graph.nodes.length) return undefined;
+  const maximumRank = Math.max(...rank.values());
+  const nodeIdByRank = new Map<string | number, string>();
+  for (const [id, value] of rank) {
+    if (nodeIdByRank.has(value)) return undefined;
+    nodeIdByRank.set(value, id);
+  }
+  if (nodeIdByRank.size !== maximumRank + 1) return undefined;
+  const orderedIds = Array.from({ length: maximumRank + 1 }, (_, index) =>
+    nodeIdByRank.get(index)!,
+  );
+  const sizes = new Map(graph.nodes.map((node) => [node.id, getNodeSize(node, options)]));
+  const layerSpacing = options.spacing?.layer ?? options.settings?.["spacing.baseValue"] ?? 20;
+  const nodeSpacing = options.spacing?.node ?? options.settings?.["spacing.baseValue"] ?? 20;
+  const widths = orderedIds.map((id) => sizes.get(id)!.width + layerSpacing);
+  const heights = orderedIds.map((id) => sizes.get(id)!.height + nodeSpacing);
+  const aspectRatio = Number(options.settings?.aspectRatio ?? 1.6);
+  const correctionFactor = Number(options.settings?.["wrapping.correctionFactor"] ?? 1);
+  const desiredAspectRatio = aspectRatio * correctionFactor;
+  const rowCount = Math.max(
+    1,
+    Math.min(
+      orderedIds.length,
+      Math.round(
+        Math.sqrt(
+          widths.reduce((sum, width) => sum + width, 0) /
+            (desiredAspectRatio * Math.max(...heights)),
+        ),
+      ),
+    ),
+  );
+  const cuttingStrategy = String(options.settings?.["wrapping.cutting.strategy"] ?? "MSD");
+  let cuts: number[];
+  if (cuttingStrategy === "MANUAL" && Array.isArray(options.settings?.["wrapping.cutting.cuts"])) {
+    cuts = (options.settings["wrapping.cutting.cuts"] as unknown[])
+      .map(Number)
+      .filter((cut) => Number.isInteger(cut) && cut > 0 && cut < orderedIds.length)
+      .sort((left, right) => left - right);
+  } else if (cuttingStrategy === "ARD") {
+    cuts = Array.from({ length: rowCount - 1 }, (_, index) =>
+      Math.round(((index + 1) * orderedIds.length) / rowCount),
+    );
+  } else {
+    const freedom = Math.max(0, Number(options.settings?.["wrapping.cutting.msd.freedom"] ?? 1));
+    const prefixWidths: number[] = [];
+    widths.reduce((sum, width, index) => (prefixWidths[index] = sum + width), 0);
+    const totalWidth = prefixWidths.at(-1)!;
+    let bestScale = Number.NEGATIVE_INFINITY;
+    cuts = [];
+    for (
+      let cutCount = Math.max(0, rowCount - 1 - freedom);
+      cutCount <= Math.min(orderedIds.length - 1, rowCount - 1 + freedom);
+      cutCount++
+    ) {
+      const rowWidth = totalWidth / (cutCount + 1);
+      const candidate: number[] = [];
+      let sumSoFar = 0;
+      let lastCutWidth = 0;
+      let maximumWidth = Number.NEGATIVE_INFINITY;
+      let totalHeight = 0;
+      let rowHeight = heights[0]!;
+      if (cutCount === 0) {
+        maximumWidth = totalWidth;
+        totalHeight = Math.max(...heights);
+      } else {
+        for (let index = 1; index < orderedIds.length; index++) {
+          if (prefixWidths[index - 1]! - sumSoFar >= rowWidth) {
+            candidate.push(index);
+            maximumWidth = Math.max(maximumWidth, prefixWidths[index - 1]! - lastCutWidth);
+            totalHeight += rowHeight;
+            sumSoFar += prefixWidths[index - 1]! - sumSoFar;
+            lastCutWidth = prefixWidths[index - 1]!;
+            rowHeight = heights[index]!;
+          }
+          rowHeight = Math.max(rowHeight, heights[index]!);
+        }
+        totalHeight += rowHeight;
+      }
+      const scale = Math.min(1 / maximumWidth, 1 / desiredAspectRatio / totalHeight);
+      if (scale > bestScale) {
+        bestScale = scale;
+        cuts = candidate;
+      }
+    }
+  }
+  cuts = [...new Set(cuts)];
+  if (options.settings?.["wrapping.multiEdge.improveCuts"] ?? true) {
+    const spans = Array.from({ length: orderedIds.length + 1 }, () => 0);
+    for (const edge of graph.edges) {
+      const sourceRank = rank.get(edge.sourceId)!;
+      const targetRank = rank.get(edge.targetId)!;
+      for (let index = sourceRank + 1; index <= targetRank; index++) spans[index]!++;
+    }
+    const distancePenalty = Number(options.settings?.["wrapping.multiEdge.distancePenalty"] ?? 2);
+    type Cut = {
+      index: number;
+      newIndex: number;
+      assigned: boolean;
+      previous?: Cut;
+      next?: Cut;
+    };
+    const candidates: Cut[] = cuts.map((index) => ({ index, newIndex: index, assigned: false }));
+    for (let index = 0; index < candidates.length; index++) {
+      candidates[index]!.previous = candidates[index - 1];
+      candidates[index]!.next = candidates[index + 1];
+    }
+    const nextUnassigned = (candidate: Cut | undefined): Cut | undefined => {
+      while (candidate?.assigned) candidate = candidate.next;
+      return candidate;
+    };
+    const improved: number[] = [];
+    for (let iteration = 0; iteration < candidates.length; iteration++) {
+      let left: Cut | undefined;
+      let right = nextUnassigned(candidates[0]);
+      let best: { candidate: Cut; index: number; score: number } | undefined;
+      for (let index = 1; index < orderedIds.length; index++) {
+        const rightDistance = right
+          ? Math.abs(right.index - index)
+          : Math.abs(index - left!.index) + 1;
+        const leftDistance = left ? Math.abs(index - left.index) : rightDistance + 1;
+        const candidate = leftDistance < rightDistance ? left! : right!;
+        const distance = Math.min(leftDistance, rightDistance);
+        const score = spans[index]! + Math.pow(distance, distancePenalty);
+        if (!best || score < best.score) best = { candidate, index, score };
+        if (right && index === right.index) {
+          left = right;
+          right = nextUnassigned(right.next);
+        }
+      }
+      if (!best) break;
+      const offset = best.index - best.candidate.index;
+      best.candidate.newIndex = best.index;
+      best.candidate.assigned = true;
+      improved.push(best.index);
+      let previous = best.candidate.previous;
+      while (previous && !previous.assigned) {
+        previous.index += offset;
+        previous = previous.previous;
+      }
+      let next = best.candidate.next;
+      while (next && !next.assigned) {
+        next.index += offset;
+        next = next.next;
+      }
+    }
+    cuts = improved.sort((left, right) => left - right);
+  }
+  const forbidden = new Set(
+    Array.isArray(options.settings?.["wrapping.validify.forbiddenIndices"])
+      ? (options.settings["wrapping.validify.forbiddenIndices"] as unknown[]).map(Number)
+      : [],
+  );
+  const validify = String(options.settings?.["wrapping.validify.strategy"] ?? "NO");
+  if (options.settings?.["wrapping.validify.strategy"] !== undefined && validify !== "NO") {
+    cuts = cuts.flatMap((cut, cutIndex) => {
+      const allowed = (index: number) => {
+        if (forbidden.size > 0) return !forbidden.has(index);
+        const targetId = orderedIds[index];
+        if (!targetId) return false;
+        const pairs = new Set(
+          (incoming.get(targetId) ?? []).map((sourceId) => `${sourceId}\0${targetId}`),
+        );
+        return pairs.size <= 1;
+      };
+      if (allowed(cut)) return [cut];
+      if (validify === "LOOK_BACK") {
+        for (let index = cut - 1; index > (cuts[cutIndex - 1] ?? 0); index--)
+          if (allowed(index)) return [index];
+      }
+      for (let index = cut + 1; index < orderedIds.length; index++)
+        if (allowed(index)) return [index];
+      return [];
+    });
+  }
+  cuts = [...new Set(cuts)].sort((left, right) => left - right);
+  if (cuts.length === 0) return undefined;
+
+  const base = runLayeredPipeline(
+    graph,
+    {
+      ...options,
+      settings: { ...options.settings, "wrapping.strategy": "OFF" },
+    },
+    undefined,
+  );
+  const padding =
+    typeof options.padding === "number"
+      ? {
+          top: options.padding,
+          right: options.padding,
+          bottom: options.padding,
+          left: options.padding,
+        }
+      : {
+          top: options.padding?.top ?? 12,
+          right: options.padding?.right ?? 12,
+          bottom: options.padding?.bottom ?? 12,
+          left: options.padding?.left ?? 12,
+        };
+  const boundaries = [0, ...cuts, orderedIds.length];
+  const rowByNodeId = new Map<string, number>();
+  const rowStartByNodeId = new Map<string, number>();
+  for (let row = 0; row + 1 < boundaries.length; row++) {
+    for (let index = boundaries[row]!; index < boundaries[row + 1]!; index++) {
+      rowByNodeId.set(orderedIds[index]!, row);
+      rowStartByNodeId.set(orderedIds[index]!, boundaries[row]!);
+    }
+  }
+  const maximumOpenEdges = Math.max(
+    1,
+    ...cuts.map(
+      (cut) =>
+        graph.edges.filter(
+          (edge) => rank.get(edge.sourceId)! < cut && rank.get(edge.targetId)! >= cut,
+        ).length,
+    ),
+  );
+  const sideMargin = 20 + maximumOpenEdges * 10;
+  const baseNodeById = new Map(base.nodes.map((node) => [node.id, node]));
+  const rowTop: number[] = [];
+  const rowHeight: number[] = [];
+  for (let row = 0; row + 1 < boundaries.length; row++) {
+    const ids = orderedIds.slice(boundaries[row], boundaries[row + 1]);
+    const minimumY = Math.min(...ids.map((id) => baseNodeById.get(id)!.y ?? 0));
+    const maximumY = Math.max(
+      ...ids.map((id) => (baseNodeById.get(id)!.y ?? 0) + (baseNodeById.get(id)!.height ?? 0)),
+    );
+    rowHeight[row] = maximumY - minimumY;
+    rowTop[row] =
+      row === 0
+        ? padding.top
+        : rowTop[row - 1]! +
+          rowHeight[row - 1]! +
+          nodeSpacing +
+          1 +
+          2 * Number(options.settings?.["wrapping.additionalEdgeSpacing"] ?? 10);
+  }
+  const transformedNodeById = new Map<string, VisualNode<N, P>>();
+  for (const id of orderedIds) {
+    const node = baseNodeById.get(id)!;
+    const row = rowByNodeId.get(id)!;
+    const first = baseNodeById.get(orderedIds[rowStartByNodeId.get(id)!]!)!;
+    const ids = orderedIds.slice(boundaries[row], boundaries[row + 1]);
+    const minimumY = Math.min(...ids.map((rowId) => baseNodeById.get(rowId)!.y ?? 0));
+    transformedNodeById.set(id, {
+      ...node,
+      x: padding.left + sideMargin + (node.x ?? 0) - (first.x ?? 0),
+      y: rowTop[row]! + (node.y ?? 0) - minimumY,
+    });
+  }
+  const transformedEdges = base.edges.map((edge) => {
+    const sourceRow = rowByNodeId.get(edge.sourceId)!;
+    const targetRow = rowByNodeId.get(edge.targetId)!;
+    const sourceBefore = baseNodeById.get(edge.sourceId)!;
+    const targetBefore = baseNodeById.get(edge.targetId)!;
+    const sourceAfter = transformedNodeById.get(edge.sourceId)!;
+    const targetAfter = transformedNodeById.get(edge.targetId)!;
+    const sourceDelta = {
+      x: sourceAfter.x! - sourceBefore.x!,
+      y: sourceAfter.y! - sourceBefore.y!,
+    };
+    const targetDelta = {
+      x: targetAfter.x! - targetBefore.x!,
+      y: targetAfter.y! - targetBefore.y!,
+    };
+    if (sourceRow === targetRow) {
+      return {
+        ...edge,
+        points: (edge.points ?? []).map((point) => ({
+          x: point.x + sourceDelta.x,
+          y: point.y + sourceDelta.y,
+        })),
+      };
+    }
+    const originalPoints = edge.points ?? [];
+    const originalStart = originalPoints[0] ?? {
+      x: (sourceBefore.x ?? 0) + (sourceBefore.width ?? 0),
+      y: (sourceBefore.y ?? 0) + (sourceBefore.height ?? 0) / 2,
+    };
+    const originalEnd = originalPoints.at(-1) ?? {
+      x: targetBefore.x ?? 0,
+      y: (targetBefore.y ?? 0) + (targetBefore.height ?? 0) / 2,
+    };
+    const start = { x: originalStart.x + sourceDelta.x, y: originalStart.y + sourceDelta.y };
+    const end = { x: originalEnd.x + targetDelta.x, y: originalEnd.y + targetDelta.y };
+    const open = graph.edges
+      .filter(
+        (candidate) =>
+          rank.get(candidate.sourceId)! < boundaries[sourceRow + 1]! &&
+          rank.get(candidate.targetId)! >= boundaries[sourceRow + 1]!,
+      )
+      .map((candidate) => candidate.id);
+    const track = open.indexOf(edge.id);
+    const rightX =
+      Math.max(
+        ...orderedIds
+          .slice(boundaries[sourceRow], boundaries[sourceRow + 1])
+          .map((id) => transformedNodeById.get(id)!.x! + transformedNodeById.get(id)!.width!),
+      ) +
+      sideMargin -
+      10 +
+      (options.settings?.["crossingMinimization.strategy"] === "NONE" ? 10 : 0) +
+      10 * track;
+    const leftX = padding.left + 10 * track;
+    const betweenY = rowTop[sourceRow]! + rowHeight[sourceRow]! + nodeSpacing / 2;
+    const points = [
+      start,
+      { x: rightX, y: start.y },
+      { x: rightX, y: betweenY },
+      { x: leftX, y: betweenY },
+      { x: leftX, y: end.y },
+      end,
+    ];
+    return { ...edge, points, routing: "orthogonal" as const };
+  });
+  return {
+    ...base,
+    nodes: graph.nodes.map((node) => transformedNodeById.get(node.id)!),
+    edges: transformedEdges,
+  };
+}
+
+function runWrappedPipeline<N, E, G, P>(
+  graph: Graph<N, E, G, P> | VisualGraph<N, E, G, P>,
+  options: LayeredLayoutOptions,
+): VisualGraph<N, E, G, P> | undefined {
+  return runWrappedPathPipeline(graph, options) ?? runWrappedMultiEdgePipeline(graph, options);
+}
+
 function runCommentBoxPipeline<N, E, G, P>(
   graph: Graph<N, E, G, P> | VisualGraph<N, E, G, P>,
   options: LayeredLayoutOptions,
@@ -883,7 +1256,7 @@ function runLayeredPipeline<N, E, G, P>(
     } as VisualGraph<N, E, G, P>;
   }
   if (hasNestedNodes(graph)) return runCompoundPipeline(graph, options, context);
-  const wrapped = runWrappedPathPipeline(graph, options);
+  const wrapped = runWrappedPipeline(graph, options);
   if (wrapped) return wrapped;
   const comments = runCommentBoxPipeline(graph, options, context);
   if (comments) return comments;

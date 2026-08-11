@@ -189,3 +189,63 @@ for (const [validify, expectedRows] of [
     expect(actual.children?.map((node) => rowCoordinates.indexOf(node.y))).toEqual(expectedRows);
   });
 }
+
+function createMultiEdgeWrappingGraph(option?: string, value?: string): ElkNode {
+  return {
+    id: "root",
+    layoutOptions: {
+      "elk.algorithm": "layered",
+      "elk.aspectRatio": "1",
+      "elk.layered.layering.strategy": "LONGEST_PATH",
+      "elk.layered.wrapping.strategy": "MULTI_EDGE",
+      ...(option === undefined ? {} : { [`elk.layered.wrapping.multiEdge.${option}`]: value }),
+    },
+    children: Array.from({ length: 10 }, (_, index) => ({
+      id: `multi-${index}`,
+      width: 20,
+      height: 20,
+    })),
+    edges: [
+      ...Array.from({ length: 9 }, (_, index) => ({
+        id: `backbone-${index}`,
+        sources: [`multi-${index}`],
+        targets: [`multi-${index + 1}`],
+      })),
+      ...[
+        [0, 3],
+        [2, 5],
+        [5, 8],
+      ].map(([source, target], index) => ({
+        id: `skip-${index}`,
+        sources: [`multi-${source}`],
+        targets: [`multi-${target}`],
+      })),
+    ],
+  };
+}
+
+for (const [option, value] of [
+  ["improveCuts", "false"],
+  ["improveCuts", "true"],
+  ["distancePenalty", "1"],
+  ["distancePenalty", "2"],
+  ["distancePenalty", "4"],
+  ["improveWrappedEdges", "false"],
+  ["improveWrappedEdges", "true"],
+] as const) {
+  it(`matches ELK general MULTI_EDGE cuts with ${option}=${value}`, async () => {
+    const graph = createMultiEdgeWrappingGraph(option, value);
+    const expected = (await new OracleELK().layout(
+      structuredClone(graph) as never,
+    )) as unknown as ElkNode;
+    const actual = await new NativeELK().layout(structuredClone(graph));
+
+    expect(actual.children?.map((node) => node.x)).toEqual(
+      expected.children?.map((node) => node.x),
+    );
+    expect(actual.width).toBe(expected.width);
+    expect(actual.edges?.every((edge) => (edge.sections?.[0]?.bendPoints?.length ?? 0) > 0)).toBe(
+      expected.edges?.every((edge) => (edge.sections?.[0]?.bendPoints?.length ?? 0) > 0),
+    );
+  });
+}
