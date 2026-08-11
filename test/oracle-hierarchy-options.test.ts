@@ -74,6 +74,30 @@ const baseGraph = (): ElkNode => ({
 });
 
 describe("ELK compound layered parity", () => {
+  for (const hierarchyHandling of ["INHERIT", "SEPARATE_CHILDREN"] as const) {
+    it(`matches ${hierarchyHandling} recursive layout`, async () => {
+      await compare({
+        id: "root",
+        layoutOptions: {
+          "elk.algorithm": "layered",
+          "elk.hierarchyHandling": hierarchyHandling,
+        },
+        children: [
+          {
+            id: "parent",
+            children: [
+              { id: "a", width: 20, height: 20 },
+              { id: "b", width: 20, height: 20 },
+            ],
+            edges: [{ id: "ab", sources: ["a"], targets: ["b"] }],
+          },
+          { id: "peer", width: 20, height: 20 },
+        ],
+        edges: [{ id: "parent-peer", sources: ["parent"], targets: ["peer"] }],
+      });
+    });
+  }
+
   it("matches cross-hierarchy placement and routing", async () => {
     await compare(baseGraph());
   });

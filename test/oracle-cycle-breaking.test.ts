@@ -281,6 +281,58 @@ describe("ELK enforced cycle-breaking group order", () => {
     });
   }
 
+  for (const groupOrder of ["ONLY_WITHIN_GROUP", "MODEL_ORDER", "ENFORCED"] as const) {
+    it(`matches GREEDY_MODEL_ORDER with ${groupOrder} cycle groups`, async () => {
+      const expected = await new ELK().layout({
+        id: "root",
+        layoutOptions: {
+          "elk.algorithm": "layered",
+          "elk.layered.cycleBreaking.strategy": "GREEDY_MODEL_ORDER",
+          "elk.layered.feedbackEdges": "true",
+          "elk.layered.considerModelOrder.groupModelOrder.cbGroupOrderStrategy": groupOrder,
+        },
+        children: nodeIds.map((id) => ({
+          id,
+          width: 20,
+          height: 20,
+          layoutOptions: {
+            "elk.layered.considerModelOrder.groupModelOrder.cycleBreakingId": String(
+              groupById.get(id),
+            ),
+          },
+        })),
+        edges: edges.map((edge) => ({
+          id: edge.id,
+          sources: [edge.sourceId],
+          targets: [edge.targetId],
+        })),
+      });
+      const actual = getLayeredLayout(
+        createGraph({ nodes: nodeIds.map((id) => ({ id })), edges }),
+        {
+          settings: {
+            "cycleBreaking.strategy": "GREEDY_MODEL_ORDER",
+            feedbackEdges: true,
+            "considerModelOrder.groupModelOrder.cbGroupOrderStrategy": groupOrder,
+          },
+          nodeSettings: (node) => ({
+            "considerModelOrder.groupModelOrder.cycleBreakingId": groupById.get(node.id),
+          }),
+        },
+      );
+      const feedback = (positions: ReadonlyMap<string, number>) =>
+        edges
+          .filter(
+            ({ sourceId, targetId }) =>
+              (positions.get(sourceId) ?? 0) > (positions.get(targetId) ?? 0),
+          )
+          .map(({ id }) => id);
+      expect(feedback(new Map(actual.nodes.map(({ id, x }) => [id, x])))).toEqual(
+        feedback(new Map(expected.children?.map(({ id, x }) => [String(id), x ?? 0]) ?? [])),
+      );
+    });
+  }
+
   for (const [option, value] of [
     ["cbPreferredSourceId", 2],
     ["cbPreferredTargetId", 1],

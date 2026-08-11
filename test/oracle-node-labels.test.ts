@@ -21,7 +21,11 @@ async function compareNode(graph: ElkNode) {
   );
 }
 
-for (const placement of ["INSIDE, V_TOP, H_CENTER", "OUTSIDE, V_TOP, H_CENTER"] as const) {
+for (const placement of [
+  "INSIDE, V_TOP, H_CENTER",
+  "OUTSIDE, V_TOP, H_CENTER",
+  "OUTSIDE, V_TOP, H_CENTER, H_PRIORITY",
+] as const) {
   it(`matches ELK ${placement} node-label placement and margins`, async () => {
     await compareNode({
       id: "root",

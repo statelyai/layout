@@ -55,6 +55,16 @@ function graph(width: number, aspectRatio: number): ElkNode {
 }
 
 describe("ELK top-down recursive layout parity", () => {
+  it("matches a PARALLEL_NODE child", async () => {
+    const input = graph(100, 2);
+    input.children![0]!.layoutOptions!["elk.topdown.nodeType"] = "PARALLEL_NODE";
+    delete input.children![0]!.layoutOptions!["elk.topdown.hierarchicalNodeWidth"];
+    delete input.children![0]!.layoutOptions!["elk.topdown.hierarchicalNodeAspectRatio"];
+    const expected = (await new OracleELK().layout(structuredClone(input) as never)) as ElkNode;
+    const actual = await new NativeELK().layout(structuredClone(input));
+    expectNodeGeometry(actual, expected);
+  });
+
   for (const [width, aspectRatio] of [
     [40, 2],
     [100, 2],

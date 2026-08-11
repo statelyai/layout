@@ -197,7 +197,7 @@ describe("ELK port-option parity", () => {
     });
   }
 
-  for (const alignment of ["BEGIN", "CENTER", "END", "JUSTIFIED"] as const) {
+  for (const alignment of ["BEGIN", "CENTER", "END", "JUSTIFIED", "DISTRIBUTED"] as const) {
     it(`matches ${alignment} side alignment`, async () => {
       await compare({
         id: "root",
@@ -219,7 +219,7 @@ describe("ELK port-option parity", () => {
   }
 
   for (const side of ["NORTH", "SOUTH", "WEST"] as const) {
-    for (const alignment of ["BEGIN", "CENTER", "END", "JUSTIFIED"] as const) {
+    for (const alignment of ["BEGIN", "CENTER", "END", "JUSTIFIED", "DISTRIBUTED"] as const) {
       it(`matches ${alignment} ${side.toLowerCase()}-side alignment`, async () => {
         await compare({
           id: "root",
@@ -241,7 +241,7 @@ describe("ELK port-option parity", () => {
     }
   }
 
-  for (const alignment of ["BEGIN", "CENTER", "END", "JUSTIFIED"] as const) {
+  for (const alignment of ["BEGIN", "CENTER", "END", "JUSTIFIED", "DISTRIBUTED"] as const) {
     it(`matches ${alignment} default port alignment`, async () => {
       await compare({
         id: "root",

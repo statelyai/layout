@@ -204,6 +204,27 @@ export function joinLongEdgeRoutes(
   segmentIdsByEdgeId: ReadonlyMap<string, readonly string[]>,
   preserveInternalDuplicates = false,
 ): EdgeRoutes {
+  const simplify = (points: readonly Point[]): Point[] => {
+    const result: Point[] = [];
+    const equal = (left: number, right: number) => Math.abs(left - right) < 1e-9;
+    for (const point of points) {
+      const previous = result.at(-1);
+      if (previous && equal(previous.x, point.x) && equal(previous.y, point.y)) continue;
+      result.push(point);
+      while (result.length >= 3) {
+        const first = result.at(-3)!;
+        const middle = result.at(-2)!;
+        const last = result.at(-1)!;
+        if (
+          (equal(first.x, middle.x) && equal(middle.x, last.x)) ||
+          (equal(first.y, middle.y) && equal(middle.y, last.y))
+        ) {
+          result.splice(-2, 1);
+        } else break;
+      }
+    }
+    return result;
+  };
   const pointsByEdgeId = new Map<string, readonly Point[]>();
   for (const [edgeId, segmentIds] of segmentIdsByEdgeId) {
     const points: Point[] = [];
@@ -216,17 +237,7 @@ export function joinLongEdgeRoutes(
     }
     pointsByEdgeId.set(
       edgeId,
-      preserveInternalDuplicates || segmentIds.length === 1
-        ? points
-        : points.filter((point, index) => {
-            const previous = points[index - 1];
-            const next = points[index + 1];
-            if (!previous || !next) return true;
-            return !(
-              (previous.x === point.x && point.x === next.x) ||
-              (previous.y === point.y && point.y === next.y)
-            );
-          }),
+      preserveInternalDuplicates || segmentIds.length === 1 ? points : simplify(points),
     );
   }
   return { pointsByEdgeId };

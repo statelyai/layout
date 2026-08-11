@@ -6,6 +6,7 @@ import {
   type ElkLayeredOptionValueByName,
 } from "./elk-options.generated";
 import type { LayeredLayoutOptions, LayoutPadding } from "./types";
+export { elkLayeredEnumValues, type ElkLayeredEnumOptionName } from "./elk-enum-values";
 
 export {
   elkLayeredOptionDefinitions,

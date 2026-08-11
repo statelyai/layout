@@ -100,6 +100,7 @@ export function placeNodesWithNetworkSimplex(
   order: LayerOrder,
 ): NodePlacement {
   const base = placeNodesInLayers(input, order);
+  const horizontal = input.direction === "left" || input.direction === "right";
   const anchors = endpointAnchors(input, order);
   const nodes: SimplexNode[] = [];
   const nodeById = new Map<string, SimplexNode>();
@@ -243,7 +244,6 @@ export function placeNodesWithNetworkSimplex(
     }
   }
 
-  const horizontal = input.direction === "left" || input.direction === "right";
   for (const node of input.graph.nodes) {
     const flexibility = String(
       input.nodeSettings?.(node)?.["nodePlacement.networkSimplex.nodeFlexibility"] ??
@@ -279,7 +279,26 @@ export function placeNodesWithNetworkSimplex(
     const mayResize =
       flexibility === "NODE_SIZE" || flexibility === "NODE_SIZE_WHERE_SPACE_PERMITS";
     const currentCrossSize = horizontal ? rect.height : rect.width;
-    if (!mayResize && requiredSize > currentCrossSize) continue;
+    if (!mayResize && requiredSize > currentCrossSize) {
+      const count = desired.length;
+      for (const [index, { port, portSize }] of desired.entries()) {
+        const center =
+          portSize / 2 +
+          ((index + 1) * (currentCrossSize - count * portSize)) / (count + 1) +
+          index * portSize;
+        const axis = Math.round(center - portSize / 2);
+        setFlexiblePortPosition(
+          port,
+          horizontal ? (port.x ?? 0) : axis,
+          horizontal ? axis : (port.y ?? 0),
+        );
+      }
+      rectByNodeId.set(
+        node.id,
+        horizontal ? { ...rect, y: rect.y + 1 } : { ...rect, x: rect.x + 1 },
+      );
+      continue;
+    }
     const resultSize = mayResize ? Math.max(currentCrossSize, requiredSize) : currentCrossSize;
     const crossStart =
       requiredSize <= currentCrossSize
@@ -301,6 +320,40 @@ export function placeNodesWithNetworkSimplex(
         horizontal ? axis : (port.y ?? 0),
       );
     }
+  }
+  let flexiblePortFlowOffset = 0;
+  for (const [layerIndex, layer] of order.layers.entries()) {
+    if (flexiblePortFlowOffset > 0) {
+      for (const id of layer) {
+        const rect = rectByNodeId.get(id);
+        if (!rect) continue;
+        rectByNodeId.set(
+          id,
+          horizontal
+            ? { ...rect, x: rect.x + flexiblePortFlowOffset }
+            : { ...rect, y: rect.y + flexiblePortFlowOffset },
+        );
+      }
+    }
+    if (layerIndex === order.layers.length - 1) continue;
+    flexiblePortFlowOffset += Math.max(
+      0,
+      ...layer.map((id) => {
+        const node = input.graph.nodes.find((candidate) => candidate.id === id);
+        const flexibility = String(
+          (node && input.nodeSettings?.(node)?.["nodePlacement.networkSimplex.nodeFlexibility"]) ??
+            input.settings["nodePlacement.networkSimplex.nodeFlexibility.default"] ??
+            "NONE",
+        );
+        if (flexibility !== "PORT_POSITION") return 0;
+        return Math.max(
+          0,
+          ...(node?.ports ?? []).map(
+            (port) => (horizontal ? (port.width ?? 8) : (port.height ?? 8)) + 2,
+          ),
+        );
+      }),
+    );
   }
   return { rectByNodeId };
 }

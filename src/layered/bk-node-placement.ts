@@ -92,14 +92,20 @@ function buildNeighbors(input: LayeredPhaseInput, order: LayerOrder) {
   const useLayerOrderPorts =
     (input.settings["layerUnzipping.strategy"] ?? "NONE") === "ALTERNATING";
   for (const [id, entries] of right) {
+    const sweptOrder = order.outputPortOrderByNodeId?.get(id);
     const portOrder =
-      useLayerOrderPorts || entries.some((entry) => entry.id.startsWith("__layout_dummy:"))
-        ? entries
-        : [...entries].sort(
+      sweptOrder !== undefined
+        ? [...entries].sort(
             (leftEntry, rightEntry) =>
-              (edgeModelOrder.get(leftEntry.edgeId) ?? 0) -
-              (edgeModelOrder.get(rightEntry.edgeId) ?? 0),
-          );
+              sweptOrder.indexOf(leftEntry.edgeId) - sweptOrder.indexOf(rightEntry.edgeId),
+          )
+        : useLayerOrderPorts || entries.some((entry) => entry.id.startsWith("__layout_dummy:"))
+          ? entries
+          : [...entries].sort(
+              (leftEntry, rightEntry) =>
+                (edgeModelOrder.get(leftEntry.edgeId) ?? 0) -
+                (edgeModelOrder.get(rightEntry.edgeId) ?? 0),
+            );
     portOrder.forEach((entry, index) => {
       anchor.set(
         `${entry.edgeId}:${id}`,
@@ -108,14 +114,20 @@ function buildNeighbors(input: LayeredPhaseInput, order: LayerOrder) {
     });
   }
   for (const [id, entries] of left) {
+    const sweptOrder = order.inputPortOrderByNodeId?.get(id);
     const portOrder =
-      useLayerOrderPorts || entries.some((entry) => entry.id.startsWith("__layout_dummy:"))
-        ? entries
-        : [...entries].sort(
+      sweptOrder !== undefined
+        ? [...entries].sort(
             (leftEntry, rightEntry) =>
-              (edgeModelOrder.get(rightEntry.edgeId) ?? 0) -
-              (edgeModelOrder.get(leftEntry.edgeId) ?? 0),
-          );
+              sweptOrder.indexOf(rightEntry.edgeId) - sweptOrder.indexOf(leftEntry.edgeId),
+          )
+        : useLayerOrderPorts || entries.some((entry) => entry.id.startsWith("__layout_dummy:"))
+          ? entries
+          : [...entries].sort(
+              (leftEntry, rightEntry) =>
+                (edgeModelOrder.get(rightEntry.edgeId) ?? 0) -
+                (edgeModelOrder.get(leftEntry.edgeId) ?? 0),
+            );
     portOrder.forEach((entry, index) => {
       anchor.set(
         `${entry.edgeId}:${id}`,

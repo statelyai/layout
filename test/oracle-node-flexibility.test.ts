@@ -2,7 +2,10 @@ import OracleELK from "elkjs/lib/elk.bundled.js";
 import { describe, expect, it } from "vitest";
 import NativeELK, { type ElkNode } from "../src/elkjs";
 
-function fixture(flexibility: "NODE_SIZE" | "NODE_SIZE_WHERE_SPACE_PERMITS", perNode: boolean) {
+function fixture(
+  flexibility: "PORT_POSITION" | "NODE_SIZE" | "NODE_SIZE_WHERE_SPACE_PERMITS",
+  perNode: boolean,
+) {
   return {
     id: "root",
     layoutOptions: {
@@ -64,7 +67,11 @@ async function compare(graph: ElkNode) {
 }
 
 describe("ELK network-simplex node-flexibility parity", () => {
-  for (const flexibility of ["NODE_SIZE", "NODE_SIZE_WHERE_SPACE_PERMITS"] as const) {
+  for (const flexibility of [
+    "PORT_POSITION",
+    "NODE_SIZE",
+    "NODE_SIZE_WHERE_SPACE_PERMITS",
+  ] as const) {
     it(`matches ${flexibility} inherited from the parent`, async () => {
       await compare(fixture(flexibility, false));
     });

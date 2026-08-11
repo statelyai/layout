@@ -74,7 +74,7 @@ function expectGeometry(actual: ElkNode, expected: ElkNode): void {
   }
 }
 
-for (const seed of [1, 2, 3, 5, 6, 7, 8, 9, 11, 12, 13, 15, 17]) {
+for (const seed of Array.from({ length: 100 }, (_, index) => index + 1)) {
   it(`matches default layered geometry for generated DAG seed ${seed}`, async () => {
     const graph = fixture(seed);
     const [expected, actual] = await Promise.all([

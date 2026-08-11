@@ -14,6 +14,8 @@ import type {
   NodePlacement,
   NodePlacer,
 } from "./types";
+
+const phaseRandomByInput = new WeakMap<LayeredPhaseInput, JavaRandom>();
 import { nodeNodeSpacing } from "./spacing";
 import type { ElkLayeredOptionValueByName } from "./elk-options";
 import { conservativeSpline } from "./spline-bezier";
@@ -695,6 +697,7 @@ export function applyLayerConstraintOrder(input: LayeredPhaseInput, order: Layer
       .map((node) => node.id),
   );
   return {
+    ...order,
     layers: order.layers.map((layer) => [
       ...layer.filter((id) => !constrained.has(id)),
       ...layer.filter((id) => constrained.has(id)),
@@ -771,7 +774,7 @@ export function applyLayerUnzipping(input: LayeredPhaseInput, order: LayerOrder)
     }
     layers.push(...sublayers);
   }
-  return { layers };
+  return { ...order, layers };
 }
 
 /** ELK's adjacent-node greedy-switch crossing minimization postprocessor. */
@@ -874,7 +877,7 @@ export function applyGreedySwitch(
   while (sweep(true) || sweep(false)) {
     // Repeat until every adjacent exchange is locally optimal.
   }
-  return { layers };
+  return { ...order, layers };
 }
 
 /** Preserve authored in-layer order while leaving long-edge dummy slots available. */
@@ -1414,6 +1417,7 @@ function sortLayerByAdjacentPosition(
   random?: JavaRandom,
   preOrdered = true,
   sourceUnknownPlacement = true,
+  perturbSummedWeight = true,
 ): void {
   const originalIndex = new Map(layer.map((nodeId, index) => [nodeId, index] as const));
   const adjacentPosition = new Map<string, number | undefined>();
@@ -1432,8 +1436,12 @@ function sortLayerByAdjacentPosition(
     } else {
       adjacentPosition.set(
         nodeId,
-        positions.reduce((sum, value) => sum + value, 0) / positions.length +
-          (random ? random.nextFloat() * 0.07 - 0.035 : 0),
+        perturbSummedWeight
+          ? (positions.reduce((sum, value) => sum + value, 0) +
+              (random ? random.nextFloat() * 0.07 - 0.035 : 0)) /
+              positions.length
+          : positions.reduce((sum, value) => sum + value, 0) / positions.length +
+              (random ? random.nextFloat() * 0.07 - 0.035 : 0),
       );
     }
   }
@@ -1487,6 +1495,12 @@ function minimizeCrossingsWithLayerSweep(
   sweeps = 4,
 ): CrossingMinimizer {
   return (input, orientation, assignment) => {
+    const exactPortSweep =
+      input.direction === "right" &&
+      (input.settings.hierarchyHandling !== "INCLUDE_CHILDREN" ||
+        input.graph.nodes.some((node) => node.id.startsWith("__native_hierarchy_"))) &&
+      (input.settings["wrapping.strategy"] ?? "OFF") === "OFF" &&
+      (input.settings["layerUnzipping.strategy"] ?? "NONE") === "NONE";
     let maximumLayer = 0;
     for (const layer of assignment.layerByNodeId.values()) {
       maximumLayer = Math.max(maximumLayer, layer);
@@ -1500,33 +1514,85 @@ function minimizeCrossingsWithLayerSweep(
     for (const nodeId of initialNodes) {
       layers[assignment.layerByNodeId.get(nodeId) ?? 0]?.push(nodeId);
     }
-
+    const inputPortOrder = new Map(input.graph.nodes.map((node) => [node.id, [] as string[]]));
+    const outputPortOrder = new Map(input.graph.nodes.map((node) => [node.id, [] as string[]]));
+    for (const edge of input.graph.edges) {
+      const [sourceId, targetId] = getOrientedEndpoints(edge, orientation);
+      outputPortOrder.get(sourceId)?.push(edge.id);
+      inputPortOrder.get(targetId)?.push(edge.id);
+    }
+    if (exactPortSweep) {
+      for (const edgeIds of inputPortOrder.values()) {
+        if (edgeIds.length >= 4) {
+          edgeIds.splice(0, edgeIds.length - 1, ...edgeIds.slice(0, -1).reverse());
+        }
+      }
+    }
     const countCrossings = (candidateLayers: readonly (readonly string[])[]): number => {
+      if (!exactPortSweep) {
+        const positions = new Map<string, number>();
+        for (const layer of candidateLayers) {
+          for (const [index, id] of layer.entries()) positions.set(id, index);
+        }
+        let crossings = 0;
+        for (let left = 0; left < input.graph.edges.length; left++) {
+          const [leftSource, leftTarget] = getOrientedEndpoints(
+            input.graph.edges[left]!,
+            orientation,
+          );
+          for (let right = left + 1; right < input.graph.edges.length; right++) {
+            const [rightSource, rightTarget] = getOrientedEndpoints(
+              input.graph.edges[right]!,
+              orientation,
+            );
+            if (leftSource === rightSource || leftTarget === rightTarget) continue;
+            const sourceDifference =
+              (positions.get(leftSource) ?? 0) - (positions.get(rightSource) ?? 0);
+            const targetDifference =
+              (positions.get(leftTarget) ?? 0) - (positions.get(rightTarget) ?? 0);
+            if (sourceDifference * targetDifference < 0) crossings++;
+          }
+        }
+        return crossings;
+      }
       const layerIndex = new Map<string, number>();
-      const position = new Map<string, number>();
       for (const [index, layer] of candidateLayers.entries()) {
-        for (const [nodePosition, id] of layer.entries()) {
+        for (const id of layer) {
           layerIndex.set(id, index);
-          position.set(id, nodePosition);
         }
       }
       let crossings = 0;
       for (let index = 0; index < candidateLayers.length - 1; index++) {
-        const between = input.graph.edges
-          .map((edge) => getOrientedEndpoints(edge, orientation))
-          .filter(
-            ([sourceId, targetId]) =>
-              layerIndex.get(sourceId) === index && layerIndex.get(targetId) === index + 1,
-          );
+        const between = input.graph.edges.filter((edge) => {
+          const [sourceId, targetId] = getOrientedEndpoints(edge, orientation);
+          return layerIndex.get(sourceId) === index && layerIndex.get(targetId) === index + 1;
+        });
+        const sourceRanks = new Map<string, number>();
+        const targetRanks = new Map<string, number>();
+        let consumed = 0;
+        for (const nodeId of candidateLayers[index] ?? []) {
+          const edgeIds = outputPortOrder.get(nodeId) ?? [];
+          for (const [portIndex, edgeId] of edgeIds.entries()) {
+            sourceRanks.set(edgeId, consumed + portIndex + 1);
+          }
+          consumed += edgeIds.length;
+        }
+        consumed = 0;
+        for (const nodeId of candidateLayers[index + 1] ?? []) {
+          const edgeIds = inputPortOrder.get(nodeId) ?? [];
+          for (const [portIndex, edgeId] of edgeIds.entries()) {
+            targetRanks.set(edgeId, consumed + edgeIds.length - portIndex);
+          }
+          consumed += edgeIds.length;
+        }
         for (let left = 0; left < between.length; left++) {
-          const [leftSource, leftTarget] = between[left] as readonly [string, string];
           for (let right = left + 1; right < between.length; right++) {
-            const [rightSource, rightTarget] = between[right] as readonly [string, string];
-            if (leftSource === rightSource || leftTarget === rightTarget) continue;
             const sourceDifference =
-              (position.get(leftSource) ?? 0) - (position.get(rightSource) ?? 0);
+              (sourceRanks.get(between[left]!.id) ?? 0) -
+              (sourceRanks.get(between[right]!.id) ?? 0);
             const targetDifference =
-              (position.get(leftTarget) ?? 0) - (position.get(rightTarget) ?? 0);
+              (targetRanks.get(between[left]!.id) ?? 0) -
+              (targetRanks.get(between[right]!.id) ?? 0);
             if (sourceDifference * targetDifference < 0) crossings++;
           }
         }
@@ -1535,10 +1601,13 @@ function minimizeCrossingsWithLayerSweep(
     };
 
     const sharedRandom = new JavaRandom(input.settings.randomSeed ?? 1);
-    const random = new JavaRandom(sharedRandom.nextLong());
-    const nodeRelativePortRanks = true;
+    const randomSeed = sharedRandom.nextLong();
+    const nodeRelativePortRanks = exactPortSweep ? sharedRandom.nextBoolean() : true;
+    const random = new JavaRandom(randomSeed);
     const thoroughness = Math.max(1, input.settings.thoroughness ?? sweeps ?? 7);
     let bestLayers = layers.map((layer) => [...layer]);
+    let bestInputPortOrder = new Map<string, string[]>();
+    let bestOutputPortOrder = new Map<string, string[]>();
     let bestCrossings = Number.POSITIVE_INFINITY;
     let working = layers.map((layer) => [...layer]);
     const sourceUnknownPlacement =
@@ -1589,8 +1658,15 @@ function minimizeCrossingsWithLayerSweep(
           group.edges.push(edge);
           groups.set(key, group);
         }
-        const orderedGroups = [...groups.values()].sort(
-          (left, right) => left.portOrder - right.portOrder,
+        const currentPortOrder = forward
+          ? outputPortOrder.get(fixedId)
+          : inputPortOrder.get(fixedId);
+        const orderedGroups = [...groups.values()].sort((left, right) =>
+          exactPortSweep
+            ? (currentPortOrder?.indexOf(left.edges[0]?.id ?? "") ?? -1) -
+                (currentPortOrder?.indexOf(right.edges[0]?.id ?? "") ?? -1) ||
+              left.portOrder - right.portOrder
+            : left.portOrder - right.portOrder,
         );
         const count = orderedGroups.length;
         for (const [index, group] of orderedGroups.entries()) {
@@ -1609,6 +1685,61 @@ function minimizeCrossingsWithLayerSweep(
         rankSum += nodeRelativePortRanks ? 1 : count;
       }
       return ranks;
+    };
+
+    const distributePorts = (
+      fixedLayer: readonly string[],
+      freeLayer: readonly string[],
+      forward: boolean,
+    ) => {
+      const calculateRanks = (
+        layer: readonly string[],
+        orders: ReadonlyMap<string, readonly string[]>,
+        inputPorts: boolean,
+      ) => {
+        const ranks = new Map<string, number>();
+        let consumed = 0;
+        for (const nodeId of layer) {
+          const edgeIds = orders.get(nodeId) ?? [];
+          for (const [index, edgeId] of edgeIds.entries()) {
+            ranks.set(
+              edgeId,
+              nodeRelativePortRanks
+                ? consumed +
+                    (inputPorts
+                      ? 1 - (index + 1) / (edgeIds.length + 1)
+                      : (index + 1) / (edgeIds.length + 1))
+                : consumed + (inputPorts ? edgeIds.length - index : index + 1),
+            );
+          }
+          consumed += nodeRelativePortRanks ? 1 : edgeIds.length;
+        }
+        return ranks;
+      };
+      const reorder = (
+        nodeIds: readonly string[],
+        orders: Map<string, string[]>,
+        oppositeRanks: ReadonlyMap<string, number>,
+        reverse: boolean,
+      ) => {
+        for (const nodeId of nodeIds) {
+          orders.get(nodeId)?.sort((leftId, rightId) => {
+            const difference = (oppositeRanks.get(leftId) ?? 0) - (oppositeRanks.get(rightId) ?? 0);
+            return reverse ? -difference : difference;
+          });
+        }
+      };
+      if (forward) {
+        const fixedRanks = calculateRanks(fixedLayer, outputPortOrder, false);
+        reorder(freeLayer, inputPortOrder, fixedRanks, true);
+        const freeRanks = calculateRanks(freeLayer, inputPortOrder, true);
+        reorder(fixedLayer, outputPortOrder, freeRanks, false);
+      } else {
+        const fixedRanks = calculateRanks(fixedLayer, inputPortOrder, true);
+        reorder(freeLayer, outputPortOrder, fixedRanks, false);
+        const freeRanks = calculateRanks(freeLayer, outputPortOrder, false);
+        reorder(fixedLayer, inputPortOrder, freeRanks, true);
+      }
     };
 
     for (let attempt = 0; attempt < thoroughness; attempt++) {
@@ -1634,7 +1765,9 @@ function minimizeCrossingsWithLayerSweep(
                 statistic === "mean" ? random : undefined,
                 !firstSweep,
                 sourceUnknownPlacement,
+                exactPortSweep,
               );
+              if (exactPortSweep) distributePorts(previous, current, true);
             }
           }
         } else {
@@ -1649,7 +1782,9 @@ function minimizeCrossingsWithLayerSweep(
                 statistic === "mean" ? random : undefined,
                 !firstSweep,
                 sourceUnknownPlacement,
+                exactPortSweep,
               );
+              if (exactPortSweep) distributePorts(next, current, false);
             }
           }
         }
@@ -1657,25 +1792,48 @@ function minimizeCrossingsWithLayerSweep(
 
       sweep(forward, true);
       let crossings = countCrossings(working);
+      let attemptBestLayers = working.map((layer) => [...layer]);
+      let attemptBestInputPortOrder = new Map(
+        [...inputPortOrder].map(([id, edgeIds]) => [id, [...edgeIds]]),
+      );
+      let attemptBestOutputPortOrder = new Map(
+        [...outputPortOrder].map(([id, edgeIds]) => [id, [...edgeIds]]),
+      );
       while (crossings > 0) {
         forward = !forward;
-        const before = working.map((layer) => [...layer]);
+        const before = exactPortSweep ? undefined : working.map((layer) => [...layer]);
         sweep(forward, false);
         const nextCrossings = countCrossings(working);
         if (nextCrossings >= crossings) {
-          working = before;
+          if (before) working = before;
           break;
         }
         crossings = nextCrossings;
+        attemptBestLayers = working.map((layer) => [...layer]);
+        attemptBestInputPortOrder = new Map(
+          [...inputPortOrder].map(([id, edgeIds]) => [id, [...edgeIds]]),
+        );
+        attemptBestOutputPortOrder = new Map(
+          [...outputPortOrder].map(([id, edgeIds]) => [id, [...edgeIds]]),
+        );
       }
       if (crossings < bestCrossings) {
         bestCrossings = crossings;
-        bestLayers = working.map((layer) => [...layer]);
+        bestLayers = attemptBestLayers;
+        bestInputPortOrder = attemptBestInputPortOrder;
+        bestOutputPortOrder = attemptBestOutputPortOrder;
         if (crossings === 0) break;
       }
     }
 
-    return { layers: bestLayers };
+    phaseRandomByInput.set(input, random);
+    return exactPortSweep
+      ? {
+          layers: bestLayers,
+          inputPortOrderByNodeId: bestInputPortOrder,
+          outputPortOrderByNodeId: bestOutputPortOrder,
+        }
+      : { layers: bestLayers };
   };
 }
 
@@ -1729,9 +1887,18 @@ export const minimizeCrossingsWithModelOrder: CrossingMinimizer = (
   input,
   _orientation,
   assignment,
-) => ({
-  layers: layersFromAssignment(input, assignment),
-});
+) => {
+  const maximumLayer = Math.max(0, ...assignment.layerByNodeId.values());
+  const layers = Array.from({ length: maximumLayer + 1 }, () => [] as string[]);
+  const nodeOrder =
+    (input.settings["layering.strategy"] ?? "NETWORK_SIMPLEX") === "NETWORK_SIMPLEX"
+      ? networkSimplexComponentOrder(input)
+      : input.graph.nodes.map((node) => node.id);
+  for (const nodeId of nodeOrder) {
+    layers[assignment.layerByNodeId.get(nodeId) ?? 0]?.push(nodeId);
+  }
+  return { layers };
+};
 
 export const minimizeCrossingsInteractively: CrossingMinimizer = (
   input,
@@ -2197,21 +2364,26 @@ function getPortPoint(
 
 function simplifyRoute(points: readonly Point[]): Point[] {
   const equal = (left: number, right: number) => Math.abs(left - right) < 1e-9;
-  const unique = points.filter(
-    (point, index) =>
-      index === 0 ||
-      !equal(point.x, points[index - 1]?.x ?? Number.NaN) ||
-      !equal(point.y, points[index - 1]?.y ?? Number.NaN),
-  );
-  return unique.filter((point, index) => {
-    const previous = unique[index - 1];
-    const next = unique[index + 1];
-    if (!previous || !next) return true;
-    return !(
-      (equal(previous.x, point.x) && equal(point.x, next.x)) ||
-      (equal(previous.y, point.y) && equal(point.y, next.y))
-    );
-  });
+  const simplified: Point[] = [];
+  for (const point of points) {
+    const previous = simplified.at(-1);
+    if (previous && equal(previous.x, point.x) && equal(previous.y, point.y)) continue;
+    simplified.push(point);
+    while (simplified.length >= 3) {
+      const first = simplified.at(-3)!;
+      const middle = simplified.at(-2)!;
+      const last = simplified.at(-1)!;
+      if (
+        (equal(first.x, middle.x) && equal(middle.x, last.x)) ||
+        (equal(first.y, middle.y) && equal(middle.y, last.y))
+      ) {
+        simplified.splice(-2, 1);
+      } else {
+        break;
+      }
+    }
+  }
+  return simplified;
 }
 
 function implicitEdgeEndpoints(
@@ -2270,6 +2442,9 @@ function implicitEdgeEndpoints(
     const unzipping = (input.settings["layerUnzipping.strategy"] ?? "NONE") === "ALTERNATING";
     const layerOrdered =
       unzipping ||
+      (input.settings.hierarchyHandling !== "INCLUDE_CHILDREN" &&
+        ((input.settings["crossingMinimization.strategy"] ?? "LAYER_SWEEP") === "LAYER_SWEEP" ||
+          input.settings["crossingMinimization.strategy"] === "MEDIAN_LAYER_SWEEP")) ||
       entries.some(({ edge, endpoint }) =>
         (endpoint === "source" ? edge.targetId : edge.sourceId).startsWith("__layout_dummy:"),
       );
@@ -2445,10 +2620,16 @@ function routeEdges(style: "ORTHOGONAL" | "POLYLINE" | "SPLINES"): EdgeRouter {
     if (labelShift !== 0) implicitEndpoints = implicitEdgeEndpoints(input, placement, orientation);
 
     const orthogonalTrackByEdgeId = new Map<string, number>();
+    const orthogonalDetourByEdgeId = new Map<
+      string,
+      { firstTrack: number; secondTrack: number; crossover: number }
+    >();
     if (
       style === "ORTHOGONAL" &&
-      (input.settings["spacing.edgeNodeBetweenLayers"] !== undefined ||
-        input.settings["spacing.edgeEdgeBetweenLayers"] !== undefined)
+      input.settings.mergeEdges !== true &&
+      (input.settings["wrapping.strategy"] ?? "OFF") === "OFF" &&
+      input.settings.hierarchyHandling !== "INCLUDE_CHILDREN" &&
+      (input.settings["layerUnzipping.strategy"] ?? "NONE") === "NONE"
     ) {
       const edgeNodeSpacing = Number(input.settings["spacing.edgeNodeBetweenLayers"] ?? 10);
       const edgeEdgeSpacing = Number(input.settings["spacing.edgeEdgeBetweenLayers"] ?? 10);
@@ -2456,7 +2637,12 @@ function routeEdges(style: "ORTHOGONAL" | "POLYLINE" | "SPLINES"): EdgeRouter {
         () =>
           [] as Array<{
             edge: GraphEdge;
+            sourceCross: number;
             targetCross: number;
+            straight: boolean;
+            slot?: number;
+            secondSlot?: number;
+            crossover?: number;
           }>,
       );
       for (const edge of input.graph.edges) {
@@ -2473,9 +2659,158 @@ function routeEdges(style: "ORTHOGONAL" | "POLYLINE" | "SPLINES"): EdgeRouter {
         }
         const sourceCross = horizontal ? endpoints.source.y : endpoints.source.x;
         const targetCross = horizontal ? endpoints.target.y : endpoints.target.x;
-        if (Math.abs(sourceCross - targetCross) < 0.2) continue;
-        candidatesByGap[Math.min(sourceLayer, targetLayer)]?.push({ edge, targetCross });
+        candidatesByGap[Math.min(sourceLayer, targetLayer)]?.push({
+          edge,
+          sourceCross,
+          targetCross,
+          straight: Math.abs(sourceCross - targetCross) < 1e-3,
+        });
       }
+
+      const slotsByGap = candidatesByGap.map((candidates) => {
+        if (candidates.length === 0) return 0;
+        const minimumDifference = (values: readonly number[]) => {
+          const distinct = [...new Set(values)].sort((left, right) => left - right);
+          let minimum = Number.MAX_VALUE;
+          for (let index = 1; index < distinct.length; index++) {
+            minimum = Math.min(minimum, distinct[index]! - distinct[index - 1]!);
+          }
+          return minimum;
+        };
+        const criticalThreshold =
+          0.2 *
+          Math.min(
+            minimumDifference(candidates.map(({ sourceCross }) => sourceCross)),
+            minimumDifference(candidates.map(({ targetCross }) => targetCross)),
+          );
+        const dependencies = candidates.map(() => new Set<number>());
+        const criticalDependencies = new Set<string>();
+        const addDependency = (source: number, target: number, critical = false) => {
+          dependencies[source]?.add(target);
+          if (critical) criticalDependencies.add(`${source}:${target}`);
+        };
+        const conflicts = (left: number, right: number) => {
+          const difference = Math.abs(left - right);
+          if (difference < criticalThreshold) return -1;
+          return difference < 0.5 * edgeEdgeSpacing ? 1 : 0;
+        };
+        const crossesExtent = (position: number, candidate: (typeof candidates)[number]) =>
+          position >= Math.min(candidate.sourceCross, candidate.targetCross) &&
+          position <= Math.max(candidate.sourceCross, candidate.targetCross)
+            ? 1
+            : 0;
+
+        for (let left = 0; left < candidates.length - 1; left++) {
+          for (let right = left + 1; right < candidates.length; right++) {
+            const first = candidates[left]!;
+            const second = candidates[right]!;
+            if (first.straight || second.straight) continue;
+            const conflictsFirst = conflicts(first.targetCross, second.sourceCross);
+            const conflictsSecond = conflicts(second.targetCross, first.sourceCross);
+            if (conflictsFirst < 0 || conflictsSecond < 0) {
+              if (conflictsFirst < 0) addDependency(right, left, true);
+              if (conflictsSecond < 0) addDependency(left, right, true);
+              continue;
+            }
+            const firstPenalty =
+              conflictsFirst +
+              16 *
+                (crossesExtent(first.targetCross, second) +
+                  crossesExtent(second.sourceCross, first));
+            const secondPenalty =
+              conflictsSecond +
+              16 *
+                (crossesExtent(second.targetCross, first) +
+                  crossesExtent(first.sourceCross, second));
+            if (firstPenalty < secondPenalty) addDependency(left, right);
+            else if (firstPenalty > secondPenalty) addDependency(right, left);
+            else if (firstPenalty > 0) {
+              addDependency(left, right);
+              addDependency(right, left);
+            }
+          }
+        }
+
+        const nonStraight = candidates.filter(({ straight }) => !straight);
+        let splitCycle = false;
+        for (let left = 0; left < candidates.length - 1 && !splitCycle; left++) {
+          for (let right = left + 1; right < candidates.length; right++) {
+            if (
+              dependencies[left]?.has(right) &&
+              dependencies[right]?.has(left) &&
+              criticalDependencies.has(`${left}:${right}`) &&
+              criticalDependencies.has(`${right}:${left}`)
+            ) {
+              const random =
+                phaseRandomByInput.get(input) ?? new JavaRandom(input.settings.randomSeed ?? 1);
+              const detour = random.nextInt(2) === 0 ? candidates[right]! : candidates[left]!;
+              const central = detour === candidates[left] ? candidates[right]! : candidates[left]!;
+              detour.slot = 0;
+              detour.secondSlot = 2;
+              detour.crossover = (detour.sourceCross + central.sourceCross) / 2;
+              central.slot = 1;
+              dependencies[left]?.delete(right);
+              dependencies[right]?.delete(left);
+              splitCycle = true;
+              break;
+            }
+          }
+        }
+
+        for (let left = 0; left < candidates.length - 1; left++) {
+          for (let right = left + 1; right < candidates.length; right++) {
+            if (
+              dependencies[left]?.has(right) &&
+              dependencies[right]?.has(left) &&
+              !criticalDependencies.has(`${left}:${right}`) &&
+              !criticalDependencies.has(`${right}:${left}`)
+            ) {
+              const lowerSource =
+                candidates[left]!.sourceCross < candidates[right]!.sourceCross ? left : right;
+              const higherSource = lowerSource === left ? right : left;
+              dependencies[lowerSource]?.delete(higherSource);
+            }
+          }
+        }
+
+        // ELK breaks dependency cycles before topological numbering. Removing the
+        // later edge is equivalent for the zero-weight two-cycles that remain here.
+        const visiting = new Set<number>();
+        const visited = new Set<number>();
+        const removeCycles = (source: number) => {
+          visiting.add(source);
+          for (const target of dependencies[source] ?? []) {
+            if (visiting.has(target)) dependencies[source]?.delete(target);
+            else if (!visited.has(target)) removeCycles(target);
+          }
+          visiting.delete(source);
+          visited.add(source);
+        };
+        for (let index = 0; index < candidates.length; index++) removeCycles(index);
+
+        const incoming = candidates.map(() => 0);
+        for (const targets of dependencies) {
+          for (const target of targets) incoming[target] = (incoming[target] ?? 0) + 1;
+        }
+        const queue = incoming.flatMap((count, index) => (count === 0 ? [index] : []));
+        let maximumSlot = Math.max(
+          0,
+          ...candidates.map(({ secondSlot, slot }) => secondSlot ?? slot ?? 0),
+        );
+        for (let queueIndex = 0; queueIndex < queue.length; queueIndex++) {
+          const source = queue[queueIndex]!;
+          const sourceSlot = candidates[source]?.slot ?? 0;
+          for (const target of dependencies[source] ?? []) {
+            const targetCandidate = candidates[target];
+            if (!targetCandidate) continue;
+            targetCandidate.slot = Math.max(targetCandidate.slot ?? 0, sourceSlot + 1);
+            maximumSlot = Math.max(maximumSlot, targetCandidate.slot);
+            incoming[target]!--;
+            if (incoming[target] === 0) queue.push(target);
+          }
+        }
+        return nonStraight.length === 0 ? 0 : maximumSlot + 1;
+      });
 
       const existingGapByLayer = flowLayers
         .slice(0, -1)
@@ -2493,7 +2828,7 @@ function routeEdges(style: "ORTHOGONAL" | "POLYLINE" | "SPLINES"): EdgeRouter {
         const size = bounds.end - bounds.start;
         bounds.start = nextStart;
         bounds.end = nextStart + size;
-        const slots = candidatesByGap[layerNo]?.length ?? 0;
+        const slots = slotsByGap[layerNo] ?? 0;
         const gapSpacing =
           slots === 0
             ? (existingGapByLayer[layerNo] ?? input.spacing.layer)
@@ -2506,12 +2841,22 @@ function routeEdges(style: "ORTHOGONAL" | "POLYLINE" | "SPLINES"): EdgeRouter {
       implicitEndpoints = implicitEdgeEndpoints(input, placement, orientation);
 
       for (const [gap, candidates] of candidatesByGap.entries()) {
-        candidates.sort((left, right) => left.targetCross - right.targetCross);
-        for (const [rank, candidate] of candidates.entries()) {
-          orthogonalTrackByEdgeId.set(
-            candidate.edge.id,
-            (flowLayers[gap]?.end ?? 0) + edgeNodeSpacing + rank * edgeEdgeSpacing,
-          );
+        for (const candidate of candidates) {
+          if (candidate.straight) continue;
+          const firstTrack =
+            (flowLayers[gap]?.end ?? 0) + edgeNodeSpacing + (candidate.slot ?? 0) * edgeEdgeSpacing;
+          if (candidate.secondSlot !== undefined && candidate.crossover !== undefined) {
+            orthogonalDetourByEdgeId.set(candidate.edge.id, {
+              firstTrack,
+              secondTrack:
+                (flowLayers[gap]?.end ?? 0) +
+                edgeNodeSpacing +
+                candidate.secondSlot * edgeEdgeSpacing,
+              crossover: candidate.crossover,
+            });
+          } else {
+            orthogonalTrackByEdgeId.set(candidate.edge.id, firstTrack);
+          }
         }
       }
     }
@@ -2946,6 +3291,7 @@ function routeEdges(style: "ORTHOGONAL" | "POLYLINE" | "SPLINES"): EdgeRouter {
           : horizontal
             ? (start.x + end.x) / 2
             : (start.y + end.y) / 2);
+      const orthogonalDetour = orthogonalDetourByEdgeId.get(edge.id);
       const polylineMiddle: Point[] = [];
       if (style === "POLYLINE" && earlier && later && earlierLayer !== laterLayer) {
         const slopedZone = Number(input.settings["edgeRouting.polyline.slopedEdgeZoneWidth"] ?? 2);
@@ -2995,15 +3341,29 @@ function routeEdges(style: "ORTHOGONAL" | "POLYLINE" | "SPLINES"): EdgeRouter {
           ? polylineMiddle
           : style === "SPLINES"
             ? splineMiddle
-            : horizontal
+            : orthogonalDetour && horizontal
               ? [
-                  { x: track, y: start.y },
-                  { x: track, y: end.y },
+                  { x: orthogonalDetour.firstTrack, y: start.y },
+                  { x: orthogonalDetour.firstTrack, y: orthogonalDetour.crossover },
+                  { x: orthogonalDetour.secondTrack, y: orthogonalDetour.crossover },
+                  { x: orthogonalDetour.secondTrack, y: end.y },
                 ]
-              : [
-                  { x: start.x, y: track },
-                  { x: end.x, y: track },
-                ];
+              : orthogonalDetour
+                ? [
+                    { x: start.x, y: orthogonalDetour.firstTrack },
+                    { x: orthogonalDetour.crossover, y: orthogonalDetour.firstTrack },
+                    { x: orthogonalDetour.crossover, y: orthogonalDetour.secondTrack },
+                    { x: end.x, y: orthogonalDetour.secondTrack },
+                  ]
+                : horizontal
+                  ? [
+                      { x: track, y: start.y },
+                      { x: track, y: end.y },
+                    ]
+                  : [
+                      { x: start.x, y: track },
+                      { x: end.x, y: track },
+                    ];
       const routedPoints = [start, ...middle, end];
       const splineMode = input.settings["edgeRouting.splines.mode"] ?? "SLOPPY";
       pointsByEdgeId.set(
@@ -3142,6 +3502,9 @@ export function placePorts<P>(
     const portLabelsInside = String(nodeSettings?.["portLabels.placement"] ?? "OUTSIDE").includes(
       "INSIDE",
     );
+    const spaceEfficientPortLabels =
+      String(nodeSettings?.["portLabels.placement"] ?? "").includes("SPACE_EFFICIENT") ||
+      String(nodeSettings?.["nodeSize.options"] ?? "").includes("SPACE_EFFICIENT_PORT_LABELS");
     const accountForPortLabels =
       String(nodeSettings?.["nodeSize.constraints"] ?? "").includes("PORT_LABELS") &&
       portLabelsInside;
@@ -3175,8 +3538,45 @@ export function placePorts<P>(
     const portsOverhang = String(nodeSettings?.["nodeSize.options"] ?? "")
       .split(/[\s,;]+/)
       .includes("PORTS_OVERHANG");
-    const axisPosition =
-      alignmentName === "BEGIN"
+    const axisPosition = spaceEfficientPortLabels
+      ? (() => {
+          const rightMargins = group.map((candidate, candidateIndex) => {
+            if (candidateIndex === 0 || candidateIndex === group.length - 1) return 0;
+            const settings = portSettings?.(candidate) as
+              | (ElkLayeredOptionValueByName & { "port.labelWidth"?: number })
+              | undefined;
+            return (
+              Number(settings?.["port.labelWidth"] ?? 0) +
+              (side === "NORTH" || side === "SOUTH"
+                ? Number(nodeSettings?.["spacing.labelPortHorizontal"] ?? 1)
+                : 0)
+            );
+          });
+          const minimum =
+            group.reduce(
+              (sum, candidate, candidateIndex) =>
+                sum +
+                (side === "NORTH" || side === "SOUTH"
+                  ? (candidate.width ?? 8)
+                  : (candidate.height ?? 8)) +
+                rightMargins[candidateIndex]!,
+              Math.max(0, group.length - 1) * spacing,
+            ) +
+            2 * spacing;
+          const distributedSpacing = spacing + (availableAxisSize - minimum) / (group.length + 1);
+          let current = axisStart + distributedSpacing;
+          for (let candidateIndex = 0; candidateIndex < index; candidateIndex++) {
+            const candidate = group[candidateIndex]!;
+            current +=
+              (side === "NORTH" || side === "SOUTH"
+                ? (candidate.width ?? 8)
+                : (candidate.height ?? 8)) +
+              rightMargins[candidateIndex]! +
+              distributedSpacing;
+          }
+          return Math.round((current + portAxisSize / 2) * 1e12) / 1e12;
+        })()
+      : alignmentName === "BEGIN"
         ? axisStart + index * (portAxisSize + spacing) + portAxisSize / 2
         : alignmentName === "END"
           ? axisStart +
@@ -3235,13 +3635,17 @@ export function placePorts<P>(
           ? rect.width + borderOffset
           : side === "WEST"
             ? -size.width - borderOffset
-            : ratio * rect.width - size.width / 2,
+            : spaceEfficientPortLabels
+              ? axisPosition - size.width / 2
+              : ratio * rect.width - size.width / 2,
       y:
         side === "SOUTH"
           ? rect.height + borderOffset
           : side === "NORTH"
             ? -size.height - borderOffset
-            : ratio * rect.height - size.height / 2,
+            : spaceEfficientPortLabels
+              ? axisPosition - size.height / 2
+              : ratio * rect.height - size.height / 2,
     };
   });
 }

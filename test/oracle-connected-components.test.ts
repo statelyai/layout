@@ -59,7 +59,12 @@ it("matches ELK when connected-component separation is disabled", async () => {
   });
 });
 
-for (const strategy of ["INSIDE_PORT_SIDE_GROUPS", "GROUP_MODEL_ORDER", "MODEL_ORDER"] as const) {
+for (const strategy of [
+  "NONE",
+  "INSIDE_PORT_SIDE_GROUPS",
+  "GROUP_MODEL_ORDER",
+  "MODEL_ORDER",
+] as const) {
   it(`matches ELK ${strategy} component model order`, async () => {
     await expectOracleParity({
       id: "root",

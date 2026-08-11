@@ -19,7 +19,7 @@ const edges = [
   { id: "de", sourceId: "d", targetId: "e" },
 ];
 
-for (const edgeRouting of ["ORTHOGONAL", "POLYLINE", "SPLINES"] as const) {
+for (const edgeRouting of ["UNDEFINED", "ORTHOGONAL", "POLYLINE", "SPLINES"] as const) {
   it(`matches ELK ${edgeRouting} implicit-port routes`, async () => {
     const oracle = await new ELK().layout({
       id: "root",
@@ -160,7 +160,7 @@ for (const [edgeRouting, option, values] of [
   }
 }
 
-for (const splineMode of ["CONSERVATIVE", "CONSERVATIVE_SOFT"] as const) {
+for (const splineMode of ["CONSERVATIVE", "CONSERVATIVE_SOFT", "SLOPPY"] as const) {
   it(`matches ELK ${splineMode} spline control points`, async () => {
     const splineNodes = [
       { id: "a", width: 30, height: 20 },

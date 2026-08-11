@@ -43,7 +43,7 @@ function expectExactGeometry(actual: ElkNode, expected: ElkNode): void {
   }
 }
 
-for (const strategy of ["SINGLE_EDGE", "MULTI_EDGE"] as const) {
+for (const strategy of ["OFF", "SINGLE_EDGE", "MULTI_EDGE"] as const) {
   for (const additionalSpacing of [0, 10]) {
     it(`matches ELK ${strategy} path wrapping with additional spacing ${additionalSpacing}`, async () => {
       const graph: ElkNode = {

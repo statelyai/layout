@@ -43,6 +43,10 @@ export interface LayerAssignment {
 
 export interface LayerOrder {
   layers: readonly (readonly string[])[];
+  /** Internal ELK sweep state retained for exact port-aware placement. */
+  inputPortOrderByNodeId?: ReadonlyMap<string, readonly string[]>;
+  /** Internal ELK sweep state retained for exact port-aware placement. */
+  outputPortOrderByNodeId?: ReadonlyMap<string, readonly string[]>;
 }
 
 export interface NodePlacement {

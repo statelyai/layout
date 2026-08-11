@@ -206,19 +206,49 @@ export default class ELK {
     let hasHierarchyCrossingEdges = false;
     const hierarchyHandling = getOption(layoutOptions, "hierarchyHandling");
     const topdownLayout = getBooleanOption(layoutOptions, "topdownLayout") === true;
+    const separateHierarchy =
+      hasHierarchy && hierarchyHandling !== undefined && hierarchyHandling !== "INCLUDE_CHILDREN";
     if (hasHierarchy && topdownLayout && hierarchyHandling === "INCLUDE_CHILDREN") {
       throw new Error(
         "org.eclipse.elk.core.UnsupportedConfigurationException: Topdown layout cannot be used together with hierarchy handling.",
       );
     }
-    if (
-      hasHierarchy &&
-      hierarchyHandling !== undefined &&
-      hierarchyHandling !== "INCLUDE_CHILDREN"
-    ) {
-      throw new Error(
-        "org.eclipse.elk.core.UnsupportedGraphException: Hierarchical edges require INCLUDE_CHILDREN",
-      );
+    if (separateHierarchy) {
+      const hasCrossHierarchyEdge = (container: ElkNode): boolean => {
+        const directEndpointIds = new Set<string>();
+        for (const child of container.children ?? []) {
+          directEndpointIds.add(String(child.id));
+          for (const port of child.ports ?? []) directEndpointIds.add(String(port.id));
+        }
+        if (
+          (container.edges ?? []).some((edge) => {
+            const sourceId = String(edge.sources?.[0] ?? edge.source);
+            const targetId = String(edge.targets?.[0] ?? edge.target);
+            return !directEndpointIds.has(sourceId) || !directEndpointIds.has(targetId);
+          })
+        ) {
+          return true;
+        }
+        return (container.children ?? []).some((child) => hasCrossHierarchyEdge(child));
+      };
+      if (hasCrossHierarchyEdge(graph)) {
+        throw new Error(
+          "org.eclipse.elk.core.UnsupportedGraphException: Hierarchical edges require INCLUDE_CHILDREN",
+        );
+      }
+      for (const child of graph.children ?? []) {
+        if ((child.children?.length ?? 0) === 0) continue;
+        await this.layout(child, {
+          ...arguments_,
+          layoutOptions: {
+            ...arguments_.layoutOptions,
+            ...child.layoutOptions,
+            hierarchyHandling,
+          },
+          logging: false,
+          measureExecutionTime: false,
+        });
+      }
     }
     if (hasHierarchy && topdownLayout) {
       if (getOption(layoutOptions, "topdown.nodeType") === undefined) {
@@ -228,16 +258,20 @@ export default class ELK {
         if ((child.children?.length ?? 0) === 0) continue;
         const childOptions = { ...layoutOptions, ...child.layoutOptions };
         const childPadding = parsePadding(getOption(childOptions, "padding"), 12);
-        const width = getNumberOption(childOptions, "topdown.hierarchicalNodeWidth") ?? 0;
+        const parallelNode = getOption(childOptions, "topdown.nodeType") === "PARALLEL_NODE";
+        const width =
+          getNumberOption(childOptions, "topdown.hierarchicalNodeWidth") ??
+          (parallelNode ? 150 : 0);
         const aspectRatio =
-          getNumberOption(childOptions, "topdown.hierarchicalNodeAspectRatio") ?? 1 / Math.sqrt(2);
+          getNumberOption(childOptions, "topdown.hierarchicalNodeAspectRatio") ??
+          (parallelNode ? 1.414 : 1 / Math.sqrt(2));
         child.width = Math.max(child.width ?? 0, width + childPadding.left + childPadding.right);
         child.height = Math.max(
           child.height ?? 0,
           width / aspectRatio + childPadding.top + childPadding.bottom,
         );
       }
-    } else if (hasHierarchy) {
+    } else if (hasHierarchy && !separateHierarchy) {
       // The probability only chooses between equivalent top-down and bottom-up
       // sweep schedules. The deterministic proxy decomposition below preserves
       // the resulting exported order for either schedule.
@@ -1385,6 +1419,40 @@ function normalizeElkGraphBounds(
       }
     }
   }
+  const maximumNodeX = Math.max(
+    0,
+    ...layoutChildren.map((node) => (node.x ?? 0) + (node.width ?? 0)),
+  );
+  const maximumNodeY = Math.max(
+    0,
+    ...layoutChildren.map((node) => (node.y ?? 0) + (node.height ?? 0)),
+  );
+  const layoutEdgePoints = (root.edges ?? []).flatMap((edge) =>
+    getBooleanOption(edge.layoutOptions ?? {}, "noLayout") === true
+      ? []
+      : (edge.sections ?? []).flatMap((section) => [
+          section.startPoint,
+          ...(section.bendPoints ?? []),
+          section.endPoint,
+        ]),
+  );
+  const addBoundaryPixel =
+    getOption(layoutOptions, "layered.wrapping.strategy") === undefined &&
+    getBooleanOption(layoutOptions, "layered.feedbackEdges") !== true &&
+    !(root.edges ?? []).some((edge) => edge.sources?.[0] === edge.targets?.[0]) &&
+    !(root.children ?? []).some((child) => (child.children?.length ?? 0) > 0);
+  const edgeBoundsExtraX =
+    addBoundaryPixel &&
+    layoutEdgePoints.length > 0 &&
+    Math.max(...layoutEdgePoints.map((point) => point.x)) >= maximumNodeX - 1e-9
+      ? 1
+      : 0;
+  const edgeBoundsExtraY =
+    addBoundaryPixel &&
+    layoutEdgePoints.length > 0 &&
+    Math.max(...layoutEdgePoints.map((point) => point.y)) >= maximumNodeY - 1e-9
+      ? 1
+      : 0;
   const calculatedWidth =
     Math.max(
       0,
@@ -1414,6 +1482,7 @@ function normalizeElkGraphBounds(
       ),
     ) +
     padding.right +
+    edgeBoundsExtraX +
     (getBooleanOption(layoutOptions, "layered.feedbackEdges") === true &&
     (getDirection(layoutOptions) === "down" || getDirection(layoutOptions) === "up")
       ? 1
@@ -1455,6 +1524,7 @@ function normalizeElkGraphBounds(
       ),
     ) +
     padding.bottom +
+    edgeBoundsExtraY +
     (getBooleanOption(layoutOptions, "layered.feedbackEdges") === true &&
     (getDirection(layoutOptions) === "right" || getDirection(layoutOptions) === "left")
       ? 1
@@ -1533,14 +1603,21 @@ function placePortLabels(node: ElkNode, globalOptions: Readonly<Record<string, u
   const placement = String(
     getOption({ ...globalOptions, ...node.layoutOptions }, "portLabels.placement") ?? "OUTSIDE",
   );
-  const inside = placement === "INSIDE";
+  const inside = placement.includes("INSIDE");
+  const alwaysOtherSide = placement.includes("ALWAYS_OTHER_SAME_SIDE");
+  const spaceEfficient =
+    placement.includes("SPACE_EFFICIENT") ||
+    String(getOption(node.layoutOptions ?? {}, "nodeSize.options") ?? "").includes(
+      "SPACE_EFFICIENT_PORT_LABELS",
+    );
   const horizontalSpacing = getNumberOption(globalOptions, "spacing.labelPortHorizontal") ?? 1;
   const verticalSpacing = getNumberOption(globalOptions, "spacing.labelPortVertical") ?? 1;
   const labelSpacing = getNumberOption(globalOptions, "spacing.labelLabel") ?? 0;
   const treatAsGroup =
     getBooleanOption(node.layoutOptions ?? {}, "portLabels.treatAsGroup") ?? false;
   const placeNextToPort =
-    getOption(node.layoutOptions ?? {}, "portLabels.nextToPortIfPossible") !== undefined;
+    placement.includes("NEXT_TO_PORT_IF_POSSIBLE") ||
+    getBooleanOption(node.layoutOptions ?? {}, "portLabels.nextToPortIfPossible") === true;
   const nodeWidth = node.width ?? 0;
   for (const port of node.ports ?? []) {
     if (getBooleanOption(port.layoutOptions ?? {}, "noLayout") === true) continue;
@@ -1554,6 +1631,17 @@ function placePortLabels(node: ElkNode, globalOptions: Readonly<Record<string, u
           : (port.y ?? 0) < 0
             ? "NORTH"
             : "SOUTH";
+    const portsOnSide = (node.ports ?? []).filter((candidate) => {
+      const candidateSide =
+        (candidate.x ?? 0) < 0
+          ? "WEST"
+          : (candidate.x ?? 0) >= nodeWidth
+            ? "EAST"
+            : (candidate.y ?? 0) < 0
+              ? "NORTH"
+              : "SOUTH";
+      return candidateSide === side;
+    });
     const labels = (port.labels ?? []).filter(
       (label) =>
         Boolean(label.text) && getBooleanOption(label.layoutOptions ?? {}, "noLayout") !== true,
@@ -1575,16 +1663,47 @@ function placePortLabels(node: ElkNode, globalOptions: Readonly<Record<string, u
       const height = label.height ?? 0;
       if (side === "EAST") {
         label.x = inside ? -width - horizontalSpacing : portWidth + horizontalSpacing;
-        label.y = stackedY ?? (inside ? (portHeight - height) / 2 : portHeight + verticalSpacing);
+        label.y =
+          stackedY ??
+          (inside || placeNextToPort
+            ? (portHeight - height) / 2
+            : alwaysOtherSide
+              ? -height - verticalSpacing
+              : portHeight + verticalSpacing);
       } else if (side === "WEST") {
         label.x = inside ? portWidth + horizontalSpacing : -width - horizontalSpacing;
-        label.y = stackedY ?? (inside ? (portHeight - height) / 2 : portHeight + verticalSpacing);
+        label.y =
+          stackedY ??
+          (inside || placeNextToPort
+            ? (portHeight - height) / 2
+            : alwaysOtherSide
+              ? -height - verticalSpacing
+              : portHeight + verticalSpacing);
       } else if (side === "NORTH") {
-        label.x = inside ? (portWidth - width) / 2 : portWidth + horizontalSpacing;
+        label.x =
+          inside || placeNextToPort
+            ? (portWidth - width) / 2
+            : alwaysOtherSide
+              ? -width - horizontalSpacing
+              : portWidth + horizontalSpacing;
         label.y = inside ? portHeight + verticalSpacing : -height - verticalSpacing;
       } else {
-        label.x = inside ? (portWidth - width) / 2 : portWidth + horizontalSpacing;
+        label.x =
+          inside || placeNextToPort
+            ? (portWidth - width) / 2
+            : alwaysOtherSide
+              ? -width - horizontalSpacing
+              : portWidth + horizontalSpacing;
         label.y = inside ? -height - verticalSpacing : portHeight + verticalSpacing;
+      }
+      if (
+        spaceEfficient &&
+        portsOnSide[0] === port &&
+        portsOnSide.length >= 2 &&
+        !placeNextToPort
+      ) {
+        if (side === "EAST" || side === "WEST") label.y = -height - verticalSpacing;
+        else label.x = -width - horizontalSpacing;
       }
       if (stackedY !== undefined) stackedY += height + labelSpacing;
     }

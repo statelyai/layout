@@ -175,4 +175,31 @@ describe("ELK node-size option parity", () => {
       ],
     });
   });
+
+  it("matches deprecated SPACE_EFFICIENT_PORT_LABELS", async () => {
+    await compare({
+      id: "root",
+      layoutOptions: { "elk.algorithm": "layered" },
+      children: [
+        {
+          id: "node",
+          width: 60,
+          height: 60,
+          layoutOptions: {
+            "elk.portConstraints": "FIXED_SIDE",
+            "elk.nodeSize.constraints": "PORT_LABELS",
+            "elk.nodeSize.options": "SPACE_EFFICIENT_PORT_LABELS",
+            "elk.portLabels.placement": "OUTSIDE",
+          },
+          ports: [0, 1, 2].map((index) => ({
+            id: `port-${index}`,
+            width: 8,
+            height: 8,
+            layoutOptions: { "elk.port.side": "NORTH" },
+            labels: [{ id: `label-${index}`, text: "label", width: 20, height: 8 }],
+          })),
+        },
+      ],
+    });
+  });
 });

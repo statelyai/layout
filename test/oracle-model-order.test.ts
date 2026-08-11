@@ -40,7 +40,7 @@ async function expectExactNodePositions(input: ElkNode): Promise<void> {
 }
 
 describe("ELK model-order crossing parity", () => {
-  for (const strategy of ["NODES_AND_EDGES", "PREFER_EDGES", "PREFER_NODES"]) {
+  for (const strategy of ["NONE", "NODES_AND_EDGES", "PREFER_EDGES", "PREFER_NODES"]) {
     for (const force of [false, true]) {
       it(`matches ${strategy} with force=${force}`, async () => {
         await expectExactNodePositions(crossedGraph(strategy, force));

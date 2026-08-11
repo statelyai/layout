@@ -20,7 +20,7 @@ const edges = [
   targets: [target!],
 }));
 
-for (const type of ["ONE_SIDED", "TWO_SIDED"] as const) {
+for (const type of ["OFF", "ONE_SIDED", "TWO_SIDED"] as const) {
   it(`matches ELK ${type} greedy switching`, async () => {
     const graph: ElkNode = {
       id: "root",
