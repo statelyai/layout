@@ -74,6 +74,47 @@ it("matches ELK wrapping correction factor", async () => {
   expect([actual.width, actual.height]).toEqual([expected.width, expected.height]);
 });
 
+for (const [option, values] of [
+  ["improveCuts", ["false", "true"]],
+  ["distancePenalty", ["1", "2", "4"]],
+  ["improveWrappedEdges", ["false", "true"]],
+] as const) {
+  for (const value of values) {
+    it(`matches ELK path wrapping with ${option}=${value}`, async () => {
+      const graph: ElkNode = {
+        id: "root",
+        layoutOptions: {
+          "elk.algorithm": "layered",
+          "elk.aspectRatio": "1",
+          "elk.layered.layering.strategy": "LONGEST_PATH",
+          "elk.layered.wrapping.strategy": "MULTI_EDGE",
+          [`elk.layered.wrapping.multiEdge.${option}`]: value,
+        },
+        children: Array.from({ length: 10 }, (_, index) => ({
+          id: `node-${index}`,
+          width: 20,
+          height: 20,
+        })),
+        edges: Array.from({ length: 9 }, (_, index) => ({
+          id: `edge-${index}`,
+          sources: [`node-${index}`],
+          targets: [`node-${index + 1}`],
+        })),
+      };
+      const expected = (await new OracleELK().layout(
+        structuredClone(graph) as never,
+      )) as unknown as ElkNode;
+      const actual = await new NativeELK().layout(structuredClone(graph));
+      expect(actual.children?.map((node) => [node.x, node.y])).toEqual(
+        expected.children?.map((node) => [node.x, node.y]),
+      );
+      expect(actual.edges?.map((edge) => edge.sections)).toEqual(
+        expected.edges?.map((edge) => edge.sections),
+      );
+    });
+  }
+}
+
 for (const [cuttingStrategy, freedom] of [
   ["ARD", 1],
   ["MSD", 0],

@@ -35,6 +35,12 @@ describe("ELK direction congruency parity", () => {
         expect(actual.children?.find((node) => node.id === "target")?.[flowCoordinate]).toEqual(
           expected.children?.find((node) => node.id === "target")?.[flowCoordinate],
         );
+        if (direction === "RIGHT" && congruency === "READING_DIRECTION") {
+          expect(actual.children?.find((node) => node.id === "target")?.y).toBeCloseTo(
+            expected.children?.find((node) => node.id === "target")?.y ?? Number.NaN,
+            12,
+          );
+        }
       });
     }
   }

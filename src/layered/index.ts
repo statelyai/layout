@@ -134,6 +134,16 @@ function runWrappedPathPipeline<N, E, G, P>(
   options: LayeredLayoutOptions,
 ): VisualGraph<N, E, G, P> | undefined {
   const strategy = options.settings?.["wrapping.strategy"] ?? "OFF";
+  const improveMultiEdgeCuts = options.settings?.["wrapping.multiEdge.improveCuts"] ?? true;
+  const multiEdgeDistancePenalty = Number(
+    options.settings?.["wrapping.multiEdge.distancePenalty"] ?? 2,
+  );
+  const improveWrappedEdges = options.settings?.["wrapping.multiEdge.improveWrappedEdges"] ?? true;
+  // A path has one edge spanning every candidate cut, so all three multi-edge
+  // refinements are mathematically neutral. General graphs use them below.
+  void improveMultiEdgeCuts;
+  void multiEdgeDistancePenalty;
+  void improveWrappedEdges;
   const direction = options.direction ?? graph.direction ?? "right";
   if (strategy === "OFF" || direction !== "right" || graph.nodes.length < 2) return undefined;
   if (graph.edges.length !== graph.nodes.length - 1) return undefined;

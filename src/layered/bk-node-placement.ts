@@ -48,6 +48,7 @@ function buildNeighbors(input: LayeredPhaseInput, order: LayerOrder) {
   const left = new Map<string, Neighbor[]>();
   const right = new Map<string, Neighbor[]>();
   const anchor = new Map<string, number>();
+  const edgeModelOrder = new Map(input.graph.edges.map((edge, index) => [edge.id, index]));
   for (const id of layerIndex.keys()) {
     left.set(id, []);
     right.set(id, []);
@@ -66,7 +67,11 @@ function buildNeighbors(input: LayeredPhaseInput, order: LayerOrder) {
     neighbors.sort((a, b) => (nodeIndex.get(a.id) ?? 0) - (nodeIndex.get(b.id) ?? 0));
   }
   for (const [id, entries] of right) {
-    entries.forEach((entry, index) => {
+    const portOrder = [...entries].sort(
+      (leftEntry, rightEntry) =>
+        (edgeModelOrder.get(leftEntry.edgeId) ?? 0) - (edgeModelOrder.get(rightEntry.edgeId) ?? 0),
+    );
+    portOrder.forEach((entry, index) => {
       anchor.set(
         `${entry.edgeId}:${id}`,
         (crossSize(input, id) * (index + 1)) / (entries.length + 1),
@@ -74,10 +79,14 @@ function buildNeighbors(input: LayeredPhaseInput, order: LayerOrder) {
     });
   }
   for (const [id, entries] of left) {
-    entries.forEach((entry, index) => {
+    const portOrder = [...entries].sort(
+      (leftEntry, rightEntry) =>
+        (edgeModelOrder.get(rightEntry.edgeId) ?? 0) - (edgeModelOrder.get(leftEntry.edgeId) ?? 0),
+    );
+    portOrder.forEach((entry, index) => {
       anchor.set(
         `${entry.edgeId}:${id}`,
-        (crossSize(input, id) * (entries.length - index)) / (entries.length + 1),
+        (crossSize(input, id) * (index + 1)) / (entries.length + 1),
       );
     });
   }
@@ -185,6 +194,16 @@ function compact(
       bal.shift.set(id, bal.vdir === "UP" ? Number.NEGATIVE_INFINITY : Number.POSITIVE_INFINITY);
     }
   }
+  const classEdges = new Map<string, Array<{ target: string; separation: number }>>();
+  const classIndegree = new Map<string, number>();
+  const addClassEdge = (source: string, target: string, separation: number): void => {
+    const edges = classEdges.get(source) ?? [];
+    edges.push({ target, separation });
+    classEdges.set(source, edges);
+    if (!classEdges.has(target)) classEdges.set(target, []);
+    classIndegree.set(source, classIndegree.get(source) ?? 0);
+    classIndegree.set(target, (classIndegree.get(target) ?? 0) + 1);
+  };
 
   const placeBlock = (root: string): void => {
     if (bal.y.has(root)) return;
@@ -227,7 +246,7 @@ function compact(
           );
           assigned = true;
         } else {
-          const candidate =
+          const separation =
             bal.vdir === "UP"
               ? (bal.y.get(root) ?? 0) +
                 (bal.innerShift.get(current) ?? 0) +
@@ -241,13 +260,7 @@ function compact(
                 (bal.innerShift.get(neighbor) ?? 0) -
                 crossSize(input, neighbor) -
                 spacing;
-          const previous =
-            bal.shift.get(neighborSink) ??
-            (bal.vdir === "UP" ? Number.NEGATIVE_INFINITY : Number.POSITIVE_INFINITY);
-          bal.shift.set(
-            neighborSink,
-            bal.vdir === "UP" ? Math.max(previous, candidate) : Math.min(previous, candidate),
-          );
+          addClassEdge(rootSink, neighborSink, separation);
         }
       }
       current = bal.align.get(current) ?? root;
@@ -259,6 +272,29 @@ function compact(
     const layer = bal.vdir === "UP" ? [...originalLayer].reverse() : originalLayer;
     for (const id of layer) if (bal.root.get(id) === id) placeBlock(id);
   }
+  const classShift = new Map<string, number>();
+  const queue = [...classEdges.keys()].filter((id) => (classIndegree.get(id) ?? 0) === 0);
+  for (let index = 0; index < queue.length; index++) {
+    const source = queue[index]!;
+    const sourceShift = classShift.get(source) ?? 0;
+    classShift.set(source, sourceShift);
+    for (const edge of classEdges.get(source) ?? []) {
+      const candidate = sourceShift + edge.separation;
+      const previous = classShift.get(edge.target);
+      classShift.set(
+        edge.target,
+        previous === undefined
+          ? candidate
+          : bal.vdir === "DOWN"
+            ? Math.min(previous, candidate)
+            : Math.max(previous, candidate),
+      );
+      const indegree = (classIndegree.get(edge.target) ?? 1) - 1;
+      classIndegree.set(edge.target, indegree);
+      if (indegree === 0) queue.push(edge.target);
+    }
+  }
+  for (const [id, shift] of classShift) bal.shift.set(id, shift);
   const rootPositions = new Map(bal.y);
   for (const layer of layers) {
     for (const id of layer) {
@@ -279,6 +315,70 @@ function extent(input: LayeredPhaseInput, bal: Alignment): [number, number] {
     max = Math.max(max, value + crossSize(input, id));
   }
   return [min, max];
+}
+
+function improveEdgeStraightness(
+  input: LayeredPhaseInput,
+  order: LayerOrder,
+  bal: Alignment,
+  neighbors: ReturnType<typeof buildNeighbors>,
+): void {
+  if (input.settings["nodePlacement.bk.edgeStraightening"] !== "IMPROVE_STRAIGHTNESS") {
+    return;
+  }
+  const lockedRoots = new Set<string>();
+  const nodesByRoot = new Map<string, string[]>();
+  for (const id of neighbors.layerIndex.keys()) {
+    const root = bal.root.get(id) ?? id;
+    const nodes = nodesByRoot.get(root) ?? [];
+    nodes.push(id);
+    nodesByRoot.set(root, nodes);
+  }
+  const canShift = (root: string, delta: number): boolean =>
+    (nodesByRoot.get(root) ?? []).every((id) => {
+      const candidate = (bal.y.get(id) ?? 0) + delta;
+      const end = candidate + crossSize(input, id);
+      const layer = order.layers[neighbors.layerIndex.get(id) ?? 0] ?? [];
+      return layer.every((otherId) => {
+        if ((bal.root.get(otherId) ?? otherId) === root) return true;
+        const other = bal.y.get(otherId) ?? 0;
+        const spacing = nodeNodeSpacing(input, id, otherId);
+        return end + spacing <= other || other + crossSize(input, otherId) + spacing <= candidate;
+      });
+    });
+  const layers = bal.hdir === "LEFT" ? [...order.layers].reverse() : order.layers;
+  for (const layer of layers) {
+    const nodes = bal.vdir === "UP" ? [...layer].reverse() : layer;
+    for (const [traversalIndex, id] of nodes.entries()) {
+      if (traversalIndex === 0) continue;
+      const root = bal.root.get(id) ?? id;
+      if (lockedRoots.has(root) || root !== id) continue;
+      const candidateEdges = input.graph.edges.filter((edge) =>
+        bal.hdir === "RIGHT" ? edge.targetId === id : edge.sourceId === id,
+      );
+      const edge = candidateEdges.find((candidate) => {
+        const otherId = candidate.sourceId === id ? candidate.targetId : candidate.sourceId;
+        return !lockedRoots.has(bal.root.get(otherId) ?? otherId);
+      });
+      if (!edge) continue;
+      const otherId = edge.sourceId === id ? edge.targetId : edge.sourceId;
+      const currentAnchor = neighbors.anchor.get(`${edge.id}:${id}`) ?? crossSize(input, id) / 2;
+      const otherAnchor =
+        neighbors.anchor.get(`${edge.id}:${otherId}`) ?? crossSize(input, otherId) / 2;
+      const desired = (bal.y.get(otherId) ?? 0) + otherAnchor - currentAnchor;
+      const delta = desired - (bal.y.get(id) ?? 0);
+      if (
+        ((bal.vdir === "DOWN" && delta > 0) || (bal.vdir === "UP" && delta < 0)) &&
+        canShift(root, delta)
+      ) {
+        for (const blockNode of nodesByRoot.get(root) ?? []) {
+          bal.y.set(blockNode, (bal.y.get(blockNode) ?? 0) + delta);
+        }
+        lockedRoots.add(root);
+        lockedRoots.add(bal.root.get(otherId) ?? otherId);
+      }
+    }
+  }
 }
 
 /** ELK-compatible Brandes-Koepf placement for implicit center ports. */
@@ -308,6 +408,7 @@ export function placeNodesWithBrandesKoepf(
     const layout = makeAlignment(hdir, vdir);
     alignBlocks(input, order, layout, neighbors);
     compact(input, order, layout, neighbors);
+    improveEdgeStraightness(input, order, layout, neighbors);
     return layout;
   });
 
@@ -344,7 +445,6 @@ export function placeNodesWithBrandesKoepf(
     }
     positions = chosen.y;
   }
-
   const minimum = Math.min(...positions.values());
   const crossPadding =
     input.direction === "left" || input.direction === "right"
