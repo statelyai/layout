@@ -93,9 +93,8 @@ function buildNeighbors(input: LayeredPhaseInput, order: LayerOrder) {
     (input.settings["layerUnzipping.strategy"] ?? "NONE") === "ALTERNATING";
   for (const [id, entries] of right) {
     const sweptOrder = order.outputPortOrderByNodeId?.get(id);
-    const interactiveVerticalLongEdgeSource =
+    const interactiveForwardLongEdgeSource =
       input.direction !== "left" &&
-      input.direction !== "right" &&
       input.settings["crossingMinimization.strategy"] === "INTERACTIVE" &&
       entries.some((entry) => entry.id.startsWith("__layout_dummy:"));
     const portOrder =
@@ -104,7 +103,7 @@ function buildNeighbors(input: LayeredPhaseInput, order: LayerOrder) {
             (leftEntry, rightEntry) =>
               sweptOrder.indexOf(leftEntry.edgeId) - sweptOrder.indexOf(rightEntry.edgeId),
           )
-        : interactiveVerticalLongEdgeSource
+        : interactiveForwardLongEdgeSource
           ? [...entries].sort((leftEntry, rightEntry) => {
               const leftDummy = leftEntry.id.startsWith("__layout_dummy:");
               const rightDummy = rightEntry.id.startsWith("__layout_dummy:");
@@ -129,15 +128,16 @@ function buildNeighbors(input: LayeredPhaseInput, order: LayerOrder) {
   }
   for (const [id, entries] of left) {
     const sweptOrder = order.inputPortOrderByNodeId?.get(id);
-    const interactiveUpTargetOrder =
-      input.direction === "up" && input.settings["crossingMinimization.strategy"] === "INTERACTIVE";
+    const interactiveForwardTargetOrder =
+      (input.direction === "up" || input.direction === "right") &&
+      input.settings["crossingMinimization.strategy"] === "INTERACTIVE";
     const portOrder =
       sweptOrder !== undefined
         ? [...entries].sort(
             (leftEntry, rightEntry) =>
               sweptOrder.indexOf(rightEntry.edgeId) - sweptOrder.indexOf(leftEntry.edgeId),
           )
-        : interactiveUpTargetOrder
+        : interactiveForwardTargetOrder
           ? [...entries].sort((leftEntry, rightEntry) => {
               const leftDummy = leftEntry.id.startsWith("__layout_dummy:");
               const rightDummy = rightEntry.id.startsWith("__layout_dummy:");

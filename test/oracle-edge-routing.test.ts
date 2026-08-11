@@ -1307,6 +1307,82 @@ it("matches upward interactive BK target-port order", async () => {
   }
 });
 
+it("matches rightward interactive BK long-edge port order", async () => {
+  const bkNodes = [
+    ["n0", 37, 18, 192, 140],
+    ["n1", 40, 12, 88, 9],
+    ["n2", 14, 38, 39, 35],
+    ["n3", 37, 15, 82, 40],
+    ["n4", 17, 37, 125, 74],
+    ["n5", 23, 39, 138, 58],
+  ].map(([id, width, height, x, y]) => ({
+    id: String(id),
+    width: Number(width),
+    height: Number(height),
+    x: Number(x),
+    y: Number(y),
+  }));
+  const bkEdges = [
+    [0, 2],
+    [1, 2],
+    [1, 4],
+    [2, 5],
+  ].map(([source, target]) => ({
+    id: `e${source}-${target}`,
+    sourceId: `n${source}`,
+    targetId: `n${target}`,
+  }));
+  const oracle = await new ELK().layout({
+    id: "root",
+    layoutOptions: {
+      "elk.algorithm": "layered",
+      "elk.direction": "RIGHT",
+      "elk.edgeRouting": "ORTHOGONAL",
+      "elk.randomSeed": "4",
+      "elk.separateConnectedComponents": "false",
+      "elk.layered.layering.strategy": "INTERACTIVE",
+      "elk.layered.crossingMinimization.strategy": "INTERACTIVE",
+      "elk.layered.crossingMinimization.greedySwitch.type": "OFF",
+      "elk.layered.nodePlacement.strategy": "BRANDES_KOEPF",
+    },
+    children: structuredClone(bkNodes),
+    edges: bkEdges.map(({ id, sourceId, targetId }) => ({
+      id,
+      sources: [sourceId],
+      targets: [targetId],
+    })),
+  });
+  const native = getLayeredLayout(createGraph({ nodes: bkNodes, edges: bkEdges }), {
+    direction: "right",
+    settings: {
+      edgeRouting: "ORTHOGONAL",
+      randomSeed: 4,
+      separateConnectedComponents: false,
+      "layering.strategy": "INTERACTIVE",
+      "crossingMinimization.strategy": "INTERACTIVE",
+      "crossingMinimization.greedySwitch.type": "OFF",
+      "nodePlacement.strategy": "BRANDES_KOEPF",
+    },
+  });
+  for (const expectedNode of oracle.children ?? []) {
+    const actualNode = native.nodes.find(({ id }) => id === expectedNode.id);
+    expect(actualNode?.x).toBeCloseTo(expectedNode.x ?? Number.NaN, 12);
+    expect(actualNode?.y).toBeCloseTo(expectedNode.y ?? Number.NaN, 12);
+  }
+  for (const edge of oracle.edges ?? []) {
+    const section = (edge as ElkExtendedEdge).sections?.[0];
+    const expected = section
+      ? [section.startPoint, ...(section.bendPoints ?? []), section.endPoint]
+      : [];
+    const actual = native.edges.find(({ id }) => id === edge.id)?.points ?? [];
+    expect(actual).toHaveLength(expected.length);
+    actual.forEach((point, index) => {
+      expect(point.x).toBeCloseTo(expected[index]?.x ?? Number.NaN, 12);
+      expect(point.y).toBeCloseTo(expected[index]?.y ?? Number.NaN, 12);
+    });
+  }
+});
+
 for (const edgeRouting of ["ORTHOGONAL", "POLYLINE", "SPLINES"] as const) {
   it(`matches ELK ${edgeRouting} self-loop routing`, async () => {
     const loopNodes = [{ id: "a", width: 40, height: 30 }];

@@ -2825,8 +2825,8 @@ function implicitEdgeEndpoints(
             })
             .map(({ edge }) => edge.id)
         : undefined;
-    const interactiveVerticalLongEdgeSource =
-      !horizontal &&
+    const interactiveForwardLongEdgeSource =
+      input.direction !== "left" &&
       crossingStrategy === "INTERACTIVE" &&
       entries.every(({ endpoint }) => endpoint === "source") &&
       entries.some(({ edge }) => edge.targetId.startsWith("__layout_dummy:"));
@@ -2845,7 +2845,7 @@ function implicitEdgeEndpoints(
           (edgeModelOrder.get(left.edge.id) ?? 0) - (edgeModelOrder.get(right.edge.id) ?? 0)
         );
       }
-      if (interactiveVerticalLongEdgeSource) {
+      if (interactiveForwardLongEdgeSource) {
         const leftDummy = left.edge.targetId.startsWith("__layout_dummy:");
         const rightDummy = right.edge.targetId.startsWith("__layout_dummy:");
         if (leftDummy !== rightDummy) return Number(leftDummy) - Number(rightDummy);
