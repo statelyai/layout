@@ -66,6 +66,61 @@ for (const edgeRouting of ["ORTHOGONAL", "POLYLINE", "SPLINES"] as const) {
   });
 }
 
+for (const [edgeRouting, option, values] of [
+  ["SPLINES", "edgeRouting.splines.sloppy.layerSpacingFactor", [0, 0.2, 0.8]],
+  ["POLYLINE", "edgeRouting.polyline.slopedEdgeZoneWidth", [0, 2, 20]],
+] as const) {
+  for (const value of values) {
+    it(`matches ELK ${option}=${value}`, async () => {
+      const oracle = await new ELK().layout({
+        id: "root",
+        layoutOptions: {
+          "elk.algorithm": "layered",
+          "elk.direction": "RIGHT",
+          "elk.separateConnectedComponents": "false",
+          "elk.layered.layering.strategy": "LONGEST_PATH_SOURCE",
+          "elk.layered.crossingMinimization.strategy": "NONE",
+          "elk.layered.crossingMinimization.greedySwitch.type": "OFF",
+          "elk.layered.nodePlacement.strategy": "BRANDES_KOEPF",
+          "elk.edgeRouting": edgeRouting,
+          [`elk.layered.${option}`]: String(value),
+        },
+        children: structuredClone(nodes),
+        edges: edges.map((edge) => ({
+          id: edge.id,
+          sources: [edge.sourceId],
+          targets: [edge.targetId],
+        })),
+      });
+      const native = getLayeredLayout(createGraph({ nodes, edges }), {
+        direction: "right",
+        settings: {
+          "layering.strategy": "LONGEST_PATH_SOURCE",
+          "crossingMinimization.strategy": "NONE",
+          "crossingMinimization.greedySwitch.type": "OFF",
+          "nodePlacement.strategy": "BRANDES_KOEPF",
+          edgeRouting,
+          [option]: value,
+        },
+      });
+
+      expect(native.nodes.map((node) => node.x)).toEqual(oracle.children?.map((node) => node.x));
+      for (const edge of oracle.edges ?? []) {
+        const section = (edge as ElkExtendedEdge).sections?.[0];
+        const expected = section
+          ? [section.startPoint, ...(section.bendPoints ?? []), section.endPoint]
+          : [];
+        const actual = native.edges.find((candidate) => candidate.id === edge.id)?.points ?? [];
+        expect(actual).toHaveLength(expected.length);
+        actual.forEach((point, index) => {
+          expect(point.x).toBeCloseTo(expected[index]?.x ?? Number.NaN, 12);
+          expect(point.y).toBeCloseTo(expected[index]?.y ?? Number.NaN, 12);
+        });
+      }
+    });
+  }
+}
+
 for (const splineMode of ["CONSERVATIVE", "CONSERVATIVE_SOFT"] as const) {
   it(`matches ELK ${splineMode} spline control points`, async () => {
     const splineNodes = [
