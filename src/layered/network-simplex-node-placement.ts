@@ -169,7 +169,13 @@ export function placeNodesWithNetworkSimplex(
         edges,
         nodeById.get(upperId)!,
         nodeById.get(lowerId)!,
-        Math.ceil(crossSize(input, upperId) + nodeNodeSpacing(input, upperId, lowerId)),
+        Math.ceil(
+          crossSize(input, upperId) +
+            nodeNodeSpacing(input, upperId, lowerId) +
+            (upperId.startsWith("__layout_dummy:") && lowerId.startsWith("__layout_dummy:")
+              ? 1
+              : 0),
+        ),
         0,
       );
     }

@@ -17,6 +17,45 @@ function positions(nodes: ReadonlyArray<{ id?: string | number; x?: number; y?: 
 }
 
 describe("ELK node-placement oracle", () => {
+  it("matches network-simplex separation between adjacent long-edge dummies", async () => {
+    const graph: ElkNode = {
+      id: "root",
+      layoutOptions: {
+        "elk.algorithm": "layered",
+        "elk.direction": "RIGHT",
+        "elk.edgeRouting": "SPLINES",
+        "elk.randomSeed": "9",
+        "elk.separateConnectedComponents": "false",
+        "elk.layered.layering.strategy": "LONGEST_PATH_SOURCE",
+        "elk.layered.crossingMinimization.strategy": "LAYER_SWEEP",
+        "elk.layered.crossingMinimization.greedySwitch.type": "OFF",
+        "elk.layered.nodePlacement.strategy": "NETWORK_SIMPLEX",
+      },
+      children: [
+        { id: "n0", width: 21, height: 29, x: 66, y: 75 },
+        { id: "n1", width: 18, height: 32, x: 173, y: 79 },
+        { id: "n2", width: 15, height: 16, x: 110, y: 114 },
+        { id: "n3", width: 32, height: 18, x: 97, y: 119 },
+        { id: "n4", width: 40, height: 35, x: 109, y: 124 },
+        { id: "n5", width: 36, height: 27, x: 94, y: 59 },
+      ],
+      edges: [
+        ["e0-1", "n0", "n1"],
+        ["e1-2", "n1", "n2"],
+        ["e0-4", "n0", "n4"],
+        ["e0-5", "n0", "n5"],
+        ["e1-5", "n1", "n5"],
+        ["e2-5", "n2", "n5"],
+        ["e4-5", "n4", "n5"],
+      ].map(([id, source, target]) => ({ id, sources: [source], targets: [target] })),
+    };
+    const [oracle, native] = await Promise.all([
+      new ELK().layout(structuredClone(graph)),
+      new NativeELK().layout(structuredClone(graph)),
+    ]);
+    expect(positions(native.children ?? [])).toEqual(positions(oracle.children ?? []));
+  });
+
   for (const strategy of [
     "SIMPLE",
     "INTERACTIVE",
