@@ -40,6 +40,7 @@ export function splitLongEdges(
   const labelDummyIdByEdgeId = new Map<string, string>();
   const originalEdgeBySegmentId = new Map<string, GraphEdge>();
   const usedNodeIds = new Set(nodes.map((node) => node.id));
+  const originalNodeIds = new Set(usedNodeIds);
 
   for (const edge of input.graph.edges) {
     const sourceLayer = layerByNodeId.get(edge.sourceId) ?? 0;
@@ -139,7 +140,54 @@ export function splitLongEdges(
     segmentIdsByEdgeId.set(edge.id, segmentIds);
   }
 
-  const graph = { ...input.graph, nodes, edges } as LayeredPhaseInput["graph"];
+  // ELK creates long-edge dummies while walking layers. Thus dummies for an
+  // edge whose source is in the next layer can precede later parts of an edge
+  // that started in an earlier layer. Preserve that order for crossing ties.
+  const maximumLayer = Math.max(0, ...layerByNodeId.values());
+  const nodesByLayer = Array.from({ length: maximumLayer + 1 }, () => [] as string[]);
+  for (const node of input.graph.nodes) {
+    nodesByLayer[layerByNodeId.get(node.id) ?? 0]?.push(node.id);
+  }
+  const outgoingBySource = new Map<string, GraphEdge[]>();
+  for (const edge of edges) {
+    const outgoing = outgoingBySource.get(edge.sourceId) ?? [];
+    outgoing.push(edge);
+    outgoingBySource.set(edge.sourceId, outgoing);
+  }
+  const appendNextLayerDummies = (layer: number, step: 1 | -1): void => {
+    for (const sourceId of nodesByLayer[layer] ?? []) {
+      for (const edge of outgoingBySource.get(sourceId) ?? []) {
+        const targetLayer = layerByNodeId.get(edge.targetId);
+        if (
+          targetLayer !== layer + step ||
+          originalNodeIds.has(edge.targetId) ||
+          nodesByLayer[targetLayer]?.includes(edge.targetId)
+        ) {
+          continue;
+        }
+        nodesByLayer[targetLayer]?.push(edge.targetId);
+      }
+    }
+  };
+  for (let layer = 0; layer < maximumLayer; layer++) appendNextLayerDummies(layer, 1);
+  for (let layer = maximumLayer; layer > 0; layer--) appendNextLayerDummies(layer, -1);
+  const dummyOrder = new Map<string, number>();
+  for (const layer of nodesByLayer) {
+    layer.forEach((id, index) => {
+      if (!originalNodeIds.has(id)) dummyOrder.set(id, index);
+    });
+  }
+  const orderedNodes = [
+    ...input.graph.nodes,
+    ...nodes
+      .filter((node) => !originalNodeIds.has(node.id))
+      .sort(
+        (left, right) =>
+          (layerByNodeId.get(left.id) ?? 0) - (layerByNodeId.get(right.id) ?? 0) ||
+          (dummyOrder.get(left.id) ?? 0) - (dummyOrder.get(right.id) ?? 0),
+      ),
+  ];
+  const graph = { ...input.graph, nodes: orderedNodes, edges } as LayeredPhaseInput["graph"];
   return {
     input: {
       ...input,
