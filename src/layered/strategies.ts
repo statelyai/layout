@@ -2287,6 +2287,78 @@ function routeEdges(style: "ORTHOGONAL" | "POLYLINE" | "SPLINES"): EdgeRouter {
     }
     if (labelShift !== 0) implicitEndpoints = implicitEdgeEndpoints(input, placement, orientation);
 
+    const orthogonalTrackByEdgeId = new Map<string, number>();
+    if (
+      style === "ORTHOGONAL" &&
+      (input.settings["spacing.edgeNodeBetweenLayers"] !== undefined ||
+        input.settings["spacing.edgeEdgeBetweenLayers"] !== undefined)
+    ) {
+      const edgeNodeSpacing = Number(input.settings["spacing.edgeNodeBetweenLayers"] ?? 10);
+      const edgeEdgeSpacing = Number(input.settings["spacing.edgeEdgeBetweenLayers"] ?? 10);
+      const candidatesByGap = flowLayers.slice(0, -1).map(
+        () =>
+          [] as Array<{
+            edge: GraphEdge;
+            targetCross: number;
+          }>,
+      );
+      for (const edge of input.graph.edges) {
+        const sourceLayer = flowLayerByNodeId.get(edge.sourceId);
+        const targetLayer = flowLayerByNodeId.get(edge.targetId);
+        const endpoints = implicitEndpoints.get(edge.id);
+        if (
+          endpoints === undefined ||
+          sourceLayer === undefined ||
+          targetLayer === undefined ||
+          Math.abs(sourceLayer - targetLayer) !== 1
+        ) {
+          continue;
+        }
+        const sourceCross = horizontal ? endpoints.source.y : endpoints.source.x;
+        const targetCross = horizontal ? endpoints.target.y : endpoints.target.x;
+        if (Math.abs(sourceCross - targetCross) < 0.2) continue;
+        candidatesByGap[Math.min(sourceLayer, targetLayer)]?.push({ edge, targetCross });
+      }
+
+      const existingGapByLayer = flowLayers
+        .slice(0, -1)
+        .map((bounds, layerNo) => (flowLayers[layerNo + 1]?.start ?? bounds.end) - bounds.end);
+      let nextStart = flowLayers[0]?.start ?? 0;
+      for (const [layerNo, bounds] of flowLayers.entries()) {
+        const shift = nextStart - bounds.start;
+        for (const [id, rect] of placement.rectByNodeId) {
+          if (flowLayerByNodeId.get(id) !== layerNo) continue;
+          mutableRects.set(
+            id,
+            horizontal ? { ...rect, x: rect.x + shift } : { ...rect, y: rect.y + shift },
+          );
+        }
+        const size = bounds.end - bounds.start;
+        bounds.start = nextStart;
+        bounds.end = nextStart + size;
+        const slots = candidatesByGap[layerNo]?.length ?? 0;
+        const gapSpacing =
+          slots === 0
+            ? (existingGapByLayer[layerNo] ?? input.spacing.layer)
+            : Math.max(
+                existingGapByLayer[layerNo] ?? input.spacing.layer,
+                2 * edgeNodeSpacing + Math.max(0, slots - 1) * edgeEdgeSpacing,
+              );
+        nextStart = bounds.end + gapSpacing;
+      }
+      implicitEndpoints = implicitEdgeEndpoints(input, placement, orientation);
+
+      for (const [gap, candidates] of candidatesByGap.entries()) {
+        candidates.sort((left, right) => left.targetCross - right.targetCross);
+        for (const [rank, candidate] of candidates.entries()) {
+          orthogonalTrackByEdgeId.set(
+            candidate.edge.id,
+            (flowLayers[gap]?.end ?? 0) + edgeNodeSpacing + rank * edgeEdgeSpacing,
+          );
+        }
+      }
+    }
+
     if (style === "POLYLINE" || style === "SPLINES") {
       const edgeSpacing = Number(input.settings["spacing.edgeEdgeBetweenLayers"] ?? 10);
       const nodeSpacing = input.spacing.layer;
@@ -2710,6 +2782,7 @@ function routeEdges(style: "ORTHOGONAL" | "POLYLINE" | "SPLINES"): EdgeRouter {
       const earlier = flowLayers[earlierLayer];
       const later = flowLayers[laterLayer];
       const track =
+        orthogonalTrackByEdgeId.get(edge.id) ??
         conservativeSplineTrackByEdgeId.get(edge.id) ??
         (earlier && later && earlierLayer !== laterLayer
           ? (earlier.end + later.start) / 2

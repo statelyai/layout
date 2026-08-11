@@ -531,7 +531,9 @@ export default class ELK {
                           (getNumberOption(
                             layoutOptions,
                             "layered.spacing.nodeNodeBetweenLayers",
-                          ) ?? 20) +
+                          ) ??
+                            getNumberOption(layoutOptions, "layered.spacing.baseValue") ??
+                            20) +
                           (hasHierarchyCrossingEdges
                             ? 5 * Math.max(...hierarchyBoundaryCountByEdge.values())
                             : 0),
@@ -1294,7 +1296,11 @@ function applyLayout(
     const edgeLabelSpacing = getNumberOption(layoutOptions, "spacing.edgeLabel") ?? 2;
     const labelLabelSpacing = getNumberOption(layoutOptions, "spacing.labelLabel") ?? 0;
     for (const label of edge.labels ?? []) {
-      if (!label.text) continue;
+      if (!label.text) {
+        label.x ??= 0;
+        label.y ??= 0;
+        continue;
+      }
       const placement = String(
         getOption(label.layoutOptions ?? {}, "edgeLabels.placement") ?? "CENTER",
       );
@@ -1346,8 +1352,9 @@ function normalizeElkGraphBounds(
     );
   }
   for (const edge of root.edges ?? []) {
-    minimumX = Math.min(minimumX, ...(edge.labels ?? []).map((label) => label.x ?? 0));
-    minimumY = Math.min(minimumY, ...(edge.labels ?? []).map((label) => label.y ?? 0));
+    const laidOutLabels = (edge.labels ?? []).filter((label) => Boolean(label.text));
+    minimumX = Math.min(minimumX, ...laidOutLabels.map((label) => label.x ?? 0));
+    minimumY = Math.min(minimumY, ...laidOutLabels.map((label) => label.y ?? 0));
     if (getBooleanOption(edge.layoutOptions ?? {}, "noLayout") !== true) {
       const points = (edge.sections ?? []).flatMap((section) => [
         section.startPoint,
@@ -1372,7 +1379,7 @@ function normalizeElkGraphBounds(
           point.y += shiftY;
         }
       }
-      for (const label of edge.labels ?? []) {
+      for (const label of (edge.labels ?? []).filter((candidate) => Boolean(candidate.text))) {
         label.x = (label.x ?? 0) + shiftX;
         label.y = (label.y ?? 0) + shiftY;
       }
@@ -1392,7 +1399,9 @@ function normalizeElkGraphBounds(
         ),
       ]),
       ...(root.edges ?? []).flatMap((edge) =>
-        (edge.labels ?? []).map((label) => (label.x ?? 0) + (label.width ?? 0)),
+        (edge.labels ?? [])
+          .filter((label) => Boolean(label.text))
+          .map((label) => (label.x ?? 0) + (label.width ?? 0)),
       ),
       ...(root.edges ?? []).flatMap((edge) =>
         getBooleanOption(edge.layoutOptions ?? {}, "noLayout") === true
@@ -1423,15 +1432,17 @@ function normalizeElkGraphBounds(
         ),
       ]),
       ...(root.edges ?? []).flatMap((edge) =>
-        (edge.labels ?? []).map(
-          (label) =>
-            (label.y ?? 0) +
-            (label.height ?? 0) +
-            (String(getOption(label.layoutOptions ?? {}, "edgeLabels.placement") ?? "CENTER") ===
-            "CENTER"
-              ? 1
-              : 0),
-        ),
+        (edge.labels ?? [])
+          .filter((label) => Boolean(label.text))
+          .map(
+            (label) =>
+              (label.y ?? 0) +
+              (label.height ?? 0) +
+              (String(getOption(label.layoutOptions ?? {}, "edgeLabels.placement") ?? "CENTER") ===
+              "CENTER"
+                ? 1
+                : 0),
+          ),
       ),
       ...(root.edges ?? []).flatMap((edge) =>
         getBooleanOption(edge.layoutOptions ?? {}, "noLayout") === true
