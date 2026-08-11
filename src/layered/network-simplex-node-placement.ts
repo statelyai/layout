@@ -101,6 +101,7 @@ export function placeNodesWithNetworkSimplex(
 ): NodePlacement {
   const base = placeNodesInLayers(input, order);
   const horizontal = input.direction === "left" || input.direction === "right";
+  const inputNodeById = new Map(input.graph.nodes.map((node) => [node.id, node]));
   const anchors = endpointAnchors(input, order);
   const nodes: SimplexNode[] = [];
   const nodeById = new Map<string, SimplexNode>();
@@ -339,13 +340,14 @@ export function placeNodesWithNetworkSimplex(
     flexiblePortFlowOffset += Math.max(
       0,
       ...layer.map((id) => {
-        const node = input.graph.nodes.find((candidate) => candidate.id === id);
+        const node = inputNodeById.get(id);
         const flexibility = String(
           (node && input.nodeSettings?.(node)?.["nodePlacement.networkSimplex.nodeFlexibility"]) ??
             input.settings["nodePlacement.networkSimplex.nodeFlexibility.default"] ??
             "NONE",
         );
         if (flexibility !== "PORT_POSITION") return 0;
+        // ELK keeps one flow-axis unit of clearance on either side of a movable port box.
         return Math.max(
           0,
           ...(node?.ports ?? []).map(

@@ -1585,16 +1585,28 @@ function minimizeCrossingsWithLayerSweep(
           }
           consumed += edgeIds.length;
         }
-        for (let left = 0; left < between.length; left++) {
-          for (let right = left + 1; right < between.length; right++) {
-            const sourceDifference =
-              (sourceRanks.get(between[left]!.id) ?? 0) -
-              (sourceRanks.get(between[right]!.id) ?? 0);
-            const targetDifference =
-              (targetRanks.get(between[left]!.id) ?? 0) -
-              (targetRanks.get(between[right]!.id) ?? 0);
-            if (sourceDifference * targetDifference < 0) crossings++;
+        const orderedTargets = between
+          .map((edge) => ({
+            source: sourceRanks.get(edge.id) ?? 0,
+            target: targetRanks.get(edge.id) ?? 0,
+          }))
+          .sort((left, right) => left.source - right.source)
+          .map(({ target }) => target);
+        const sortedTargets = [...orderedTargets].sort((left, right) => left - right);
+        const targetIndex = new Map(sortedTargets.map((rank, rankIndex) => [rank, rankIndex + 1]));
+        const fenwick = Array.from({ length: sortedTargets.length + 1 }, () => 0);
+        let seen = 0;
+        for (const target of orderedTargets) {
+          const rank = targetIndex.get(target) ?? 1;
+          let preceding = 0;
+          for (let cursor = rank; cursor > 0; cursor -= cursor & -cursor) {
+            preceding += fenwick[cursor] ?? 0;
           }
+          crossings += seen - preceding;
+          for (let cursor = rank; cursor < fenwick.length; cursor += cursor & -cursor) {
+            fenwick[cursor] = (fenwick[cursor] ?? 0) + 1;
+          }
+          seen++;
         }
       }
       return crossings;
