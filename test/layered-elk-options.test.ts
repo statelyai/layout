@@ -1,6 +1,7 @@
 import ELK from "elkjs/lib/elk.bundled.js";
 import { readFileSync, readdirSync } from "node:fs";
 import { describe, expect, it } from "vitest";
+import NativeELK from "../src/elkjs";
 import {
   elkLayeredOptionDefinitions,
   elkLayeredEnumValues,
@@ -30,6 +31,25 @@ describe("ELK layered option inventory", () => {
   it("round-trips every exact ID through its simplified name", () => {
     for (const definition of elkLayeredOptionDefinitions) {
       expect(fromElkLayeredOptionId(definition.elkId)).toBe(definition.name);
+    }
+  });
+
+  it("matches every elkjs option type and target", async () => {
+    const [oracleOptions, nativeOptions] = await Promise.all([
+      new ELK().knownLayoutOptions(),
+      new NativeELK().knownLayoutOptions(),
+    ]);
+    const oracleById = new Map(oracleOptions.map((option) => [option.id, option]));
+    const nativeById = new Map(nativeOptions.map((option) => [option.id, option]));
+    for (const definition of elkLayeredOptionDefinitions) {
+      const oracle = oracleById.get(definition.elkId);
+      const native = nativeById.get(definition.elkId);
+      expect(oracle, definition.name).toBeDefined();
+      expect(native, definition.name).toBeDefined();
+      expect(definition.type, `${definition.name}.type`).toBe(oracle?.type);
+      expect(definition.targets, `${definition.name}.targets`).toEqual(oracle?.targets);
+      expect(native?.type, `${definition.name}.native.type`).toBe(oracle?.type);
+      expect(native?.targets, `${definition.name}.native.targets`).toEqual(oracle?.targets);
     }
   });
 
