@@ -1044,9 +1044,7 @@ function runLayeredPipeline<N, E, G, P>(
     if (nodePlacementStrategy === "NETWORK_SIMPLEX") return placeNodesWithNetworkSimplex;
     return placeNodesInLayers;
   })();
-  const placement = measure("node-placement", () =>
-    applyPostCompaction(expanded.input, nodePlacer(expanded.input, order)),
-  );
+  const placement = measure("node-placement", () => nodePlacer(expanded.input, order));
   const mutableRects = placement.rectByNodeId as Map<
     string,
     { x: number; y: number; width: number; height: number }
@@ -1257,6 +1255,7 @@ function runLayeredPipeline<N, E, G, P>(
   const expandedRoutes = measure("edge-routing", () =>
     edgeRouter(expanded.input, expanded.orientation, placement),
   );
+  measure("post-compaction", () => applyPostCompaction(expanded.input, placement, expandedRoutes));
   const routes = measure("long-edge-joining", () =>
     joinLongEdgeRoutes(
       expandedRoutes,

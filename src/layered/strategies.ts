@@ -6,6 +6,7 @@ import type {
   CrossingMinimizer,
   CycleBreaker,
   EdgeRouter,
+  EdgeRoutes,
   LayerAssigner,
   LayerAssignment,
   LayerOrder,
@@ -1655,6 +1656,7 @@ export function applyDirectionCongruency(input: LayeredPhaseInput, order: LayerO
 export function applyPostCompaction(
   input: LayeredPhaseInput,
   placement: NodePlacement,
+  routes?: EdgeRoutes,
 ): NodePlacement {
   const strategy = input.settings["compaction.postCompaction.strategy"] ?? "NONE";
   // Both source strategies construct the same constraint relation; only their
@@ -1662,85 +1664,205 @@ export function applyPostCompaction(
   const constraintStrategy = input.settings["compaction.postCompaction.constraints"] ?? "SCANLINE";
   void constraintStrategy;
   if (strategy === "NONE") return placement;
-  const horizontal = input.direction === "left" || input.direction === "right";
   const rects = placement.rectByNodeId as Map<string, EntityRect>;
-  const crossStart = (rect: EntityRect) => (horizontal ? rect.y : rect.x);
-  const crossEnd = (rect: EntityRect) => crossStart(rect) + (horizontal ? rect.height : rect.width);
-  const flowStart = (rect: EntityRect) => (horizontal ? rect.x : rect.y);
-  const flowSize = (rect: EntityRect) => (horizontal ? rect.width : rect.height);
-  const setFlow = (rect: EntityRect, value: number): EntityRect =>
-    horizontal ? { ...rect, x: value } : { ...rect, y: value };
-  const leading = horizontal ? input.padding.left : input.padding.top;
-  const original = new Map([...rects].map(([id, rect]) => [id, { ...rect }]));
-
-  const compactLeft = (): void => {
-    const processed: string[] = [];
-    const ids = [...rects.keys()].sort(
-      (left, right) =>
-        flowStart(original.get(left)!) - flowStart(original.get(right)!) ||
-        crossStart(original.get(left)!) - crossStart(original.get(right)!),
-    );
-    for (const id of ids) {
-      const authored = original.get(id)!;
-      let candidate = leading;
-      for (const previousId of processed) {
-        const previousAuthored = original.get(previousId)!;
-        if (flowStart(previousAuthored) >= flowStart(authored)) continue;
-        const previous = rects.get(previousId)!;
-        if (
-          crossEnd(previous) <= crossStart(authored) ||
-          crossStart(previous) >= crossEnd(authored)
-        )
-          continue;
-        candidate = Math.max(
-          candidate,
-          flowStart(previous) + flowSize(previous) + input.spacing.layer,
-        );
+  type ConstraintNode = {
+    id: string;
+    kind: "node" | "segment";
+    nodeId?: string;
+    edgeId?: string;
+    x: number;
+    y: number;
+    width: number;
+    height: number;
+    originalX: number;
+    points?: [Point, Point];
+  };
+  const compactables: ConstraintNode[] = [...rects].map(([id, rect]) => ({
+    id: `node:${id}`,
+    kind: "node",
+    nodeId: id,
+    x: rect.x,
+    y: rect.y,
+    width: rect.width,
+    height: rect.height,
+    originalX: rect.x,
+  }));
+  if (routes) {
+    for (const [edgeId, readonlyPoints] of routes.pointsByEdgeId) {
+      const points = readonlyPoints as Point[];
+      for (let index = 0; index + 1 < points.length; index++) {
+        const first = points[index]!;
+        const second = points[index + 1]!;
+        if (Math.abs(first.x - second.x) > 1e-9 || Math.abs(first.y - second.y) < 1e-9) continue;
+        compactables.push({
+          id: `segment:${edgeId}:${index}`,
+          kind: "segment",
+          edgeId,
+          x: first.x,
+          y: Math.min(first.y, second.y),
+          width: 0,
+          height: Math.abs(first.y - second.y),
+          originalX: first.x,
+          points: [first, second],
+        });
       }
-      rects.set(id, setFlow(rects.get(id)!, Math.min(flowStart(authored), candidate)));
-      processed.push(id);
+    }
+  }
+  const verticalSpacing = (left: ConstraintNode, right: ConstraintNode): number =>
+    left.kind === "node" && right.kind === "node"
+      ? input.spacing.node
+      : left.kind === "segment" && right.kind === "segment" && left.edgeId === right.edgeId
+        ? 1
+        : Number(
+            input.settings[
+              left.kind === "segment" && right.kind === "segment"
+                ? "spacing.edgeEdge"
+                : "spacing.edgeNode"
+            ] ?? 10,
+          );
+  const horizontalSpacing = (left: ConstraintNode, right: ConstraintNode): number =>
+    left.kind === "node" && right.kind === "node"
+      ? input.spacing.node
+      : left.kind === "segment" && right.kind === "segment" && left.edgeId === right.edgeId
+        ? 0
+        : Number(
+            input.settings[
+              left.kind === "segment" && right.kind === "segment"
+                ? "spacing.edgeEdge"
+                : "spacing.edgeNode"
+            ] ?? 10,
+          );
+  const compact = (direction: "LEFT" | "RIGHT", locked = new Set<string>()): void => {
+    const nodes: ConstraintNode[] = compactables.map((item) => ({
+      ...item,
+      x: direction === "RIGHT" ? -item.x - item.width : item.x,
+      originalX: item.x,
+    }));
+    const constraints = new Map(nodes.map((node) => [node.id, [] as string[]]));
+    const incoming = new Map(nodes.map((node) => [node.id, 0]));
+    for (const left of nodes) {
+      for (const right of nodes) {
+        if (left === right) continue;
+        const ordered = right.x > left.x || (right.x === left.x && left.width < right.width);
+        const verticalCollision =
+          right.y + right.height + verticalSpacing(left, right) > left.y + 1e-9 &&
+          right.y < left.y + left.height + verticalSpacing(left, right) - 1e-9;
+        if (!ordered || !verticalCollision) continue;
+        constraints.get(left.id)!.push(right.id);
+        incoming.set(right.id, (incoming.get(right.id) ?? 0) + 1);
+      }
+    }
+    const minimum = Math.min(...nodes.map((node) => node.x));
+    const position = new Map(nodes.map((node) => [node.id, minimum]));
+    const pending = nodes.filter((node) => incoming.get(node.id) === 0).map((node) => node.id);
+    const nodeById = new Map(nodes.map((node) => [node.id, node]));
+    while (pending.length > 0) {
+      const id = pending.shift()!;
+      const node = nodeById.get(id)!;
+      if (locked.has(node.nodeId ?? id) && node.x >= (position.get(id) ?? minimum)) {
+        position.set(id, node.x);
+      }
+      for (const constrainedId of constraints.get(id) ?? []) {
+        position.set(
+          constrainedId,
+          Math.max(
+            position.get(constrainedId) ?? minimum,
+            (position.get(id) ?? minimum) +
+              node.width +
+              horizontalSpacing(node, nodeById.get(constrainedId)!),
+          ),
+        );
+        incoming.set(constrainedId, (incoming.get(constrainedId) ?? 1) - 1);
+        if (incoming.get(constrainedId) === 0) pending.push(constrainedId);
+      }
+    }
+    const compactableById = new Map(compactables.map((item) => [item.id, item]));
+    for (const node of nodes) {
+      const compacted = position.get(node.id) ?? node.x;
+      compactableById.get(node.id)!.x = direction === "RIGHT" ? -compacted - node.width : compacted;
     }
   };
-  compactLeft();
-  if (strategy === "RIGHT" || strategy === "LEFT_RIGHT_CONNECTION_LOCKING") {
-    const maximumEnd = Math.max(
-      ...[...original.values()].map((rect) => flowStart(rect) + flowSize(rect)),
-    );
-    const processed: string[] = [];
+  if (strategy === "RIGHT") {
+    compact("RIGHT");
+  } else if (strategy === "LEFT_RIGHT_CONSTRAINT_LOCKING") {
+    compact("LEFT");
     const degree = new Map(input.graph.nodes.map((node) => [node.id, 0]));
     for (const edge of input.graph.edges) {
       degree.set(edge.sourceId, (degree.get(edge.sourceId) ?? 0) + 1);
       degree.set(edge.targetId, (degree.get(edge.targetId) ?? 0) + 1);
     }
-    const rightmostFreeId = [...rects.keys()]
-      .filter((id) => (degree.get(id) ?? 0) === 0)
-      .sort((left, right) => crossStart(rects.get(left)!) - crossStart(rects.get(right)!))[0];
-    const ids = [...rects.keys()].sort(
-      (left, right) =>
-        flowStart(original.get(right)!) - flowStart(original.get(left)!) ||
-        crossStart(original.get(right)!) - crossStart(original.get(left)!),
+    compact(
+      "RIGHT",
+      new Set(input.graph.nodes.filter((node) => degree.get(node.id) === 0).map((node) => node.id)),
     );
-    for (const id of ids) {
-      if ((degree.get(id) ?? 0) === 0 && id !== rightmostFreeId) {
-        processed.push(id);
-        continue;
-      }
-      const authored = original.get(id)!;
-      let candidate = maximumEnd - flowSize(authored);
-      for (const nextId of processed) {
-        const nextAuthored = original.get(nextId)!;
-        if (flowStart(nextAuthored) <= flowStart(authored)) continue;
-        const next = rects.get(nextId)!;
-        if (crossEnd(next) <= crossStart(authored) || crossStart(next) >= crossEnd(authored))
-          continue;
-        candidate = Math.min(candidate, flowStart(next) - input.spacing.layer - flowSize(authored));
-      }
-      rects.set(id, setFlow(rects.get(id)!, Math.max(flowStart(rects.get(id)!), candidate)));
-      processed.push(id);
+  } else if (strategy === "LEFT_RIGHT_CONNECTION_LOCKING") {
+    compact("LEFT");
+    const incomingDegree = new Map(input.graph.nodes.map((node) => [node.id, 0]));
+    const outgoingDegree = new Map(input.graph.nodes.map((node) => [node.id, 0]));
+    for (const edge of input.graph.edges) {
+      outgoingDegree.set(edge.sourceId, (outgoingDegree.get(edge.sourceId) ?? 0) + 1);
+      incomingDegree.set(edge.targetId, (incomingDegree.get(edge.targetId) ?? 0) + 1);
     }
-    const minimum = Math.min(...[...rects.values()].map(flowStart));
-    for (const [id, rect] of rects)
-      rects.set(id, setFlow(rect, flowStart(rect) + leading - minimum));
+    compact(
+      "RIGHT",
+      new Set(
+        input.graph.nodes
+          .filter((node) => (incomingDegree.get(node.id) ?? 0) > (outgoingDegree.get(node.id) ?? 0))
+          .map((node) => node.id),
+      ),
+    );
+  } else {
+    compact("LEFT");
+    if (strategy === "EDGE_LENGTH") {
+      const itemByNodeId = new Map(
+        compactables.flatMap((item) =>
+          item.kind === "node" && item.nodeId ? [[item.nodeId, item] as const] : [],
+        ),
+      );
+      const incomingDegree = new Map(input.graph.nodes.map((node) => [node.id, 0]));
+      const outgoing = new Map(input.graph.nodes.map((node) => [node.id, [] as string[]]));
+      for (const edge of input.graph.edges) {
+        outgoing.get(edge.sourceId)?.push(edge.targetId);
+        incomingDegree.set(edge.targetId, (incomingDegree.get(edge.targetId) ?? 0) + 1);
+      }
+      for (const node of input.graph.nodes) {
+        const targets = outgoing.get(node.id) ?? [];
+        if (targets.length <= (incomingDegree.get(node.id) ?? 0) || targets.length === 0) continue;
+        const item = itemByNodeId.get(node.id);
+        if (!item) continue;
+        const upper = Math.min(
+          ...targets.map(
+            (targetId) =>
+              (itemByNodeId.get(targetId)?.x ?? item.x) - item.width - input.spacing.node,
+          ),
+        );
+        item.x = Math.max(item.x, upper);
+      }
+    }
+  }
+  const offset = input.padding.left - Math.min(...compactables.map((item) => item.x));
+  for (const item of compactables) item.x += offset;
+  const nodeDeltaById = new Map<string, number>();
+  for (const item of compactables) {
+    if (item.kind === "node") {
+      const rect = rects.get(item.nodeId!)!;
+      nodeDeltaById.set(item.nodeId!, item.x - rect.x);
+      rects.set(item.nodeId!, { ...rect, x: item.x });
+    } else if (item.points) {
+      const delta = item.x - item.originalX;
+      item.points[0].x += delta;
+      item.points[1].x += delta;
+    }
+  }
+  if (routes) {
+    const edgeById = new Map(input.graph.edges.map((edge) => [edge.id, edge]));
+    for (const [edgeId, readonlyPoints] of routes.pointsByEdgeId) {
+      const points = readonlyPoints as Point[];
+      const edge = edgeById.get(edgeId);
+      if (!edge || points.length === 0) continue;
+      points[0]!.x += nodeDeltaById.get(edge.sourceId) ?? 0;
+      points.at(-1)!.x += nodeDeltaById.get(edge.targetId) ?? 0;
+    }
   }
   return placement;
 }

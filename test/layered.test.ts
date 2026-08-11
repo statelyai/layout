@@ -251,6 +251,7 @@ describe("getLayout", () => {
       "node-placement",
       "port-margin-normalization",
       "edge-routing",
+      "post-compaction",
       "long-edge-joining",
     ]);
   });
