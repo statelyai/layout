@@ -2719,6 +2719,7 @@ export function placePorts<P>(
   }
   return ports.map((port) => {
     const size = { width: port.width ?? 8, height: port.height ?? 8 };
+    const configuredSide = portSettings?.(port)?.["port.side"];
     const flexiblePosition = getFlexiblePortPosition(port);
     if (flexiblePosition) {
       const side = sideByPort.get(port)!;
@@ -2734,6 +2735,15 @@ export function placePorts<P>(
       port.x !== undefined &&
       port.y !== undefined
     ) {
+      if (
+        constraints === "FIXED_POS" &&
+        configuredSide !== "NORTH" &&
+        configuredSide !== "SOUTH" &&
+        configuredSide !== "WEST" &&
+        configuredSide !== "EAST"
+      ) {
+        return { ...port, ...size, x: port.x, y: port.y };
+      }
       const side = sideByPort.get(port)!;
       return {
         ...port,

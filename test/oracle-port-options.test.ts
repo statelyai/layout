@@ -143,6 +143,22 @@ describe("ELK port-option parity", () => {
     });
   }
 
+  it("preserves an authored fixed position when the port side is undefined", async () => {
+    await compare({
+      id: "root",
+      layoutOptions: { "elk.algorithm": "layered" },
+      children: [
+        {
+          id: "node",
+          width: 100,
+          height: 80,
+          layoutOptions: { "elk.portConstraints": "FIXED_POS" },
+          ports: [{ id: "p", x: 17, y: 23, width: 8, height: 8 }],
+        },
+      ],
+    });
+  });
+
   for (const side of ["NORTH", "SOUTH", "WEST", "EAST"] as const) {
     it(`matches a fixed ${side} port`, async () => {
       await compare({
