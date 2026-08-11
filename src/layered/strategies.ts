@@ -2048,42 +2048,28 @@ export const minimizeCrossingsWithModelOrder: CrossingMinimizer = (
   for (const nodeId of nodeOrder) {
     layers[assignment.layerByNodeId.get(nodeId) ?? 0]?.push(nodeId);
   }
-  if (
-    layeringStrategy === "STRETCH_WIDTH" &&
-    (input.settings["crossingMinimization.strategy"] ?? "LAYER_SWEEP") === "NONE"
-  ) {
-    const position = new Map<string, number>();
-    let nextPosition = 0;
-    for (const layer of layers) {
-      for (const id of layer) {
-        if (!id.startsWith("__layout_dummy:")) position.set(id, nextPosition++);
-      }
-    }
-    const edgeOrder = new Map(input.graph.edges.map((edge, index) => [edge.id, index]));
-    const sourceAndOrder = (dummyId: string): [number, number] => {
-      let id = dummyId;
-      let incoming = input.graph.edges.find((edge) => edge.targetId === id);
-      while (incoming && incoming.sourceId.startsWith("__layout_dummy:")) {
-        id = incoming.sourceId;
-        incoming = input.graph.edges.find((edge) => edge.targetId === id);
-      }
-      return [
-        position.get(incoming?.sourceId ?? "") ?? Number.MAX_SAFE_INTEGER,
-        edgeOrder.get(incoming?.id ?? "") ?? Number.MAX_SAFE_INTEGER,
-      ];
-    };
-    for (const layer of layers) {
-      const sortedDummies = layer
-        .filter((id) => id.startsWith("__layout_dummy:"))
-        .sort((left, right) => {
-          const [leftSource, leftEdge] = sourceAndOrder(left);
-          const [rightSource, rightEdge] = sourceAndOrder(right);
-          return leftSource - rightSource || leftEdge - rightEdge;
-        });
-      let dummyIndex = 0;
-      for (let index = 0; index < layer.length; index++) {
-        if (layer[index]?.startsWith("__layout_dummy:")) layer[index] = sortedDummies[dummyIndex++]!;
-      }
+  for (let layerIndex = 1; layerIndex < layers.length; layerIndex++) {
+    const previousPosition = new Map(
+      layers[layerIndex - 1]!.map((id, index) => [id, index] as const),
+    );
+    const layer = layers[layerIndex]!;
+    const sortedDummies = layer
+      .filter((id) => id.startsWith("__layout_dummy:"))
+      .map((id, index) => {
+        const incoming = input.graph.edges.find(
+          (edge) => edge.targetId === id && previousPosition.has(edge.sourceId),
+        );
+        return { id, index, source: previousPosition.get(incoming?.sourceId ?? "") };
+      })
+      .sort(
+        (left, right) =>
+          (left.source ?? Number.MAX_SAFE_INTEGER) - (right.source ?? Number.MAX_SAFE_INTEGER) ||
+          left.index - right.index,
+      );
+    let dummyIndex = 0;
+    for (let index = 0; index < layer.length; index++) {
+      if (layer[index]?.startsWith("__layout_dummy:"))
+        layer[index] = sortedDummies[dummyIndex++]!.id;
     }
   }
   return { layers };
@@ -2587,8 +2573,7 @@ export const placeNodesInteractively: NodePlacer = (input, order) => {
         originalCross,
         minimumCross === Number.NEGATIVE_INFINITY
           ? originalCross
-          : minimumCross +
-              nodeNodeSpacing(input, layer[Math.max(0, nodeIndex - 1)]!, id),
+          : minimumCross + nodeNodeSpacing(input, layer[Math.max(0, nodeIndex - 1)]!, id),
       );
       let nodeFlow =
         (flowByLayer[layerIndex] ?? leadingPadding) +
@@ -2737,12 +2722,31 @@ function implicitEdgeEndpoints(
       crossingStrategy === "INTERACTIVE" &&
       entries.every(({ endpoint }) => endpoint === "target") &&
       entries.some(({ edge }) => edge.sourceId.startsWith("__layout_dummy:"));
+    const verticalNoneTargetOrder =
+      !horizontal &&
+      crossingStrategy === "NONE" &&
+      input.settings["layering.strategy"] === "STRETCH_WIDTH" &&
+      entries.every(({ endpoint }) => endpoint === "target") &&
+      !input.graph.edges.some(({ sourceId }) => sourceId === nodeId) &&
+      entries.some(({ edge }) => edge.sourceId.startsWith("__layout_dummy:"));
     const layerOrdered =
       unzipping ||
       interactiveTargetOrder ||
+      verticalNoneTargetOrder ||
       (input.settings.hierarchyHandling !== "INCLUDE_CHILDREN" &&
         (crossingStrategy === "LAYER_SWEEP" || crossingStrategy === "MEDIAN_LAYER_SWEEP"));
     entries.sort((left, right) => {
+      if (verticalNoneTargetOrder) {
+        const leftOrder = edgeModelOrder.get(left.edge.id) ?? Number.MAX_SAFE_INTEGER;
+        const rightOrder = edgeModelOrder.get(right.edge.id) ?? Number.MAX_SAFE_INTEGER;
+        const maximumOrder = Math.max(
+          ...entries.map(({ edge }) => edgeModelOrder.get(edge.id) ?? 0),
+        );
+        return (
+          Number(rightOrder === maximumOrder) - Number(leftOrder === maximumOrder) ||
+          leftOrder - rightOrder
+        );
+      }
       if (layerOrdered) {
         const leftOther = placement.rectByNodeId.get(
           left.endpoint === "source" ? left.edge.targetId : left.edge.sourceId,
@@ -2988,7 +2992,7 @@ function routeEdges(style: "ORTHOGONAL" | "POLYLINE" | "SPLINES"): EdgeRouter {
           Math.min(
             minimumDifference(candidates.map(({ sourceCross }) => sourceCross)),
             minimumDifference(candidates.map(({ targetCross }) => targetCross)),
-        );
+          );
         const dependencies = candidates.map(() => new Set<number>());
         const criticalDependencies = new Set<string>();
         const addDependency = (source: number, target: number, critical = false) => {
@@ -3172,28 +3176,23 @@ function routeEdges(style: "ORTHOGONAL" | "POLYLINE" | "SPLINES"): EdgeRouter {
       }
     }
 
-    const splineTrackRankByEdgeId = new Map<
-      string,
-      { gap: number; rank: number; slots: number }
-    >();
+    const splineTrackRankByEdgeId = new Map<string, { gap: number; rank: number; slots: number }>();
     if (style === "POLYLINE" || style === "SPLINES") {
       const edgeSpacing = Number(input.settings["spacing.edgeEdgeBetweenLayers"] ?? 10);
       const nodeSpacing = input.spacing.layer;
       const edgeSpaceFactor = Math.min(1, edgeSpacing / nodeSpacing);
       const extraByGap = flowLayers.slice(0, -1).map(() => 0);
       const nonStraightByGap = flowLayers.slice(0, -1).map(() => 0);
-      const splineCandidatesByGap = flowLayers
-        .slice(0, -1)
-        .map(
-          () =>
-            [] as Array<{
-              edgeId: string;
-              left: number;
-              right: number;
-              leftNode: string;
-              rightNode: string;
-            }>,
-        );
+      const splineCandidatesByGap = flowLayers.slice(0, -1).map(
+        () =>
+          [] as Array<{
+            edgeId: string;
+            left: number;
+            right: number;
+            leftNode: string;
+            rightNode: string;
+          }>,
+      );
       for (const edge of input.graph.edges) {
         const sourceLayer = flowLayerByNodeId.get(edge.sourceId);
         const targetLayer = flowLayerByNodeId.get(edge.targetId);

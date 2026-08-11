@@ -279,6 +279,83 @@ it("matches ELK merged implicit edge endpoints", async () => {
   }
 });
 
+it("matches vertical model-order ports on a long-edge sink", async () => {
+  const sinkNodes = [
+    ["n0", 35, 26],
+    ["n1", 34, 14],
+    ["n2", 35, 25],
+    ["n3", 10, 38],
+    ["n4", 38, 10],
+    ["n5", 25, 26],
+  ].map(([id, width, height]) => ({
+    id: String(id),
+    width: Number(width),
+    height: Number(height),
+  }));
+  const sinkEdges = [
+    [0, 3],
+    [1, 3],
+    [2, 3],
+    [0, 4],
+    [2, 4],
+    [1, 5],
+    [2, 5],
+    [3, 5],
+    [4, 5],
+  ].map(([source, target]) => ({
+    id: `e${source}-${target}`,
+    sourceId: `n${source}`,
+    targetId: `n${target}`,
+  }));
+  const oracle = await new ELK().layout({
+    id: "root",
+    layoutOptions: {
+      "elk.algorithm": "layered",
+      "elk.direction": "UP",
+      "elk.edgeRouting": "POLYLINE",
+      "elk.separateConnectedComponents": "false",
+      "elk.layered.layering.strategy": "STRETCH_WIDTH",
+      "elk.layered.crossingMinimization.strategy": "NONE",
+      "elk.layered.crossingMinimization.greedySwitch.type": "OFF",
+      "elk.layered.nodePlacement.strategy": "SIMPLE",
+    },
+    children: structuredClone(sinkNodes),
+    edges: sinkEdges.map(({ id, sourceId, targetId }) => ({
+      id,
+      sources: [sourceId],
+      targets: [targetId],
+    })),
+  });
+  const native = getLayeredLayout(createGraph({ nodes: sinkNodes, edges: sinkEdges }), {
+    direction: "up",
+    settings: {
+      edgeRouting: "POLYLINE",
+      separateConnectedComponents: false,
+      "layering.strategy": "STRETCH_WIDTH",
+      "crossingMinimization.strategy": "NONE",
+      "crossingMinimization.greedySwitch.type": "OFF",
+      "nodePlacement.strategy": "SIMPLE",
+    },
+  });
+  for (const node of oracle.children ?? []) {
+    const actual = native.nodes.find(({ id }) => id === node.id);
+    expect(actual?.x).toBeCloseTo(node.x ?? Number.NaN, 12);
+    expect(actual?.y).toBeCloseTo(node.y ?? Number.NaN, 12);
+  }
+  for (const edge of oracle.edges ?? []) {
+    const section = (edge as ElkExtendedEdge).sections?.[0];
+    const expected = section
+      ? [section.startPoint, ...(section.bendPoints ?? []), section.endPoint]
+      : [];
+    const actual = native.edges.find(({ id }) => id === edge.id)?.points ?? [];
+    expect(actual).toHaveLength(expected.length);
+    actual.forEach((point, index) => {
+      expect(point.x).toBeCloseTo(expected[index]?.x ?? Number.NaN, 12);
+      expect(point.y).toBeCloseTo(expected[index]?.y ?? Number.NaN, 12);
+    });
+  }
+});
+
 for (const edgeRouting of ["ORTHOGONAL", "POLYLINE", "SPLINES"] as const) {
   it(`matches ELK ${edgeRouting} self-loop routing`, async () => {
     const loopNodes = [{ id: "a", width: 40, height: 30 }];
