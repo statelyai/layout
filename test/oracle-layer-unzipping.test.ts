@@ -110,3 +110,53 @@ it("matches ELK layer-unzipping edge-length minimization", async () => {
   }
   expect([actual.width, actual.height]).toEqual([expected.width, expected.height]);
 });
+
+it("matches ELK reset-on-long-edges option behavior", async () => {
+  const createGraph = (resetOnLongEdges: boolean): ElkNode => ({
+    id: "root",
+    layoutOptions: {
+      "elk.algorithm": "layered",
+      "elk.direction": "RIGHT",
+      "elk.separateConnectedComponents": "false",
+      "elk.layered.layering.strategy": "LONGEST_PATH_SOURCE",
+      "elk.layered.layerUnzipping.strategy": "ALTERNATING",
+      "elk.layered.crossingMinimization.strategy": "NONE",
+      "elk.layered.crossingMinimization.greedySwitch.type": "OFF",
+    },
+    children: [
+      ...Array.from({ length: 5 }, (_, index) => ({
+        id: `source-${index}`,
+        width: 20,
+        height: 20,
+        layoutOptions: {
+          "elk.layered.layerUnzipping.layerSplit": "2",
+          "elk.layered.layerUnzipping.resetOnLongEdges": String(resetOnLongEdges),
+        },
+      })),
+      { id: "middle", width: 20, height: 20 },
+      { id: "target", width: 20, height: 20 },
+    ],
+    edges: [
+      ...Array.from({ length: 5 }, (_, index) => ({
+        id: `long-${index}`,
+        sources: [`source-${index}`],
+        targets: ["target"],
+      })),
+      { id: "source-middle", sources: ["source-0"], targets: ["middle"] },
+      { id: "middle-target", sources: ["middle"], targets: ["target"] },
+    ],
+  });
+  const signature = (graph: ElkNode) =>
+    graph.children?.map((node) => [node.id, node.x, node.y, node.width, node.height]);
+  const [oracleOff, oracleOn, nativeOff, nativeOn] = await Promise.all([
+    new OracleELK().layout(structuredClone(createGraph(false)) as never),
+    new OracleELK().layout(structuredClone(createGraph(true)) as never),
+    new NativeELK().layout(structuredClone(createGraph(false))),
+    new NativeELK().layout(structuredClone(createGraph(true))),
+  ]);
+
+  expect(signature(nativeOn)).toEqual(signature(nativeOff));
+  expect(signature(oracleOn as unknown as ElkNode)).toEqual(
+    signature(oracleOff as unknown as ElkNode),
+  );
+});

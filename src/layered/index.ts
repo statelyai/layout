@@ -1424,6 +1424,7 @@ function runLayeredPipeline<N, E, G, P>(
   >;
   if (
     (expanded.input.settings["layerUnzipping.strategy"] ?? "NONE") === "ALTERNATING" &&
+    graph.edges.length === graph.nodes.length - 1 &&
     (direction === "right" || direction === "left")
   ) {
     const originalNodes = graph.nodes;
