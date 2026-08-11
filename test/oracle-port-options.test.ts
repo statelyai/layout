@@ -218,6 +218,50 @@ describe("ELK port-option parity", () => {
     });
   }
 
+  for (const side of ["NORTH", "SOUTH", "WEST"] as const) {
+    for (const alignment of ["BEGIN", "CENTER", "END", "JUSTIFIED"] as const) {
+      it(`matches ${alignment} ${side.toLowerCase()}-side alignment`, async () => {
+        await compare({
+          id: "root",
+          layoutOptions: { "elk.algorithm": "layered" },
+          children: [
+            {
+              id: "node",
+              width: 100,
+              height: 80,
+              layoutOptions: {
+                "elk.portConstraints": "FIXED_ORDER",
+                [`elk.portAlignment.${side.toLowerCase()}`]: alignment,
+              },
+              ports: [port("p0", side), port("p1", side), port("p2", side)],
+            },
+          ],
+        });
+      });
+    }
+  }
+
+  for (const alignment of ["BEGIN", "CENTER", "END", "JUSTIFIED"] as const) {
+    it(`matches ${alignment} default port alignment`, async () => {
+      await compare({
+        id: "root",
+        layoutOptions: { "elk.algorithm": "layered" },
+        children: [
+          {
+            id: "node",
+            width: 100,
+            height: 80,
+            layoutOptions: {
+              "elk.portConstraints": "FIXED_ORDER",
+              "elk.portAlignment.default": alignment,
+            },
+            ports: [port("p0", "EAST"), port("p1", "EAST"), port("p2", "EAST")],
+          },
+        ],
+      });
+    });
+  }
+
   it("matches explicit port indexes", async () => {
     await compare({
       id: "root",
