@@ -282,4 +282,67 @@ describe("ELK longest-path layering oracle", () => {
       }
     }
   });
+
+  const minWidthNodes = Array.from({ length: 9 }, (_, index) => ({
+    id: `min-${index}`,
+    width: 20,
+    height: 15 + (index % 4) * 13,
+  }));
+  const minWidthEdges = [
+    [0, 1],
+    [0, 2],
+    [0, 3],
+    [1, 4],
+    [2, 4],
+    [2, 5],
+    [3, 6],
+    [4, 7],
+    [5, 7],
+    [6, 8],
+    [7, 8],
+    [1, 6],
+    [2, 7],
+  ].map(([source, target], index) => ({
+    id: `min-edge-${index}`,
+    sourceId: `min-${source}`,
+    targetId: `min-${target}`,
+  }));
+
+  for (const [option, values] of [
+    ["upperBoundOnWidth", [-1, 1, 2, 4, 8]],
+    ["upperLayerEstimationScalingFactor", [-1, 1, 2, 4]],
+  ] as const) {
+    for (const value of values) {
+      it(`matches MIN_WIDTH ${option}=${value}`, async () => {
+        const elkResult = await new ELK().layout({
+          id: `min-width-${option}-${value}`,
+          layoutOptions: {
+            "elk.algorithm": "layered",
+            "elk.direction": "RIGHT",
+            "elk.separateConnectedComponents": "false",
+            "elk.layered.layering.strategy": "MIN_WIDTH",
+            [`elk.layered.layering.minWidth.${option}`]: String(value),
+          },
+          children: structuredClone(minWidthNodes),
+          edges: minWidthEdges.map((edge) => ({
+            id: edge.id,
+            sources: [edge.sourceId],
+            targets: [edge.targetId],
+          })),
+        });
+        const native = getLayeredLayout(
+          createGraph({ nodes: minWidthNodes, edges: minWidthEdges }),
+          {
+            direction: "right",
+            settings: {
+              "layering.strategy": "MIN_WIDTH",
+              [`layering.minWidth.${option}`]: value,
+            },
+          },
+        );
+
+        expect(getLayerRanks(native.nodes)).toEqual(getLayerRanks(elkResult.children ?? []));
+      });
+    }
+  }
 });
