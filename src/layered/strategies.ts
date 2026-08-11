@@ -2796,7 +2796,26 @@ function implicitEdgeEndpoints(
       input.settings["layering.strategy"] === "STRETCH_WIDTH" &&
       entries.every(({ endpoint }) => endpoint === "target") &&
       !input.graph.edges.some(({ sourceId }) => sourceId === nodeId) &&
-      entries.some(({ edge }) => edge.sourceId.startsWith("__layout_dummy:"));
+        entries.some(({ edge }) => edge.sourceId.startsWith("__layout_dummy:"));
+    const interactiveLeftSourceOrder =
+      crossingStrategy === "INTERACTIVE" &&
+      input.direction === "left" &&
+      entries.length >= 3 &&
+      entries.every(({ endpoint }) => endpoint === "source")
+        ? [...entries]
+            .sort((left, right) => {
+              const leftRect = placement.rectByNodeId.get(left.edge.targetId);
+              const rightRect = placement.rectByNodeId.get(right.edge.targetId);
+              const leftCross = (leftRect?.y ?? 0) + (leftRect?.height ?? 0) / 2;
+              const rightCross = (rightRect?.y ?? 0) + (rightRect?.height ?? 0) / 2;
+              return (
+                rightCross - leftCross ||
+                (edgeModelOrder.get(left.edge.id) ?? 0) -
+                  (edgeModelOrder.get(right.edge.id) ?? 0)
+              );
+            })
+            .map(({ edge }) => edge.id)
+        : undefined;
     const layerOrdered =
       unzipping ||
       interactiveTargetOrder ||
@@ -2804,6 +2823,15 @@ function implicitEdgeEndpoints(
       (input.settings.hierarchyHandling !== "INCLUDE_CHILDREN" &&
         (crossingStrategy === "LAYER_SWEEP" || crossingStrategy === "MEDIAN_LAYER_SWEEP"));
     entries.sort((left, right) => {
+      if (interactiveLeftSourceOrder) {
+        const leftExtreme = interactiveLeftSourceOrder[0] === left.edge.id;
+        const rightExtreme = interactiveLeftSourceOrder[0] === right.edge.id;
+        return (
+          Number(rightExtreme) - Number(leftExtreme) ||
+          (edgeModelOrder.get(left.edge.id) ?? 0) -
+            (edgeModelOrder.get(right.edge.id) ?? 0)
+        );
+      }
       if (interactiveTargetOrder) {
         const leftDummy = left.edge.sourceId.startsWith("__layout_dummy:");
         const rightDummy = right.edge.sourceId.startsWith("__layout_dummy:");
@@ -3358,6 +3386,13 @@ function routeEdges(style: "ORTHOGONAL" | "POLYLINE" | "SPLINES"): EdgeRouter {
         phaseRandomByInput.get(input) ?? new JavaRandom(input.settings.randomSeed ?? 1);
       for (const [gap, candidates] of splineCandidatesByGap.entries()) {
         if (candidates.length === 0) continue;
+        if (
+          input.direction === "left" &&
+          input.settings["crossingMinimization.strategy"] === "INTERACTIVE" &&
+          candidates.length >= 3
+        ) {
+          candidates.sort((left, right) => Number(right.straight) - Number(left.straight));
+        }
         type SplineSegment = { left: number[]; right: number[]; top: number; bottom: number };
         const segments: SplineSegment[] = [];
         const remaining = new Set(candidates.map((_, index) => index));

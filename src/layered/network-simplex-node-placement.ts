@@ -112,6 +112,16 @@ function endpointAnchors(input: LayeredPhaseInput, order: LayerOrder) {
           ? sweptOrder.indexOf(a.id) - sweptOrder.indexOf(b.id)
           : (index.get(other(a, id)) ?? 0) - (index.get(other(b, id)) ?? 0)),
     );
+    if (
+      input.direction === "left" &&
+      input.settings["crossingMinimization.strategy"] === "INTERACTIVE" &&
+      edges.length >= 3
+    ) {
+      const first = edges.shift()!;
+      const modelOrder = new Map(input.graph.edges.map((edge, edgeIndex) => [edge.id, edgeIndex]));
+      edges.sort((a, b) => (modelOrder.get(a.id) ?? 0) - (modelOrder.get(b.id) ?? 0));
+      edges.unshift(first);
+    }
     edges.forEach((edge, edgeNo) =>
       anchors.set(
         `${edge.id}:${id}`,
@@ -189,6 +199,15 @@ export function placeNodesWithNetworkSimplex(
     layer.flatMap((id) => {
       const outgoing = input.graph.edges.filter((edge) => edge.sourceId === id);
       const portOrder = order.outputPortOrderByNodeId?.get(id);
+      if (
+        input.direction === "left" &&
+        input.settings["crossingMinimization.strategy"] === "INTERACTIVE"
+      ) {
+        return outgoing.sort(
+          (left, right) =>
+            (anchors.get(`${left.id}:${id}`) ?? 0) - (anchors.get(`${right.id}:${id}`) ?? 0),
+        );
+      }
       return portOrder === undefined
         ? outgoing
         : outgoing.sort((left, right) => portOrder.indexOf(left.id) - portOrder.indexOf(right.id));
