@@ -3282,7 +3282,15 @@ function routeEdges(style: "ORTHOGONAL" | "POLYLINE" | "SPLINES"): EdgeRouter {
                 weight: firstCounter - secondCounter,
               });
             } else {
-              dependencies.push({ source: firstIndex, target: secondIndex, weight: 1 });
+              if (
+                input.settings["layering.strategy"] === "STRETCH_WIDTH" &&
+                input.settings["crossingMinimization.strategy"] === "NONE"
+              ) {
+                dependencies.push({ source: secondIndex, target: firstIndex, weight: 0 });
+                dependencies.push({ source: firstIndex, target: secondIndex, weight: 0 });
+              } else {
+                dependencies.push({ source: firstIndex, target: secondIndex, weight: 1 });
+              }
             }
           }
         }
