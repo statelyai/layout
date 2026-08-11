@@ -2137,6 +2137,21 @@ export const minimizeCrossingsInteractively: CrossingMinimizer = (
   const nodeById = new Map(input.graph.nodes.map((node) => [node.id, node]));
   const layers = layersFromAssignment(input, assignment);
   const center = input.settings.interactiveReferencePoint !== "TOP_LEFT";
+  const flowExtent = Math.max(
+    0,
+    ...input.graph.nodes.map((node) => {
+      const size = input.sizes.get(node.id);
+      return horizontal ? (node.x ?? 0) + (size?.width ?? 0) : (node.y ?? 0) + (size?.height ?? 0);
+    }),
+  );
+  const internalFlow = (node: GraphNode): number => {
+    const size = input.sizes.get(node.id);
+    const authored = horizontal ? (node.x ?? 0) : (node.y ?? 0);
+    const flowSize = horizontal ? (size?.width ?? 0) : (size?.height ?? 0);
+    return input.direction === "left" || input.direction === "up"
+      ? flowExtent - authored - flowSize
+      : authored;
+  };
   for (const layer of layers) {
     const normalNodes = layer
       .filter((id) => !id.startsWith("__layout_dummy:"))
@@ -2148,9 +2163,8 @@ export const minimizeCrossingsInteractively: CrossingMinimizer = (
             const size = input.sizes.get(node.id);
             return (
               sum +
-              (horizontal
-                ? (node.x ?? 0) + (size?.width ?? 0) / 2
-                : (node.y ?? 0) + (size?.height ?? 0) / 2)
+              internalFlow(node) +
+              (horizontal ? (size?.width ?? 0) / 2 : (size?.height ?? 0) / 2)
             );
           }, 0) / normalNodes.length;
     for (const id of layer) {
@@ -2173,13 +2187,18 @@ export const minimizeCrossingsInteractively: CrossingMinimizer = (
       if (!source || !target) continue;
       const point = (node: GraphNode) => {
         const size = input.sizes.get(node.id);
+        const flowSize = horizontal ? (size?.width ?? 0) : (size?.height ?? 0);
         return horizontal
           ? {
-              flow: node.x ?? 0,
+              flow:
+                internalFlow(node) +
+                (input.direction === "left" || input.direction === "up" ? flowSize : 0),
               cross: (node.y ?? 0) + (size?.height ?? 0) / 2,
             }
           : {
-              flow: node.y ?? 0,
+              flow:
+                internalFlow(node) +
+                (input.direction === "left" || input.direction === "up" ? flowSize : 0),
               cross: (node.x ?? 0) + (size?.width ?? 0) / 2,
             };
       };
@@ -2187,14 +2206,9 @@ export const minimizeCrossingsInteractively: CrossingMinimizer = (
       const targetPoint = point(target);
       sourcePoint.cross = horizontal ? (source.y ?? 0) : (source.x ?? 0);
       targetPoint.cross = horizontal ? (target.y ?? 0) : (target.x ?? 0);
-      const internalFlowSign =
-        input.direction === "left" ||
-        (input.direction === "down" && input.settings.directionCongruency === "ROTATION")
-          ? -1
-          : 1;
-      const internalReferenceFlow = internalFlowSign * referenceFlow;
-      const internalSourceFlow = internalFlowSign * sourcePoint.flow;
-      const internalTargetFlow = internalFlowSign * targetPoint.flow;
+      const internalReferenceFlow = referenceFlow;
+      const internalSourceFlow = sourcePoint.flow;
+      const internalTargetFlow = targetPoint.flow;
       const denominator = internalTargetFlow - internalSourceFlow;
       const ratio =
         internalReferenceFlow <= internalSourceFlow
@@ -2848,6 +2862,7 @@ function implicitEdgeEndpoints(
         const order =
           (edgeModelOrder.get(left.edge.id) ?? Number.MAX_SAFE_INTEGER) -
           (edgeModelOrder.get(right.edge.id) ?? Number.MAX_SAFE_INTEGER);
+        if (input.direction === "up" && leftDummy) return -order;
         return input.direction === "left" && !leftDummy ? -order : order;
       }
       if (verticalNoneTargetOrder) {

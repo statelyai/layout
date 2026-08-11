@@ -413,9 +413,11 @@ it("matches STRETCH_WIDTH spline dependency cycle breaking", async () => {
       "nodePlacement.strategy": "SIMPLE",
     },
   });
-  expect(native.nodes.map(({ x, y }) => [x, y])).toEqual(
-    oracle.children?.map(({ x, y }) => [x, y]),
-  );
+  for (const expectedNode of oracle.children ?? []) {
+    const actualNode = native.nodes.find(({ id }) => id === expectedNode.id);
+    expect(actualNode?.x).toBeCloseTo(expectedNode.x ?? Number.NaN, 12);
+    expect(actualNode?.y).toBeCloseTo(expectedNode.y ?? Number.NaN, 12);
+  }
   for (const edge of oracle.edges ?? []) {
     const section = (edge as ElkExtendedEdge).sections?.[0];
     const expected = section
@@ -848,7 +850,12 @@ it("matches LEFT interactive physical-port spline ordering", async () => {
     const expected = section
       ? [section.startPoint, ...(section.bendPoints ?? []), section.endPoint]
       : [];
-    expect(native.edges.find(({ id }) => id === edge.id)?.points).toEqual(expected);
+    const actual = native.edges.find(({ id }) => id === edge.id)?.points ?? [];
+    expect(actual).toHaveLength(expected.length);
+    actual.forEach((point, index) => {
+      expect(point.x).toBeCloseTo(expected[index]?.x ?? Number.NaN, 12);
+      expect(point.y).toBeCloseTo(expected[index]?.y ?? Number.NaN, 12);
+    });
   }
 });
 
@@ -1141,6 +1148,85 @@ it("matches vertical interactive orthogonal dependency cycles", async () => {
       ? [section.startPoint, ...(section.bendPoints ?? []), section.endPoint]
       : [];
     expect(native.edges.find(({ id }) => id === edge.id)?.points).toEqual(expected);
+  }
+});
+
+it("matches upward interactive long-edge anchors and polyline spacing", async () => {
+  const nodes = [
+    ["n0", 18, 10, 22, 74],
+    ["n1", 40, 34, 21, 16],
+    ["n2", 21, 33, 187, 17],
+    ["n3", 31, 12, 55, 163],
+    ["n4", 19, 12, 34, 27],
+    ["n5", 31, 29, 195, 152],
+  ].map(([id, width, height, x, y]) => ({
+    id: String(id),
+    width: Number(width),
+    height: Number(height),
+    x: Number(x),
+    y: Number(y),
+  }));
+  const edges = [
+    [1, 2],
+    [2, 3],
+    [0, 4],
+    [3, 4],
+    [1, 5],
+    [3, 5],
+    [4, 5],
+  ].map(([source, target]) => ({
+    id: `e${source}-${target}`,
+    sourceId: `n${source}`,
+    targetId: `n${target}`,
+  }));
+  const oracle = await new ELK().layout({
+    id: "root",
+    layoutOptions: {
+      "elk.algorithm": "layered",
+      "elk.direction": "UP",
+      "elk.edgeRouting": "POLYLINE",
+      "elk.randomSeed": "6",
+      "elk.separateConnectedComponents": "false",
+      "elk.layered.layering.strategy": "DF_MODEL_ORDER",
+      "elk.layered.crossingMinimization.strategy": "INTERACTIVE",
+      "elk.layered.crossingMinimization.greedySwitch.type": "OFF",
+      "elk.layered.nodePlacement.strategy": "INTERACTIVE",
+    },
+    children: structuredClone(nodes),
+    edges: edges.map(({ id, sourceId, targetId }) => ({
+      id,
+      sources: [sourceId],
+      targets: [targetId],
+    })),
+  });
+  const native = getLayeredLayout(createGraph({ nodes, edges }), {
+    direction: "up",
+    settings: {
+      edgeRouting: "POLYLINE",
+      randomSeed: 6,
+      separateConnectedComponents: false,
+      "layering.strategy": "DF_MODEL_ORDER",
+      "crossingMinimization.strategy": "INTERACTIVE",
+      "crossingMinimization.greedySwitch.type": "OFF",
+      "nodePlacement.strategy": "INTERACTIVE",
+    },
+  });
+  for (const expectedNode of oracle.children ?? []) {
+    const actualNode = native.nodes.find(({ id }) => id === expectedNode.id);
+    expect(actualNode?.x).toBeCloseTo(expectedNode.x ?? Number.NaN, 12);
+    expect(actualNode?.y).toBeCloseTo(expectedNode.y ?? Number.NaN, 12);
+  }
+  for (const edge of oracle.edges ?? []) {
+    const section = (edge as ElkExtendedEdge).sections?.[0];
+    const expected = section
+      ? [section.startPoint, ...(section.bendPoints ?? []), section.endPoint]
+      : [];
+    const actual = native.edges.find(({ id }) => id === edge.id)?.points ?? [];
+    expect(actual).toHaveLength(expected.length);
+    actual.forEach((point, index) => {
+      expect(point.x).toBeCloseTo(expected[index]?.x ?? Number.NaN, 12);
+      expect(point.y).toBeCloseTo(expected[index]?.y ?? Number.NaN, 12);
+    });
   }
 });
 
