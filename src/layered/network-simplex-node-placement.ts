@@ -172,9 +172,7 @@ export function placeNodesWithNetworkSimplex(
         Math.ceil(
           crossSize(input, upperId) +
             nodeNodeSpacing(input, upperId, lowerId) +
-            (upperId.startsWith("__layout_dummy:") && lowerId.startsWith("__layout_dummy:")
-              ? 1
-              : 0),
+            (upperId.startsWith("__layout_dummy:") ? 1 : 0),
         ),
         0,
       );

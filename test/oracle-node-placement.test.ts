@@ -56,6 +56,45 @@ describe("ELK node-placement oracle", () => {
     expect(positions(native.children ?? [])).toEqual(positions(oracle.children ?? []));
   });
 
+  it("matches network-simplex separation after a long-edge dummy", async () => {
+    const graph: ElkNode = {
+      id: "root",
+      layoutOptions: {
+        "elk.algorithm": "layered",
+        "elk.direction": "DOWN",
+        "elk.edgeRouting": "ORTHOGONAL",
+        "elk.randomSeed": "2",
+        "elk.separateConnectedComponents": "false",
+        "elk.layered.layering.strategy": "COFFMAN_GRAHAM",
+        "elk.layered.crossingMinimization.strategy": "MEDIAN_LAYER_SWEEP",
+        "elk.layered.crossingMinimization.greedySwitch.type": "OFF",
+        "elk.layered.nodePlacement.strategy": "NETWORK_SIMPLEX",
+      },
+      children: [
+        { id: "n0", width: 40, height: 10, x: 162, y: 6 },
+        { id: "n1", width: 15, height: 40, x: 102, y: 149 },
+        { id: "n2", width: 24, height: 21, x: 189, y: 129 },
+        { id: "n3", width: 34, height: 22, x: 26, y: 145 },
+        { id: "n4", width: 28, height: 33, x: 4, y: 53 },
+        { id: "n5", width: 21, height: 21, x: 68, y: 198 },
+      ],
+      edges: [
+        ["e0-3", "n0", "n3"],
+        ["e2-3", "n2", "n3"],
+        ["e0-4", "n0", "n4"],
+        ["e1-4", "n1", "n4"],
+        ["e0-5", "n0", "n5"],
+        ["e2-5", "n2", "n5"],
+        ["e4-5", "n4", "n5"],
+      ].map(([id, source, target]) => ({ id, sources: [source], targets: [target] })),
+    };
+    const [oracle, native] = await Promise.all([
+      new ELK().layout(structuredClone(graph)),
+      new NativeELK().layout(structuredClone(graph)),
+    ]);
+    expect(positions(native.children ?? [])).toEqual(positions(oracle.children ?? []));
+  });
+
   for (const strategy of [
     "SIMPLE",
     "INTERACTIVE",
