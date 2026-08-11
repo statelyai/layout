@@ -129,19 +129,31 @@ function buildNeighbors(input: LayeredPhaseInput, order: LayerOrder) {
   }
   for (const [id, entries] of left) {
     const sweptOrder = order.inputPortOrderByNodeId?.get(id);
+    const interactiveUpTargetOrder =
+      input.direction === "up" && input.settings["crossingMinimization.strategy"] === "INTERACTIVE";
     const portOrder =
       sweptOrder !== undefined
         ? [...entries].sort(
             (leftEntry, rightEntry) =>
               sweptOrder.indexOf(rightEntry.edgeId) - sweptOrder.indexOf(leftEntry.edgeId),
           )
-        : useLayerOrderPorts || entries.some((entry) => entry.id.startsWith("__layout_dummy:"))
-          ? entries
-          : [...entries].sort(
-              (leftEntry, rightEntry) =>
-                (edgeModelOrder.get(rightEntry.edgeId) ?? 0) -
-                (edgeModelOrder.get(leftEntry.edgeId) ?? 0),
-            );
+        : interactiveUpTargetOrder
+          ? [...entries].sort((leftEntry, rightEntry) => {
+              const leftDummy = leftEntry.id.startsWith("__layout_dummy:");
+              const rightDummy = rightEntry.id.startsWith("__layout_dummy:");
+              return (
+                Number(leftDummy) - Number(rightDummy) ||
+                (edgeModelOrder.get(leftEntry.edgeId) ?? 0) -
+                  (edgeModelOrder.get(rightEntry.edgeId) ?? 0)
+              );
+            })
+          : useLayerOrderPorts || entries.some((entry) => entry.id.startsWith("__layout_dummy:"))
+            ? entries
+            : [...entries].sort(
+                (leftEntry, rightEntry) =>
+                  (edgeModelOrder.get(rightEntry.edgeId) ?? 0) -
+                  (edgeModelOrder.get(leftEntry.edgeId) ?? 0),
+              );
     portOrder.forEach((entry, index) => {
       anchor.set(
         `${entry.edgeId}:${id}`,
@@ -436,7 +448,10 @@ function improveEdgeStraightness(
   bal: Alignment,
   neighbors: ReturnType<typeof buildNeighbors>,
 ): void {
-  if (input.settings["nodePlacement.bk.edgeStraightening"] !== "IMPROVE_STRAIGHTNESS") {
+  if (
+    (input.settings["nodePlacement.bk.edgeStraightening"] ?? "IMPROVE_STRAIGHTNESS") !==
+    "IMPROVE_STRAIGHTNESS"
+  ) {
     return;
   }
   const lockedRoots = new Set<string>();
