@@ -66,6 +66,45 @@ for (const edgeRouting of ["ORTHOGONAL", "POLYLINE", "SPLINES"] as const) {
   });
 }
 
+for (const unnecessaryBendpoints of [false, true]) {
+  it(`matches ELK unnecessary-bendpoint handling ${unnecessaryBendpoints}`, async () => {
+    const longEdgeNodes = ["a", "b", "c"].map((id) => ({ id, width: 20, height: 20 }));
+    const longEdges = [
+      { id: "ab", sourceId: "a", targetId: "b" },
+      { id: "bc", sourceId: "b", targetId: "c" },
+      { id: "ac", sourceId: "a", targetId: "c" },
+    ];
+    const oracle = await new ELK().layout({
+      id: "root",
+      layoutOptions: {
+        "elk.algorithm": "layered",
+        "elk.layered.layering.strategy": "LONGEST_PATH",
+        "elk.layered.unnecessaryBendpoints": String(unnecessaryBendpoints),
+      },
+      children: structuredClone(longEdgeNodes),
+      edges: longEdges.map((edge) => ({
+        id: edge.id,
+        sources: [edge.sourceId],
+        targets: [edge.targetId],
+      })),
+    });
+    const native = getLayeredLayout(createGraph({ nodes: longEdgeNodes, edges: longEdges }), {
+      settings: { unnecessaryBendpoints },
+    });
+    const section = (oracle.edges?.find((edge) => edge.id === "ac") as ElkExtendedEdge | undefined)
+      ?.sections?.[0];
+    const expected = section
+      ? [section.startPoint, ...(section.bendPoints ?? []), section.endPoint]
+      : [];
+    const actual = native.edges.find((edge) => edge.id === "ac")?.points ?? [];
+    expect(actual).toHaveLength(expected.length);
+    actual.forEach((point, index) => {
+      expect(point.x).toBeCloseTo(expected[index]?.x ?? Number.NaN, 12);
+      expect(point.y).toBeCloseTo(expected[index]?.y ?? Number.NaN, 12);
+    });
+  });
+}
+
 for (const [edgeRouting, option, values] of [
   ["SPLINES", "edgeRouting.splines.sloppy.layerSpacingFactor", [0, 0.2, 0.8]],
   ["POLYLINE", "edgeRouting.polyline.slopedEdgeZoneWidth", [0, 2, 20]],
