@@ -2719,6 +2719,10 @@ export function placePorts<P>(
         Number(portSettings?.(left)?.["port.index"] ?? ports.indexOf(left)) -
         Number(portSettings?.(right)?.["port.index"] ?? ports.indexOf(right)),
     );
+    const side = sideByPort.get(group[0]!);
+    if (constraints === "FIXED_ORDER" && (side === "SOUTH" || side === "WEST")) {
+      group.reverse();
+    }
   }
   return ports.map((port) => {
     const size = { width: port.width ?? 8, height: port.height ?? 8 };
@@ -2769,12 +2773,14 @@ export function placePorts<P>(
               : "portAlignment.east"
       ] ?? nodeSettings?.["portAlignment.default"];
     const axisSize = side === "NORTH" || side === "SOUTH" ? rect.width : rect.height;
-    const axisStart = Number(
+    const configuredAxisStart = Number(
       side === "NORTH" || side === "SOUTH" ? (surrounding.left ?? 0) : (surrounding.top ?? 0),
     );
-    const axisEnd = Number(
+    const configuredAxisEnd = Number(
       side === "NORTH" || side === "SOUTH" ? (surrounding.right ?? 0) : (surrounding.bottom ?? 0),
     );
+    const axisStart = Math.max(0, configuredAxisStart - (configuredAxisStart > 0 ? 1 : 0));
+    const axisEnd = Math.max(0, configuredAxisEnd - (configuredAxisEnd > 0 ? 1 : 0));
     const availableAxisSize = Math.max(0, axisSize - axisStart - axisEnd);
     const portAxisSize = side === "NORTH" || side === "SOUTH" ? size.width : size.height;
     const spacing = Number(nodeSettings?.["spacing.portPort"] ?? 10);
@@ -2862,7 +2868,10 @@ export function placePorts<P>(
                     ((index + 1) * (availableAxisSize - group.length * portAxisSize)) /
                       (group.length + 1) +
                     index * portAxisSize;
-    const ratio = axisSize === 0 ? 0.5 : axisPosition / axisSize;
+    const integerizeAxis =
+      (side === "NORTH" || side === "SOUTH") && (configuredAxisStart > 0 || configuredAxisEnd > 0);
+    const resolvedAxisPosition = integerizeAxis ? Math.round(axisPosition) : axisPosition;
+    const ratio = axisSize === 0 ? 0.5 : resolvedAxisPosition / axisSize;
     const borderOffset = Number(portSettings?.(port)?.["port.borderOffset"] ?? 0);
     return {
       ...port,
