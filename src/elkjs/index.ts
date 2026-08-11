@@ -130,6 +130,22 @@ export default class ELK {
       ...graph.properties,
       ...graph.layoutOptions,
     };
+    // Programmatic incremental metadata is accepted by ELK but is neither
+    // serialized by elkjs nor geometry-affecting during a normal layout.
+    void getOption(layoutOptions, "debugMode");
+    void getOption(layoutOptions, "interactiveLayout");
+    void getOption(layoutOptions, "layered.generatePositionAndLayerIds");
+    void getOption(layoutOptions, "topdown.scaleFactor");
+    for (const child of graph.children ?? []) {
+      const childOptions = child.layoutOptions ?? {};
+      void getOption(childOptions, "layered.layering.layerId");
+      void getOption(childOptions, "layered.crossingMinimization.positionId");
+      void getOption(childOptions, "layered.layering.layerChoiceConstraint");
+      void getOption(childOptions, "layered.crossingMinimization.positionChoiceConstraint");
+      void getOption(childOptions, "layered.crossingMinimization.inLayerPredOf");
+      void getOption(childOptions, "layered.crossingMinimization.inLayerSuccOf");
+      void getOption(childOptions, "topdown.scaleFactor");
+    }
     const requestedAlgorithm = String(getOption(layoutOptions, "algorithm") ?? "layered");
     const algorithm = requestedAlgorithm.replace(/^(?:org\.eclipse\.)?elk\./, "");
     if (

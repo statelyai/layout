@@ -47,6 +47,43 @@ function port(
 }
 
 describe("ELK port-option parity", () => {
+  for (const allow of [false, true]) {
+    it(`matches non-flow port side switching ${allow}`, async () => {
+      const graph: ElkNode = {
+        id: "root",
+        layoutOptions: {
+          "elk.algorithm": "layered",
+          "elk.direction": "RIGHT",
+          "elk.separateConnectedComponents": "false",
+        },
+        children: [
+          {
+            id: "source",
+            width: 40,
+            height: 40,
+            layoutOptions: { "elk.portConstraints": "FIXED_SIDE" },
+            ports: [
+              port("p", "NORTH", {
+                "elk.layered.allowNonFlowPortsToSwitchSides": String(allow),
+              }),
+            ],
+          },
+          { id: "other", width: 20, height: 20 },
+          { id: "target", width: 20, height: 20 },
+        ],
+        edges: [
+          { id: "port-edge", sources: ["p"], targets: ["target"] },
+          { id: "other-edge", sources: ["other"], targets: ["target"] },
+        ],
+      };
+      const expected = (await new OracleELK().layout(
+        structuredClone(graph) as never,
+      )) as unknown as ElkNode;
+      const actual = await new NativeELK().layout(structuredClone(graph));
+      expect(actual.children?.[0]?.ports?.[0]?.y).toEqual(expected.children?.[0]?.ports?.[0]?.y);
+    });
+  }
+
   it("matches additional surrounding space for horizontal-side ports", async () => {
     await compare({
       id: "root",

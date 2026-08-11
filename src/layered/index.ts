@@ -873,6 +873,7 @@ function runLayeredPipeline<N, E, G, P>(
           bottom: options.padding?.bottom ?? 12,
           left: options.padding?.left ?? 12,
         };
+  const switchedSideByPort = new Map<string, "NORTH" | "SOUTH" | "WEST" | "EAST">();
   const input: LayeredPhaseInput = {
     graph: graph as Graph<unknown, unknown, unknown, unknown>,
     sizes: new Map(graph.nodes.map((node) => [node.id, getNodeSize(node, options)])),
@@ -891,7 +892,12 @@ function runLayeredPipeline<N, E, G, P>(
     settings: options.settings ?? {},
     ...(options.nodeSettings === undefined ? {} : { nodeSettings: options.nodeSettings }),
     ...(options.edgeSettings === undefined ? {} : { edgeSettings: options.edgeSettings }),
-    ...(options.portSettings === undefined ? {} : { portSettings: options.portSettings }),
+    portSettings: (port, node) => ({
+      ...options.portSettings?.(port, node),
+      ...(switchedSideByPort.has(`${node.id}\0${port.name}`)
+        ? { "port.side": switchedSideByPort.get(`${node.id}\0${port.name}`) }
+        : {}),
+    }),
   };
   const measure = <T>(id: string, run: () => T): T => {
     context?.throwIfAborted();
@@ -1135,6 +1141,56 @@ function runLayeredPipeline<N, E, G, P>(
   measure("port-margin-normalization", () =>
     normalizePlacementForPortExtents(expanded.input, placement, order),
   );
+  {
+    const horizontal = direction === "left" || direction === "right";
+    const crossCenter = (nodeId: string): number => {
+      const rect = placement.rectByNodeId.get(nodeId);
+      return rect ? (horizontal ? rect.y + rect.height / 2 : rect.x + rect.width / 2) : 0;
+    };
+    for (const node of graph.nodes) {
+      for (const port of node.ports ?? []) {
+        const settings = options.portSettings?.(port, node);
+        if (settings?.allowNonFlowPortsToSwitchSides !== true) continue;
+        const side = settings["port.side"];
+        if (
+          horizontal ? side !== "NORTH" && side !== "SOUTH" : side !== "WEST" && side !== "EAST"
+        ) {
+          continue;
+        }
+        const configuredSide = side as "NORTH" | "SOUTH" | "WEST" | "EAST";
+        const outgoing = graph.edges.find(
+          (edge) => edge.sourceId === node.id && edge.sourcePort === port.name,
+        );
+        const incoming = graph.edges.find(
+          (edge) => edge.targetId === node.id && edge.targetPort === port.name,
+        );
+        const peers = outgoing
+          ? graph.edges
+              .filter((edge) => edge.targetId === outgoing.targetId)
+              .map((edge) => edge.sourceId)
+          : incoming
+            ? graph.edges
+                .filter((edge) => edge.sourceId === incoming.sourceId)
+                .map((edge) => edge.targetId)
+            : [];
+        if (peers.length < 2) continue;
+        const positions = peers.map(crossCenter);
+        const own = crossCenter(node.id);
+        const switched = horizontal
+          ? own >= Math.max(...positions)
+            ? "SOUTH"
+            : own <= Math.min(...positions)
+              ? "NORTH"
+              : configuredSide
+          : own >= Math.max(...positions)
+            ? "EAST"
+            : own <= Math.min(...positions)
+              ? "WEST"
+              : configuredSide;
+        switchedSideByPort.set(`${node.id}\0${port.name}`, switched);
+      }
+    }
+  }
   const edgeRouting = options.settings?.edgeRouting ?? "ORTHOGONAL";
   const edgeRouter =
     options.strategies?.routeEdges ??
@@ -1163,7 +1219,7 @@ function runLayeredPipeline<N, E, G, P>(
       node.ports,
       rect,
       direction,
-      (port) => options.portSettings?.(port, node),
+      (port) => input.portSettings?.(port, node),
       { ...options.settings, ...options.nodeSettings?.(node) },
     );
     return {
