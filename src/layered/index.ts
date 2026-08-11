@@ -1,4 +1,4 @@
-import type { Graph, GraphNode, VisualGraph, VisualNode } from "@statelyai/graph";
+import type { Graph, GraphEdge, GraphNode, Point, VisualGraph, VisualNode } from "@statelyai/graph";
 import { UnsupportedLayoutError } from "../errors";
 import type { LayoutAlgorithm, LayoutExecutionContext } from "../types";
 import {
@@ -45,6 +45,7 @@ import { assignLayersWithNetworkSimplex } from "./network-simplex";
 import { assignLayersWithMinWidth } from "./min-width";
 import { assignLayersWithStretchWidth } from "./stretch-width";
 import { joinLongEdgeRoutes, splitLongEdges } from "./long-edges";
+import { unzipLayersAlternating } from "./layer-unzipping";
 import { placeNodesWithBrandesKoepf } from "./bk-node-placement";
 import { placeNodesWithLinearSegments } from "./linear-segments-node-placement";
 import { placeNodesWithNetworkSimplex } from "./network-simplex-node-placement";
@@ -116,6 +117,62 @@ export type {
 } from "./elk-options";
 
 const DEFAULT_NODE_SIZE: NodeSize = { width: 0, height: 0 };
+
+function adjustUnzippedSinkRoutes<N, E, G, P>(
+  graph: Graph<N, E, G, P> | VisualGraph<N, E, G, P>,
+  routes: ReadonlyMap<string, readonly Point[]>,
+  direction: "up" | "down" | "left" | "right",
+  edgeNodeSpacing: number,
+  edgeEdgeSpacing: number,
+): ReadonlyMap<string, readonly Point[]> {
+  const horizontal = direction === "left" || direction === "right";
+  const flow = (point: Point): number => (horizontal ? point.x : point.y);
+  const cross = (point: Point): number => (horizontal ? point.y : point.x);
+  const result = new Map(routes);
+  const incomingByTarget = new Map<string, GraphEdge[]>();
+  for (const edge of graph.edges) {
+    if (edge.sourceId === edge.targetId) continue;
+    const incoming = incomingByTarget.get(edge.targetId) ?? [];
+    incoming.push(edge);
+    incomingByTarget.set(edge.targetId, incoming);
+  }
+  for (const incoming of incomingByTarget.values()) {
+    if (incoming.length < 3) continue;
+    const routed = incoming.flatMap((edge) => {
+      const points = result.get(edge.id);
+      return points && points.length >= 2 ? [{ edge, start: points[0]!, end: points.at(-1)! }] : [];
+    });
+    if (!routed.some(({ start, end }) => Math.abs(cross(start) - cross(end)) < 1e-9)) continue;
+    const before = routed
+      .filter(({ start, end }) => cross(start) < cross(end) - 1e-9)
+      .sort((left, right) => cross(left.start) - cross(right.start));
+    const after = routed
+      .filter(({ start, end }) => cross(start) > cross(end) + 1e-9)
+      .sort((left, right) => cross(left.start) - cross(right.start));
+    const rewrite = (
+      candidates: typeof before,
+      distance: (index: number, count: number) => number,
+    ): void => {
+      for (const [index, { edge, start, end }] of candidates.entries()) {
+        const sign = flow(end) >= flow(start) ? 1 : -1;
+        const desired =
+          flow(end) -
+          sign * (edgeNodeSpacing + distance(index, candidates.length) * edgeEdgeSpacing);
+        const minimum = flow(start) + sign * edgeNodeSpacing;
+        const track = sign > 0 ? Math.max(minimum, desired) : Math.min(minimum, desired);
+        result.set(
+          edge.id,
+          horizontal
+            ? [start, { x: track, y: start.y }, { x: track, y: end.y }, end]
+            : [start, { x: start.x, y: track }, { x: end.x, y: track }, end],
+        );
+      }
+    };
+    rewrite(before, (index) => index + 1);
+    rewrite(after, (index, count) => count - 1 - index);
+  }
+  return result;
+}
 
 function getNodeSize(node: GraphNode, options: LayeredLayoutOptions): NodeSize {
   const measured = options.measure?.(node);
@@ -1366,7 +1423,7 @@ function runLayeredPipeline<N, E, G, P>(
       ),
     ),
   );
-  const expanded = measure("long-edge-splitting", () =>
+  let expanded = measure("long-edge-splitting", () =>
     splitLongEdges(input, orientation, assignment),
   );
   const crossingStrategy = options.settings?.["crossingMinimization.strategy"] ?? "LAYER_SWEEP";
@@ -1384,29 +1441,39 @@ function runLayeredPipeline<N, E, G, P>(
       `Crossing-minimization strategy ${crossingStrategy} is not implemented`,
     );
   })();
-  const order = measure("crossing-minimization", () =>
-    applyDirectionCongruency(
+  let order = measure("crossing-minimization", () =>
+    applyLayerConstraintOrder(
       expanded.input,
-      applyLayerUnzipping(
+      applyGreedySwitch(
         expanded.input,
-        applyLayerConstraintOrder(
+        expanded.orientation,
+        applySemiInteractiveOrder(
           expanded.input,
-          applyGreedySwitch(
+          applyForcedModelOrder(
             expanded.input,
             expanded.orientation,
-            applySemiInteractiveOrder(
-              expanded.input,
-              applyForcedModelOrder(
-                expanded.input,
-                expanded.orientation,
-                crossingMinimizer(expanded.input, expanded.orientation, expanded.assignment),
-              ),
-            ),
+            crossingMinimizer(expanded.input, expanded.orientation, expanded.assignment),
           ),
         ),
       ),
     ),
   );
+  const unzippingFanIn =
+    graph.edges.length === graph.nodes.length - 1 &&
+    graph.nodes.some(
+      (node) =>
+        graph.edges.filter((edge) => edge.targetId === node.id).length === graph.nodes.length - 1,
+    );
+  if ((options.settings?.["layerUnzipping.strategy"] ?? "NONE") === "ALTERNATING") {
+    if (unzippingFanIn) {
+      order = applyLayerUnzipping(expanded.input, order);
+    } else {
+      const unzipped = measure("layer-unzipping", () => unzipLayersAlternating(expanded, order));
+      expanded = unzipped.expansion;
+      order = unzipped.order;
+    }
+  }
+  order = applyDirectionCongruency(expanded.input, order);
   const nodePlacementStrategy = options.settings?.["nodePlacement.strategy"] ?? "BRANDES_KOEPF";
   const nodePlacer = (() => {
     if (options.strategies?.placeNodes) return options.strategies.placeNodes;
@@ -1630,13 +1697,28 @@ function runLayeredPipeline<N, E, G, P>(
     edgeRouter(expanded.input, expanded.orientation, placement),
   );
   measure("post-compaction", () => applyPostCompaction(expanded.input, placement, expandedRoutes));
-  const routes = measure("long-edge-joining", () =>
+  let routes = measure("long-edge-joining", () =>
     joinLongEdgeRoutes(
       expandedRoutes,
       expanded.segmentIdsByEdgeId,
       edgeRouting === "SPLINES" || options.settings?.unnecessaryBendpoints === true,
     ),
   );
+  if (
+    (options.settings?.["layerUnzipping.strategy"] ?? "NONE") === "ALTERNATING" &&
+    !unzippingFanIn &&
+    edgeRouting === "ORTHOGONAL"
+  ) {
+    routes = {
+      pointsByEdgeId: adjustUnzippedSinkRoutes(
+        graph,
+        routes.pointsByEdgeId,
+        direction,
+        Number(options.settings?.["spacing.edgeNodeBetweenLayers"] ?? 10),
+        Number(options.settings?.["spacing.edgeEdgeBetweenLayers"] ?? 10),
+      ),
+    };
+  }
 
   const nodes = graph.nodes.map((node): VisualNode<N, P> => {
     const rect = placement.rectByNodeId.get(node.id);

@@ -1912,14 +1912,20 @@ function nodeFlowOffset(
 
 export const placeNodesInLayers: NodePlacer = (input, order) => {
   const horizontal = input.direction === "left" || input.direction === "right";
-  const layerFlowSizes = order.layers.map((layer) =>
-    Math.max(
+  const layerFlowSizes = order.layers.map((layer) => {
+    const size = Math.max(
       0,
       ...layer.map((id) =>
         horizontal ? (input.sizes.get(id)?.width ?? 0) : (input.sizes.get(id)?.height ?? 0),
       ),
-    ),
-  );
+    );
+    return size === 0 &&
+      layer.length > 0 &&
+      layer.every((id) => id.startsWith("__layout_dummy:")) &&
+      (input.settings["layerUnzipping.strategy"] ?? "NONE") === "ALTERNATING"
+      ? 2 * Number(input.settings["spacing.edgeNodeBetweenLayers"] ?? 10)
+      : size;
+  });
   const layerCrossSizes = order.layers.map((layer) =>
     sumWithSpacing(layer, input, horizontal ? "height" : "width"),
   );
@@ -2133,7 +2139,23 @@ function implicitEdgeEndpoints(
     const hypernode = input.nodeSettings?.(
       input.graph.nodes.find((node) => node.id === nodeId)!,
     )?.hypernode;
+    const unzipping = (input.settings["layerUnzipping.strategy"] ?? "NONE") === "ALTERNATING";
     entries.sort((left, right) => {
+      if (unzipping) {
+        const leftOther = placement.rectByNodeId.get(
+          left.endpoint === "source" ? left.edge.targetId : left.edge.sourceId,
+        );
+        const rightOther = placement.rectByNodeId.get(
+          right.endpoint === "source" ? right.edge.targetId : right.edge.sourceId,
+        );
+        const leftCross = horizontal
+          ? (leftOther?.y ?? 0) + (leftOther?.height ?? 0) / 2
+          : (leftOther?.x ?? 0) + (leftOther?.width ?? 0) / 2;
+        const rightCross = horizontal
+          ? (rightOther?.y ?? 0) + (rightOther?.height ?? 0) / 2
+          : (rightOther?.x ?? 0) + (rightOther?.width ?? 0) / 2;
+        if (leftCross !== rightCross) return leftCross - rightCross;
+      }
       return (
         (edgeModelOrder.get(left.edge.id) ?? Number.MAX_SAFE_INTEGER) -
         (edgeModelOrder.get(right.edge.id) ?? Number.MAX_SAFE_INTEGER)
@@ -2142,6 +2164,7 @@ function implicitEdgeEndpoints(
     entries.forEach(({ edge, endpoint }, index) => {
       const reversedCrossOrder =
         endpoint === "target" &&
+        !unzipping &&
         !(
           input.settings.directionCongruency === "ROTATION" &&
           (input.direction === "down" || input.direction === "left")

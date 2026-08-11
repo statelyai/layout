@@ -2,6 +2,37 @@ import OracleELK from "elkjs/lib/elk.bundled.js";
 import { expect, it } from "vitest";
 import NativeELK, { type ElkNode } from "../src/elkjs";
 
+function expectGeometry(actual: ElkNode, expected: ElkNode): void {
+  expect(actual.width).toBeCloseTo(expected.width ?? Number.NaN, 12);
+  expect(actual.height).toBeCloseTo(expected.height ?? Number.NaN, 12);
+  for (const expectedNode of expected.children ?? []) {
+    const actualNode = actual.children?.find((node) => node.id === expectedNode.id);
+    for (const property of ["x", "y", "width", "height"] as const) {
+      expect(actualNode?.[property]).toBeCloseTo(expectedNode[property] ?? Number.NaN, 12);
+    }
+  }
+  for (const expectedEdge of expected.edges ?? []) {
+    const actualEdge = actual.edges?.find((edge) => edge.id === expectedEdge.id);
+    const expectedSection = expectedEdge.sections?.[0];
+    const actualSection = actualEdge?.sections?.[0];
+    const expectedPoints = expectedSection
+      ? [
+          expectedSection.startPoint,
+          ...(expectedSection.bendPoints ?? []),
+          expectedSection.endPoint,
+        ]
+      : [];
+    const actualPoints = actualSection
+      ? [actualSection.startPoint, ...(actualSection.bendPoints ?? []), actualSection.endPoint]
+      : [];
+    expect(actualPoints).toHaveLength(expectedPoints.length);
+    actualPoints.forEach((point, index) => {
+      expect(point.x).toBeCloseTo(expectedPoints[index]!.x, 12);
+      expect(point.y).toBeCloseTo(expectedPoints[index]!.y, 12);
+    });
+  }
+}
+
 for (const split of [2, 3]) {
   it(`matches ELK alternating layer unzipping with split ${split}`, async () => {
     const graph: ElkNode = {
@@ -159,4 +190,6 @@ it("matches ELK reset-on-long-edges option behavior", async () => {
   expect(signature(oracleOn as unknown as ElkNode)).toEqual(
     signature(oracleOff as unknown as ElkNode),
   );
+  expectGeometry(nativeOff, oracleOff as unknown as ElkNode);
+  expectGeometry(nativeOn, oracleOn as unknown as ElkNode);
 });

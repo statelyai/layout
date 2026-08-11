@@ -29,11 +29,22 @@ interface Neighbor {
   edgeId: string;
 }
 
-function crossSize(input: LayeredPhaseInput, id: string): number {
+function actualCrossSize(input: LayeredPhaseInput, id: string): number {
   const size = input.sizes.get(id);
   return input.direction === "left" || input.direction === "right"
     ? (size?.height ?? 0)
     : (size?.width ?? 0);
+}
+
+function crossSize(input: LayeredPhaseInput, id: string): number {
+  const value = actualCrossSize(input, id);
+  if (value !== 0 || !id.startsWith("__layout_dummy:")) return value;
+  return Math.max(
+    1,
+    ...input.graph.edges
+      .filter((edge) => edge.sourceId === id || edge.targetId === id)
+      .map((edge) => Number(input.edgeSettings?.(edge)?.["edge.thickness"] ?? 1)),
+  );
 }
 
 function buildNeighbors(input: LayeredPhaseInput, order: LayerOrder) {
@@ -66,27 +77,35 @@ function buildNeighbors(input: LayeredPhaseInput, order: LayerOrder) {
   for (const neighbors of [...left.values(), ...right.values()]) {
     neighbors.sort((a, b) => (nodeIndex.get(a.id) ?? 0) - (nodeIndex.get(b.id) ?? 0));
   }
+  const useLayerOrderPorts =
+    (input.settings["layerUnzipping.strategy"] ?? "NONE") === "ALTERNATING";
   for (const [id, entries] of right) {
-    const portOrder = [...entries].sort(
-      (leftEntry, rightEntry) =>
-        (edgeModelOrder.get(leftEntry.edgeId) ?? 0) - (edgeModelOrder.get(rightEntry.edgeId) ?? 0),
-    );
+    const portOrder = useLayerOrderPorts
+      ? entries
+      : [...entries].sort(
+          (leftEntry, rightEntry) =>
+            (edgeModelOrder.get(leftEntry.edgeId) ?? 0) -
+            (edgeModelOrder.get(rightEntry.edgeId) ?? 0),
+        );
     portOrder.forEach((entry, index) => {
       anchor.set(
         `${entry.edgeId}:${id}`,
-        (crossSize(input, id) * (index + 1)) / (entries.length + 1),
+        (actualCrossSize(input, id) * (index + 1)) / (entries.length + 1),
       );
     });
   }
   for (const [id, entries] of left) {
-    const portOrder = [...entries].sort(
-      (leftEntry, rightEntry) =>
-        (edgeModelOrder.get(rightEntry.edgeId) ?? 0) - (edgeModelOrder.get(leftEntry.edgeId) ?? 0),
-    );
+    const portOrder = useLayerOrderPorts
+      ? entries
+      : [...entries].sort(
+          (leftEntry, rightEntry) =>
+            (edgeModelOrder.get(rightEntry.edgeId) ?? 0) -
+            (edgeModelOrder.get(leftEntry.edgeId) ?? 0),
+        );
     portOrder.forEach((entry, index) => {
       anchor.set(
         `${entry.edgeId}:${id}`,
-        (crossSize(input, id) * (index + 1)) / (entries.length + 1),
+        (actualCrossSize(input, id) * (index + 1)) / (entries.length + 1),
       );
     });
   }
@@ -107,11 +126,48 @@ function makeAlignment(hdir: HDirection, vdir: VDirection): Alignment {
   };
 }
 
+function markConflicts(
+  order: LayerOrder,
+  neighbors: ReturnType<typeof buildNeighbors>,
+): Set<string> {
+  const marked = new Set<string>();
+  if (order.layers.length < 3) return marked;
+  const isInner = (id: string): boolean =>
+    id.startsWith("__layout_dummy:") &&
+    (neighbors.left.get(id) ?? []).some((neighbor) => neighbor.id.startsWith("__layout_dummy:"));
+  for (let previousLayerNo = 1; previousLayerNo + 1 < order.layers.length; previousLayerNo++) {
+    const previousLayer = order.layers[previousLayerNo]!;
+    const currentLayer = order.layers[previousLayerNo + 1]!;
+    let lowerBound = 0;
+    let scan = 0;
+    for (let currentIndex = 0; currentIndex < currentLayer.length; currentIndex++) {
+      const id = currentLayer[currentIndex]!;
+      const inner = isInner(id);
+      if (currentIndex !== currentLayer.length - 1 && !inner) continue;
+      const upperBound = inner
+        ? (neighbors.nodeIndex.get(neighbors.left.get(id)?.[0]?.id ?? "") ??
+          previousLayer.length - 1)
+        : previousLayer.length - 1;
+      while (scan <= currentIndex) {
+        const scannedId = currentLayer[scan++]!;
+        if (isInner(scannedId)) continue;
+        for (const neighbor of neighbors.left.get(scannedId) ?? []) {
+          const index = neighbors.nodeIndex.get(neighbor.id) ?? 0;
+          if (index < lowerBound || index > upperBound) marked.add(neighbor.edgeId);
+        }
+      }
+      lowerBound = upperBound;
+    }
+  }
+  return marked;
+}
+
 function alignBlocks(
   input: LayeredPhaseInput,
   order: LayerOrder,
   bal: Alignment,
   neighbors: ReturnType<typeof buildNeighbors>,
+  markedEdges: ReadonlySet<string>,
 ): void {
   for (const layer of order.layers) {
     for (const id of layer) {
@@ -136,6 +192,7 @@ function alignBlocks(
         if (bal.align.get(id) !== id) break;
         const neighbor = adjacent[median];
         if (neighbor === undefined) continue;
+        if (markedEdges.has(neighbor.edgeId)) continue;
         const index = neighbors.nodeIndex.get(neighbor.id) ?? 0;
         if ((bal.vdir === "UP" && r > index) || (bal.vdir === "DOWN" && r < index)) {
           bal.align.set(neighbor.id, id);
@@ -161,11 +218,11 @@ function alignBlocks(
           (candidate.sourceId === next && candidate.targetId === current),
       );
       const currentAnchor = edge
-        ? (neighbors.anchor.get(`${edge.id}:${current}`) ?? crossSize(input, current) / 2)
-        : crossSize(input, current) / 2;
+        ? (neighbors.anchor.get(`${edge.id}:${current}`) ?? actualCrossSize(input, current) / 2)
+        : actualCrossSize(input, current) / 2;
       const nextAnchor = edge
-        ? (neighbors.anchor.get(`${edge.id}:${next}`) ?? crossSize(input, next) / 2)
-        : crossSize(input, next) / 2;
+        ? (neighbors.anchor.get(`${edge.id}:${next}`) ?? actualCrossSize(input, next) / 2)
+        : actualCrossSize(input, next) / 2;
       const nextShift = (bal.innerShift.get(current) ?? 0) + currentAnchor - nextAnchor;
       bal.innerShift.set(next, nextShift);
       above = Math.max(above, crossSize(input, next) / 2 - nextShift);
@@ -388,6 +445,7 @@ export function placeNodesWithBrandesKoepf(
 ): NodePlacement {
   const base = placeNodesInLayers(input, order);
   const neighbors = buildNeighbors(input, order);
+  const markedEdges = markConflicts(order, neighbors);
   const fixed = String(input.settings["nodePlacement.bk.fixedAlignment"] ?? "NONE");
   const requested: Array<[HDirection, VDirection]> =
     fixed === "LEFTDOWN"
@@ -406,7 +464,7 @@ export function placeNodesWithBrandesKoepf(
               ];
   const layouts = requested.map(([hdir, vdir]) => {
     const layout = makeAlignment(hdir, vdir);
-    alignBlocks(input, order, layout, neighbors);
+    alignBlocks(input, order, layout, neighbors, markedEdges);
     compact(input, order, layout, neighbors);
     improveEdgeStraightness(input, order, layout, neighbors);
     return layout;
