@@ -51,6 +51,7 @@ import { placeNodesWithLinearSegments } from "./linear-segments-node-placement";
 import { placeNodesWithNetworkSimplex } from "./network-simplex-node-placement";
 import { applyHighDegreeNodeTreatment } from "./high-degree";
 import { applyNodePromotion } from "./node-promotion";
+import { foldMultiEdgeBreakingPoints, insertMultiEdgeBreakingPoints } from "./multi-edge-wrapping";
 
 export type {
   AcyclicOrientation,
@@ -612,15 +613,7 @@ function runWrappedMultiEdgePipeline<N, E, G, P>(
   cuts = [...new Set(cuts)].sort((left, right) => left - right);
   if (cuts.length === 0) return undefined;
 
-  const base = runLayeredPipeline(
-    graph,
-    {
-      ...options,
-      settings: { ...options.settings, "wrapping.strategy": "OFF" },
-    },
-    undefined,
-  );
-  const padding =
+  const wrappedPadding =
     typeof options.padding === "number"
       ? {
           top: options.padding,
@@ -634,127 +627,210 @@ function runWrappedMultiEdgePipeline<N, E, G, P>(
           bottom: options.padding?.bottom ?? 12,
           left: options.padding?.left ?? 12,
         };
-  const boundaries = [0, ...cuts, orderedIds.length];
-  const rowByNodeId = new Map<string, number>();
-  const rowStartByNodeId = new Map<string, number>();
-  for (let row = 0; row + 1 < boundaries.length; row++) {
-    for (let index = boundaries[row]!; index < boundaries[row + 1]!; index++) {
-      rowByNodeId.set(orderedIds[index]!, row);
-      rowStartByNodeId.set(orderedIds[index]!, boundaries[row]!);
-    }
-  }
-  const maximumOpenEdges = Math.max(
-    1,
-    ...cuts.map(
-      (cut) =>
-        graph.edges.filter(
-          (edge) => rank.get(edge.sourceId)! < cut && rank.get(edge.targetId)! >= cut,
-        ).length,
+  const phaseInput: LayeredPhaseInput = {
+    graph: graph as Graph<unknown, unknown, unknown, unknown>,
+    sizes,
+    direction: "right",
+    spacing: { node: nodeSpacing, layer: layerSpacing },
+    padding: wrappedPadding,
+    constrainedLayerByNodeId: new Map(),
+    settings: options.settings ?? {},
+    ...(options.nodeSettings === undefined ? {} : { nodeSettings: options.nodeSettings }),
+    ...(options.edgeSettings === undefined ? {} : { edgeSettings: options.edgeSettings }),
+    ...(options.portSettings === undefined ? {} : { portSettings: options.portSettings }),
+  };
+  const prepared = insertMultiEdgeBreakingPoints(
+    phaseInput,
+    { reversedEdgeIds: new Set() },
+    { layerByNodeId: rank },
+    cuts,
+  );
+  const brokenExpansion = splitLongEdges(prepared.input, prepared.orientation, prepared.assignment);
+  const crossingStrategy = options.settings?.["crossingMinimization.strategy"] ?? "LAYER_SWEEP";
+  const crossingMinimizer =
+    crossingStrategy === "MEDIAN_LAYER_SWEEP"
+      ? minimizeCrossingsWithMedian(options.crossingSweeps)
+      : crossingStrategy === "INTERACTIVE"
+        ? minimizeCrossingsInteractively
+        : crossingStrategy === "NONE"
+          ? minimizeCrossingsWithModelOrder
+          : minimizeCrossingsWithBarycenter(options.crossingSweeps);
+  const crossedOrder = applyLayerConstraintOrder(
+    brokenExpansion.input,
+    applyGreedySwitch(
+      brokenExpansion.input,
+      brokenExpansion.orientation,
+      applySemiInteractiveOrder(
+        brokenExpansion.input,
+        applyForcedModelOrder(
+          brokenExpansion.input,
+          brokenExpansion.orientation,
+          crossingMinimizer(
+            brokenExpansion.input,
+            brokenExpansion.orientation,
+            brokenExpansion.assignment,
+          ),
+        ),
+      ),
     ),
   );
-  const sideMargin = 20 + maximumOpenEdges * 10;
-  const baseNodeById = new Map(base.nodes.map((node) => [node.id, node]));
-  const rowTop: number[] = [];
-  const rowHeight: number[] = [];
-  for (let row = 0; row + 1 < boundaries.length; row++) {
-    const ids = orderedIds.slice(boundaries[row], boundaries[row + 1]);
-    const minimumY = Math.min(...ids.map((id) => baseNodeById.get(id)!.y ?? 0));
-    const maximumY = Math.max(
-      ...ids.map((id) => (baseNodeById.get(id)!.y ?? 0) + (baseNodeById.get(id)!.height ?? 0)),
-    );
-    rowHeight[row] = maximumY - minimumY;
-    rowTop[row] =
-      row === 0
-        ? padding.top
-        : rowTop[row - 1]! +
-          rowHeight[row - 1]! +
-          nodeSpacing +
-          1 +
-          2 * Number(options.settings?.["wrapping.additionalEdgeSpacing"] ?? 10);
-  }
-  const transformedNodeById = new Map<string, VisualNode<N, P>>();
-  for (const id of orderedIds) {
-    const node = baseNodeById.get(id)!;
-    const row = rowByNodeId.get(id)!;
-    const first = baseNodeById.get(orderedIds[rowStartByNodeId.get(id)!]!)!;
-    const ids = orderedIds.slice(boundaries[row], boundaries[row + 1]);
-    const minimumY = Math.min(...ids.map((rowId) => baseNodeById.get(rowId)!.y ?? 0));
-    transformedNodeById.set(id, {
-      ...node,
-      x: padding.left + sideMargin + (node.x ?? 0) - (first.x ?? 0),
-      y: rowTop[row]! + (node.y ?? 0) - minimumY,
-    });
-  }
-  const transformedEdges = base.edges.map((edge) => {
-    const sourceRow = rowByNodeId.get(edge.sourceId)!;
-    const targetRow = rowByNodeId.get(edge.targetId)!;
-    const sourceBefore = baseNodeById.get(edge.sourceId)!;
-    const targetBefore = baseNodeById.get(edge.targetId)!;
-    const sourceAfter = transformedNodeById.get(edge.sourceId)!;
-    const targetAfter = transformedNodeById.get(edge.targetId)!;
-    const sourceDelta = {
-      x: sourceAfter.x! - sourceBefore.x!,
-      y: sourceAfter.y! - sourceBefore.y!,
-    };
-    const targetDelta = {
-      x: targetAfter.x! - targetBefore.x!,
-      y: targetAfter.y! - targetBefore.y!,
-    };
-    if (sourceRow === targetRow) {
-      return {
-        ...edge,
-        points: (edge.points ?? []).map((point) => ({
-          x: point.x + sourceDelta.x,
-          y: point.y + sourceDelta.y,
-        })),
-      };
-    }
-    const originalPoints = edge.points ?? [];
-    const originalStart = originalPoints[0] ?? {
-      x: (sourceBefore.x ?? 0) + (sourceBefore.width ?? 0),
-      y: (sourceBefore.y ?? 0) + (sourceBefore.height ?? 0) / 2,
-    };
-    const originalEnd = originalPoints.at(-1) ?? {
-      x: targetBefore.x ?? 0,
-      y: (targetBefore.y ?? 0) + (targetBefore.height ?? 0) / 2,
-    };
-    const start = { x: originalStart.x + sourceDelta.x, y: originalStart.y + sourceDelta.y };
-    const end = { x: originalEnd.x + targetDelta.x, y: originalEnd.y + targetDelta.y };
-    const open = graph.edges
-      .filter(
-        (candidate) =>
-          rank.get(candidate.sourceId)! < boundaries[sourceRow + 1]! &&
-          rank.get(candidate.targetId)! >= boundaries[sourceRow + 1]!,
+  const folded = foldMultiEdgeBreakingPoints(brokenExpansion, crossedOrder, prepared);
+  const placementStrategy = options.settings?.["nodePlacement.strategy"] ?? "BRANDES_KOEPF";
+  const placement =
+    placementStrategy === "INTERACTIVE"
+      ? placeNodesInteractively(folded.expansion.input, folded.order)
+      : placementStrategy === "LINEAR_SEGMENTS"
+        ? placeNodesWithLinearSegments(folded.expansion.input, folded.order)
+        : placementStrategy === "NETWORK_SIMPLEX"
+          ? placeNodesWithNetworkSimplex(folded.expansion.input, folded.order)
+          : placementStrategy === "SIMPLE"
+            ? placeNodesInLayers(folded.expansion.input, folded.order)
+            : placeNodesWithBrandesKoepf(folded.expansion.input, folded.order);
+  const routing = options.settings?.edgeRouting ?? "ORTHOGONAL";
+  const router =
+    routing === "POLYLINE"
+      ? routeEdgesWithPolylines
+      : routing === "SPLINES"
+        ? routeEdgesWithSplines
+        : routeEdgesOrthogonally;
+  const internalRoutes = router(folded.expansion.input, folded.expansion.orientation, placement);
+  const appendRoute = (target: Point[], points: readonly Point[]): void => {
+    for (const point of points) {
+      const previous = target.at(-1);
+      if (
+        previous &&
+        Math.abs(previous.x - point.x) < 1e-9 &&
+        Math.abs(previous.y - point.y) < 1e-9
       )
-      .map((candidate) => candidate.id);
-    const track = open.indexOf(edge.id);
-    const rightX =
-      Math.max(
-        ...orderedIds
-          .slice(boundaries[sourceRow], boundaries[sourceRow + 1])
-          .map((id) => transformedNodeById.get(id)!.x! + transformedNodeById.get(id)!.width!),
-      ) +
-      sideMargin -
-      10 +
-      (options.settings?.["crossingMinimization.strategy"] === "NONE" ? 10 : 0) +
-      10 * track;
-    const leftX = padding.left + 10 * track;
-    const betweenY = rowTop[sourceRow]! + rowHeight[sourceRow]! + nodeSpacing / 2;
-    const points = [
-      start,
-      { x: rightX, y: start.y },
-      { x: rightX, y: betweenY },
-      { x: leftX, y: betweenY },
-      { x: leftX, y: end.y },
-      end,
-    ];
-    return { ...edge, points, routing: "orthogonal" as const };
+        continue;
+      target.push(point);
+    }
+  };
+  const simplify = (points: readonly Point[]): Point[] =>
+    points.filter((point, index) => {
+      const previous = points[index - 1];
+      const next = points[index + 1];
+      if (!previous || !next) return true;
+      return !(
+        (Math.abs(previous.x - point.x) < 1e-9 && Math.abs(point.x - next.x) < 1e-9) ||
+        (Math.abs(previous.y - point.y) < 1e-9 && Math.abs(point.y - next.y) < 1e-9)
+      );
+    });
+  const publicPointsByEdgeId = new Map<string, readonly Point[]>();
+  const cutIndexes = [...new Set(prepared.infos.map((info) => info.cutIndex))].sort(
+    (left, right) => left - right,
+  );
+  const infosByCut = new Map(
+    cutIndexes.map((cutIndex) => [
+      cutIndex,
+      prepared.infos.filter((info) => info.cutIndex === cutIndex),
+    ]),
+  );
+  const wrapDummyRects = [...placement.rectByNodeId]
+    .filter(([id]) => id.startsWith("__layout_dummy:wrap:"))
+    .map(([, rect]) => rect);
+  const leftDummyFlow = Math.min(...wrapDummyRects.map((rect) => rect.x));
+  const rightDummyFlow = Math.max(...wrapDummyRects.map((rect) => rect.x));
+  const edgeEdgeSpacing = Number(folded.expansion.input.settings["spacing.edgeEdge"] ?? 10);
+  for (const [edgeId, pieces] of folded.routePiecesByOriginalEdgeId) {
+    const points: Point[] = [];
+    let lastPoint: Point | undefined;
+    for (const piece of pieces) {
+      const joined =
+        joinLongEdgeRoutes(
+          internalRoutes,
+          new Map([[piece.edgeIds.join("\0"), piece.edgeIds]]),
+        ).pointsByEdgeId.get(piece.edgeIds.join("\0")) ?? [];
+      const oriented = piece.reversed ? [...joined].reverse() : joined;
+      if (points.length === 0 && oriented[0]) appendRoute(points, [oriented[0]]);
+      appendRoute(points, oriented.slice(1, -1));
+      lastPoint = oriented.at(-1);
+    }
+    if (lastPoint) appendRoute(points, [lastPoint]);
+    const edgeInfos = prepared.infos.filter((info) => info.originalEdgeId === edgeId);
+    let publicPoints = simplify(points);
+    // ELK's orthogonal router assigns distinct channels around the folded dummy chains.
+    // Our generic router uses the midpoint between a breaking point and its adjacent
+    // dummy, so move those midpoint segments onto the same ordered channels.
+    if (routing === "ORTHOGONAL" && edgeInfos.length === 1) {
+      const info = edgeInfos[0]!;
+      const cutEdges = infosByCut.get(info.cutIndex) ?? [];
+      const edgeIndex = Math.max(0, cutEdges.indexOf(info));
+      const rowIndex = Math.max(0, cutIndexes.indexOf(info.cutIndex));
+      const originalEdge = graph.edges.find((edge) => edge.id === edgeId);
+      const targetLayer = originalEdge
+        ? (folded.expansion.assignment.layerByNodeId.get(originalEdge.targetId) ?? 1)
+        : 1;
+      const startRect = placement.rectByNodeId.get(info.startId);
+      const endRect = placement.rectByNodeId.get(info.endId);
+      const rightMidpoint = startRect ? (startRect.x + rightDummyFlow) / 2 : rightDummyFlow;
+      const leftMidpoint = endRect ? (endRect.x + leftDummyFlow) / 2 : leftDummyFlow;
+      const rightChannel = rightDummyFlow + edgeIndex * edgeEdgeSpacing;
+      const improveWrappedEdges =
+        folded.expansion.input.settings["wrapping.multiEdge.improveWrappedEdges"] !== false;
+      const leftChannel = improveWrappedEdges
+        ? leftDummyFlow + (edgeIndex - rowIndex + Math.max(0, targetLayer - 1)) * edgeEdgeSpacing
+        : leftDummyFlow + (edgeIndex - 1) * edgeEdgeSpacing;
+      for (const point of publicPoints) {
+        if (Math.abs(point.x - rightMidpoint) < 1e-9) point.x = rightChannel;
+        else if (Math.abs(point.x - leftMidpoint) < 1e-9) point.x = leftChannel;
+      }
+      if (improveWrappedEdges && targetLayer > 1 && publicPoints.length >= 3) {
+        const thickness = Math.max(
+          0,
+          Number(
+            originalEdge
+              ? (folded.expansion.input.edgeSettings?.(originalEdge)?.["edge.thickness"] ?? 1)
+              : 1,
+          ),
+        );
+        const targetY = publicPoints.at(-1)?.y;
+        const approachY = [...publicPoints]
+          .reverse()
+          .find((point) => targetY === undefined || Math.abs(point.y - targetY) >= 1e-9)?.y;
+        if (approachY !== undefined) {
+          for (const point of publicPoints.slice(0, -1)) {
+            if (Math.abs(point.y - approachY) < 1e-9) point.y += thickness;
+          }
+        }
+      }
+      publicPoints = simplify(publicPoints);
+    }
+    publicPointsByEdgeId.set(edgeId, publicPoints);
+  }
+  const visualNodeById = new Map<string, VisualNode<N, P>>();
+  for (const node of graph.nodes) {
+    const rect = placement.rectByNodeId.get(node.id);
+    if (!rect) return undefined;
+    visualNodeById.set(node.id, {
+      ...node,
+      ...rect,
+      ports: placePorts(node.ports, rect, "right", (port) => options.portSettings?.(port, node), {
+        ...options.settings,
+        ...options.nodeSettings?.(node),
+      }),
+    } as VisualNode<N, P>);
+  }
+  const visualEdges = graph.edges.map((edge) => {
+    const points = publicPointsByEdgeId.get(edge.id) ?? [];
+    const first = points[0] ?? { x: 0, y: 0 };
+    const last = points.at(-1) ?? first;
+    return {
+      ...edge,
+      x: (first.x + last.x) / 2,
+      y: (first.y + last.y) / 2,
+      width: edge.width ?? 0,
+      height: edge.height ?? 0,
+      points,
+      routing: routing === "SPLINES" ? ("spline" as const) : ("orthogonal" as const),
+    };
   });
   return {
-    ...base,
-    nodes: graph.nodes.map((node) => transformedNodeById.get(node.id)!),
-    edges: transformedEdges,
-  };
+    ...graph,
+    direction: "right",
+    nodes: graph.nodes.map((node) => visualNodeById.get(node.id)!),
+    edges: visualEdges,
+  } as VisualGraph<N, E, G, P>;
 }
 
 function runWrappedPipeline<N, E, G, P>(

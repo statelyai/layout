@@ -36,9 +36,16 @@ function actualCrossSize(input: LayeredPhaseInput, id: string): number {
     : (size?.width ?? 0);
 }
 
+function anchorCrossSize(input: LayeredPhaseInput, id: string): number {
+  return id.startsWith("__layout_dummy:wrap:") ? 0 : actualCrossSize(input, id);
+}
+
 function crossSize(input: LayeredPhaseInput, id: string): number {
   const value = actualCrossSize(input, id);
-  if (value !== 0 || !id.startsWith("__layout_dummy:")) return value;
+  if (id.startsWith("__layout_breaking:")) return value;
+  if (value !== 0 || (!id.startsWith("__layout_dummy:") && !id.startsWith("__layout_breaking:"))) {
+    return value;
+  }
   return Math.max(
     1,
     ...input.graph.edges
@@ -80,32 +87,34 @@ function buildNeighbors(input: LayeredPhaseInput, order: LayerOrder) {
   const useLayerOrderPorts =
     (input.settings["layerUnzipping.strategy"] ?? "NONE") === "ALTERNATING";
   for (const [id, entries] of right) {
-    const portOrder = useLayerOrderPorts
-      ? entries
-      : [...entries].sort(
-          (leftEntry, rightEntry) =>
-            (edgeModelOrder.get(leftEntry.edgeId) ?? 0) -
-            (edgeModelOrder.get(rightEntry.edgeId) ?? 0),
-        );
+    const portOrder =
+      useLayerOrderPorts || entries.some((entry) => entry.id.startsWith("__layout_dummy:"))
+        ? entries
+        : [...entries].sort(
+            (leftEntry, rightEntry) =>
+              (edgeModelOrder.get(leftEntry.edgeId) ?? 0) -
+              (edgeModelOrder.get(rightEntry.edgeId) ?? 0),
+          );
     portOrder.forEach((entry, index) => {
       anchor.set(
         `${entry.edgeId}:${id}`,
-        (actualCrossSize(input, id) * (index + 1)) / (entries.length + 1),
+        (anchorCrossSize(input, id) * (index + 1)) / (entries.length + 1),
       );
     });
   }
   for (const [id, entries] of left) {
-    const portOrder = useLayerOrderPorts
-      ? entries
-      : [...entries].sort(
-          (leftEntry, rightEntry) =>
-            (edgeModelOrder.get(rightEntry.edgeId) ?? 0) -
-            (edgeModelOrder.get(leftEntry.edgeId) ?? 0),
-        );
+    const portOrder =
+      useLayerOrderPorts || entries.some((entry) => entry.id.startsWith("__layout_dummy:"))
+        ? entries
+        : [...entries].sort(
+            (leftEntry, rightEntry) =>
+              (edgeModelOrder.get(rightEntry.edgeId) ?? 0) -
+              (edgeModelOrder.get(leftEntry.edgeId) ?? 0),
+          );
     portOrder.forEach((entry, index) => {
       anchor.set(
         `${entry.edgeId}:${id}`,
-        (actualCrossSize(input, id) * (index + 1)) / (entries.length + 1),
+        (anchorCrossSize(input, id) * (index + 1)) / (entries.length + 1),
       );
     });
   }
@@ -218,11 +227,11 @@ function alignBlocks(
           (candidate.sourceId === next && candidate.targetId === current),
       );
       const currentAnchor = edge
-        ? (neighbors.anchor.get(`${edge.id}:${current}`) ?? actualCrossSize(input, current) / 2)
-        : actualCrossSize(input, current) / 2;
+        ? (neighbors.anchor.get(`${edge.id}:${current}`) ?? anchorCrossSize(input, current) / 2)
+        : anchorCrossSize(input, current) / 2;
       const nextAnchor = edge
-        ? (neighbors.anchor.get(`${edge.id}:${next}`) ?? actualCrossSize(input, next) / 2)
-        : actualCrossSize(input, next) / 2;
+        ? (neighbors.anchor.get(`${edge.id}:${next}`) ?? anchorCrossSize(input, next) / 2)
+        : anchorCrossSize(input, next) / 2;
       const nextShift = (bal.innerShift.get(current) ?? 0) + currentAnchor - nextAnchor;
       bal.innerShift.set(next, nextShift);
       above = Math.max(above, crossSize(input, next) / 2 - nextShift);

@@ -2,6 +2,47 @@ import OracleELK from "elkjs/lib/elk.bundled.js";
 import { expect, it } from "vitest";
 import NativeELK, { type ElkNode } from "../src/elkjs";
 
+function expectExactGeometry(actual: ElkNode, expected: ElkNode): void {
+  expect(actual.width).toBeCloseTo(expected.width ?? Number.NaN, 12);
+  expect(actual.height).toBeCloseTo(expected.height ?? Number.NaN, 12);
+  for (const expectedNode of expected.children ?? []) {
+    const actualNode = actual.children?.find((node) => node.id === expectedNode.id);
+    for (const property of ["x", "y", "width", "height"] as const) {
+      expect(actualNode?.[property], `${String(expectedNode.id)}.${property}`).toBeCloseTo(
+        expectedNode[property] ?? Number.NaN,
+        12,
+      );
+    }
+  }
+  for (const expectedEdge of expected.edges ?? []) {
+    const actualSection = actual.edges?.find((edge) => edge.id === expectedEdge.id)?.sections?.[0];
+    const expectedSection = expectedEdge.sections?.[0];
+    expect(actualSection?.bendPoints?.length ?? 0, `${String(expectedEdge.id)}.bend count`).toBe(
+      expectedSection?.bendPoints?.length ?? 0,
+    );
+    const actualPoints = [
+      actualSection?.startPoint,
+      ...(actualSection?.bendPoints ?? []),
+      actualSection?.endPoint,
+    ];
+    const expectedPoints = [
+      expectedSection?.startPoint,
+      ...(expectedSection?.bendPoints ?? []),
+      expectedSection?.endPoint,
+    ];
+    actualPoints.forEach((point, index) => {
+      expect(point?.x, `${String(expectedEdge.id)}[${index}].x`).toBeCloseTo(
+        expectedPoints[index]?.x ?? Number.NaN,
+        12,
+      );
+      expect(point?.y, `${String(expectedEdge.id)}[${index}].y`).toBeCloseTo(
+        expectedPoints[index]?.y ?? Number.NaN,
+        12,
+      );
+    });
+  }
+}
+
 for (const strategy of ["SINGLE_EDGE", "MULTI_EDGE"] as const) {
   for (const additionalSpacing of [0, 10]) {
     it(`matches ELK ${strategy} path wrapping with additional spacing ${additionalSpacing}`, async () => {
@@ -240,12 +281,6 @@ for (const [option, value] of [
     )) as unknown as ElkNode;
     const actual = await new NativeELK().layout(structuredClone(graph));
 
-    expect(actual.children?.map((node) => node.x)).toEqual(
-      expected.children?.map((node) => node.x),
-    );
-    expect(actual.width).toBe(expected.width);
-    expect(actual.edges?.every((edge) => (edge.sections?.[0]?.bendPoints?.length ?? 0) > 0)).toBe(
-      expected.edges?.every((edge) => (edge.sections?.[0]?.bendPoints?.length ?? 0) > 0),
-    );
+    expectExactGeometry(actual, expected);
   });
 }

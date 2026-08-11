@@ -8,10 +8,12 @@ export function nodeNodeSpacing(
   firstId: string,
   secondId: string,
 ): number {
-  const firstDummy = firstId.startsWith("__layout_dummy:");
-  const secondDummy = secondId.startsWith("__layout_dummy:");
+  const firstBreakingPoint = firstId.startsWith("__layout_breaking:");
+  const secondBreakingPoint = secondId.startsWith("__layout_breaking:");
+  const firstDummy = firstId.startsWith("__layout_dummy:") || firstBreakingPoint;
+  const secondDummy = secondId.startsWith("__layout_dummy:") || secondBreakingPoint;
   const spacingName =
-    firstDummy && secondDummy
+    firstDummy && secondDummy && firstBreakingPoint === secondBreakingPoint
       ? "spacing.edgeEdge"
       : firstDummy || secondDummy
         ? "spacing.edgeNode"

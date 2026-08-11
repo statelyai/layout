@@ -1921,8 +1921,11 @@ export const placeNodesInLayers: NodePlacer = (input, order) => {
     );
     return size === 0 &&
       layer.length > 0 &&
-      layer.every((id) => id.startsWith("__layout_dummy:")) &&
-      (input.settings["layerUnzipping.strategy"] ?? "NONE") === "ALTERNATING"
+      layer.every(
+        (id) => id.startsWith("__layout_dummy:") || id.startsWith("__layout_breaking:"),
+      ) &&
+      ((input.settings["layerUnzipping.strategy"] ?? "NONE") === "ALTERNATING" ||
+        (input.settings["wrapping.strategy"] ?? "OFF") === "MULTI_EDGE")
       ? 2 * Number(input.settings["spacing.edgeNodeBetweenLayers"] ?? 10)
       : size;
   });
@@ -2140,8 +2143,13 @@ function implicitEdgeEndpoints(
       input.graph.nodes.find((node) => node.id === nodeId)!,
     )?.hypernode;
     const unzipping = (input.settings["layerUnzipping.strategy"] ?? "NONE") === "ALTERNATING";
+    const layerOrdered =
+      unzipping ||
+      entries.some(({ edge, endpoint }) =>
+        (endpoint === "source" ? edge.targetId : edge.sourceId).startsWith("__layout_dummy:"),
+      );
     entries.sort((left, right) => {
-      if (unzipping) {
+      if (layerOrdered) {
         const leftOther = placement.rectByNodeId.get(
           left.endpoint === "source" ? left.edge.targetId : left.edge.sourceId,
         );
@@ -2164,20 +2172,21 @@ function implicitEdgeEndpoints(
     entries.forEach(({ edge, endpoint }, index) => {
       const reversedCrossOrder =
         endpoint === "target" &&
-        !unzipping &&
+        !layerOrdered &&
         !(
           input.settings.directionCongruency === "ROTATION" &&
           (input.direction === "down" || input.direction === "left")
         );
       const ordinal = reversedCrossOrder ? entries.length - index : index + 1;
       const ratio = mergeEdges || hypernode === true ? 0.5 : ordinal / (entries.length + 1);
+      const fixedWrapAnchor = nodeId.startsWith("__layout_dummy:wrap:");
       const point = horizontal
         ? {
             x: side === "after" ? rect.x + rect.width : rect.x,
-            y: rect.y + ratio * rect.height,
+            y: rect.y + (fixedWrapAnchor ? 0 : ratio * rect.height),
           }
         : {
-            x: rect.x + ratio * rect.width,
+            x: rect.x + (fixedWrapAnchor ? 0 : ratio * rect.width),
             y: side === "after" ? rect.y + rect.height : rect.y,
           };
       const pair = result.get(edge.id) ?? { source: point, target: point };

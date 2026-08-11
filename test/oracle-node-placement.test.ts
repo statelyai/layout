@@ -229,4 +229,48 @@ describe("ELK node-placement oracle", () => {
       }
     });
   }
+
+  it("matches BRANDES_KOEPF implicit port order across several long edges", async () => {
+    const graph = {
+      id: "root",
+      layoutOptions: {
+        "elk.algorithm": "layered",
+        "elk.aspectRatio": "1",
+        "elk.layered.layering.strategy": "LONGEST_PATH",
+        "elk.layered.wrapping.strategy": "OFF",
+      },
+      children: Array.from({ length: 10 }, (_, index) => ({
+        id: `multi-${index}`,
+        width: 20,
+        height: 20,
+      })),
+      edges: [
+        ...Array.from({ length: 9 }, (_, index) => ({
+          id: `backbone-${index}`,
+          sources: [`multi-${index}`],
+          targets: [`multi-${index + 1}`],
+        })),
+        ...[
+          [0, 3],
+          [2, 5],
+          [5, 8],
+        ].map(([source, target], index) => ({
+          id: `skip-${index}`,
+          sources: [`multi-${source}`],
+          targets: [`multi-${target}`],
+        })),
+      ],
+    };
+    const [oracle, native] = await Promise.all([
+      new ELK().layout(structuredClone(graph)),
+      new NativeELK().layout(structuredClone(graph)),
+    ]);
+    expect(native.width).toBeCloseTo(oracle.width ?? Number.NaN, 12);
+    expect(native.height).toBeCloseTo(oracle.height ?? Number.NaN, 12);
+    for (const expectedNode of oracle.children ?? []) {
+      const actualNode = native.children?.find((node) => node.id === expectedNode.id);
+      expect(actualNode?.x).toBeCloseTo(expectedNode.x ?? Number.NaN, 12);
+      expect(actualNode?.y).toBeCloseTo(expectedNode.y ?? Number.NaN, 12);
+    }
+  });
 });
