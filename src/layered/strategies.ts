@@ -1409,21 +1409,18 @@ export const assignLayersWithCoffmanGraham: LayerAssigner = (input, orientation)
 
 function sortLayerByAdjacentPosition(
   layer: string[],
-  adjacentLayer: readonly string[],
-  neighbors: ReadonlyMap<string, readonly string[]>,
+  ranksByNodeId: ReadonlyMap<string, readonly number[]>,
   statistic: "mean" | "median",
   random?: JavaRandom,
+  preOrdered = true,
+  sourceUnknownPlacement = true,
 ): void {
-  const adjacentIndex = new Map(adjacentLayer.map((nodeId, index) => [nodeId, index] as const));
   const originalIndex = new Map(layer.map((nodeId, index) => [nodeId, index] as const));
-  const adjacentPosition = new Map<string, number>();
+  const adjacentPosition = new Map<string, number | undefined>();
   for (const nodeId of layer) {
-    const positions = (neighbors.get(nodeId) ?? [])
-      .map((id) => adjacentIndex.get(id))
-      .filter((value): value is number => value !== undefined)
-      .sort((left, right) => left - right);
+    const positions = [...(ranksByNodeId.get(nodeId) ?? [])].sort((left, right) => left - right);
     if (positions.length === 0) {
-      adjacentPosition.set(nodeId, originalIndex.get(nodeId) ?? 0);
+      adjacentPosition.set(nodeId, undefined);
     } else if (statistic === "median") {
       const middle = Math.floor(positions.length / 2);
       adjacentPosition.set(
@@ -1438,6 +1435,42 @@ function sortLayerByAdjacentPosition(
         positions.reduce((sum, value) => sum + value, 0) / positions.length +
           (random ? random.nextFloat() * 0.07 - 0.035 : 0),
       );
+    }
+  }
+
+  if (statistic === "mean" && random && sourceUnknownPlacement) {
+    if (preOrdered) {
+      let lastValue = -1;
+      for (const [index, nodeId] of layer.entries()) {
+        let value = adjacentPosition.get(nodeId);
+        if (value === undefined) {
+          let nextValue = lastValue + 1;
+          for (const nextId of layer.slice(index + 1)) {
+            const candidate = adjacentPosition.get(nextId);
+            if (candidate !== undefined) {
+              nextValue = candidate;
+              break;
+            }
+          }
+          value = (lastValue + nextValue) / 2;
+          adjacentPosition.set(nodeId, value);
+        }
+        lastValue = value;
+      }
+    } else {
+      const maximum =
+        Math.max(0, ...[...adjacentPosition.values()].filter((value) => value !== undefined)) + 2;
+      for (const nodeId of layer) {
+        if (adjacentPosition.get(nodeId) === undefined) {
+          adjacentPosition.set(nodeId, random.nextFloat() * maximum - 1);
+        }
+      }
+    }
+  } else {
+    for (const nodeId of layer) {
+      if (adjacentPosition.get(nodeId) === undefined) {
+        adjacentPosition.set(nodeId, originalIndex.get(nodeId) ?? 0);
+      }
     }
   }
 
@@ -1460,21 +1493,12 @@ function minimizeCrossingsWithLayerSweep(
     }
     const layerCount = maximumLayer + 1;
     const layers = Array.from({ length: layerCount }, () => [] as string[]);
-    for (const node of input.graph.nodes) {
-      layers[assignment.layerByNodeId.get(node.id) ?? 0]?.push(node.id);
-    }
-
-    const predecessors = new Map<string, string[]>();
-    const successors = new Map<string, string[]>();
-    for (const node of input.graph.nodes) {
-      predecessors.set(node.id, []);
-      successors.set(node.id, []);
-    }
-    for (const edge of input.graph.edges) {
-      const [sourceId, targetId] = getOrientedEndpoints(edge, orientation);
-      if (sourceId === targetId) continue;
-      successors.get(sourceId)?.push(targetId);
-      predecessors.get(targetId)?.push(sourceId);
+    const initialNodes =
+      (input.settings["layering.strategy"] ?? "NETWORK_SIMPLEX") === "NETWORK_SIMPLEX"
+        ? networkSimplexComponentOrder(input)
+        : input.graph.nodes.map((node) => node.id);
+    for (const nodeId of initialNodes) {
+      layers[assignment.layerByNodeId.get(nodeId) ?? 0]?.push(nodeId);
     }
 
     const countCrossings = (candidateLayers: readonly (readonly string[])[]): number => {
@@ -1512,10 +1536,80 @@ function minimizeCrossingsWithLayerSweep(
 
     const sharedRandom = new JavaRandom(input.settings.randomSeed ?? 1);
     const random = new JavaRandom(sharedRandom.nextLong());
+    const nodeRelativePortRanks = true;
     const thoroughness = Math.max(1, input.settings.thoroughness ?? sweeps ?? 7);
     let bestLayers = layers.map((layer) => [...layer]);
     let bestCrossings = Number.POSITIVE_INFINITY;
     let working = layers.map((layer) => [...layer]);
+    const sourceUnknownPlacement =
+      (input.settings["considerModelOrder.strategy"] ?? "NONE") === "NONE";
+    const usePortRanks = true;
+
+    const adjacentRanks = (
+      fixedLayer: readonly string[],
+      freeLayer: readonly string[],
+      forward: boolean,
+    ): Map<string, number[]> => {
+      const freeIds = new Set(freeLayer);
+      const ranks = new Map(freeLayer.map((id) => [id, [] as number[]]));
+      if (!usePortRanks) {
+        const fixedPosition = new Map(fixedLayer.map((id, index) => [id, index]));
+        for (const edge of input.graph.edges) {
+          const [sourceId, targetId] = getOrientedEndpoints(edge, orientation);
+          if (forward && fixedPosition.has(sourceId) && freeIds.has(targetId)) {
+            ranks.get(targetId)?.push(fixedPosition.get(sourceId)!);
+          } else if (!forward && fixedPosition.has(targetId) && freeIds.has(sourceId)) {
+            ranks.get(sourceId)?.push(fixedPosition.get(targetId)!);
+          }
+        }
+        return ranks;
+      }
+      let rankSum = 0;
+      for (const fixedId of fixedLayer) {
+        const groups = new Map<string, { edges: GraphEdge[]; portOrder: number }>();
+        for (const [modelOrder, edge] of input.graph.edges.entries()) {
+          const [sourceId, targetId] = getOrientedEndpoints(edge, orientation);
+          if (
+            (forward && sourceId !== fixedId) ||
+            (!forward && targetId !== fixedId) ||
+            !freeIds.has(forward ? targetId : sourceId)
+          ) {
+            continue;
+          }
+          const reversed = orientation.reversedEdgeIds.has(edge.id);
+          const port = forward
+            ? reversed
+              ? edge.targetPort
+              : edge.sourcePort
+            : reversed
+              ? edge.sourcePort
+              : edge.targetPort;
+          const key = port ?? `__implicit:${edge.id}`;
+          const group = groups.get(key) ?? { edges: [], portOrder: modelOrder };
+          group.edges.push(edge);
+          groups.set(key, group);
+        }
+        const orderedGroups = [...groups.values()].sort(
+          (left, right) => left.portOrder - right.portOrder,
+        );
+        const count = orderedGroups.length;
+        for (const [index, group] of orderedGroups.entries()) {
+          const rank = nodeRelativePortRanks
+            ? forward
+              ? rankSum + (index + 1) / (count + 1)
+              : rankSum + 1 - (index + 1) / (count + 1)
+            : forward
+              ? rankSum + index + 1
+              : rankSum + count - index;
+          for (const edge of group.edges) {
+            const [sourceId, targetId] = getOrientedEndpoints(edge, orientation);
+            ranks.get(forward ? targetId : sourceId)?.push(rank);
+          }
+        }
+        rankSum += nodeRelativePortRanks ? 1 : count;
+      }
+      return ranks;
+    };
 
     for (let attempt = 0; attempt < thoroughness; attempt++) {
       let forward = random.nextBoolean();
@@ -1527,7 +1621,7 @@ function minimizeCrossingsWithLayerSweep(
         (left, right) => (weights.get(left) ?? 0) - (weights.get(right) ?? 0),
       );
 
-      const sweep = (isForward: boolean) => {
+      const sweep = (isForward: boolean, firstSweep: boolean) => {
         if (isForward) {
           for (let layer = 1; layer < working.length; layer++) {
             const current = working[layer];
@@ -1535,10 +1629,11 @@ function minimizeCrossingsWithLayerSweep(
             if (current && previous) {
               sortLayerByAdjacentPosition(
                 current,
-                previous,
-                predecessors,
+                adjacentRanks(previous, current, true),
                 statistic,
                 statistic === "mean" ? random : undefined,
+                !firstSweep,
+                sourceUnknownPlacement,
               );
             }
           }
@@ -1549,22 +1644,23 @@ function minimizeCrossingsWithLayerSweep(
             if (current && next) {
               sortLayerByAdjacentPosition(
                 current,
-                next,
-                successors,
+                adjacentRanks(next, current, false),
                 statistic,
                 statistic === "mean" ? random : undefined,
+                !firstSweep,
+                sourceUnknownPlacement,
               );
             }
           }
         }
       };
 
-      sweep(forward);
+      sweep(forward, true);
       let crossings = countCrossings(working);
       while (crossings > 0) {
         forward = !forward;
         const before = working.map((layer) => [...layer]);
-        sweep(forward);
+        sweep(forward, false);
         const nextCrossings = countCrossings(working);
         if (nextCrossings >= crossings) {
           working = before;
@@ -1581,6 +1677,35 @@ function minimizeCrossingsWithLayerSweep(
 
     return { layers: bestLayers };
   };
+}
+
+/** NetworkSimplexLayerer processes the largest undirected component first. */
+function networkSimplexComponentOrder(input: LayeredPhaseInput): string[] {
+  const neighbors = new Map(input.graph.nodes.map((node) => [node.id, [] as string[]]));
+  for (const edge of input.graph.edges) {
+    if (edge.sourceId === edge.targetId) continue;
+    neighbors.get(edge.sourceId)?.push(edge.targetId);
+    neighbors.get(edge.targetId)?.push(edge.sourceId);
+  }
+  const visited = new Set<string>();
+  const components: string[][] = [];
+  for (const node of input.graph.nodes) {
+    if (visited.has(node.id)) continue;
+    const component: string[] = [];
+    const visit = (id: string): void => {
+      if (visited.has(id)) return;
+      visited.add(id);
+      component.push(id);
+      for (const neighbor of neighbors.get(id) ?? []) visit(neighbor);
+    };
+    visit(node.id);
+    if (components.length === 0 || components[0]!.length < component.length) {
+      components.unshift(component);
+    } else {
+      components.push(component);
+    }
+  }
+  return components.flat();
 }
 
 export function minimizeCrossingsWithBarycenter(sweeps = 7): CrossingMinimizer {
