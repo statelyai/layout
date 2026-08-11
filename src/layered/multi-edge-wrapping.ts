@@ -267,17 +267,28 @@ export function joinFoldedMultiEdgeRoutes(
       const endRect = placement.rectByNodeId.get(info.endId);
       const rightMidpoint = startRect ? (startRect.x + rightDummyFlow) / 2 : rightDummyFlow;
       const leftMidpoint = endRect ? (endRect.x + leftDummyFlow) / 2 : leftDummyFlow;
-      const rightChannel = rightDummyFlow + edgeIndex * edgeEdgeSpacing;
       const improveWrappedEdges =
         folded.expansion.input.settings["wrapping.multiEdge.improveWrappedEdges"] !== false;
+      const edgeNodeSpacing = Number(folded.expansion.input.settings["spacing.edgeNode"] ?? 10);
+      const additionalEdgeSpacing = Number(
+        folded.expansion.input.settings["wrapping.additionalEdgeSpacing"] ?? 10,
+      );
+      const singleCut = cutIndexes.length === 1;
+      const rightChannel =
+        rightDummyFlow -
+        (improveWrappedEdges && singleCut ? edgeNodeSpacing + additionalEdgeSpacing : 0) +
+        edgeIndex *
+          (edgeEdgeSpacing + (improveWrappedEdges && singleCut ? additionalEdgeSpacing : 0));
       const leftChannel = improveWrappedEdges
-        ? leftDummyFlow + (edgeIndex - rowIndex + Math.max(0, targetLayer - 1)) * edgeEdgeSpacing
+        ? singleCut
+          ? leftDummyFlow - edgeNodeSpacing + edgeIndex * edgeEdgeSpacing
+          : leftDummyFlow + (edgeIndex - rowIndex + Math.max(0, targetLayer - 1)) * edgeEdgeSpacing
         : leftDummyFlow + (edgeIndex - 1) * edgeEdgeSpacing;
       for (const point of publicPoints) {
         if (Math.abs(point.x - rightMidpoint) < 1e-9) point.x = rightChannel;
         else if (Math.abs(point.x - leftMidpoint) < 1e-9) point.x = leftChannel;
       }
-      if (improveWrappedEdges && targetLayer > 1 && publicPoints.length >= 3) {
+      if (improveWrappedEdges && !singleCut && targetLayer > 1 && publicPoints.length >= 3) {
         const thickness = Math.max(
           0,
           Number(

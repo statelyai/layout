@@ -1457,8 +1457,25 @@ function normalizeElkGraphBounds(
           section.endPoint,
         ]),
   );
+  const wrappingStrategy = String(getOption(layoutOptions, "layered.wrapping.strategy") ?? "OFF");
+  const direction = getDirection(layoutOptions);
+  const laidOutChildById = new Map((root.children ?? []).map((child) => [String(child.id), child]));
+  const wrappedEdgeCount = (root.edges ?? []).filter((edge) => {
+    const source = laidOutChildById.get(String(edge.sources?.[0] ?? edge.source));
+    const target = laidOutChildById.get(String(edge.targets?.[0] ?? edge.target));
+    if (!source || !target) return false;
+    return direction === "right"
+      ? (source.x ?? 0) > (target.x ?? 0)
+      : direction === "left"
+        ? (source.x ?? 0) < (target.x ?? 0)
+        : direction === "down"
+          ? (source.y ?? 0) > (target.y ?? 0)
+          : (source.y ?? 0) < (target.y ?? 0);
+  }).length;
+  const hasWrappedEdge = wrappedEdgeCount > 0;
   const addBoundaryPixel =
-    getOption(layoutOptions, "layered.wrapping.strategy") === undefined &&
+    wrappingStrategy !== "MULTI_EDGE" &&
+    !(wrappingStrategy === "SINGLE_EDGE" && hasWrappedEdge) &&
     String(getOption(layoutOptions, "layered.compaction.postCompaction.strategy") ?? "NONE") ===
       "NONE" &&
     getBooleanOption(layoutOptions, "layered.feedbackEdges") !== true &&
@@ -1472,6 +1489,13 @@ function normalizeElkGraphBounds(
       : 0;
   const edgeBoundsExtraY =
     addBoundaryPixel &&
+    layoutEdgePoints.length > 0 &&
+    Math.max(...layoutEdgePoints.map((point) => point.y)) >= maximumNodeY - 1e-9
+      ? 1
+      : 0;
+  const singleMultiEdgeCutBoundsExtraY =
+    wrappingStrategy === "MULTI_EDGE" &&
+    wrappedEdgeCount === 1 &&
     layoutEdgePoints.length > 0 &&
     Math.max(...layoutEdgePoints.map((point) => point.y)) >= maximumNodeY - 1e-9
       ? 1
@@ -1565,6 +1589,7 @@ function normalizeElkGraphBounds(
     ) +
     padding.bottom +
     edgeBoundsExtraY +
+    singleMultiEdgeCutBoundsExtraY +
     postCompactionBoundsExtraY +
     (getBooleanOption(layoutOptions, "layered.feedbackEdges") === true &&
     (getDirection(layoutOptions) === "right" || getDirection(layoutOptions) === "left")

@@ -81,6 +81,34 @@ for (const strategy of ["OFF", "SINGLE_EDGE", "MULTI_EDGE"] as const) {
   }
 }
 
+it("matches ELK single-cut MULTI_EDGE channels and bounds", async () => {
+  const graph: ElkNode = {
+    id: "root",
+    layoutOptions: {
+      "elk.algorithm": "layered",
+      "elk.direction": "RIGHT",
+      "elk.edgeRouting": "ORTHOGONAL",
+      "elk.separateConnectedComponents": "false",
+      "elk.layered.wrapping.strategy": "MULTI_EDGE",
+    },
+    children: [
+      { id: "a", width: 30, height: 20 },
+      { id: "b", width: 40, height: 25 },
+      { id: "c", width: 35, height: 30 },
+      { id: "d", width: 30, height: 25 },
+    ],
+    edges: [
+      { id: "ab", sources: ["a"], targets: ["b"] },
+      { id: "ac", sources: ["a"], targets: ["c"] },
+      { id: "bd", sources: ["b"], targets: ["d"] },
+      { id: "dc", sources: ["d"], targets: ["c"] },
+    ],
+  };
+  const expected = (await new OracleELK().layout(structuredClone(graph) as never)) as ElkNode;
+  const actual = await new NativeELK().layout(structuredClone(graph));
+  expectExactGeometry(actual, expected);
+});
+
 it("matches ELK wrapping correction factor", async () => {
   const graph: ElkNode = {
     id: "root",
