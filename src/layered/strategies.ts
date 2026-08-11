@@ -2048,6 +2048,11 @@ export const minimizeCrossingsWithModelOrder: CrossingMinimizer = (
   for (const nodeId of nodeOrder) {
     layers[assignment.layerByNodeId.get(nodeId) ?? 0]?.push(nodeId);
   }
+  for (const layer of layers) {
+    const normal = layer.filter((id) => !id.startsWith("__layout_dummy:"));
+    const dummies = layer.filter((id) => id.startsWith("__layout_dummy:"));
+    layer.splice(0, layer.length, ...normal, ...dummies);
+  }
   for (let layerIndex = 1; layerIndex < layers.length; layerIndex++) {
     const previousPosition = new Map(
       layers[layerIndex - 1]!.map((id, index) => [id, index] as const),
