@@ -2507,6 +2507,7 @@ function nodeFlowOffset(
   id: string,
   layerFlowSize: number,
   nodeFlowSize: number,
+  layerByNodeId: ReadonlyMap<string, number>,
 ): number {
   const node = input.graph.nodes.find((candidate) => candidate.id === id);
   const alignment = node
@@ -2519,9 +2520,15 @@ function nodeFlowOffset(
   else {
     let incoming = 0;
     let outgoing = 0;
+    const ownLayer = layerByNodeId.get(id) ?? 0;
     for (const edge of input.graph.edges) {
-      if (edge.sourceId === id) outgoing++;
-      if (edge.targetId === id) incoming++;
+      if (edge.sourceId !== id && edge.targetId !== id) continue;
+      const otherId = edge.sourceId === id ? edge.targetId : edge.sourceId;
+      const otherLayer = layerByNodeId.get(otherId) ?? ownLayer;
+      if (otherLayer > ownLayer) outgoing++;
+      else if (otherLayer < ownLayer) incoming++;
+      else if (edge.sourceId === id) outgoing++;
+      else incoming++;
     }
     ratio = incoming + outgoing === 0 ? 0.5 : outgoing / (incoming + outgoing);
   }
@@ -2530,6 +2537,9 @@ function nodeFlowOffset(
 
 export const placeNodesInLayers: NodePlacer = (input, order) => {
   const horizontal = input.direction === "left" || input.direction === "right";
+  const layerByNodeId = new Map(
+    order.layers.flatMap((layer, layerIndex) => layer.map((id) => [id, layerIndex] as const)),
+  );
   const layerFlowSizes = order.layers.map((layer) => {
     const size = Math.max(
       0,
@@ -2568,6 +2578,7 @@ export const placeNodesInLayers: NodePlacer = (input, order) => {
           id,
           layerFlowSizes[layerIndex] ?? 0,
           horizontal ? size.width : size.height,
+          layerByNodeId,
         );
       const rect = horizontal
         ? { x: centeredFlow, y: cross, ...size }
@@ -2605,6 +2616,9 @@ export const placeNodesInLayers: NodePlacer = (input, order) => {
 export const placeNodesInteractively: NodePlacer = (input, order) => {
   const horizontal = input.direction === "left" || input.direction === "right";
   const reverse = input.direction === "up" || input.direction === "left";
+  const layerByNodeId = new Map(
+    order.layers.flatMap((layer, layerIndex) => layer.map((id) => [id, layerIndex] as const)),
+  );
   const nodeById = new Map(input.graph.nodes.map((node) => [node.id, node]));
   const layerFlowSizes = order.layers.map((layer) =>
     Math.max(
@@ -2668,6 +2682,7 @@ export const placeNodesInteractively: NodePlacer = (input, order) => {
           id,
           layerFlowSizes[layerIndex] ?? 0,
           horizontal ? size.width : size.height,
+          layerByNodeId,
         );
       if (reverse) {
         const flowSize = horizontal ? size.width : size.height;

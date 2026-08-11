@@ -197,6 +197,67 @@ describe("ELK cycle-breaking strategy oracle", () => {
       expect(actual).toEqual(expected);
     });
   }
+
+  it("matches MODEL_ORDER flow alignment for reversed edges", async () => {
+    const input = {
+      id: "root",
+      layoutOptions: {
+        "elk.algorithm": "layered",
+        "elk.direction": "RIGHT",
+        "elk.edgeRouting": "ORTHOGONAL",
+        "elk.separateConnectedComponents": "false",
+        "elk.layered.cycleBreaking.strategy": "MODEL_ORDER",
+      },
+      children: [
+        { id: "a", width: 30, height: 20 },
+        { id: "b", width: 40, height: 25 },
+        { id: "c", width: 35, height: 30 },
+        { id: "d", width: 30, height: 25 },
+      ],
+      edges: [
+        { id: "ab", sources: ["a"], targets: ["b"] },
+        { id: "ac", sources: ["a"], targets: ["c"] },
+        { id: "bd", sources: ["b"], targets: ["d"] },
+        { id: "dc", sources: ["d"], targets: ["c"] },
+      ],
+    };
+    const oracle = await new ELK().layout(input);
+    const native = getLayeredLayout(
+      createGraph({
+        nodes: input.children,
+        edges: input.edges.map((edge) => ({
+          id: edge.id,
+          sourceId: edge.sources[0]!,
+          targetId: edge.targets[0]!,
+        })),
+      }),
+      {
+        direction: "right",
+        settings: {
+          edgeRouting: "ORTHOGONAL",
+          separateConnectedComponents: false,
+          "cycleBreaking.strategy": "MODEL_ORDER",
+        },
+      },
+    );
+    for (const expectedNode of oracle.children ?? []) {
+      const actualNode = native.nodes.find(({ id }) => id === expectedNode.id);
+      expect(actualNode?.x).toBeCloseTo(expectedNode.x ?? Number.NaN, 12);
+      expect(actualNode?.y).toBeCloseTo(expectedNode.y ?? Number.NaN, 12);
+    }
+    for (const expectedEdge of oracle.edges ?? []) {
+      const section = expectedEdge.sections?.[0];
+      const expectedPoints = section
+        ? [section.startPoint, ...(section.bendPoints ?? []), section.endPoint]
+        : [];
+      const actualPoints = native.edges.find(({ id }) => id === expectedEdge.id)?.points ?? [];
+      expect(actualPoints).toHaveLength(expectedPoints.length);
+      expectedPoints.forEach((point, index) => {
+        expect(actualPoints[index]?.x).toBeCloseTo(point.x, 12);
+        expect(actualPoints[index]?.y).toBeCloseTo(point.y, 12);
+      });
+    }
+  });
 });
 
 describe("ELK enforced cycle-breaking group order", () => {
