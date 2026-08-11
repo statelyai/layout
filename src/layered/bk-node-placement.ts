@@ -105,10 +105,14 @@ function buildNeighbors(input: LayeredPhaseInput, order: LayerOrder) {
               sweptOrder.indexOf(leftEntry.edgeId) - sweptOrder.indexOf(rightEntry.edgeId),
           )
         : interactiveVerticalLongEdgeSource
-          ? [...entries].sort(
-              (leftEntry, rightEntry) =>
-                (nodeIndex.get(rightEntry.id) ?? 0) - (nodeIndex.get(leftEntry.id) ?? 0),
-            )
+          ? [...entries].sort((leftEntry, rightEntry) => {
+              const leftDummy = leftEntry.id.startsWith("__layout_dummy:");
+              const rightDummy = rightEntry.id.startsWith("__layout_dummy:");
+              return (
+                Number(leftDummy) - Number(rightDummy) ||
+                (nodeIndex.get(leftEntry.id) ?? 0) - (nodeIndex.get(rightEntry.id) ?? 0)
+              );
+            })
           : useLayerOrderPorts || entries.some((entry) => entry.id.startsWith("__layout_dummy:"))
             ? entries
             : [...entries].sort(

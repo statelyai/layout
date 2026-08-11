@@ -2185,10 +2185,7 @@ export const minimizeCrossingsInteractively: CrossingMinimizer = (
       };
       const sourcePoint = point(source);
       const targetPoint = point(target);
-      if (input.direction === "left") sourcePoint.cross = source.y ?? 0;
-      sourcePoint.flow += horizontal
-        ? (input.sizes.get(source.id)?.width ?? 0)
-        : (input.sizes.get(source.id)?.height ?? 0);
+      sourcePoint.cross = horizontal ? (source.y ?? 0) : (source.x ?? 0);
       targetPoint.cross = horizontal ? (target.y ?? 0) : (target.x ?? 0);
       const internalFlowSign =
         input.direction === "left" ||
@@ -2835,11 +2832,14 @@ function implicitEdgeEndpoints(
         );
       }
       if (interactiveVerticalLongEdgeSource) {
+        const leftDummy = left.edge.targetId.startsWith("__layout_dummy:");
+        const rightDummy = right.edge.targetId.startsWith("__layout_dummy:");
+        if (leftDummy !== rightDummy) return Number(leftDummy) - Number(rightDummy);
         const leftOther = placement.rectByNodeId.get(left.edge.targetId);
         const rightOther = placement.rectByNodeId.get(right.edge.targetId);
         const leftCross = (leftOther?.x ?? 0) + (leftOther?.width ?? 0) / 2;
         const rightCross = (rightOther?.x ?? 0) + (rightOther?.width ?? 0) / 2;
-        if (leftCross !== rightCross) return rightCross - leftCross;
+        if (leftCross !== rightCross) return leftCross - rightCross;
       }
       if (interactiveTargetOrder) {
         const leftDummy = left.edge.sourceId.startsWith("__layout_dummy:");
@@ -3114,10 +3114,17 @@ function routeEdges(style: "ORTHOGONAL" | "POLYLINE" | "SPLINES"): EdgeRouter {
             minimumDifference(candidates.map(({ targetCross }) => targetCross)),
           );
         const dependencies = candidates.map(() => new Set<number>());
+        const dependencyWeights = candidates.map(() => new Map<number, number>());
         const criticalDependencies = new Set<string>();
-        const addDependency = (source: number, target: number, critical = false) => {
+        const addDependency = (source: number, target: number, critical = false, weight = 1) => {
           dependencies[source]?.add(target);
+          dependencyWeights[source]?.set(target, weight);
           if (critical) criticalDependencies.add(`${source}:${target}`);
+        };
+        const removeDependency = (source: number, target: number) => {
+          dependencies[source]?.delete(target);
+          dependencyWeights[source]?.delete(target);
+          criticalDependencies.delete(`${source}:${target}`);
         };
         const conflicts = (left: number, right: number) => {
           const difference = Math.abs(left - right);
@@ -3152,11 +3159,13 @@ function routeEdges(style: "ORTHOGONAL" | "POLYLINE" | "SPLINES"): EdgeRouter {
               16 *
                 (crossesExtent(second.targetCross, first) +
                   crossesExtent(first.sourceCross, second));
-            if (firstPenalty < secondPenalty) addDependency(left, right);
-            else if (firstPenalty > secondPenalty) addDependency(right, left);
+            if (firstPenalty < secondPenalty)
+              addDependency(left, right, false, secondPenalty - firstPenalty);
+            else if (firstPenalty > secondPenalty)
+              addDependency(right, left, false, firstPenalty - secondPenalty);
             else if (firstPenalty > 0) {
-              addDependency(left, right);
-              addDependency(right, left);
+              addDependency(left, right, false, 0);
+              addDependency(right, left, false, 0);
             }
           }
         }
@@ -3172,9 +3181,11 @@ function routeEdges(style: "ORTHOGONAL" | "POLYLINE" | "SPLINES"): EdgeRouter {
               const candidate = candidates[dummy]!;
               if (
                 Math.abs(candidate.sourceCross - candidate.targetCross) < edgeEdgeSpacing &&
-                dependencies[dummy]?.delete(ordinary)
+                dependencies[dummy]?.has(ordinary)
               ) {
+                removeDependency(dummy, ordinary);
                 dependencies[ordinary]?.add(dummy);
+                dependencyWeights[ordinary]?.set(dummy, 1);
               }
             }
           }
@@ -3198,44 +3209,125 @@ function routeEdges(style: "ORTHOGONAL" | "POLYLINE" | "SPLINES"): EdgeRouter {
               detour.secondSlot = 2;
               detour.crossover = (detour.sourceCross + central.sourceCross) / 2;
               central.slot = 1;
-              dependencies[left]?.delete(right);
-              dependencies[right]?.delete(left);
+              removeDependency(left, right);
+              removeDependency(right, left);
               splitCycle = true;
               break;
             }
           }
         }
 
-        for (let left = 0; left < candidates.length - 1; left++) {
-          for (let right = left + 1; right < candidates.length; right++) {
-            if (
-              dependencies[left]?.has(right) &&
-              dependencies[right]?.has(left) &&
-              !criticalDependencies.has(`${left}:${right}`) &&
-              !criticalDependencies.has(`${right}:${left}`)
-            ) {
-              const lowerSource =
-                candidates[left]!.sourceCross < candidates[right]!.sourceCross ? left : right;
-              const higherSource = lowerSource === left ? right : left;
-              dependencies[lowerSource]?.delete(higherSource);
+        if (horizontal) {
+          for (let left = 0; left < candidates.length - 1; left++) {
+            for (let right = left + 1; right < candidates.length; right++) {
+              if (
+                dependencies[left]?.has(right) &&
+                dependencies[right]?.has(left) &&
+                !criticalDependencies.has(`${left}:${right}`) &&
+                !criticalDependencies.has(`${right}:${left}`)
+              ) {
+                const lowerSource =
+                  candidates[left]!.sourceCross < candidates[right]!.sourceCross ? left : right;
+                const higherSource = lowerSource === left ? right : left;
+                removeDependency(lowerSource, higherSource);
+              }
             }
           }
-        }
 
-        // ELK breaks dependency cycles before topological numbering. Removing the
-        // later edge is equivalent for the zero-weight two-cycles that remain here.
-        const visiting = new Set<number>();
-        const visited = new Set<number>();
-        const removeCycles = (source: number) => {
-          visiting.add(source);
-          for (const target of dependencies[source] ?? []) {
-            if (visiting.has(target)) dependencies[source]?.delete(target);
-            else if (!visited.has(target)) removeCycles(target);
+          const visiting = new Set<number>();
+          const visited = new Set<number>();
+          const removeCycles = (source: number) => {
+            visiting.add(source);
+            for (const target of dependencies[source] ?? []) {
+              if (visiting.has(target)) removeDependency(source, target);
+              else if (!visited.has(target)) removeCycles(target);
+            }
+            visiting.delete(source);
+            visited.add(source);
+          };
+          for (let index = 0; index < candidates.length; index++) removeCycles(index);
+        } else {
+          const marks = candidates.map((_, index) => -index - 1);
+          const inWeight = candidates.map(() => 0);
+          const outWeight = candidates.map(() => 0);
+          for (const [source, targets] of dependencyWeights.entries()) {
+            for (const [target, weight] of targets) {
+              outWeight[source] = (outWeight[source] ?? 0) + weight;
+              inWeight[target] = (inWeight[target] ?? 0) + weight;
+            }
           }
-          visiting.delete(source);
-          visited.add(source);
-        };
-        for (let index = 0; index < candidates.length; index++) removeCycles(index);
+          const sources = inWeight.flatMap((weight, index) =>
+            weight === 0 && (outWeight[index] ?? 0) > 0 ? [index] : [],
+          );
+          const sinks = outWeight.flatMap((weight, index) => (weight === 0 ? [index] : []));
+          const unprocessed = new Set(candidates.map((_, index) => index));
+          const update = (node: number) => {
+            for (const [target, weight] of dependencyWeights[node] ?? []) {
+              if (!unprocessed.has(target) || weight <= 0) continue;
+              inWeight[target] = (inWeight[target] ?? 0) - weight;
+              if ((inWeight[target] ?? 0) <= 0 && (outWeight[target] ?? 0) > 0)
+                sources.push(target);
+            }
+            for (let source = 0; source < candidates.length; source++) {
+              const weight = dependencyWeights[source]?.get(node);
+              if (!unprocessed.has(source) || weight === undefined || weight <= 0) continue;
+              outWeight[source] = (outWeight[source] ?? 0) - weight;
+              if ((outWeight[source] ?? 0) <= 0 && (inWeight[source] ?? 0) > 0) sinks.push(source);
+            }
+          };
+          const random =
+            phaseRandomByInput.get(input) ?? new JavaRandom(input.settings.randomSeed ?? 1);
+          const markBase = candidates.length;
+          let nextSink = markBase - 1;
+          let nextSource = markBase + 1;
+          while (unprocessed.size > 0) {
+            while (sinks.length > 0) {
+              const sink = sinks.shift()!;
+              if (!unprocessed.delete(sink)) continue;
+              marks[sink] = nextSink--;
+              update(sink);
+            }
+            while (sources.length > 0) {
+              const source = sources.shift()!;
+              if (!unprocessed.delete(source)) continue;
+              marks[source] = nextSource++;
+              update(source);
+            }
+            if (unprocessed.size === 0) break;
+            const ordered = [...unprocessed].sort((left, right) => marks[left]! - marks[right]!);
+            let maximum = Number.NEGATIVE_INFINITY;
+            let maxima: number[] = [];
+            for (const candidate of ordered) {
+              const outflow = (outWeight[candidate] ?? 0) - (inWeight[candidate] ?? 0);
+              if (outflow > maximum) {
+                maximum = outflow;
+                maxima = [candidate];
+              } else if (outflow === maximum) maxima.push(candidate);
+            }
+            const selected = maxima[random.nextInt(maxima.length)]!;
+            unprocessed.delete(selected);
+            marks[selected] = nextSource++;
+            update(selected);
+          }
+          const shift = candidates.length + 1;
+          for (let index = 0; index < marks.length; index++) {
+            if (marks[index]! < markBase) marks[index]! += shift;
+          }
+          const reversed: Array<[number, number, number]> = [];
+          for (const [source, targets] of dependencyWeights.entries()) {
+            for (const [target, weight] of targets) {
+              if (
+                marks[source]! <= marks[target]! ||
+                criticalDependencies.has(`${source}:${target}`)
+              )
+                continue;
+              removeDependency(source, target);
+              if (weight > 0) reversed.push([target, source, weight]);
+            }
+          }
+          for (const [source, target, weight] of reversed)
+            addDependency(source, target, false, weight);
+        }
 
         const incoming = candidates.map(() => 0);
         for (const targets of dependencies) {
