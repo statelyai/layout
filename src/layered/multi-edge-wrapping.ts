@@ -4,9 +4,16 @@
  * SPDX-License-Identifier: EPL-2.0
  *******************************************************************************/
 
-import type { GraphEdge, GraphNode } from "@statelyai/graph";
-import type { LongEdgeExpansion } from "./long-edges";
-import type { AcyclicOrientation, LayerAssignment, LayerOrder, LayeredPhaseInput } from "./types";
+import type { GraphEdge, GraphNode, Point } from "@statelyai/graph";
+import { joinLongEdgeRoutes, type LongEdgeExpansion } from "./long-edges";
+import type {
+  AcyclicOrientation,
+  EdgeRoutes,
+  LayerAssignment,
+  LayerOrder,
+  LayeredPhaseInput,
+  NodePlacement,
+} from "./types";
 
 interface BreakingPointInfo {
   originalEdgeId: string;
@@ -17,11 +24,26 @@ interface BreakingPointInfo {
   startEndEdgeId: string;
 }
 
+function groupBreakingPoints<K>(
+  infos: readonly BreakingPointInfo[],
+  keyOf: (info: BreakingPointInfo) => K,
+): Map<K, BreakingPointInfo[]> {
+  const result = new Map<K, BreakingPointInfo[]>();
+  for (const info of infos) {
+    const key = keyOf(info);
+    const group = result.get(key) ?? [];
+    group.push(info);
+    result.set(key, group);
+  }
+  return result;
+}
+
 export interface BreakingPointPreparation {
   input: LayeredPhaseInput;
   orientation: AcyclicOrientation;
   assignment: LayerAssignment;
   infos: readonly BreakingPointInfo[];
+  infosByOriginalEdgeId: ReadonlyMap<string, readonly BreakingPointInfo[]>;
   piecesByOriginalEdgeId: ReadonlyMap<string, readonly { edgeId: string; reversed: boolean }[]>;
 }
 
@@ -162,8 +184,123 @@ export function insertMultiEdgeBreakingPoints(
     orientation: { reversedEdgeIds },
     assignment: { layerByNodeId },
     infos,
+    infosByOriginalEdgeId: groupBreakingPoints(infos, (info) => info.originalEdgeId),
     piecesByOriginalEdgeId,
   };
+}
+
+function appendRoute(target: Point[], points: readonly Point[]): void {
+  for (const point of points) {
+    const previous = target.at(-1);
+    if (
+      previous &&
+      Math.abs(previous.x - point.x) < 1e-9 &&
+      Math.abs(previous.y - point.y) < 1e-9
+    ) {
+      continue;
+    }
+    target.push(point);
+  }
+}
+
+function simplifyRoute(points: readonly Point[]): Point[] {
+  return points.filter((point, index) => {
+    const previous = points[index - 1];
+    const next = points[index + 1];
+    if (!previous || !next) return true;
+    return !(
+      (Math.abs(previous.x - point.x) < 1e-9 && Math.abs(point.x - next.x) < 1e-9) ||
+      (Math.abs(previous.y - point.y) < 1e-9 && Math.abs(point.y - next.y) < 1e-9)
+    );
+  });
+}
+
+/** ELK BreakingPointRemover plus orthogonal channel allocation. */
+export function joinFoldedMultiEdgeRoutes(
+  originalGraph: LayeredPhaseInput["graph"],
+  preparation: BreakingPointPreparation,
+  folded: FoldedBreakingPoints,
+  placement: NodePlacement,
+  internalRoutes: EdgeRoutes,
+  routing: string,
+): ReadonlyMap<string, readonly Point[]> {
+  const result = new Map<string, readonly Point[]>();
+  const cutIndexes = [...new Set(preparation.infos.map((info) => info.cutIndex))].sort(
+    (left, right) => left - right,
+  );
+  const infosByCut = groupBreakingPoints(preparation.infos, (info) => info.cutIndex);
+  const wrapDummyRects = [...placement.rectByNodeId]
+    .filter(([id]) => id.startsWith("__layout_dummy:wrap:"))
+    .map(([, rect]) => rect);
+  const leftDummyFlow = Math.min(...wrapDummyRects.map((rect) => rect.x));
+  const rightDummyFlow = Math.max(...wrapDummyRects.map((rect) => rect.x));
+  const edgeEdgeSpacing = Number(folded.expansion.input.settings["spacing.edgeEdge"] ?? 10);
+  const edgeById = new Map(originalGraph.edges.map((edge) => [edge.id, edge]));
+
+  for (const [edgeId, pieces] of folded.routePiecesByOriginalEdgeId) {
+    const points: Point[] = [];
+    let lastPoint: Point | undefined;
+    for (const piece of pieces) {
+      const joined =
+        joinLongEdgeRoutes(
+          internalRoutes,
+          new Map([[piece.edgeIds.join("\0"), piece.edgeIds]]),
+        ).pointsByEdgeId.get(piece.edgeIds.join("\0")) ?? [];
+      const oriented = piece.reversed ? [...joined].reverse() : joined;
+      if (points.length === 0 && oriented[0]) appendRoute(points, [oriented[0]]);
+      appendRoute(points, oriented.slice(1, -1));
+      lastPoint = oriented.at(-1);
+    }
+    if (lastPoint) appendRoute(points, [lastPoint]);
+    const edgeInfos = preparation.infosByOriginalEdgeId.get(edgeId) ?? [];
+    let publicPoints = simplifyRoute(points);
+    if (routing === "ORTHOGONAL" && edgeInfos.length === 1) {
+      const info = edgeInfos[0]!;
+      const cutEdges = infosByCut.get(info.cutIndex) ?? [];
+      const edgeIndex = Math.max(0, cutEdges.indexOf(info));
+      const rowIndex = Math.max(0, cutIndexes.indexOf(info.cutIndex));
+      const originalEdge = edgeById.get(edgeId);
+      const targetLayer = originalEdge
+        ? (folded.expansion.assignment.layerByNodeId.get(originalEdge.targetId) ?? 1)
+        : 1;
+      const startRect = placement.rectByNodeId.get(info.startId);
+      const endRect = placement.rectByNodeId.get(info.endId);
+      const rightMidpoint = startRect ? (startRect.x + rightDummyFlow) / 2 : rightDummyFlow;
+      const leftMidpoint = endRect ? (endRect.x + leftDummyFlow) / 2 : leftDummyFlow;
+      const rightChannel = rightDummyFlow + edgeIndex * edgeEdgeSpacing;
+      const improveWrappedEdges =
+        folded.expansion.input.settings["wrapping.multiEdge.improveWrappedEdges"] !== false;
+      const leftChannel = improveWrappedEdges
+        ? leftDummyFlow + (edgeIndex - rowIndex + Math.max(0, targetLayer - 1)) * edgeEdgeSpacing
+        : leftDummyFlow + (edgeIndex - 1) * edgeEdgeSpacing;
+      for (const point of publicPoints) {
+        if (Math.abs(point.x - rightMidpoint) < 1e-9) point.x = rightChannel;
+        else if (Math.abs(point.x - leftMidpoint) < 1e-9) point.x = leftChannel;
+      }
+      if (improveWrappedEdges && targetLayer > 1 && publicPoints.length >= 3) {
+        const thickness = Math.max(
+          0,
+          Number(
+            originalEdge
+              ? (folded.expansion.input.edgeSettings?.(originalEdge)?.["edge.thickness"] ?? 1)
+              : 1,
+          ),
+        );
+        const targetY = publicPoints.at(-1)?.y;
+        const approachY = [...publicPoints]
+          .reverse()
+          .find((point) => targetY === undefined || Math.abs(point.y - targetY) >= 1e-9)?.y;
+        if (approachY !== undefined) {
+          for (const point of publicPoints.slice(0, -1)) {
+            if (Math.abs(point.y - approachY) < 1e-9) point.y += thickness;
+          }
+        }
+      }
+      publicPoints = simplifyRoute(publicPoints);
+    }
+    result.set(edgeId, publicPoints);
+  }
+  return result;
 }
 
 function replaceSegment(

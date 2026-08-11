@@ -51,7 +51,11 @@ import { placeNodesWithLinearSegments } from "./linear-segments-node-placement";
 import { placeNodesWithNetworkSimplex } from "./network-simplex-node-placement";
 import { applyHighDegreeNodeTreatment } from "./high-degree";
 import { applyNodePromotion } from "./node-promotion";
-import { foldMultiEdgeBreakingPoints, insertMultiEdgeBreakingPoints } from "./multi-edge-wrapping";
+import {
+  foldMultiEdgeBreakingPoints,
+  insertMultiEdgeBreakingPoints,
+  joinFoldedMultiEdgeRoutes,
+} from "./multi-edge-wrapping";
 
 export type {
   AcyclicOrientation,
@@ -694,110 +698,14 @@ function runWrappedMultiEdgePipeline<N, E, G, P>(
         ? routeEdgesWithSplines
         : routeEdgesOrthogonally;
   const internalRoutes = router(folded.expansion.input, folded.expansion.orientation, placement);
-  const appendRoute = (target: Point[], points: readonly Point[]): void => {
-    for (const point of points) {
-      const previous = target.at(-1);
-      if (
-        previous &&
-        Math.abs(previous.x - point.x) < 1e-9 &&
-        Math.abs(previous.y - point.y) < 1e-9
-      )
-        continue;
-      target.push(point);
-    }
-  };
-  const simplify = (points: readonly Point[]): Point[] =>
-    points.filter((point, index) => {
-      const previous = points[index - 1];
-      const next = points[index + 1];
-      if (!previous || !next) return true;
-      return !(
-        (Math.abs(previous.x - point.x) < 1e-9 && Math.abs(point.x - next.x) < 1e-9) ||
-        (Math.abs(previous.y - point.y) < 1e-9 && Math.abs(point.y - next.y) < 1e-9)
-      );
-    });
-  const publicPointsByEdgeId = new Map<string, readonly Point[]>();
-  const cutIndexes = [...new Set(prepared.infos.map((info) => info.cutIndex))].sort(
-    (left, right) => left - right,
+  const publicPointsByEdgeId = joinFoldedMultiEdgeRoutes(
+    graph as Graph<unknown, unknown, unknown, unknown>,
+    prepared,
+    folded,
+    placement,
+    internalRoutes,
+    routing,
   );
-  const infosByCut = new Map(
-    cutIndexes.map((cutIndex) => [
-      cutIndex,
-      prepared.infos.filter((info) => info.cutIndex === cutIndex),
-    ]),
-  );
-  const wrapDummyRects = [...placement.rectByNodeId]
-    .filter(([id]) => id.startsWith("__layout_dummy:wrap:"))
-    .map(([, rect]) => rect);
-  const leftDummyFlow = Math.min(...wrapDummyRects.map((rect) => rect.x));
-  const rightDummyFlow = Math.max(...wrapDummyRects.map((rect) => rect.x));
-  const edgeEdgeSpacing = Number(folded.expansion.input.settings["spacing.edgeEdge"] ?? 10);
-  for (const [edgeId, pieces] of folded.routePiecesByOriginalEdgeId) {
-    const points: Point[] = [];
-    let lastPoint: Point | undefined;
-    for (const piece of pieces) {
-      const joined =
-        joinLongEdgeRoutes(
-          internalRoutes,
-          new Map([[piece.edgeIds.join("\0"), piece.edgeIds]]),
-        ).pointsByEdgeId.get(piece.edgeIds.join("\0")) ?? [];
-      const oriented = piece.reversed ? [...joined].reverse() : joined;
-      if (points.length === 0 && oriented[0]) appendRoute(points, [oriented[0]]);
-      appendRoute(points, oriented.slice(1, -1));
-      lastPoint = oriented.at(-1);
-    }
-    if (lastPoint) appendRoute(points, [lastPoint]);
-    const edgeInfos = prepared.infos.filter((info) => info.originalEdgeId === edgeId);
-    let publicPoints = simplify(points);
-    // ELK's orthogonal router assigns distinct channels around the folded dummy chains.
-    // Our generic router uses the midpoint between a breaking point and its adjacent
-    // dummy, so move those midpoint segments onto the same ordered channels.
-    if (routing === "ORTHOGONAL" && edgeInfos.length === 1) {
-      const info = edgeInfos[0]!;
-      const cutEdges = infosByCut.get(info.cutIndex) ?? [];
-      const edgeIndex = Math.max(0, cutEdges.indexOf(info));
-      const rowIndex = Math.max(0, cutIndexes.indexOf(info.cutIndex));
-      const originalEdge = graph.edges.find((edge) => edge.id === edgeId);
-      const targetLayer = originalEdge
-        ? (folded.expansion.assignment.layerByNodeId.get(originalEdge.targetId) ?? 1)
-        : 1;
-      const startRect = placement.rectByNodeId.get(info.startId);
-      const endRect = placement.rectByNodeId.get(info.endId);
-      const rightMidpoint = startRect ? (startRect.x + rightDummyFlow) / 2 : rightDummyFlow;
-      const leftMidpoint = endRect ? (endRect.x + leftDummyFlow) / 2 : leftDummyFlow;
-      const rightChannel = rightDummyFlow + edgeIndex * edgeEdgeSpacing;
-      const improveWrappedEdges =
-        folded.expansion.input.settings["wrapping.multiEdge.improveWrappedEdges"] !== false;
-      const leftChannel = improveWrappedEdges
-        ? leftDummyFlow + (edgeIndex - rowIndex + Math.max(0, targetLayer - 1)) * edgeEdgeSpacing
-        : leftDummyFlow + (edgeIndex - 1) * edgeEdgeSpacing;
-      for (const point of publicPoints) {
-        if (Math.abs(point.x - rightMidpoint) < 1e-9) point.x = rightChannel;
-        else if (Math.abs(point.x - leftMidpoint) < 1e-9) point.x = leftChannel;
-      }
-      if (improveWrappedEdges && targetLayer > 1 && publicPoints.length >= 3) {
-        const thickness = Math.max(
-          0,
-          Number(
-            originalEdge
-              ? (folded.expansion.input.edgeSettings?.(originalEdge)?.["edge.thickness"] ?? 1)
-              : 1,
-          ),
-        );
-        const targetY = publicPoints.at(-1)?.y;
-        const approachY = [...publicPoints]
-          .reverse()
-          .find((point) => targetY === undefined || Math.abs(point.y - targetY) >= 1e-9)?.y;
-        if (approachY !== undefined) {
-          for (const point of publicPoints.slice(0, -1)) {
-            if (Math.abs(point.y - approachY) < 1e-9) point.y += thickness;
-          }
-        }
-      }
-      publicPoints = simplify(publicPoints);
-    }
-    publicPointsByEdgeId.set(edgeId, publicPoints);
-  }
   const visualNodeById = new Map<string, VisualNode<N, P>>();
   for (const node of graph.nodes) {
     const rect = placement.rectByNodeId.get(node.id);
