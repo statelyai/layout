@@ -2578,6 +2578,18 @@ export const placeNodesInteractively: NodePlacer = (input, order) => {
             ? Number(input.settings["spacing.edgeNode"] ?? 10)
             : nodeNodeSpacing(input, previous, id));
       }
+      if (
+        isDummy &&
+        hasInteractiveDummyPosition &&
+        input.direction === "right" &&
+        input.settings["nodePlacement.strategy"] === "INTERACTIVE" &&
+        minimumCross !== Number.NEGATIVE_INFINITY
+      ) {
+        originalCross = Math.min(
+          originalCross,
+          minimumCross + nodeNodeSpacing(input, layer[Math.max(0, nodeIndex - 1)]!, id),
+        );
+      }
       const cross = Math.max(
         originalCross,
         minimumCross === Number.NEGATIVE_INFINITY

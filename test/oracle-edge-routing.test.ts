@@ -645,6 +645,80 @@ it("matches interactive target-port order with a long-edge spline", async () => 
   }
 });
 
+it("matches the minimum legal position for a RIGHT interactive long-edge spline", async () => {
+  const nodes = [
+    ["n0", 26, 24, 0, 75],
+    ["n1", 26, 36, 124, 164],
+    ["n2", 30, 14, 78, 156],
+    ["n3", 14, 17, 58, 44],
+    ["n4", 36, 14, 113, 80],
+    ["n5", 34, 26, 165, 47],
+  ].map(([id, width, height, x, y]) => ({
+    id: String(id),
+    width: Number(width),
+    height: Number(height),
+    x: Number(x),
+    y: Number(y),
+  }));
+  const edges = [
+    [0, 1],
+    [1, 2],
+    [1, 4],
+    [2, 4],
+    [3, 4],
+  ].map(([source, target]) => ({
+    id: `e${source}-${target}`,
+    sourceId: `n${source}`,
+    targetId: `n${target}`,
+  }));
+  const options = {
+    edgeRouting: "SPLINES" as const,
+    randomSeed: 9,
+    separateConnectedComponents: false,
+    "layering.strategy": "BF_MODEL_ORDER" as const,
+    "crossingMinimization.strategy": "INTERACTIVE" as const,
+    "crossingMinimization.greedySwitch.type": "OFF" as const,
+    "nodePlacement.strategy": "INTERACTIVE" as const,
+  };
+  const oracle = await new ELK().layout({
+    id: "root",
+    layoutOptions: {
+      "elk.algorithm": "layered",
+      "elk.edgeRouting": options.edgeRouting,
+      "elk.randomSeed": String(options.randomSeed),
+      "elk.separateConnectedComponents": String(options.separateConnectedComponents),
+      "elk.layered.layering.strategy": options["layering.strategy"],
+      "elk.layered.crossingMinimization.strategy":
+        options["crossingMinimization.strategy"],
+      "elk.layered.crossingMinimization.greedySwitch.type":
+        options["crossingMinimization.greedySwitch.type"],
+      "elk.layered.nodePlacement.strategy": options["nodePlacement.strategy"],
+    },
+    children: structuredClone(nodes),
+    edges: edges.map(({ id, sourceId, targetId }) => ({
+      id,
+      sources: [sourceId],
+      targets: [targetId],
+    })),
+  });
+  const native = getLayeredLayout(createGraph({ nodes, edges }), { settings: options });
+  expect(native.nodes.map(({ x, y }) => [x, y])).toEqual(
+    oracle.children?.map(({ x, y }) => [x, y]),
+  );
+  for (const edge of oracle.edges ?? []) {
+    const section = (edge as ElkExtendedEdge).sections?.[0];
+    const expected = section
+      ? [section.startPoint, ...(section.bendPoints ?? []), section.endPoint]
+      : [];
+    const actual = native.edges.find(({ id }) => id === edge.id)?.points ?? [];
+    expect(actual).toHaveLength(expected.length);
+    actual.forEach((point, index) => {
+      expect(point.x).toBeCloseTo(expected[index]?.x ?? Number.NaN, 12);
+      expect(point.y).toBeCloseTo(expected[index]?.y ?? Number.NaN, 12);
+    });
+  }
+});
+
 it("uses pre-placement source coordinates for leftward interactive long edges", async () => {
   const nodes = [
     ["n0", 38, 32, 111, 74],
