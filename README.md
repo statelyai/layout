@@ -98,6 +98,8 @@ pnpm demo:generate
 pnpm demo
 ```
 
+The demo opens at `https://layout.localhost` through Portless.
+
 `pnpm demo:sync` refreshes the pinned ELK Live catalog and its converted ELK
 JSON inputs. Normal generation and browser use remain offline.
 
