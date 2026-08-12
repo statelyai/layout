@@ -136,10 +136,78 @@ input:focus-visible,
 }
 
 .workbench {
-  display: grid;
-  grid-template-columns: minmax(360px, 1fr) minmax(0, 1fr);
   min-width: 0;
   min-height: 0;
+}
+
+.resizable-panel-group {
+  display: flex;
+  width: 100%;
+  height: 100%;
+}
+
+.workbench > [data-panel] {
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.resizable-handle {
+  position: relative;
+  z-index: 5;
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  border: 0;
+  background: var(--subtle);
+  outline: none;
+}
+
+.resizable-handle[aria-orientation="vertical"] {
+  width: 9px;
+  border-right: 1px solid var(--border);
+  border-left: 1px solid var(--border);
+}
+
+.resizable-handle[aria-orientation="horizontal"] {
+  height: 9px;
+  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+}
+
+.resizable-handle:hover,
+.resizable-handle[data-separator="active"] {
+  background: var(--accent-soft);
+}
+
+.resizable-handle:focus-visible {
+  z-index: 6;
+  outline: 2px solid var(--accent);
+  outline-offset: -2px;
+}
+
+.resizable-handle-grip {
+  position: absolute;
+  display: flex;
+  width: 15px;
+  height: 24px;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--border-strong);
+  border-radius: 4px;
+  color: #68727e;
+  background: #fff;
+  box-shadow: 0 1px 2px rgb(31 35 40 / 8%);
+}
+
+.resizable-handle-grip svg {
+  width: 10px;
+  height: 10px;
+}
+
+.resizable-handle[aria-orientation="horizontal"] .resizable-handle-grip {
+  transform: rotate(90deg);
 }
 
 .editor-pane,
@@ -152,7 +220,11 @@ input:focus-visible,
 
 .editor-pane {
   grid-template-rows: 56px 34px minmax(0, 1fr) 32px;
-  border-right: 1px solid var(--border-strong);
+}
+
+.editor-pane,
+.visualization-pane {
+  height: 100%;
 }
 
 .visualization-pane {
@@ -607,16 +679,11 @@ input:focus-visible,
   .app-shell {
     height: auto;
     min-height: 100vh;
+    grid-template-rows: 56px minmax(640px, 1fr);
   }
 
   .workbench {
-    grid-template-columns: minmax(0, 1fr);
-    grid-template-rows: minmax(520px, 60vh) minmax(520px, 60vh);
-  }
-
-  .editor-pane {
-    border-right: 0;
-    border-bottom: 1px solid var(--border-strong);
+    min-height: 640px;
   }
 
   .example-picker select {

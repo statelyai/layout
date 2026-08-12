@@ -86,12 +86,13 @@ The canonical ELKT source remains unchanged; elkjs is never bundled into the
 browser.
 
 The workbench places a CodeMirror JSON5 editor beside a coordinate-faithful SVG
-viewer. Selecting an example loads its complete XGraph into the editor; pasted
-or edited XGraph redraws automatically. Existing visual geometry is preserved;
-topology-only graphs run through native layered layout. Invalid input is marked
-inline while the last valid preview remains visible. Pan, zoom, selection
-details, and optional overlays expose exact node coordinates, edge-label
-rectangles, route points, routing modes, and node-relative ports.
+viewer in keyboard-accessible shadcn resizable panels. Selecting an example
+loads its complete XGraph into the editor; pasted or edited XGraph redraws
+automatically. Existing visual geometry is preserved; topology-only graphs run
+through native layered layout. Invalid input is marked inline while the last
+valid preview remains visible. Pan, zoom, selection details, and optional
+overlays expose exact node coordinates, edge-label rectangles, route points,
+routing modes, and node-relative ports.
 
 ```bash
 pnpm demo:generate

@@ -7,76 +7,7 @@
     <title>Stately Layout Lab</title>
   </head>
   <body>
-    <main class="app-shell">
-      <header class="topbar">
-        <div class="brand">
-          <span class="brand-mark" aria-hidden="true"></span>
-          <div>
-            <strong>Layout Lab</strong>
-            <span>@statelyai/layout</span>
-          </div>
-        </div>
-        <div class="topbar-status" role="status" aria-live="polite">
-          <span class="status-dot" data-status-dot></span>
-          <span data-status>Graph ready</span>
-          <span class="status-detail" data-detail>JSON5 · live preview</span>
-        </div>
-      </header>
-
-      <div class="workbench">
-        <section class="editor-pane" aria-label="XGraph editor">
-          <header class="pane-heading editor-heading">
-            <label class="example-picker">
-              <span>Example</span>
-              <select data-example aria-label="ELK Live example"></select>
-            </label>
-            <div class="pane-actions">
-              <button type="button" data-format>Format</button>
-              <button type="button" data-copy>Copy</button>
-            </div>
-          </header>
-          <div class="editor-toolbar">
-            <strong>XGraph</strong>
-            <span>JSON5</span>
-            <span class="editor-state" data-editor-state>Valid</span>
-          </div>
-          <div class="code-editor" data-editor></div>
-          <footer class="editor-message" data-editor-message>
-            Paste an XGraph or edit this example. The preview updates automatically.
-          </footer>
-        </section>
-
-        <section class="visualization-pane" aria-label="Graph visualization">
-          <header class="pane-heading visualization-heading">
-            <div class="visualization-title">
-              <h1 data-name></h1>
-              <span data-graph-summary></span>
-            </div>
-            <div class="zoom-controls" aria-label="Canvas zoom">
-              <button type="button" data-zoom="out" aria-label="Zoom out">−</button>
-              <button type="button" data-zoom="fit">Fit</button>
-              <button type="button" data-zoom="in" aria-label="Zoom in">+</button>
-            </div>
-          </header>
-          <div class="geometry-stage">
-            <div class="geometry-canvas" data-geometry></div>
-            <p class="canvas-help">Scroll to zoom · drag to pan</p>
-            <details class="inspector">
-              <summary>Inspect</summary>
-              <section class="inspector-selection" data-inspector aria-live="polite"></section>
-              <fieldset class="overlay-controls">
-                <legend>Overlays</legend>
-                <label><input type="checkbox" data-option="grid" /> Grid</label>
-                <label><input type="checkbox" data-option="bounds" /> Container bounds</label>
-                <label><input type="checkbox" data-option="labels" /> Label bounds</label>
-                <label><input type="checkbox" data-option="points" /> Route points</label>
-                <label><input type="checkbox" data-option="ports" checked /> Ports</label>
-              </fieldset>
-            </details>
-          </div>
-        </section>
-      </div>
-    </main>
-    <script type="module" src="/src/main.ts"></script>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>
