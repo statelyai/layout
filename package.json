@@ -45,9 +45,12 @@
     "@statelyai/graph": "^2.1.0"
   },
   "devDependencies": {
-    "@statelyai/sdk": "^0.20.1",
+    "@codemirror/lang-javascript": "^6.2.5",
+    "@codemirror/lint": "^6.9.7",
     "@types/node": "^25.0.3",
+    "codemirror": "^6.0.2",
     "elkjs": "^0.11.1",
+    "json5": "^2.2.3",
     "oxfmt": "0.62.0",
     "oxlint": "1.77.0",
     "publint": "^0.3.15",

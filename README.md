@@ -81,16 +81,17 @@ exposes the complete mapping, value type, and valid graph-element targets;
 
 The browser lab contains the same 45 categorized examples as ELK Live, sourced
 from the canonical `eclipse/elk-models` catalog. Each is pre-laid out with the
-elkjs oracle after zero-sized nodes and ports receive consistent visual bounds,
-then shown in two renderers: a coordinate-faithful SVG geometry inspector and
-the `@statelyai/sdk` project embed. The canonical ELKT source remains unchanged;
-elkjs is never bundled into the browser.
+elkjs oracle after zero-sized nodes and ports receive consistent visual bounds.
+The canonical ELKT source remains unchanged; elkjs is never bundled into the
+browser.
 
-The searchable example browser opens each graph in a pannable, zoomable SVG.
-Its selection inspector and optional overlays expose exact node coordinates,
-edge-label rectangles, route points, routing modes, and node-relative ports
-without crowding the diagram. The SDK layer shows how the same serialized
-`@statelyai/graph` value appears in the Viz project view.
+The workbench places a CodeMirror JSON5 editor beside a coordinate-faithful SVG
+viewer. Selecting an example loads its complete XGraph into the editor; pasted
+or edited XGraph redraws automatically. Existing visual geometry is preserved;
+topology-only graphs run through native layered layout. Invalid input is marked
+inline while the last valid preview remains visible. Pan, zoom, selection
+details, and optional overlays expose exact node coordinates, edge-label
+rectangles, route points, routing modes, and node-relative ports.
 
 ```bash
 pnpm demo:generate

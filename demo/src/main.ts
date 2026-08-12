@@ -1,22 +1,31 @@
-import { createStatelyEmbed } from "@statelyai/sdk/embed";
+import { javascript } from "@codemirror/lang-javascript";
+import { type Diagnostic, lintGutter, linter } from "@codemirror/lint";
+import { createGraph } from "@statelyai/graph";
+import { basicSetup, EditorView } from "codemirror";
 import corpus from "../generated/corpus.json";
+import { getLayeredLayout } from "../../src/layered";
 import {
   renderGeometry,
   routeLength,
+  visibleNodeCount,
   type GeometryGraph,
   type GeometryOptions,
   type GeometrySelection,
   type GeometryViewport,
 } from "./geometry-renderer";
+import { formatXGraph, parseXGraph, parseXGraphDocument } from "./xgraph-editor";
 import "./styles.css";
 
 type CorpusEntry = (typeof corpus)[number];
-type View = "geometry" | "sdk";
 
 function element<T extends Element>(selector: string): T {
   const value = document.querySelector<T>(selector);
   if (!value) throw new Error(`Missing demo element: ${selector}`);
   return value;
+}
+
+function errorMessage(error: unknown): string {
+  return error instanceof Error ? error.message : String(error);
 }
 
 function setStatus(title: string, message: string, state: "ready" | "waiting" | "error"): void {
@@ -40,13 +49,12 @@ function showSelection(selection: GeometrySelection): void {
   const heading = document.createElement("strong");
   const kind = document.createElement("span");
   const values = document.createElement("dl");
-
   if (selection.kind === "graph") {
     heading.textContent = "Layout extent";
     kind.textContent = "Graph geometry";
     inspectorRow(values, "Origin", `${selection.bounds.x}, ${selection.bounds.y}`);
     inspectorRow(values, "Size", `${selection.bounds.width} × ${selection.bounds.height}`);
-    inspectorRow(values, "Nodes", String(selection.graph.nodes.length - 1));
+    inspectorRow(values, "Nodes", String(visibleNodeCount(selection.graph)));
     inspectorRow(values, "Edges", String(selection.graph.edges.length));
     inspectorRow(
       values,
@@ -74,23 +82,35 @@ function showSelection(selection: GeometrySelection): void {
     inspectorRow(values, "Routing", selection.edge.routing ?? "polyline");
     inspectorRow(values, "Route points", String(points.length));
     inspectorRow(values, "Route length", routeLength(points).toFixed(1));
-    inspectorRow(
-      values,
-      "Ports",
-      `${selection.edge.sourcePort ?? "node"} → ${selection.edge.targetPort ?? "node"}`,
-    );
-    inspectorRow(
-      values,
-      "Label rect",
-      `${selection.edge.x}, ${selection.edge.y} · ${selection.edge.width} × ${selection.edge.height}`,
-    );
   }
-
   inspector.replaceChildren(heading, kind, values);
 }
 
+function diagnosticFor(source: string): Diagnostic[] {
+  try {
+    parseXGraph(source);
+    return [];
+  } catch (error) {
+    const message = errorMessage(error);
+    const match = /at (\d+):(\d+)/.exec(message);
+    if (!match) return [{ from: 0, to: Math.min(1, source.length), severity: "error", message }];
+    const line = Number(match[1]);
+    const column = Number(match[2]);
+    const lines = source.split("\n");
+    const from =
+      lines.slice(0, line - 1).reduce((total, value) => total + value.length + 1, 0) + column - 1;
+    return [
+      {
+        from: Math.max(0, from),
+        to: Math.min(source.length, from + 1),
+        severity: "error",
+        message,
+      },
+    ];
+  }
+}
+
 const params = new URLSearchParams(window.location.search);
-const editorBaseUrl = params.get("editor") ?? "http://localhost:3000";
 const initialId = params.get("graph") ?? corpus[0]?.id;
 let currentEntry = corpus.find((entry) => entry.id === initialId) ?? corpus[0];
 if (!currentEntry) throw new Error("The layout corpus is empty");
@@ -99,21 +119,15 @@ const status = element<HTMLElement>("[data-status]");
 const detail = element<HTMLElement>("[data-detail]");
 const dot = element<HTMLElement>("[data-status-dot]");
 const name = element<HTMLElement>("[data-name]");
-const description = element<HTMLElement>("[data-description]");
-const engine = element<HTMLElement>("[data-engine]");
-const embedMount = element<HTMLElement>("[data-embed]");
+const summary = element<HTMLElement>("[data-graph-summary]");
+const editorMount = element<HTMLElement>("[data-editor]");
+const editorState = element<HTMLElement>("[data-editor-state]");
+const editorMessage = element<HTMLElement>("[data-editor-message]");
+const exampleSelect = element<HTMLSelectElement>("[data-example]");
 const geometryMount = element<HTMLElement>("[data-geometry]");
-const geometryView = element<HTMLElement>("[data-geometry-view]");
-const geometryControls = element<HTMLElement>("[data-geometry-controls]");
-const zoomControls = element<HTMLElement>("[data-zoom-controls]");
 const inspector = element<HTMLElement>("[data-inspector]");
-const scenarioList = element<HTMLElement>("[data-scenarios]");
-const empty = element<HTMLElement>("[data-empty]");
-const search = element<HTMLInputElement>("[data-search]");
-const viewButtons = [...document.querySelectorAll<HTMLButtonElement>("[data-view]")];
 const zoomButtons = [...document.querySelectorAll<HTMLButtonElement>("[data-zoom]")];
 const optionInputs = [...document.querySelectorAll<HTMLInputElement>("[data-option]")];
-element<HTMLElement>("[data-count]").textContent = String(corpus.length);
 
 const geometryOptions: GeometryOptions = {
   grid: false,
@@ -122,155 +136,121 @@ const geometryOptions: GeometryOptions = {
   points: false,
   ports: true,
 };
-let currentView: View = params.get("view") === "sdk" ? "sdk" : "geometry";
-let embed: ReturnType<typeof createStatelyEmbed> | undefined;
+let currentGraph = currentEntry.graph as unknown as GeometryGraph;
 let viewport: GeometryViewport | undefined;
+let renderTimer: number | undefined;
 
 const groups = new Map<string, CorpusEntry[]>();
 for (const entry of corpus) {
   const category = entry.category.join(" › ");
-  const group = groups.get(category) ?? [];
-  group.push(entry);
-  groups.set(category, group);
+  const entries = groups.get(category) ?? [];
+  entries.push(entry);
+  groups.set(category, entries);
 }
-
 for (const [category, entries] of groups) {
-  const section = document.createElement("section");
-  section.className = "scenario-group";
-  section.dataset.scenarioGroup = category;
-  const heading = document.createElement("h2");
-  heading.textContent = category;
-  const list = document.createElement("div");
-  list.className = "scenario-group-list";
+  const group = document.createElement("optgroup");
+  group.label = category;
   for (const entry of entries) {
-    const button = document.createElement("button");
-    button.type = "button";
-    button.className = "scenario-button";
-    button.dataset.scenario = entry.id;
-    button.dataset.searchValue =
-      `${entry.name} ${entry.description} ${entry.category.join(" ")} ${entry.sourcePath}`.toLowerCase();
-    button.innerHTML = `<i class="scenario-engine${entry.engine === "native" ? "" : " oracle"}"></i><span></span>`;
-    button.querySelector("span")!.textContent = entry.name;
-    button.addEventListener("click", () => selectEntry(entry));
-    list.append(button);
+    const option = document.createElement("option");
+    option.value = entry.id;
+    option.textContent = entry.name;
+    group.append(option);
   }
-  section.append(heading, list);
-  scenarioList.append(section);
+  exampleSelect.append(group);
+}
+exampleSelect.value = currentEntry.id;
+
+function showGraph(graph: GeometryGraph): void {
+  currentGraph = graph;
+  viewport = renderGeometry(geometryMount, graph, geometryOptions, showSelection);
+  const nodeCount = visibleNodeCount(graph);
+  summary.textContent = `${nodeCount} nodes · ${graph.edges.length} edges`;
+  name.textContent =
+    typeof (graph as unknown as { id?: unknown }).id === "string"
+      ? String((graph as unknown as { id: string }).id)
+      : currentEntry.name;
 }
 
-function updateScenarioSelection(): void {
-  for (const button of document.querySelectorAll<HTMLButtonElement>("[data-scenario]")) {
-    if (button.dataset.scenario === currentEntry.id) button.setAttribute("aria-current", "page");
-    else button.removeAttribute("aria-current");
+function applySource(source: string): void {
+  try {
+    const document = parseXGraphDocument(source);
+    const graph = document.needsLayout
+      ? (getLayeredLayout(createGraph(document.graph), {
+          direction: document.graph.direction ?? "right",
+          padding: 24,
+          spacing: { node: 32, layer: 64 },
+        }) as GeometryGraph)
+      : document.graph;
+    showGraph(graph);
+    editorState.textContent = "Valid";
+    editorState.dataset.error = "false";
+    editorMessage.textContent = document.needsLayout
+      ? "Preview updated with native layered layout."
+      : "Preview updated from the editor geometry.";
+    setStatus(
+      "Graph ready",
+      `${visibleNodeCount(graph)} nodes · ${graph.edges.length} edges`,
+      "ready",
+    );
+  } catch (error) {
+    const message = errorMessage(error);
+    editorState.textContent = "Invalid";
+    editorState.dataset.error = "true";
+    editorMessage.textContent = message;
+    setStatus("Invalid XGraph", "Showing the last valid graph", "error");
   }
 }
 
-function showEntry(entry: CorpusEntry): void {
+const editor = new EditorView({
+  parent: editorMount,
+  doc: `${JSON.stringify(currentEntry.graph, null, 2)}\n`,
+  extensions: [
+    basicSetup,
+    javascript(),
+    lintGutter(),
+    linter((view) => diagnosticFor(view.state.doc.toString()), { delay: 200 }),
+    EditorView.lineWrapping,
+    EditorView.updateListener.of((update) => {
+      if (!update.docChanged) return;
+      window.clearTimeout(renderTimer);
+      editorState.textContent = "Editing…";
+      delete editorState.dataset.error;
+      setStatus("Editing XGraph", "Waiting for valid JSON5", "waiting");
+      renderTimer = window.setTimeout(() => applySource(update.state.doc.toString()), 220);
+    }),
+    EditorView.theme({
+      "&": { height: "100%" },
+      ".cm-scroller": { fontFamily: '"SFMono-Regular", Consolas, monospace' },
+    }),
+  ],
+});
+
+function replaceEditor(source: string): void {
+  editor.dispatch({ changes: { from: 0, to: editor.state.doc.length, insert: source } });
+}
+
+exampleSelect.addEventListener("change", () => {
+  const entry = corpus.find((candidate) => candidate.id === exampleSelect.value);
+  if (!entry) return;
   currentEntry = entry;
-  name.textContent = entry.name;
-  description.textContent = entry.description;
-  engine.textContent = "ELK Live · elkjs";
-  engine.dataset.engine = entry.engine;
-  viewport = renderGeometry(
-    geometryMount,
-    entry.graph as unknown as GeometryGraph,
-    geometryOptions,
-    showSelection,
-  );
-  updateScenarioSelection();
-}
-
-function selectEntry(entry: CorpusEntry): void {
-  showEntry(entry);
-  embed?.selectMachine(entry.id);
+  replaceEditor(`${JSON.stringify(entry.graph, null, 2)}\n`);
   const url = new URL(window.location.href);
   url.searchParams.set("graph", entry.id);
   history.replaceState(null, "", url);
-}
-
-function ensureEmbed(): void {
-  if (embed) return;
-  setStatus("Connecting to SDK view…", "Waiting for @statelyai/sdk", "waiting");
-  embed = createStatelyEmbed({
-    baseUrl: editorBaseUrl,
-    apiKey: params.get("api_key") ?? "test",
-    machines: corpus.map((entry) => ({ id: entry.id, name: entry.name, machine: entry.graph })),
-    currentMachineId: currentEntry.id,
-    mode: "viewing",
-    theme: "light",
-    readOnly: true,
-    depth: 1,
-    panels: {
-      leftPanels: ["structure"],
-      rightPanels: ["graph"],
-    },
-    onReady() {
-      if (currentView === "sdk") {
-        setStatus("SDK view connected", `${corpus.length} pre-laid graphs loaded`, "ready");
-      }
-    },
-    onLoaded(graph) {
-      if (currentView === "sdk") {
-        setStatus(
-          "SDK view connected",
-          `${graph.nodes.length - 1} nodes · ${graph.edges.length} edges`,
-          "ready",
-        );
-      }
-    },
-    onError(error) {
-      if (currentView === "sdk") setStatus("SDK view error", error.message, "error");
-    },
-  });
-  embed.mount(embedMount);
-  embed.on("machineSelected", ({ machineId }) => {
-    const entry = corpus.find((candidate) => candidate.id === machineId);
-    if (entry) selectEntry(entry);
-  });
-}
-
-function showView(view: View): void {
-  currentView = view;
-  const geometryVisible = view === "geometry";
-  geometryView.hidden = !geometryVisible;
-  geometryControls.hidden = !geometryVisible;
-  zoomControls.hidden = !geometryVisible;
-  embedMount.hidden = geometryVisible;
-  for (const button of viewButtons) {
-    const selected = button.dataset.view === view;
-    button.setAttribute("aria-selected", String(selected));
-    button.tabIndex = selected ? 0 : -1;
-  }
-  if (geometryVisible) {
-    setStatus("Geometry ready", "Exact graph geometry", "ready");
-  } else {
-    ensureEmbed();
-    embed?.selectMachine(currentEntry.id);
-  }
-  const url = new URL(window.location.href);
-  url.searchParams.set("view", view);
-  history.replaceState(null, "", url);
-}
-
-search.addEventListener("input", () => {
-  const query = search.value.trim().toLowerCase();
-  let visibleCount = 0;
-  for (const group of document.querySelectorAll<HTMLElement>("[data-scenario-group]")) {
-    let visibleInGroup = 0;
-    for (const button of group.querySelectorAll<HTMLButtonElement>("[data-scenario]")) {
-      const visible = !query || button.dataset.searchValue?.includes(query) === true;
-      button.hidden = !visible;
-      if (visible) visibleInGroup++;
-    }
-    group.hidden = visibleInGroup === 0;
-    visibleCount += visibleInGroup;
-  }
-  empty.hidden = visibleCount > 0;
 });
 
-for (const button of viewButtons) {
-  button.addEventListener("click", () => showView(button.dataset.view as View));
-}
+element<HTMLButtonElement>("[data-format]").addEventListener("click", () => {
+  try {
+    replaceEditor(formatXGraph(editor.state.doc.toString()));
+  } catch {
+    applySource(editor.state.doc.toString());
+  }
+});
+
+element<HTMLButtonElement>("[data-copy]").addEventListener("click", async () => {
+  await navigator.clipboard.writeText(editor.state.doc.toString());
+  editorMessage.textContent = "Copied XGraph to clipboard.";
+});
 
 for (const button of zoomButtons) {
   button.addEventListener("click", () => {
@@ -282,11 +262,14 @@ for (const button of zoomButtons) {
 
 for (const input of optionInputs) {
   input.addEventListener("change", () => {
-    const option = input.dataset.option as keyof GeometryOptions;
-    geometryOptions[option] = input.checked;
-    showEntry(currentEntry);
+    geometryOptions[input.dataset.option as keyof GeometryOptions] = input.checked;
+    showGraph(currentGraph);
   });
 }
 
-showEntry(currentEntry);
-showView(currentView);
+showGraph(currentGraph);
+setStatus(
+  "Graph ready",
+  `${visibleNodeCount(currentGraph)} nodes · ${currentGraph.edges.length} edges`,
+  "ready",
+);

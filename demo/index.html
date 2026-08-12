@@ -16,76 +16,64 @@
             <span>@statelyai/layout</span>
           </div>
         </div>
-        <div class="topbar-status" role="status">
+        <div class="topbar-status" role="status" aria-live="polite">
           <span class="status-dot" data-status-dot></span>
-          <span data-status>Geometry ready</span>
-          <span class="status-detail" data-detail>Exact graph geometry</span>
+          <span data-status>Graph ready</span>
+          <span class="status-detail" data-detail>JSON5 · live preview</span>
         </div>
       </header>
 
-      <div class="app-body">
-        <nav class="scenario-browser" aria-label="Example graphs">
-          <div class="scenario-browser-heading">
-            <div>
-              <strong>Examples</strong>
-              <span><b data-count></b> layouts</span>
-            </div>
-            <label class="scenario-search">
-              <span class="sr-only">Filter examples</span>
-              <input type="search" data-search placeholder="Filter examples…" autocomplete="off" />
+      <div class="workbench">
+        <section class="editor-pane" aria-label="XGraph editor">
+          <header class="pane-heading editor-heading">
+            <label class="example-picker">
+              <span>Example</span>
+              <select data-example aria-label="ELK Live example"></select>
             </label>
-          </div>
-          <div class="scenario-list" data-scenarios></div>
-          <p class="scenario-empty" data-empty hidden>No matching examples.</p>
-          <div class="scenario-legend">
-            <span><i class="swatch oracle"></i>ELK Live catalog · elkjs geometry</span>
-          </div>
-        </nav>
-
-        <section class="workspace" aria-label="Layout viewer">
-          <header class="workspace-heading">
-            <div class="workspace-title">
-              <div>
-                <h1 data-name></h1>
-                <span class="engine-badge" data-engine></span>
-              </div>
-              <p data-description></p>
-            </div>
-            <div class="workspace-actions">
-              <div class="renderer-switch" role="tablist" aria-label="Renderer">
-                <button type="button" role="tab" data-view="geometry">Geometry</button>
-                <button type="button" role="tab" data-view="sdk">SDK view</button>
-              </div>
-              <div class="zoom-controls" data-zoom-controls aria-label="Canvas zoom">
-                <button type="button" data-zoom="out" aria-label="Zoom out">−</button>
-                <button type="button" data-zoom="fit">Fit</button>
-                <button type="button" data-zoom="in" aria-label="Zoom in">+</button>
-              </div>
+            <div class="pane-actions">
+              <button type="button" data-format>Format</button>
+              <button type="button" data-copy>Copy</button>
             </div>
           </header>
+          <div class="editor-toolbar">
+            <strong>XGraph</strong>
+            <span>JSON5</span>
+            <span class="editor-state" data-editor-state>Valid</span>
+          </div>
+          <div class="code-editor" data-editor></div>
+          <footer class="editor-message" data-editor-message>
+            Paste an XGraph or edit this example. The preview updates automatically.
+          </footer>
+        </section>
 
-          <div class="geometry-workspace" data-geometry-view>
-            <div class="geometry-stage">
-              <div class="geometry-canvas" data-geometry></div>
-              <p class="canvas-help">Scroll to zoom · drag to pan</p>
+        <section class="visualization-pane" aria-label="Graph visualization">
+          <header class="pane-heading visualization-heading">
+            <div class="visualization-title">
+              <h1 data-name></h1>
+              <span data-graph-summary></span>
             </div>
-            <aside class="inspector" aria-label="Geometry inspector">
+            <div class="zoom-controls" aria-label="Canvas zoom">
+              <button type="button" data-zoom="out" aria-label="Zoom out">−</button>
+              <button type="button" data-zoom="fit">Fit</button>
+              <button type="button" data-zoom="in" aria-label="Zoom in">+</button>
+            </div>
+          </header>
+          <div class="geometry-stage">
+            <div class="geometry-canvas" data-geometry></div>
+            <p class="canvas-help">Scroll to zoom · drag to pan</p>
+            <details class="inspector">
+              <summary>Inspect</summary>
               <section class="inspector-selection" data-inspector aria-live="polite"></section>
-              <fieldset class="overlay-controls" data-geometry-controls>
-                <legend>Inspection overlays</legend>
-                <label><input type="checkbox" data-option="grid" /> Measurement grid</label>
+              <fieldset class="overlay-controls">
+                <legend>Overlays</legend>
+                <label><input type="checkbox" data-option="grid" /> Grid</label>
                 <label><input type="checkbox" data-option="bounds" /> Container bounds</label>
-                <label><input type="checkbox" data-option="labels" /> Edge label bounds</label>
+                <label><input type="checkbox" data-option="labels" /> Label bounds</label>
                 <label><input type="checkbox" data-option="points" /> Route points</label>
                 <label><input type="checkbox" data-option="ports" checked /> Ports</label>
               </fieldset>
-              <p class="inspector-note">
-                The SVG reads the serialized <code>@statelyai/graph</code> coordinates directly. No
-                renderer-side layout or routing.
-              </p>
-            </aside>
+            </details>
           </div>
-          <div class="embed" data-embed hidden></div>
         </section>
       </div>
     </main>

@@ -38,6 +38,8 @@ export interface GeometryEdge {
 }
 
 export interface GeometryGraph {
+  id?: string;
+  direction?: "up" | "down" | "left" | "right";
   nodes: GeometryNode[];
   edges: GeometryEdge[];
 }
@@ -111,9 +113,13 @@ function absoluteNodes(graph: GeometryGraph): AbsoluteNode[] {
       absoluteX: point.x,
       absoluteY: point.y,
       isContainer: parentIds.has(node.id),
-      isRoot: node.parentId == null,
+      isRoot: node.parentId == null && node.id.endsWith(":root"),
     };
   });
+}
+
+export function visibleNodeCount(graph: GeometryGraph): number {
+  return absoluteNodes(graph).filter((node) => !node.isRoot).length;
 }
 
 function includePoint(
@@ -269,7 +275,7 @@ export function renderGeometry(
     viewBox: formatViewBox(viewBox),
     preserveAspectRatio: "xMidYMid meet",
     role: "img",
-    "aria-label": `Graph geometry, ${graph.nodes.length - 1} nodes and ${graph.edges.length} edges`,
+    "aria-label": `Graph geometry, ${visibleNodeCount(graph)} nodes and ${graph.edges.length} edges`,
   });
   const defs = svgElement("defs");
   const marker = svgElement("marker", {
