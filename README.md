@@ -136,5 +136,5 @@ pnpm demo
 ```
 
 `pnpm verify` checks Oxfmt, Oxlint, source and repository TypeScript projects,
-generated corpus freshness, tests, declarations/runtime builds, the demo
-bundle, and the packed package surface.
+generated layered-option and demo-corpus freshness, tests,
+declarations/runtime builds, the demo bundle, and the packed package surface.
