@@ -130,6 +130,20 @@ See [Architecture](./docs/architecture.md), [Roadmap](./docs/roadmap.md), and
 [Upstream and provenance](./docs/upstream.md). [Parity](./docs/parity.md) tracks
 API coverage separately from native algorithm fidelity.
 
+## Performance
+
+<!-- benchmark corpus and budgets from bench/performance.ts -->
+
+`pnpm bench` reports warm, repeated median, median absolute deviation, range,
+and edge-routing phase time. The corpus covers every built-in algorithm on
+5,000-node graphs, layered chains up to 5,000 nodes, all three routing styles
+on a 240-node long-edge DAG, and compound graphs nested 10,000 levels deep.
+
+`pnpm bench:check` enforces conservative regression budgets: 150 ms for each
+non-layered 5,000-node case, 750 ms for the 5,000-node layered chain, 600 ms
+total and 100 ms routing-phase time for every long-edge routing style, and
+150 ms for the 10,000-level compound graph.
+
 ## Development
 
 <!-- scripts derived from package.json#scripts -->
@@ -138,9 +152,10 @@ API coverage separately from native algorithm fidelity.
 pnpm install
 pnpm verify
 pnpm bench
+pnpm bench:check
 pnpm demo
 ```
 
 `pnpm verify` checks Oxfmt, Oxlint, source and repository TypeScript projects,
 generated corpus freshness, tests, declarations/runtime builds, the demo
-bundle, and the packed package surface.
+bundle, the packed package surface, and large-graph performance budgets.

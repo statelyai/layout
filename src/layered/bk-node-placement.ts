@@ -8,6 +8,7 @@ import type { EntityRect } from "@statelyai/graph";
 import { placeNodesInLayers, placePorts } from "./strategies";
 import type { LayerOrder, LayeredPhaseInput, NodePlacement } from "./types";
 import { nodeNodeSpacing } from "./spacing";
+import { getLayeredGraphIndex } from "./graph-index";
 
 type HDirection = "LEFT" | "RIGHT";
 type VDirection = "UP" | "DOWN";
@@ -48,9 +49,9 @@ function crossSize(input: LayeredPhaseInput, id: string): number {
   }
   return Math.max(
     1,
-    ...input.graph.edges
-      .filter((edge) => edge.sourceId === id || edge.targetId === id)
-      .map((edge) => Number(input.edgeSettings?.(edge)?.["edge.thickness"] ?? 1)),
+    ...(getLayeredGraphIndex(input).incidentByNodeId.get(id) ?? []).map((edge) =>
+      Number(input.edgeSettings?.(edge)?.["edge.thickness"] ?? 1),
+    ),
   );
 }
 
@@ -568,6 +569,7 @@ function improveEdgeStraightness(
     return;
   }
   const lockedRoots = new Set<string>();
+  const { incidentByNodeId } = getLayeredGraphIndex(input);
   const nodesByRoot = new Map<string, string[]>();
   for (const id of neighbors.layerIndex.keys()) {
     const root = bal.root.get(id) ?? id;
@@ -594,7 +596,7 @@ function improveEdgeStraightness(
       if (traversalIndex === 0) continue;
       const root = bal.root.get(id) ?? id;
       if (lockedRoots.has(root) || root !== id) continue;
-      const candidateEdges = input.graph.edges.filter((edge) =>
+      const candidateEdges = (incidentByNodeId.get(id) ?? []).filter((edge) =>
         bal.hdir === "RIGHT" ? edge.targetId === id : edge.sourceId === id,
       );
       const edge = candidateEdges.find((candidate) => {

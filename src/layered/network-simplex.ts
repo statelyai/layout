@@ -150,24 +150,31 @@ function growTightTree(
   const treeEdges: SimplexEdge[] = [];
   const visitTight = (start: SimplexNode): number => {
     const visitedEdges = new Set<SimplexEdge>();
-    const visit = (node: SimplexNode): number => {
-      let count = 1;
-      node.treeNode = true;
-      for (const edge of connectedEdges(node)) {
-        if (visitedEdges.has(edge)) continue;
-        visitedEdges.add(edge);
-        const opposite = otherNode(edge, node);
-        if (edge.treeEdge) {
-          count += visit(opposite);
-        } else if (!opposite.treeNode && edge.target.layer - edge.source.layer === edge.delta) {
-          edge.treeEdge = true;
-          treeEdges.push(edge);
-          count += visit(opposite);
-        }
+    let count = 1;
+    start.treeNode = true;
+    const stack: Array<{ node: SimplexNode; edges: SimplexEdge[]; index: number }> = [
+      { node: start, edges: connectedEdges(start), index: 0 },
+    ];
+    while (stack.length > 0) {
+      const frame = stack.at(-1)!;
+      const edge = frame.edges[frame.index++];
+      if (!edge) {
+        stack.pop();
+        continue;
       }
-      return count;
-    };
-    return visit(start);
+      if (visitedEdges.has(edge)) continue;
+      visitedEdges.add(edge);
+      const opposite = otherNode(edge, frame.node);
+      if (!edge.treeEdge) {
+        if (opposite.treeNode || edge.target.layer - edge.source.layer !== edge.delta) continue;
+        edge.treeEdge = true;
+        treeEdges.push(edge);
+      }
+      opposite.treeNode = true;
+      count++;
+      stack.push({ node: opposite, edges: connectedEdges(opposite), index: 0 });
+    }
+    return count;
   };
 
   while (visitTight(nodes[0] as SimplexNode) < nodes.length) {
@@ -212,21 +219,53 @@ function getHeadComponent(
   return complement;
 }
 
-function getCutValue(
+function getCutValues(
   nodes: readonly SimplexNode[],
   edges: readonly SimplexEdge[],
   treeEdges: ReadonlySet<SimplexEdge>,
-  edge: SimplexEdge,
-): number {
-  const head = getHeadComponent(nodes, treeEdges, edge);
-  let value = 0;
-  for (const candidate of edges) {
-    const sourceInHead = head.has(candidate.source);
-    const targetInHead = head.has(candidate.target);
-    if (!sourceInHead && targetInHead) value += candidate.weight;
-    else if (sourceInHead && !targetInHead) value -= candidate.weight;
+): ReadonlyMap<SimplexEdge, number> {
+  const balance = new Map(nodes.map((node) => [node, 0]));
+  for (const edge of edges) {
+    balance.set(edge.source, (balance.get(edge.source) ?? 0) - edge.weight);
+    balance.set(edge.target, (balance.get(edge.target) ?? 0) + edge.weight);
   }
-  return value;
+
+  const root = nodes[0];
+  if (!root) return new Map();
+  const parent = new Map<SimplexNode, SimplexNode>();
+  const order: SimplexNode[] = [root];
+  for (let index = 0; index < order.length; index++) {
+    const node = order[index]!;
+    for (const edge of connectedEdges(node)) {
+      if (!treeEdges.has(edge)) continue;
+      const opposite = otherNode(edge, node);
+      if (opposite === parent.get(node) || parent.has(opposite) || opposite === root) continue;
+      parent.set(opposite, node);
+      order.push(opposite);
+    }
+  }
+
+  const subtreeBalance = new Map(balance);
+  for (let index = order.length - 1; index > 0; index--) {
+    const node = order[index]!;
+    const parentNode = parent.get(node);
+    if (!parentNode) continue;
+    subtreeBalance.set(
+      parentNode,
+      (subtreeBalance.get(parentNode) ?? 0) + (subtreeBalance.get(node) ?? 0),
+    );
+  }
+
+  const total = subtreeBalance.get(root) ?? 0;
+  const cutValues = new Map<SimplexEdge, number>();
+  for (const edge of treeEdges) {
+    if (parent.get(edge.target) === edge.source) {
+      cutValues.set(edge, subtreeBalance.get(edge.target) ?? 0);
+    } else if (parent.get(edge.source) === edge.target) {
+      cutValues.set(edge, total - (subtreeBalance.get(edge.source) ?? 0));
+    }
+  }
+  return cutValues;
 }
 
 function normalizeAndBalance(
@@ -288,8 +327,9 @@ export function runNetworkSimplex(
     const orderedTreeEdges = growTightTree(nodes, orderedEdges);
     const treeEdges = new Set(orderedTreeEdges);
     for (let iteration = 0; iteration < iterationLimit; iteration++) {
+      const cutValues = getCutValues(nodes, orderedEdges, treeEdges);
       const leave = orderedTreeEdges.find(
-        (edge) => edge.treeEdge && getCutValue(nodes, orderedEdges, treeEdges, edge) < -1e-10,
+        (edge) => edge.treeEdge && (cutValues.get(edge) ?? 0) < -1e-10,
       );
       if (!leave) break;
       const head = getHeadComponent(nodes, treeEdges, leave);

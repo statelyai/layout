@@ -21,7 +21,9 @@
   },
   "scripts": {
     "build": "tsdown",
-    "bench": "vitest bench --run",
+    "bench": "node --expose-gc --import tsx bench/performance.ts",
+    "bench:check": "node --expose-gc --import tsx bench/performance.ts --check --samples 3",
+    "bench:vitest": "vitest bench --run",
     "demo": "vite --config demo/vite.config.ts",
     "demo:build": "vite build --config demo/vite.config.ts",
     "demo:check": "tsx scripts/generate-demo-corpus.ts --check",
@@ -37,7 +39,7 @@
     "test": "vitest",
     "typecheck": "tsc --noEmit",
     "typecheck:repo": "tsc --project tsconfig.repo.json",
-    "verify": "oxfmt --check . && oxlint && tsc --noEmit && tsc --project tsconfig.repo.json && tsc --project demo/tsconfig.json && tsx scripts/generate-elk-layered-options.ts --check && tsx scripts/generate-demo-corpus.ts --check && vitest --run && tsdown && vite build --config demo/vite.config.ts && publint --pack npm && tsx scripts/smoke-package.ts",
+    "verify": "oxfmt --check . && oxlint && tsc --noEmit && tsc --project tsconfig.repo.json && tsc --project demo/tsconfig.json && tsx scripts/generate-elk-layered-options.ts --check && tsx scripts/generate-demo-corpus.ts --check && vitest --run && node --expose-gc --import tsx bench/performance.ts --check --samples 3 && tsdown && vite build --config demo/vite.config.ts && publint --pack npm && tsx scripts/smoke-package.ts",
     "validate:package": "publint --pack npm && tsx scripts/smoke-package.ts"
   },
   "dependencies": {
