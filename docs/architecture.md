@@ -17,8 +17,8 @@ format.
    `LayoutFn` convention.
 2. `getLayout(request)` adds algorithm selection, execution scope,
    cancellation, patches, diagnostics, and measurements.
-3. A future `elkjs` compatibility adapter will translate at the package
-   boundary. ELK option names do not enter the native API.
+3. The `/elkjs` compatibility adapter translates at the package boundary. ELK
+   option names do not enter the native API.
 
 ## Layered pipeline
 
@@ -39,7 +39,7 @@ read-only artifacts keyed by the IDs already owned by `@statelyai/graph`.
 
 Compatibility has three independently measured levels:
 
-1. Input/output API compatibility through a future adapter.
+1. Input/output API compatibility through the `/elkjs` adapter.
 2. Algorithmic invariants and deterministic behavior.
 3. Geometry comparison against elkjs with tolerances and quality metrics.
 

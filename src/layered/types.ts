@@ -1,6 +1,7 @@
-import type { EntityRect, Graph, GraphNode, Point } from "@statelyai/graph";
+import type { EntityRect, Graph, GraphEdge, GraphNode, GraphPort, Point } from "@statelyai/graph";
 import type { LayoutConstraints } from "@statelyai/graph/layout";
 import type { LayoutDirection } from "../types";
+import type { ElkLayeredOptionValueByName, LayeredAdvancedOptions } from "./elk-options";
 
 export interface NodeSize {
   width: number;
@@ -26,6 +27,10 @@ export interface LayeredPhaseInput {
   spacing: LayeredSpacing;
   padding: LayoutPadding;
   constrainedLayerByNodeId: ReadonlyMap<string, number>;
+  settings: LayeredAdvancedOptions;
+  nodeSettings?: (node: GraphNode) => ElkLayeredOptionValueByName | undefined;
+  edgeSettings?: (edge: GraphEdge) => ElkLayeredOptionValueByName | undefined;
+  portSettings?: (port: GraphPort, node: GraphNode) => ElkLayeredOptionValueByName | undefined;
 }
 
 export interface AcyclicOrientation {
@@ -34,10 +39,16 @@ export interface AcyclicOrientation {
 
 export interface LayerAssignment {
   layerByNodeId: ReadonlyMap<string, number>;
+  /** Layer-internal seed order produced by layerers whose insertion order is observable. */
+  seedOrder?: readonly string[];
 }
 
 export interface LayerOrder {
   layers: readonly (readonly string[])[];
+  /** Internal ELK sweep state retained for exact port-aware placement. */
+  inputPortOrderByNodeId?: ReadonlyMap<string, readonly string[]>;
+  /** Internal ELK sweep state retained for exact port-aware placement. */
+  outputPortOrderByNodeId?: ReadonlyMap<string, readonly string[]>;
 }
 
 export interface NodePlacement {
@@ -46,6 +57,8 @@ export interface NodePlacement {
 
 export interface EdgeRoutes {
   pointsByEdgeId: ReadonlyMap<string, readonly Point[]>;
+  /** ELK spline segment NUB controls retained until long-edge joining. */
+  splineNubControlsByEdgeId?: ReadonlyMap<string, readonly Point[]>;
 }
 
 export type CycleBreaker = (input: LayeredPhaseInput) => AcyclicOrientation;
@@ -85,4 +98,12 @@ export interface LayeredLayoutOptions {
   measure?: (node: GraphNode) => NodeSize;
   crossingSweeps?: number;
   strategies?: LayeredStrategies;
+  /** ELK-equivalent settings keyed by simplified names without vendor prefixes. */
+  settings?: LayeredAdvancedOptions;
+  /** Per-node settings for ELK options whose target is a node. */
+  nodeSettings?: (node: GraphNode) => ElkLayeredOptionValueByName | undefined;
+  /** Per-edge settings for ELK options whose target is an edge. */
+  edgeSettings?: (edge: GraphEdge) => ElkLayeredOptionValueByName | undefined;
+  /** Per-port settings for ELK options whose target is a port. */
+  portSettings?: (port: GraphPort, node: GraphNode) => ElkLayeredOptionValueByName | undefined;
 }
