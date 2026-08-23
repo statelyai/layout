@@ -11,21 +11,19 @@
 
 ## M1: layered parity
 
-- Long-edge dummy nodes
-- Better cycle-breaking strategies
-- Network-simplex layer assignment
-- Two-layer crossing minimization and constraints
-- Brandes-Kopf-style node placement
-- Edge labels, port ordering, parallel edges
-- Compound graphs and cross-hierarchy edges
+- Complete: all 152 layered options map one-to-one to simplified typed names.
+- Complete: long-edge, wrapping, unzipping, cycle breaking, layer assignment,
+  crossing minimization, node placement, routing, labels, and ports.
+- Complete: compound graphs and cross-hierarchy edges.
+- Guarded by elkjs differential coverage for every option.
 
 ## Current compatibility checkpoint
 
 - elkjs-compatible `/elkjs` entry
-- 37 of 43 upstream elkjs 0.11.1 behaviors covered
+- 37 of 43 upstream elkjs 0.11.1 public-suite behaviors covered
 - Original elkjs#7 and ChangeAwareArrayList fixtures
 - Legacy option aliases, padding, fixed vectors/routes, logging, labels
-- Compatibility-only recursive compound-parent regression handling
+- Complete layered option inventory and native compound-parent handling
 
 ## M2: interactive layout
 

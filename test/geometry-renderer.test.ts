@@ -3,6 +3,7 @@ import {
   geometryPath,
   getGeometryBounds,
   routeLength,
+  visibleNodeCount,
   type GeometryGraph,
 } from "../demo/src/geometry-renderer";
 
@@ -72,5 +73,20 @@ describe("geometry renderer primitives", () => {
 
     expect(getGeometryBounds(graph)).toEqual({ x: 10, y: 20, width: 160, height: 80 });
     expect(routeLength(graph.edges[0]!.points!)).toBeCloseTo(58.523, 3);
+  });
+
+  it("renders ordinary top-level nodes while omitting generated structural roots", () => {
+    expect(
+      visibleNodeCount({ nodes: [{ id: "a", x: 0, y: 0, width: 80, height: 40 }], edges: [] }),
+    ).toBe(1);
+    expect(
+      visibleNodeCount({
+        nodes: [
+          { id: "example:root", x: 0, y: 0, width: 200, height: 100 },
+          { id: "a", parentId: "example:root", x: 20, y: 20, width: 80, height: 40 },
+        ],
+        edges: [],
+      }),
+    ).toBe(1);
   });
 });

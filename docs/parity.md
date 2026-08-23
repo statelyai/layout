@@ -32,31 +32,52 @@ tests combine related assertions while preserving all listed behaviors.
 
 <!-- registered native algorithms from src/layout.ts -->
 
-| Algorithm             | Native API                     | Current fidelity                                      |
-| --------------------- | ------------------------------ | ----------------------------------------------------- |
-| Box                   | `getBoxLayout`                 | Java SIMPLE node placement; grouped modes pending     |
-| Layered               | `getLayeredLayout`             | Initial flat Sugiyama-style pipeline; not Java parity |
-| Fixed                 | `getFixedLayout`               | Preserves authored geometry and routes                |
-| Random                | `getRandomLayout`              | Seeded Java-exact nodes; edge-route parity pending    |
-| Rectangle packing     | `getRectanglePackingLayout`    | Deterministic shelf baseline; not ELK parity          |
-| SPOrE compaction      | `getSporeCompactionLayout`     | Initial relative-direction baseline; not ELK parity   |
-| SPOrE overlap removal | `getSporeOverlapRemovalLayout` | Initial separation baseline; not ELK parity           |
+| Algorithm             | Native API                     | Current fidelity                                     |
+| --------------------- | ------------------------------ | ---------------------------------------------------- |
+| Box                   | `getBoxLayout`                 | Java SIMPLE node placement; grouped modes pending    |
+| Layered               | `getLayeredLayout`             | Complete 152-option ELK 0.11.1 layered parity target |
+| Fixed                 | `getFixedLayout`               | Preserves authored geometry and routes               |
+| Random                | `getRandomLayout`              | Seeded Java-exact nodes; edge-route parity pending   |
+| Rectangle packing     | `getRectanglePackingLayout`    | Deterministic shelf baseline; not ELK parity         |
+| SPOrE compaction      | `getSporeCompactionLayout`     | Initial relative-direction baseline; not ELK parity  |
+| SPOrE overlap removal | `getSporeOverlapRemovalLayout` | Initial separation baseline; not ELK parity          |
 
-The compatibility adapter recursively handles the upstream compound-parent
-regression. Native compound layout, cross-hierarchy routing, worker execution,
-and the Java algorithm suites remain open.
+The native layered pipeline handles compound layout and cross-hierarchy
+routing. Worker execution and non-layered Java algorithm suites remain open.
+
+## Layered option and geometry coverage
+
+<!-- layered option inventory from src/layered/elk-options.generated.ts -->
+
+- 152 of 152 elkjs 0.11.1 layered options have unique simplified typed names.
+- Every mapping is checked against `knownLayoutAlgorithms()` and round-tripped.
+- Every option has an enforced elkjs differential-test reference, including
+  parameterized enum, boolean, numeric, object, node, edge, port, and label
+  cases.
+- The exhaustive target/value matrix contains 394 cases. Four ELK
+  `OBJECT`-typed properties rejected by the elkjs importer are instead guarded
+  by source-derived behavior tests.
+- Geometry comparisons cover bounds, nodes, ports, labels, edge endpoints, bend
+  counts, and bend coordinates. Floating-point comparisons use 12 decimal
+  digits where operation order can differ.
+- Java-derived phases retain EPL-2.0 headers and are tested against the elkjs
+  0.11.1 oracle.
 
 ## Visual corpus
 
-<!-- representative graph count and engines from demo/scenarios.ts -->
+<!-- ELK Live example count and source from demo/generated/elk-live-examples.json -->
 
-The two-renderer corpus contains 15 pre-laid graphs across the 11 layout
-families available in elkjs 0.11.1. Ten currently run through native
-TypeScript; five remain elkjs oracle snapshots (`stress`, `mrtree`, `radial`,
-`force`, and compound layered). Its SVG geometry layer exposes exact bounds,
-label rectangles, route points, and ports; its SDK project-view layer exercises
-the same graph as a Viz consumer. Corpus generation is offline, so the browser
-bundle contains the resulting Stately graphs but not elkjs.
+The corpus contains the same 45 categorized examples as ELK Live, pinned from
+`eclipse/elk-models` and pre-laid out with the elkjs oracle. A CodeMirror JSON5
+editor and coordinate-faithful SVG viewer share one XGraph value, so pasted or
+edited graphs redraw automatically. Existing visual geometry is preserved;
+topology-only graphs run through native layered layout. The geometry layer
+exposes exact bounds, label rectangles, route points, and ports. Before layout,
+zero-sized nodes and ports receive consistent visual bounds so spacing and
+routing account for the shapes the browser displays. The stored canonical ELKT
+source remains unchanged. Normal corpus generation is offline, so the browser
+bundle contains the resulting Stately graphs but not elkjs. `pnpm demo:sync`
+explicitly refreshes the upstream catalog and converted ELK JSON inputs.
 
 ## Definition of full parity
 

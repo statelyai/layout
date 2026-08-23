@@ -8,6 +8,7 @@
 import type { Graph, Point, VisualGraph, VisualNode } from "@statelyai/graph";
 import { getNodeSize, type LayoutOptions } from "@statelyai/graph/layout";
 import { getFixedLayout } from "./fixed";
+import { JavaRandom } from "./java-random";
 import type { LayoutPadding } from "./layered";
 import type { LayoutAlgorithm } from "./types";
 
@@ -16,42 +17,6 @@ export interface RandomLayoutOptions extends Pick<LayoutOptions, "direction" | "
   padding?: number | Partial<LayoutPadding>;
   aspectRatio?: number;
   seed?: number;
-}
-
-class JavaRandom {
-  static readonly #multiplier = 0x5deece66dn;
-  static readonly #addend = 0xbn;
-  static readonly #mask = (1n << 48n) - 1n;
-  #seed: bigint;
-
-  constructor(seed: number) {
-    this.#seed = (BigInt(seed) ^ JavaRandom.#multiplier) & JavaRandom.#mask;
-  }
-
-  #next(bits: number): number {
-    this.#seed = (this.#seed * JavaRandom.#multiplier + JavaRandom.#addend) & JavaRandom.#mask;
-    return Number(this.#seed >> BigInt(48 - bits));
-  }
-
-  nextDouble(): number {
-    return (this.#next(26) * 2 ** 27 + this.#next(27)) / 2 ** 53;
-  }
-
-  nextFloat(): number {
-    return this.#next(24) / 2 ** 24;
-  }
-
-  nextInt(bound: number): number {
-    if (bound <= 0) throw new RangeError("bound must be positive");
-    if ((bound & -bound) === bound) return Math.floor((bound * this.#next(31)) / 2 ** 31);
-    let bits: number;
-    let value: number;
-    do {
-      bits = this.#next(31);
-      value = bits % bound;
-    } while (bits - value + (bound - 1) >= 2 ** 31);
-    return value;
-  }
 }
 
 function getPadding(value: RandomLayoutOptions["padding"]): LayoutPadding {

@@ -9,13 +9,12 @@ return `VisualGraph`; positions remain node fields and routes remain
 
 ## Status
 
-The native layered implementation currently supports flat graphs, cycles,
-ports, self-loops, four directions, typed constraints, padding, orthogonal
-routes, and replaceable phases. Native fixed, rectangle-packing, and initial
-SPOrE implementations are also available. ELK Box SIMPLE placement and seeded
-Random node placement are translated from Java. Partial, incremental,
-route-only, and native compound layout remain explicit unimplemented
-capabilities.
+The native layered implementation covers the complete 152-option elkjs 0.11.1
+layered inventory with one simplified typed name per ELK option. Flat and
+compound graphs, cross-hierarchy edges, ports, labels, self-loops, wrapping,
+four directions, constraints, and replaceable phases are differential-tested
+against elkjs. Partial, incremental, and route-only layout remain explicit
+unimplemented capabilities.
 
 ## Install
 
@@ -54,7 +53,7 @@ result.metrics;
 
 ## elkjs compatibility
 
-<!-- elkjs-compatible entry point exported from package.json#exports -->
+<!-- elkjs-compatible entry point and layered mapping exports from package.json#exports and src/layered/index.ts -->
 
 Legacy consumers can migrate through an isolated compatibility entry point:
 
@@ -69,31 +68,44 @@ The adapter accepts ELK JSON and option aliases, translates to
 `@statelyai/graph`, runs native algorithms, and translates the result back.
 Native algorithms never consume ELK JSON directly.
 
+Advanced layered settings use shorter names such as
+`layering.strategy`, `spacing.edgeNode`, and `nodePlacement.strategy`.
+`toElkLayeredOptions` and `fromElkLayeredOptionId` provide the exact one-to-one
+mapping when migration tooling needs ELK IDs. `elkLayeredOptionDefinitions`
+exposes the complete mapping, value type, and valid graph-element targets;
+`elkLayeredEnumValues` exposes every accepted enum value.
+
 ## Parity lab
 
-<!-- representative graph count and engines from demo/scenarios.ts -->
+<!-- ELK Live example count and source from demo/generated/elk-live-examples.json -->
 
-The browser lab compares 15 already-laid-out graphs in two renderers: a
-coordinate-faithful SVG geometry inspector and the `@statelyai/sdk` project
-embed. It covers all 11 algorithm families exposed by the elkjs 0.11.1
-demonstrator surface plus cycle, long-edge, named-port, and compound layered
-cases. Native and oracle-backed graphs are labeled separately; elkjs is never
-bundled into the browser.
+The browser lab contains the same 45 categorized examples as ELK Live, sourced
+from the canonical `eclipse/elk-models` catalog. Each is pre-laid out with the
+elkjs oracle after zero-sized nodes and ports receive consistent visual bounds.
+The canonical ELKT source remains unchanged; elkjs is never bundled into the
+browser.
 
-The SVG layer displays exact node dimensions and coordinates, edge label
-rectangles, route points, routing modes, and node-relative ports. The SDK layer
-then shows how the same serialized `@statelyai/graph` value appears in the Viz
-project view.
+The workbench places a CodeMirror JSON5 editor beside a coordinate-faithful SVG
+viewer in keyboard-accessible shadcn resizable panels. Selecting an example
+loads its complete XGraph into the editor; pasted or edited XGraph redraws
+automatically. Existing visual geometry is preserved; topology-only graphs run
+through native layered layout. Invalid input is marked inline while the last
+valid preview remains visible. Pan, zoom, selection details, and optional
+overlays expose exact node coordinates, edge-label rectangles, route points,
+routing modes, and node-relative ports.
 
 ```bash
 pnpm demo:generate
 pnpm demo
 ```
 
+The demo opens at `https://layout.localhost` through Portless.
+
+`pnpm demo:sync` refreshes the pinned ELK Live catalog and its converted ELK
+JSON inputs. Normal generation and browser use remain offline.
+
 The embed target defaults to `http://localhost:3000`. Override it with
 `?editor=http://localhost:4864` when the Viz editor runs elsewhere.
-
-![Native layered graph in the SDK project view](./artifacts/screenshots/layout-parity-layered.png)
 
 ## Extensibility
 
