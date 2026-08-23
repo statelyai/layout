@@ -37,7 +37,7 @@
 
 ## M3: compatibility and breadth
 
-- elkjs constructor and JSON compatibility adapter
+- Package and worker entry-point compatibility for elkjs consumers
 - Option migration with diagnostics
 - Fixed plus Java-derived Box SIMPLE and seeded Random placement
 - Stress, tree, radial, force, and component layout as justified by

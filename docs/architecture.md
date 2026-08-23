@@ -13,12 +13,14 @@ format.
 
 ## Public layers
 
+<!-- public entry points from package.json#exports and src/index.ts -->
+
 1. `getLayeredLayout(graph, options)` conforms to `@statelyai/graph`'s
    `LayoutFn` convention.
 2. `getLayout(request)` adds algorithm selection, execution scope,
    cancellation, patches, diagnostics, and measurements.
-3. The `/elkjs` compatibility adapter translates at the package boundary. ELK
-   option names do not enter the native API.
+3. The isolated `@statelyai/layout/elkjs` entry translates ELK JSON at the
+   package boundary. ELK option names do not enter the native API.
 
 ## Layered pipeline
 
@@ -39,7 +41,7 @@ read-only artifacts keyed by the IDs already owned by `@statelyai/graph`.
 
 Compatibility has three independently measured levels:
 
-1. Input/output API compatibility through the `/elkjs` adapter.
+1. Input/output API compatibility through the isolated `elkjs` adapter.
 2. Algorithmic invariants and deterministic behavior.
 3. Geometry comparison against elkjs with tolerances and quality metrics.
 
