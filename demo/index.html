@@ -3,67 +3,11 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="color-scheme" content="dark" />
-    <title>Stately Layout Parity Lab</title>
+    <meta name="color-scheme" content="light" />
+    <title>Stately Layout Lab</title>
   </head>
   <body>
-    <main class="shell">
-      <header class="masthead">
-        <div>
-          <p class="eyebrow">@statelyai/layout</p>
-          <h1>Layout parity lab</h1>
-          <p class="lede">
-            One graph value, inspected as exact SVG geometry and through the Stately SDK.
-          </p>
-        </div>
-        <div class="status-card">
-          <span class="status-dot" data-status-dot></span>
-          <div>
-            <strong data-status>Geometry inspector ready</strong>
-            <span data-detail>Routes, bounds, ports, and labels preserved</span>
-          </div>
-        </div>
-      </header>
-      <section class="toolbar" aria-label="Corpus controls">
-        <label>
-          <span>Representative graph</span>
-          <select data-scenario></select>
-        </label>
-        <div class="metrics">
-          <span><b data-count></b> graphs</span>
-          <span><i class="swatch native"></i> native TypeScript</span>
-          <span><i class="swatch oracle"></i> elkjs oracle reference</span>
-        </div>
-      </section>
-      <section class="canvas-frame">
-        <div class="canvas-heading">
-          <div>
-            <strong data-name></strong>
-            <span data-description></span>
-          </div>
-          <div class="canvas-actions">
-            <span class="engine-badge" data-engine></span>
-            <div class="renderer-switch" role="tablist" aria-label="Renderer">
-              <button type="button" role="tab" data-view="geometry">Geometry SVG</button>
-              <button type="button" role="tab" data-view="sdk">SDK project view</button>
-            </div>
-          </div>
-        </div>
-        <div class="geometry-controls" data-geometry-controls aria-label="Geometry overlays">
-          <span>Overlays</span>
-          <label><input type="checkbox" data-option="grid" checked /> 20-unit grid</label>
-          <label><input type="checkbox" data-option="bounds" checked /> node bounds</label>
-          <label><input type="checkbox" data-option="labels" checked /> label bounds</label>
-          <label><input type="checkbox" data-option="points" checked /> route points</label>
-          <label><input type="checkbox" data-option="ports" checked /> ports</label>
-        </div>
-        <div class="geometry-workspace" data-geometry-view>
-          <div class="geometry-stage" data-geometry></div>
-          <aside class="geometry-inspector" data-inspector aria-live="polite"></aside>
-        </div>
-        <div class="embed" data-embed hidden></div>
-      </section>
-    </main>
-    <script type="module" src="/src/main.ts"></script>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

@@ -38,6 +38,8 @@ export interface GeometryEdge {
 }
 
 export interface GeometryGraph {
+  id?: string;
+  direction?: "up" | "down" | "left" | "right";
   nodes: GeometryNode[];
   edges: GeometryEdge[];
 }
@@ -63,9 +65,16 @@ export interface GeometryBounds {
   height: number;
 }
 
+export interface GeometryViewport {
+  fit(): void;
+  zoomIn(): void;
+  zoomOut(): void;
+}
+
 interface AbsoluteNode extends GeometryNode {
   absoluteX: number;
   absoluteY: number;
+  isContainer: boolean;
   isRoot: boolean;
 }
 
@@ -82,6 +91,7 @@ function svgElement<K extends keyof SVGElementTagNameMap>(
 
 function absoluteNodes(graph: GeometryGraph): AbsoluteNode[] {
   const byId = new Map(graph.nodes.map((node) => [node.id, node]));
+  const parentIds = new Set(graph.nodes.flatMap((node) => (node.parentId ? [node.parentId] : [])));
   const cache = new Map<string, Point>();
 
   const position = (node: GeometryNode, seen = new Set<string>()): Point => {
@@ -102,9 +112,14 @@ function absoluteNodes(graph: GeometryGraph): AbsoluteNode[] {
       ...node,
       absoluteX: point.x,
       absoluteY: point.y,
-      isRoot: node.parentId == null,
+      isContainer: parentIds.has(node.id),
+      isRoot: node.parentId == null && node.id.endsWith(":root"),
     };
   });
+}
+
+export function visibleNodeCount(graph: GeometryGraph): number {
+  return absoluteNodes(graph).filter((node) => !node.isRoot).length;
 }
 
 function includePoint(
@@ -208,6 +223,22 @@ function appendText(
   return text;
 }
 
+function paddedViewBox(bounds: GeometryBounds): GeometryBounds {
+  const padding = 56;
+  const width = Math.max(360, bounds.width + padding * 2);
+  const height = Math.max(260, bounds.height + padding * 2);
+  return {
+    x: bounds.x + bounds.width / 2 - width / 2,
+    y: bounds.y + bounds.height / 2 - height / 2,
+    width,
+    height,
+  };
+}
+
+function formatViewBox(viewBox: GeometryBounds): string {
+  return `${viewBox.x} ${viewBox.y} ${viewBox.width} ${viewBox.height}`;
+}
+
 function appendGrid(defs: SVGDefsElement, svg: SVGSVGElement): void {
   const pattern = svgElement("pattern", {
     id: "measurement-grid",
@@ -234,16 +265,17 @@ export function renderGeometry(
   graph: GeometryGraph,
   options: GeometryOptions,
   onSelect: (selection: GeometrySelection) => void,
-): void {
+): GeometryViewport {
   container.replaceChildren();
   const bounds = getGeometryBounds(graph);
-  const padding = 54;
+  const fittedViewBox = paddedViewBox(bounds);
+  let viewBox = { ...fittedViewBox };
   const svg = svgElement("svg", {
     class: "geometry-svg",
-    viewBox: `${bounds.x - padding} ${bounds.y - padding} ${bounds.width + padding * 2} ${bounds.height + padding * 2}`,
+    viewBox: formatViewBox(viewBox),
     preserveAspectRatio: "xMidYMid meet",
     role: "img",
-    "aria-label": `Graph geometry, ${graph.nodes.length - 1} nodes and ${graph.edges.length} edges`,
+    "aria-label": `Graph geometry, ${visibleNodeCount(graph)} nodes and ${graph.edges.length} edges`,
   });
   const defs = svgElement("defs");
   const marker = svgElement("marker", {
@@ -251,8 +283,8 @@ export function renderGeometry(
     viewBox: "0 0 10 10",
     refX: 9,
     refY: 5,
-    markerWidth: 7,
-    markerHeight: 7,
+    markerWidth: 6,
+    markerHeight: 6,
     orient: "auto-start-reverse",
   });
   marker.append(svgElement("path", { d: "M 0 0 L 10 5 L 0 10 z", class: "geometry-arrow" }));
@@ -302,9 +334,6 @@ export function renderGeometry(
             class: index === 0 || index === points.length - 1 ? "route-endpoint" : "route-bend",
           }),
         );
-        if (index > 0 && index < points.length - 1) {
-          appendText(group, String(index), point.x + 6, point.y - 6, "route-point-label");
-        }
       });
     }
     if (options.labels && edge.width > 0 && edge.height > 0) {
@@ -319,7 +348,7 @@ export function renderGeometry(
       );
       appendText(
         group,
-        `${edge.id} · ${edge.width}×${edge.height}`,
+        edge.id,
         edge.x + edge.width / 2,
         edge.y + edge.height / 2 + 4,
         "geometry-edge-label",
@@ -338,8 +367,8 @@ export function renderGeometry(
       y: node.absoluteY,
       width: node.width,
       height: node.height,
-      rx: 7,
-      class: "geometry-node-rect geometry-hit-target",
+      rx: 4,
+      class: `geometry-node-rect${node.isContainer ? " geometry-container-rect" : ""} geometry-hit-target`,
     });
     makeInteractive(rect, `Node ${node.label ?? node.id}`, () =>
       onSelect({ kind: "node", node, x: node.absoluteX, y: node.absoluteY }),
@@ -348,19 +377,11 @@ export function renderGeometry(
     appendText(
       group,
       node.label ?? node.id,
-      node.absoluteX + 10,
-      node.absoluteY + 20,
-      "geometry-node-label",
+      node.isContainer ? node.absoluteX + 4 : node.absoluteX + node.width / 2,
+      node.isContainer ? node.absoluteY - 6 : node.absoluteY + node.height / 2 + 3.5,
+      `geometry-node-label${node.isContainer ? " geometry-container-label" : ""}`,
+      node.isContainer ? "start" : "middle",
     );
-    if (options.bounds) {
-      appendText(
-        group,
-        `${node.width}×${node.height}  @ ${node.absoluteX}, ${node.absoluteY}`,
-        node.absoluteX + 10,
-        node.absoluteY + 38,
-        "geometry-node-measure",
-      );
-    }
     if (options.ports) {
       for (const port of node.ports ?? []) {
         const x = node.absoluteX + port.x;
@@ -377,31 +398,74 @@ export function renderGeometry(
           onSelect({ kind: "port", node, port, x, y }),
         );
         group.append(portRect);
-        const onLeft = port.x < node.width / 2;
-        appendText(
-          group,
-          port.label ?? port.name,
-          x + (onLeft ? -5 : port.width + 5),
-          y + port.height / 2 + 3,
-          "geometry-port-label",
-          onLeft ? "end" : "start",
-        );
       }
     }
     nodeLayer.append(group);
   }
   svg.append(nodeLayer);
 
-  const dimensions = appendText(
-    svg,
-    `${Math.round(bounds.width)} × ${Math.round(bounds.height)} layout units`,
-    bounds.x,
-    bounds.y - 20,
-    "geometry-extent-label",
-  );
-  makeInteractive(dimensions, "Inspect graph bounds", () =>
-    onSelect({ kind: "graph", bounds, graph }),
-  );
   container.append(svg);
   onSelect({ kind: "graph", bounds, graph });
+
+  const setViewBox = (next: GeometryBounds): void => {
+    viewBox = next;
+    svg.setAttribute("viewBox", formatViewBox(viewBox));
+  };
+  const zoom = (factor: number, anchorX = 0.5, anchorY = 0.5): void => {
+    const nextWidth = Math.min(fittedViewBox.width * 8, Math.max(60, viewBox.width * factor));
+    const nextHeight = Math.min(fittedViewBox.height * 8, Math.max(40, viewBox.height * factor));
+    const graphX = viewBox.x + viewBox.width * anchorX;
+    const graphY = viewBox.y + viewBox.height * anchorY;
+    setViewBox({
+      x: graphX - nextWidth * anchorX,
+      y: graphY - nextHeight * anchorY,
+      width: nextWidth,
+      height: nextHeight,
+    });
+  };
+
+  svg.addEventListener(
+    "wheel",
+    (event) => {
+      event.preventDefault();
+      const rect = svg.getBoundingClientRect();
+      zoom(
+        event.deltaY < 0 ? 0.86 : 1.16,
+        (event.clientX - rect.left) / rect.width,
+        (event.clientY - rect.top) / rect.height,
+      );
+    },
+    { passive: false },
+  );
+
+  let pointer: { id: number; x: number; y: number; viewBox: GeometryBounds } | undefined;
+  svg.addEventListener("pointerdown", (event) => {
+    if (event.button !== 0 || (event.target as Element).closest(".geometry-hit-target")) return;
+    pointer = { id: event.pointerId, x: event.clientX, y: event.clientY, viewBox: { ...viewBox } };
+    svg.setPointerCapture(event.pointerId);
+    container.dataset.panning = "true";
+  });
+  svg.addEventListener("pointermove", (event) => {
+    if (!pointer || event.pointerId !== pointer.id) return;
+    const rect = svg.getBoundingClientRect();
+    setViewBox({
+      ...pointer.viewBox,
+      x: pointer.viewBox.x - ((event.clientX - pointer.x) / rect.width) * pointer.viewBox.width,
+      y: pointer.viewBox.y - ((event.clientY - pointer.y) / rect.height) * pointer.viewBox.height,
+    });
+  });
+  const stopPanning = (event: PointerEvent): void => {
+    if (!pointer || event.pointerId !== pointer.id) return;
+    pointer = undefined;
+    delete container.dataset.panning;
+  };
+  svg.addEventListener("pointerup", stopPanning);
+  svg.addEventListener("pointercancel", stopPanning);
+  svg.addEventListener("dblclick", () => setViewBox({ ...fittedViewBox }));
+
+  return {
+    fit: () => setViewBox({ ...fittedViewBox }),
+    zoomIn: () => zoom(0.8),
+    zoomOut: () => zoom(1.25),
+  };
 }

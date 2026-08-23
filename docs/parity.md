@@ -65,15 +65,19 @@ routing. Worker execution and non-layered Java algorithm suites remain open.
 
 ## Visual corpus
 
-<!-- representative graph count and engines from demo/scenarios.ts -->
+<!-- ELK Live example count and source from demo/generated/elk-live-examples.json -->
 
-The two-renderer corpus contains 15 pre-laid graphs across the 11 layout
-families available in elkjs 0.11.1. Ten currently run through native
-TypeScript; five remain elkjs oracle snapshots (`stress`, `mrtree`, `radial`,
-`force`, and compound layered). Its SVG geometry layer exposes exact bounds,
-label rectangles, route points, and ports; its SDK project-view layer exercises
-the same graph as a Viz consumer. Corpus generation is offline, so the browser
-bundle contains the resulting Stately graphs but not elkjs.
+The corpus contains the same 45 categorized examples as ELK Live, pinned from
+`eclipse/elk-models` and pre-laid out with the elkjs oracle. A CodeMirror JSON5
+editor and coordinate-faithful SVG viewer share one XGraph value, so pasted or
+edited graphs redraw automatically. Existing visual geometry is preserved;
+topology-only graphs run through native layered layout. The geometry layer
+exposes exact bounds, label rectangles, route points, and ports. Before layout,
+zero-sized nodes and ports receive consistent visual bounds so spacing and
+routing account for the shapes the browser displays. The stored canonical ELKT
+source remains unchanged. Normal corpus generation is offline, so the browser
+bundle contains the resulting Stately graphs but not elkjs. `pnpm demo:sync`
+explicitly refreshes the upstream catalog and converted ELK JSON inputs.
 
 ## Definition of full parity
 
