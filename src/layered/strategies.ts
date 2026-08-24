@@ -18,6 +18,7 @@ import type {
 const phaseRandomByInput = new WeakMap<LayeredPhaseInput, JavaRandom>();
 import { nodeNodeSpacing } from "./spacing";
 import type { ElkLayeredOptionValueByName } from "./elk-options";
+import { getLayeredGraphIndex } from "./graph-index";
 import { conservativeSpline } from "./spline-bezier";
 import { getFlexiblePortPosition } from "./flexible-ports";
 
@@ -1174,19 +1175,28 @@ export const assignLayersByLongestPathToSink: LayerAssigner = (input, orientatio
   }
   const heightByNodeId = new Map<string, number>();
   const layers: string[][] = [];
-  const visit = (id: string): number => {
-    const known = heightByNodeId.get(id);
-    if (known !== undefined) return known;
-    let height = 1;
-    for (const targetId of successors.get(id) ?? []) {
-      height = Math.max(height, visit(targetId) + 1);
+  for (const node of input.graph.nodes) {
+    if (heightByNodeId.has(node.id)) continue;
+    const stack: Array<{ id: string; index: number }> = [{ id: node.id, index: 0 }];
+    while (stack.length > 0) {
+      const frame = stack.at(-1)!;
+      const targets = successors.get(frame.id) ?? [];
+      const targetId = targets[frame.index++];
+      if (targetId !== undefined && !heightByNodeId.has(targetId)) {
+        stack.push({ id: targetId, index: 0 });
+        continue;
+      }
+      if (targetId !== undefined) continue;
+      let height = 1;
+      for (const successor of targets) {
+        height = Math.max(height, (heightByNodeId.get(successor) ?? 0) + 1);
+      }
+      while (layers.length < height) layers.unshift([]);
+      layers[layers.length - height]!.push(frame.id);
+      heightByNodeId.set(frame.id, height);
+      stack.pop();
     }
-    while (layers.length < height) layers.unshift([]);
-    layers[layers.length - height]!.push(id);
-    heightByNodeId.set(id, height);
-    return height;
-  };
-  for (const node of input.graph.nodes) visit(node.id);
+  }
   const layerByNodeId = new Map<string, number>();
   for (const [layer, ids] of layers.entries()) {
     for (const id of ids) layerByNodeId.set(id, layer);
@@ -1672,10 +1682,31 @@ function minimizeCrossingsWithLayerSweep(
     }
     const inputPortOrder = new Map(input.graph.nodes.map((node) => [node.id, [] as string[]]));
     const outputPortOrder = new Map(input.graph.nodes.map((node) => [node.id, [] as string[]]));
-    for (const edge of input.graph.edges) {
+    const orientedEdges = input.graph.edges.map((edge, modelOrder) => {
       const [sourceId, targetId] = getOrientedEndpoints(edge, orientation);
+      return { edge, modelOrder, sourceId, targetId };
+    });
+    const outgoingOrientedByNodeId = new Map(
+      input.graph.nodes.map((node) => [node.id, [] as (typeof orientedEdges)[number][]]),
+    );
+    const incomingOrientedByNodeId = new Map(
+      input.graph.nodes.map((node) => [node.id, [] as (typeof orientedEdges)[number][]]),
+    );
+    const edgesByLayerGap = Array.from(
+      { length: Math.max(0, layerCount - 1) },
+      () => [] as GraphEdge[],
+    );
+    for (const oriented of orientedEdges) {
+      const { edge, sourceId, targetId } = oriented;
       outputPortOrder.get(sourceId)?.push(edge.id);
       inputPortOrder.get(targetId)?.push(edge.id);
+      outgoingOrientedByNodeId.get(sourceId)?.push(oriented);
+      incomingOrientedByNodeId.get(targetId)?.push(oriented);
+      const sourceLayer = assignment.layerByNodeId.get(sourceId);
+      const targetLayer = assignment.layerByNodeId.get(targetId);
+      if (sourceLayer !== undefined && targetLayer === sourceLayer + 1) {
+        edgesByLayerGap[sourceLayer]?.push(edge);
+      }
     }
     if (exactPortSweep) {
       for (const edgeIds of inputPortOrder.values()) {
@@ -1686,43 +1717,63 @@ function minimizeCrossingsWithLayerSweep(
     }
     const countCrossings = (candidateLayers: readonly (readonly string[])[]): number => {
       if (!exactPortSweep) {
+        const layerByNodeId = new Map<string, number>();
         const positions = new Map<string, number>();
-        for (const layer of candidateLayers) {
-          for (const [index, id] of layer.entries()) positions.set(id, index);
+        for (const [layerIndex, layer] of candidateLayers.entries()) {
+          for (const [index, id] of layer.entries()) {
+            layerByNodeId.set(id, layerIndex);
+            positions.set(id, index);
+          }
+        }
+        const edgesByLayerPair = new Map<string, Array<{ source: number; target: number }>>();
+        for (const { sourceId, targetId } of orientedEdges) {
+          const sourceLayer = layerByNodeId.get(sourceId);
+          const targetLayer = layerByNodeId.get(targetId);
+          if (sourceLayer === undefined || targetLayer === undefined || sourceLayer === targetLayer)
+            continue;
+          const key = `${sourceLayer}:${targetLayer}`;
+          const edges = edgesByLayerPair.get(key) ?? [];
+          edges.push({
+            source: positions.get(sourceId) ?? 0,
+            target: positions.get(targetId) ?? 0,
+          });
+          edgesByLayerPair.set(key, edges);
         }
         let crossings = 0;
-        for (let left = 0; left < input.graph.edges.length; left++) {
-          const [leftSource, leftTarget] = getOrientedEndpoints(
-            input.graph.edges[left]!,
-            orientation,
+        for (const edges of edgesByLayerPair.values()) {
+          edges.sort((left, right) => left.source - right.source || left.target - right.target);
+          const targetValues = [...new Set(edges.map((edge) => edge.target))].sort(
+            (left, right) => left - right,
           );
-          for (let right = left + 1; right < input.graph.edges.length; right++) {
-            const [rightSource, rightTarget] = getOrientedEndpoints(
-              input.graph.edges[right]!,
-              orientation,
-            );
-            if (leftSource === rightSource || leftTarget === rightTarget) continue;
-            const sourceDifference =
-              (positions.get(leftSource) ?? 0) - (positions.get(rightSource) ?? 0);
-            const targetDifference =
-              (positions.get(leftTarget) ?? 0) - (positions.get(rightTarget) ?? 0);
-            if (sourceDifference * targetDifference < 0) crossings++;
+          const targetRank = new Map(targetValues.map((value, index) => [value, index + 1]));
+          const fenwick = Array.from({ length: targetValues.length + 1 }, () => 0);
+          let seen = 0;
+          for (let start = 0; start < edges.length;) {
+            let end = start + 1;
+            while (end < edges.length && edges[end]!.source === edges[start]!.source) end++;
+            for (let index = start; index < end; index++) {
+              const rank = targetRank.get(edges[index]!.target) ?? 1;
+              let preceding = 0;
+              for (let cursor = rank; cursor > 0; cursor -= cursor & -cursor) {
+                preceding += fenwick[cursor] ?? 0;
+              }
+              crossings += seen - preceding;
+            }
+            for (let index = start; index < end; index++) {
+              const rank = targetRank.get(edges[index]!.target) ?? 1;
+              for (let cursor = rank; cursor < fenwick.length; cursor += cursor & -cursor) {
+                fenwick[cursor] = (fenwick[cursor] ?? 0) + 1;
+              }
+              seen++;
+            }
+            start = end;
           }
         }
         return crossings;
       }
-      const layerIndex = new Map<string, number>();
-      for (const [index, layer] of candidateLayers.entries()) {
-        for (const id of layer) {
-          layerIndex.set(id, index);
-        }
-      }
       let crossings = 0;
       for (let index = 0; index < candidateLayers.length - 1; index++) {
-        const between = input.graph.edges.filter((edge) => {
-          const [sourceId, targetId] = getOrientedEndpoints(edge, orientation);
-          return layerIndex.get(sourceId) === index && layerIndex.get(targetId) === index + 1;
-        });
+        const between = edgesByLayerGap[index] ?? [];
         const sourceRanks = new Map<string, number>();
         const targetRanks = new Map<string, number>();
         let consumed = 0;
@@ -1809,15 +1860,11 @@ function minimizeCrossingsWithLayerSweep(
       let rankSum = 0;
       for (const fixedId of fixedLayer) {
         const groups = new Map<string, { edges: GraphEdge[]; portOrder: number }>();
-        for (const [modelOrder, edge] of input.graph.edges.entries()) {
-          const [sourceId, targetId] = getOrientedEndpoints(edge, orientation);
-          if (
-            (forward && sourceId !== fixedId) ||
-            (!forward && targetId !== fixedId) ||
-            !freeIds.has(forward ? targetId : sourceId)
-          ) {
-            continue;
-          }
+        const adjacent = forward
+          ? (outgoingOrientedByNodeId.get(fixedId) ?? [])
+          : (incomingOrientedByNodeId.get(fixedId) ?? []);
+        for (const { edge, modelOrder, sourceId, targetId } of adjacent) {
+          if (!freeIds.has(forward ? targetId : sourceId)) continue;
           const reversed = orientation.reversedEdgeIds.has(edge.id);
           const port = forward
             ? reversed
@@ -2105,13 +2152,20 @@ function networkSimplexComponentOrder(input: LayeredPhaseInput): string[] {
   for (const node of input.graph.nodes) {
     if (visited.has(node.id)) continue;
     const component: string[] = [];
-    const visit = (id: string): void => {
-      if (visited.has(id)) return;
-      visited.add(id);
-      component.push(id);
-      for (const neighbor of neighbors.get(id) ?? []) visit(neighbor);
-    };
-    visit(node.id);
+    visited.add(node.id);
+    component.push(node.id);
+    const stack: Array<{ id: string; index: number }> = [{ id: node.id, index: 0 }];
+    while (stack.length > 0) {
+      const frame = stack.at(-1)!;
+      const neighbor = neighbors.get(frame.id)?.[frame.index++];
+      if (neighbor === undefined) {
+        stack.pop();
+      } else if (!visited.has(neighbor)) {
+        visited.add(neighbor);
+        component.push(neighbor);
+        stack.push({ id: neighbor, index: 0 });
+      }
+    }
     if (components.length === 0 || components[0]!.length < component.length) {
       components.unshift(component);
     } else {
@@ -2134,13 +2188,17 @@ function stableComponentModelOrder(input: LayeredPhaseInput): string[] {
   let component = 0;
   for (const node of input.graph.nodes) {
     if (visited.has(node.id)) continue;
-    const visit = (id: string): void => {
-      if (visited.has(id)) return;
-      visited.add(id);
+    const pending = [node.id];
+    visited.add(node.id);
+    while (pending.length > 0) {
+      const id = pending.pop()!;
       componentByNodeId.set(id, component);
-      for (const neighbor of neighbors.get(id) ?? []) visit(neighbor);
-    };
-    visit(node.id);
+      for (const neighbor of neighbors.get(id) ?? []) {
+        if (visited.has(neighbor)) continue;
+        visited.add(neighbor);
+        pending.push(neighbor);
+      }
+    }
     component++;
   }
   const components = Array.from({ length: component }, () => [] as string[]);
@@ -2610,7 +2668,8 @@ function nodeFlowOffset(
   nodeFlowSize: number,
   layerByNodeId: ReadonlyMap<string, number>,
 ): number {
-  const node = input.graph.nodes.find((candidate) => candidate.id === id);
+  const { incidentByNodeId, nodeById } = getLayeredGraphIndex(input);
+  const node = nodeById.get(id);
   const alignment = node
     ? (input.nodeSettings?.(node)?.alignment ?? input.settings.alignment)
     : input.settings.alignment;
@@ -2622,8 +2681,7 @@ function nodeFlowOffset(
     let incoming = 0;
     let outgoing = 0;
     const ownLayer = layerByNodeId.get(id) ?? 0;
-    for (const edge of input.graph.edges) {
-      if (edge.sourceId !== id && edge.targetId !== id) continue;
+    for (const edge of incidentByNodeId.get(id) ?? []) {
       const otherId = edge.sourceId === id ? edge.targetId : edge.sourceId;
       const otherLayer = layerByNodeId.get(otherId) ?? ownLayer;
       if (otherLayer > ownLayer) outgoing++;
@@ -2871,7 +2929,7 @@ function implicitEdgeEndpoints(
   orientation?: AcyclicOrientation,
 ): ReadonlyMap<string, { source: Point; target: Point }> {
   const horizontal = input.direction === "left" || input.direction === "right";
-  const nodeById = new Map(input.graph.nodes.map((node) => [node.id, node]));
+  const { nodeById } = getLayeredGraphIndex(input);
   const groups = new Map<string, Array<{ edge: GraphEdge; endpoint: "source" | "target" }>>();
   for (const edge of input.graph.edges) {
     const sourceRect = placement.rectByNodeId.get(edge.sourceId);
@@ -3113,7 +3171,7 @@ function implicitEdgeEndpoints(
 
 function routeEdges(style: "ORTHOGONAL" | "POLYLINE" | "SPLINES"): EdgeRouter {
   return (input, orientation, placement) => {
-    const nodeById = new Map(input.graph.nodes.map((node) => [node.id, node]));
+    const { edgeById, incomingByNodeId, nodeById, outgoingByNodeId } = getLayeredGraphIndex(input);
     const pointsByEdgeId = new Map<string, readonly Point[]>();
     const splineNubControlsByEdgeId = new Map<string, readonly Point[]>();
     const horizontal = input.direction === "left" || input.direction === "right";
@@ -3191,15 +3249,18 @@ function routeEdges(style: "ORTHOGONAL" | "POLYLINE" | "SPLINES"): EdgeRouter {
       .sort((left, right) => left.start - right.start || left.end - right.end);
     const flowLayerByNodeId = new Map<string, number>();
     const flowLayers: Array<{ start: number; end: number }> = [];
+    const nodeIdsByFlowLayer: string[][] = [];
     for (const interval of flowIntervals) {
       const current = flowLayers.at(-1);
       if (!current || interval.start > current.end) {
         flowLayers.push({ start: interval.start, end: interval.end });
+        nodeIdsByFlowLayer.push([]);
       } else {
         current.start = Math.min(current.start, interval.start);
         current.end = Math.max(current.end, interval.end);
       }
       flowLayerByNodeId.set(interval.id, flowLayers.length - 1);
+      nodeIdsByFlowLayer.at(-1)?.push(interval.id);
     }
 
     const labelExtraByGap = flowLayers.slice(0, -1).map(() => 0);
@@ -3220,8 +3281,9 @@ function routeEdges(style: "ORTHOGONAL" | "POLYLINE" | "SPLINES"): EdgeRouter {
     let labelShift = 0;
     for (const [layerNo, bounds] of flowLayers.entries()) {
       if (labelShift !== 0) {
-        for (const [id, rect] of placement.rectByNodeId) {
-          if (flowLayerByNodeId.get(id) !== layerNo) continue;
+        for (const id of nodeIdsByFlowLayer[layerNo] ?? []) {
+          const rect = placement.rectByNodeId.get(id);
+          if (!rect) continue;
           mutableRects.set(
             id,
             horizontal ? { ...rect, x: rect.x + labelShift } : { ...rect, y: rect.y + labelShift },
@@ -3575,8 +3637,9 @@ function routeEdges(style: "ORTHOGONAL" | "POLYLINE" | "SPLINES"): EdgeRouter {
       let nextStart = flowLayers[0]?.start ?? 0;
       for (const [layerNo, bounds] of flowLayers.entries()) {
         const shift = nextStart - bounds.start;
-        for (const [id, rect] of placement.rectByNodeId) {
-          if (flowLayerByNodeId.get(id) !== layerNo) continue;
+        for (const id of nodeIdsByFlowLayer[layerNo] ?? []) {
+          const rect = placement.rectByNodeId.get(id);
+          if (!rect) continue;
           mutableRects.set(
             id,
             horizontal ? { ...rect, x: rect.x + shift } : { ...rect, y: rect.y + shift },
@@ -3877,8 +3940,9 @@ function routeEdges(style: "ORTHOGONAL" | "POLYLINE" | "SPLINES"): EdgeRouter {
       let nextStart = flowLayers[0]?.start ?? 0;
       for (const [layerNo, bounds] of flowLayers.entries()) {
         const shift = nextStart - bounds.start;
-        for (const [id, rect] of placement.rectByNodeId) {
-          if (flowLayerByNodeId.get(id) !== layerNo) continue;
+        for (const id of nodeIdsByFlowLayer[layerNo] ?? []) {
+          const rect = placement.rectByNodeId.get(id);
+          if (!rect) continue;
           mutableRects.set(
             id,
             horizontal ? { ...rect, x: rect.x + shift } : { ...rect, y: rect.y + shift },
@@ -3909,7 +3973,7 @@ function routeEdges(style: "ORTHOGONAL" | "POLYLINE" | "SPLINES"): EdgeRouter {
       const edgeNodeSpacing = Number(input.settings["spacing.edgeNodeBetweenLayers"] ?? 10);
       const edgeEdgeSpacing = Number(input.settings["spacing.edgeEdgeBetweenLayers"] ?? 10);
       for (const [edgeId, ranked] of splineTrackRankByEdgeId) {
-        const edge = input.graph.edges.find((candidate) => candidate.id === edgeId);
+        const edge = edgeById.get(edgeId);
         if (
           !edge?.sourceId.startsWith("__layout_dummy:") ||
           !edge.targetId.startsWith("__layout_dummy:")
@@ -4332,12 +4396,8 @@ function routeEdges(style: "ORTHOGONAL" | "POLYLINE" | "SPLINES"): EdgeRouter {
       }
       const splineMiddle: Point[] = [];
       if (style === "SPLINES") {
-        const sourceOutgoing = input.graph.edges.filter(
-          (candidate) => candidate.sourceId === edge.sourceId,
-        ).length;
-        const targetIncoming = input.graph.edges.filter(
-          (candidate) => candidate.targetId === edge.targetId,
-        ).length;
+        const sourceOutgoing = outgoingByNodeId.get(edge.sourceId)?.length ?? 0;
+        const targetIncoming = incomingByNodeId.get(edge.targetId)?.length ?? 0;
         const degreeDifference = Math.sign(sourceOutgoing - targetIncoming);
         const sourceCross = horizontal ? start.y : start.x;
         const targetCross = horizontal ? end.y : end.x;
@@ -4727,6 +4787,7 @@ export function normalizePlacementForPortExtents(
   placement: NodePlacement,
   order: LayerOrder,
 ): void {
+  const { nodeById } = getLayeredGraphIndex(input);
   const horizontal = input.direction === "left" || input.direction === "right";
   const physicalLayers = order.layers
     .map((layer) => layer.flatMap((id) => (placement.rectByNodeId.has(id) ? [id] : [])))
@@ -4763,7 +4824,7 @@ export function normalizePlacementForPortExtents(
       [nextLayer, false],
     ] as const) {
       for (const id of ids) {
-        const node = input.graph.nodes.find((candidate) => candidate.id === id);
+        const node = nodeById.get(id);
         const rect = placement.rectByNodeId.get(id);
         if (!node || !rect) continue;
         const ports = placePorts(

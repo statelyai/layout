@@ -1,4 +1,5 @@
 import type { LayeredPhaseInput } from "./types";
+import { getLayeredGraphIndex } from "./graph-index";
 
 export type IndividualSpacing = Readonly<Record<string, number>>;
 
@@ -8,6 +9,7 @@ export function nodeNodeSpacing(
   firstId: string,
   secondId: string,
 ): number {
+  const { nodeById } = getLayeredGraphIndex(input);
   const firstBreakingPoint = firstId.startsWith("__layout_breaking:");
   const secondBreakingPoint = secondId.startsWith("__layout_breaking:");
   const firstDummy = firstId.startsWith("__layout_dummy:") || firstBreakingPoint;
@@ -25,7 +27,7 @@ export function nodeNodeSpacing(
         ? Number(input.settings["spacing.edgeNode"] ?? 10)
         : input.spacing.node;
   for (const id of [firstId, secondId]) {
-    const node = input.graph.nodes.find((candidate) => candidate.id === id);
+    const node = nodeById.get(id);
     if (!node) continue;
     const individual = input.nodeSettings?.(node)?.["spacing.individual"];
     if (individual && typeof individual === "object") {

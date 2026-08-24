@@ -1181,30 +1181,72 @@ function runCompoundPipeline<N, E, G, P>(
 ): VisualGraph<N, E, G, P> {
   const nodes = graph.nodes.map((node) => ({ ...node })) as VisualNode<N, P>[];
   const nodeById = new Map(nodes.map((node) => [node.id, node]));
-  const depth = (node: GraphNode): number => {
-    let value = 0;
-    let parentId = node.parentId;
-    const seen = new Set<string>();
-    while (parentId != null && !seen.has(parentId)) {
-      seen.add(parentId);
-      value++;
-      parentId = nodeById.get(parentId)?.parentId;
+  const childrenByParentId = new Map<string | null, VisualNode<N, P>[]>();
+  const parentIds: string[] = [];
+  const seenParentIds = new Set<string>();
+  for (const node of nodes) {
+    const parentId = node.parentId ?? null;
+    const children = childrenByParentId.get(parentId) ?? [];
+    children.push(node);
+    childrenByParentId.set(parentId, children);
+    if (parentId !== null && !seenParentIds.has(parentId)) {
+      seenParentIds.add(parentId);
+      parentIds.push(parentId);
     }
-    return value;
-  };
-  const parentIds = [
-    ...new Set(nodes.flatMap((node) => (node.parentId == null ? [] : [node.parentId]))),
-  ].sort((left, right) => depth(nodeById.get(right)!) - depth(nodeById.get(left)!));
+  }
+  const depthByNodeId = new Map<string, number>();
+  for (const node of nodes) {
+    if (depthByNodeId.has(node.id)) continue;
+    const path: VisualNode<N, P>[] = [];
+    const seen = new Set<string>();
+    let current: VisualNode<N, P> | undefined = node;
+    while (current && !depthByNodeId.has(current.id) && !seen.has(current.id)) {
+      seen.add(current.id);
+      path.push(current);
+      current = current.parentId == null ? undefined : nodeById.get(current.parentId);
+    }
+    let depth = current ? (depthByNodeId.get(current.id) ?? 0) : -1;
+    for (let index = path.length - 1; index >= 0; index--) {
+      depthByNodeId.set(path[index]!.id, ++depth);
+    }
+  }
+  parentIds.sort((left, right) => (depthByNodeId.get(right) ?? 0) - (depthByNodeId.get(left) ?? 0));
   const edgeById = new Map(graph.edges.map((edge) => [edge.id, { ...edge }]));
+  const siblingEdgesByParentId = new Map<string | null, GraphEdge[]>();
+  for (const edge of graph.edges) {
+    const sourceParentId = nodeById.get(edge.sourceId)?.parentId ?? null;
+    const targetParentId = nodeById.get(edge.targetId)?.parentId ?? null;
+    if (sourceParentId !== targetParentId) continue;
+    const edges = siblingEdgesByParentId.get(sourceParentId) ?? [];
+    edges.push(edge);
+    siblingEdgesByParentId.set(sourceParentId, edges);
+  }
   const padding = typeof options.padding === "number" ? options.padding : 12;
 
   const layoutSiblings = (parentId: string | null): void => {
-    const siblings = nodes.filter((node) => (node.parentId ?? null) === parentId);
+    context?.throwIfAborted();
+    const siblings = childrenByParentId.get(parentId) ?? [];
     if (siblings.length === 0) return;
-    const siblingIds = new Set(siblings.map((node) => node.id));
-    const siblingEdges = graph.edges.filter(
-      (edge) => siblingIds.has(edge.sourceId) && siblingIds.has(edge.targetId),
-    );
+    const siblingEdges = siblingEdgesByParentId.get(parentId) ?? [];
+    if (
+      siblings.length === 1 &&
+      siblingEdges.length === 0 &&
+      siblings[0]!.ports === undefined &&
+      options.settings === undefined &&
+      options.constraints === undefined &&
+      options.strategies === undefined &&
+      options.nodeSettings === undefined &&
+      options.portSettings === undefined
+    ) {
+      const node = siblings[0]!;
+      const size = getNodeSize(node, options);
+      const inset =
+        typeof options.padding === "number"
+          ? { x: options.padding, y: options.padding }
+          : { x: options.padding?.left ?? 12, y: options.padding?.top ?? 12 };
+      Object.assign(node, inset, size, { parentId });
+      return;
+    }
     const flatNodes = siblings.map((node) => ({ ...node, parentId: null }));
     const flatGraph = {
       ...graph,
@@ -1224,41 +1266,40 @@ function runCompoundPipeline<N, E, G, P>(
     layoutSiblings(parentId);
     const parent = nodeById.get(parentId);
     if (!parent) continue;
-    const children = nodes.filter((node) => node.parentId === parentId);
+    const children = childrenByParentId.get(parentId) ?? [];
     const right = Math.max(0, ...children.map((node) => (node.x ?? 0) + (node.width ?? 0)));
     const bottom = Math.max(0, ...children.map((node) => (node.y ?? 0) + (node.height ?? 0)));
     parent.width = Math.max(parent.width ?? 0, right + padding);
     parent.height = Math.max(parent.height ?? 0, bottom + padding);
   }
 
-  const roots = nodes.filter((node) => node.parentId == null);
-  if (roots.length === 1 && parentIds.includes(roots[0]!.id)) {
+  const roots = childrenByParentId.get(null) ?? [];
+  if (roots.length === 1 && seenParentIds.has(roots[0]!.id)) {
     Object.assign(roots[0]!, { x: 0, y: 0 });
   } else {
     layoutSiblings(null);
   }
 
-  const absoluteRect = (id: string): { x: number; y: number; width: number; height: number } => {
-    const node = nodeById.get(id);
-    if (!node) return { x: 0, y: 0, width: 0, height: 0 };
-    let x = node.x ?? 0;
-    let y = node.y ?? 0;
-    let parentId = node.parentId;
-    const seen = new Set<string>();
-    while (parentId != null && !seen.has(parentId)) {
-      seen.add(parentId);
-      const parent = nodeById.get(parentId);
-      if (!parent) break;
-      x += parent.x ?? 0;
-      y += parent.y ?? 0;
-      parentId = parent.parentId;
-    }
-    return { x, y, width: node.width ?? 0, height: node.height ?? 0 };
-  };
+  const absoluteRectByNodeId = new Map<
+    string,
+    { x: number; y: number; width: number; height: number }
+  >();
+  for (const node of [...nodes].sort(
+    (left, right) => (depthByNodeId.get(left.id) ?? 0) - (depthByNodeId.get(right.id) ?? 0),
+  )) {
+    const parent = node.parentId == null ? undefined : absoluteRectByNodeId.get(node.parentId);
+    absoluteRectByNodeId.set(node.id, {
+      x: (parent?.x ?? 0) + (node.x ?? 0),
+      y: (parent?.y ?? 0) + (node.y ?? 0),
+      width: node.width ?? 0,
+      height: node.height ?? 0,
+    });
+  }
+  const emptyRect = { x: 0, y: 0, width: 0, height: 0 };
   for (const edge of graph.edges) {
     if (edgeById.get(edge.id)?.points !== undefined) continue;
-    const source = absoluteRect(edge.sourceId);
-    const target = absoluteRect(edge.targetId);
+    const source = absoluteRectByNodeId.get(edge.sourceId) ?? emptyRect;
+    const target = absoluteRectByNodeId.get(edge.targetId) ?? emptyRect;
     const start = { x: source.x + source.width, y: source.y + source.height / 2 };
     const end = { x: target.x, y: target.y + target.height / 2 };
     const track = (start.x + end.x) / 2;
@@ -1307,7 +1348,12 @@ function runLayeredPipeline<N, E, G, P>(
       })),
     } as VisualGraph<N, E, G, P>;
   }
-  if (hasNestedNodes(graph)) return runCompoundPipeline(graph, options, context);
+  if (hasNestedNodes(graph)) {
+    context?.throwIfAborted();
+    return context
+      ? context.measurePhase("compound-layout", () => runCompoundPipeline(graph, options, context))
+      : runCompoundPipeline(graph, options, context);
+  }
   const wrapped = runWrappedPipeline(graph, options);
   if (wrapped) return wrapped;
   const comments = runCommentBoxPipeline(graph, options, context);
@@ -1453,13 +1499,19 @@ function runLayeredPipeline<N, E, G, P>(
       ),
     ),
   );
-  const unzippingFanIn =
-    graph.edges.length === graph.nodes.length - 1 &&
-    graph.nodes.some(
-      (node) =>
-        graph.edges.filter((edge) => edge.targetId === node.id).length === graph.nodes.length - 1,
+  const unzippingEnabled =
+    (options.settings?.["layerUnzipping.strategy"] ?? "NONE") === "ALTERNATING";
+  let unzippingFanIn = false;
+  if (unzippingEnabled && graph.edges.length === graph.nodes.length - 1) {
+    const incomingCountByNodeId = new Map(graph.nodes.map((node) => [node.id, 0]));
+    for (const edge of graph.edges) {
+      incomingCountByNodeId.set(edge.targetId, (incomingCountByNodeId.get(edge.targetId) ?? 0) + 1);
+    }
+    unzippingFanIn = [...incomingCountByNodeId.values()].some(
+      (count) => count === graph.nodes.length - 1,
     );
-  if ((options.settings?.["layerUnzipping.strategy"] ?? "NONE") === "ALTERNATING") {
+  }
+  if (unzippingEnabled) {
     if (unzippingFanIn) {
       order = applyLayerUnzipping(expanded.input, order);
     } else {
