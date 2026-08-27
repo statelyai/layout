@@ -132,8 +132,9 @@ const result = getLayeredLayout(graph, {
 });
 ```
 
-See [Architecture](./docs/architecture.md), [Roadmap](./docs/roadmap.md), and
-[Upstream and provenance](./docs/upstream.md). [Parity](./docs/parity.md) tracks
+See [API reference](./docs/api-reference.md), [Architecture](./docs/architecture.md),
+[Roadmap](./docs/roadmap.md), and [Upstream and provenance](./docs/upstream.md).
+[Parity](./docs/parity.md) tracks
 API coverage separately from native algorithm fidelity.
 
 ## Development
