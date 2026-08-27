@@ -3,6 +3,10 @@
   "version": "0.0.0",
   "description": "Extensible, graph-native layout algorithms for @statelyai/graph",
   "license": "EPL-2.0 OR GPL-3.0-or-later",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/statelyai/layout.git"
+  },
   "files": [
     "dist",
     "LICENSE.md",
@@ -19,6 +23,9 @@
     "./layered": "./dist/layered/index.mjs",
     "./package.json": "./package.json"
   },
+  "publishConfig": {
+    "access": "public"
+  },
   "scripts": {
     "build": "tsdown",
     "bench": "vitest bench --run",
@@ -31,6 +38,8 @@
     "generate:elk-layered-options": "tsx scripts/generate-elk-layered-options.ts",
     "generate:elk-layered-options:check": "tsx scripts/generate-elk-layered-options.ts --check",
     "dev": "tsdown --watch",
+    "changeset": "changeset",
+    "release": "pnpm build && pnpm changeset publish",
     "format": "oxfmt .",
     "format:check": "oxfmt --check .",
     "lint": "oxlint",
@@ -45,6 +54,7 @@
     "@statelyai/graph": "^2.1.0"
   },
   "devDependencies": {
+    "@changesets/cli": "3.0.1",
     "@codemirror/lang-javascript": "^6.2.5",
     "@codemirror/lint": "^6.9.7",
     "@types/node": "^25.0.3",
