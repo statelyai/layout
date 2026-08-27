@@ -132,8 +132,9 @@ const result = getLayeredLayout(graph, {
 });
 ```
 
-See [Architecture](./docs/architecture.md), [Roadmap](./docs/roadmap.md), and
-[Upstream and provenance](./docs/upstream.md). [Parity](./docs/parity.md) tracks
+See [API reference](./docs/api-reference.md), [Architecture](./docs/architecture.md),
+[Roadmap](./docs/roadmap.md), and [Upstream and provenance](./docs/upstream.md).
+[Parity](./docs/parity.md) tracks
 API coverage separately from native algorithm fidelity.
 
 ## Development
@@ -145,8 +146,22 @@ pnpm install
 pnpm verify
 pnpm bench
 pnpm demo
+pnpm changeset
+pnpm release
 ```
 
 `pnpm verify` checks Oxfmt, Oxlint, source and repository TypeScript projects,
 generated layered-option and demo-corpus freshness, tests,
 declarations/runtime builds, the demo bundle, and the packed package surface.
+
+## Releases
+
+<!-- release process derived from package.json#scripts and .changeset/config.json -->
+
+Add a release note with `pnpm changeset`. When it reaches `main`, the release
+workflow opens or updates a version pull request. Merging that pull request
+publishes the package to npm and creates the GitHub release and tag.
+
+Before the first automated release, publish the initial `0.0.0` package and
+configure npm Trusted Publishing for `statelyai/layout` using
+`.github/workflows/release.yml`.
