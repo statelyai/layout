@@ -5,6 +5,8 @@ description: "Exports from @statelyai/layout and its package entry points"
 
 ## Main entry point
 
+<!-- public exports from src/index.ts -->
+
 Import these exports from `@statelyai/layout`.
 
 ### Layout execution
@@ -86,6 +88,20 @@ Import these exports from `@statelyai/layout`.
 | `NodePlacer`           | Node-placement function.                          |
 | `NodeSize`             | Node width and height.                            |
 
+### Layered option types
+
+| Type                           | Description                                  |
+| ------------------------------ | -------------------------------------------- |
+| `LayeredAdvancedOptions`       | Simplified names for ELK layered options.    |
+| `ElkLayeredOptionId`           | Supported full ELK layered option IDs.       |
+| `ElkLayeredOptionName`         | Supported simplified layered option names.   |
+| `ElkLayeredOptionValueByName`  | Value type lookup by simplified option name. |
+| `CycleBreakingStrategy`        | Supported cycle-breaking strategy names.     |
+| `CrossingMinimizationStrategy` | Supported crossing-minimization names.       |
+| `EdgeRoutingStyle`             | Supported layered edge-routing styles.       |
+| `LayeringStrategy`             | Supported layer-assignment strategy names.   |
+| `NodePlacementStrategy`        | Supported node-placement strategy names.     |
+
 ### Additional strategy exports
 
 The layered entry point also exports:
@@ -125,6 +141,8 @@ class UnsupportedLayoutError extends LayoutError {}
 The error code is `UNSUPPORTED_LAYOUT`.
 
 ## Layered entry point
+
+<!-- public exports from src/layered/index.ts -->
 
 `@statelyai/layout/layered` exports the layered layout function, algorithm,
 strategy functions, and layered types listed above. It does not export the

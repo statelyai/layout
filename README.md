@@ -162,6 +162,4 @@ Add a release note with `pnpm changeset`. When it reaches `main`, the release
 workflow opens or updates a version pull request. Merging that pull request
 publishes the package to npm and creates the GitHub release and tag.
 
-Before the first automated release, publish the initial `0.0.0` package and
-configure npm Trusted Publishing for `statelyai/layout` using
-`.github/workflows/release.yml`.
+Publishing uses npm Trusted Publishing through `.github/workflows/release.yml`.
