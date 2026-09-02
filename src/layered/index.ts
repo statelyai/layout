@@ -1877,18 +1877,67 @@ function runLayeredPipeline<N, E, G, P>(
         : { ...end, y: end.y + delta };
     (routes.pointsByEdgeId as Map<string, readonly Point[]>).set(edge.id, points);
   }
+  const routedPortAnchors = new Map<string, Point>();
+  for (const edge of graph.edges) {
+    const points = routes.pointsByEdgeId.get(edge.id);
+    const first = points?.[0];
+    const last = points?.at(-1);
+    if (
+      edge.sourcePort !== undefined &&
+      first &&
+      graph.edges.filter(
+        (candidate) =>
+          candidate.sourceId === edge.sourceId && candidate.sourcePort === edge.sourcePort,
+      ).length === 1
+    ) {
+      routedPortAnchors.set(`${edge.sourceId}\0${edge.sourcePort}`, first);
+    }
+    if (
+      edge.targetPort !== undefined &&
+      last &&
+      graph.edges.filter(
+        (candidate) =>
+          candidate.targetId === edge.targetId && candidate.targetPort === edge.targetPort,
+      ).length === 1
+    ) {
+      routedPortAnchors.set(`${edge.targetId}\0${edge.targetPort}`, last);
+    }
+  }
   const nodes = graph.nodes.map((node): VisualNode<N, P> => {
     const rect = placement.rectByNodeId.get(node.id);
     if (!rect) {
       throw new Error(`Node placement missing for ${node.id}`);
     }
-    const ports = placePorts(
+    let ports = placePorts(
       node.ports,
       rect,
       direction,
       (port) => input.portSettings?.(port, node),
       { ...options.settings, ...options.nodeSettings?.(node) },
     );
+    if (options.nodeSettings?.(node)?.portConstraints === "FIXED_SIDE") {
+      ports = ports?.map((port) => {
+        if ((port.width ?? 8) !== 0 || (port.height ?? 8) !== 0) return port;
+        const anchor = routedPortAnchors.get(`${node.id}\0${port.name}`);
+        if (!anchor || port.x === undefined || port.y === undefined) return port;
+        const settings = input.portSettings?.(port, node);
+        const configuredAnchor = settings?.["port.anchor"] as
+          | { x?: number; y?: number }
+          | undefined;
+        const width = port.width ?? 0;
+        const height = port.height ?? 0;
+        const defaultAnchorX = port.x >= rect.width ? width : port.x + width <= 0 ? 0 : width / 2;
+        const defaultAnchorY =
+          port.y >= rect.height ? height : port.y + height <= 0 ? 0 : height / 2;
+        const x = anchor.x - rect.x - (configuredAnchor?.x ?? defaultAnchorX);
+        const y = anchor.y - rect.y - (configuredAnchor?.y ?? defaultAnchorY);
+        return {
+          ...port,
+          x: x === 0 && Object.is(port.x, -0) ? port.x : x,
+          y: y === 0 && Object.is(port.y, -0) ? port.y : y,
+        };
+      });
+    }
     return {
       ...node,
       ...rect,
@@ -1915,12 +1964,29 @@ function runLayeredPipeline<N, E, G, P>(
       edgeLabelSideSelection === "ALWAYS_UP" ||
       edgeLabelSideSelection === "SMART_UP" ||
       edgeLabelSideSelection === "DIRECTION_UP";
+    const horizontal = direction === "left" || direction === "right";
+    const verticalTrack = horizontal
+      ? points.find((point, index) => {
+          const next = points[index + 1];
+          return next !== undefined && point.x === next.x && point.y !== next.y;
+        })
+      : undefined;
+    const trackNearTarget =
+      verticalTrack !== undefined &&
+      Math.abs(lastPoint.x - verticalTrack.x) < Math.abs(verticalTrack.x - firstPoint.x);
+    const edgeNodeSpacing = Number(options.settings?.["spacing.edgeNodeBetweenLayers"] ?? 10);
     const routeX =
       labelPlacement === "TAIL"
         ? firstPoint.x + labelSpacing
         : labelPlacement === "HEAD"
           ? lastPoint.x - width - labelSpacing
-          : midpoint.x - width / 2;
+          : inlineLabel && verticalTrack
+            ? trackNearTarget
+              ? verticalTrack.x - edgeNodeSpacing - width
+              : verticalTrack.x + edgeNodeSpacing
+            : inlineLabel
+              ? Math.floor(midpoint.x - width / 2)
+              : midpoint.x - width / 2;
     const routeY =
       labelPlacement === "CENTER" && inlineLabel
         ? midpoint.y - height / 2 - 0.5
@@ -1929,7 +1995,6 @@ function runLayeredPipeline<N, E, G, P>(
           : (labelPlacement === "CENTER" ? midpoint.y : (firstPoint.y + lastPoint.y) / 2) +
             labelSpacing +
             Math.round(edgeThickness / 2);
-    const horizontal = direction === "left" || direction === "right";
     const x =
       labelPlacement === "CENTER" && horizontal && labelDummyRect ? labelDummyRect.x : routeX;
     const y =

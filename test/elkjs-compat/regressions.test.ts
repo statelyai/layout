@@ -4,6 +4,7 @@
  * SPDX-License-Identifier: EPL-2.0
  *******************************************************************************/
 import { describe, expect, it } from "vitest";
+import OracleELK from "elkjs/lib/elk.bundled.js";
 import ELK, { type ElkNode } from "../../src/elkjs";
 import bug7 from "../fixtures/elkjs-0.11.1/bug-7.json";
 import changeAwareArrayList from "../fixtures/elkjs-0.11.1/change-aware-array-list.json";
@@ -177,5 +178,248 @@ describe("elkjs compatibility: regressions", () => {
         ).toBe(true);
       }
     }
+  });
+
+  it("does not compact a right-directed wide edge label into its nodes", async () => {
+    const graph: ElkNode = {
+      id: "root",
+      layoutOptions: {
+        "elk.algorithm": "layered",
+        "elk.direction": "RIGHT",
+        "elk.edgeRouting": "ORTHOGONAL",
+        "elk.layered.compaction.postCompaction.strategy": "LEFT",
+        "elk.layered.spacing.nodeNodeBetweenLayers": "6",
+      },
+      children: [
+        { id: "source", width: 10, height: 3 },
+        { id: "target", width: 10, height: 3 },
+      ],
+      edges: [
+        {
+          id: "edge",
+          sources: ["source"],
+          targets: ["target"],
+          labels: [
+            {
+              id: "label",
+              text: "A_WIDE_TRANSITION_LABEL",
+              width: 24,
+              height: 1,
+              layoutOptions: {
+                "elk.edgeLabels.inline": "true",
+                "elk.edgeLabels.placement": "CENTER",
+              },
+            },
+          ],
+        },
+      ],
+    };
+
+    const [actual, expected] = await Promise.all([
+      new ELK().layout(structuredClone(graph)),
+      new OracleELK().layout(structuredClone(graph) as never) as Promise<ElkNode>,
+    ]);
+    const geometry = (result: ElkNode) => ({
+      nodes: result.children?.map(({ id, x, y, width, height }) => ({ id, x, y, width, height })),
+      labels: result.edges?.flatMap((edge) =>
+        (edge.labels ?? []).map(({ id, x, y, width, height }) => ({ id, x, y, width, height })),
+      ),
+    });
+
+    expect(geometry(actual)).toEqual(geometry(expected));
+  });
+
+  it("orders right-directed fixed-side fan-out ports with their target layer", async () => {
+    const targetIds = ["alpha", "beta", "gamma"];
+    const graph: ElkNode = {
+      id: "root",
+      layoutOptions: {
+        "elk.algorithm": "layered",
+        "elk.direction": "RIGHT",
+        "elk.edgeRouting": "ORTHOGONAL",
+        "elk.padding": "[top=2,left=2,bottom=2,right=2]",
+        "elk.spacing.nodeNode": "3",
+        "elk.spacing.edgeNode": "2",
+        "elk.spacing.edgeEdge": "1",
+        "elk.spacing.edgeLabel": "1",
+        "elk.layered.spacing.nodeNodeBetweenLayers": "12",
+        "elk.layered.spacing.edgeNodeBetweenLayers": "3",
+        "elk.layered.spacing.edgeEdgeBetweenLayers": "2",
+        "elk.layered.layering.strategy": "NETWORK_SIMPLEX",
+        "elk.layered.cycleBreaking.strategy": "GREEDY_MODEL_ORDER",
+        "elk.layered.crossingMinimization.strategy": "LAYER_SWEEP",
+        "elk.layered.crossingMinimization.forceNodeModelOrder": "false",
+        "elk.layered.considerModelOrder.strategy": "NONE",
+        "elk.layered.compaction.postCompaction.strategy": "EDGE_LENGTH",
+        "elk.layered.nodePlacement.strategy": "BRANDES_KOEPF",
+        "elk.layered.nodePlacement.bk.fixedAlignment": "BALANCED",
+        "elk.layered.unnecessaryBendpoints": "true",
+      },
+      children: [
+        {
+          id: "hub",
+          width: 7,
+          height: 3,
+          layoutOptions: { "elk.portConstraints": "FIXED_SIDE" },
+          ports: targetIds.map((target) => ({
+            id: `source-${target}`,
+            width: 0,
+            height: 0,
+            layoutOptions: { "elk.port.side": "EAST" },
+          })),
+        },
+        ...targetIds.map((target) => ({
+          id: target,
+          width: target === "beta" ? 8 : 9,
+          height: 3,
+          layoutOptions: { "elk.portConstraints": "FIXED_SIDE" },
+          ports: [
+            {
+              id: `target-${target}`,
+              width: 0,
+              height: 0,
+              layoutOptions: { "elk.port.side": "WEST" },
+            },
+          ],
+        })),
+      ],
+      edges: targetIds.map((target) => ({
+        id: `edge-${target}`,
+        sources: [`source-${target}`],
+        targets: [`target-${target}`],
+        labels: [
+          {
+            id: `label-${target}`,
+            text: `TO_${target.toUpperCase()}`,
+            width: `TO_${target.toUpperCase()}`.length,
+            height: 1,
+            layoutOptions: {
+              "elk.edgeLabels.inline": "true",
+              "elk.edgeLabels.placement": "CENTER",
+            },
+          },
+        ],
+      })),
+    };
+
+    const [actual, expected] = await Promise.all([
+      new ELK().layout(structuredClone(graph)),
+      new OracleELK().layout(structuredClone(graph) as never) as Promise<ElkNode>,
+    ]);
+    const geometry = (result: ElkNode) => ({
+      nodes: result.children?.map(({ id, x, y, ports }) => ({
+        id,
+        x,
+        y,
+        ports: ports?.map(({ id: portId, x: portX, y: portY }) => ({
+          id: portId,
+          x: portX,
+          y: portY,
+        })),
+      })),
+      edges: result.edges?.map(({ id, sections, labels }) => ({
+        id,
+        sections,
+        labels: labels?.map(({ id: labelId, x, y }) => ({ id: labelId, x, y })),
+      })),
+    });
+
+    expect(geometry(actual)).toEqual(geometry(expected));
+  });
+
+  it("routes right-directed fixed-side fan-in tracks beside their target", async () => {
+    const sourceIds = ["alpha", "beta", "gamma"];
+    const graph: ElkNode = {
+      id: "root",
+      layoutOptions: {
+        "elk.algorithm": "layered",
+        "elk.direction": "RIGHT",
+        "elk.edgeRouting": "ORTHOGONAL",
+        "elk.padding": "[top=2,left=2,bottom=2,right=2]",
+        "elk.spacing.nodeNode": "3",
+        "elk.spacing.edgeNode": "2",
+        "elk.spacing.edgeEdge": "1",
+        "elk.spacing.edgeLabel": "1",
+        "elk.layered.spacing.nodeNodeBetweenLayers": "16",
+        "elk.layered.spacing.edgeNodeBetweenLayers": "3",
+        "elk.layered.spacing.edgeEdgeBetweenLayers": "2",
+        "elk.layered.layering.strategy": "NETWORK_SIMPLEX",
+        "elk.layered.cycleBreaking.strategy": "GREEDY_MODEL_ORDER",
+        "elk.layered.crossingMinimization.strategy": "LAYER_SWEEP",
+        "elk.layered.compaction.postCompaction.strategy": "EDGE_LENGTH",
+        "elk.layered.nodePlacement.strategy": "BRANDES_KOEPF",
+        "elk.layered.nodePlacement.bk.fixedAlignment": "BALANCED",
+        "elk.layered.unnecessaryBendpoints": "true",
+      },
+      children: [
+        ...sourceIds.map((source) => ({
+          id: source,
+          width: source === "beta" ? 8 : 9,
+          height: 3,
+          layoutOptions: { "elk.portConstraints": "FIXED_SIDE" },
+          ports: [
+            {
+              id: `source-${source}`,
+              width: 0,
+              height: 0,
+              layoutOptions: { "elk.port.side": "EAST" },
+            },
+          ],
+        })),
+        {
+          id: "done",
+          width: 10,
+          height: 3,
+          layoutOptions: { "elk.portConstraints": "FIXED_SIDE" },
+          ports: sourceIds.map((source) => ({
+            id: `target-${source}`,
+            width: 0,
+            height: 0,
+            layoutOptions: { "elk.port.side": "WEST" },
+          })),
+        },
+      ],
+      edges: sourceIds.map((source) => ({
+        id: `edge-${source}`,
+        sources: [`source-${source}`],
+        targets: [`target-${source}`],
+        labels: [
+          {
+            id: `label-${source}`,
+            text: `FINISH_${source.toUpperCase()}`,
+            width: `FINISH_${source.toUpperCase()}`.length,
+            height: 1,
+            layoutOptions: {
+              "elk.edgeLabels.inline": "true",
+              "elk.edgeLabels.placement": "CENTER",
+            },
+          },
+        ],
+      })),
+    };
+
+    const [actual, expected] = await Promise.all([
+      new ELK().layout(structuredClone(graph)),
+      new OracleELK().layout(structuredClone(graph) as never) as Promise<ElkNode>,
+    ]);
+    const geometry = (result: ElkNode) => ({
+      nodes: result.children?.map(({ id, x, y, ports }) => ({
+        id,
+        x,
+        y,
+        ports: ports?.map(({ id: portId, x: portX, y: portY }) => ({
+          id: portId,
+          x: portX,
+          y: portY,
+        })),
+      })),
+      edges: result.edges?.map(({ id, sections, labels }) => ({
+        id,
+        sections,
+        labels: labels?.map(({ id: labelId, x, y }) => ({ id: labelId, x, y })),
+      })),
+    });
+
+    expect(geometry(actual)).toEqual(geometry(expected));
   });
 });
