@@ -37,6 +37,7 @@
     "demo:typecheck": "tsc --project demo/tsconfig.json",
     "generate:elk-layered-options": "tsx scripts/generate-elk-layered-options.ts",
     "generate:elk-layered-options:check": "tsx scripts/generate-elk-layered-options.ts --check",
+    "prepare": "pnpm build",
     "dev": "tsdown --watch",
     "changeset": "changeset",
     "release": "pnpm build && pnpm changeset publish",
