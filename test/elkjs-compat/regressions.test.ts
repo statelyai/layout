@@ -180,6 +180,157 @@ describe("elkjs compatibility: regressions", () => {
     }
   });
 
+  it.each(["POLYLINE", "SPLINES"])(
+    "keeps post-compacted %s routes distinct from orthogonal routing",
+    async (edgeRouting) => {
+      const graph: ElkNode = {
+        id: "root",
+        layoutOptions: {
+          "elk.algorithm": "layered",
+          "elk.direction": "RIGHT",
+          "elk.edgeRouting": edgeRouting,
+          "elk.layered.compaction.postCompaction.strategy": "EDGE_LENGTH",
+        },
+        children: [
+          { id: "source", width: 20, height: 20 },
+          { id: "upper", width: 20, height: 20 },
+          { id: "lower", width: 20, height: 20 },
+        ],
+        edges: [
+          { id: "upper-edge", sources: ["source"], targets: ["upper"] },
+          { id: "lower-edge", sources: ["source"], targets: ["lower"] },
+        ],
+      };
+      const result = await new ELK().layout(graph);
+      const pointLists = (result.edges ?? []).flatMap((edge) =>
+        (edge.sections ?? []).map((section) => [
+          section.startPoint,
+          ...(section.bendPoints ?? []),
+          section.endPoint,
+        ]),
+      );
+
+      expect(
+        pointLists.some((points) =>
+          points.some(
+            (point, index) =>
+              index > 0 &&
+              Math.abs(point.x - points[index - 1]!.x) > 1e-9 &&
+              Math.abs(point.y - points[index - 1]!.y) > 1e-9,
+          ),
+        ),
+      ).toBe(true);
+    },
+  );
+
+  it("preserves non-flow fixed sides for zero-size ports", async () => {
+    const graph: ElkNode = {
+      id: "root",
+      layoutOptions: {
+        "elk.algorithm": "layered",
+        "elk.direction": "RIGHT",
+        "elk.edgeRouting": "ORTHOGONAL",
+        "elk.layered.compaction.postCompaction.strategy": "EDGE_LENGTH",
+      },
+      children: [
+        {
+          id: "source",
+          width: 20,
+          height: 10,
+          layoutOptions: { "elk.portConstraints": "FIXED_SIDE" },
+          ports: [
+            {
+              id: "source-port",
+              width: 0,
+              height: 0,
+              layoutOptions: { "elk.port.side": "NORTH" },
+            },
+          ],
+        },
+        {
+          id: "target",
+          width: 20,
+          height: 10,
+          layoutOptions: { "elk.portConstraints": "FIXED_SIDE" },
+          ports: [
+            {
+              id: "target-port",
+              width: 0,
+              height: 0,
+              layoutOptions: { "elk.port.side": "SOUTH" },
+            },
+          ],
+        },
+      ],
+      edges: [{ id: "edge", sources: ["source-port"], targets: ["target-port"] }],
+    };
+    const result = await new ELK().layout(graph);
+    const source = result.children?.find((node) => node.id === "source");
+    const target = result.children?.find((node) => node.id === "target");
+
+    expect(source?.ports?.[0]?.y).toBeCloseTo(0);
+    expect(target?.ports?.[0]?.y).toBe(target?.height);
+  });
+
+  it("places left-directed inline labels away from a target-side track", async () => {
+    const graph: ElkNode = {
+      id: "root",
+      layoutOptions: {
+        "elk.algorithm": "layered",
+        "elk.direction": "LEFT",
+        "elk.edgeRouting": "ORTHOGONAL",
+        "elk.layered.spacing.edgeNodeBetweenLayers": "3",
+      },
+      children: [
+        { id: "alpha", width: 10, height: 10 },
+        { id: "beta", width: 10, height: 10 },
+        { id: "gamma", width: 10, height: 10 },
+        { id: "target", width: 10, height: 10 },
+      ],
+      edges: ["alpha", "beta", "gamma"].map((source) => ({
+        id: `edge-${source}`,
+        sources: [source],
+        targets: ["target"],
+        labels: [
+          {
+            id: `label-${source}`,
+            text: `FROM_${source.toUpperCase()}`,
+            width: 12,
+            height: 1,
+            layoutOptions: {
+              "elk.edgeLabels.inline": "true",
+              "elk.edgeLabels.placement": "CENTER",
+            },
+          },
+        ],
+      })),
+    };
+    const result = await new ELK().layout(graph);
+    const targetSideRoutes = (result.edges ?? []).flatMap((edge) => {
+      const section = edge.sections?.[0];
+      const points = section
+        ? [section.startPoint, ...(section.bendPoints ?? []), section.endPoint]
+        : [];
+      const track = points.find((point, index) => {
+        const next = points[index + 1];
+        return next !== undefined && point.x === next.x && point.y !== next.y;
+      });
+      if (
+        !section ||
+        !track ||
+        Math.abs(section.endPoint.x - track.x) >= Math.abs(track.x - section.startPoint.x)
+      ) {
+        return [];
+      }
+      return [{ label: edge.labels?.[0], track }];
+    });
+
+    expect(targetSideRoutes.length).toBeGreaterThan(0);
+    for (const { label, track } of targetSideRoutes) {
+      expect(label?.x).toBeGreaterThanOrEqual(track.x + 3);
+    }
+  });
+
   it("does not compact a right-directed wide edge label into its nodes", async () => {
     const graph: ElkNode = {
       id: "root",

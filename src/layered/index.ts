@@ -1975,13 +1975,14 @@ function runLayeredPipeline<N, E, G, P>(
       verticalTrack !== undefined &&
       Math.abs(lastPoint.x - verticalTrack.x) < Math.abs(verticalTrack.x - firstPoint.x);
     const edgeNodeSpacing = Number(options.settings?.["spacing.edgeNodeBetweenLayers"] ?? 10);
+    const labelBeforeTrack = direction === "right" ? trackNearTarget : !trackNearTarget;
     const routeX =
       labelPlacement === "TAIL"
         ? firstPoint.x + labelSpacing
         : labelPlacement === "HEAD"
           ? lastPoint.x - width - labelSpacing
           : inlineLabel && verticalTrack
-            ? trackNearTarget
+            ? labelBeforeTrack
               ? verticalTrack.x - edgeNodeSpacing - width
               : verticalTrack.x + edgeNodeSpacing
             : inlineLabel

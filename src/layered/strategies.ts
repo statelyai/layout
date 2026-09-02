@@ -2658,6 +2658,10 @@ export function applyPostCompaction(
     }
   }
   if (routes) {
+    const edgeRouting = input.settings.edgeRouting ?? "ORTHOGONAL";
+    const compactedSplineControls = routes.splineNubControlsByEdgeId
+      ? new Map(routes.splineNubControlsByEdgeId)
+      : undefined;
     const edgeById = new Map(input.graph.edges.map((edge) => [edge.id, edge]));
     for (const [edgeId, readonlyPoints] of routes.pointsByEdgeId) {
       const points = [...readonlyPoints];
@@ -2674,25 +2678,34 @@ export function applyPostCompaction(
           x: originalEndpoints.end.x + (nodeDeltaById.get(edge.targetId) ?? 0),
         };
       }
-      const horizontal = input.direction === "left" || input.direction === "right";
-      const orthogonal: Point[] = [];
-      for (const [index, point] of points.entries()) {
-        const previous = orthogonal.at(-1);
-        if (previous && previous.x !== point.x && previous.y !== point.y) {
-          const approachingTarget = index === points.length - 1;
-          orthogonal.push(
-            horizontal === approachingTarget
-              ? { x: previous.x, y: point.y }
-              : { x: point.x, y: previous.y },
-          );
+      let compactedPoints = points;
+      if (edgeRouting === "ORTHOGONAL") {
+        const horizontal = input.direction === "left" || input.direction === "right";
+        const orthogonal: Point[] = [];
+        for (const [index, point] of points.entries()) {
+          const previous = orthogonal.at(-1);
+          if (
+            previous &&
+            Math.abs(previous.x - point.x) > 1e-9 &&
+            Math.abs(previous.y - point.y) > 1e-9
+          ) {
+            const approachingTarget = index === points.length - 1;
+            orthogonal.push(
+              horizontal === approachingTarget
+                ? { x: previous.x, y: point.y }
+                : { x: point.x, y: previous.y },
+            );
+          }
+          orthogonal.push(point);
         }
-        orthogonal.push(point);
+        compactedPoints = simplifyRoute(orthogonal);
+      } else if (edgeRouting === "SPLINES") {
+        // Long-edge joining regenerates controls from the compacted route.
+        compactedSplineControls?.delete(edgeId);
       }
-      (routes.pointsByEdgeId as Map<string, readonly Point[]>).set(
-        edgeId,
-        simplifyRoute(orthogonal),
-      );
+      (routes.pointsByEdgeId as Map<string, readonly Point[]>).set(edgeId, compactedPoints);
     }
+    if (compactedSplineControls) routes.splineNubControlsByEdgeId = compactedSplineControls;
   }
   return placement;
 }
@@ -4411,8 +4424,21 @@ function routeEdges(style: "ORTHOGONAL" | "POLYLINE" | "SPLINES"): EdgeRouter {
             });
       const sourcePort = source.ports?.find((port) => port.name === edge.sourcePort);
       const targetPort = target.ports?.find((port) => port.name === edge.targetPort);
+      const sourcePortSide = sourcePort
+        ? input.portSettings?.(sourcePort, source)?.["port.side"]
+        : undefined;
+      const targetPortSide = targetPort
+        ? input.portSettings?.(targetPort, target)?.["port.side"]
+        : undefined;
+      const sourcePortOnFlowSide = horizontal
+        ? sourcePortSide === undefined || sourcePortSide === "EAST" || sourcePortSide === "WEST"
+        : sourcePortSide === undefined || sourcePortSide === "NORTH" || sourcePortSide === "SOUTH";
+      const targetPortOnFlowSide = horizontal
+        ? targetPortSide === undefined || targetPortSide === "EAST" || targetPortSide === "WEST"
+        : targetPortSide === undefined || targetPortSide === "NORTH" || targetPortSide === "SOUTH";
       const sourceFixedSide =
         sourcePort !== undefined &&
+        sourcePortOnFlowSide &&
         (sourcePort.width ?? 8) === 0 &&
         (sourcePort.height ?? 8) === 0 &&
         input.nodeSettings?.(source)?.portConstraints === "FIXED_SIDE" &&
@@ -4422,6 +4448,7 @@ function routeEdges(style: "ORTHOGONAL" | "POLYLINE" | "SPLINES"): EdgeRouter {
         ).length === 1;
       const targetFixedSide =
         targetPort !== undefined &&
+        targetPortOnFlowSide &&
         (targetPort.width ?? 8) === 0 &&
         (targetPort.height ?? 8) === 0 &&
         input.nodeSettings?.(target)?.portConstraints === "FIXED_SIDE" &&
