@@ -1971,6 +1971,79 @@ function runLayeredPipeline<N, E, G, P>(
           return next !== undefined && point.x === next.x && point.y !== next.y;
         })
       : undefined;
+    const secondPoint = points[1];
+    const beforeLastPoint = points.at(-2);
+    const flowDelta = horizontal ? lastPoint.x - firstPoint.x : lastPoint.y - firstPoint.y;
+    const firstLeadDelta = secondPoint
+      ? horizontal
+        ? secondPoint.x - firstPoint.x
+        : secondPoint.y - firstPoint.y
+      : 0;
+    const lastLeadDelta = beforeLastPoint
+      ? horizontal
+        ? lastPoint.x - beforeLastPoint.x
+        : lastPoint.y - beforeLastPoint.y
+      : 0;
+    const outsideFeedback =
+      routes.outsideFeedbackEdgeIds?.has(edge.id) === true ||
+      (secondPoint !== undefined &&
+        beforeLastPoint !== undefined &&
+        flowDelta !== 0 &&
+        firstLeadDelta * flowDelta < 0 &&
+        lastLeadDelta * flowDelta < 0);
+    const feedbackNodeRects = graph.nodes.flatMap((node) => {
+      const rect = placement.rectByNodeId.get(node.id);
+      return rect ? [rect] : [];
+    });
+    const minimumFeedbackNodeX = Math.min(...feedbackNodeRects.map((rect) => rect.x));
+    const maximumFeedbackNodeX = Math.max(...feedbackNodeRects.map((rect) => rect.x + rect.width));
+    const minimumFeedbackNodeY = Math.min(...feedbackNodeRects.map((rect) => rect.y));
+    const maximumFeedbackNodeY = Math.max(...feedbackNodeRects.map((rect) => rect.y + rect.height));
+    const horizontalFeedbackCandidate = outsideFeedback
+      ? points
+          .flatMap((point, index) => {
+            const next = points[index + 1];
+            return next !== undefined &&
+              point.y === next.y &&
+              (point.y < minimumFeedbackNodeY || point.y > maximumFeedbackNodeY)
+              ? [{ start: point, end: next, length: Math.abs(next.x - point.x) }]
+              : [];
+          })
+          .sort((left, right) => right.length - left.length)[0]
+      : undefined;
+    const verticalFeedbackCandidate = outsideFeedback
+      ? points
+          .flatMap((point, index) => {
+            const next = points[index + 1];
+            return next !== undefined &&
+              point.x === next.x &&
+              (point.x < minimumFeedbackNodeX || point.x > maximumFeedbackNodeX)
+              ? [{ start: point, end: next, length: Math.abs(next.y - point.y) }]
+              : [];
+          })
+          .sort((left, right) => right.length - left.length)[0]
+      : undefined;
+    const sourceNode = graph.nodes.find((node) => node.id === edge.sourceId);
+    const sourcePort = sourceNode?.ports?.find((port) => port.name === edge.sourcePort);
+    const targetPort = sourceNode?.ports?.find((port) => port.name === edge.targetPort);
+    const sourcePortSide =
+      sourceNode && sourcePort
+        ? options.portSettings?.(sourcePort, sourceNode)?.["port.side"]
+        : undefined;
+    const targetPortSide =
+      sourceNode && targetPort
+        ? options.portSettings?.(targetPort, sourceNode)?.["port.side"]
+        : undefined;
+    const sameSideHorizontalPortSelfLoop =
+      edge.sourceId === edge.targetId &&
+      (sourcePortSide === "EAST" || sourcePortSide === "WEST") &&
+      targetPortSide === sourcePortSide;
+    const horizontalFeedbackTrack =
+      sameSideHorizontalPortSelfLoop ||
+      (horizontalFeedbackCandidate?.length ?? -1) >= (verticalFeedbackCandidate?.length ?? -1)
+        ? horizontalFeedbackCandidate
+        : undefined;
+    const verticalFeedbackTrack = horizontalFeedbackTrack ? undefined : verticalFeedbackCandidate;
     const trackNearTarget =
       verticalTrack !== undefined &&
       Math.abs(lastPoint.x - verticalTrack.x) < Math.abs(verticalTrack.x - firstPoint.x);
@@ -1981,21 +2054,33 @@ function runLayeredPipeline<N, E, G, P>(
         ? firstPoint.x + labelSpacing
         : labelPlacement === "HEAD"
           ? lastPoint.x - width - labelSpacing
-          : inlineLabel && verticalTrack
-            ? labelBeforeTrack
-              ? verticalTrack.x - edgeNodeSpacing - width
-              : verticalTrack.x + edgeNodeSpacing
-            : inlineLabel
-              ? Math.floor(midpoint.x - width / 2)
-              : midpoint.x - width / 2;
+          : inlineLabel && horizontalFeedbackTrack
+            ? (horizontalFeedbackTrack.start.x + horizontalFeedbackTrack.end.x - width) / 2
+            : inlineLabel && verticalFeedbackTrack
+              ? verticalFeedbackTrack.start.x > (minimumFeedbackNodeX + maximumFeedbackNodeX) / 2
+                ? verticalFeedbackTrack.start.x + labelSpacing + 1
+                : verticalFeedbackTrack.start.x - labelSpacing - width - 1
+              : inlineLabel && verticalTrack
+                ? labelBeforeTrack
+                  ? verticalTrack.x - edgeNodeSpacing - width
+                  : verticalTrack.x + edgeNodeSpacing
+                : inlineLabel
+                  ? horizontal
+                    ? Math.floor(midpoint.x - width / 2)
+                    : Math.ceil(midpoint.x - width / 2)
+                  : midpoint.x - width / 2;
     const routeY =
-      labelPlacement === "CENTER" && inlineLabel
-        ? midpoint.y - height / 2 - 0.5
-        : labelPlacement === "CENTER" && placeLabelUp
-          ? midpoint.y - height - labelSpacing - Math.round(edgeThickness / 2)
-          : (labelPlacement === "CENTER" ? midpoint.y : (firstPoint.y + lastPoint.y) / 2) +
-            labelSpacing +
-            Math.round(edgeThickness / 2);
+      labelPlacement === "CENTER" && inlineLabel && horizontalFeedbackTrack
+        ? horizontalFeedbackTrack.start.y - height / 2 - 0.5
+        : labelPlacement === "CENTER" && inlineLabel && verticalFeedbackTrack
+          ? (verticalFeedbackTrack.start.y + verticalFeedbackTrack.end.y - height) / 2
+          : labelPlacement === "CENTER" && inlineLabel
+            ? midpoint.y - height / 2 - 0.5
+            : labelPlacement === "CENTER" && placeLabelUp
+              ? midpoint.y - height - labelSpacing - Math.round(edgeThickness / 2)
+              : (labelPlacement === "CENTER" ? midpoint.y : (firstPoint.y + lastPoint.y) / 2) +
+                labelSpacing +
+                Math.round(edgeThickness / 2);
     const x =
       labelPlacement === "CENTER" && horizontal && labelDummyRect ? labelDummyRect.x : routeX;
     const y =

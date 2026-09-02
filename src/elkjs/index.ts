@@ -1492,9 +1492,13 @@ function normalizeElkGraphBounds(
   const wrappingStrategy = String(getOption(layoutOptions, "layered.wrapping.strategy") ?? "OFF");
   const direction = getDirection(layoutOptions);
   const laidOutChildById = new Map((root.children ?? []).map((child) => [String(child.id), child]));
+  const childByEndpointId = new Map(laidOutChildById);
+  for (const child of root.children ?? []) {
+    for (const port of child.ports ?? []) childByEndpointId.set(String(port.id), child);
+  }
   const wrappedEdgeCount = (root.edges ?? []).filter((edge) => {
-    const source = laidOutChildById.get(String(edge.sources?.[0] ?? edge.source));
-    const target = laidOutChildById.get(String(edge.targets?.[0] ?? edge.target));
+    const source = childByEndpointId.get(String(edge.sources?.[0] ?? edge.source));
+    const target = childByEndpointId.get(String(edge.targets?.[0] ?? edge.target));
     if (!source || !target) return false;
     return direction === "right"
       ? (source.x ?? 0) > (target.x ?? 0)
@@ -1536,6 +1540,7 @@ function normalizeElkGraphBounds(
       : 0;
   const postCompactionBoundsExtraX =
     !addBoundaryPixel &&
+    !hasWrappedEdge &&
     String(getOption(layoutOptions, "layered.compaction.postCompaction.strategy") ?? "NONE") !==
       "NONE" &&
     layoutEdgePoints.length > 0 &&
@@ -1544,6 +1549,7 @@ function normalizeElkGraphBounds(
       : 0;
   const postCompactionBoundsExtraY =
     !addBoundaryPixel &&
+    !hasWrappedEdge &&
     String(getOption(layoutOptions, "layered.compaction.postCompaction.strategy") ?? "NONE") !==
       "NONE" &&
     layoutEdgePoints.length > 0 &&
