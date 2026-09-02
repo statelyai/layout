@@ -142,12 +142,14 @@ it("keeps ELK-like backward-edge labels in a vertical sibling corridor", async (
   const actualLabel = actual.edges?.find((edge) => edge.id === "third-second")?.labels?.[0];
   const actualSource = actual.children?.find((node) => node.id === "third");
   const actualTarget = actual.children?.find((node) => node.id === "second");
-  const labelCenterX = (actualLabel?.x ?? 0) + (actualLabel?.width ?? 0) / 2;
-  const endpointCenters = [actualSource, actualTarget].map(
-    (node) => (node?.x ?? 0) + (node?.width ?? 0) / 2,
-  );
+  expect(expectedLabel).toBeDefined();
+  expect(actualLabel).toBeDefined();
+  expect(actualSource).toBeDefined();
+  expect(actualTarget).toBeDefined();
+  const labelCenterX = actualLabel!.x! + actualLabel!.width! / 2;
+  const endpointCenters = [actualSource, actualTarget].map((node) => node!.x! + node!.width! / 2);
 
-  expect(actualLabel?.y).toEqual(expectedLabel?.y);
+  expect(actualLabel!.y).toEqual(expectedLabel!.y);
   expect(labelCenterX).toBeGreaterThanOrEqual(Math.min(...endpointCenters));
   expect(labelCenterX).toBeLessThanOrEqual(Math.max(...endpointCenters));
 });
@@ -179,6 +181,111 @@ it("matches ELK geometry for Viz's two-state cycle", async () => {
       rounded(edge.labels?.[0]?.y),
     ]),
   );
+});
+
+it("matches ELK geometry for an acyclic Viz-profile chain", async () => {
+  const graph: ElkNode = {
+    id: "root",
+    layoutOptions: {
+      ...(vizTwoStateCycle.layoutOptions as Record<string, string>),
+      "elk.direction": "DOWN",
+    },
+    children: ["a", "b", "c"].map((id) => ({ id, width: 80, height: 40 })),
+    edges: [
+      { id: "a-b", sources: ["a"], targets: ["b"] },
+      { id: "b-c", sources: ["b"], targets: ["c"] },
+    ],
+  };
+  const expected = (await new OracleELK().layout(structuredClone(graph) as never)) as ElkNode;
+  const actual = await new NativeELK().layout(structuredClone(graph));
+
+  expect(actual.children?.map(({ x, y }) => [x, y])).toEqual(
+    expected.children?.map(({ x, y }) => [x, y]),
+  );
+  expect([actual.width, actual.height]).toEqual([expected.width, expected.height]);
+});
+
+it("matches ELK spacing for parallel labeled edges", async () => {
+  const port = (id: string, side: "NORTH" | "SOUTH") => ({
+    id,
+    width: 20,
+    height: 20,
+    layoutOptions: { "elk.port.side": side },
+  });
+  const graph: ElkNode = {
+    id: "root",
+    layoutOptions: vizTwoStateCycle.layoutOptions as Record<string, string>,
+    children: [
+      {
+        id: "source",
+        width: 107.6875,
+        height: 60,
+        ports: [port("gray-source", "SOUTH"), port("red-source", "SOUTH")],
+      },
+      {
+        id: "target",
+        width: 97.0625,
+        height: 60,
+        ports: [port("gray-target", "NORTH"), port("red-target", "NORTH")],
+      },
+    ],
+    edges: [
+      {
+        id: "gray",
+        sources: ["gray-source"],
+        targets: ["gray-target"],
+        labels: [
+          {
+            id: "gray-label",
+            text: "gray",
+            width: 101.453125,
+            height: 88,
+            layoutOptions: {
+              "elk.edgeLabels.inline": "true",
+              "elk.edgeLabels.placement": "CENTER",
+            },
+          },
+        ],
+      },
+      {
+        id: "red",
+        sources: ["red-source"],
+        targets: ["red-target"],
+        labels: [
+          {
+            id: "red-label",
+            text: "red",
+            width: 71.921875,
+            height: 88,
+            layoutOptions: {
+              "elk.edgeLabels.inline": "true",
+              "elk.edgeLabels.placement": "CENTER",
+            },
+          },
+        ],
+      },
+    ],
+  };
+  const expected = (await new OracleELK().layout(structuredClone(graph) as never)) as ElkNode;
+  const actual = await new NativeELK().layout(structuredClone(graph));
+  const rounded = (value: number | undefined) =>
+    value === undefined ? value : Math.round(value * 1_000_000_000) / 1_000_000_000;
+  const geometry = (value: ElkNode) => ({
+    size: [rounded(value.width), rounded(value.height)],
+    nodes: value.children?.map((node) => [
+      node.id,
+      rounded(node.x),
+      rounded(node.y),
+      node.ports?.map((port) => [port.id, rounded(port.x), rounded(port.y)]),
+    ]),
+    labels: value.edges?.map((edge) => [
+      edge.id,
+      rounded(edge.labels?.[0]?.x),
+      rounded(edge.labels?.[0]?.y),
+    ]),
+  });
+
+  expect(geometry(actual)).toEqual(geometry(expected));
 });
 
 for (const sideSelection of [

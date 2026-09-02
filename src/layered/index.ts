@@ -1333,6 +1333,37 @@ function runLayeredPipeline<N, E, G, P>(
           left: options.padding?.left ?? 12,
         };
   const switchedSideByPort = new Map<string, "NORTH" | "SOUTH" | "WEST" | "EAST">();
+  const parallelPortIndexByKey = new Map<string, number>();
+  const labeledEdgesByPair = new Map<string, GraphEdge[]>();
+  for (const edge of graph.edges as GraphEdge[]) {
+    const settings = options.edgeSettings?.(edge);
+    if (
+      edge.sourcePort === undefined ||
+      edge.targetPort === undefined ||
+      edge.sourceId === edge.targetId ||
+      (edge.width ?? 0) <= 0 ||
+      (edge.height ?? 0) <= 0 ||
+      (settings?.["edgeLabels.placement"] ?? "CENTER") !== "CENTER" ||
+      settings?.["edgeLabels.inline"] !== true
+    ) {
+      continue;
+    }
+    const key = `${edge.sourceId}\0${edge.targetId}`;
+    const pair = labeledEdgesByPair.get(key) ?? [];
+    pair.push(edge);
+    labeledEdgesByPair.set(key, pair);
+  }
+  for (const pair of labeledEdgesByPair.values()) {
+    if (pair.length < 2) continue;
+    for (const [index, edge] of pair.entries()) {
+      const portIndex =
+        options.settings?.["considerModelOrder.strategy"] === "PREFER_NODES"
+          ? index
+          : pair.length - index - 1;
+      parallelPortIndexByKey.set(`${edge.sourceId}\0${edge.sourcePort}`, portIndex);
+      parallelPortIndexByKey.set(`${edge.targetId}\0${edge.targetPort}`, portIndex);
+    }
+  }
   const input: LayeredPhaseInput = {
     graph: graph as Graph<unknown, unknown, unknown, unknown>,
     sizes: new Map(graph.nodes.map((node) => [node.id, getNodeSize(node, options)])),
@@ -1353,6 +1384,9 @@ function runLayeredPipeline<N, E, G, P>(
     ...(options.edgeSettings === undefined ? {} : { edgeSettings: options.edgeSettings }),
     portSettings: (port, node) => ({
       ...options.portSettings?.(port, node),
+      ...(parallelPortIndexByKey.has(`${node.id}\0${port.name}`)
+        ? { "port.index": parallelPortIndexByKey.get(`${node.id}\0${port.name}`) }
+        : {}),
       ...(switchedSideByPort.has(`${node.id}\0${port.name}`)
         ? { "port.side": switchedSideByPort.get(`${node.id}\0${port.name}`) }
         : {}),
@@ -1726,9 +1760,11 @@ function runLayeredPipeline<N, E, G, P>(
   );
   measure("post-compaction", () => applyPostCompaction(expanded.input, placement, expandedRoutes));
   const antiparallelLabelPositions = new Map<string, Point>();
+  const parallelLabelPositions = new Map<string, Point>();
   const postCompactionNodeCrossDeltas = new Map<string, number>();
   const horizontalAntiparallelFlow = direction === "left" || direction === "right";
   const usesVizInteractivePlacementProfile =
+    options.strategies?.routeEdges === undefined &&
     options.settings?.["cycleBreaking.strategy"] === "MODEL_ORDER" &&
     options.settings?.["layering.strategy"] === "INTERACTIVE" &&
     options.settings?.["crossingMinimization.forceNodeModelOrder"] === true &&
@@ -1757,6 +1793,24 @@ function runLayeredPipeline<N, E, G, P>(
         for (const neighbor of neighbors.get(id) ?? []) pending.push(neighbor);
       }
       if (component.length < 2) continue;
+      const componentIds = new Set(component.map((member) => member.id));
+      if (
+        !graph.edges.some(
+          (edge) =>
+            componentIds.has(edge.sourceId) &&
+            componentIds.has(edge.targetId) &&
+            expanded.orientation.reversedEdgeIds.has(edge.id),
+        )
+      ) {
+        continue;
+      }
+      const directedPairCounts = new Map<string, number>();
+      for (const edge of graph.edges) {
+        if (!componentIds.has(edge.sourceId) || !componentIds.has(edge.targetId)) continue;
+        const key = `${edge.sourceId}\0${edge.targetId}`;
+        directedPairCounts.set(key, (directedPairCounts.get(key) ?? 0) + 1);
+      }
+      if ([...directedPairCounts.values()].some((count) => count > 1)) continue;
       if (
         component.some((member) => {
           const constraints = options.nodeSettings?.(member)?.portConstraints;
@@ -2105,6 +2159,91 @@ function runLayeredPipeline<N, E, G, P>(
         : { ...end, y: end.y + delta };
     (routes.pointsByEdgeId as Map<string, readonly Point[]>).set(edge.id, points);
   }
+  for (const pair of labeledEdgesByPair.values()) {
+    if (pair.length < 2) continue;
+    const sourceRect = mutableRects.get(pair[0]!.sourceId);
+    const targetRect = mutableRects.get(pair[0]!.targetId);
+    if (!sourceRect || !targetRect) continue;
+    const horizontal = direction === "left" || direction === "right";
+    const beforeRect = horizontal
+      ? sourceRect.x <= targetRect.x
+        ? sourceRect
+        : targetRect
+      : sourceRect.y <= targetRect.y
+        ? sourceRect
+        : targetRect;
+    const afterRect = beforeRect === sourceRect ? targetRect : sourceRect;
+    const edgeSpacing = Number(options.settings?.["spacing.edgeEdge"] ?? 10);
+    let cross = horizontal ? padding.top : padding.left;
+    const orderedPair =
+      options.settings?.["considerModelOrder.strategy"] === "PREFER_NODES"
+        ? pair
+        : [...pair].reverse();
+    for (const edge of orderedPair) {
+      const width = edge.width ?? 0;
+      const height = edge.height ?? 0;
+      parallelLabelPositions.set(
+        edge.id,
+        horizontal
+          ? {
+              x: (beforeRect.x + beforeRect.width + afterRect.x - width) / 2,
+              y: cross,
+            }
+          : {
+              x: cross,
+              y: (beforeRect.y + beforeRect.height + afterRect.y - height) / 2,
+            },
+      );
+      cross += (horizontal ? height : width) + edgeSpacing;
+    }
+
+    const anchorEdge = orderedPair[0]!;
+    const anchorLabel = parallelLabelPositions.get(anchorEdge.id)!;
+    const desiredCross = Math.round(
+      horizontal
+        ? anchorLabel.y + (anchorEdge.height ?? 0) / 2
+        : anchorLabel.x + (anchorEdge.width ?? 0) / 2,
+    );
+    const alignEndpoint = (nodeId: string, portName: string): void => {
+      const node = graph.nodes.find((candidate) => candidate.id === nodeId);
+      const rect = mutableRects.get(nodeId);
+      const port = node?.ports?.find((candidate) => candidate.name === portName);
+      if (!node || !rect || !port) return;
+      const placedPort = placePorts(
+        node.ports,
+        rect,
+        direction,
+        (candidate) => input.portSettings?.(candidate, node),
+        { ...options.settings, ...options.nodeSettings?.(node) },
+        (candidate) =>
+          getOrientedPortDirection(expanded.input, expanded.orientation, node, candidate),
+      )?.find((candidate) => candidate.name === portName);
+      if (!placedPort) return;
+      const localCross = horizontal
+        ? (placedPort.y ?? 0) + (placedPort.height ?? 0) / 2
+        : (placedPort.x ?? 0) + (placedPort.width ?? 0) / 2;
+      const currentCross = horizontal ? rect.y : rect.x;
+      const nextCross = desiredCross - localCross;
+      const delta = nextCross - currentCross;
+      mutableRects.set(nodeId, horizontal ? { ...rect, y: nextCross } : { ...rect, x: nextCross });
+      for (const edge of graph.edges) {
+        const points = [...(routes.pointsByEdgeId.get(edge.id) ?? [])];
+        if (points.length === 0) continue;
+        const index =
+          edge.sourceId === nodeId ? 0 : edge.targetId === nodeId ? points.length - 1 : undefined;
+        if (index === undefined) continue;
+        const endpoint = points[index]!;
+        points[index] = horizontal
+          ? { ...endpoint, y: endpoint.y + delta }
+          : { ...endpoint, x: endpoint.x + delta };
+        (routes.pointsByEdgeId as Map<string, readonly Point[]>).set(edge.id, points);
+      }
+    };
+    if (anchorEdge.sourcePort && anchorEdge.targetPort) {
+      alignEndpoint(anchorEdge.sourceId, anchorEdge.sourcePort);
+      alignEndpoint(anchorEdge.targetId, anchorEdge.targetPort);
+    }
+  }
   const routedPortAnchors = new Map<string, Point>();
   for (const edge of graph.edges) {
     const points = routes.pointsByEdgeId.get(edge.id);
@@ -2335,9 +2474,10 @@ function runLayeredPipeline<N, E, G, P>(
             ? [sourceRect, targetRect]
             : [targetRect, sourceRect]
         : [undefined, undefined];
-    const antiparallelLabelPosition = antiparallelLabelPositions.get(edge.id);
-    const x = antiparallelLabelPosition
-      ? antiparallelLabelPosition.x
+    const explicitLabelPosition =
+      antiparallelLabelPositions.get(edge.id) ?? parallelLabelPositions.get(edge.id);
+    const x = explicitLabelPosition
+      ? explicitLabelPosition.x
       : flexibleFeedbackLabel
         ? horizontal
           ? (beforeFlowRect!.x + beforeFlowRect!.width + afterFlowRect!.x - width) / 2
@@ -2345,8 +2485,8 @@ function runLayeredPipeline<N, E, G, P>(
         : labelPlacement === "CENTER" && horizontal && labelDummyRect
           ? labelDummyRect.x
           : routeX;
-    const y = antiparallelLabelPosition
-      ? antiparallelLabelPosition.y
+    const y = explicitLabelPosition
+      ? explicitLabelPosition.y
       : flexibleFeedbackLabel
         ? horizontal
           ? targetRect.y + (targetRect.height - height) / 2

@@ -222,6 +222,72 @@ describe("ELK feedback-edge parity", () => {
     );
   });
 
+  for (const constraints of ["FIXED_ORDER", "FIXED_RATIO", "FIXED_POS"] as const) {
+    it(`keeps a long reversed ${constraints} edge on its declared sides`, async () => {
+      const node = (id: string): ElkNode => ({
+        id,
+        width: 30,
+        height: 20,
+        layoutOptions: { "elk.portConstraints": constraints },
+        ports: [
+          {
+            id: `${id}-out`,
+            width: 0,
+            height: 0,
+            x: 30,
+            y: 10,
+            layoutOptions: { "elk.port.side": "EAST" },
+          },
+          {
+            id: `${id}-in`,
+            width: 0,
+            height: 0,
+            x: 0,
+            y: 10,
+            layoutOptions: { "elk.port.side": "WEST" },
+          },
+        ],
+      });
+      const input: ElkNode = {
+        id: "root",
+        layoutOptions: {
+          "elk.algorithm": "layered",
+          "elk.direction": "RIGHT",
+          "elk.edgeRouting": "ORTHOGONAL",
+          "elk.separateConnectedComponents": "false",
+          "elk.layered.cycleBreaking.strategy": "MODEL_ORDER",
+        },
+        children: [node("a"), node("b"), node("c")],
+        edges: [
+          { id: "a-b", sources: ["a-out"], targets: ["b-in"] },
+          { id: "b-c", sources: ["b-out"], targets: ["c-in"] },
+          { id: "c-a", sources: ["c-out"], targets: ["a-in"] },
+        ],
+      };
+      const expected = (await new OracleELK().layout(structuredClone(input) as never)) as ElkNode;
+      const actual = await new NativeELK().layout(structuredClone(input));
+      const expectedFeedback = required(
+        expected.edges?.find((edge) => edge.id === "c-a")?.sections?.[0],
+        "oracle feedback section",
+      );
+      const actualFeedback = required(
+        actual.edges?.find((edge) => edge.id === "c-a")?.sections?.[0],
+        "native feedback section",
+      );
+      expect(actualFeedback.startPoint).toEqual(expectedFeedback.startPoint);
+      expect(actualFeedback.endPoint).toEqual(expectedFeedback.endPoint);
+      const points = [
+        actualFeedback.startPoint,
+        ...(actualFeedback.bendPoints ?? []),
+        actualFeedback.endPoint,
+      ];
+      const maximumNodeX = Math.max(
+        ...(actual.children ?? []).map((child) => (child.x ?? 0) + (child.width ?? 0)),
+      );
+      expect(Math.max(...points.map((point) => point.x))).toBeGreaterThan(maximumNodeX);
+    });
+  }
+
   it("keeps a vertical fixed-side cycle straight and routes its long feedback edge outside", async () => {
     const node = (id: string, width: number): ElkNode => ({
       id,
