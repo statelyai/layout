@@ -286,6 +286,16 @@ it("matches ELK spacing for parallel labeled edges", async () => {
   });
 
   expect(geometry(actual)).toEqual(geometry(expected));
+  for (const edge of actual.edges ?? []) {
+    const section = edge.sections?.[0];
+    expect(section).toBeDefined();
+    const points = [section!.startPoint, ...(section!.bendPoints ?? []), section!.endPoint];
+    for (let index = 1; index < points.length; index++) {
+      const previous = points[index - 1]!;
+      const point = points[index]!;
+      expect(previous.x === point.x || previous.y === point.y).toBe(true);
+    }
+  }
 });
 
 for (const sideSelection of [

@@ -2233,9 +2233,17 @@ function runLayeredPipeline<N, E, G, P>(
           edge.sourceId === nodeId ? 0 : edge.targetId === nodeId ? points.length - 1 : undefined;
         if (index === undefined) continue;
         const endpoint = points[index]!;
+        const originalCross = horizontal ? endpoint.y : endpoint.x;
         points[index] = horizontal
           ? { ...endpoint, y: endpoint.y + delta }
           : { ...endpoint, x: endpoint.x + delta };
+        const adjacentIndex = index === 0 ? 1 : points.length - 2;
+        const adjacent = points[adjacentIndex];
+        if (adjacent && (horizontal ? adjacent.y : adjacent.x) === originalCross) {
+          points[adjacentIndex] = horizontal
+            ? { ...adjacent, y: adjacent.y + delta }
+            : { ...adjacent, x: adjacent.x + delta };
+        }
         (routes.pointsByEdgeId as Map<string, readonly Point[]>).set(edge.id, points);
       }
     };
