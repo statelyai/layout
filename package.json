@@ -9,6 +9,7 @@
   },
   "files": [
     "dist",
+    "src",
     "LICENSE.md",
     "NOTICE.md"
   ],
@@ -16,18 +17,18 @@
   "sideEffects": false,
   "main": "./dist/index.mjs",
   "module": "./dist/index.mjs",
-  "types": "./dist/index.d.mts",
+  "types": "./src/index.ts",
   "exports": {
     ".": {
-      "types": "./dist/index.d.mts",
+      "types": "./src/index.ts",
       "default": "./dist/index.mjs"
     },
     "./elkjs": {
-      "types": "./dist/elkjs/index.d.mts",
+      "types": "./src/elkjs/index.ts",
       "default": "./dist/elkjs/index.mjs"
     },
     "./layered": {
-      "types": "./dist/layered/index.d.mts",
+      "types": "./src/layered/index.ts",
       "default": "./dist/layered/index.mjs"
     },
     "./package.json": "./package.json"
