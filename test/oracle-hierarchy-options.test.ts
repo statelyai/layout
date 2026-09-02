@@ -74,6 +74,47 @@ const baseGraph = (): ElkNode => ({
 });
 
 describe("ELK compound layered parity", () => {
+  it("preserves a computed compound size during its parent layout", async () => {
+    const graph: ElkNode = {
+      id: "root",
+      layoutOptions: {
+        "elk.algorithm": "layered",
+        "elk.direction": "DOWN",
+        "elk.hierarchyHandling": "INHERIT",
+        "elk.layered.nodePlacement.favorStraightEdges": "true",
+      },
+      children: [
+        { id: "initial", width: 90, height: 60 },
+        { id: "another", width: 118, height: 60 },
+        {
+          id: "parent",
+          layoutOptions: {
+            "elk.direction": "RIGHT",
+            "elk.hierarchyHandling": "INCLUDE_CHILDREN",
+            "elk.nodeSize.constraints": "NODE_LABELS PORTS MINIMUM_SIZE",
+            "elk.nodeSize.minimum": "(131,60)",
+            "elk.padding": "[top=108,left=48,bottom=48,right=48]",
+          },
+          children: [
+            { id: "child", width: 84, height: 60 },
+            { id: "other", width: 178, height: 60 },
+          ],
+          edges: [{ id: "inside", sources: ["child"], targets: ["other"] }],
+        },
+      ],
+      edges: [
+        { id: "first", sources: ["initial"], targets: ["another"] },
+        { id: "second", sources: ["another"], targets: ["parent"] },
+      ],
+    };
+    const expected = (await new OracleELK().layout(structuredClone(graph) as never)) as ElkNode;
+    const actual = await new NativeELK().layout(structuredClone(graph));
+
+    const geometry = (node: ElkNode) =>
+      node.children?.map((child) => [child.id, child.x, child.y, child.width, child.height]);
+    expect(geometry(actual)).toEqual(geometry(expected));
+  });
+
   for (const hierarchyHandling of ["INHERIT", "SEPARATE_CHILDREN"] as const) {
     it(`matches ${hierarchyHandling} recursive layout`, async () => {
       await compare({

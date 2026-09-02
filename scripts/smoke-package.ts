@@ -8,7 +8,7 @@ type PackResult = { filename: string };
 type PackageJson = { exports: Record<string, unknown> };
 
 const rootDir = resolve(dirname(fileURLToPath(import.meta.url)), "..");
-const checkedExports = new Set([".", "./elkjs", "./layered"]);
+const checkedExports = new Set([".", "./elkjs", "./layered", "./lib/elk.bundled.js"]);
 
 async function main(): Promise<void> {
   const packageJson = JSON.parse(
@@ -78,6 +78,7 @@ async function main(): Promise<void> {
 import { createGraph } from "@statelyai/graph";
 import { getBoxLayout, getLayeredLayout, getRandomLayout } from "@statelyai/layout";
 import ELK from "@statelyai/layout/elkjs";
+import BundledELK from "@statelyai/layout/lib/elk.bundled.js";
 import { getLayeredLayout as getLayeredLayoutFromSubpath } from "@statelyai/layout/layered";
 const graph = createGraph({ nodes: [{ id: "a" }, { id: "b" }], edges: [{ id: "ab", sourceId: "a", targetId: "b" }] });
 assert.equal(getLayeredLayout(graph).nodes.length, 2);
@@ -86,6 +87,7 @@ assert.equal(getRandomLayout(graph, { seed: 1 }).nodes.length, 2);
 assert.equal(getLayeredLayoutFromSubpath(graph).edges.length, 1);
 const legacy = await new ELK().layout({ id: "root", children: [{ id: "a" }, { id: "b" }], edges: [{ id: "ab", sources: ["a"], targets: ["b"] }] });
 assert.equal(legacy.children?.length, 2);
+assert.equal((await new BundledELK().layout({ id: "root" })).id, "root");
 `,
     );
     execFileSync("node", [runtimePath], { cwd: consumerDir, stdio: "inherit" });
@@ -96,6 +98,7 @@ assert.equal(legacy.children?.length, 2);
       `import { createGraph } from "@statelyai/graph";
 import { getBoxLayout, getLayeredLayout, getRandomLayout, type LayoutResult } from "@statelyai/layout";
 import ELK, { type ElkNode } from "@statelyai/layout/elkjs";
+import BundledELK from "@statelyai/layout/lib/elk.bundled.js";
 import { type LayeredLayoutOptions } from "@statelyai/layout/layered";
 const graph = createGraph({ nodes: [{ id: "a" }], edges: [] });
 const options: LayeredLayoutOptions = { direction: "right" };
@@ -103,7 +106,9 @@ getLayeredLayout(graph, options).nodes[0]?.id;
 getBoxLayout(graph, { aspectRatio: 1.3 }).nodes[0]?.id;
 getRandomLayout(graph, { seed: 1 }).nodes[0]?.id;
 const request: Promise<ElkNode> = new ELK().layout({ id: "root" });
+const bundledRequest: Promise<ElkNode> = new BundledELK().layout({ id: "root" });
 void request;
+void bundledRequest;
 const result = undefined as unknown as LayoutResult;
 void result;
 `,

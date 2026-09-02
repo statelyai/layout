@@ -824,8 +824,11 @@ function applyNodeMicroLayout(
       constraints.includes("PORT_LABELS") &&
       !constraints.includes("NODE_LABELS") &&
       !constraints.includes("MINIMUM_SIZE");
-    let width = effectivelyFixedPortLabelSize ? (node.width ?? 0) : 0;
-    let height = effectivelyFixedPortLabelSize ? (node.height ?? 0) : 0;
+    const preserveComputedCompoundSize = (node.children?.length ?? 0) > 0;
+    let width =
+      effectivelyFixedPortLabelSize || preserveComputedCompoundSize ? (node.width ?? 0) : 0;
+    let height =
+      effectivelyFixedPortLabelSize || preserveComputedCompoundSize ? (node.height ?? 0) : 0;
     let insideHorizontalInset = 0;
     let insideVerticalInset = 0;
     const insideLabelCells = new Map<string, { width: number; height: number }>();
@@ -845,8 +848,12 @@ function applyNodeMicroLayout(
       }
       width = Math.max(width, (Math.max(sideCounts.NORTH, sideCounts.SOUTH) + 1) * spacing);
       height = Math.max(height, (Math.max(sideCounts.EAST, sideCounts.WEST) + 1) * spacing);
-      if (sideCounts.NORTH === 0 && sideCounts.SOUTH === 0) width = 0;
-      if (sideCounts.EAST === 0 && sideCounts.WEST === 0) height = 0;
+      if (!preserveComputedCompoundSize && sideCounts.NORTH === 0 && sideCounts.SOUTH === 0) {
+        width = 0;
+      }
+      if (!preserveComputedCompoundSize && sideCounts.EAST === 0 && sideCounts.WEST === 0) {
+        height = 0;
+      }
     }
     if (constraints.includes("NODE_LABELS")) {
       for (const label of node.labels ?? []) {

@@ -71,14 +71,15 @@ export function splitLongEdges(
       source && sourcePort ? input.portSettings?.(sourcePort, source)?.["port.side"] : undefined;
     const targetSide =
       target && targetPort ? input.portSettings?.(targetPort, target)?.["port.side"] : undefined;
+    const hasFixedPortSide = (node: GraphNode | undefined): boolean => {
+      if (!node) return false;
+      const constraints = String(input.nodeSettings?.(node)?.portConstraints ?? "UNDEFINED");
+      return constraints !== "UNDEFINED" && constraints !== "FREE";
+    };
     const fixedSideFeedback =
       sourceLayer > targetLayer &&
-      ((source !== undefined &&
-        input.nodeSettings?.(source)?.portConstraints === "FIXED_SIDE" &&
-        sourceSide === forwardSourceSide) ||
-        (target !== undefined &&
-          input.nodeSettings?.(target)?.portConstraints === "FIXED_SIDE" &&
-          targetSide === forwardTargetSide));
+      ((hasFixedPortSide(source) && sourceSide === forwardSourceSide) ||
+        (hasFixedPortSide(target) && targetSide === forwardTargetSide));
     if (
       span <= 1 ||
       edge.sourceId === edge.targetId ||

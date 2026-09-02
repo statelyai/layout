@@ -122,6 +122,55 @@ describe("getLayeredLayout", () => {
     expect(result.edges[0]?.points?.length).toBeGreaterThan(1);
   });
 
+  it("does not rewrite custom routes under the Viz placement profile", () => {
+    const graph = createGraph({
+      nodes: [
+        { id: "a", width: 80, height: 40 },
+        { id: "b", width: 80, height: 40 },
+      ],
+      edges: [
+        { id: "a-b", sourceId: "a", targetId: "b" },
+        { id: "b-a", sourceId: "b", targetId: "a" },
+      ],
+    });
+    const routes = new Map([
+      [
+        "a-b",
+        [
+          { x: 101, y: 201 },
+          { x: 301, y: 401 },
+        ],
+      ],
+      [
+        "b-a",
+        [
+          { x: 102, y: 202 },
+          { x: 302, y: 402 },
+        ],
+      ],
+    ]);
+    const result = getLayeredLayout(graph, {
+      direction: "down",
+      settings: {
+        "cycleBreaking.strategy": "MODEL_ORDER",
+        "layering.strategy": "INTERACTIVE",
+        "crossingMinimization.forceNodeModelOrder": true,
+        "nodePlacement.strategy": "BRANDES_KOEPF",
+        "nodePlacement.favorStraightEdges": true,
+        "compaction.postCompaction.strategy": "LEFT",
+        "compaction.postCompaction.constraints": "SCANLINE",
+      },
+      strategies: {
+        routeEdges: () => ({ pointsByEdgeId: routes }),
+      },
+    });
+
+    expect(result.edges.map(({ id, points }) => [id, points])).toEqual([
+      ["a-b", routes.get("a-b")],
+      ["b-a", routes.get("b-a")],
+    ]);
+  });
+
   it("splits long edges for ordering and joins their routes", () => {
     const graph = createGraph({
       nodes: [{ id: "a" }, { id: "b" }, { id: "c" }],
