@@ -2377,6 +2377,13 @@ export function applyPostCompaction(
   void constraintStrategy;
   if (strategy === "NONE") return placement;
   const rects = placement.rectByNodeId as Map<string, EntityRect>;
+  const originalEndpointsByEdgeId = new Map(
+    [...(routes?.pointsByEdgeId ?? [])].flatMap(([edgeId, points]) => {
+      const start = points[0];
+      const end = points.at(-1);
+      return start && end ? [[edgeId, { start: { ...start }, end: { ...end } }] as const] : [];
+    }),
+  );
   type ConstraintNode = {
     id: string;
     kind: "node" | "segment";
@@ -2577,11 +2584,38 @@ export function applyPostCompaction(
   if (routes) {
     const edgeById = new Map(input.graph.edges.map((edge) => [edge.id, edge]));
     for (const [edgeId, readonlyPoints] of routes.pointsByEdgeId) {
-      const points = readonlyPoints as Point[];
+      const points = [...readonlyPoints];
       const edge = edgeById.get(edgeId);
       if (!edge || points.length === 0) continue;
-      points[0]!.x += nodeDeltaById.get(edge.sourceId) ?? 0;
-      points.at(-1)!.x += nodeDeltaById.get(edge.targetId) ?? 0;
+      const originalEndpoints = originalEndpointsByEdgeId.get(edgeId);
+      if (originalEndpoints) {
+        points[0] = {
+          ...originalEndpoints.start,
+          x: originalEndpoints.start.x + (nodeDeltaById.get(edge.sourceId) ?? 0),
+        };
+        points[points.length - 1] = {
+          ...originalEndpoints.end,
+          x: originalEndpoints.end.x + (nodeDeltaById.get(edge.targetId) ?? 0),
+        };
+      }
+      const horizontal = input.direction === "left" || input.direction === "right";
+      const orthogonal: Point[] = [];
+      for (const [index, point] of points.entries()) {
+        const previous = orthogonal.at(-1);
+        if (previous && previous.x !== point.x && previous.y !== point.y) {
+          const approachingTarget = index === points.length - 1;
+          orthogonal.push(
+            horizontal === approachingTarget
+              ? { x: previous.x, y: point.y }
+              : { x: point.x, y: previous.y },
+          );
+        }
+        orthogonal.push(point);
+      }
+      (routes.pointsByEdgeId as Map<string, readonly Point[]>).set(
+        edgeId,
+        simplifyRoute(orthogonal),
+      );
     }
   }
   return placement;
