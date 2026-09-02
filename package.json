@@ -18,9 +18,18 @@
   "module": "./dist/index.mjs",
   "types": "./dist/index.d.mts",
   "exports": {
-    ".": "./dist/index.mjs",
-    "./elkjs": "./dist/elkjs/index.mjs",
-    "./layered": "./dist/layered/index.mjs",
+    ".": {
+      "types": "./dist/index.d.mts",
+      "default": "./dist/index.mjs"
+    },
+    "./elkjs": {
+      "types": "./dist/elkjs/index.d.mts",
+      "default": "./dist/elkjs/index.mjs"
+    },
+    "./layered": {
+      "types": "./dist/layered/index.d.mts",
+      "default": "./dist/layered/index.mjs"
+    },
     "./package.json": "./package.json"
   },
   "publishConfig": {
