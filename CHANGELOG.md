@@ -1,5 +1,11 @@
 # @statelyai/layout
 
+## 0.0.3
+
+### Patch Changes
+
+- 5605a00: Match ELK's free-port, compound-size, and inline-label placement for Viz's cycle layouts, and expose the legacy bundled-ELK subpath for drop-in package aliases.
+
 ## 0.0.2
 
 ### Patch Changes
