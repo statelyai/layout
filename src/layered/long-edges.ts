@@ -41,35 +41,36 @@ export function splitLongEdges(
   const originalEdgeBySegmentId = new Map<string, GraphEdge>();
   const usedNodeIds = new Set(nodes.map((node) => node.id));
   const originalNodeIds = new Set(usedNodeIds);
+  const nodeById = new Map(input.graph.nodes.map((node) => [node.id, node]));
+  const forwardSourceSide =
+    input.direction === "right"
+      ? "EAST"
+      : input.direction === "left"
+        ? "WEST"
+        : input.direction === "down"
+          ? "SOUTH"
+          : "NORTH";
+  const forwardTargetSide =
+    input.direction === "right"
+      ? "WEST"
+      : input.direction === "left"
+        ? "EAST"
+        : input.direction === "down"
+          ? "NORTH"
+          : "SOUTH";
 
   for (const edge of input.graph.edges) {
     const sourceLayer = layerByNodeId.get(edge.sourceId) ?? 0;
     const targetLayer = layerByNodeId.get(edge.targetId) ?? 0;
     const span = Math.abs(targetLayer - sourceLayer);
-    const source = input.graph.nodes.find((node) => node.id === edge.sourceId);
-    const target = input.graph.nodes.find((node) => node.id === edge.targetId);
+    const source = nodeById.get(edge.sourceId);
+    const target = nodeById.get(edge.targetId);
     const sourcePort = source?.ports?.find((port) => port.name === edge.sourcePort);
     const targetPort = target?.ports?.find((port) => port.name === edge.targetPort);
     const sourceSide =
       source && sourcePort ? input.portSettings?.(sourcePort, source)?.["port.side"] : undefined;
     const targetSide =
       target && targetPort ? input.portSettings?.(targetPort, target)?.["port.side"] : undefined;
-    const forwardSourceSide =
-      input.direction === "right"
-        ? "EAST"
-        : input.direction === "left"
-          ? "WEST"
-          : input.direction === "down"
-            ? "SOUTH"
-            : "NORTH";
-    const forwardTargetSide =
-      input.direction === "right"
-        ? "WEST"
-        : input.direction === "left"
-          ? "EAST"
-          : input.direction === "down"
-            ? "NORTH"
-            : "SOUTH";
     const fixedSideFeedback =
       sourceLayer > targetLayer &&
       ((source !== undefined &&

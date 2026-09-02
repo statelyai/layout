@@ -1944,6 +1944,14 @@ function runLayeredPipeline<N, E, G, P>(
       ...(ports === undefined ? {} : { ports }),
     } as VisualNode<N, P>;
   });
+  const feedbackNodeRects = graph.nodes.flatMap((node) => {
+    const rect = placement.rectByNodeId.get(node.id);
+    return rect ? [rect] : [];
+  });
+  const minimumFeedbackNodeX = Math.min(...feedbackNodeRects.map((rect) => rect.x));
+  const maximumFeedbackNodeX = Math.max(...feedbackNodeRects.map((rect) => rect.x + rect.width));
+  const minimumFeedbackNodeY = Math.min(...feedbackNodeRects.map((rect) => rect.y));
+  const maximumFeedbackNodeY = Math.max(...feedbackNodeRects.map((rect) => rect.y + rect.height));
   const edges = graph.edges.map((edge) => {
     const points = [...(routes.pointsByEdgeId.get(edge.id) ?? [])];
     const midpoint = getPolylineMidpoint(points);
@@ -1991,14 +1999,6 @@ function runLayeredPipeline<N, E, G, P>(
         flowDelta !== 0 &&
         firstLeadDelta * flowDelta < 0 &&
         lastLeadDelta * flowDelta < 0);
-    const feedbackNodeRects = graph.nodes.flatMap((node) => {
-      const rect = placement.rectByNodeId.get(node.id);
-      return rect ? [rect] : [];
-    });
-    const minimumFeedbackNodeX = Math.min(...feedbackNodeRects.map((rect) => rect.x));
-    const maximumFeedbackNodeX = Math.max(...feedbackNodeRects.map((rect) => rect.x + rect.width));
-    const minimumFeedbackNodeY = Math.min(...feedbackNodeRects.map((rect) => rect.y));
-    const maximumFeedbackNodeY = Math.max(...feedbackNodeRects.map((rect) => rect.y + rect.height));
     const horizontalFeedbackCandidate = outsideFeedback
       ? points
           .flatMap((point, index) => {

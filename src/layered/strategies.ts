@@ -2728,18 +2728,18 @@ export function applyPostCompaction(
           ...originalEndpoints.end,
           x: originalEndpoints.end.x + (nodeDeltaById.get(edge.targetId) ?? 0),
         };
-        if (routes.outsideFeedbackEdgeIds?.has(edgeId) && points.length >= 6) {
+        if (routes.outsideFeedbackEdgeIds?.has(edgeId)) {
           const horizontal = input.direction === "left" || input.direction === "right";
           const startDelta = points[0]!.x - originalEndpoints.start.x;
           const endDelta = points.at(-1)!.x - originalEndpoints.end.x;
-          if (horizontal) {
+          if (horizontal && points.length >= 6) {
             for (const index of [1, 2]) {
               points[index] = { ...points[index]!, x: points[index]!.x + startDelta };
             }
             for (const index of [points.length - 3, points.length - 2]) {
               points[index] = { ...points[index]!, x: points[index]!.x + endDelta };
             }
-          } else {
+          } else if (!horizontal && points.length >= 4) {
             points[1] = { ...points[1]!, x: points[1]!.x + startDelta };
             points[points.length - 2] = {
               ...points[points.length - 2]!,
@@ -3382,6 +3382,7 @@ function routeEdges(style: "ORTHOGONAL" | "POLYLINE" | "SPLINES"): EdgeRouter {
         mutableRects.set(candidateId, { ...candidateRect, x: candidateRect.x + shift });
       }
     }
+    const northReserveByLayer = new Map<number, number>();
     for (const [id, loops] of selfLoopsByNodeId) {
       const rect = mutableRects.get(id);
       if (!rect) continue;
@@ -3403,13 +3404,18 @@ function routeEdges(style: "ORTHOGONAL" | "POLYLINE" | "SPLINES"): EdgeRouter {
         const reserve =
           (ordering === "SEQUENCED" ? Math.min(1, sideLoopCount) : sideLoopCount) * spacing +
           splineOffset;
-        // A north-side loop occupies space before the node. Shift the node and
-        // every rectangle physically below it together so flow layers cannot
-        // swap order while the loop margin is reserved.
-        for (const [candidateId, candidateRect] of mutableRects) {
-          if (candidateRect.y + 1e-9 < rect.y) continue;
-          mutableRects.set(candidateId, { ...candidateRect, y: candidateRect.y + reserve });
-        }
+        northReserveByLayer.set(rect.y, Math.max(northReserveByLayer.get(rect.y) ?? 0, reserve));
+      }
+    }
+    const northReserves = [...northReserveByLayer].sort(([left], [right]) => left - right);
+    for (const [candidateId, candidateRect] of mutableRects) {
+      const reserve = northReserves.reduce(
+        (total, [layerY, layerReserve]) =>
+          candidateRect.y + 1e-9 >= layerY ? total + layerReserve : total,
+        0,
+      );
+      if (reserve > 0) {
+        mutableRects.set(candidateId, { ...candidateRect, y: candidateRect.y + reserve });
       }
     }
     const edgeLabelSideSelection = input.settings["edgeLabels.sideSelection"] ?? "SMART_DOWN";
@@ -4551,8 +4557,8 @@ function routeEdges(style: "ORTHOGONAL" | "POLYLINE" | "SPLINES"): EdgeRouter {
                   : sourceRect.x - spacing;
               const farTrack =
                 side === "EAST"
-                  ? maximumNodeX + spacing + (edge.width ?? 0)
-                  : minimumNodeX - spacing - (edge.width ?? 0);
+                  ? maximumNodeX + trackDistance + (edge.width ?? 0)
+                  : minimumNodeX - trackDistance - (edge.width ?? 0);
               const exteriorY =
                 maximumNodeY + spacing + precedingLabelHeight + (edge.height ?? 0) / 2 + 0.5;
               pointsByEdgeId.set(edge.id, [

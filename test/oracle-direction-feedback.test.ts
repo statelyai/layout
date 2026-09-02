@@ -300,6 +300,7 @@ describe("ELK feedback-edge parity", () => {
         edge("red-green", "red", "green", "after 1500"),
       ],
     };
+    // Pinned elkjs 0.11.1 rejects this graph; revisit if an upgrade fixes or rewords the error.
     await expect(new OracleELK().layout(structuredClone(input) as never)).rejects.toThrow(
       "Invalid hitboxes for scanline constraint calculation",
     );
@@ -554,7 +555,7 @@ describe("ELK feedback-edge parity", () => {
             {
               id: "second-label",
               text: "second lifecycle",
-              width: 140,
+              width: 180,
               height: 36,
               layoutOptions: {
                 "elk.edgeLabels.inline": "true",
@@ -571,7 +572,7 @@ describe("ELK feedback-edge parity", () => {
             {
               id: "third-label",
               text: "third lifecycle",
-              width: 120,
+              width: 180,
               height: 36,
               layoutOptions: {
                 "elk.edgeLabels.inline": "true",
@@ -626,5 +627,49 @@ describe("ELK feedback-edge parity", () => {
         expect(overlaps).toBe(false);
       }
     }
+    const farTracks = (actual.edges ?? []).map((candidate) =>
+      Math.max(
+        ...required(candidate.sections?.[0], `${candidate.id} section`).bendPoints!.map(
+          (point) => point.x,
+        ),
+      ),
+    );
+    expect(new Set(farTracks).size).toBe(farTracks.length);
+  });
+
+  it("reserves one north-loop margin for nodes in the same layer", async () => {
+    const input: ElkNode = {
+      id: "root",
+      layoutOptions: {
+        "elk.algorithm": "layered",
+        "elk.direction": "DOWN",
+        "elk.edgeRouting": "ORTHOGONAL",
+        "elk.separateConnectedComponents": "false",
+        "elk.spacing.nodeSelfLoop": "10",
+      },
+      children: ["left", "right", "target"].map((id) => ({
+        id,
+        width: 40,
+        height: 20,
+      })),
+      edges: [
+        { id: "left-loop", sources: ["left"], targets: ["left"] },
+        { id: "right-loop", sources: ["right"], targets: ["right"] },
+        { id: "left-target", sources: ["left"], targets: ["target"] },
+        { id: "right-target", sources: ["right"], targets: ["target"] },
+      ],
+    };
+
+    const actual = await new NativeELK().layout(structuredClone(input));
+    const left = required(
+      actual.children?.find((node) => node.id === "left"),
+      "left node",
+    );
+    const right = required(
+      actual.children?.find((node) => node.id === "right"),
+      "right node",
+    );
+
+    expect(left.y).toBe(right.y);
   });
 });

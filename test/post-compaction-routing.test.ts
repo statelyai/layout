@@ -59,4 +59,50 @@ describe("post-compaction routing", () => {
 
     expect(routes.splineNubControlsByEdgeId?.has("edge")).toBe(false);
   });
+
+  it("keeps four-point vertical self loops orthogonal after moving their node", () => {
+    const graph = createGraph({
+      nodes: [{ id: "node", width: 20, height: 20 }],
+      edges: [{ id: "loop", sourceId: "node", targetId: "node" }],
+    });
+    const input: LayeredPhaseInput = {
+      graph,
+      sizes: new Map([["node", { width: 20, height: 20 }]]),
+      direction: "down",
+      spacing: { node: 20, layer: 20 },
+      padding: { top: 12, right: 12, bottom: 12, left: 12 },
+      constrainedLayerByNodeId: new Map(),
+      settings: {
+        edgeRouting: "ORTHOGONAL",
+        "compaction.postCompaction.strategy": "LEFT",
+      },
+    };
+    const placement: NodePlacement = {
+      rectByNodeId: new Map([["node", { x: 20, y: 20, width: 20, height: 20 }]]),
+    };
+    const routes: EdgeRoutes = {
+      pointsByEdgeId: new Map([
+        [
+          "loop",
+          [
+            { x: 25, y: 20 },
+            { x: 25, y: 0 },
+            { x: 35, y: 0 },
+            { x: 35, y: 20 },
+          ],
+        ],
+      ]),
+      outsideFeedbackEdgeIds: new Set(["loop"]),
+    };
+
+    applyPostCompaction(input, placement, routes);
+
+    const points = routes.pointsByEdgeId.get("loop")!;
+    expect(points).toHaveLength(4);
+    for (let index = 1; index < points.length; index++) {
+      const previous = points[index - 1]!;
+      const point = points[index]!;
+      expect(previous.x === point.x || previous.y === point.y).toBe(true);
+    }
+  });
 });
