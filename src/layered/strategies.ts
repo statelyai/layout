@@ -4430,15 +4430,20 @@ function routeEdges(style: "ORTHOGONAL" | "POLYLINE" | "SPLINES"): EdgeRouter {
       const targetPortSide = targetPort
         ? input.portSettings?.(targetPort, target)?.["port.side"]
         : undefined;
-      const sourcePortOnFlowSide = horizontal
-        ? sourcePortSide === undefined || sourcePortSide === "EAST" || sourcePortSide === "WEST"
-        : sourcePortSide === undefined || sourcePortSide === "NORTH" || sourcePortSide === "SOUTH";
-      const targetPortOnFlowSide = horizontal
-        ? targetPortSide === undefined || targetPortSide === "EAST" || targetPortSide === "WEST"
-        : targetPortSide === undefined || targetPortSide === "NORTH" || targetPortSide === "SOUTH";
+      const fallbackMatchesPortSide = (
+        fallback: Point,
+        rect: EntityRect,
+        side: typeof sourcePortSide,
+      ): boolean =>
+        side === undefined ||
+        side === "UNDEFINED" ||
+        (side === "EAST" && Math.abs(fallback.x - rect.x - rect.width) < 1e-9) ||
+        (side === "WEST" && Math.abs(fallback.x - rect.x) < 1e-9) ||
+        (side === "SOUTH" && Math.abs(fallback.y - rect.y - rect.height) < 1e-9) ||
+        (side === "NORTH" && Math.abs(fallback.y - rect.y) < 1e-9);
       const sourceFixedSide =
         sourcePort !== undefined &&
-        sourcePortOnFlowSide &&
+        fallbackMatchesPortSide(sourceFallback, sourceRect, sourcePortSide) &&
         (sourcePort.width ?? 8) === 0 &&
         (sourcePort.height ?? 8) === 0 &&
         input.nodeSettings?.(source)?.portConstraints === "FIXED_SIDE" &&
@@ -4448,7 +4453,7 @@ function routeEdges(style: "ORTHOGONAL" | "POLYLINE" | "SPLINES"): EdgeRouter {
         ).length === 1;
       const targetFixedSide =
         targetPort !== undefined &&
-        targetPortOnFlowSide &&
+        fallbackMatchesPortSide(targetFallback, targetRect, targetPortSide) &&
         (targetPort.width ?? 8) === 0 &&
         (targetPort.height ?? 8) === 0 &&
         input.nodeSettings?.(target)?.portConstraints === "FIXED_SIDE" &&

@@ -223,54 +223,63 @@ describe("elkjs compatibility: regressions", () => {
     },
   );
 
-  it("preserves non-flow fixed sides for zero-size ports", async () => {
-    const graph: ElkNode = {
-      id: "root",
-      layoutOptions: {
-        "elk.algorithm": "layered",
-        "elk.direction": "RIGHT",
-        "elk.edgeRouting": "ORTHOGONAL",
-        "elk.layered.compaction.postCompaction.strategy": "EDGE_LENGTH",
-      },
-      children: [
-        {
-          id: "source",
-          width: 20,
-          height: 10,
-          layoutOptions: { "elk.portConstraints": "FIXED_SIDE" },
-          ports: [
-            {
-              id: "source-port",
-              width: 0,
-              height: 0,
-              layoutOptions: { "elk.port.side": "NORTH" },
-            },
-          ],
+  it.each([
+    ["RIGHT", "NORTH", "SOUTH", "y", 0, 10],
+    ["RIGHT", "WEST", "EAST", "x", 0, 20],
+    ["LEFT", "EAST", "WEST", "x", 20, 0],
+    ["DOWN", "NORTH", "SOUTH", "y", 0, 10],
+    ["UP", "SOUTH", "NORTH", "y", 10, 0],
+  ] as const)(
+    "preserves %s-directed zero-size ports fixed to %s and %s",
+    async (direction, sourceSide, targetSide, axis, expectedSource, expectedTarget) => {
+      const graph: ElkNode = {
+        id: "root",
+        layoutOptions: {
+          "elk.algorithm": "layered",
+          "elk.direction": direction,
+          "elk.edgeRouting": "ORTHOGONAL",
+          "elk.layered.compaction.postCompaction.strategy": "EDGE_LENGTH",
         },
-        {
-          id: "target",
-          width: 20,
-          height: 10,
-          layoutOptions: { "elk.portConstraints": "FIXED_SIDE" },
-          ports: [
-            {
-              id: "target-port",
-              width: 0,
-              height: 0,
-              layoutOptions: { "elk.port.side": "SOUTH" },
-            },
-          ],
-        },
-      ],
-      edges: [{ id: "edge", sources: ["source-port"], targets: ["target-port"] }],
-    };
-    const result = await new ELK().layout(graph);
-    const source = result.children?.find((node) => node.id === "source");
-    const target = result.children?.find((node) => node.id === "target");
+        children: [
+          {
+            id: "source",
+            width: 20,
+            height: 10,
+            layoutOptions: { "elk.portConstraints": "FIXED_SIDE" },
+            ports: [
+              {
+                id: "source-port",
+                width: 0,
+                height: 0,
+                layoutOptions: { "elk.port.side": sourceSide },
+              },
+            ],
+          },
+          {
+            id: "target",
+            width: 20,
+            height: 10,
+            layoutOptions: { "elk.portConstraints": "FIXED_SIDE" },
+            ports: [
+              {
+                id: "target-port",
+                width: 0,
+                height: 0,
+                layoutOptions: { "elk.port.side": targetSide },
+              },
+            ],
+          },
+        ],
+        edges: [{ id: "edge", sources: ["source-port"], targets: ["target-port"] }],
+      };
+      const result = await new ELK().layout(graph);
+      const source = result.children?.find((node) => node.id === "source");
+      const target = result.children?.find((node) => node.id === "target");
 
-    expect(source?.ports?.[0]?.y).toBeCloseTo(0);
-    expect(target?.ports?.[0]?.y).toBe(target?.height);
-  });
+      expect(source?.ports?.[0]?.[axis]).toBeCloseTo(expectedSource);
+      expect(target?.ports?.[0]?.[axis]).toBeCloseTo(expectedTarget);
+    },
+  );
 
   it("places left-directed inline labels away from a target-side track", async () => {
     const graph: ElkNode = {
