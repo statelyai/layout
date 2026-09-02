@@ -30,6 +30,37 @@ function getOrientedEndpoints(
     : [edge.sourceId, edge.targetId];
 }
 
+export function getOrientedPortDirection(
+  input: LayeredPhaseInput,
+  orientation: AcyclicOrientation,
+  node: GraphNode,
+  port: GraphPort,
+): GraphPort["direction"] {
+  const configuredSide = input.portSettings?.(port, node)?.["port.side"];
+  if (
+    configuredSide !== "NORTH" &&
+    configuredSide !== "SOUTH" &&
+    configuredSide !== "WEST" &&
+    configuredSide !== "EAST"
+  ) {
+    return port.direction;
+  }
+  let incoming = false;
+  let outgoing = false;
+  for (const edge of input.graph.edges) {
+    const reversed = orientation.reversedEdgeIds.has(edge.id);
+    if (edge.sourceId === node.id && edge.sourcePort === port.name) {
+      if (reversed) incoming = true;
+      else outgoing = true;
+    }
+    if (edge.targetId === node.id && edge.targetPort === port.name) {
+      if (reversed) outgoing = true;
+      else incoming = true;
+    }
+  }
+  return incoming && outgoing ? "inout" : outgoing ? "out" : incoming ? "in" : port.direction;
+}
+
 function cycleModelOrder(input: LayeredPhaseInput): Map<string, number> {
   const enforced =
     input.settings["considerModelOrder.groupModelOrder.cbGroupOrderStrategy"] === "ENFORCED";
@@ -4312,10 +4343,15 @@ function routeEdges(style: "ORTHOGONAL" | "POLYLINE" | "SPLINES"): EdgeRouter {
         source.id === target.id &&
         feedbackSourcePortSide !== undefined &&
         feedbackSourcePortSide === feedbackTargetPortSide;
+      const hasFixedPortSide = (node: GraphNode): boolean => {
+        const constraints = String(input.nodeSettings?.(node)?.portConstraints ?? "UNDEFINED");
+        return constraints !== "UNDEFINED" && constraints !== "FREE";
+      };
       const fixedSideFeedback =
         style === "ORTHOGONAL" &&
         !sameSideSelfLoop &&
-        (feedbackSourcePortSide === sourceAwaySide || feedbackTargetPortSide === targetAwaySide);
+        ((hasFixedPortSide(source) && feedbackSourcePortSide === sourceAwaySide) ||
+          (hasFixedPortSide(target) && feedbackTargetPortSide === targetAwaySide));
       if ((input.settings.feedbackEdges === true && reversedEdge) || fixedSideFeedback) {
         if (fixedSideFeedback) outsideFeedbackEdgeIds.add(edge.id);
         const crossSpacing = Number(input.settings["spacing.edgeNode"] ?? 10);
@@ -4769,12 +4805,32 @@ function routeEdges(style: "ORTHOGONAL" | "POLYLINE" | "SPLINES"): EdgeRouter {
           (candidate) =>
             candidate.targetId === edge.targetId && candidate.targetPort === edge.targetPort,
         ).length === 1;
-      const start = sourceFixedSide
+      const flexibleFeedback =
+        reversedEdge && !hasFixedPortSide(source) && !hasFixedPortSide(target);
+      const start = flexibleFeedback
         ? sourceFallback
-        : getPortPoint(source, edge.sourcePort, sourceRect, sourceFallback, input.direction, input);
-      const end = targetFixedSide
+        : sourceFixedSide
+          ? sourceFallback
+          : getPortPoint(
+              source,
+              edge.sourcePort,
+              sourceRect,
+              sourceFallback,
+              input.direction,
+              input,
+            );
+      const end = flexibleFeedback
         ? targetFallback
-        : getPortPoint(target, edge.targetPort, targetRect, targetFallback, input.direction, input);
+        : targetFixedSide
+          ? targetFallback
+          : getPortPoint(
+              target,
+              edge.targetPort,
+              targetRect,
+              targetFallback,
+              input.direction,
+              input,
+            );
       const sourceLayer = flowLayerByNodeId.get(edge.sourceId) ?? 0;
       const targetLayer = flowLayerByNodeId.get(edge.targetId) ?? 0;
       const earlierLayer = Math.min(sourceLayer, targetLayer);
@@ -4955,6 +5011,7 @@ export function placePorts<P>(
   direction: LayeredPhaseInput["direction"],
   portSettings?: (port: GraphPort<P>) => ElkLayeredOptionValueByName | undefined,
   nodeSettings?: ElkLayeredOptionValueByName,
+  portDirection?: (port: GraphPort<P>) => GraphPort<P>["direction"],
 ): GraphPort<P>[] | undefined {
   if (!ports) return undefined;
   const horizontal = direction === "left" || direction === "right";
@@ -4981,7 +5038,7 @@ export function placePorts<P>(
       sideByPort.set(port, configured);
       continue;
     }
-    const outgoing = port.direction === "out";
+    const outgoing = (portDirection?.(port) ?? port.direction) === "out";
     const normalFarSide = reverse ? !outgoing : outgoing;
     const farSide = sideFixed && configured === "UNDEFINED" ? !normalFarSide : normalFarSide;
     sideByPort.set(port, horizontal ? (farSide ? "EAST" : "WEST") : farSide ? "SOUTH" : "NORTH");
@@ -5221,6 +5278,7 @@ export function normalizePlacementForPortExtents(
   input: LayeredPhaseInput,
   placement: NodePlacement,
   order: LayerOrder,
+  orientation: AcyclicOrientation,
 ): void {
   const horizontal = input.direction === "left" || input.direction === "right";
   const physicalLayers = order.layers
@@ -5267,6 +5325,7 @@ export function normalizePlacementForPortExtents(
           input.direction,
           (port) => input.portSettings?.(port, node),
           { ...input.settings, ...input.nodeSettings?.(node) },
+          (port) => getOrientedPortDirection(input, orientation, node, port),
         );
         for (const port of ports ?? []) {
           const extent = horizontal
@@ -5297,6 +5356,7 @@ export function normalizePlacementForPortExtents(
       input.direction,
       (port) => input.portSettings?.(port, node),
       { ...input.settings, ...input.nodeSettings?.(node) },
+      (port) => getOrientedPortDirection(input, orientation, node, port),
     );
     for (const port of ports ?? []) {
       minimumX = Math.min(minimumX, rect.x + (port.x ?? 0));

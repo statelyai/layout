@@ -29,6 +29,7 @@ import {
   breakCyclesWithModelOrderBreadthFirstSearch,
   breakCyclesWithDepthFirstSearch,
   getPolylineMidpoint,
+  getOrientedPortDirection,
   minimizeCrossingsWithBarycenter,
   minimizeCrossingsWithMedian,
   minimizeCrossingsInteractively,
@@ -1660,7 +1661,7 @@ function runLayeredPipeline<N, E, G, P>(
     }
   }
   measure("port-margin-normalization", () =>
-    normalizePlacementForPortExtents(expanded.input, placement, order),
+    normalizePlacementForPortExtents(expanded.input, placement, order, expanded.orientation),
   );
   {
     const horizontal = direction === "left" || direction === "right";
@@ -1914,6 +1915,7 @@ function runLayeredPipeline<N, E, G, P>(
       direction,
       (port) => input.portSettings?.(port, node),
       { ...options.settings, ...options.nodeSettings?.(node) },
+      (port) => getOrientedPortDirection(expanded.input, expanded.orientation, node, port),
     );
     if (options.nodeSettings?.(node)?.portConstraints === "FIXED_SIDE") {
       ports = ports?.map((port) => {
@@ -2024,8 +2026,9 @@ function runLayeredPipeline<N, E, G, P>(
           .sort((left, right) => right.length - left.length)[0]
       : undefined;
     const sourceNode = graph.nodes.find((node) => node.id === edge.sourceId);
+    const targetNode = graph.nodes.find((node) => node.id === edge.targetId);
     const sourcePort = sourceNode?.ports?.find((port) => port.name === edge.sourcePort);
-    const targetPort = sourceNode?.ports?.find((port) => port.name === edge.targetPort);
+    const targetPort = targetNode?.ports?.find((port) => port.name === edge.targetPort);
     const sourcePortSide =
       sourceNode && sourcePort
         ? options.portSettings?.(sourcePort, sourceNode)?.["port.side"]
@@ -2081,10 +2084,44 @@ function runLayeredPipeline<N, E, G, P>(
               : (labelPlacement === "CENTER" ? midpoint.y : (firstPoint.y + lastPoint.y) / 2) +
                 labelSpacing +
                 Math.round(edgeThickness / 2);
-    const x =
-      labelPlacement === "CENTER" && horizontal && labelDummyRect ? labelDummyRect.x : routeX;
-    const y =
-      labelPlacement === "CENTER" && !horizontal && labelDummyRect ? labelDummyRect.y : routeY;
+    const sourceRect = placement.rectByNodeId.get(edge.sourceId);
+    const targetRect = placement.rectByNodeId.get(edge.targetId);
+    const hasFlexiblePorts = (node: GraphNode | undefined): boolean => {
+      const constraints = node ? options.nodeSettings?.(node)?.portConstraints : undefined;
+      return constraints === undefined || constraints === "UNDEFINED" || constraints === "FREE";
+    };
+    const flexibleFeedbackLabel =
+      labelPlacement === "CENTER" &&
+      inlineLabel &&
+      expanded.orientation.reversedEdgeIds.has(edge.id) &&
+      hasFlexiblePorts(sourceNode) &&
+      hasFlexiblePorts(targetNode) &&
+      sourceRect !== undefined &&
+      targetRect !== undefined;
+    const [beforeFlowRect, afterFlowRect] =
+      sourceRect && targetRect
+        ? horizontal
+          ? sourceRect.x <= targetRect.x
+            ? [sourceRect, targetRect]
+            : [targetRect, sourceRect]
+          : sourceRect.y <= targetRect.y
+            ? [sourceRect, targetRect]
+            : [targetRect, sourceRect]
+        : [undefined, undefined];
+    const x = flexibleFeedbackLabel
+      ? horizontal
+        ? (beforeFlowRect!.x + beforeFlowRect!.width + afterFlowRect!.x - width) / 2
+        : targetRect.x + (targetRect.width - width) / 2
+      : labelPlacement === "CENTER" && horizontal && labelDummyRect
+        ? labelDummyRect.x
+        : routeX;
+    const y = flexibleFeedbackLabel
+      ? horizontal
+        ? targetRect.y + (targetRect.height - height) / 2
+        : (beforeFlowRect!.y + beforeFlowRect!.height + afterFlowRect!.y - height) / 2
+      : labelPlacement === "CENTER" && !horizontal && labelDummyRect
+        ? labelDummyRect.y
+        : routeY;
     return {
       ...edge,
       x,

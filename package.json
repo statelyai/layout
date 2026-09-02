@@ -27,6 +27,10 @@
       "types": "./src/elkjs/index.ts",
       "default": "./dist/elkjs/index.mjs"
     },
+    "./lib/elk.bundled.js": {
+      "types": "./src/elkjs/index.ts",
+      "default": "./dist/elkjs/index.mjs"
+    },
     "./layered": {
       "types": "./src/layered/index.ts",
       "default": "./dist/layered/index.mjs"

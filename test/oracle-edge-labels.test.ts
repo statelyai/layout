@@ -51,6 +51,106 @@ for (const placement of ["CENTER", "HEAD", "TAIL"] as const) {
   }
 }
 
+it("keeps ELK-like backward-edge labels in a vertical sibling corridor", async () => {
+  const port = (id: string, side: "NORTH" | "SOUTH") => ({
+    id,
+    width: 20,
+    height: 20,
+    layoutOptions: { "elk.port.side": side },
+  });
+  const label = (id: string) => ({
+    id,
+    text: id,
+    width: 180,
+    height: 48,
+    layoutOptions: {
+      "elk.layered.edgeLabels.centerLabelPlacementStrategy": "MEDIAN_LAYER",
+      "elk.edgeLabels.inline": "true",
+      "elk.edgeLabels.placement": "CENTER",
+    },
+  });
+  const graph: ElkNode = {
+    id: "root",
+    layoutOptions: {
+      "elk.algorithm": "layered",
+      "elk.direction": "DOWN",
+      "elk.edgeRouting": "ORTHOGONAL",
+      "elk.separateConnectedComponents": "true",
+      "elk.spacing.nodeNode": "50",
+      "elk.spacing.edgeEdge": "10",
+      "elk.spacing.edgeNode": "10",
+      "elk.spacing.edgeLabel": "2",
+      "elk.spacing.labelNode": "5",
+      "elk.layered.spacing.nodeNodeBetweenLayers": "30",
+      "elk.layered.layering.strategy": "INTERACTIVE",
+      "elk.layered.cycleBreaking.strategy": "MODEL_ORDER",
+      "elk.layered.nodePlacement.strategy": "BRANDES_KOEPF",
+      "elk.layered.nodePlacement.favorStraightEdges": "true",
+      "elk.layered.crossingMinimization.forceNodeModelOrder": "true",
+      "elk.layered.considerModelOrder.strategy": "PREFER_NODES",
+      "elk.layered.compaction.postCompaction.strategy": "LEFT",
+      "elk.layered.compaction.postCompaction.constraints": "SCANLINE",
+      "elk.layered.edgeLabels.centerLabelPlacementStrategy": "MEDIAN_LAYER",
+      "elk.layered.edgeLabels.sideSelection": "SMART_DOWN",
+    },
+    children: [
+      {
+        id: "idle",
+        width: 180,
+        height: 96,
+        ports: [port("idle-second__src", "SOUTH"), port("idle-third__src", "SOUTH")],
+      },
+      {
+        id: "second",
+        width: 180,
+        height: 96,
+        ports: [port("idle-second__tgt", "NORTH"), port("third-second__tgt", "NORTH")],
+      },
+      {
+        id: "third",
+        width: 180,
+        height: 96,
+        ports: [port("idle-third__tgt", "NORTH"), port("third-second__src", "SOUTH")],
+      },
+    ],
+    edges: [
+      {
+        id: "idle-second",
+        sources: ["idle-second__src"],
+        targets: ["idle-second__tgt"],
+        labels: [label("idle-second")],
+      },
+      {
+        id: "idle-third",
+        sources: ["idle-third__src"],
+        targets: ["idle-third__tgt"],
+        labels: [label("idle-third")],
+      },
+      {
+        id: "third-second",
+        sources: ["third-second__src"],
+        targets: ["third-second__tgt"],
+        labels: [label("third-second")],
+      },
+    ],
+  };
+
+  const expected = (await new OracleELK().layout(structuredClone(graph) as never)) as ElkNode;
+  const actual = await new NativeELK().layout(structuredClone(graph));
+  const expectedLabel = expected.edges?.find((edge) => edge.id === "third-second")?.labels?.[0];
+  const actualLabel = actual.edges?.find((edge) => edge.id === "third-second")?.labels?.[0];
+  const actualSource = actual.children?.find((node) => node.id === "third");
+  const actualTarget = actual.children?.find((node) => node.id === "second");
+  const labelCenterX = (actualLabel?.x ?? 0) + (actualLabel?.width ?? 0) / 2;
+  const endpointCenters = [actualSource, actualTarget].map(
+    (node) => (node?.x ?? 0) + (node?.width ?? 0) / 2,
+  );
+
+  expect(actualLabel?.y).toEqual(expectedLabel?.y);
+  expect(labelCenterX).toBeGreaterThanOrEqual(Math.min(...endpointCenters));
+  expect(labelCenterX).toBeLessThanOrEqual(Math.max(...endpointCenters));
+});
+
 for (const sideSelection of [
   "ALWAYS_UP",
   "ALWAYS_DOWN",
