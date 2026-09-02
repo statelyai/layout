@@ -9,6 +9,7 @@
   },
   "files": [
     "dist",
+    "src",
     "LICENSE.md",
     "NOTICE.md"
   ],
@@ -16,18 +17,27 @@
   "sideEffects": false,
   "main": "./dist/index.mjs",
   "module": "./dist/index.mjs",
-  "types": "./dist/index.d.mts",
+  "types": "./src/index.ts",
   "exports": {
-    ".": "./dist/index.mjs",
-    "./elkjs": "./dist/elkjs/index.mjs",
-    "./layered": "./dist/layered/index.mjs",
+    ".": {
+      "types": "./src/index.ts",
+      "default": "./dist/index.mjs"
+    },
+    "./elkjs": {
+      "types": "./src/elkjs/index.ts",
+      "default": "./dist/elkjs/index.mjs"
+    },
+    "./layered": {
+      "types": "./src/layered/index.ts",
+      "default": "./dist/layered/index.mjs"
+    },
     "./package.json": "./package.json"
   },
   "publishConfig": {
     "access": "public"
   },
   "scripts": {
-    "build": "tsdown",
+    "build": "tsdown --config tsdown.config.mjs",
     "bench": "vitest bench --run",
     "demo": "portless --name layout vite --config demo/vite.config.ts",
     "demo:build": "vite build --config demo/vite.config.ts",
@@ -37,6 +47,7 @@
     "demo:typecheck": "tsc --project demo/tsconfig.json",
     "generate:elk-layered-options": "tsx scripts/generate-elk-layered-options.ts",
     "generate:elk-layered-options:check": "tsx scripts/generate-elk-layered-options.ts --check",
+    "prepare": "pnpm build",
     "dev": "tsdown --watch",
     "changeset": "changeset",
     "release": "pnpm build && pnpm changeset publish",

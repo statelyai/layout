@@ -1877,24 +1877,81 @@ function runLayeredPipeline<N, E, G, P>(
         : { ...end, y: end.y + delta };
     (routes.pointsByEdgeId as Map<string, readonly Point[]>).set(edge.id, points);
   }
+  const routedPortAnchors = new Map<string, Point>();
+  for (const edge of graph.edges) {
+    const points = routes.pointsByEdgeId.get(edge.id);
+    const first = points?.[0];
+    const last = points?.at(-1);
+    if (
+      edge.sourcePort !== undefined &&
+      first &&
+      graph.edges.filter(
+        (candidate) =>
+          candidate.sourceId === edge.sourceId && candidate.sourcePort === edge.sourcePort,
+      ).length === 1
+    ) {
+      routedPortAnchors.set(`${edge.sourceId}\0${edge.sourcePort}`, first);
+    }
+    if (
+      edge.targetPort !== undefined &&
+      last &&
+      graph.edges.filter(
+        (candidate) =>
+          candidate.targetId === edge.targetId && candidate.targetPort === edge.targetPort,
+      ).length === 1
+    ) {
+      routedPortAnchors.set(`${edge.targetId}\0${edge.targetPort}`, last);
+    }
+  }
   const nodes = graph.nodes.map((node): VisualNode<N, P> => {
     const rect = placement.rectByNodeId.get(node.id);
     if (!rect) {
       throw new Error(`Node placement missing for ${node.id}`);
     }
-    const ports = placePorts(
+    let ports = placePorts(
       node.ports,
       rect,
       direction,
       (port) => input.portSettings?.(port, node),
       { ...options.settings, ...options.nodeSettings?.(node) },
     );
+    if (options.nodeSettings?.(node)?.portConstraints === "FIXED_SIDE") {
+      ports = ports?.map((port) => {
+        if ((port.width ?? 8) !== 0 || (port.height ?? 8) !== 0) return port;
+        const anchor = routedPortAnchors.get(`${node.id}\0${port.name}`);
+        if (!anchor || port.x === undefined || port.y === undefined) return port;
+        const settings = input.portSettings?.(port, node);
+        const configuredAnchor = settings?.["port.anchor"] as
+          | { x?: number; y?: number }
+          | undefined;
+        const width = port.width ?? 0;
+        const height = port.height ?? 0;
+        const defaultAnchorX = port.x >= rect.width ? width : port.x + width <= 0 ? 0 : width / 2;
+        const defaultAnchorY =
+          port.y >= rect.height ? height : port.y + height <= 0 ? 0 : height / 2;
+        const x = anchor.x - rect.x - (configuredAnchor?.x ?? defaultAnchorX);
+        const y = anchor.y - rect.y - (configuredAnchor?.y ?? defaultAnchorY);
+        return {
+          ...port,
+          x: x === 0 && Object.is(port.x, -0) ? port.x : x,
+          y: y === 0 && Object.is(port.y, -0) ? port.y : y,
+        };
+      });
+    }
     return {
       ...node,
       ...rect,
       ...(ports === undefined ? {} : { ports }),
     } as VisualNode<N, P>;
   });
+  const feedbackNodeRects = graph.nodes.flatMap((node) => {
+    const rect = placement.rectByNodeId.get(node.id);
+    return rect ? [rect] : [];
+  });
+  const minimumFeedbackNodeX = Math.min(...feedbackNodeRects.map((rect) => rect.x));
+  const maximumFeedbackNodeX = Math.max(...feedbackNodeRects.map((rect) => rect.x + rect.width));
+  const minimumFeedbackNodeY = Math.min(...feedbackNodeRects.map((rect) => rect.y));
+  const maximumFeedbackNodeY = Math.max(...feedbackNodeRects.map((rect) => rect.y + rect.height));
   const edges = graph.edges.map((edge) => {
     const points = [...(routes.pointsByEdgeId.get(edge.id) ?? [])];
     const midpoint = getPolylineMidpoint(points);
@@ -1915,21 +1972,115 @@ function runLayeredPipeline<N, E, G, P>(
       edgeLabelSideSelection === "ALWAYS_UP" ||
       edgeLabelSideSelection === "SMART_UP" ||
       edgeLabelSideSelection === "DIRECTION_UP";
+    const horizontal = direction === "left" || direction === "right";
+    const verticalTrack = horizontal
+      ? points.find((point, index) => {
+          const next = points[index + 1];
+          return next !== undefined && point.x === next.x && point.y !== next.y;
+        })
+      : undefined;
+    const secondPoint = points[1];
+    const beforeLastPoint = points.at(-2);
+    const flowDelta = horizontal ? lastPoint.x - firstPoint.x : lastPoint.y - firstPoint.y;
+    const firstLeadDelta = secondPoint
+      ? horizontal
+        ? secondPoint.x - firstPoint.x
+        : secondPoint.y - firstPoint.y
+      : 0;
+    const lastLeadDelta = beforeLastPoint
+      ? horizontal
+        ? lastPoint.x - beforeLastPoint.x
+        : lastPoint.y - beforeLastPoint.y
+      : 0;
+    const outsideFeedback =
+      routes.outsideFeedbackEdgeIds?.has(edge.id) === true ||
+      (secondPoint !== undefined &&
+        beforeLastPoint !== undefined &&
+        flowDelta !== 0 &&
+        firstLeadDelta * flowDelta < 0 &&
+        lastLeadDelta * flowDelta < 0);
+    const horizontalFeedbackCandidate = outsideFeedback
+      ? points
+          .flatMap((point, index) => {
+            const next = points[index + 1];
+            return next !== undefined &&
+              point.y === next.y &&
+              (point.y < minimumFeedbackNodeY || point.y > maximumFeedbackNodeY)
+              ? [{ start: point, end: next, length: Math.abs(next.x - point.x) }]
+              : [];
+          })
+          .sort((left, right) => right.length - left.length)[0]
+      : undefined;
+    const verticalFeedbackCandidate = outsideFeedback
+      ? points
+          .flatMap((point, index) => {
+            const next = points[index + 1];
+            return next !== undefined &&
+              point.x === next.x &&
+              (point.x < minimumFeedbackNodeX || point.x > maximumFeedbackNodeX)
+              ? [{ start: point, end: next, length: Math.abs(next.y - point.y) }]
+              : [];
+          })
+          .sort((left, right) => right.length - left.length)[0]
+      : undefined;
+    const sourceNode = graph.nodes.find((node) => node.id === edge.sourceId);
+    const sourcePort = sourceNode?.ports?.find((port) => port.name === edge.sourcePort);
+    const targetPort = sourceNode?.ports?.find((port) => port.name === edge.targetPort);
+    const sourcePortSide =
+      sourceNode && sourcePort
+        ? options.portSettings?.(sourcePort, sourceNode)?.["port.side"]
+        : undefined;
+    const targetPortSide =
+      sourceNode && targetPort
+        ? options.portSettings?.(targetPort, sourceNode)?.["port.side"]
+        : undefined;
+    const sameSideHorizontalPortSelfLoop =
+      edge.sourceId === edge.targetId &&
+      (sourcePortSide === "EAST" || sourcePortSide === "WEST") &&
+      targetPortSide === sourcePortSide;
+    const horizontalFeedbackTrack =
+      sameSideHorizontalPortSelfLoop ||
+      (horizontalFeedbackCandidate?.length ?? -1) >= (verticalFeedbackCandidate?.length ?? -1)
+        ? horizontalFeedbackCandidate
+        : undefined;
+    const verticalFeedbackTrack = horizontalFeedbackTrack ? undefined : verticalFeedbackCandidate;
+    const trackNearTarget =
+      verticalTrack !== undefined &&
+      Math.abs(lastPoint.x - verticalTrack.x) < Math.abs(verticalTrack.x - firstPoint.x);
+    const edgeNodeSpacing = Number(options.settings?.["spacing.edgeNodeBetweenLayers"] ?? 10);
+    const labelBeforeTrack = direction === "right" ? trackNearTarget : !trackNearTarget;
     const routeX =
       labelPlacement === "TAIL"
         ? firstPoint.x + labelSpacing
         : labelPlacement === "HEAD"
           ? lastPoint.x - width - labelSpacing
-          : midpoint.x - width / 2;
+          : inlineLabel && horizontalFeedbackTrack
+            ? (horizontalFeedbackTrack.start.x + horizontalFeedbackTrack.end.x - width) / 2
+            : inlineLabel && verticalFeedbackTrack
+              ? verticalFeedbackTrack.start.x > (minimumFeedbackNodeX + maximumFeedbackNodeX) / 2
+                ? verticalFeedbackTrack.start.x + labelSpacing + 1
+                : verticalFeedbackTrack.start.x - labelSpacing - width - 1
+              : inlineLabel && verticalTrack
+                ? labelBeforeTrack
+                  ? verticalTrack.x - edgeNodeSpacing - width
+                  : verticalTrack.x + edgeNodeSpacing
+                : inlineLabel
+                  ? horizontal
+                    ? Math.floor(midpoint.x - width / 2)
+                    : Math.ceil(midpoint.x - width / 2)
+                  : midpoint.x - width / 2;
     const routeY =
-      labelPlacement === "CENTER" && inlineLabel
-        ? midpoint.y - height / 2 - 0.5
-        : labelPlacement === "CENTER" && placeLabelUp
-          ? midpoint.y - height - labelSpacing - Math.round(edgeThickness / 2)
-          : (labelPlacement === "CENTER" ? midpoint.y : (firstPoint.y + lastPoint.y) / 2) +
-            labelSpacing +
-            Math.round(edgeThickness / 2);
-    const horizontal = direction === "left" || direction === "right";
+      labelPlacement === "CENTER" && inlineLabel && horizontalFeedbackTrack
+        ? horizontalFeedbackTrack.start.y - height / 2 - 0.5
+        : labelPlacement === "CENTER" && inlineLabel && verticalFeedbackTrack
+          ? (verticalFeedbackTrack.start.y + verticalFeedbackTrack.end.y - height) / 2
+          : labelPlacement === "CENTER" && inlineLabel
+            ? midpoint.y - height / 2 - 0.5
+            : labelPlacement === "CENTER" && placeLabelUp
+              ? midpoint.y - height - labelSpacing - Math.round(edgeThickness / 2)
+              : (labelPlacement === "CENTER" ? midpoint.y : (firstPoint.y + lastPoint.y) / 2) +
+                labelSpacing +
+                Math.round(edgeThickness / 2);
     const x =
       labelPlacement === "CENTER" && horizontal && labelDummyRect ? labelDummyRect.x : routeX;
     const y =

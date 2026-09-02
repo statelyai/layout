@@ -59,6 +59,8 @@ export interface EdgeRoutes {
   pointsByEdgeId: ReadonlyMap<string, readonly Point[]>;
   /** ELK spline segment NUB controls retained until long-edge joining. */
   splineNubControlsByEdgeId?: ReadonlyMap<string, readonly Point[]>;
+  /** Reversed fixed-side routes that must stay outside the node envelope during compaction. */
+  outsideFeedbackEdgeIds?: ReadonlySet<string>;
 }
 
 export type CycleBreaker = (input: LayeredPhaseInput) => AcyclicOrientation;

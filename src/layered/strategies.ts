@@ -1423,8 +1423,8 @@ export const assignLayersWithCoffmanGraham: LayerAssigner = (input, orientation)
     let leftPosition = leftValues.length;
     let rightPosition = rightValues.length;
     while (leftPosition > 0 && rightPosition > 0) {
-      const leftValue = leftValues[--leftPosition];
-      const rightValue = rightValues[--rightPosition];
+      const leftValue = leftValues[--leftPosition]!;
+      const rightValue = rightValues[--rightPosition]!;
       if (leftValue !== rightValue) return leftValue - rightValue;
     }
     // This intentionally mirrors ELK's ListIterator.hasNext checks after
@@ -2377,6 +2377,13 @@ export function applyPostCompaction(
   void constraintStrategy;
   if (strategy === "NONE") return placement;
   const rects = placement.rectByNodeId as Map<string, EntityRect>;
+  const originalEndpointsByEdgeId = new Map(
+    [...(routes?.pointsByEdgeId ?? [])].flatMap(([edgeId, points]) => {
+      const start = points[0];
+      const end = points.at(-1);
+      return start && end ? [[edgeId, { start: { ...start }, end: { ...end } }] as const] : [];
+    }),
+  );
   type ConstraintNode = {
     id: string;
     kind: "node" | "segment";
@@ -2409,6 +2416,7 @@ export function applyPostCompaction(
   });
   if (routes) {
     for (const [edgeId, readonlyPoints] of routes.pointsByEdgeId) {
+      if (routes.outsideFeedbackEdgeIds?.has(edgeId)) continue;
       const points = readonlyPoints as Point[];
       for (let index = 0; index + 1 < points.length; index++) {
         const first = points[index]!;
@@ -2452,7 +2460,27 @@ export function applyPostCompaction(
                 : "spacing.edgeNode"
             ] ?? 10,
           );
+  const centerLabeledEdgeIds = new Set(
+    input.graph.edges
+      .filter(
+        (edge) =>
+          (edge.width ?? 0) > 0 &&
+          (input.edgeSettings?.(edge)?.["edgeLabels.placement"] ?? "CENTER") === "CENTER",
+      )
+      .map((edge) => edge.id),
+  );
+  const labelFlowLocked = new Set(
+    compactables
+      .filter(
+        (item) =>
+          item.kind === "segment" &&
+          item.edgeId !== undefined &&
+          centerLabeledEdgeIds.has(item.edgeId),
+      )
+      .map((item) => item.id),
+  );
   const compact = (direction: "LEFT" | "RIGHT", locked = new Set<string>()): void => {
+    locked = new Set([...labelFlowLocked, ...locked]);
     const nodes: ConstraintNode[] = compactables.map((item) => ({
       ...item,
       x: direction === "RIGHT" ? -item.x - item.width : item.x,
@@ -2548,6 +2576,13 @@ export function applyPostCompaction(
       for (const node of input.graph.nodes) {
         const targets = outgoing.get(node.id) ?? [];
         if (targets.length <= (incomingDegree.get(node.id) ?? 0) || targets.length === 0) continue;
+        if (
+          input.graph.edges.some(
+            (edge) => edge.sourceId === node.id && centerLabeledEdgeIds.has(edge.id),
+          )
+        ) {
+          continue;
+        }
         const item = itemByNodeId.get(node.id);
         if (!item) continue;
         const upper = Math.min(
@@ -2557,6 +2592,105 @@ export function applyPostCompaction(
           ),
         );
         item.x = Math.max(item.x, upper);
+      }
+    }
+  }
+  if (
+    strategy === "EDGE_LENGTH" &&
+    input.settings["nodePlacement.favorStraightEdges"] === true &&
+    (input.direction === "down" || input.direction === "up")
+  ) {
+    const itemByNodeId = new Map(
+      compactables.flatMap((item) =>
+        item.kind === "node" && item.nodeId ? [[item.nodeId, item] as const] : [],
+      ),
+    );
+    const incomingDegree = new Map(input.graph.nodes.map((node) => [node.id, 0]));
+    for (const edge of input.graph.edges) {
+      if (edge.sourceId !== edge.targetId) {
+        incomingDegree.set(edge.targetId, (incomingDegree.get(edge.targetId) ?? 0) + 1);
+      }
+    }
+    for (const edge of input.graph.edges) {
+      if (edge.sourceId === edge.targetId || (incomingDegree.get(edge.targetId) ?? 0) !== 1) {
+        continue;
+      }
+      const endpoints = originalEndpointsByEdgeId.get(edge.id);
+      const source = itemByNodeId.get(edge.sourceId);
+      const target = itemByNodeId.get(edge.targetId);
+      if (!endpoints || !source || !target) continue;
+      const forward =
+        input.direction === "down"
+          ? endpoints.start.y < endpoints.end.y
+          : endpoints.start.y > endpoints.end.y;
+      if (!forward) continue;
+      const desiredTargetX =
+        source.x + (endpoints.start.x - source.originalX) - (endpoints.end.x - target.originalX);
+      const collides = compactables.some((candidate) => {
+        if (candidate.kind !== "node" || candidate === target) return false;
+        const flowOverlap =
+          candidate.y < target.y + target.height && candidate.y + candidate.height > target.y;
+        if (!flowOverlap) return false;
+        const spacing = input.spacing.node;
+        return (
+          desiredTargetX < candidate.x + candidate.width + spacing &&
+          desiredTargetX + target.width + spacing > candidate.x
+        );
+      });
+      if (collides) continue;
+      target.x = desiredTargetX;
+      const alignedX = source.x + (endpoints.start.x - source.originalX);
+      for (const segment of compactables) {
+        if (segment.kind === "segment" && segment.edgeId === edge.id) segment.x = alignedX;
+      }
+    }
+  }
+  if (input.direction === "right" && centerLabeledEdgeIds.size > 0) {
+    const itemByNodeId = new Map(
+      compactables.flatMap((item) =>
+        item.kind === "node" && item.nodeId ? [[item.nodeId, item] as const] : [],
+      ),
+    );
+    const edgeNodeSpacing = Number(input.settings["spacing.edgeNodeBetweenLayers"] ?? 10);
+    for (const edge of input.graph.edges) {
+      if (!centerLabeledEdgeIds.has(edge.id)) continue;
+      const source = itemByNodeId.get(edge.sourceId);
+      const target = itemByNodeId.get(edge.targetId);
+      const originalEndpoints = originalEndpointsByEdgeId.get(edge.id);
+      if (
+        !source ||
+        !target ||
+        !originalEndpoints ||
+        originalEndpoints.start.x >= originalEndpoints.end.x
+      ) {
+        continue;
+      }
+      const tracks = compactables.filter(
+        (item) => item.kind === "segment" && item.edgeId === edge.id,
+      );
+      const track = tracks.length > 0 ? Math.max(...tracks.map((item) => item.x)) : undefined;
+      const targetNode = input.graph.nodes.find((node) => node.id === edge.targetId);
+      const targetPort = targetNode?.ports?.find((port) => port.name === edge.targetPort);
+      const routeNearTarget =
+        track !== undefined &&
+        targetNode !== undefined &&
+        targetPort !== undefined &&
+        (targetPort.width ?? 8) === 0 &&
+        (targetPort.height ?? 8) === 0 &&
+        input.nodeSettings?.(targetNode)?.portConstraints === "FIXED_SIDE" &&
+        input.graph.edges.filter((candidate) => candidate.targetId === edge.targetId).length >
+          input.graph.edges.filter((candidate) => candidate.sourceId === edge.sourceId).length;
+      if (routeNearTarget) {
+        source.x = Math.max(
+          source.x,
+          track - edgeNodeSpacing - (edge.width ?? 0) - input.spacing.layer - source.width,
+        );
+      } else {
+        const routeStart =
+          track !== undefined
+            ? track + edgeNodeSpacing
+            : source.x + source.width + input.spacing.layer;
+        target.x = Math.max(target.x, routeStart + (edge.width ?? 0) + input.spacing.layer);
       }
     }
   }
@@ -2575,14 +2709,73 @@ export function applyPostCompaction(
     }
   }
   if (routes) {
+    const edgeRouting = input.settings.edgeRouting ?? "ORTHOGONAL";
+    const compactedSplineControls = routes.splineNubControlsByEdgeId
+      ? new Map(routes.splineNubControlsByEdgeId)
+      : undefined;
     const edgeById = new Map(input.graph.edges.map((edge) => [edge.id, edge]));
     for (const [edgeId, readonlyPoints] of routes.pointsByEdgeId) {
-      const points = readonlyPoints as Point[];
+      const points = [...readonlyPoints];
       const edge = edgeById.get(edgeId);
       if (!edge || points.length === 0) continue;
-      points[0]!.x += nodeDeltaById.get(edge.sourceId) ?? 0;
-      points.at(-1)!.x += nodeDeltaById.get(edge.targetId) ?? 0;
+      const originalEndpoints = originalEndpointsByEdgeId.get(edgeId);
+      if (originalEndpoints) {
+        points[0] = {
+          ...originalEndpoints.start,
+          x: originalEndpoints.start.x + (nodeDeltaById.get(edge.sourceId) ?? 0),
+        };
+        points[points.length - 1] = {
+          ...originalEndpoints.end,
+          x: originalEndpoints.end.x + (nodeDeltaById.get(edge.targetId) ?? 0),
+        };
+        if (routes.outsideFeedbackEdgeIds?.has(edgeId)) {
+          const horizontal = input.direction === "left" || input.direction === "right";
+          const startDelta = points[0]!.x - originalEndpoints.start.x;
+          const endDelta = points.at(-1)!.x - originalEndpoints.end.x;
+          if (horizontal && points.length >= 6) {
+            for (const index of [1, 2]) {
+              points[index] = { ...points[index]!, x: points[index]!.x + startDelta };
+            }
+            for (const index of [points.length - 3, points.length - 2]) {
+              points[index] = { ...points[index]!, x: points[index]!.x + endDelta };
+            }
+          } else if (!horizontal && points.length >= 4) {
+            points[1] = { ...points[1]!, x: points[1]!.x + startDelta };
+            points[points.length - 2] = {
+              ...points[points.length - 2]!,
+              x: points[points.length - 2]!.x + endDelta,
+            };
+          }
+        }
+      }
+      let compactedPoints = points;
+      if (edgeRouting === "ORTHOGONAL") {
+        const horizontal = input.direction === "left" || input.direction === "right";
+        const orthogonal: Point[] = [];
+        for (const [index, point] of points.entries()) {
+          const previous = orthogonal.at(-1);
+          if (
+            previous &&
+            Math.abs(previous.x - point.x) > 1e-9 &&
+            Math.abs(previous.y - point.y) > 1e-9
+          ) {
+            const approachingTarget = index === points.length - 1;
+            orthogonal.push(
+              horizontal === approachingTarget
+                ? { x: previous.x, y: point.y }
+                : { x: point.x, y: previous.y },
+            );
+          }
+          orthogonal.push(point);
+        }
+        compactedPoints = simplifyRoute(orthogonal);
+      } else if (edgeRouting === "SPLINES") {
+        // Long-edge joining regenerates controls from the compacted route.
+        compactedSplineControls?.delete(edgeId);
+      }
+      (routes.pointsByEdgeId as Map<string, readonly Point[]>).set(edgeId, compactedPoints);
     }
+    if (compactedSplineControls) routes.splineNubControlsByEdgeId = compactedSplineControls;
   }
   return placement;
 }
@@ -2885,20 +3078,33 @@ function implicitEdgeEndpoints(
     const feedback =
       input.settings.feedbackEdges === true && orientation?.reversedEdgeIds.has(edge.id) === true;
     const directionReversed = input.direction === "left" || input.direction === "up";
-    const sourceSide = feedback
-      ? directionReversed
+    const endpointSide = (nodeId: string, portName: string | undefined): string | undefined => {
+      const node = nodeById.get(nodeId);
+      const port = node?.ports?.find((candidate) => candidate.name === portName);
+      const constraints = node ? input.nodeSettings?.(node)?.portConstraints : undefined;
+      if (
+        !node ||
+        !port ||
+        (constraints !== "FIXED_SIDE" &&
+          constraints !== "FIXED_ORDER" &&
+          constraints !== "FIXED_RATIO" &&
+          constraints !== "FIXED_POS")
+      ) {
+        return undefined;
+      }
+      const configured = input.portSettings?.(port, node)?.["port.side"];
+      return configured === "WEST" || configured === "NORTH"
         ? "before"
-        : "after"
-      : forward
-        ? "after"
-        : "before";
-    const targetSide = feedback
-      ? directionReversed
-        ? "after"
-        : "before"
-      : forward
-        ? "before"
-        : "after";
+        : configured === "EAST" || configured === "SOUTH"
+          ? "after"
+          : undefined;
+    };
+    const sourceSide =
+      endpointSide(edge.sourceId, edge.sourcePort) ??
+      (feedback ? (directionReversed ? "before" : "after") : forward ? "after" : "before");
+    const targetSide =
+      endpointSide(edge.targetId, edge.targetPort) ??
+      (feedback ? (directionReversed ? "after" : "before") : forward ? "before" : "after");
     const sourceKey = `${edge.sourceId}:${sourceSide}`;
     const targetKey = `${edge.targetId}:${targetSide}`;
     const sourceGroup = groups.get(sourceKey) ?? [];
@@ -3114,8 +3320,20 @@ function implicitEdgeEndpoints(
 function routeEdges(style: "ORTHOGONAL" | "POLYLINE" | "SPLINES"): EdgeRouter {
   return (input, orientation, placement) => {
     const nodeById = new Map(input.graph.nodes.map((node) => [node.id, node]));
+    const hasZeroFixedSideTarget = (edge: GraphEdge): boolean => {
+      const target = nodeById.get(edge.targetId);
+      const port = target?.ports?.find((candidate) => candidate.name === edge.targetPort);
+      return (
+        target !== undefined &&
+        port !== undefined &&
+        (port.width ?? 8) === 0 &&
+        (port.height ?? 8) === 0 &&
+        input.nodeSettings?.(target)?.portConstraints === "FIXED_SIDE"
+      );
+    };
     const pointsByEdgeId = new Map<string, readonly Point[]>();
     const splineNubControlsByEdgeId = new Map<string, readonly Point[]>();
+    const outsideFeedbackEdgeIds = new Set<string>();
     const horizontal = input.direction === "left" || input.direction === "right";
     const reverse = input.direction === "up" || input.direction === "left";
     const mutableRects = placement.rectByNodeId as Map<string, EntityRect>;
@@ -3126,6 +3344,45 @@ function routeEdges(style: "ORTHOGONAL" | "POLYLINE" | "SPLINES"): EdgeRouter {
       loops.push(edge);
       selfLoopsByNodeId.set(edge.sourceId, loops);
     }
+    const selfLoopEntriesByX = [...selfLoopsByNodeId].sort(
+      ([leftId], [rightId]) =>
+        (mutableRects.get(leftId)?.x ?? 0) - (mutableRects.get(rightId)?.x ?? 0),
+    );
+    for (const [id, loops] of selfLoopEntriesByX) {
+      const rect = mutableRects.get(id);
+      const node = nodeById.get(id);
+      if (!rect || !node) continue;
+      const eastLoops = loops.filter((edge) => {
+        const sourcePort = node.ports?.find((port) => port.name === edge.sourcePort);
+        const targetPort = node.ports?.find((port) => port.name === edge.targetPort);
+        return (
+          sourcePort !== undefined &&
+          targetPort !== undefined &&
+          input.portSettings?.(sourcePort, node)?.["port.side"] === "EAST" &&
+          input.portSettings?.(targetPort, node)?.["port.side"] === "EAST"
+        );
+      });
+      if (eastLoops.length === 0) continue;
+      const selfLoopSpacing = Number(input.settings["spacing.nodeSelfLoop"] ?? 10);
+      const labelSpacing = Number(input.settings["spacing.edgeLabel"] ?? 2);
+      const exteriorWidth =
+        selfLoopSpacing +
+        eastLoops.reduce((sum, edge) => sum + (edge.width ?? 0) + labelSpacing, 1);
+      const nodeRight = rect.x + rect.width;
+      const rightCandidates = [...mutableRects.entries()].filter(
+        ([candidateId, candidateRect]) => candidateId !== id && candidateRect.x >= nodeRight - 1e-9,
+      );
+      if (rightCandidates.length === 0) continue;
+      const nextX = Math.min(...rightCandidates.map(([, candidateRect]) => candidateRect.x));
+      const requiredNextX = nodeRight + exteriorWidth + input.spacing.node;
+      const shift = requiredNextX - nextX;
+      if (shift <= 0) continue;
+      for (const [candidateId, candidateRect] of mutableRects) {
+        if (candidateId === id || candidateRect.x < nextX - 1e-9) continue;
+        mutableRects.set(candidateId, { ...candidateRect, x: candidateRect.x + shift });
+      }
+    }
+    const northReserveByLayer = new Map<number, number>();
     for (const [id, loops] of selfLoopsByNodeId) {
       const rect = mutableRects.get(id);
       if (!rect) continue;
@@ -3147,7 +3404,18 @@ function routeEdges(style: "ORTHOGONAL" | "POLYLINE" | "SPLINES"): EdgeRouter {
         const reserve =
           (ordering === "SEQUENCED" ? Math.min(1, sideLoopCount) : sideLoopCount) * spacing +
           splineOffset;
-        mutableRects.set(id, { ...rect, y: rect.y + reserve });
+        northReserveByLayer.set(rect.y, Math.max(northReserveByLayer.get(rect.y) ?? 0, reserve));
+      }
+    }
+    const northReserves = [...northReserveByLayer].sort(([left], [right]) => left - right);
+    for (const [candidateId, candidateRect] of mutableRects) {
+      const reserve = northReserves.reduce(
+        (total, [layerY, layerReserve]) =>
+          candidateRect.y + 1e-9 >= layerY ? total + layerReserve : total,
+        0,
+      );
+      if (reserve > 0) {
+        mutableRects.set(candidateId, { ...candidateRect, y: candidateRect.y + reserve });
       }
     }
     const edgeLabelSideSelection = input.settings["edgeLabels.sideSelection"] ?? "SMART_DOWN";
@@ -3204,7 +3472,8 @@ function routeEdges(style: "ORTHOGONAL" | "POLYLINE" | "SPLINES"): EdgeRouter {
 
     const labelExtraByGap = flowLayers.slice(0, -1).map(() => 0);
     for (const edge of input.graph.edges) {
-      if ((edge.width ?? 0) <= 0) continue;
+      const labelFlowSize = horizontal ? (edge.width ?? 0) : (edge.height ?? 0);
+      if (labelFlowSize <= 0) continue;
       const sourceLayer = flowLayerByNodeId.get(edge.sourceId);
       const targetLayer = flowLayerByNodeId.get(edge.targetId);
       if (sourceLayer === undefined || targetLayer === undefined) continue;
@@ -3212,8 +3481,8 @@ function routeEdges(style: "ORTHOGONAL" | "POLYLINE" | "SPLINES"): EdgeRouter {
       const placement = input.edgeSettings?.(edge)?.["edgeLabels.placement"] ?? "CENTER";
       const extra =
         placement === "CENTER"
-          ? (edge.width ?? 0) + input.spacing.layer
-          : (edge.width ?? 0) + Number(input.settings["spacing.edgeLabel"] ?? 2);
+          ? labelFlowSize + input.spacing.layer
+          : labelFlowSize + Number(input.settings["spacing.edgeLabel"] ?? 2);
       const gap = Math.min(sourceLayer, targetLayer);
       labelExtraByGap[gap] = Math.max(labelExtraByGap[gap] ?? 0, extra);
     }
@@ -3586,12 +3855,25 @@ function routeEdges(style: "ORTHOGONAL" | "POLYLINE" | "SPLINES"): EdgeRouter {
         bounds.start = nextStart;
         bounds.end = nextStart + size;
         const slots = slotsByGap[layerNo] ?? 0;
+        const routesNearTarget = candidatesByGap[layerNo]?.some(
+          (candidate) =>
+            hasZeroFixedSideTarget(candidate.edge) &&
+            candidatesByGap[layerNo]!.filter(
+              ({ edge }) => edge.targetId === candidate.edge.targetId,
+            ).length >
+              candidatesByGap[layerNo]!.filter(
+                ({ edge }) => edge.sourceId === candidate.edge.sourceId,
+              ).length,
+        );
+        const preservedGap =
+          (existingGapByLayer[layerNo] ?? input.spacing.layer) -
+          (routesNearTarget ? edgeEdgeSpacing : 0);
         const gapSpacing =
           slots === 0
             ? (existingGapByLayer[layerNo] ?? input.spacing.layer)
             : Math.max(
-                preservesNodeFlexibilityGap
-                  ? (existingGapByLayer[layerNo] ?? input.spacing.layer)
+                preservesNodeFlexibilityGap || (labelExtraByGap[layerNo] ?? 0) > 0
+                  ? preservedGap
                   : input.spacing.layer,
                 2 * edgeNodeSpacing + Math.max(0, slots - 1) * edgeEdgeSpacing,
               );
@@ -3602,8 +3884,18 @@ function routeEdges(style: "ORTHOGONAL" | "POLYLINE" | "SPLINES"): EdgeRouter {
       for (const [gap, candidates] of candidatesByGap.entries()) {
         for (const candidate of candidates) {
           if (candidate.straight) continue;
-          const firstTrack =
-            (flowLayers[gap]?.end ?? 0) + edgeNodeSpacing + (candidate.slot ?? 0) * edgeEdgeSpacing;
+          const routeNearTarget =
+            input.direction === "right" &&
+            hasZeroFixedSideTarget(candidate.edge) &&
+            candidates.filter(({ edge }) => edge.targetId === candidate.edge.targetId).length >
+              candidates.filter(({ edge }) => edge.sourceId === candidate.edge.sourceId).length;
+          const firstTrack = routeNearTarget
+            ? (flowLayers[gap + 1]?.start ?? 0) -
+              edgeNodeSpacing -
+              (candidate.slot ?? 0) * edgeEdgeSpacing
+            : (flowLayers[gap]?.end ?? 0) +
+              edgeNodeSpacing +
+              (candidate.slot ?? 0) * edgeEdgeSpacing;
           if (candidate.secondSlot !== undefined && candidate.crossover !== undefined) {
             orthogonalDetourByEdgeId.set(candidate.edge.id, {
               firstTrack,
@@ -3838,7 +4130,9 @@ function routeEdges(style: "ORTHOGONAL" | "POLYLINE" | "SPLINES"): EdgeRouter {
             : [];
         });
         const incoming = segments.map(() => 0);
-        for (const dependency of acyclicDependencies) incoming[dependency.target]++;
+        for (const dependency of acyclicDependencies) {
+          incoming[dependency.target] = (incoming[dependency.target] ?? 0) + 1;
+        }
         const queue = incoming.flatMap((count, index) => (count === 0 ? [index] : []));
         const rank = segments.map(() => 0);
         for (let queueIndex = 0; queueIndex < queue.length; queueIndex++) {
@@ -3991,48 +4285,122 @@ function routeEdges(style: "ORTHOGONAL" | "POLYLINE" | "SPLINES"): EdgeRouter {
       const targetRect = placement.rectByNodeId.get(edge.targetId);
       if (!source || !target || !sourceRect || !targetRect) continue;
 
-      if (input.settings.feedbackEdges === true && orientation.reversedEdgeIds.has(edge.id)) {
-        const spacing = Number(input.settings["spacing.edgeNode"] ?? 10);
+      const reversedEdge = orientation.reversedEdgeIds.has(edge.id);
+      const feedbackSourcePort = source.ports?.find((port) => port.name === edge.sourcePort);
+      const feedbackTargetPort = target.ports?.find((port) => port.name === edge.targetPort);
+      const feedbackSourcePortSide = feedbackSourcePort
+        ? input.portSettings?.(feedbackSourcePort, source)?.["port.side"]
+        : undefined;
+      const feedbackTargetPortSide = feedbackTargetPort
+        ? input.portSettings?.(feedbackTargetPort, target)?.["port.side"]
+        : undefined;
+      const sourceAwaySide = horizontal
+        ? sourceRect.x < targetRect.x
+          ? "WEST"
+          : "EAST"
+        : sourceRect.y < targetRect.y
+          ? "NORTH"
+          : "SOUTH";
+      const targetAwaySide = horizontal
+        ? sourceRect.x < targetRect.x
+          ? "EAST"
+          : "WEST"
+        : sourceRect.y < targetRect.y
+          ? "SOUTH"
+          : "NORTH";
+      const sameSideSelfLoop =
+        source.id === target.id &&
+        feedbackSourcePortSide !== undefined &&
+        feedbackSourcePortSide === feedbackTargetPortSide;
+      const fixedSideFeedback =
+        style === "ORTHOGONAL" &&
+        !sameSideSelfLoop &&
+        (feedbackSourcePortSide === sourceAwaySide || feedbackTargetPortSide === targetAwaySide);
+      if ((input.settings.feedbackEdges === true && reversedEdge) || fixedSideFeedback) {
+        if (fixedSideFeedback) outsideFeedbackEdgeIds.add(edge.id);
+        const crossSpacing = Number(input.settings["spacing.edgeNode"] ?? 10);
+        const flowSpacing = fixedSideFeedback
+          ? Number(input.settings["spacing.edgeNodeBetweenLayers"] ?? 10) +
+            (source.id === target.id ? Number(input.settings["spacing.nodeSelfLoop"] ?? 10) : 0)
+          : crossSpacing;
+        const sourceFallback = implicitEndpoints.get(edge.id)?.source ?? {
+          x: sourceRect.x + sourceRect.width / 2,
+          y: sourceRect.y + sourceRect.height / 2,
+        };
+        const targetFallback = implicitEndpoints.get(edge.id)?.target ?? {
+          x: targetRect.x + targetRect.width / 2,
+          y: targetRect.y + targetRect.height / 2,
+        };
+        const start = fixedSideFeedback
+          ? getPortPoint(
+              source,
+              edge.sourcePort,
+              sourceRect,
+              sourceFallback,
+              input.direction,
+              input,
+            )
+          : sourceFallback;
+        const end = fixedSideFeedback
+          ? getPortPoint(
+              target,
+              edge.targetPort,
+              targetRect,
+              targetFallback,
+              input.direction,
+              input,
+            )
+          : targetFallback;
         if (horizontal) {
-          const sign = reverse ? -1 : 1;
-          const start = {
-            x: sign > 0 ? sourceRect.x + sourceRect.width : sourceRect.x,
-            y: sourceRect.y + sourceRect.height / 2,
-          };
-          const end = {
-            x: sign > 0 ? targetRect.x : targetRect.x + targetRect.width,
-            y: targetRect.y + targetRect.height / 2,
-          };
+          const sign = fixedSideFeedback
+            ? Math.sign(sourceRect.x - targetRect.x) || 1
+            : reverse
+              ? -1
+              : 1;
           const outerCross =
             Math.max(...[...placement.rectByNodeId.values()].map((rect) => rect.y + rect.height)) +
-            spacing;
+            crossSpacing +
+            (fixedSideFeedback ? 0.5 : 0);
+          const preserveCenters =
+            fixedSideFeedback && input.settings.unnecessaryBendpoints === true;
           pointsByEdgeId.set(edge.id, [
             start,
-            { x: start.x + sign * spacing, y: start.y },
-            { x: start.x + sign * spacing, y: outerCross },
-            { x: end.x - sign * spacing, y: outerCross },
-            { x: end.x - sign * spacing, y: end.y },
+            { x: start.x + sign * flowSpacing, y: start.y },
+            { x: start.x + sign * flowSpacing, y: outerCross },
+            ...(preserveCenters
+              ? [
+                  { x: sourceRect.x + sourceRect.width / 2, y: outerCross },
+                  { x: targetRect.x + targetRect.width / 2, y: outerCross },
+                ]
+              : []),
+            { x: end.x - sign * flowSpacing, y: outerCross },
+            { x: end.x - sign * flowSpacing, y: end.y },
             end,
           ]);
         } else {
-          const sign = reverse ? -1 : 1;
-          const start = {
-            x: sourceRect.x + sourceRect.width / 2,
-            y: sign > 0 ? sourceRect.y + sourceRect.height : sourceRect.y,
-          };
-          const end = {
-            x: targetRect.x + targetRect.width / 2,
-            y: sign > 0 ? targetRect.y : targetRect.y + targetRect.height,
-          };
+          const sign = fixedSideFeedback
+            ? Math.sign(sourceRect.y - targetRect.y) || 1
+            : reverse
+              ? -1
+              : 1;
           const outerCross =
             Math.max(...[...placement.rectByNodeId.values()].map((rect) => rect.x + rect.width)) +
-            spacing;
+            crossSpacing +
+            (fixedSideFeedback ? 0.5 : 0);
+          const preserveCenters =
+            fixedSideFeedback && input.settings.unnecessaryBendpoints === true;
           pointsByEdgeId.set(edge.id, [
             start,
-            { x: start.x, y: start.y + sign * spacing },
-            { x: outerCross, y: start.y + sign * spacing },
-            { x: outerCross, y: end.y - sign * spacing },
-            { x: end.x, y: end.y - sign * spacing },
+            { x: start.x, y: start.y + sign * flowSpacing },
+            { x: outerCross, y: start.y + sign * flowSpacing },
+            ...(preserveCenters
+              ? [
+                  { x: outerCross, y: sourceRect.y + sourceRect.height / 2 },
+                  { x: outerCross, y: targetRect.y + targetRect.height / 2 },
+                ]
+              : []),
+            { x: outerCross, y: end.y - sign * flowSpacing },
+            { x: end.x, y: end.y - sign * flowSpacing },
             end,
           ]);
         }
@@ -4121,6 +4489,104 @@ function routeEdges(style: "ORTHOGONAL" | "POLYLINE" | "SPLINES"): EdgeRouter {
         const distribution = nodeSettings?.["edgeRouting.selfLoopDistribution"] ?? "NORTH";
         const ordering = nodeSettings?.["edgeRouting.selfLoopOrdering"] ?? "STACKED";
         if (style === "ORTHOGONAL") {
+          if (sameSideSelfLoop) {
+            const endpoints = implicitEndpoints.get(edge.id);
+            const start = getPortPoint(
+              source,
+              edge.sourcePort,
+              sourceRect,
+              endpoints?.source ?? {
+                x: sourceRect.x + sourceRect.width / 2,
+                y: sourceRect.y + sourceRect.height / 2,
+              },
+              input.direction,
+              input,
+            );
+            const end = getPortPoint(
+              target,
+              edge.targetPort,
+              targetRect,
+              endpoints?.target ?? {
+                x: targetRect.x + targetRect.width / 2,
+                y: targetRect.y + targetRect.height / 2,
+              },
+              input.direction,
+              input,
+            );
+            const side = feedbackSourcePortSide;
+            const sameSideLoops = loops.filter((candidate) => {
+              const candidateSourcePort = source.ports?.find(
+                (port) => port.name === candidate.sourcePort,
+              );
+              const candidateTargetPort = source.ports?.find(
+                (port) => port.name === candidate.targetPort,
+              );
+              const candidateSourceSide = candidateSourcePort
+                ? input.portSettings?.(candidateSourcePort, source)?.["port.side"]
+                : undefined;
+              const candidateTargetSide = candidateTargetPort
+                ? input.portSettings?.(candidateTargetPort, source)?.["port.side"]
+                : undefined;
+              return candidateSourceSide === side && candidateTargetSide === side;
+            });
+            const sameSideLoopIndex = sameSideLoops.findIndex(
+              (candidate) => candidate.id === edge.id,
+            );
+            const labelSpacing = Number(input.settings["spacing.edgeLabel"] ?? 2);
+            const precedingLabelExtent = sameSideLoops
+              .slice(0, Math.max(0, sameSideLoopIndex))
+              .reduce(
+                (extent, candidate) =>
+                  extent +
+                  (side === "EAST" || side === "WEST"
+                    ? (candidate.width ?? 0)
+                    : (candidate.height ?? 0)) +
+                  labelSpacing,
+                0,
+              );
+            const trackDistance = spacing + precedingLabelExtent;
+            if (side === "EAST" || side === "WEST") {
+              const nodeRects = [...placement.rectByNodeId.values()];
+              const minimumNodeX = Math.min(...nodeRects.map((rect) => rect.x));
+              const maximumNodeX = Math.max(...nodeRects.map((rect) => rect.x + rect.width));
+              const maximumNodeY = Math.max(...nodeRects.map((rect) => rect.y + rect.height));
+              const precedingLabelHeight = sameSideLoops
+                .slice(0, Math.max(0, sameSideLoopIndex))
+                .reduce((extent, candidate) => extent + (candidate.height ?? 0) + labelSpacing, 0);
+              const nearTrack =
+                side === "EAST"
+                  ? sourceRect.x + sourceRect.width + spacing
+                  : sourceRect.x - spacing;
+              const farTrack =
+                side === "EAST"
+                  ? maximumNodeX + trackDistance + (edge.width ?? 0)
+                  : minimumNodeX - trackDistance - (edge.width ?? 0);
+              const exteriorY =
+                maximumNodeY + spacing + precedingLabelHeight + (edge.height ?? 0) / 2 + 0.5;
+              pointsByEdgeId.set(edge.id, [
+                start,
+                { x: nearTrack, y: start.y },
+                { x: nearTrack, y: exteriorY },
+                { x: farTrack, y: exteriorY },
+                { x: farTrack, y: end.y },
+                end,
+              ]);
+              outsideFeedbackEdgeIds.add(edge.id);
+              continue;
+            }
+            const track =
+              side === "SOUTH"
+                ? sourceRect.y + sourceRect.height + trackDistance
+                : sourceRect.y - trackDistance;
+            pointsByEdgeId.set(edge.id, [
+              start,
+              { x: start.x, y: track },
+              { x: end.x, y: track },
+              end,
+            ]);
+            outsideFeedbackEdgeIds.add(edge.id);
+            continue;
+          }
           const routeHorizontalSide = (
             side: "NORTH" | "SOUTH",
             indexOnSide: number,
@@ -4264,22 +4730,51 @@ function routeEdges(style: "ORTHOGONAL" | "POLYLINE" | "SPLINES"): EdgeRouter {
               x: targetRect.x + targetRect.width / 2,
               y: targetRect.y + (reverse ? targetRect.height : 0),
             });
-      const start = getPortPoint(
-        source,
-        edge.sourcePort,
-        sourceRect,
-        sourceFallback,
-        input.direction,
-        input,
-      );
-      const end = getPortPoint(
-        target,
-        edge.targetPort,
-        targetRect,
-        targetFallback,
-        input.direction,
-        input,
-      );
+      const sourcePort = source.ports?.find((port) => port.name === edge.sourcePort);
+      const targetPort = target.ports?.find((port) => port.name === edge.targetPort);
+      const sourcePortSide = sourcePort
+        ? input.portSettings?.(sourcePort, source)?.["port.side"]
+        : undefined;
+      const targetPortSide = targetPort
+        ? input.portSettings?.(targetPort, target)?.["port.side"]
+        : undefined;
+      const fallbackMatchesPortSide = (
+        fallback: Point,
+        rect: EntityRect,
+        side: typeof sourcePortSide,
+      ): boolean =>
+        side === undefined ||
+        side === "UNDEFINED" ||
+        (side === "EAST" && Math.abs(fallback.x - rect.x - rect.width) < 1e-9) ||
+        (side === "WEST" && Math.abs(fallback.x - rect.x) < 1e-9) ||
+        (side === "SOUTH" && Math.abs(fallback.y - rect.y - rect.height) < 1e-9) ||
+        (side === "NORTH" && Math.abs(fallback.y - rect.y) < 1e-9);
+      const sourceFixedSide =
+        sourcePort !== undefined &&
+        fallbackMatchesPortSide(sourceFallback, sourceRect, sourcePortSide) &&
+        (sourcePort.width ?? 8) === 0 &&
+        (sourcePort.height ?? 8) === 0 &&
+        input.nodeSettings?.(source)?.portConstraints === "FIXED_SIDE" &&
+        input.graph.edges.filter(
+          (candidate) =>
+            candidate.sourceId === edge.sourceId && candidate.sourcePort === edge.sourcePort,
+        ).length === 1;
+      const targetFixedSide =
+        targetPort !== undefined &&
+        fallbackMatchesPortSide(targetFallback, targetRect, targetPortSide) &&
+        (targetPort.width ?? 8) === 0 &&
+        (targetPort.height ?? 8) === 0 &&
+        input.nodeSettings?.(target)?.portConstraints === "FIXED_SIDE" &&
+        input.graph.edges.filter(
+          (candidate) =>
+            candidate.targetId === edge.targetId && candidate.targetPort === edge.targetPort,
+        ).length === 1;
+      const start = sourceFixedSide
+        ? sourceFallback
+        : getPortPoint(source, edge.sourcePort, sourceRect, sourceFallback, input.direction, input);
+      const end = targetFixedSide
+        ? targetFallback
+        : getPortPoint(target, edge.targetPort, targetRect, targetFallback, input.direction, input);
       const sourceLayer = flowLayerByNodeId.get(edge.sourceId) ?? 0;
       const targetLayer = flowLayerByNodeId.get(edge.targetId) ?? 0;
       const earlierLayer = Math.min(sourceLayer, targetLayer);
@@ -4446,7 +4941,7 @@ function routeEdges(style: "ORTHOGONAL" | "POLYLINE" | "SPLINES"): EdgeRouter {
       );
     }
 
-    return { pointsByEdgeId, splineNubControlsByEdgeId };
+    return { pointsByEdgeId, splineNubControlsByEdgeId, outsideFeedbackEdgeIds };
   };
 }
 
