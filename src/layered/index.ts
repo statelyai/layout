@@ -1721,10 +1721,237 @@ function runLayeredPipeline<N, E, G, P>(
       : edgeRouting === "SPLINES"
         ? routeEdgesWithSplines
         : routeEdgesOrthogonally);
-  const expandedRoutes = measure("edge-routing", () =>
+  let expandedRoutes = measure("edge-routing", () =>
     edgeRouter(expanded.input, expanded.orientation, placement),
   );
   measure("post-compaction", () => applyPostCompaction(expanded.input, placement, expandedRoutes));
+  const antiparallelLabelPositions = new Map<string, Point>();
+  const postCompactionNodeCrossDeltas = new Map<string, number>();
+  const horizontalAntiparallelFlow = direction === "left" || direction === "right";
+  const usesVizInteractivePlacementProfile =
+    options.settings?.["cycleBreaking.strategy"] === "MODEL_ORDER" &&
+    options.settings?.["layering.strategy"] === "INTERACTIVE" &&
+    options.settings?.["crossingMinimization.forceNodeModelOrder"] === true &&
+    options.settings?.["nodePlacement.strategy"] === "BRANDES_KOEPF" &&
+    options.settings?.["nodePlacement.favorStraightEdges"] === true &&
+    options.settings?.["compaction.postCompaction.strategy"] === "LEFT" &&
+    options.settings?.["compaction.postCompaction.constraints"] === "SCANLINE";
+  if (usesVizInteractivePlacementProfile) {
+    const neighbors = new Map(graph.nodes.map((node) => [node.id, new Set<string>()]));
+    for (const edge of graph.edges) {
+      if (edge.sourceId === edge.targetId) continue;
+      neighbors.get(edge.sourceId)?.add(edge.targetId);
+      neighbors.get(edge.targetId)?.add(edge.sourceId);
+    }
+    const visited = new Set<string>();
+    for (const node of graph.nodes) {
+      if (visited.has(node.id)) continue;
+      const component: GraphNode[] = [];
+      const pending = [node.id];
+      while (pending.length > 0) {
+        const id = pending.pop()!;
+        if (visited.has(id)) continue;
+        visited.add(id);
+        const member = graph.nodes.find((candidate) => candidate.id === id);
+        if (member) component.push(member);
+        for (const neighbor of neighbors.get(id) ?? []) pending.push(neighbor);
+      }
+      if (component.length < 2) continue;
+      if (
+        component.some((member) => {
+          const constraints = options.nodeSettings?.(member)?.portConstraints;
+          return constraints !== undefined && constraints !== "UNDEFINED" && constraints !== "FREE";
+        })
+      ) {
+        continue;
+      }
+      const layerCounts = new Map<number, number>();
+      for (const member of component) {
+        const layer = expanded.assignment.layerByNodeId.get(member.id);
+        if (layer === undefined) continue;
+        layerCounts.set(layer, (layerCounts.get(layer) ?? 0) + 1);
+      }
+      if ([...layerCounts.values()].some((count) => count !== 1)) continue;
+      const rects = component.flatMap((member) => {
+        const rect = mutableRects.get(member.id);
+        return rect ? [{ member, rect }] : [];
+      });
+      if (rects.length !== component.length) continue;
+      const minimumCross = Math.min(
+        ...rects.map(({ rect }) => (horizontalAntiparallelFlow ? rect.y : rect.x)),
+      );
+      const maximumCross = Math.max(
+        ...rects.map(({ rect }) =>
+          horizontalAntiparallelFlow ? rect.y + rect.height : rect.x + rect.width,
+        ),
+      );
+      const center = (minimumCross + maximumCross) / 2;
+      for (const { member, rect } of rects) {
+        const currentCross = horizontalAntiparallelFlow ? rect.y : rect.x;
+        const nextCross = horizontalAntiparallelFlow
+          ? center - rect.height / 2
+          : center - rect.width / 2;
+        postCompactionNodeCrossDeltas.set(member.id, nextCross - currentCross);
+        mutableRects.set(
+          member.id,
+          horizontalAntiparallelFlow ? { ...rect, y: nextCross } : { ...rect, x: nextCross },
+        );
+      }
+    }
+  }
+  {
+    const horizontal = horizontalAntiparallelFlow;
+    const nodesById = new Map(graph.nodes.map((node) => [node.id, node]));
+    const pairEdges = new Map<string, GraphEdge[]>();
+    for (const edge of graph.edges) {
+      if (edge.sourceId === edge.targetId || (edge.width ?? 0) <= 0 || (edge.height ?? 0) <= 0) {
+        continue;
+      }
+      const key = [edge.sourceId, edge.targetId].sort().join("\0");
+      const pair = pairEdges.get(key) ?? [];
+      pair.push(edge);
+      pairEdges.set(key, pair);
+    }
+    for (const pair of pairEdges.values()) {
+      if (
+        pair.length !== 2 ||
+        pair[0]!.sourceId !== pair[1]!.targetId ||
+        pair[0]!.targetId !== pair[1]!.sourceId ||
+        pair.some((edge) => {
+          const settings = options.edgeSettings?.(edge);
+          return (
+            (settings?.["edgeLabels.placement"] ?? "CENTER") !== "CENTER" ||
+            settings?.["edgeLabels.inline"] !== true
+          );
+        })
+      ) {
+        continue;
+      }
+      const firstNode = nodesById.get(pair[0]!.sourceId);
+      const secondNode = nodesById.get(pair[0]!.targetId);
+      const firstRect = placement.rectByNodeId.get(pair[0]!.sourceId);
+      const secondRect = placement.rectByNodeId.get(pair[0]!.targetId);
+      if (!firstNode || !secondNode || !firstRect || !secondRect) continue;
+      const nonSelfNeighbors = (nodeId: string) =>
+        new Set(
+          graph.edges.flatMap((edge) =>
+            edge.sourceId === edge.targetId
+              ? []
+              : edge.sourceId === nodeId
+                ? [edge.targetId]
+                : edge.targetId === nodeId
+                  ? [edge.sourceId]
+                  : [],
+          ),
+        );
+      if (nonSelfNeighbors(firstNode.id).size !== 1 || nonSelfNeighbors(secondNode.id).size !== 1) {
+        continue;
+      }
+      const hasFlexiblePorts = (node: GraphNode): boolean => {
+        const constraints = options.nodeSettings?.(node)?.portConstraints;
+        return constraints === undefined || constraints === "UNDEFINED" || constraints === "FREE";
+      };
+      if (!hasFlexiblePorts(firstNode) || !hasFlexiblePorts(secondNode)) continue;
+
+      const firstBeforeSecond = horizontal
+        ? firstRect.x + firstRect.width / 2 < secondRect.x + secondRect.width / 2
+        : firstRect.y + firstRect.height / 2 < secondRect.y + secondRect.height / 2;
+      const beforeRect = firstBeforeSecond ? firstRect : secondRect;
+      const afterRect = firstBeforeSecond ? secondRect : firstRect;
+      const forward = pair.find((edge) =>
+        firstBeforeSecond
+          ? edge.sourceId === pair[0]!.sourceId
+          : edge.sourceId === pair[0]!.targetId,
+      );
+      if (!forward?.sourcePort || !forward.targetPort) continue;
+
+      let cross = Math.min(
+        horizontal ? firstRect.y : firstRect.x,
+        horizontal ? secondRect.y : secondRect.x,
+      );
+      const edgeSpacing = Number(options.settings?.["spacing.edgeEdge"] ?? 10);
+      for (const edge of pair) {
+        const width = edge.width ?? 0;
+        const height = edge.height ?? 0;
+        antiparallelLabelPositions.set(
+          edge.id,
+          horizontal
+            ? {
+                x: (beforeRect.x + beforeRect.width + afterRect.x - width) / 2,
+                y: cross,
+              }
+            : {
+                x: cross,
+                y: (beforeRect.y + beforeRect.height + afterRect.y - height) / 2,
+              },
+        );
+        cross += (horizontal ? height : width) + edgeSpacing;
+      }
+
+      const forwardLabel = antiparallelLabelPositions.get(forward.id)!;
+      const forwardCross = horizontal
+        ? Math.round(forwardLabel.y + (forward.height ?? 0) / 2)
+        : Math.round(forwardLabel.x + (forward.width ?? 0) / 2);
+      const alignPort = (node: GraphNode, portName: string): void => {
+        const rect = placement.rectByNodeId.get(node.id);
+        const port = node.ports?.find((candidate) => candidate.name === portName);
+        if (!rect || !port) return;
+        const placedPort = placePorts(
+          node.ports,
+          rect,
+          direction,
+          (candidate) => input.portSettings?.(candidate, node),
+          { ...options.settings, ...options.nodeSettings?.(node) },
+          (candidate) =>
+            getOrientedPortDirection(expanded.input, expanded.orientation, node, candidate),
+        )?.find((candidate) => candidate.name === portName);
+        if (!placedPort) return;
+        const localCross = horizontal
+          ? (placedPort.y ?? 0) + (placedPort.height ?? 0) / 2
+          : (placedPort.x ?? 0) + (placedPort.width ?? 0) / 2;
+        const nextCross = forwardCross - localCross;
+        const currentCross = horizontal ? rect.y : rect.x;
+        postCompactionNodeCrossDeltas.set(
+          node.id,
+          (postCompactionNodeCrossDeltas.get(node.id) ?? 0) + nextCross - currentCross,
+        );
+        mutableRects.set(
+          node.id,
+          horizontal ? { ...rect, y: nextCross } : { ...rect, x: nextCross },
+        );
+      };
+      alignPort(nodesById.get(forward.sourceId)!, forward.sourcePort);
+      alignPort(nodesById.get(forward.targetId)!, forward.targetPort);
+    }
+  }
+  if (postCompactionNodeCrossDeltas.size > 0) {
+    const pointsByEdgeId = new Map(expandedRoutes.pointsByEdgeId);
+    for (const edge of graph.edges) {
+      const points = [...(pointsByEdgeId.get(edge.id) ?? [])];
+      if (points.length === 0) continue;
+      const sourceDelta = postCompactionNodeCrossDeltas.get(edge.sourceId) ?? 0;
+      const targetDelta = postCompactionNodeCrossDeltas.get(edge.targetId) ?? 0;
+      const shiftEndpoint = (endpointIndex: number, adjacentIndex: number, delta: number): void => {
+        if (delta === 0) return;
+        const endpoint = points[endpointIndex];
+        const adjacent = points[adjacentIndex];
+        if (!endpoint) return;
+        const originalCross = horizontalAntiparallelFlow ? endpoint.y : endpoint.x;
+        points[endpointIndex] = horizontalAntiparallelFlow
+          ? { ...endpoint, y: endpoint.y + delta }
+          : { ...endpoint, x: endpoint.x + delta };
+        if (adjacent && (horizontalAntiparallelFlow ? adjacent.y : adjacent.x) === originalCross) {
+          points[adjacentIndex] = horizontalAntiparallelFlow
+            ? { ...adjacent, y: adjacent.y + delta }
+            : { ...adjacent, x: adjacent.x + delta };
+        }
+      };
+      shiftEndpoint(0, 1, sourceDelta);
+      shiftEndpoint(points.length - 1, points.length - 2, targetDelta);
+      pointsByEdgeId.set(edge.id, points);
+    }
+    expandedRoutes = { ...expandedRoutes, pointsByEdgeId };
+  }
   let routes = measure("long-edge-joining", () =>
     joinLongEdgeRoutes(
       expandedRoutes,
@@ -2108,20 +2335,25 @@ function runLayeredPipeline<N, E, G, P>(
             ? [sourceRect, targetRect]
             : [targetRect, sourceRect]
         : [undefined, undefined];
-    const x = flexibleFeedbackLabel
-      ? horizontal
-        ? (beforeFlowRect!.x + beforeFlowRect!.width + afterFlowRect!.x - width) / 2
-        : targetRect.x + (targetRect.width - width) / 2
-      : labelPlacement === "CENTER" && horizontal && labelDummyRect
-        ? labelDummyRect.x
-        : routeX;
-    const y = flexibleFeedbackLabel
-      ? horizontal
-        ? targetRect.y + (targetRect.height - height) / 2
-        : (beforeFlowRect!.y + beforeFlowRect!.height + afterFlowRect!.y - height) / 2
-      : labelPlacement === "CENTER" && !horizontal && labelDummyRect
-        ? labelDummyRect.y
-        : routeY;
+    const antiparallelLabelPosition = antiparallelLabelPositions.get(edge.id);
+    const x = antiparallelLabelPosition
+      ? antiparallelLabelPosition.x
+      : flexibleFeedbackLabel
+        ? horizontal
+          ? (beforeFlowRect!.x + beforeFlowRect!.width + afterFlowRect!.x - width) / 2
+          : targetRect.x + (targetRect.width - width) / 2
+        : labelPlacement === "CENTER" && horizontal && labelDummyRect
+          ? labelDummyRect.x
+          : routeX;
+    const y = antiparallelLabelPosition
+      ? antiparallelLabelPosition.y
+      : flexibleFeedbackLabel
+        ? horizontal
+          ? targetRect.y + (targetRect.height - height) / 2
+          : (beforeFlowRect!.y + beforeFlowRect!.height + afterFlowRect!.y - height) / 2
+        : labelPlacement === "CENTER" && !horizontal && labelDummyRect
+          ? labelDummyRect.y
+          : routeY;
     return {
       ...edge,
       x,

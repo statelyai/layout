@@ -1,6 +1,7 @@
 import OracleELK from "elkjs/lib/elk.bundled.js";
 import { expect, it } from "vitest";
 import NativeELK, { type ElkNode } from "../src/elkjs";
+import vizTwoStateCycle from "./fixtures/viz-two-state-cycle.json";
 
 for (const placement of ["CENTER", "HEAD", "TAIL"] as const) {
   for (const inline of [false, true]) {
@@ -149,6 +150,35 @@ it("keeps ELK-like backward-edge labels in a vertical sibling corridor", async (
   expect(actualLabel?.y).toEqual(expectedLabel?.y);
   expect(labelCenterX).toBeGreaterThanOrEqual(Math.min(...endpointCenters));
   expect(labelCenterX).toBeLessThanOrEqual(Math.max(...endpointCenters));
+});
+
+it("matches ELK geometry for Viz's two-state cycle", async () => {
+  const graph = structuredClone(vizTwoStateCycle) as ElkNode;
+  const expected = (await new OracleELK().layout(structuredClone(graph) as never)) as ElkNode;
+  const actual = await new NativeELK().layout(structuredClone(graph));
+  const rounded = (value: number | undefined) =>
+    value === undefined ? value : Math.round(value * 1_000_000_000) / 1_000_000_000;
+
+  expect([rounded(actual.width), rounded(actual.height)]).toEqual([
+    rounded(expected.width),
+    rounded(expected.height),
+  ]);
+  expect(actual.children?.map((node) => [rounded(node.x), rounded(node.y)])).toEqual(
+    expected.children?.map((node) => [rounded(node.x), rounded(node.y)]),
+  );
+  expect(
+    actual.edges?.map((edge) => [
+      edge.id,
+      rounded(edge.labels?.[0]?.x),
+      rounded(edge.labels?.[0]?.y),
+    ]),
+  ).toEqual(
+    expected.edges?.map((edge) => [
+      edge.id,
+      rounded(edge.labels?.[0]?.x),
+      rounded(edge.labels?.[0]?.y),
+    ]),
+  );
 });
 
 for (const sideSelection of [
