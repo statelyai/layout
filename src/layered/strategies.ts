@@ -1423,8 +1423,8 @@ export const assignLayersWithCoffmanGraham: LayerAssigner = (input, orientation)
     let leftPosition = leftValues.length;
     let rightPosition = rightValues.length;
     while (leftPosition > 0 && rightPosition > 0) {
-      const leftValue = leftValues[--leftPosition];
-      const rightValue = rightValues[--rightPosition];
+      const leftValue = leftValues[--leftPosition]!;
+      const rightValue = rightValues[--rightPosition]!;
       if (leftValue !== rightValue) return leftValue - rightValue;
     }
     // This intentionally mirrors ELK's ListIterator.hasNext checks after
@@ -4130,7 +4130,9 @@ function routeEdges(style: "ORTHOGONAL" | "POLYLINE" | "SPLINES"): EdgeRouter {
             : [];
         });
         const incoming = segments.map(() => 0);
-        for (const dependency of acyclicDependencies) incoming[dependency.target]++;
+        for (const dependency of acyclicDependencies) {
+          incoming[dependency.target] = (incoming[dependency.target] ?? 0) + 1;
+        }
         const queue = incoming.flatMap((count, index) => (count === 0 ? [index] : []));
         const rank = segments.map(() => 0);
         for (let queueIndex = 0; queueIndex < queue.length; queueIndex++) {

@@ -274,7 +274,7 @@ function normalizeAndBalance(
 
 export function runNetworkSimplex(
   nodes: SimplexNode[],
-  edges: SimplexEdge[],
+  _edges: SimplexEdge[],
   iterationLimit: number,
   previousLayerCounts: readonly number[] | undefined,
   balance = true,
