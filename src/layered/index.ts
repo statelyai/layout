@@ -1760,6 +1760,7 @@ function runLayeredPipeline<N, E, G, P>(
   );
   measure("post-compaction", () => applyPostCompaction(expanded.input, placement, expandedRoutes));
   const antiparallelLabelPositions = new Map<string, Point>();
+  const outerAntiparallelLabelIds = new Set<string>();
   const parallelLabelPositions = new Map<string, Point>();
   const postCompactionNodeCrossDeltas = new Map<string, number>();
   const horizontalAntiparallelFlow = direction === "left" || direction === "right";
@@ -1904,7 +1905,8 @@ function runLayeredPipeline<N, E, G, P>(
         const constraints = options.nodeSettings?.(node)?.portConstraints;
         return constraints === undefined || constraints === "UNDEFINED" || constraints === "FREE";
       };
-      if (!hasFlexiblePorts(firstNode) || !hasFlexiblePorts(secondNode)) continue;
+      const hasFlexiblePairPorts = hasFlexiblePorts(firstNode) && hasFlexiblePorts(secondNode);
+      if (isolatedAntiparallelPair && !hasFlexiblePairPorts) continue;
 
       const firstBeforeSecond = horizontal
         ? firstRect.x + firstRect.width / 2 < secondRect.x + secondRect.width / 2
@@ -1963,6 +1965,9 @@ function runLayeredPipeline<N, E, G, P>(
                   y: (beforeRect.y + beforeRect.height + afterRect.y - height) / 2,
                 },
         );
+        if (!isolatedAntiparallelPair && edge !== forward) {
+          outerAntiparallelLabelIds.add(edge.id);
+        }
         cross += (horizontal ? height : width) + edgeSpacing;
       }
 
@@ -2508,8 +2513,22 @@ function runLayeredPipeline<N, E, G, P>(
             ? [sourceRect, targetRect]
             : [targetRect, sourceRect]
         : [undefined, undefined];
-    const explicitLabelPosition =
-      antiparallelLabelPositions.get(edge.id) ?? parallelLabelPositions.get(edge.id);
+    const antiparallelLabelPosition = antiparallelLabelPositions.get(edge.id);
+    const explicitLabelPosition = outerAntiparallelLabelIds.has(edge.id)
+      ? horizontal
+        ? {
+            x: (beforeFlowRect!.x + beforeFlowRect!.width + afterFlowRect!.x - width) / 2,
+            y:
+              Math.max(sourceRect!.y + sourceRect!.height, targetRect!.y + targetRect!.height) +
+              Number(options.settings?.["spacing.edgeEdge"] ?? 10),
+          }
+        : {
+            x:
+              Math.max(sourceRect!.x + sourceRect!.width, targetRect!.x + targetRect!.width) +
+              Number(options.settings?.["spacing.edgeEdge"] ?? 10),
+            y: (beforeFlowRect!.y + beforeFlowRect!.height + afterFlowRect!.y - height) / 2,
+          }
+      : (antiparallelLabelPosition ?? parallelLabelPositions.get(edge.id));
     const x = explicitLabelPosition
       ? explicitLabelPosition.x
       : flexibleFeedbackLabel

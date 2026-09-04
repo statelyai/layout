@@ -56,21 +56,25 @@ describe("elkjs compatibility: node labels", () => {
         "elk.layered.cycleBreaking.strategy": "MODEL_ORDER",
         "elk.layered.layering.strategy": "INTERACTIVE",
         "elk.layered.crossingMinimization.forceNodeModelOrder": "true",
+        "elk.hierarchyHandling": "INCLUDE_CHILDREN",
       },
       children: [
         {
           id: "first",
           width: 180,
           height: 96,
+          layoutOptions: { "elk.portConstraints": "FIXED_SIDE" },
           ports: [
             { id: "next-source", layoutOptions: { "elk.port.side": "SOUTH" } },
             { id: "back-target", layoutOptions: { "elk.port.side": "NORTH" } },
           ],
+          children: [{ id: "first-detail", width: 120, height: 40 }],
         },
         {
           id: "second",
           width: 180,
           height: 96,
+          layoutOptions: { "elk.portConstraints": "FIXED_SIDE" },
           ports: [
             { id: "next-target", layoutOptions: { "elk.port.side": "NORTH" } },
             { id: "back-source", layoutOptions: { "elk.port.side": "SOUTH" } },
@@ -81,6 +85,7 @@ describe("elkjs compatibility: node labels", () => {
           id: "third",
           width: 180,
           height: 96,
+          layoutOptions: { "elk.portConstraints": "FIXED_SIDE" },
           ports: [{ id: "continue-target", layoutOptions: { "elk.port.side": "NORTH" } }],
         },
       ],
@@ -92,7 +97,6 @@ describe("elkjs compatibility: node labels", () => {
           labels: [
             {
               id: "next-label",
-              text: "NEXT",
               width: 120,
               height: 48,
               layoutOptions: { "elk.edgeLabels.inline": "true" },
@@ -106,7 +110,6 @@ describe("elkjs compatibility: node labels", () => {
           labels: [
             {
               id: "back-label",
-              text: "BACK",
               width: 120,
               height: 48,
               layoutOptions: { "elk.edgeLabels.inline": "true" },
@@ -120,7 +123,6 @@ describe("elkjs compatibility: node labels", () => {
           labels: [
             {
               id: "continue-label",
-              text: "CONTINUE",
               width: 120,
               height: 48,
               layoutOptions: { "elk.edgeLabels.inline": "true" },
