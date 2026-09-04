@@ -2514,21 +2514,40 @@ function runLayeredPipeline<N, E, G, P>(
             : [targetRect, sourceRect]
         : [undefined, undefined];
     const antiparallelLabelPosition = antiparallelLabelPositions.get(edge.id);
-    const explicitLabelPosition = outerAntiparallelLabelIds.has(edge.id)
-      ? horizontal
-        ? {
-            x: (beforeFlowRect!.x + beforeFlowRect!.width + afterFlowRect!.x - width) / 2,
-            y:
-              Math.max(sourceRect!.y + sourceRect!.height, targetRect!.y + targetRect!.height) +
-              Number(options.settings?.["spacing.edgeEdge"] ?? 10),
-          }
-        : {
-            x:
-              Math.max(sourceRect!.x + sourceRect!.width, targetRect!.x + targetRect!.width) +
-              Number(options.settings?.["spacing.edgeEdge"] ?? 10),
-            y: (beforeFlowRect!.y + beforeFlowRect!.height + afterFlowRect!.y - height) / 2,
-          }
-      : (antiparallelLabelPosition ?? parallelLabelPositions.get(edge.id));
+    const outerAntiparallelLabelPosition = (() => {
+      if (!outerAntiparallelLabelIds.has(edge.id)) return undefined;
+      const edgeNodeSpacing = Number(options.settings?.["spacing.edgeNode"] ?? 10);
+      if (horizontal) {
+        const x = (beforeFlowRect!.x + beforeFlowRect!.width + afterFlowRect!.x - width) / 2;
+        const blockers = [
+          sourceRect!,
+          targetRect!,
+          ...[...placement.rectByNodeId.values()].filter(
+            (rect) => rect.x < x + width && rect.x + rect.width > x,
+          ),
+        ];
+        return {
+          x,
+          y: Math.max(...blockers.map((rect) => rect.y + rect.height)) + edgeNodeSpacing,
+        };
+      }
+      const y = (beforeFlowRect!.y + beforeFlowRect!.height + afterFlowRect!.y - height) / 2;
+      const blockers = [
+        sourceRect!,
+        targetRect!,
+        ...[...placement.rectByNodeId.values()].filter(
+          (rect) => rect.y < y + height && rect.y + rect.height > y,
+        ),
+      ];
+      return {
+        x: Math.max(...blockers.map((rect) => rect.x + rect.width)) + edgeNodeSpacing,
+        y,
+      };
+    })();
+    const explicitLabelPosition =
+      outerAntiparallelLabelPosition ??
+      antiparallelLabelPosition ??
+      parallelLabelPositions.get(edge.id);
     const x = explicitLabelPosition
       ? explicitLabelPosition.x
       : flexibleFeedbackLabel
