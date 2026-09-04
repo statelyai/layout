@@ -1760,6 +1760,7 @@ function runLayeredPipeline<N, E, G, P>(
   );
   measure("post-compaction", () => applyPostCompaction(expanded.input, placement, expandedRoutes));
   const antiparallelLabelPositions = new Map<string, Point>();
+  const outerAntiparallelLabelIds = new Set<string>();
   const parallelLabelPositions = new Map<string, Point>();
   const postCompactionNodeCrossDeltas = new Map<string, number>();
   const horizontalAntiparallelFlow = direction === "left" || direction === "right";
@@ -1898,14 +1899,14 @@ function runLayeredPipeline<N, E, G, P>(
                   : [],
           ),
         );
-      if (nonSelfNeighbors(firstNode.id).size !== 1 || nonSelfNeighbors(secondNode.id).size !== 1) {
-        continue;
-      }
+      const isolatedAntiparallelPair =
+        nonSelfNeighbors(firstNode.id).size === 1 && nonSelfNeighbors(secondNode.id).size === 1;
       const hasFlexiblePorts = (node: GraphNode): boolean => {
         const constraints = options.nodeSettings?.(node)?.portConstraints;
         return constraints === undefined || constraints === "UNDEFINED" || constraints === "FREE";
       };
-      if (!hasFlexiblePorts(firstNode) || !hasFlexiblePorts(secondNode)) continue;
+      const hasFlexiblePairPorts = hasFlexiblePorts(firstNode) && hasFlexiblePorts(secondNode);
+      if (isolatedAntiparallelPair && !hasFlexiblePairPorts) continue;
 
       const firstBeforeSecond = horizontal
         ? firstRect.x + firstRect.width / 2 < secondRect.x + secondRect.width / 2
@@ -1929,16 +1930,44 @@ function runLayeredPipeline<N, E, G, P>(
         const height = edge.height ?? 0;
         antiparallelLabelPositions.set(
           edge.id,
-          horizontal
-            ? {
-                x: (beforeRect.x + beforeRect.width + afterRect.x - width) / 2,
-                y: cross,
-              }
-            : {
-                x: cross,
-                y: (beforeRect.y + beforeRect.height + afterRect.y - height) / 2,
-              },
+          isolatedAntiparallelPair
+            ? horizontal
+              ? {
+                  x: (beforeRect.x + beforeRect.width + afterRect.x - width) / 2,
+                  y: cross,
+                }
+              : {
+                  x: cross,
+                  y: (beforeRect.y + beforeRect.height + afterRect.y - height) / 2,
+                }
+            : horizontal
+              ? {
+                  x: (beforeRect.x + beforeRect.width + afterRect.x - width) / 2,
+                  y:
+                    edge === forward
+                      ? (firstRect.y +
+                          firstRect.height / 2 +
+                          secondRect.y +
+                          secondRect.height / 2) /
+                          2 -
+                        height / 2
+                      : Math.max(firstRect.y + firstRect.height, secondRect.y + secondRect.height) +
+                        edgeSpacing,
+                }
+              : {
+                  x:
+                    edge === forward
+                      ? (firstRect.x + firstRect.width / 2 + secondRect.x + secondRect.width / 2) /
+                          2 -
+                        width / 2
+                      : Math.max(firstRect.x + firstRect.width, secondRect.x + secondRect.width) +
+                        edgeSpacing,
+                  y: (beforeRect.y + beforeRect.height + afterRect.y - height) / 2,
+                },
         );
+        if (!isolatedAntiparallelPair && edge !== forward) {
+          outerAntiparallelLabelIds.add(edge.id);
+        }
         cross += (horizontal ? height : width) + edgeSpacing;
       }
 
@@ -1974,8 +2003,10 @@ function runLayeredPipeline<N, E, G, P>(
           horizontal ? { ...rect, y: nextCross } : { ...rect, x: nextCross },
         );
       };
-      alignPort(nodesById.get(forward.sourceId)!, forward.sourcePort);
-      alignPort(nodesById.get(forward.targetId)!, forward.targetPort);
+      if (isolatedAntiparallelPair) {
+        alignPort(nodesById.get(forward.sourceId)!, forward.sourcePort);
+        alignPort(nodesById.get(forward.targetId)!, forward.targetPort);
+      }
     }
   }
   if (postCompactionNodeCrossDeltas.size > 0) {
@@ -2482,8 +2513,41 @@ function runLayeredPipeline<N, E, G, P>(
             ? [sourceRect, targetRect]
             : [targetRect, sourceRect]
         : [undefined, undefined];
+    const antiparallelLabelPosition = antiparallelLabelPositions.get(edge.id);
+    const outerAntiparallelLabelPosition = (() => {
+      if (!outerAntiparallelLabelIds.has(edge.id)) return undefined;
+      const edgeNodeSpacing = Number(options.settings?.["spacing.edgeNode"] ?? 10);
+      if (horizontal) {
+        const x = (beforeFlowRect!.x + beforeFlowRect!.width + afterFlowRect!.x - width) / 2;
+        const blockers = [
+          sourceRect!,
+          targetRect!,
+          ...[...placement.rectByNodeId.values()].filter(
+            (rect) => rect.x < x + width && rect.x + rect.width > x,
+          ),
+        ];
+        return {
+          x,
+          y: Math.max(...blockers.map((rect) => rect.y + rect.height)) + edgeNodeSpacing,
+        };
+      }
+      const y = (beforeFlowRect!.y + beforeFlowRect!.height + afterFlowRect!.y - height) / 2;
+      const blockers = [
+        sourceRect!,
+        targetRect!,
+        ...[...placement.rectByNodeId.values()].filter(
+          (rect) => rect.y < y + height && rect.y + rect.height > y,
+        ),
+      ];
+      return {
+        x: Math.max(...blockers.map((rect) => rect.x + rect.width)) + edgeNodeSpacing,
+        y,
+      };
+    })();
     const explicitLabelPosition =
-      antiparallelLabelPositions.get(edge.id) ?? parallelLabelPositions.get(edge.id);
+      outerAntiparallelLabelPosition ??
+      antiparallelLabelPosition ??
+      parallelLabelPositions.get(edge.id);
     const x = explicitLabelPosition
       ? explicitLabelPosition.x
       : flexibleFeedbackLabel

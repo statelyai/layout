@@ -14,6 +14,7 @@ import type {
   ElkConstructorArguments,
   ElkLayoutAlgorithmDescription,
   ElkEdge,
+  ElkLabel,
   ElkLayoutArguments,
   ElkLayoutCategoryDescription,
   ElkLayoutOptionDescription,
@@ -24,6 +25,13 @@ import type {
   ElkShape,
   LaidOutElkNode,
 } from "./types";
+
+function isLayoutEdgeLabel(label: ElkLabel): boolean {
+  return (
+    getBooleanOption(label.layoutOptions ?? {}, "noLayout") !== true &&
+    (Boolean(label.text) || label.width !== undefined || label.height !== undefined)
+  );
+}
 
 export type {
   ElkConstructorArguments,
@@ -1264,10 +1272,7 @@ function toGraph(root: ElkNode, globalOptions: Readonly<Record<string, unknown>>
       if (isInsideSelfLoop(root, edge)) return [];
       const source = endpoint(edge.sources?.[0] ?? edge.source, portOwnerById);
       const target = endpoint(edge.targets?.[0] ?? edge.target, portOwnerById);
-      const labels = (edge.labels ?? []).filter(
-        (label) =>
-          Boolean(label.text) && getBooleanOption(label.layoutOptions ?? {}, "noLayout") !== true,
-      );
+      const labels = (edge.labels ?? []).filter(isLayoutEdgeLabel);
       const labelLabelSpacing = getNumberOption(globalOptions, "spacing.labelLabel") ?? 0;
       const labelWidth = Math.max(0, ...labels.map((label) => label.width ?? 0));
       const labelHeight =
@@ -1387,7 +1392,7 @@ function applyLayout(
         label.y ??= 0;
         continue;
       }
-      if (!label.text) {
+      if (!isLayoutEdgeLabel(label)) {
         label.x ??= 0;
         label.y ??= 0;
         continue;
@@ -1443,10 +1448,7 @@ function normalizeElkGraphBounds(
     );
   }
   for (const edge of root.edges ?? []) {
-    const laidOutLabels = (edge.labels ?? []).filter(
-      (label) =>
-        Boolean(label.text) && getBooleanOption(label.layoutOptions ?? {}, "noLayout") !== true,
-    );
+    const laidOutLabels = (edge.labels ?? []).filter(isLayoutEdgeLabel);
     minimumX = Math.min(minimumX, ...laidOutLabels.map((label) => label.x ?? 0));
     minimumY = Math.min(minimumY, ...laidOutLabels.map((label) => label.y ?? 0));
     if (getBooleanOption(edge.layoutOptions ?? {}, "noLayout") !== true) {
@@ -1473,7 +1475,7 @@ function normalizeElkGraphBounds(
           point.y += shiftY;
         }
       }
-      for (const label of (edge.labels ?? []).filter((candidate) => Boolean(candidate.text))) {
+      for (const label of (edge.labels ?? []).filter(isLayoutEdgeLabel)) {
         label.x = (label.x ?? 0) + shiftX;
         label.y = (label.y ?? 0) + shiftY;
       }
@@ -1578,11 +1580,7 @@ function normalizeElkGraphBounds(
       ]),
       ...(root.edges ?? []).flatMap((edge) =>
         (edge.labels ?? [])
-          .filter(
-            (label) =>
-              Boolean(label.text) &&
-              getBooleanOption(label.layoutOptions ?? {}, "noLayout") !== true,
-          )
+          .filter(isLayoutEdgeLabel)
           .map((label) => (label.x ?? 0) + (label.width ?? 0)),
       ),
       ...(root.edges ?? []).flatMap((edge) =>
@@ -1617,11 +1615,7 @@ function normalizeElkGraphBounds(
       ]),
       ...(root.edges ?? []).flatMap((edge) =>
         (edge.labels ?? [])
-          .filter(
-            (label) =>
-              Boolean(label.text) &&
-              getBooleanOption(label.layoutOptions ?? {}, "noLayout") !== true,
-          )
+          .filter(isLayoutEdgeLabel)
           .map(
             (label) =>
               (label.y ?? 0) +

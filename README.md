@@ -9,12 +9,15 @@ return `VisualGraph`; positions remain node fields and routes remain
 
 ## Status
 
+<!-- layered compatibility coverage from test/oracle*.test.ts -->
+
 The native layered implementation covers the complete 152-option elkjs 0.11.1
 layered inventory with one simplified typed name per ELK option. Flat and
 compound graphs, cross-hierarchy edges, ports, labels, self-loops, wrapping,
 four directions, constraints, and replaceable phases are differential-tested
-against elkjs. Partial, incremental, and route-only layout remain explicit
-unimplemented capabilities.
+against elkjs, including a curated complex state-machine corpus in both primary
+layout orientations. Partial, incremental, and route-only layout remain
+explicit unimplemented capabilities.
 
 ## Install
 
