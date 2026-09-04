@@ -1,5 +1,11 @@
 # @statelyai/layout
 
+## 0.0.4
+
+### Patch Changes
+
+- 62f4980: Place backward edge labels beside the corridor between their endpoint layers, including dimension-only labels from compatibility adapters.
+
 ## 0.0.3
 
 ### Patch Changes
