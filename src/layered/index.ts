@@ -1898,9 +1898,8 @@ function runLayeredPipeline<N, E, G, P>(
                   : [],
           ),
         );
-      if (nonSelfNeighbors(firstNode.id).size !== 1 || nonSelfNeighbors(secondNode.id).size !== 1) {
-        continue;
-      }
+      const isolatedAntiparallelPair =
+        nonSelfNeighbors(firstNode.id).size === 1 && nonSelfNeighbors(secondNode.id).size === 1;
       const hasFlexiblePorts = (node: GraphNode): boolean => {
         const constraints = options.nodeSettings?.(node)?.portConstraints;
         return constraints === undefined || constraints === "UNDEFINED" || constraints === "FREE";
@@ -1929,15 +1928,40 @@ function runLayeredPipeline<N, E, G, P>(
         const height = edge.height ?? 0;
         antiparallelLabelPositions.set(
           edge.id,
-          horizontal
-            ? {
-                x: (beforeRect.x + beforeRect.width + afterRect.x - width) / 2,
-                y: cross,
-              }
-            : {
-                x: cross,
-                y: (beforeRect.y + beforeRect.height + afterRect.y - height) / 2,
-              },
+          isolatedAntiparallelPair
+            ? horizontal
+              ? {
+                  x: (beforeRect.x + beforeRect.width + afterRect.x - width) / 2,
+                  y: cross,
+                }
+              : {
+                  x: cross,
+                  y: (beforeRect.y + beforeRect.height + afterRect.y - height) / 2,
+                }
+            : horizontal
+              ? {
+                  x: (beforeRect.x + beforeRect.width + afterRect.x - width) / 2,
+                  y:
+                    edge === forward
+                      ? (firstRect.y +
+                          firstRect.height / 2 +
+                          secondRect.y +
+                          secondRect.height / 2) /
+                          2 -
+                        height / 2
+                      : Math.max(firstRect.y + firstRect.height, secondRect.y + secondRect.height) +
+                        edgeSpacing,
+                }
+              : {
+                  x:
+                    edge === forward
+                      ? (firstRect.x + firstRect.width / 2 + secondRect.x + secondRect.width / 2) /
+                          2 -
+                        width / 2
+                      : Math.max(firstRect.x + firstRect.width, secondRect.x + secondRect.width) +
+                        edgeSpacing,
+                  y: (beforeRect.y + beforeRect.height + afterRect.y - height) / 2,
+                },
         );
         cross += (horizontal ? height : width) + edgeSpacing;
       }
@@ -1974,8 +1998,10 @@ function runLayeredPipeline<N, E, G, P>(
           horizontal ? { ...rect, y: nextCross } : { ...rect, x: nextCross },
         );
       };
-      alignPort(nodesById.get(forward.sourceId)!, forward.sourcePort);
-      alignPort(nodesById.get(forward.targetId)!, forward.targetPort);
+      if (isolatedAntiparallelPair) {
+        alignPort(nodesById.get(forward.sourceId)!, forward.sourcePort);
+        alignPort(nodesById.get(forward.targetId)!, forward.targetPort);
+      }
     }
   }
   if (postCompactionNodeCrossDeltas.size > 0) {
