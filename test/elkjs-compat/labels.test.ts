@@ -235,4 +235,138 @@ describe("elkjs compatibility: node labels", () => {
       }
     },
   );
+
+  it("keeps a long feedback label inside its endpoint span", async () => {
+    const port = (id: string, side: "NORTH" | "SOUTH") => ({
+      id,
+      width: 20,
+      height: 20,
+      layoutOptions: { "elk.port.side": side },
+    });
+    const edge = (id: string, width: number) => ({
+      id,
+      sources: [`${id}__src`],
+      targets: [`${id}__tgt`],
+      labels: [
+        {
+          id,
+          width,
+          height: 44,
+          layoutOptions: {
+            "elk.edgeLabels.inline": "true",
+            "elk.edgeLabels.placement": "CENTER",
+          },
+        },
+      ],
+    });
+    const result = await new ELK().layout({
+      id: "root",
+      layoutOptions: {
+        "elk.algorithm": "layered",
+        "elk.direction": "DOWN",
+        "elk.edgeRouting": "ORTHOGONAL",
+        "elk.spacing.nodeNode": "50",
+        "elk.spacing.edgeEdge": "10",
+        "elk.spacing.edgeNode": "10",
+        "elk.spacing.edgeLabel": "2",
+        "elk.layered.spacing.nodeNodeBetweenLayers": "30",
+        "elk.layered.spacing.edgeEdgeBetweenLayers": "10",
+        "elk.layered.spacing.edgeNodeBetweenLayers": "10",
+        "elk.layered.layering.strategy": "INTERACTIVE",
+        "elk.layered.cycleBreaking.strategy": "MODEL_ORDER",
+        "elk.layered.nodePlacement.strategy": "BRANDES_KOEPF",
+        "elk.layered.nodePlacement.favorStraightEdges": "true",
+        "elk.layered.crossingMinimization.forceNodeModelOrder": "true",
+        "elk.layered.considerModelOrder.strategy": "PREFER_NODES",
+        "elk.layered.considerModelOrder.longEdgeStrategy": "DUMMY_NODE_OVER",
+        "elk.layered.considerModelOrder.components": "MODEL_ORDER",
+        "elk.layered.compaction.postCompaction.strategy": "LEFT",
+        "elk.layered.compaction.postCompaction.constraints": "SCANLINE",
+      },
+      children: [
+        {
+          id: "title",
+          width: 71.74,
+          height: 52,
+          ports: [port("START__src", "SOUTH"), port("RESTART__tgt", "NORTH")],
+          layoutOptions: { "elk.layered.layering.layerConstraint": "FIRST_SEPARATE" },
+        },
+        {
+          id: "playing",
+          width: 112.75,
+          height: 52,
+          ports: [
+            port("START__tgt", "NORTH"),
+            port("PAUSE__src", "SOUTH"),
+            port("PLAYING_DONE__src", "SOUTH"),
+            port("RESUME__tgt", "NORTH"),
+          ],
+        },
+        {
+          id: "paused",
+          width: 114.05,
+          height: 52,
+          ports: [
+            port("PAUSE__tgt", "NORTH"),
+            port("RESUME__src", "SOUTH"),
+            port("PAUSED_DONE__src", "SOUTH"),
+          ],
+        },
+        {
+          id: "gameOver",
+          width: 148.41,
+          height: 52,
+          ports: [
+            port("PLAYING_DONE__tgt", "NORTH"),
+            port("PAUSED_DONE__tgt", "NORTH"),
+            port("RESTART__src", "SOUTH"),
+          ],
+        },
+      ],
+      edges: [
+        edge("START", 73.6),
+        edge("PAUSE", 73.71),
+        edge("PLAYING_DONE", 113.71),
+        edge("RESUME", 86.41),
+        edge("PAUSED_DONE", 113.71),
+        edge("RESTART", 91.2),
+      ],
+    });
+    const title = result.children?.find((node) => node.id === "title");
+    const gameOver = result.children?.find((node) => node.id === "gameOver");
+    const restart = result.edges?.find((candidate) => candidate.id === "RESTART")?.labels?.[0];
+    expect(title).toBeDefined();
+    expect(gameOver).toBeDefined();
+    expect(restart).toBeDefined();
+    if (!title || !gameOver || !restart) throw new Error("Expected game-loop geometry");
+    expect(restart.y).toBeGreaterThanOrEqual((title.y ?? 0) + (title.height ?? 0));
+    expect((restart.y ?? 0) + (restart.height ?? 0)).toBeLessThanOrEqual(gameOver.y ?? 0);
+    const overlaps = (
+      left: { x?: number; y?: number; width?: number; height?: number },
+      right: { x?: number; y?: number; width?: number; height?: number },
+    ) =>
+      (left.x ?? 0) < (right.x ?? 0) + (right.width ?? 0) &&
+      (left.x ?? 0) + (left.width ?? 0) > (right.x ?? 0) &&
+      (left.y ?? 0) < (right.y ?? 0) + (right.height ?? 0) &&
+      (left.y ?? 0) + (left.height ?? 0) > (right.y ?? 0);
+    const otherLabels =
+      result.edges?.flatMap((candidate) =>
+        candidate.id === "RESTART" ? [] : (candidate.labels ?? []),
+      ) ?? [];
+    expect(otherLabels.some((label) => overlaps(restart, label))).toBe(false);
+    const restartSection = result.edges?.find((candidate) => candidate.id === "RESTART")
+      ?.sections?.[0];
+    const restartPoints = restartSection
+      ? [restartSection.startPoint, ...(restartSection.bendPoints ?? []), restartSection.endPoint]
+      : [];
+    const maximumNodeRight = Math.max(
+      ...(result.children ?? []).map((node) => (node.x ?? 0) + (node.width ?? 0)),
+    );
+    const exteriorTrack = restartPoints.find((point, index) => {
+      const next = restartPoints[index + 1];
+      return next && point.x === next.x && point.y !== next.y && point.x > maximumNodeRight;
+    });
+    expect(exteriorTrack?.x).toBeGreaterThanOrEqual(restart.x ?? 0);
+    expect(exteriorTrack?.x).toBeLessThanOrEqual((restart.x ?? 0) + (restart.width ?? 0));
+  });
 });
