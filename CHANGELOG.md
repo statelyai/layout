@@ -1,5 +1,11 @@
 # @statelyai/layout
 
+## 0.0.5
+
+### Patch Changes
+
+- 0033c84: Keep exterior inline edge labels and their orthogonal route tracks clear of overlapping nodes and labels.
+
 ## 0.0.4
 
 ### Patch Changes
