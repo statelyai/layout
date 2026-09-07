@@ -1,6 +1,7 @@
 import type { Graph, GraphEdge, GraphNode, Point, VisualGraph, VisualNode } from "@statelyai/graph";
 import { UnsupportedLayoutError } from "../errors";
 import type { LayoutAlgorithm, LayoutExecutionContext } from "../types";
+import { separateExteriorLabels } from "./separate-exterior-labels";
 import {
   assignLayersByLongestPath,
   assignLayersByLongestPathToSink,
@@ -2581,6 +2582,22 @@ function runLayeredPipeline<N, E, G, P>(
             : ("orthogonal" as const),
     };
   });
+
+  if (edgeRouting === "ORTHOGONAL") {
+    separateExteriorLabels({
+      edges,
+      nodeRects: feedbackNodeRects,
+      direction,
+      spacing: Number(options.settings?.["spacing.edgeEdge"] ?? 10),
+      settings: (edge) => {
+        const edgeSettings = options.edgeSettings?.(edge);
+        return {
+          inline: edgeSettings?.["edgeLabels.inline"] === true,
+          placement: edgeSettings?.["edgeLabels.placement"] ?? "CENTER",
+        };
+      },
+    });
+  }
 
   return {
     ...graph,

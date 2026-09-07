@@ -21,6 +21,9 @@ importers:
       '@codemirror/lint':
         specifier: ^6.9.7
         version: 6.9.7
+      '@statelyai/layout-pre-exterior-label-separation':
+        specifier: npm:@statelyai/layout@0.0.4
+        version: '@statelyai/layout@0.0.4(@statelyai/graph@2.1.0(elkjs@0.11.1))'
       '@types/node':
         specifier: ^25.0.3
         version: 25.9.5
@@ -992,6 +995,11 @@ packages:
         optional: true
       zod:
         optional: true
+
+  '@statelyai/layout@0.0.4':
+    resolution: {integrity: sha512-Qs3j9pubCzjtJPBCrQdoW+t6Cewv3ckPzhErcvca9NUctPn/9nptWEHRquOhjncmc6mChtcIWXo62HlVH0EU2g==, tarball: https://registry.npmjs.org/@statelyai/layout/-/layout-0.0.4.tgz}
+    peerDependencies:
+      '@statelyai/graph': ^2.1.0
 
   '@tybys/wasm-util@0.10.3':
     resolution: {integrity: sha512-F3fo1MYrRJYL3zER0OUOmkutjr1Vp23m7OsSgp7nq4SP6OqX6C/56XFIPAl5bt3zaBRjmW7SGz3u/6LwFpYcOg==, tarball: https://registry.npmjs.org/@tybys/wasm-util/-/wasm-util-0.10.3.tgz}
@@ -2226,6 +2234,10 @@ snapshots:
   '@statelyai/graph@2.1.0(elkjs@0.11.1)':
     optionalDependencies:
       elkjs: 0.11.1
+
+  '@statelyai/layout@0.0.4(@statelyai/graph@2.1.0(elkjs@0.11.1))':
+    dependencies:
+      '@statelyai/graph': 2.1.0(elkjs@0.11.1)
 
   '@tybys/wasm-util@0.10.3':
     dependencies:
