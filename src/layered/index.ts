@@ -1,14 +1,7 @@
-import type {
-  EntityRect,
-  Graph,
-  GraphEdge,
-  GraphNode,
-  Point,
-  VisualGraph,
-  VisualNode,
-} from "@statelyai/graph";
+import type { Graph, GraphEdge, GraphNode, Point, VisualGraph, VisualNode } from "@statelyai/graph";
 import { UnsupportedLayoutError } from "../errors";
 import type { LayoutAlgorithm, LayoutExecutionContext } from "../types";
+import { separateExteriorLabels } from "./separate-exterior-labels";
 import {
   assignLayersByLongestPath,
   assignLayersByLongestPathToSink,
@@ -2590,86 +2583,20 @@ function runLayeredPipeline<N, E, G, P>(
     };
   });
 
-  const edgeLabelSpacing = Number(options.settings?.["spacing.edgeEdge"] ?? 10);
-  const placedLabelRects: EntityRect[] = [];
-  const horizontalFlow = direction === "left" || direction === "right";
-  const nodeCrossStart = horizontalFlow ? minimumFeedbackNodeY : minimumFeedbackNodeX;
-  const nodeCrossEnd = horizontalFlow ? maximumFeedbackNodeY : maximumFeedbackNodeX;
-  const flowStart = (rect: EntityRect): number => (horizontalFlow ? rect.x : rect.y);
-  const flowEnd = (rect: EntityRect): number =>
-    horizontalFlow ? rect.x + rect.width : rect.y + rect.height;
-  const crossStart = (rect: EntityRect): number => (horizontalFlow ? rect.y : rect.x);
-  const crossEnd = (rect: EntityRect): number =>
-    horizontalFlow ? rect.y + rect.height : rect.x + rect.width;
-  const overlaps = (left: EntityRect, right: EntityRect): boolean =>
-    flowStart(left) < flowEnd(right) &&
-    flowEnd(left) > flowStart(right) &&
-    crossStart(left) < crossEnd(right) &&
-    crossEnd(left) > crossStart(right);
-
-  for (const edge of edges) {
-    const edgeSettings = options.edgeSettings?.(edge);
-    if (
-      edgeSettings?.["edgeLabels.inline"] !== true ||
-      (edgeSettings["edgeLabels.placement"] ?? "CENTER") !== "CENTER" ||
-      edge.width <= 0 ||
-      edge.height <= 0
-    ) {
-      continue;
-    }
-    const labelRect: EntityRect = {
-      x: edge.x,
-      y: edge.y,
-      width: edge.width,
-      height: edge.height,
-    };
-    const exteriorTrack = edge.points
-      .flatMap((point, index) => {
-        const next = edge.points[index + 1];
-        if (!next) return [];
-        const isFlowSegment = horizontalFlow
-          ? point.y === next.y && point.x !== next.x
-          : point.x === next.x && point.y !== next.y;
-        const trackCross = horizontalFlow ? point.y : point.x;
-        return isFlowSegment && (trackCross < nodeCrossStart || trackCross > nodeCrossEnd)
-          ? [
-              {
-                cross: trackCross,
-                length: horizontalFlow ? Math.abs(next.x - point.x) : Math.abs(next.y - point.y),
-              },
-            ]
-          : [];
-      })
-      .sort((left, right) => right.length - left.length)[0];
-    const blockers = [...feedbackNodeRects, ...placedLabelRects].filter((rect) =>
-      overlaps(labelRect, rect),
-    );
-    if (exteriorTrack && blockers.length > 0) {
-      const lowSide = exteriorTrack.cross < (nodeCrossStart + nodeCrossEnd) / 2;
-      const desiredCross = lowSide
-        ? Math.min(...blockers.map(crossStart)) -
-          edgeLabelSpacing -
-          (horizontalFlow ? edge.height : edge.width)
-        : Math.max(...blockers.map(crossEnd)) + edgeLabelSpacing;
-      const currentCross = crossStart(labelRect);
-      const delta = lowSide
-        ? Math.min(0, desiredCross - currentCross)
-        : Math.max(0, desiredCross - currentCross);
-      if (delta !== 0) {
-        if (horizontalFlow) edge.y += delta;
-        else edge.x += delta;
-        edge.points = edge.points.map((point) => {
-          const pointCross = horizontalFlow ? point.y : point.x;
-          if (pointCross !== exteriorTrack.cross) return point;
-          return horizontalFlow
-            ? { ...point, y: point.y + delta }
-            : { ...point, x: point.x + delta };
-        });
-        if (horizontalFlow) labelRect.y += delta;
-        else labelRect.x += delta;
-      }
-    }
-    placedLabelRects.push(labelRect);
+  if (edgeRouting === "ORTHOGONAL") {
+    separateExteriorLabels({
+      edges,
+      nodeRects: feedbackNodeRects,
+      direction,
+      spacing: Number(options.settings?.["spacing.edgeEdge"] ?? 10),
+      settings: (edge) => {
+        const edgeSettings = options.edgeSettings?.(edge);
+        return {
+          inline: edgeSettings?.["edgeLabels.inline"] === true,
+          placement: edgeSettings?.["edgeLabels.placement"] ?? "CENTER",
+        };
+      },
+    });
   }
 
   return {
