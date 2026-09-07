@@ -72,6 +72,7 @@
     "@changesets/cli": "3.0.1",
     "@codemirror/lang-javascript": "^6.2.5",
     "@codemirror/lint": "^6.9.7",
+    "@statelyai/layout-pre-exterior-label-separation": "npm:@statelyai/layout@0.0.4",
     "@types/node": "^25.0.3",
     "@types/react": "^19.2.18",
     "@types/react-dom": "^19.2.4",
