@@ -1,0 +1,302 @@
+{
+  "id": "root",
+  "children": [
+    {
+      "id": "feedback.prompt",
+      "width": 111.66,
+      "height": 52,
+      "ports": [
+        {
+          "id": "feedback.good__src",
+          "width": 20,
+          "height": 20,
+          "layoutOptions": {
+            "elk.port.side": "SOUTH"
+          }
+        },
+        {
+          "id": "feedback.bad__src",
+          "width": 20,
+          "height": 20,
+          "layoutOptions": {
+            "elk.port.side": "SOUTH"
+          }
+        }
+      ],
+      "layoutOptions": {
+        "elk.hierarchyHandling": "INHERIT",
+        "elk.layered.edgeRouting.selfLoopDistribution": "NORTH",
+        "elk.layered.edgeRouting.selfLoopOrdering": "STACKED",
+        "elk.portConstraints": "UNDEFINED",
+        "elk.portAlignment.default": "DISTRIBUTED",
+        "elk.portLabels.treatAsGroup": "true",
+        "elk.spacing.portPort": "10",
+        "elk.layered.layering.layerConstraint": "FIRST_SEPARATE",
+        "elk.padding": "[top=48, left=48, right=48, bottom=48]"
+      },
+      "order": 0
+    },
+    {
+      "id": "feedback.thanks",
+      "width": 106.54,
+      "height": 52,
+      "ports": [
+        {
+          "id": "feedback.good__tgt",
+          "width": 20,
+          "height": 20,
+          "layoutOptions": {
+            "elk.port.side": "NORTH"
+          }
+        },
+        {
+          "id": "submit__tgt",
+          "width": 20,
+          "height": 20,
+          "layoutOptions": {
+            "elk.port.side": "NORTH"
+          }
+        },
+        {
+          "id": "thanks.close__src",
+          "width": 20,
+          "height": 20,
+          "layoutOptions": {
+            "elk.port.side": "SOUTH"
+          }
+        }
+      ],
+      "layoutOptions": {
+        "elk.hierarchyHandling": "INHERIT",
+        "elk.layered.edgeRouting.selfLoopDistribution": "NORTH",
+        "elk.layered.edgeRouting.selfLoopOrdering": "STACKED",
+        "elk.portConstraints": "UNDEFINED",
+        "elk.portAlignment.default": "DISTRIBUTED",
+        "elk.portLabels.treatAsGroup": "true",
+        "elk.spacing.portPort": "10",
+        "elk.padding": "[top=48, left=48, right=48, bottom=48]"
+      },
+      "order": 1
+    },
+    {
+      "id": "feedback.form",
+      "width": 82.74,
+      "height": 52,
+      "ports": [
+        {
+          "id": "feedback.bad__tgt",
+          "width": 20,
+          "height": 20,
+          "layoutOptions": {
+            "elk.port.side": "NORTH"
+          }
+        },
+        {
+          "id": "submit__src",
+          "width": 20,
+          "height": 20,
+          "layoutOptions": {
+            "elk.port.side": "SOUTH"
+          }
+        },
+        {
+          "id": "form.close__src",
+          "width": 20,
+          "height": 20,
+          "layoutOptions": {
+            "elk.port.side": "SOUTH"
+          }
+        }
+      ],
+      "layoutOptions": {
+        "elk.hierarchyHandling": "INHERIT",
+        "elk.layered.edgeRouting.selfLoopDistribution": "NORTH",
+        "elk.layered.edgeRouting.selfLoopOrdering": "STACKED",
+        "elk.portConstraints": "UNDEFINED",
+        "elk.portAlignment.default": "DISTRIBUTED",
+        "elk.portLabels.treatAsGroup": "true",
+        "elk.spacing.portPort": "10",
+        "elk.padding": "[top=48, left=48, right=48, bottom=48]"
+      },
+      "order": 2
+    },
+    {
+      "id": "feedback.closed",
+      "width": 137.24,
+      "height": 52,
+      "ports": [
+        {
+          "id": "form.close__tgt",
+          "width": 20,
+          "height": 20,
+          "layoutOptions": {
+            "elk.port.side": "NORTH"
+          }
+        },
+        {
+          "id": "thanks.close__tgt",
+          "width": 20,
+          "height": 20,
+          "layoutOptions": {
+            "elk.port.side": "NORTH"
+          }
+        }
+      ],
+      "layoutOptions": {
+        "elk.hierarchyHandling": "INHERIT",
+        "elk.layered.edgeRouting.selfLoopDistribution": "NORTH",
+        "elk.layered.edgeRouting.selfLoopOrdering": "STACKED",
+        "elk.portConstraints": "UNDEFINED",
+        "elk.portAlignment.default": "DISTRIBUTED",
+        "elk.portLabels.treatAsGroup": "true",
+        "elk.spacing.portPort": "10",
+        "elk.padding": "[top=48, left=48, right=48, bottom=48]"
+      },
+      "order": 3
+    }
+  ],
+  "edges": [
+    {
+      "id": "feedback.good",
+      "sources": ["feedback.good__src"],
+      "targets": ["feedback.good__tgt"],
+      "labels": [
+        {
+          "id": "feedback.good",
+          "text": "feedback.good",
+          "width": 130.46,
+          "height": 44,
+          "layoutOptions": {
+            "elk.layered.edgeLabels.centerLabelPlacementStrategy": "MEDIAN_LAYER",
+            "elk.edgeLabels.inline": "true",
+            "elk.edgeLabels.placement": "CENTER"
+          }
+        }
+      ]
+    },
+    {
+      "id": "feedback.bad",
+      "sources": ["feedback.bad__src"],
+      "targets": ["feedback.bad__tgt"],
+      "labels": [
+        {
+          "id": "feedback.bad",
+          "text": "feedback.bad",
+          "width": 121.57,
+          "height": 44,
+          "layoutOptions": {
+            "elk.layered.edgeLabels.centerLabelPlacementStrategy": "MEDIAN_LAYER",
+            "elk.edgeLabels.inline": "true",
+            "elk.edgeLabels.placement": "CENTER"
+          }
+        }
+      ]
+    },
+    {
+      "id": "submit",
+      "sources": ["submit__src"],
+      "targets": ["submit__tgt"],
+      "labels": [
+        {
+          "id": "submit",
+          "text": "submit",
+          "width": 74.22,
+          "height": 44,
+          "layoutOptions": {
+            "elk.layered.edgeLabels.centerLabelPlacementStrategy": "MEDIAN_LAYER",
+            "elk.edgeLabels.inline": "true",
+            "elk.edgeLabels.placement": "CENTER"
+          }
+        }
+      ]
+    },
+    {
+      "id": "form.close",
+      "sources": ["form.close__src"],
+      "targets": ["form.close__tgt"],
+      "labels": [
+        {
+          "id": "form.close",
+          "text": "form.close",
+          "width": 64.32,
+          "height": 44,
+          "layoutOptions": {
+            "elk.layered.edgeLabels.centerLabelPlacementStrategy": "MEDIAN_LAYER",
+            "elk.edgeLabels.inline": "true",
+            "elk.edgeLabels.placement": "CENTER"
+          }
+        }
+      ]
+    },
+    {
+      "id": "thanks.close",
+      "sources": ["thanks.close__src"],
+      "targets": ["thanks.close__tgt"],
+      "labels": [
+        {
+          "id": "thanks.close",
+          "text": "thanks.close",
+          "width": 64.32,
+          "height": 44,
+          "layoutOptions": {
+            "elk.layered.edgeLabels.centerLabelPlacementStrategy": "MEDIAN_LAYER",
+            "elk.edgeLabels.inline": "true",
+            "elk.edgeLabels.placement": "CENTER"
+          }
+        }
+      ]
+    }
+  ],
+  "layoutOptions": {
+    "elk.algorithm": "layered",
+    "elk.direction": "DOWN",
+    "elk.edgeRouting": "ORTHOGONAL",
+    "elk.hierarchyHandling": "INHERIT",
+    "elk.separateConnectedComponents": "true",
+    "elk.spacing.nodeNode": "50",
+    "elk.spacing.edgeEdge": "10",
+    "elk.spacing.edgeNode": "10",
+    "elk.spacing.edgeLabel": "2",
+    "elk.spacing.labelNode": "5",
+    "elk.spacing.componentComponent": "20",
+    "elk.spacing.nodeSelfLoop": "10",
+    "elk.layered.spacing.nodeNodeBetweenLayers": "30",
+    "elk.layered.spacing.edgeEdgeBetweenLayers": "10",
+    "elk.layered.spacing.edgeNodeBetweenLayers": "10",
+    "elk.layered.layering.strategy": "INTERACTIVE",
+    "elk.layered.cycleBreaking.strategy": "MODEL_ORDER",
+    "elk.layered.directionCongruency": "READING_DIRECTION",
+    "elk.layered.nodePlacement.strategy": "BRANDES_KOEPF",
+    "elk.layered.nodePlacement.favorStraightEdges": "true",
+    "elk.layered.nodePlacement.bk.fixedAlignment": "NONE",
+    "elk.layered.nodePlacement.bk.edgeStraightening": "IMPROVE_STRAIGHTNESS",
+    "elk.layered.nodePlacement.linearSegments.deflectionDampening": "0.3",
+    "elk.layered.crossingMinimization.strategy": "LAYER_SWEEP",
+    "elk.layered.crossingMinimization.forceNodeModelOrder": "true",
+    "elk.layered.crossingMinimization.greedySwitch.type": "TWO_SIDED",
+    "elk.layered.crossingMinimization.semiInteractive": "false",
+    "elk.layered.considerModelOrder.strategy": "PREFER_NODES",
+    "elk.layered.considerModelOrder.longEdgeStrategy": "DUMMY_NODE_OVER",
+    "elk.layered.considerModelOrder.components": "MODEL_ORDER",
+    "elk.layered.considerModelOrder.crossingCounterNodeInfluence": "0",
+    "elk.layered.considerModelOrder.crossingCounterPortInfluence": "0",
+    "elk.layered.compaction.connectedComponents": "true",
+    "elk.layered.compaction.postCompaction.strategy": "LEFT",
+    "elk.layered.compaction.postCompaction.constraints": "SCANLINE",
+    "elk.layered.edgeRouting.splines.mode": "SLOPPY",
+    "elk.layered.edgeRouting.splines.sloppy.layerSpacingFactor": "0.2",
+    "elk.layered.edgeLabels.centerLabelPlacementStrategy": "MEDIAN_LAYER",
+    "elk.layered.edgeLabels.sideSelection": "SMART_DOWN",
+    "elk.layered.wrapping.strategy": "OFF",
+    "elk.layered.wrapping.additionalEdgeSpacing": "10",
+    "elk.layered.wrapping.correctionFactor": "1",
+    "elk.layered.highDegreeNodes.treatment": "false",
+    "elk.layered.highDegreeNodes.threshold": "16",
+    "elk.layered.highDegreeNodes.treeHeight": "5",
+    "elk.layered.thoroughness": "7",
+    "elk.layered.mergeEdges": "false",
+    "elk.layered.mergeHierarchyEdges": "true",
+    "elk.layered.feedbackEdges": "false",
+    "elk.layered.unnecessaryBendpoints": "false"
+  }
+}

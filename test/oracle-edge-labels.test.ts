@@ -1,7 +1,13 @@
 import OracleELK from "elkjs/lib/elk.bundled.js";
 import { expect, it } from "vitest";
 import NativeELK, { type ElkNode } from "../src/elkjs";
+import vizFeedbackForm from "./fixtures/viz-feedback-form.json";
 import vizTwoStateCycle from "./fixtures/viz-two-state-cycle.json";
+
+function required<T>(value: T | undefined, description: string): T {
+  if (value === undefined) throw new Error(`Missing ${description}`);
+  return value;
+}
 
 for (const placement of ["CENTER", "HEAD", "TAIL"] as const) {
   for (const inline of [false, true]) {
@@ -152,6 +158,35 @@ it("keeps ELK-like backward-edge labels in a vertical sibling corridor", async (
   expect(actualLabel!.y).toEqual(expectedLabel!.y);
   expect(labelCenterX).toBeGreaterThanOrEqual(Math.min(...endpointCenters));
   expect(labelCenterX).toBeLessThanOrEqual(Math.max(...endpointCenters));
+});
+
+it("keeps Viz feedback-form labels between their endpoint ranks", async () => {
+  const graph = structuredClone(vizFeedbackForm) as ElkNode;
+  const expected = (await new OracleELK().layout(structuredClone(graph) as never)) as ElkNode;
+  const actual = await new NativeELK().layout(graph);
+  const child = (result: ElkNode, id: string) =>
+    required(
+      result.children?.find((candidate) => candidate.id === id),
+      `${id} node`,
+    );
+  const label = (result: ElkNode, id: string) =>
+    required(result.edges?.find((edge) => edge.id === id)?.labels?.[0], `${id} label`);
+
+  for (const result of [expected, actual]) {
+    for (const [edgeId, sourceId, targetId] of [
+      ["feedback.bad", "feedback.prompt", "feedback.form"],
+      ["thanks.close", "feedback.thanks", "feedback.closed"],
+    ] as const) {
+      const source = child(result, sourceId);
+      const target = child(result, targetId);
+      const edgeLabel = label(result, edgeId);
+      const corridorStart = Math.min(source.y! + source.height!, target.y! + target.height!);
+      const corridorEnd = Math.max(source.y!, target.y!);
+
+      expect(edgeLabel.y, edgeId).toBeGreaterThanOrEqual(corridorStart);
+      expect(edgeLabel.y! + edgeLabel.height!, edgeId).toBeLessThanOrEqual(corridorEnd);
+    }
+  }
 });
 
 it("matches ELK geometry for Viz's two-state cycle", async () => {
