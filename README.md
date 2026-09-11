@@ -166,3 +166,13 @@ workflow opens or updates a version pull request. Merging that pull request
 publishes the package to npm and creates the GitHub release and tag.
 
 Publishing uses npm Trusted Publishing through `.github/workflows/release.yml`.
+
+## Statechart reading order
+
+<!-- statechart policy API from src/elkjs/statechart.ts -->
+
+The opt-in `layoutStatechart` export from `@statelyai/layout/elkjs` compiles
+initial-state and preferred-path hints into scoped settings, then selects among
+at most three fresh layout attempts. It returns all quality scores, including
+remaining defects. See [statechart policies](docs/statechart-layout.md) for the
+API, supported controls, tradeoffs and reproducible visual comparison.

@@ -77,7 +77,7 @@ async function main(): Promise<void> {
       `import assert from "node:assert/strict";
 import { createGraph } from "@statelyai/graph";
 import { getBoxLayout, getLayeredLayout, getRandomLayout } from "@statelyai/layout";
-import ELK from "@statelyai/layout/elkjs";
+import ELK, { layoutStatechart, compileStatechartLayout, scoreStatechartLayout } from "@statelyai/layout/elkjs";
 import BundledELK from "@statelyai/layout/lib/elk.bundled.js";
 import { getLayeredLayout as getLayeredLayoutFromSubpath } from "@statelyai/layout/layered";
 const graph = createGraph({ nodes: [{ id: "a" }, { id: "b" }], edges: [{ id: "ab", sourceId: "a", targetId: "b" }] });
@@ -87,6 +87,11 @@ assert.equal(getRandomLayout(graph, { seed: 1 }).nodes.length, 2);
 assert.equal(getLayeredLayoutFromSubpath(graph).edges.length, 1);
 const legacy = await new ELK().layout({ id: "root", children: [{ id: "a" }, { id: "b" }], edges: [{ id: "ab", sources: ["a"], targets: ["b"] }] });
 assert.equal(legacy.children?.length, 2);
+const policyInput = { id: "root", children: [{ id: "a", width: 80, height: 40 }, { id: "b", width: 80, height: 40 }], edges: [{ id: "ab", sources: ["a"], targets: ["b"] }] };
+const policy = await layoutStatechart(policyInput, { scopes: { root: { initialNodeId: "a" } } });
+assert.equal(policy.score.pathOrder, 0);
+assert.deepEqual(compileStatechartLayout(policyInput, { root: { initialNodeId: "a" } }).paths.root, ["a", "b"]);
+assert.equal(scoreStatechartLayout(policy.graph).invalid, 0);
 assert.equal((await new BundledELK().layout({ id: "root" })).id, "root");
 `,
     );
@@ -97,7 +102,7 @@ assert.equal((await new BundledELK().layout({ id: "root" })).id, "root");
       typesPath,
       `import { createGraph } from "@statelyai/graph";
 import { getBoxLayout, getLayeredLayout, getRandomLayout, type LayoutResult } from "@statelyai/layout";
-import ELK, { type ElkNode } from "@statelyai/layout/elkjs";
+import ELK, { layoutStatechart, type StatechartLayoutOptions, type ElkNode } from "@statelyai/layout/elkjs";
 import BundledELK from "@statelyai/layout/lib/elk.bundled.js";
 import { type LayeredLayoutOptions } from "@statelyai/layout/layered";
 const graph = createGraph({ nodes: [{ id: "a" }], edges: [] });
@@ -109,6 +114,8 @@ const request: Promise<ElkNode> = new ELK().layout({ id: "root" });
 const bundledRequest: Promise<ElkNode> = new BundledELK().layout({ id: "root" });
 void request;
 void bundledRequest;
+const policyOptions: StatechartLayoutOptions = { scopes: { root: { direction: "DOWN" } } };
+layoutStatechart({ id: "root" }, policyOptions).then((policy) => { const graph: ElkNode = policy.graph; void graph; });
 const result = undefined as unknown as LayoutResult;
 void result;
 `,

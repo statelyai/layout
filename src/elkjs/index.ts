@@ -1824,3 +1824,11 @@ function placePortLabels(node: ElkNode, globalOptions: Readonly<Record<string, u
     }
   }
 }
+
+export { compileStatechartLayout, layoutStatechart, scoreStatechartLayout } from "./statechart";
+export type {
+  StatechartScope,
+  StatechartLayoutOptions,
+  StatechartLayoutScore,
+  StatechartLayoutPlan,
+} from "./statechart";
