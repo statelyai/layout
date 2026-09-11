@@ -1,0 +1,314 @@
+{
+  "id": "babyfood",
+  "width": 300,
+  "height": 80,
+  "labels": [
+    {
+      "text": "babyfood",
+      "width": 150,
+      "height": 20
+    }
+  ],
+  "children": [
+    {
+      "id": "babyfood.waiting",
+      "width": 332.19,
+      "height": 80,
+      "labels": [
+        {
+          "text": "waiting",
+          "width": 150,
+          "height": 20
+        }
+      ]
+    },
+    {
+      "id": "babyfood.intro",
+      "width": 303.56,
+      "height": 80,
+      "labels": [
+        {
+          "text": "intro",
+          "width": 150,
+          "height": 20
+        }
+      ],
+      "children": [
+        {
+          "id": "babyfood.intro.smallAmount",
+          "width": 274.91,
+          "height": 80,
+          "labels": [
+            {
+              "text": "smallAmount",
+              "width": 150,
+              "height": 20
+            }
+          ]
+        },
+        {
+          "id": "babyfood.intro.observe",
+          "width": 341.74,
+          "height": 80,
+          "labels": [
+            {
+              "text": "observe",
+              "width": 150,
+              "height": 20
+            }
+          ]
+        },
+        {
+          "id": "babyfood.intro.monitorBurp",
+          "width": 364.88,
+          "height": 80,
+          "labels": [
+            {
+              "text": "monitorBurp",
+              "width": 150,
+              "height": 20
+            }
+          ]
+        },
+        {
+          "id": "babyfood.intro.waitNextFeeding",
+          "width": 389.02,
+          "height": 80,
+          "labels": [
+            {
+              "text": "waitNextFeeding",
+              "width": 150,
+              "height": 20
+            }
+          ]
+        }
+      ],
+      "edges": [
+        {
+          "id": "babyfood.intro.smallAmount-REACTION_FREE-0",
+          "sources": ["babyfood.intro.smallAmount"],
+          "targets": ["babyfood.intro.observe"],
+          "labels": [
+            {
+              "text": "REACTION_FREE",
+              "width": 141.59,
+              "height": 40
+            }
+          ]
+        },
+        {
+          "id": "babyfood.intro.observe-BURP_DONE-0",
+          "sources": ["babyfood.intro.observe"],
+          "targets": ["babyfood.intro.monitorBurp"],
+          "labels": [
+            {
+              "text": "BURP_DONE",
+              "width": 112.71,
+              "height": 40
+            }
+          ]
+        },
+        {
+          "id": "babyfood.intro.monitorBurp-BURP_DONE-0",
+          "sources": ["babyfood.intro.monitorBurp"],
+          "targets": ["babyfood.intro.waitNextFeeding"],
+          "labels": [
+            {
+              "text": "BURP_DONE",
+              "width": 112.71,
+              "height": 40
+            }
+          ]
+        },
+        {
+          "id": "babyfood.intro.monitorBurp-xstate.after.300000.babySolids.intro.monitorBurp-0",
+          "sources": ["babyfood.intro.monitorBurp"],
+          "targets": ["babyfood.intro.waitNextFeeding"],
+          "labels": [
+            {
+              "text": "xstate.after.300000.babySolids.intro.monitorBurp",
+              "width": 162.98,
+              "height": 40
+            }
+          ]
+        },
+        {
+          "id": "babyfood.intro.waitNextFeeding-OFFER_MORE-0",
+          "sources": ["babyfood.intro.waitNextFeeding"],
+          "targets": ["babyfood.intro.smallAmount"],
+          "labels": [
+            {
+              "text": "OFFER_MORE",
+              "width": 121.16,
+              "height": 40
+            }
+          ]
+        }
+      ],
+      "layoutOptions": {
+        "elk.direction": "DOWN",
+        "elk.padding": "[top=40,left=20,bottom=20,right=20]"
+      }
+    },
+    {
+      "id": "babyfood.monitoring",
+      "width": 329.91,
+      "height": 80,
+      "labels": [
+        {
+          "text": "monitoring",
+          "width": 150,
+          "height": 20
+        }
+      ],
+      "children": [
+        {
+          "id": "babyfood.monitoring.normal",
+          "width": 264.35,
+          "height": 80,
+          "labels": [
+            {
+              "text": "normal",
+              "width": 150,
+              "height": 20
+            }
+          ]
+        },
+        {
+          "id": "babyfood.monitoring.allergyWatch",
+          "width": 334.63,
+          "height": 80,
+          "labels": [
+            {
+              "text": "allergyWatch",
+              "width": 150,
+              "height": 20
+            }
+          ]
+        }
+      ],
+      "edges": [
+        {
+          "id": "babyfood.monitoring.normal-NEW_REACTION-0",
+          "sources": ["babyfood.monitoring.normal"],
+          "targets": ["babyfood.monitoring.allergyWatch"],
+          "labels": [
+            {
+              "text": "NEW_REACTION",
+              "width": 140.49,
+              "height": 40
+            }
+          ]
+        },
+        {
+          "id": "babyfood.monitoring.allergyWatch-SYMPTOMS_RESOLVED-0",
+          "sources": ["babyfood.monitoring.allergyWatch"],
+          "targets": ["babyfood.monitoring.normal"],
+          "labels": [
+            {
+              "text": "SYMPTOMS_RESOLVED",
+              "width": 190.79,
+              "height": 40
+            }
+          ]
+        }
+      ],
+      "layoutOptions": {
+        "elk.direction": "DOWN",
+        "elk.padding": "[top=40,left=20,bottom=20,right=20]"
+      }
+    },
+    {
+      "id": "babyfood.allergyCheck",
+      "width": 369.19,
+      "height": 80,
+      "labels": [
+        {
+          "text": "allergyCheck",
+          "width": 150,
+          "height": 20
+        }
+      ]
+    }
+  ],
+  "layoutOptions": {
+    "elk.algorithm": "layered",
+    "elk.direction": "RIGHT",
+    "elk.hierarchyHandling": "INCLUDE_CHILDREN",
+    "elk.padding": "[top=40,left=20,bottom=20,right=20]"
+  },
+  "edges": [
+    {
+      "id": "babyfood.waiting-START_SOLIDS-0",
+      "sources": ["babyfood.waiting"],
+      "targets": ["babyfood.intro"],
+      "labels": [
+        {
+          "text": "START_SOLIDS",
+          "width": 130.24,
+          "height": 40
+        }
+      ]
+    },
+    {
+      "id": "babyfood.intro.observe-ALLERGY_CONCERN-0",
+      "sources": ["babyfood.intro.observe"],
+      "targets": ["babyfood.allergyCheck"],
+      "labels": [
+        {
+          "text": "ALLERGY_CONCERN",
+          "width": 168.01,
+          "height": 40
+        }
+      ]
+    },
+    {
+      "id": "babyfood.intro.monitorBurp-ALLERGY_CONCERN-0",
+      "sources": ["babyfood.intro.monitorBurp"],
+      "targets": ["babyfood.allergyCheck"],
+      "labels": [
+        {
+          "text": "ALLERGY_CONCERN",
+          "width": 168.01,
+          "height": 40
+        }
+      ]
+    },
+    {
+      "id": "babyfood.intro.waitNextFeeding-ALLERGY_CONCERN-0",
+      "sources": ["babyfood.intro.waitNextFeeding"],
+      "targets": ["babyfood.allergyCheck"],
+      "labels": [
+        {
+          "text": "ALLERGY_CONCERN",
+          "width": 168.01,
+          "height": 40
+        }
+      ]
+    },
+    {
+      "id": "babyfood.intro.waitNextFeeding-FINISH_FEED-0",
+      "sources": ["babyfood.intro.waitNextFeeding"],
+      "targets": ["babyfood.monitoring"],
+      "labels": [
+        {
+          "text": "FINISH_FEED",
+          "width": 116.66,
+          "height": 40
+        }
+      ]
+    },
+    {
+      "id": "babyfood.monitoring.allergyWatch-SEVERE_SYMPTOMS-0",
+      "sources": ["babyfood.monitoring.allergyWatch"],
+      "targets": ["babyfood.allergyCheck"],
+      "labels": [
+        {
+          "text": "SEVERE_SYMPTOMS",
+          "width": 171.05,
+          "height": 40
+        }
+      ]
+    }
+  ]
+}
