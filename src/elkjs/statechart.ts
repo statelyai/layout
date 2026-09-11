@@ -1,5 +1,5 @@
 import ELK from "./index";
-import type { ElkEdge, ElkId, ElkNode, ElkPoint, LaidOutElkNode } from "./types";
+import type { ElkEdge, ElkGraphElement, ElkId, ElkNode, ElkPoint, LaidOutElkNode } from "./types";
 
 export interface StatechartScope {
   /** Direct child of this container; never inferred from state names. */
@@ -30,7 +30,7 @@ export interface StatechartLayoutPlan {
   commonExits: Record<string, ElkId[]>;
 }
 
-function option(node: ElkNode | ElkEdge, suffix: string): unknown {
+function option(node: ElkGraphElement, suffix: string): unknown {
   const settings = { ...node.properties, ...node.layoutOptions };
   return settings[suffix] ?? settings[`elk.${suffix}`] ?? settings[`org.eclipse.elk.${suffix}`];
 }
@@ -92,7 +92,7 @@ export function compileStatechartLayout(
     }
     if (
       scope.initialNodeId !== undefined &&
-      (!ids.has(scope.initialNodeId) || (path.length > 0 && path[0] !== scope.initialNodeId))
+      (!ids.has(scope.initialNodeId) || path[0] !== scope.initialNodeId)
     ) {
       throw new Error(`Path must start at initial child of ${id}`);
     }
@@ -189,6 +189,7 @@ export function scoreStatechartLayout(
       if (!a || !b || sign * (horizontal ? b.x! - a.x! : b.y! - a.y!) <= 0) score.pathOrder++;
     }
     for (const child of node.children ?? []) {
+      if (String(option(child, "noLayout")).toLowerCase() === "true") continue;
       const box = rect(child, x, y);
       if (
         (child.x ?? 0) < 0 ||
@@ -204,7 +205,7 @@ export function scoreStatechartLayout(
       if (String(option(edge, "noLayout")).toLowerCase() === "true") continue;
       if (!edge.sections?.length) score.invalid++;
       for (const label of edge.labels ?? []) {
-        if (label.layoutOptions?.noLayout === true) continue;
+        if (String(option(label, "noLayout")).toLowerCase() === "true") continue;
         boxes.push({ rect: rect(label, x, y), ancestors });
       }
       for (const section of edge.sections ?? []) {
@@ -307,10 +308,18 @@ export async function layoutStatechart<T extends ElkNode>(
               option(edge, "edgeLabels.placement") === undefined &&
               edge.labels!.every((label) => option(label, "edgeLabels.placement") === undefined)
             ) {
+              const placement = i === 1 ? "HEAD" : "TAIL";
               edge.layoutOptions = {
                 ...edge.layoutOptions,
-                "elk.edgeLabels.placement": i === 1 ? "HEAD" : "TAIL",
+                "elk.edgeLabels.placement": placement,
               };
+              edge.labels = edge.labels!.map((label) => ({
+                ...label,
+                layoutOptions: {
+                  ...label.layoutOptions,
+                  "elk.edgeLabels.placement": placement,
+                },
+              }));
             }
           }
       }

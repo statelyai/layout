@@ -53,7 +53,7 @@ describe("statechart policy layout", () => {
       "babyfood.monitoring.allergyWatch",
     ]);
     expect(plan.commonExits.babyfood).toEqual(["babyfood.allergyCheck"]);
-    const result = await layoutStatechart(babyfood, { scopes });
+    const result = await layoutStatechart(babyfood as ElkNode, { scopes });
     expect(result.score.overlaps).toBeLessThan(result.attempts[0].score.overlaps);
     const intro = result.graph.children!.find((node) => node.id === "babyfood.intro")!;
     expect([...intro.children!].sort((a, b) => a.y! - b.y!).map((node) => node.id)).toEqual(
@@ -111,6 +111,9 @@ describe("statechart policy layout", () => {
     expect(() =>
       compileStatechartLayout(graph, { root: { initialNodeId: "b", preferredPath: ["a", "b"] } }),
     ).toThrow("initial");
+    expect(() =>
+      compileStatechartLayout(graph, { root: { initialNodeId: "a", preferredPath: [] } }),
+    ).toThrow("initial");
   });
 
   it("bounds engine calls and keeps baseline when no policy improves it", async () => {
@@ -147,19 +150,24 @@ describe("statechart policy layout", () => {
         { id: "a", width: 100, height: 50, ports: [{ id: "out", width: 1, height: 1 }] },
         { id: "b", width: 100, height: 50 },
       ],
-      edges: ["first", "second"].map((id) => ({
+      edges: ["first", "second", "third"].map((id) => ({
         id,
         sources: ["out"],
         targets: ["b"],
-        labels: [{ text: id, width: 100, height: 30 }],
+        labels: [{ text: id, width: 40, height: 30 }],
       })),
     };
     const result = await layoutStatechart(graph, { scopes: { r: { initialNodeId: "a" } } });
     expect(result.paths.r).toEqual(["a", "b"]);
-    expect(result.graph.edges).toHaveLength(2);
-    expect(result.attempts[2].score.overlaps).toBeLessThanOrEqual(
-      result.attempts[1].score.overlaps,
-    );
+    expect(result.graph.edges).toHaveLength(3);
+    expect(result.attempt).toBe(2);
+    expect(result.attempts[2].score.overlaps).toBeLessThan(result.attempts[1].score.overlaps);
+    expect(result.graph.edges?.[1].labels?.[0].layoutOptions).toMatchObject({
+      "elk.edgeLabels.placement": "HEAD",
+    });
+    expect(result.graph.edges?.[2].labels?.[0].layoutOptions).toMatchObject({
+      "elk.edgeLabels.placement": "TAIL",
+    });
     expect(graph.edges?.[1].layoutOptions).toBeUndefined();
   });
 
@@ -196,5 +204,27 @@ describe("statechart policy layout", () => {
       bends: 0,
       routeLength: 200,
     });
+  });
+
+  it("excludes no-layout aliases from candidate scoring", () => {
+    const score = scoreStatechartLayout({
+      id: "r",
+      width: 100,
+      height: 100,
+      children: [{ id: "fixed", layoutOptions: { "elk.noLayout": "true" } }],
+      edges: [
+        {
+          id: "edge",
+          sections: [{ startPoint: { x: 0, y: 0 }, endPoint: { x: 10, y: 0 } }],
+          labels: [
+            {
+              text: "fixed",
+              properties: { "org.eclipse.elk.noLayout": "true" },
+            },
+          ],
+        },
+      ],
+    });
+    expect(score.invalid).toBe(0);
   });
 });
