@@ -1,5 +1,11 @@
 # @statelyai/layout
 
+## 0.1.0
+
+### Minor Changes
+
+- 0c9aecf: Add opt-in ELK statechart policy compilation and bounded layout selection with initial-anchored paths, common-exit detection, scoped directions, parallel-label repair candidates and diagnostic geometry scores.
+
 ## 0.0.5
 
 ### Patch Changes
