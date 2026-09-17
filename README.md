@@ -71,6 +71,10 @@ The adapter accepts ELK JSON and option aliases, translates to
 `@statelyai/graph`, runs native algorithms, and translates the result back.
 Native algorithms never consume ELK JSON directly.
 
+<!-- fixed-port placement and inline center-label guarantees from src/layered/index.ts and src/layered/strategies.ts -->
+
+Fixed port sides constrain routes without collapsing fan-out targets onto each other. Port preferences cannot reintroduce cycles before layering. Inline center labels stay between their endpoint ranks, and horizontal compaction preserves their reserved space. Inline self-loop labels reserve exterior clearance, including compound-to-descendant edges. Initial states may have self-loops.
+
 Advanced layered settings use shorter names such as
 `layering.strategy`, `spacing.edgeNode`, and `nodePlacement.strategy`.
 `toElkLayeredOptions` and `fromElkLayeredOptionId` provide the exact one-to-one

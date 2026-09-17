@@ -510,6 +510,7 @@ export default class ELK {
     if (
       algorithm === "layered" &&
       graph_.edges.some((edge) => {
+        if (edge.sourceId === edge.targetId) return false;
         const sourceConstraint = layerConstraintByNodeId.get(edge.sourceId);
         const targetConstraint = layerConstraintByNodeId.get(edge.targetId);
         return (
@@ -721,11 +722,35 @@ export default class ELK {
         }
       }
       const edgeNodeSpacing = getNumberOption(layoutOptions, "spacing.edgeNodeBetweenLayers") ?? 10;
+      const labelExtentByOwner = new Map<string, number>();
       for (const restoration of hierarchyRestorations) {
         const route = laidOut.edges.find((edge) => edge.id === String(restoration.edge.id))?.points;
         if (!route || route.length < 2) continue;
         const start = route[0]!;
         const end = route.at(-1)!;
+        const nativeEdge = laidOut.edges.find((edge) => edge.id === String(restoration.edge.id));
+        const inlineCenter = (restoration.edge.labels ?? []).some(
+          (label) =>
+            getBooleanOption(label.layoutOptions ?? {}, "edgeLabels.inline") === true &&
+            String(getOption(label.layoutOptions ?? {}, "edgeLabels.placement") ?? "CENTER") ===
+              "CENTER",
+        );
+        // A hierarchy edge between a compound and its descendant becomes a
+        // loop on the compound during decomposition. Its exterior label needs
+        // clearance before equal-cross routes can be simplified.
+        if (nativeEdge && nativeEdge.sourceId === nativeEdge.targetId && inlineCenter) {
+          const owner = laidOut.nodes.find((node) => node.id === nativeEdge.sourceId);
+          if (owner) {
+            const height = nativeEdge.height ?? 0;
+            const precedingExtent = labelExtentByOwner.get(owner.id) ?? 0;
+            const track = (owner.y ?? 0) - edgeNodeSpacing - height / 2 - precedingExtent;
+            labelExtentByOwner.set(owner.id, precedingExtent + height + 2);
+            route.splice(1, route.length - 2, { x: start.x, y: track }, { x: end.x, y: track });
+            nativeEdge.x = (start.x + end.x - (nativeEdge.width ?? 0)) / 2;
+            nativeEdge.y = track - height / 2 - 0.5;
+            continue;
+          }
+        }
         if (Math.abs(cross(start) - cross(end)) < 1e-9) {
           route.splice(1, route.length - 2);
           continue;

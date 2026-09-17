@@ -1,0 +1,714 @@
+{
+  "id": "root",
+  "children": [
+    {
+      "id": "email-drafter-v1.evaluating",
+      "width": 280,
+      "height": 180,
+      "ports": [
+        {
+          "id": "root.evaluating-invoke-$auto-invoke-evaluatePrompt-done-0__src",
+          "width": 20,
+          "height": 20,
+          "layoutOptions": {
+            "elk.port.side": "SOUTH"
+          }
+        },
+        {
+          "id": "root.evaluating-invoke-$auto-invoke-evaluatePrompt-done-1__src",
+          "width": 20,
+          "height": 20,
+          "layoutOptions": {
+            "elk.port.side": "SOUTH"
+          }
+        },
+        {
+          "id": "root.evaluating-invoke-$auto-invoke-evaluatePrompt-error-0__src",
+          "width": 20,
+          "height": 20,
+          "layoutOptions": {
+            "elk.port.side": "SOUTH"
+          }
+        },
+        {
+          "id": "root.needsMoreInfo-MORE_INFO-0__tgt",
+          "width": 20,
+          "height": 20,
+          "layoutOptions": {
+            "elk.port.side": "NORTH"
+          }
+        }
+      ],
+      "layoutOptions": {
+        "elk.hierarchyHandling": "INHERIT",
+        "elk.layered.edgeRouting.selfLoopDistribution": "NORTH",
+        "elk.layered.edgeRouting.selfLoopOrdering": "STACKED",
+        "elk.portConstraints": "UNDEFINED",
+        "elk.portAlignment.default": "DISTRIBUTED",
+        "elk.portLabels.treatAsGroup": "true",
+        "elk.spacing.portPort": "10",
+        "elk.layered.layering.layerConstraint": "FIRST_SEPARATE",
+        "elk.padding": "[top=48, left=48, right=48, bottom=48]"
+      },
+      "order": 0
+    },
+    {
+      "id": "email-drafter-v1.drafting",
+      "width": 280,
+      "height": 180,
+      "ports": [
+        {
+          "id": "root.evaluating-invoke-$auto-invoke-evaluatePrompt-done-0__tgt",
+          "width": 20,
+          "height": 20,
+          "layoutOptions": {
+            "elk.port.side": "NORTH"
+          }
+        },
+        {
+          "id": "root.needsMoreInfo-DRAFT_ANYWAY-0__tgt",
+          "width": 20,
+          "height": 20,
+          "layoutOptions": {
+            "elk.port.side": "NORTH"
+          }
+        },
+        {
+          "id": "root.drafting-invoke-$auto-invoke-draftEmail-done-0__src",
+          "width": 20,
+          "height": 20,
+          "layoutOptions": {
+            "elk.port.side": "SOUTH"
+          }
+        },
+        {
+          "id": "root.drafting-invoke-$auto-invoke-draftEmail-done-1__src",
+          "width": 20,
+          "height": 20,
+          "layoutOptions": {
+            "elk.port.side": "SOUTH"
+          }
+        },
+        {
+          "id": "root.drafting-invoke-$auto-invoke-draftEmail-error-0__src",
+          "width": 20,
+          "height": 20,
+          "layoutOptions": {
+            "elk.port.side": "SOUTH"
+          }
+        },
+        {
+          "id": "root.reviewing-REQUEST_CHANGES-0__tgt",
+          "width": 20,
+          "height": 20,
+          "layoutOptions": {
+            "elk.port.side": "NORTH"
+          }
+        }
+      ],
+      "layoutOptions": {
+        "elk.hierarchyHandling": "INHERIT",
+        "elk.layered.edgeRouting.selfLoopDistribution": "NORTH",
+        "elk.layered.edgeRouting.selfLoopOrdering": "STACKED",
+        "elk.portConstraints": "UNDEFINED",
+        "elk.portAlignment.default": "DISTRIBUTED",
+        "elk.portLabels.treatAsGroup": "true",
+        "elk.spacing.portPort": "10",
+        "elk.padding": "[top=48, left=48, right=48, bottom=48]"
+      },
+      "order": 1
+    },
+    {
+      "id": "email-drafter-v1.needsMoreInfo",
+      "width": 280,
+      "height": 180,
+      "ports": [
+        {
+          "id": "root.evaluating-invoke-$auto-invoke-evaluatePrompt-done-1__tgt",
+          "width": 20,
+          "height": 20,
+          "layoutOptions": {
+            "elk.port.side": "NORTH"
+          }
+        },
+        {
+          "id": "root.needsMoreInfo-MORE_INFO-0__src",
+          "width": 20,
+          "height": 20,
+          "layoutOptions": {
+            "elk.port.side": "SOUTH"
+          }
+        },
+        {
+          "id": "root.needsMoreInfo-DRAFT_ANYWAY-0__src",
+          "width": 20,
+          "height": 20,
+          "layoutOptions": {
+            "elk.port.side": "SOUTH"
+          }
+        },
+        {
+          "id": "root.reviewing-SEND-1__tgt",
+          "width": 20,
+          "height": 20,
+          "layoutOptions": {
+            "elk.port.side": "NORTH"
+          }
+        },
+        {
+          "id": "root.finalReview-SEND-1__tgt",
+          "width": 20,
+          "height": 20,
+          "layoutOptions": {
+            "elk.port.side": "NORTH"
+          }
+        }
+      ],
+      "layoutOptions": {
+        "elk.hierarchyHandling": "INHERIT",
+        "elk.layered.edgeRouting.selfLoopDistribution": "NORTH",
+        "elk.layered.edgeRouting.selfLoopOrdering": "STACKED",
+        "elk.portConstraints": "UNDEFINED",
+        "elk.portAlignment.default": "DISTRIBUTED",
+        "elk.portLabels.treatAsGroup": "true",
+        "elk.spacing.portPort": "10",
+        "elk.padding": "[top=48, left=48, right=48, bottom=48]"
+      },
+      "order": 2
+    },
+    {
+      "id": "email-drafter-v1.failed",
+      "width": 280,
+      "height": 180,
+      "ports": [
+        {
+          "id": "root.evaluating-invoke-$auto-invoke-evaluatePrompt-error-0__tgt",
+          "width": 20,
+          "height": 20,
+          "layoutOptions": {
+            "elk.port.side": "NORTH"
+          }
+        },
+        {
+          "id": "root.drafting-invoke-$auto-invoke-draftEmail-error-0__tgt",
+          "width": 20,
+          "height": 20,
+          "layoutOptions": {
+            "elk.port.side": "NORTH"
+          }
+        },
+        {
+          "id": "root.sending-invoke-$auto-invoke-sendEmail-error-0__tgt",
+          "width": 20,
+          "height": 20,
+          "layoutOptions": {
+            "elk.port.side": "NORTH"
+          }
+        }
+      ],
+      "layoutOptions": {
+        "elk.hierarchyHandling": "INHERIT",
+        "elk.layered.edgeRouting.selfLoopDistribution": "NORTH",
+        "elk.layered.edgeRouting.selfLoopOrdering": "STACKED",
+        "elk.portConstraints": "UNDEFINED",
+        "elk.portAlignment.default": "DISTRIBUTED",
+        "elk.portLabels.treatAsGroup": "true",
+        "elk.spacing.portPort": "10",
+        "elk.padding": "[top=48, left=48, right=48, bottom=48]"
+      },
+      "order": 3
+    },
+    {
+      "id": "email-drafter-v1.finalReview",
+      "width": 280,
+      "height": 180,
+      "ports": [
+        {
+          "id": "root.drafting-invoke-$auto-invoke-draftEmail-done-0__tgt",
+          "width": 20,
+          "height": 20,
+          "layoutOptions": {
+            "elk.port.side": "NORTH"
+          }
+        },
+        {
+          "id": "root.finalReview-SEND-0__src",
+          "width": 20,
+          "height": 20,
+          "layoutOptions": {
+            "elk.port.side": "SOUTH"
+          }
+        },
+        {
+          "id": "root.finalReview-SEND-1__src",
+          "width": 20,
+          "height": 20,
+          "layoutOptions": {
+            "elk.port.side": "SOUTH"
+          }
+        }
+      ],
+      "layoutOptions": {
+        "elk.hierarchyHandling": "INHERIT",
+        "elk.layered.edgeRouting.selfLoopDistribution": "NORTH",
+        "elk.layered.edgeRouting.selfLoopOrdering": "STACKED",
+        "elk.portConstraints": "UNDEFINED",
+        "elk.portAlignment.default": "DISTRIBUTED",
+        "elk.portLabels.treatAsGroup": "true",
+        "elk.spacing.portPort": "10",
+        "elk.padding": "[top=48, left=48, right=48, bottom=48]"
+      },
+      "order": 4
+    },
+    {
+      "id": "email-drafter-v1.reviewing",
+      "width": 280,
+      "height": 180,
+      "ports": [
+        {
+          "id": "root.drafting-invoke-$auto-invoke-draftEmail-done-1__tgt",
+          "width": 20,
+          "height": 20,
+          "layoutOptions": {
+            "elk.port.side": "NORTH"
+          }
+        },
+        {
+          "id": "root.reviewing-REQUEST_CHANGES-0__src",
+          "width": 20,
+          "height": 20,
+          "layoutOptions": {
+            "elk.port.side": "SOUTH"
+          }
+        },
+        {
+          "id": "root.reviewing-SEND-0__src",
+          "width": 20,
+          "height": 20,
+          "layoutOptions": {
+            "elk.port.side": "SOUTH"
+          }
+        },
+        {
+          "id": "root.reviewing-SEND-1__src",
+          "width": 20,
+          "height": 20,
+          "layoutOptions": {
+            "elk.port.side": "SOUTH"
+          }
+        }
+      ],
+      "layoutOptions": {
+        "elk.hierarchyHandling": "INHERIT",
+        "elk.layered.edgeRouting.selfLoopDistribution": "NORTH",
+        "elk.layered.edgeRouting.selfLoopOrdering": "STACKED",
+        "elk.portConstraints": "UNDEFINED",
+        "elk.portAlignment.default": "DISTRIBUTED",
+        "elk.portLabels.treatAsGroup": "true",
+        "elk.spacing.portPort": "10",
+        "elk.padding": "[top=48, left=48, right=48, bottom=48]"
+      },
+      "order": 5
+    },
+    {
+      "id": "email-drafter-v1.sending",
+      "width": 280,
+      "height": 180,
+      "ports": [
+        {
+          "id": "root.reviewing-SEND-0__tgt",
+          "width": 20,
+          "height": 20,
+          "layoutOptions": {
+            "elk.port.side": "NORTH"
+          }
+        },
+        {
+          "id": "root.finalReview-SEND-0__tgt",
+          "width": 20,
+          "height": 20,
+          "layoutOptions": {
+            "elk.port.side": "NORTH"
+          }
+        },
+        {
+          "id": "root.sending-invoke-$auto-invoke-sendEmail-done-0__src",
+          "width": 20,
+          "height": 20,
+          "layoutOptions": {
+            "elk.port.side": "SOUTH"
+          }
+        },
+        {
+          "id": "root.sending-invoke-$auto-invoke-sendEmail-error-0__src",
+          "width": 20,
+          "height": 20,
+          "layoutOptions": {
+            "elk.port.side": "SOUTH"
+          }
+        }
+      ],
+      "layoutOptions": {
+        "elk.hierarchyHandling": "INHERIT",
+        "elk.layered.edgeRouting.selfLoopDistribution": "NORTH",
+        "elk.layered.edgeRouting.selfLoopOrdering": "STACKED",
+        "elk.portConstraints": "UNDEFINED",
+        "elk.portAlignment.default": "DISTRIBUTED",
+        "elk.portLabels.treatAsGroup": "true",
+        "elk.spacing.portPort": "10",
+        "elk.padding": "[top=48, left=48, right=48, bottom=48]"
+      },
+      "order": 6
+    },
+    {
+      "id": "email-drafter-v1.sent",
+      "width": 280,
+      "height": 180,
+      "ports": [
+        {
+          "id": "root.sending-invoke-$auto-invoke-sendEmail-done-0__tgt",
+          "width": 20,
+          "height": 20,
+          "layoutOptions": {
+            "elk.port.side": "NORTH"
+          }
+        }
+      ],
+      "layoutOptions": {
+        "elk.hierarchyHandling": "INHERIT",
+        "elk.layered.edgeRouting.selfLoopDistribution": "NORTH",
+        "elk.layered.edgeRouting.selfLoopOrdering": "STACKED",
+        "elk.portConstraints": "UNDEFINED",
+        "elk.portAlignment.default": "DISTRIBUTED",
+        "elk.portLabels.treatAsGroup": "true",
+        "elk.spacing.portPort": "10",
+        "elk.padding": "[top=48, left=48, right=48, bottom=48]"
+      },
+      "order": 7
+    }
+  ],
+  "edges": [
+    {
+      "id": "root.evaluating-invoke-$auto-invoke-evaluatePrompt-done-0",
+      "sources": ["root.evaluating-invoke-$auto-invoke-evaluatePrompt-done-0__src"],
+      "targets": ["root.evaluating-invoke-$auto-invoke-evaluatePrompt-done-0__tgt"],
+      "labels": [
+        {
+          "id": "root.evaluating-invoke-$auto-invoke-evaluatePrompt-done-0",
+          "text": "root.evaluating-invoke-$auto-invoke-evaluatePrompt-done-0",
+          "width": 440,
+          "height": 140,
+          "layoutOptions": {
+            "elk.layered.edgeLabels.centerLabelPlacementStrategy": "MEDIAN_LAYER",
+            "elk.edgeLabels.inline": "true",
+            "elk.edgeLabels.placement": "CENTER"
+          }
+        }
+      ]
+    },
+    {
+      "id": "root.evaluating-invoke-$auto-invoke-evaluatePrompt-done-1",
+      "sources": ["root.evaluating-invoke-$auto-invoke-evaluatePrompt-done-1__src"],
+      "targets": ["root.evaluating-invoke-$auto-invoke-evaluatePrompt-done-1__tgt"],
+      "labels": [
+        {
+          "id": "root.evaluating-invoke-$auto-invoke-evaluatePrompt-done-1",
+          "text": "root.evaluating-invoke-$auto-invoke-evaluatePrompt-done-1",
+          "width": 440,
+          "height": 140,
+          "layoutOptions": {
+            "elk.layered.edgeLabels.centerLabelPlacementStrategy": "MEDIAN_LAYER",
+            "elk.edgeLabels.inline": "true",
+            "elk.edgeLabels.placement": "CENTER"
+          }
+        }
+      ]
+    },
+    {
+      "id": "root.evaluating-invoke-$auto-invoke-evaluatePrompt-error-0",
+      "sources": ["root.evaluating-invoke-$auto-invoke-evaluatePrompt-error-0__src"],
+      "targets": ["root.evaluating-invoke-$auto-invoke-evaluatePrompt-error-0__tgt"],
+      "labels": [
+        {
+          "id": "root.evaluating-invoke-$auto-invoke-evaluatePrompt-error-0",
+          "text": "root.evaluating-invoke-$auto-invoke-evaluatePrompt-error-0",
+          "width": 440,
+          "height": 140,
+          "layoutOptions": {
+            "elk.layered.edgeLabels.centerLabelPlacementStrategy": "MEDIAN_LAYER",
+            "elk.edgeLabels.inline": "true",
+            "elk.edgeLabels.placement": "CENTER"
+          }
+        }
+      ]
+    },
+    {
+      "id": "root.needsMoreInfo-MORE_INFO-0",
+      "sources": ["root.needsMoreInfo-MORE_INFO-0__src"],
+      "targets": ["root.needsMoreInfo-MORE_INFO-0__tgt"],
+      "labels": [
+        {
+          "id": "root.needsMoreInfo-MORE_INFO-0",
+          "text": "root.needsMoreInfo-MORE_INFO-0",
+          "width": 440,
+          "height": 140,
+          "layoutOptions": {
+            "elk.layered.edgeLabels.centerLabelPlacementStrategy": "MEDIAN_LAYER",
+            "elk.edgeLabels.inline": "true",
+            "elk.edgeLabels.placement": "CENTER"
+          }
+        }
+      ]
+    },
+    {
+      "id": "root.needsMoreInfo-DRAFT_ANYWAY-0",
+      "sources": ["root.needsMoreInfo-DRAFT_ANYWAY-0__src"],
+      "targets": ["root.needsMoreInfo-DRAFT_ANYWAY-0__tgt"],
+      "labels": [
+        {
+          "id": "root.needsMoreInfo-DRAFT_ANYWAY-0",
+          "text": "root.needsMoreInfo-DRAFT_ANYWAY-0",
+          "width": 440,
+          "height": 140,
+          "layoutOptions": {
+            "elk.layered.edgeLabels.centerLabelPlacementStrategy": "MEDIAN_LAYER",
+            "elk.edgeLabels.inline": "true",
+            "elk.edgeLabels.placement": "CENTER"
+          }
+        }
+      ]
+    },
+    {
+      "id": "root.drafting-invoke-$auto-invoke-draftEmail-done-0",
+      "sources": ["root.drafting-invoke-$auto-invoke-draftEmail-done-0__src"],
+      "targets": ["root.drafting-invoke-$auto-invoke-draftEmail-done-0__tgt"],
+      "labels": [
+        {
+          "id": "root.drafting-invoke-$auto-invoke-draftEmail-done-0",
+          "text": "root.drafting-invoke-$auto-invoke-draftEmail-done-0",
+          "width": 440,
+          "height": 140,
+          "layoutOptions": {
+            "elk.layered.edgeLabels.centerLabelPlacementStrategy": "MEDIAN_LAYER",
+            "elk.edgeLabels.inline": "true",
+            "elk.edgeLabels.placement": "CENTER"
+          }
+        }
+      ]
+    },
+    {
+      "id": "root.drafting-invoke-$auto-invoke-draftEmail-done-1",
+      "sources": ["root.drafting-invoke-$auto-invoke-draftEmail-done-1__src"],
+      "targets": ["root.drafting-invoke-$auto-invoke-draftEmail-done-1__tgt"],
+      "labels": [
+        {
+          "id": "root.drafting-invoke-$auto-invoke-draftEmail-done-1",
+          "text": "root.drafting-invoke-$auto-invoke-draftEmail-done-1",
+          "width": 440,
+          "height": 140,
+          "layoutOptions": {
+            "elk.layered.edgeLabels.centerLabelPlacementStrategy": "MEDIAN_LAYER",
+            "elk.edgeLabels.inline": "true",
+            "elk.edgeLabels.placement": "CENTER"
+          }
+        }
+      ]
+    },
+    {
+      "id": "root.drafting-invoke-$auto-invoke-draftEmail-error-0",
+      "sources": ["root.drafting-invoke-$auto-invoke-draftEmail-error-0__src"],
+      "targets": ["root.drafting-invoke-$auto-invoke-draftEmail-error-0__tgt"],
+      "labels": [
+        {
+          "id": "root.drafting-invoke-$auto-invoke-draftEmail-error-0",
+          "text": "root.drafting-invoke-$auto-invoke-draftEmail-error-0",
+          "width": 440,
+          "height": 140,
+          "layoutOptions": {
+            "elk.layered.edgeLabels.centerLabelPlacementStrategy": "MEDIAN_LAYER",
+            "elk.edgeLabels.inline": "true",
+            "elk.edgeLabels.placement": "CENTER"
+          }
+        }
+      ]
+    },
+    {
+      "id": "root.reviewing-REQUEST_CHANGES-0",
+      "sources": ["root.reviewing-REQUEST_CHANGES-0__src"],
+      "targets": ["root.reviewing-REQUEST_CHANGES-0__tgt"],
+      "labels": [
+        {
+          "id": "root.reviewing-REQUEST_CHANGES-0",
+          "text": "root.reviewing-REQUEST_CHANGES-0",
+          "width": 440,
+          "height": 140,
+          "layoutOptions": {
+            "elk.layered.edgeLabels.centerLabelPlacementStrategy": "MEDIAN_LAYER",
+            "elk.edgeLabels.inline": "true",
+            "elk.edgeLabels.placement": "CENTER"
+          }
+        }
+      ]
+    },
+    {
+      "id": "root.reviewing-SEND-0",
+      "sources": ["root.reviewing-SEND-0__src"],
+      "targets": ["root.reviewing-SEND-0__tgt"],
+      "labels": [
+        {
+          "id": "root.reviewing-SEND-0",
+          "text": "root.reviewing-SEND-0",
+          "width": 440,
+          "height": 140,
+          "layoutOptions": {
+            "elk.layered.edgeLabels.centerLabelPlacementStrategy": "MEDIAN_LAYER",
+            "elk.edgeLabels.inline": "true",
+            "elk.edgeLabels.placement": "CENTER"
+          }
+        }
+      ]
+    },
+    {
+      "id": "root.reviewing-SEND-1",
+      "sources": ["root.reviewing-SEND-1__src"],
+      "targets": ["root.reviewing-SEND-1__tgt"],
+      "labels": [
+        {
+          "id": "root.reviewing-SEND-1",
+          "text": "root.reviewing-SEND-1",
+          "width": 440,
+          "height": 140,
+          "layoutOptions": {
+            "elk.layered.edgeLabels.centerLabelPlacementStrategy": "MEDIAN_LAYER",
+            "elk.edgeLabels.inline": "true",
+            "elk.edgeLabels.placement": "CENTER"
+          }
+        }
+      ]
+    },
+    {
+      "id": "root.finalReview-SEND-0",
+      "sources": ["root.finalReview-SEND-0__src"],
+      "targets": ["root.finalReview-SEND-0__tgt"],
+      "labels": [
+        {
+          "id": "root.finalReview-SEND-0",
+          "text": "root.finalReview-SEND-0",
+          "width": 440,
+          "height": 140,
+          "layoutOptions": {
+            "elk.layered.edgeLabels.centerLabelPlacementStrategy": "MEDIAN_LAYER",
+            "elk.edgeLabels.inline": "true",
+            "elk.edgeLabels.placement": "CENTER"
+          }
+        }
+      ]
+    },
+    {
+      "id": "root.finalReview-SEND-1",
+      "sources": ["root.finalReview-SEND-1__src"],
+      "targets": ["root.finalReview-SEND-1__tgt"],
+      "labels": [
+        {
+          "id": "root.finalReview-SEND-1",
+          "text": "root.finalReview-SEND-1",
+          "width": 440,
+          "height": 140,
+          "layoutOptions": {
+            "elk.layered.edgeLabels.centerLabelPlacementStrategy": "MEDIAN_LAYER",
+            "elk.edgeLabels.inline": "true",
+            "elk.edgeLabels.placement": "CENTER"
+          }
+        }
+      ]
+    },
+    {
+      "id": "root.sending-invoke-$auto-invoke-sendEmail-done-0",
+      "sources": ["root.sending-invoke-$auto-invoke-sendEmail-done-0__src"],
+      "targets": ["root.sending-invoke-$auto-invoke-sendEmail-done-0__tgt"],
+      "labels": [
+        {
+          "id": "root.sending-invoke-$auto-invoke-sendEmail-done-0",
+          "text": "root.sending-invoke-$auto-invoke-sendEmail-done-0",
+          "width": 440,
+          "height": 140,
+          "layoutOptions": {
+            "elk.layered.edgeLabels.centerLabelPlacementStrategy": "MEDIAN_LAYER",
+            "elk.edgeLabels.inline": "true",
+            "elk.edgeLabels.placement": "CENTER"
+          }
+        }
+      ]
+    },
+    {
+      "id": "root.sending-invoke-$auto-invoke-sendEmail-error-0",
+      "sources": ["root.sending-invoke-$auto-invoke-sendEmail-error-0__src"],
+      "targets": ["root.sending-invoke-$auto-invoke-sendEmail-error-0__tgt"],
+      "labels": [
+        {
+          "id": "root.sending-invoke-$auto-invoke-sendEmail-error-0",
+          "text": "root.sending-invoke-$auto-invoke-sendEmail-error-0",
+          "width": 440,
+          "height": 140,
+          "layoutOptions": {
+            "elk.layered.edgeLabels.centerLabelPlacementStrategy": "MEDIAN_LAYER",
+            "elk.edgeLabels.inline": "true",
+            "elk.edgeLabels.placement": "CENTER"
+          }
+        }
+      ]
+    }
+  ],
+  "layoutOptions": {
+    "elk.algorithm": "layered",
+    "elk.direction": "DOWN",
+    "elk.edgeRouting": "ORTHOGONAL",
+    "elk.hierarchyHandling": "INHERIT",
+    "elk.separateConnectedComponents": "true",
+    "elk.spacing.nodeNode": "50",
+    "elk.spacing.edgeEdge": "10",
+    "elk.spacing.edgeNode": "10",
+    "elk.spacing.edgeLabel": "2",
+    "elk.spacing.labelNode": "5",
+    "elk.spacing.componentComponent": "20",
+    "elk.spacing.nodeSelfLoop": "10",
+    "elk.layered.spacing.nodeNodeBetweenLayers": "30",
+    "elk.layered.spacing.edgeEdgeBetweenLayers": "10",
+    "elk.layered.spacing.edgeNodeBetweenLayers": "10",
+    "elk.layered.layering.strategy": "INTERACTIVE",
+    "elk.layered.cycleBreaking.strategy": "MODEL_ORDER",
+    "elk.layered.directionCongruency": "READING_DIRECTION",
+    "elk.layered.nodePlacement.strategy": "BRANDES_KOEPF",
+    "elk.layered.nodePlacement.favorStraightEdges": "true",
+    "elk.layered.nodePlacement.bk.fixedAlignment": "NONE",
+    "elk.layered.nodePlacement.bk.edgeStraightening": "IMPROVE_STRAIGHTNESS",
+    "elk.layered.nodePlacement.linearSegments.deflectionDampening": "0.3",
+    "elk.layered.crossingMinimization.strategy": "LAYER_SWEEP",
+    "elk.layered.crossingMinimization.forceNodeModelOrder": "true",
+    "elk.layered.crossingMinimization.greedySwitch.type": "TWO_SIDED",
+    "elk.layered.crossingMinimization.semiInteractive": "false",
+    "elk.layered.considerModelOrder.strategy": "PREFER_NODES",
+    "elk.layered.considerModelOrder.longEdgeStrategy": "DUMMY_NODE_OVER",
+    "elk.layered.considerModelOrder.components": "MODEL_ORDER",
+    "elk.layered.considerModelOrder.crossingCounterNodeInfluence": "0",
+    "elk.layered.considerModelOrder.crossingCounterPortInfluence": "0",
+    "elk.layered.compaction.connectedComponents": "true",
+    "elk.layered.compaction.postCompaction.strategy": "LEFT",
+    "elk.layered.compaction.postCompaction.constraints": "SCANLINE",
+    "elk.layered.edgeRouting.splines.mode": "SLOPPY",
+    "elk.layered.edgeRouting.splines.sloppy.layerSpacingFactor": "0.2",
+    "elk.layered.edgeLabels.centerLabelPlacementStrategy": "MEDIAN_LAYER",
+    "elk.layered.edgeLabels.sideSelection": "SMART_DOWN",
+    "elk.layered.wrapping.strategy": "OFF",
+    "elk.layered.wrapping.additionalEdgeSpacing": "10",
+    "elk.layered.wrapping.correctionFactor": "1",
+    "elk.layered.highDegreeNodes.treatment": "false",
+    "elk.layered.highDegreeNodes.threshold": "16",
+    "elk.layered.highDegreeNodes.treeHeight": "5",
+    "elk.layered.thoroughness": "7",
+    "elk.layered.mergeEdges": "false",
+    "elk.layered.mergeHierarchyEdges": "true",
+    "elk.layered.feedbackEdges": "false",
+    "elk.layered.unnecessaryBendpoints": "false"
+  }
+}

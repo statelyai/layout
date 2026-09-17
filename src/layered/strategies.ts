@@ -311,7 +311,8 @@ function addDepthFirstBackEdges(
       if (sourceId === targetId) continue;
       const targetState = state.get(targetId);
       if (targetState === "active") {
-        reversedEdgeIds.add(edge.id);
+        if (reversed) reversedEdgeIds.delete(edge.id);
+        else reversedEdgeIds.add(edge.id);
       } else if (targetState === undefined) {
         state.set(targetId, "active");
         stack.push({ nodeId: targetId, edgeIndex: 0 });
@@ -740,7 +741,8 @@ export function applyLayerConstraintOrientation(
     if (reversedEdgeIds.has(edge.id)) reversedEdgeIds.delete(edge.id);
     else reversedEdgeIds.add(edge.id);
   }
-  return { reversedEdgeIds };
+  // Port-side preferences can reintroduce cycles after the cycle breaker.
+  return { reversedEdgeIds: addDepthFirstBackEdges(input, reversedEdgeIds, "model") };
 }
 
 /** Keep activated ELK partitions in ascending, contiguous layer blocks. */
@@ -2400,6 +2402,7 @@ export function applyPostCompaction(
   input: LayeredPhaseInput,
   placement: NodePlacement,
   routes?: EdgeRoutes,
+  labelEdges: readonly GraphEdge[] = input.graph.edges,
 ): NodePlacement {
   const strategy = input.settings["compaction.postCompaction.strategy"] ?? "NONE";
   // Both source strategies construct the same constraint relation; only their
@@ -2479,9 +2482,33 @@ export function applyPostCompaction(
                 : "spacing.edgeNode"
             ] ?? 10,
           );
+  // Compaction must preserve the space reserved for an inline center label,
+  // even when its endpoint rectangles do not intersect on the cross axis.
+  const inlineLabelSpaceByPair = new Map<string, number>();
+  // EDGE_LENGTH retains its route-track label constraints below.
+  if (strategy !== "EDGE_LENGTH" && (input.direction === "left" || input.direction === "right")) {
+    for (const edge of labelEdges) {
+      const settings = input.edgeSettings?.(edge);
+      if (
+        edge.sourceId === edge.targetId ||
+        settings?.["edgeLabels.inline"] !== true ||
+        (settings["edgeLabels.placement"] ?? "CENTER") !== "CENTER"
+      )
+        continue;
+      const key = [edge.sourceId, edge.targetId].sort().join("\0");
+      inlineLabelSpaceByPair.set(
+        key,
+        Math.max(inlineLabelSpaceByPair.get(key) ?? 0, (edge.width ?? 0) + 2 * input.spacing.layer),
+      );
+    }
+  }
+  const labelSpace = (left: ConstraintNode, right: ConstraintNode): number =>
+    left.nodeId !== undefined && right.nodeId !== undefined
+      ? (inlineLabelSpaceByPair.get([left.nodeId, right.nodeId].sort().join("\0")) ?? 0)
+      : 0;
   const horizontalSpacing = (left: ConstraintNode, right: ConstraintNode): number =>
     left.kind === "node" && right.kind === "node"
-      ? input.spacing.node
+      ? Math.max(input.spacing.node, labelSpace(left, right))
       : left.kind === "segment" && right.kind === "segment" && left.edgeId === right.edgeId
         ? 0
         : Number(
@@ -2526,7 +2553,7 @@ export function applyPostCompaction(
         const verticalCollision =
           right.y + right.height + verticalSpacing(left, right) > left.y + 1e-9 &&
           right.y < left.y + left.height + verticalSpacing(left, right) - 1e-9;
-        if (!ordered || !verticalCollision) continue;
+        if (!ordered || (!verticalCollision && labelSpace(left, right) === 0)) continue;
         constraints.get(left.id)!.push(right.id);
         incoming.set(right.id, (incoming.get(right.id) ?? 0) + 1);
       }
@@ -2684,7 +2711,13 @@ export function applyPostCompaction(
     );
     const edgeNodeSpacing = Number(input.settings["spacing.edgeNodeBetweenLayers"] ?? 10);
     for (const edge of input.graph.edges) {
-      if (!centerLabeledEdgeIds.has(edge.id)) continue;
+      // Inline labels already constrain endpoint separation during compaction.
+      // A late target nudge would invalidate its outgoing label constraints.
+      if (
+        !centerLabeledEdgeIds.has(edge.id) ||
+        (strategy !== "EDGE_LENGTH" && input.edgeSettings?.(edge)?.["edgeLabels.inline"] === true)
+      )
+        continue;
       const source = itemByNodeId.get(edge.sourceId);
       const target = itemByNodeId.get(edge.targetId);
       const originalEndpoints = originalEndpointsByEdgeId.get(edge.id);
@@ -3434,7 +3467,17 @@ function routeEdges(style: "ORTHOGONAL" | "POLYLINE" | "SPLINES"): EdgeRouter {
           distribution === "NORTH_SOUTH" ? Math.ceil(loops.length / 2) : loops.length;
         const reserve =
           (ordering === "SEQUENCED" ? Math.min(1, sideLoopCount) : sideLoopCount) * spacing +
-          splineOffset;
+          splineOffset +
+          (style === "ORTHOGONAL"
+            ? loops.reduce(
+                (total, edge) =>
+                  total +
+                  (input.edgeSettings?.(edge)?.["edgeLabels.inline"] === true
+                    ? (edge.height ?? 0)
+                    : 0),
+                0,
+              )
+            : 0);
         northReserveByLayer.set(rect.y, Math.max(northReserveByLayer.get(rect.y) ?? 0, reserve));
       }
     }
@@ -4650,10 +4693,15 @@ function routeEdges(style: "ORTHOGONAL" | "POLYLINE" | "SPLINES"): EdgeRouter {
               startRatio = (countOnSide + nestingIndex + 1) / denominator;
               endRatio = (countOnSide - nestingIndex) / denominator;
             }
+            const labelClearance =
+              input.edgeSettings?.(edge)?.["edgeLabels.inline"] === true
+                ? (edge.height ?? 0) / 2 + Number(input.settings["spacing.edgeLabel"] ?? 2)
+                : 0;
+            const distance = spacing * trackIndex + labelClearance;
             const y =
               side === "NORTH"
-                ? sourceRect.y - spacing * trackIndex
-                : sourceRect.y + sourceRect.height + spacing * trackIndex;
+                ? sourceRect.y - distance
+                : sourceRect.y + sourceRect.height + distance;
             const start = {
               x: sourceRect.x + sourceRect.width * startRatio,
               y: side === "NORTH" ? sourceRect.y : sourceRect.y + sourceRect.height,
