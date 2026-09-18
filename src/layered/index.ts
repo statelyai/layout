@@ -1664,6 +1664,13 @@ function runLayeredPipeline<N, E, G, P>(
   }
   {
     const horizontal = direction === "right" || direction === "left";
+    const targetsBySource = new Map<string, Set<string>>();
+    for (const edge of graph.edges) {
+      if (edge.sourceId === edge.targetId) continue;
+      const targets = targetsBySource.get(edge.sourceId) ?? new Set<string>();
+      targets.add(edge.targetId);
+      targetsBySource.set(edge.sourceId, targets);
+    }
     for (const edge of graph.edges) {
       if (edge.sourcePort === undefined) continue;
       const source = graph.nodes.find((node) => node.id === edge.sourceId);
@@ -1672,27 +1679,35 @@ function runLayeredPipeline<N, E, G, P>(
       const port = source?.ports?.find((candidate) => candidate.name === edge.sourcePort);
       if (!source || !sourceRect || !targetRect || !port) continue;
       const side = input.portSettings?.(port, source)?.["port.side"];
-      if (horizontal && side === "NORTH") {
-        mutableRects.set(edge.targetId, {
-          ...targetRect,
-          y: sourceRect.y - (port.height ?? 0) - targetRect.height,
-        });
-      } else if (horizontal && side === "SOUTH") {
-        mutableRects.set(edge.targetId, {
-          ...targetRect,
-          y: sourceRect.y + sourceRect.height + (port.height ?? 0),
-        });
-      } else if (!horizontal && side === "WEST") {
-        mutableRects.set(edge.targetId, {
-          ...targetRect,
-          x: sourceRect.x - (port.width ?? 0) - targetRect.width,
-        });
-      } else if (!horizontal && side === "EAST") {
-        mutableRects.set(edge.targetId, {
-          ...targetRect,
-          x: sourceRect.x + sourceRect.width + (port.width ?? 0),
-        });
-      }
+      // A port side constrains its route, not the positions of an entire fan-out.
+      // Align an isolated target only when the placement's separation survives.
+      if (edge.sourceId === edge.targetId || (targetsBySource.get(edge.sourceId)?.size ?? 0) > 1)
+        continue;
+      const candidate =
+        horizontal && side === "NORTH"
+          ? { ...targetRect, y: sourceRect.y - (port.height ?? 0) - targetRect.height }
+          : horizontal && side === "SOUTH"
+            ? { ...targetRect, y: sourceRect.y + sourceRect.height + (port.height ?? 0) }
+            : !horizontal && side === "WEST"
+              ? { ...targetRect, x: sourceRect.x - (port.width ?? 0) - targetRect.width }
+              : !horizontal && side === "EAST"
+                ? { ...targetRect, x: sourceRect.x + sourceRect.width + (port.width ?? 0) }
+                : undefined;
+      if (
+        !candidate ||
+        [...mutableRects].some(
+          ([id, other]) =>
+            id !== edge.targetId &&
+            other.width > 0 &&
+            other.height > 0 &&
+            candidate.x < other.x + other.width &&
+            candidate.x + candidate.width > other.x &&
+            candidate.y < other.y + other.height &&
+            candidate.y + candidate.height > other.y,
+        )
+      )
+        continue;
+      mutableRects.set(edge.targetId, candidate);
     }
   }
   measure("port-margin-normalization", () =>
@@ -1759,7 +1774,9 @@ function runLayeredPipeline<N, E, G, P>(
   let expandedRoutes = measure("edge-routing", () =>
     edgeRouter(expanded.input, expanded.orientation, placement),
   );
-  measure("post-compaction", () => applyPostCompaction(expanded.input, placement, expandedRoutes));
+  measure("post-compaction", () =>
+    applyPostCompaction(expanded.input, placement, expandedRoutes, graph.edges),
+  );
   const antiparallelLabelPositions = new Map<string, Point>();
   const outerAntiparallelLabelIds = new Set<string>();
   const parallelLabelPositions = new Map<string, Point>();
@@ -2499,6 +2516,7 @@ function runLayeredPipeline<N, E, G, P>(
     const flexibleFeedbackLabel =
       labelPlacement === "CENTER" &&
       inlineLabel &&
+      edge.sourceId !== edge.targetId &&
       expanded.orientation.reversedEdgeIds.has(edge.id) &&
       hasFlexiblePorts(sourceNode) &&
       hasFlexiblePorts(targetNode) &&
@@ -2545,7 +2563,39 @@ function runLayeredPipeline<N, E, G, P>(
         y,
       };
     })();
+    // An inline CENTER label occupies the reserved flow interval between its
+    // endpoint ranks. Route midpoints can lie on long cross-axis detours, and
+    // are not a flow-coordinate anchor for that label.
+    const centerFlowPosition =
+      options.settings?.["compaction.postCompaction.strategy"] !== "EDGE_LENGTH" &&
+      labelDummyRect === undefined &&
+      edgeRouting === "ORTHOGONAL" &&
+      inlineLabel &&
+      labelPlacement === "CENTER" &&
+      edge.sourceId !== edge.targetId &&
+      beforeFlowRect &&
+      afterFlowRect &&
+      (horizontal
+        ? afterFlowRect.x - beforeFlowRect.x - beforeFlowRect.width >= width
+        : afterFlowRect.y - beforeFlowRect.y - beforeFlowRect.height >= height)
+        ? horizontal
+          ? (beforeFlowRect.x + beforeFlowRect.width + afterFlowRect.x - width) / 2
+          : (beforeFlowRect.y + beforeFlowRect.height + afterFlowRect.y - height) / 2 -
+            edgeThickness / 2
+        : undefined;
+    const selfLoopLabelPosition =
+      edgeRouting === "ORTHOGONAL" &&
+      labelPlacement === "CENTER" &&
+      inlineLabel &&
+      edge.sourceId === edge.targetId &&
+      points.length === 4
+        ? {
+            x: (points[1]!.x + points[2]!.x - width) / 2,
+            y: (points[1]!.y + points[2]!.y - height) / 2,
+          }
+        : undefined;
     const explicitLabelPosition =
+      selfLoopLabelPosition ??
       outerAntiparallelLabelPosition ??
       antiparallelLabelPosition ??
       parallelLabelPositions.get(edge.id);
@@ -2555,18 +2605,22 @@ function runLayeredPipeline<N, E, G, P>(
         ? horizontal
           ? (beforeFlowRect!.x + beforeFlowRect!.width + afterFlowRect!.x - width) / 2
           : targetRect.x + (targetRect.width - width) / 2
-        : labelPlacement === "CENTER" && horizontal && labelDummyRect
-          ? labelDummyRect.x
-          : routeX;
+        : centerFlowPosition !== undefined && horizontal
+          ? centerFlowPosition
+          : labelPlacement === "CENTER" && horizontal && labelDummyRect
+            ? labelDummyRect.x
+            : routeX;
     const y = explicitLabelPosition
       ? explicitLabelPosition.y
       : flexibleFeedbackLabel
         ? horizontal
           ? targetRect.y + (targetRect.height - height) / 2
           : (beforeFlowRect!.y + beforeFlowRect!.height + afterFlowRect!.y - height) / 2
-        : labelPlacement === "CENTER" && !horizontal && labelDummyRect
-          ? labelDummyRect.y
-          : routeY;
+        : centerFlowPosition !== undefined && !horizontal
+          ? centerFlowPosition
+          : labelPlacement === "CENTER" && !horizontal && labelDummyRect
+            ? labelDummyRect.y
+            : routeY;
     return {
       ...edge,
       x,

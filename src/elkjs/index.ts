@@ -510,6 +510,7 @@ export default class ELK {
     if (
       algorithm === "layered" &&
       graph_.edges.some((edge) => {
+        if (edge.sourceId === edge.targetId) return false;
         const sourceConstraint = layerConstraintByNodeId.get(edge.sourceId);
         const targetConstraint = layerConstraintByNodeId.get(edge.targetId);
         return (
@@ -722,10 +723,15 @@ export default class ELK {
       }
       const edgeNodeSpacing = getNumberOption(layoutOptions, "spacing.edgeNodeBetweenLayers") ?? 10;
       for (const restoration of hierarchyRestorations) {
-        const route = laidOut.edges.find((edge) => edge.id === String(restoration.edge.id))?.points;
+        const nativeEdge = laidOut.edges.find((edge) => edge.id === String(restoration.edge.id));
+        const route = nativeEdge?.points;
         if (!route || route.length < 2) continue;
         const start = route[0]!;
         const end = route.at(-1)!;
+        // Decomposed ancestor/descendant edges are native self-loops. Preserve
+        // their reserved exterior route and label placement instead of treating
+        // equal endpoint coordinates as a straight inter-node connection.
+        if (nativeEdge.sourceId === nativeEdge.targetId) continue;
         if (Math.abs(cross(start) - cross(end)) < 1e-9) {
           route.splice(1, route.length - 2);
           continue;

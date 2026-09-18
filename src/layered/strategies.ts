@@ -311,7 +311,8 @@ function addDepthFirstBackEdges(
       if (sourceId === targetId) continue;
       const targetState = state.get(targetId);
       if (targetState === "active") {
-        reversedEdgeIds.add(edge.id);
+        if (reversed) reversedEdgeIds.delete(edge.id);
+        else reversedEdgeIds.add(edge.id);
       } else if (targetState === undefined) {
         state.set(targetId, "active");
         stack.push({ nodeId: targetId, edgeIndex: 0 });
@@ -740,7 +741,8 @@ export function applyLayerConstraintOrientation(
     if (reversedEdgeIds.has(edge.id)) reversedEdgeIds.delete(edge.id);
     else reversedEdgeIds.add(edge.id);
   }
-  return { reversedEdgeIds };
+  // Port-side preferences can reintroduce cycles after the cycle breaker.
+  return { reversedEdgeIds: addDepthFirstBackEdges(input, reversedEdgeIds, "model") };
 }
 
 /** Keep activated ELK partitions in ascending, contiguous layer blocks. */
@@ -2400,6 +2402,7 @@ export function applyPostCompaction(
   input: LayeredPhaseInput,
   placement: NodePlacement,
   routes?: EdgeRoutes,
+  labelEdges: readonly GraphEdge[] = input.graph.edges,
 ): NodePlacement {
   const strategy = input.settings["compaction.postCompaction.strategy"] ?? "NONE";
   // Both source strategies construct the same constraint relation; only their
@@ -2479,9 +2482,33 @@ export function applyPostCompaction(
                 : "spacing.edgeNode"
             ] ?? 10,
           );
+  // Compaction must preserve the space reserved for an inline center label,
+  // even when its endpoint rectangles do not intersect on the cross axis.
+  const inlineLabelSpaceByPair = new Map<string, number>();
+  // EDGE_LENGTH retains its route-track label constraints below.
+  if (strategy !== "EDGE_LENGTH" && (input.direction === "left" || input.direction === "right")) {
+    for (const edge of labelEdges) {
+      const settings = input.edgeSettings?.(edge);
+      if (
+        edge.sourceId === edge.targetId ||
+        settings?.["edgeLabels.inline"] !== true ||
+        (settings["edgeLabels.placement"] ?? "CENTER") !== "CENTER"
+      )
+        continue;
+      const key = [edge.sourceId, edge.targetId].sort().join("\0");
+      inlineLabelSpaceByPair.set(
+        key,
+        Math.max(inlineLabelSpaceByPair.get(key) ?? 0, (edge.width ?? 0) + 2 * input.spacing.layer),
+      );
+    }
+  }
+  const labelSpace = (left: ConstraintNode, right: ConstraintNode): number =>
+    left.nodeId !== undefined && right.nodeId !== undefined
+      ? (inlineLabelSpaceByPair.get([left.nodeId, right.nodeId].sort().join("\0")) ?? 0)
+      : 0;
   const horizontalSpacing = (left: ConstraintNode, right: ConstraintNode): number =>
     left.kind === "node" && right.kind === "node"
-      ? input.spacing.node
+      ? Math.max(input.spacing.node, labelSpace(left, right))
       : left.kind === "segment" && right.kind === "segment" && left.edgeId === right.edgeId
         ? 0
         : Number(
@@ -2526,7 +2553,7 @@ export function applyPostCompaction(
         const verticalCollision =
           right.y + right.height + verticalSpacing(left, right) > left.y + 1e-9 &&
           right.y < left.y + left.height + verticalSpacing(left, right) - 1e-9;
-        if (!ordered || !verticalCollision) continue;
+        if (!ordered || (!verticalCollision && labelSpace(left, right) === 0)) continue;
         constraints.get(left.id)!.push(right.id);
         incoming.set(right.id, (incoming.get(right.id) ?? 0) + 1);
       }
@@ -2684,7 +2711,13 @@ export function applyPostCompaction(
     );
     const edgeNodeSpacing = Number(input.settings["spacing.edgeNodeBetweenLayers"] ?? 10);
     for (const edge of input.graph.edges) {
-      if (!centerLabeledEdgeIds.has(edge.id)) continue;
+      // Inline labels already constrain endpoint separation during compaction.
+      // A late target nudge would invalidate its outgoing label constraints.
+      if (
+        !centerLabeledEdgeIds.has(edge.id) ||
+        (strategy !== "EDGE_LENGTH" && input.edgeSettings?.(edge)?.["edgeLabels.inline"] === true)
+      )
+        continue;
       const source = itemByNodeId.get(edge.sourceId);
       const target = itemByNodeId.get(edge.targetId);
       const originalEndpoints = originalEndpointsByEdgeId.get(edge.id);
@@ -2759,7 +2792,11 @@ export function applyPostCompaction(
           ...originalEndpoints.end,
           x: originalEndpoints.end.x + (nodeDeltaById.get(edge.targetId) ?? 0),
         };
-        if (routes.outsideFeedbackEdgeIds?.has(edgeId)) {
+        if (edge.sourceId === edge.targetId && routes.outsideFeedbackEdgeIds?.has(edgeId)) {
+          const delta = nodeDeltaById.get(edge.sourceId) ?? 0;
+          for (let index = 1; index + 1 < points.length; index++)
+            points[index] = { ...points[index]!, x: points[index]!.x + delta };
+        } else if (routes.outsideFeedbackEdgeIds?.has(edgeId)) {
           const horizontal = input.direction === "left" || input.direction === "right";
           const startDelta = points[0]!.x - originalEndpoints.start.x;
           const endDelta = points.at(-1)!.x - originalEndpoints.end.x;
@@ -3413,6 +3450,57 @@ function routeEdges(style: "ORTHOGONAL" | "POLYLINE" | "SPLINES"): EdgeRouter {
         mutableRects.set(candidateId, { ...candidateRect, x: candidateRect.x + shift });
       }
     }
+    const loopSide = (
+      distribution: string,
+      index: number,
+      edge?: GraphEdge,
+    ): "NORTH" | "SOUTH" | "EAST" | "WEST" => {
+      const node = edge ? nodeById.get(edge.sourceId) : undefined;
+      const sourcePort = node?.ports?.find((port) => port.name === edge?.sourcePort);
+      const targetPort = node?.ports?.find((port) => port.name === edge?.targetPort);
+      const sourceSide =
+        node && sourcePort ? input.portSettings?.(sourcePort, node)?.["port.side"] : undefined;
+      const targetSide =
+        node && targetPort ? input.portSettings?.(targetPort, node)?.["port.side"] : undefined;
+      if (
+        sourceSide &&
+        sourceSide === targetSide &&
+        ["NORTH", "SOUTH", "EAST", "WEST"].includes(sourceSide)
+      )
+        return sourceSide as "NORTH" | "SOUTH" | "EAST" | "WEST";
+      return distribution === "EQUALLY"
+        ? (["NORTH", "SOUTH", "EAST", "WEST"][index % 4] as "NORTH" | "SOUTH" | "EAST" | "WEST")
+        : distribution === "NORTH_SOUTH" && index % 2 === 1
+          ? "SOUTH"
+          : "NORTH";
+    };
+    const loopDistance = (
+      loops: readonly GraphEdge[],
+      edge: GraphEdge,
+      side: string,
+      ordering: string,
+    ): number => {
+      const axis = side === "NORTH" || side === "SOUTH" ? "height" : "width";
+      const ordered = ordering === "REVERSE_STACKED" ? [...loops].reverse() : loops;
+      const index = ordered.indexOf(edge);
+      const spacing = Number(input.settings["spacing.nodeSelfLoop"] ?? 10);
+      const labelSpacing = Number(input.settings["spacing.edgeLabel"] ?? 2);
+      const size = (candidate: GraphEdge) =>
+        input.edgeSettings?.(candidate)?.["edgeLabels.inline"] === true
+          ? (candidate[axis] ?? 0)
+          : 0;
+      return (
+        spacing * (ordering === "SEQUENCED" ? 1 : index + 1) +
+        ordered
+          .slice(0, index)
+          .reduce(
+            (extent, candidate) =>
+              extent + (size(candidate) > 0 ? size(candidate) + labelSpacing : 0),
+            0,
+          ) +
+        (size(edge) > 0 ? size(edge) / 2 + labelSpacing : 0)
+      );
+    };
     const northReserveByLayer = new Map<number, number>();
     for (const [id, loops] of selfLoopsByNodeId) {
       const rect = mutableRects.get(id);
@@ -3447,6 +3535,62 @@ function routeEdges(style: "ORTHOGONAL" | "POLYLINE" | "SPLINES"): EdgeRouter {
       );
       if (reserve > 0) {
         mutableRects.set(candidateId, { ...candidateRect, y: candidateRect.y + reserve });
+      }
+    }
+    // Reserve labeled loop envelopes before routing, on both sides of each
+    // physical axis. This protects neighboring ranks and cross-axis rows alike.
+    if (style === "ORTHOGONAL") {
+      for (const axis of ["x", "y"] as const) {
+        const size = axis === "x" ? "width" : "height";
+        const reservations = new Map<number, number>();
+        for (const [id, loops] of selfLoopsByNodeId) {
+          const rect = mutableRects.get(id);
+          const node = nodeById.get(id);
+          if (!rect || !node) continue;
+          const settings = input.nodeSettings?.(node);
+          const distribution = settings?.["edgeRouting.selfLoopDistribution"] ?? "NORTH";
+          const ordering = settings?.["edgeRouting.selfLoopOrdering"] ?? "STACKED";
+          for (const [index, edge] of loops.entries()) {
+            if (input.edgeSettings?.(edge)?.["edgeLabels.inline"] !== true) continue;
+            const side = loopSide(distribution, index, edge);
+            if ((axis === "y") !== (side === "NORTH" || side === "SOUTH")) continue;
+            const sideLoops = loops.filter(
+              (candidate, i) => loopSide(distribution, i, candidate) === side,
+            );
+            const extent = loopDistance(sideLoops, edge, side, ordering) + (edge[size] ?? 0) / 2;
+            const negative = side === "NORTH" || side === "WEST";
+            const boundary = rect[axis] + (negative ? 0 : rect[size]);
+            const neighboringBounds = [...mutableRects.entries()].flatMap(([otherId, other]) => {
+              if (otherId === id) return [];
+              const bound = other[axis] + (negative ? other[size] : 0);
+              return negative
+                ? bound <= boundary
+                  ? [bound]
+                  : []
+                : bound >= boundary
+                  ? [bound]
+                  : [];
+            });
+            const existingGap =
+              neighboringBounds.length === 0
+                ? 0
+                : negative
+                  ? boundary - Math.max(...neighboringBounds)
+                  : Math.min(...neighboringBounds) - boundary;
+            const required = Math.max(
+              0,
+              extent + (neighboringBounds.length > 0 ? input.spacing.node : 0) - existingGap,
+            );
+            reservations.set(boundary, Math.max(reservations.get(boundary) ?? 0, required));
+          }
+        }
+        for (const [id, rect] of mutableRects) {
+          const shift = [...reservations].reduce(
+            (sum, [boundary, extent]) => sum + (rect[axis] >= boundary - 1e-9 ? extent : 0),
+            0,
+          );
+          if (shift > 0) mutableRects.set(id, { ...rect, [axis]: rect[axis] + shift });
+        }
       }
     }
     const edgeLabelSideSelection = input.settings["edgeLabels.sideSelection"] ?? "SMART_DOWN";
@@ -3903,7 +4047,16 @@ function routeEdges(style: "ORTHOGONAL" | "POLYLINE" | "SPLINES"): EdgeRouter {
           slots === 0
             ? (existingGapByLayer[layerNo] ?? input.spacing.layer)
             : Math.max(
-                preservesNodeFlexibilityGap || (labelExtraByGap[layerNo] ?? 0) > 0
+                preservesNodeFlexibilityGap ||
+                  (labelExtraByGap[layerNo] ?? 0) > 0 ||
+                  [...selfLoopsByNodeId].some(
+                    ([id, loops]) =>
+                      (flowLayerByNodeId.get(id) === layerNo ||
+                        flowLayerByNodeId.get(id) === layerNo + 1) &&
+                      loops.some(
+                        (edge) => input.edgeSettings?.(edge)?.["edgeLabels.inline"] === true,
+                      ),
+                  )
                   ? preservedGap
                   : input.spacing.layer,
                 2 * edgeNodeSpacing + Math.max(0, slots - 1) * edgeEdgeSpacing,
@@ -4350,6 +4503,7 @@ function routeEdges(style: "ORTHOGONAL" | "POLYLINE" | "SPLINES"): EdgeRouter {
       const fixedSideFeedback =
         style === "ORTHOGONAL" &&
         !sameSideSelfLoop &&
+        (source.id !== target.id || input.edgeSettings?.(edge)?.["edgeLabels.inline"] !== true) &&
         ((hasFixedPortSide(source) && feedbackSourcePortSide === sourceAwaySide) ||
           (hasFixedPortSide(target) && feedbackTargetPortSide === targetAwaySide));
       if ((input.settings.feedbackEdges === true && reversedEdge) || fixedSideFeedback) {
@@ -4518,6 +4672,8 @@ function routeEdges(style: "ORTHOGONAL" | "POLYLINE" | "SPLINES"): EdgeRouter {
       }
 
       if (source.id === target.id) {
+        if (style === "ORTHOGONAL" && input.edgeSettings?.(edge)?.["edgeLabels.inline"] === true)
+          outsideFeedbackEdgeIds.add(edge.id);
         const loops = selfLoopsByNodeId.get(source.id) ?? [edge];
         const loopIndex = loops.indexOf(edge);
         const spacing = Number(input.settings["spacing.nodeSelfLoop"] ?? 10);
@@ -4580,7 +4736,13 @@ function routeEdges(style: "ORTHOGONAL" | "POLYLINE" | "SPLINES"): EdgeRouter {
                   labelSpacing,
                 0,
               );
-            const trackDistance = spacing + precedingLabelExtent;
+            const trackDistance =
+              spacing +
+              precedingLabelExtent +
+              ((side === "NORTH" || side === "SOUTH") &&
+              input.edgeSettings?.(edge)?.["edgeLabels.inline"] === true
+                ? (edge.height ?? 0) / 2 + labelSpacing
+                : 0);
             if (side === "EAST" || side === "WEST") {
               const nodeRects = [...placement.rectByNodeId.values()];
               const minimumNodeX = Math.min(...nodeRects.map((rect) => rect.x));
@@ -4632,7 +4794,7 @@ function routeEdges(style: "ORTHOGONAL" | "POLYLINE" | "SPLINES"): EdgeRouter {
             const sequenced = ordering === "SEQUENCED";
             const nestingIndex =
               ordering === "REVERSE_STACKED" ? countOnSide - indexOnSide - 1 : indexOnSide;
-            const trackIndex = sequenced ? 1 : nestingIndex + 1;
+
             let startRatio: number;
             let endRatio: number;
             if (sequenced) {
@@ -4650,10 +4812,14 @@ function routeEdges(style: "ORTHOGONAL" | "POLYLINE" | "SPLINES"): EdgeRouter {
               startRatio = (countOnSide + nestingIndex + 1) / denominator;
               endRatio = (countOnSide - nestingIndex) / denominator;
             }
+            const sideLoops = loops.filter(
+              (candidate, i) => loopSide(distribution, i, candidate) === side,
+            );
+            const distance = loopDistance(sideLoops, edge, side, ordering);
             const y =
               side === "NORTH"
-                ? sourceRect.y - spacing * trackIndex
-                : sourceRect.y + sourceRect.height + spacing * trackIndex;
+                ? sourceRect.y - distance
+                : sourceRect.y + sourceRect.height + distance;
             const start = {
               x: sourceRect.x + sourceRect.width * startRatio,
               y: side === "NORTH" ? sourceRect.y : sourceRect.y + sourceRect.height,
@@ -4675,10 +4841,19 @@ function routeEdges(style: "ORTHOGONAL" | "POLYLINE" | "SPLINES"): EdgeRouter {
             const secondRatio = sequenced ? 1 / denominator : 2 / denominator;
             const startRatio = side === "EAST" ? firstRatio : secondRatio;
             const endRatio = side === "EAST" ? secondRatio : firstRatio;
+            const distance =
+              input.edgeSettings?.(edge)?.["edgeLabels.inline"] === true
+                ? loopDistance(
+                    loops.filter((candidate, i) => loopSide(distribution, i, candidate) === side),
+                    edge,
+                    side,
+                    ordering,
+                  )
+                : spacing * (indexOnSide + 1);
             const x =
               side === "EAST"
-                ? sourceRect.x + sourceRect.width + spacing * (indexOnSide + 1)
-                : sourceRect.x - spacing * (indexOnSide + 1);
+                ? sourceRect.x + sourceRect.width + distance
+                : sourceRect.x - distance;
             const start = {
               x: side === "EAST" ? sourceRect.x + sourceRect.width : sourceRect.x,
               y: sourceRect.y + sourceRect.height * startRatio,
