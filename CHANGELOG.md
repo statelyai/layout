@@ -1,5 +1,15 @@
 # @statelyai/layout
 
+## 0.1.0
+
+### Minor Changes
+
+- 0c9aecf: Add opt-in ELK statechart policy compilation and bounded layout selection with initial-anchored paths, common-exit detection, scoped directions, parallel-label repair candidates and diagnostic geometry scores.
+
+### Patch Changes
+
+- e2cd671: Preserve node separation for fixed-port fan-out and remove cycles reintroduced by port preferences. Preserve inline-label space during compaction and use the reserved inter-rank interval when no dedicated label layer exists. Reserve labeled self-loop clearance on all assigned sides, preserve loop tracks through compaction and hierarchy restoration, and honor normalized edge/label option inheritance. Allow FIRST/FIRST_SEPARATE nodes to have self-loops. Includes minimal anonymous graph regressions in all four directions and captured integration fixtures.
+
 ## 0.0.5
 
 ### Patch Changes
