@@ -2,4 +2,4 @@
 "@statelyai/layout": patch
 ---
 
-Preserve state separation for fixed-port fan-out, remove cycles reintroduced by port preferences, and keep inline center labels between endpoint ranks. Preserve label space during horizontal compaction, reserve exterior inline self-loop labels, and keep compound-to-descendant labels clear of headers. Allow initial states to have self-loops. Includes captured Viz regressions and the email drafter in all four directions.
+Preserve node separation for fixed-port fan-out and remove cycles reintroduced by port preferences. Preserve inline-label space during compaction and use the reserved inter-rank interval when no dedicated label layer exists. Reserve labeled self-loop clearance on all assigned sides, preserve loop tracks through compaction and hierarchy restoration, and honor normalized edge/label option inheritance. Allow FIRST/FIRST_SEPARATE nodes to have self-loops. Includes minimal anonymous graph regressions in all four directions and captured integration fixtures.

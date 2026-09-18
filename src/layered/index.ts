@@ -2516,6 +2516,7 @@ function runLayeredPipeline<N, E, G, P>(
     const flexibleFeedbackLabel =
       labelPlacement === "CENTER" &&
       inlineLabel &&
+      edge.sourceId !== edge.targetId &&
       expanded.orientation.reversedEdgeIds.has(edge.id) &&
       hasFlexiblePorts(sourceNode) &&
       hasFlexiblePorts(targetNode) &&
@@ -2562,7 +2563,39 @@ function runLayeredPipeline<N, E, G, P>(
         y,
       };
     })();
+    // An inline CENTER label occupies the reserved flow interval between its
+    // endpoint ranks. Route midpoints can lie on long cross-axis detours, and
+    // are not a flow-coordinate anchor for that label.
+    const centerFlowPosition =
+      options.settings?.["compaction.postCompaction.strategy"] !== "EDGE_LENGTH" &&
+      labelDummyRect === undefined &&
+      edgeRouting === "ORTHOGONAL" &&
+      inlineLabel &&
+      labelPlacement === "CENTER" &&
+      edge.sourceId !== edge.targetId &&
+      beforeFlowRect &&
+      afterFlowRect &&
+      (horizontal
+        ? afterFlowRect.x - beforeFlowRect.x - beforeFlowRect.width >= width
+        : afterFlowRect.y - beforeFlowRect.y - beforeFlowRect.height >= height)
+        ? horizontal
+          ? (beforeFlowRect.x + beforeFlowRect.width + afterFlowRect.x - width) / 2
+          : (beforeFlowRect.y + beforeFlowRect.height + afterFlowRect.y - height) / 2 -
+            edgeThickness / 2
+        : undefined;
+    const selfLoopLabelPosition =
+      edgeRouting === "ORTHOGONAL" &&
+      labelPlacement === "CENTER" &&
+      inlineLabel &&
+      edge.sourceId === edge.targetId &&
+      points.length === 4
+        ? {
+            x: (points[1]!.x + points[2]!.x - width) / 2,
+            y: (points[1]!.y + points[2]!.y - height) / 2,
+          }
+        : undefined;
     const explicitLabelPosition =
+      selfLoopLabelPosition ??
       outerAntiparallelLabelPosition ??
       antiparallelLabelPosition ??
       parallelLabelPositions.get(edge.id);
@@ -2572,28 +2605,10 @@ function runLayeredPipeline<N, E, G, P>(
         ? horizontal
           ? (beforeFlowRect!.x + beforeFlowRect!.width + afterFlowRect!.x - width) / 2
           : targetRect.x + (targetRect.width - width) / 2
-        : labelPlacement === "CENTER" && horizontal && labelDummyRect
-          ? edgeRouting === "ORTHOGONAL" &&
-            inlineLabel &&
-            edge.sourceId !== edge.targetId &&
-            beforeFlowRect &&
-            afterFlowRect
-            ? Math.max(
-                beforeFlowRect.x + beforeFlowRect.width,
-                Math.min(labelDummyRect.x, afterFlowRect.x - width),
-              )
-            : labelDummyRect.x
-          : labelPlacement === "CENTER" &&
-              edgeRouting === "ORTHOGONAL" &&
-              inlineLabel &&
-              edge.sourceId !== edge.targetId &&
-              horizontal &&
-              beforeFlowRect &&
-              afterFlowRect
-            ? Math.max(
-                beforeFlowRect.x + beforeFlowRect.width,
-                Math.min(routeX, afterFlowRect.x - width),
-              )
+        : centerFlowPosition !== undefined && horizontal
+          ? centerFlowPosition
+          : labelPlacement === "CENTER" && horizontal && labelDummyRect
+            ? labelDummyRect.x
             : routeX;
     const y = explicitLabelPosition
       ? explicitLabelPosition.y
@@ -2601,28 +2616,10 @@ function runLayeredPipeline<N, E, G, P>(
         ? horizontal
           ? targetRect.y + (targetRect.height - height) / 2
           : (beforeFlowRect!.y + beforeFlowRect!.height + afterFlowRect!.y - height) / 2
-        : labelPlacement === "CENTER" && !horizontal && labelDummyRect
-          ? edgeRouting === "ORTHOGONAL" &&
-            inlineLabel &&
-            edge.sourceId !== edge.targetId &&
-            beforeFlowRect &&
-            afterFlowRect
-            ? Math.max(
-                beforeFlowRect.y + beforeFlowRect.height,
-                Math.min(labelDummyRect.y, afterFlowRect.y - height),
-              )
-            : labelDummyRect.y
-          : labelPlacement === "CENTER" &&
-              edgeRouting === "ORTHOGONAL" &&
-              inlineLabel &&
-              edge.sourceId !== edge.targetId &&
-              !horizontal &&
-              beforeFlowRect &&
-              afterFlowRect
-            ? Math.max(
-                beforeFlowRect.y + beforeFlowRect.height,
-                Math.min(routeY, afterFlowRect.y - height),
-              )
+        : centerFlowPosition !== undefined && !horizontal
+          ? centerFlowPosition
+          : labelPlacement === "CENTER" && !horizontal && labelDummyRect
+            ? labelDummyRect.y
             : routeY;
     return {
       ...edge,

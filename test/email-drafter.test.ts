@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import ELK from "../src/elkjs";
+import ELK, { type ElkNode } from "../src/elkjs";
 import legacyFixture from "./fixtures/email-drafter-viz.json";
 import stateAnchorFixture from "./fixtures/email-drafter-state-anchors.json";
 
@@ -108,7 +108,7 @@ it.each(["label", "edge"])(
   "keeps inline compound-to-descendant labels clear with %s options",
   async (optionOwner) => {
     const { default: input } = await import("./fixtures/cross-hierarchy-viz.json");
-    const fixture = structuredClone(input);
+    const fixture: ElkNode = structuredClone(input);
     if (optionOwner === "edge")
       for (const edge of fixture.edges ?? []) {
         for (const label of edge.labels ?? []) {
