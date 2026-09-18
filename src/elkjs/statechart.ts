@@ -98,16 +98,16 @@ export function compileStatechartLayout(
     }
     if (scope.preferredPath) {
       for (let i = 1; i < path.length; i++) {
-        if (!successors.get(path[i - 1])?.has(path[i]))
+        if (!successors.get(path[i - 1]!)?.has(path[i]!))
           throw new Error(`Disconnected preferred path in ${id}`);
       }
     } else {
       while (path.length) {
-        const next = [...successors.get(path.at(-1))!].filter(
+        const next = [...successors.get(path.at(-1)!)!].filter(
           (nodeId) => !path.includes(nodeId) && !exits.includes(nodeId),
         );
         if (next.length !== 1) break;
-        path.push(next[0]);
+        path.push(next[0]!);
       }
     }
     paths[id] = path;
@@ -214,8 +214,8 @@ export function scoreStatechartLayout(
         for (const point of points)
           if (!Number.isFinite(point.x) || !Number.isFinite(point.y)) score.invalid++;
         for (let i = 1; i < points.length; i++) {
-          const a = { x: x + points[i - 1].x, y: y + points[i - 1].y };
-          const b = { x: x + points[i].x, y: y + points[i].y };
+          const a = { x: x + points[i - 1]!.x, y: y + points[i - 1]!.y };
+          const b = { x: x + points[i]!.x, y: y + points[i]!.y };
           score.routeLength += Math.hypot(b.x - a.x, b.y - a.y);
           segments.push({ a, b, edge });
         }
@@ -225,16 +225,16 @@ export function scoreStatechartLayout(
   visit(graph, 0, 0, [graph]);
   for (let i = 0; i < boxes.length; i++)
     for (let j = i + 1; j < boxes.length; j++) {
-      const a = boxes[i],
-        b = boxes[j];
+      const a = boxes[i]!,
+        b = boxes[j]!;
       if ((a.node && b.ancestors.includes(a.node)) || (b.node && a.ancestors.includes(b.node)))
         continue;
       if (intersects(a.rect, b.rect)) score.overlaps++;
     }
   for (let i = 0; i < segments.length; i++)
     for (let j = i + 1; j < segments.length; j++) {
-      const a = segments[i],
-        b = segments[j];
+      const a = segments[i]!,
+        b = segments[j]!;
       if (a.edge === b.edge) continue;
       if (
         cross(a.a, a.b, b.a) * cross(a.a, a.b, b.b) < 0 &&
@@ -303,7 +303,7 @@ export async function layoutStatechart<T extends ElkNode>(
         }
         for (const group of groups.values())
           for (let i = 1; i < Math.min(group.length, 3); i++) {
-            const edge = group[i];
+            const edge = group[i]!;
             if (
               option(edge, "edgeLabels.placement") === undefined &&
               edge.labels!.every((label) => option(label, "edgeLabels.placement") === undefined)

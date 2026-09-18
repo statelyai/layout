@@ -1,6 +1,7 @@
 {
   "extends": "./tsconfig.json",
   "compilerOptions": {
+    "noUncheckedIndexedAccess": false,
     "allowImportingTsExtensions": true,
     "declaration": false,
     "emitDeclarationOnly": false,
