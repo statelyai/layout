@@ -161,6 +161,11 @@ pnpm release
 generated layered-option and demo-corpus freshness, tests,
 declarations/runtime builds, the demo bundle, and the packed package surface.
 
+<!-- exported source compatibility derived from tsconfig.json -->
+
+The source project checks indexed reads with `noUncheckedIndexedAccess` so
+published TypeScript source supports consumers using that option.
+
 ## Releases
 
 <!-- release process derived from package.json#scripts and .changeset/config.json -->

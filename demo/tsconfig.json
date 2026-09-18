@@ -1,6 +1,7 @@
 {
   "extends": "../tsconfig.json",
   "compilerOptions": {
+    "noUncheckedIndexedAccess": false,
     "declaration": false,
     "emitDeclarationOnly": false,
     "lib": ["ES2023", "DOM", "DOM.Iterable"],
