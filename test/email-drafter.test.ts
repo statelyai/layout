@@ -194,3 +194,38 @@ it.each(["NORTH_SOUTH", "EQUALLY"])(
     expect(label.y! + label.height!).toBeLessThanOrEqual(next.y!);
   },
 );
+
+it("reserves tall EQUALLY north-loop labels after a preceding rank", async () => {
+  const result = await new ELK().layout({
+    id: "root",
+    layoutOptions: { "elk.direction": "DOWN" },
+    children: [
+      { id: "previous", width: 200, height: 100 },
+      {
+        id: "owner",
+        width: 200,
+        height: 100,
+        layoutOptions: { "elk.layered.edgeRouting.selfLoopDistribution": "EQUALLY" },
+      },
+    ],
+    edges: [
+      { id: "forward", sources: ["previous"], targets: ["owner"] },
+      {
+        id: "loop",
+        sources: ["owner"],
+        targets: ["owner"],
+        labels: [
+          {
+            id: "label",
+            width: 180,
+            height: 140,
+            layoutOptions: { "elk.edgeLabels.inline": true },
+          },
+        ],
+      },
+    ],
+  });
+  const previous = result.children!.find((node) => node.id === "previous")!;
+  const label = result.edges!.find((edge) => edge.id === "loop")!.labels![0]!;
+  expect(label.y!).toBeGreaterThanOrEqual(previous.y! + previous.height!);
+});

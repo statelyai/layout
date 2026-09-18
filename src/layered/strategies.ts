@@ -3449,6 +3449,7 @@ function routeEdges(style: "ORTHOGONAL" | "POLYLINE" | "SPLINES"): EdgeRouter {
     const northReserveByLayer = new Map<number, number>();
     const southReserveByLayer = new Map<number, number>();
     const southReserveOwnerIds = new Set<string>();
+    const northReserveOwnerIds = new Set<string>();
     for (const [id, loops] of selfLoopsByNodeId) {
       const rect = mutableRects.get(id);
       if (!rect) continue;
@@ -3489,6 +3490,27 @@ function routeEdges(style: "ORTHOGONAL" | "POLYLINE" | "SPLINES"): EdgeRouter {
         }
       }
 
+      if (style === "ORTHOGONAL" && distribution === "EQUALLY") {
+        const northLoops = loops.filter((_, index) => index % 4 === 0);
+        let reserve = 0;
+        for (let index = 0; index < northLoops.length; index++) {
+          const edge = northLoops[index]!;
+          if (input.edgeSettings?.(edge)?.["edgeLabels.inline"] !== true) continue;
+          const nestingIndex =
+            ordering === "REVERSE_STACKED" ? northLoops.length - index - 1 : index;
+          const trackIndex = ordering === "SEQUENCED" ? 1 : nestingIndex + 1;
+          reserve = Math.max(
+            reserve,
+            spacing * trackIndex +
+              (edge.height ?? 0) +
+              Number(input.settings["spacing.edgeLabel"] ?? 2),
+          );
+        }
+        if (reserve > 0) {
+          northReserveOwnerIds.add(id);
+          northReserveByLayer.set(rect.y, Math.max(northReserveByLayer.get(rect.y) ?? 0, reserve));
+        }
+      }
       if (distribution === "EQUALLY") {
         mutableRects.set(id, {
           ...rect,
@@ -3988,7 +4010,8 @@ function routeEdges(style: "ORTHOGONAL" | "POLYLINE" | "SPLINES"): EdgeRouter {
             : Math.max(
                 preservesNodeFlexibilityGap ||
                   (labelExtraByGap[layerNo] ?? 0) > 0 ||
-                  [...southReserveOwnerIds].some((id) => flowLayerByNodeId.get(id) === layerNo)
+                  [...southReserveOwnerIds].some((id) => flowLayerByNodeId.get(id) === layerNo) ||
+                  [...northReserveOwnerIds].some((id) => flowLayerByNodeId.get(id) === layerNo + 1)
                   ? preservedGap
                   : input.spacing.layer,
                 2 * edgeNodeSpacing + Math.max(0, slots - 1) * edgeEdgeSpacing,
