@@ -1,5 +1,11 @@
 # @statelyai/layout
 
+## 0.1.1
+
+### Patch Changes
+
+- b85b261: Make exported statechart source compatible with consumers enabling noUncheckedIndexedAccess. Preserve runtime behavior and verify indexed access with the package TypeScript configuration.
+
 ## 0.1.0
 
 ### Minor Changes
