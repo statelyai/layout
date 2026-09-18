@@ -22,7 +22,7 @@ interface SeparateExteriorLabelsInput<E extends ExteriorLabelEdge> {
   settings: (edge: E) => ExteriorLabelSettings;
 }
 
-/** Separates movable inline labels and their exterior orthogonal route tracks. */
+/** Assigns collision-free cross-axis lanes to inline labels and their route tracks. */
 export function separateExteriorLabels<E extends ExteriorLabelEdge>({
   edges,
   nodeRects,
@@ -77,13 +77,38 @@ export function separateExteriorLabels<E extends ExteriorLabelEdge>({
           : [];
       })
       .sort((left, right) => right.length - left.length)[0];
-    if (!exteriorTrack) return [];
+    const routeTrack =
+      exteriorTrack ??
+      edge.points
+        .flatMap((point, index) => {
+          const next = edge.points[index + 1];
+          if (!next) return [];
+          const isFlowSegment = horizontalFlow
+            ? point.y === next.y && point.x !== next.x
+            : point.x === next.x && point.y !== next.y;
+          if (!isFlowSegment) return [];
+          const cross = horizontalFlow ? point.y : point.x;
+          return [
+            {
+              cross,
+              length: horizontalFlow ? Math.abs(next.x - point.x) : Math.abs(next.y - point.y),
+            },
+          ];
+        })
+        .sort(
+          (left, right) =>
+            Math.abs(left.cross - (crossStart(labelRect) + crossEnd(labelRect)) / 2) -
+              Math.abs(right.cross - (crossStart(labelRect) + crossEnd(labelRect)) / 2) ||
+            right.length - left.length,
+        )[0];
     return [
       {
         edge,
-        exteriorTrack,
+        exteriorTrack: routeTrack,
+        preserveAnchors: exteriorTrack === undefined,
         labelRect,
-        lowSide: exteriorTrack.cross < (nodeCrossStart + nodeCrossEnd) / 2,
+        lowSide:
+          (crossStart(labelRect) + crossEnd(labelRect)) / 2 < (nodeCrossStart + nodeCrossEnd) / 2,
       },
     ];
   });
@@ -104,7 +129,7 @@ export function separateExteriorLabels<E extends ExteriorLabelEdge>({
     );
   });
 
-  for (const { edge, exteriorTrack, labelRect, lowSide } of movableLabels) {
+  for (const { edge, exteriorTrack, labelRect, lowSide, preserveAnchors } of movableLabels) {
     const obstacles = [
       ...nodeRects,
       ...[...labelRectByEdgeId.entries()].flatMap(([edgeId, rect]) =>
@@ -128,12 +153,20 @@ export function separateExteriorLabels<E extends ExteriorLabelEdge>({
     if (totalDelta === 0) continue;
     if (horizontalFlow) edge.y += totalDelta;
     else edge.x += totalDelta;
-    edge.points = edge.points.map((point) => {
+    if (!exteriorTrack) continue;
+    const originalPoints = edge.points;
+    edge.points = edge.points.flatMap((point, index) => {
       const pointCross = horizontalFlow ? point.y : point.x;
-      if (pointCross !== exteriorTrack.cross) return point;
-      return horizontalFlow
+      if (pointCross !== exteriorTrack.cross) return [point];
+      const shifted = horizontalFlow
         ? { ...point, y: point.y + totalDelta }
         : { ...point, x: point.x + totalDelta };
+      // Keep authored endpoint anchors attached when the chosen track ends there.
+      return preserveAnchors && index === 0
+        ? [point, shifted]
+        : preserveAnchors && index === originalPoints.length - 1
+          ? [shifted, point]
+          : [shifted];
     });
   }
 }
