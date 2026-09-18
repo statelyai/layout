@@ -729,12 +729,16 @@ export default class ELK {
         const start = route[0]!;
         const end = route.at(-1)!;
         const nativeEdge = laidOut.edges.find((edge) => edge.id === String(restoration.edge.id));
-        const inlineCenter = (restoration.edge.labels ?? []).some(
-          (label) =>
-            getBooleanOption(label.layoutOptions ?? {}, "edgeLabels.inline") === true &&
-            String(getOption(label.layoutOptions ?? {}, "edgeLabels.placement") ?? "CENTER") ===
-              "CENTER",
-        );
+        const inlineCenter = (restoration.edge.labels ?? []).some((label) => {
+          const options = {
+            ...getElementLayeredSettings(restoration.edge.layoutOptions ?? {}),
+            ...getElementLayeredSettings(label.layoutOptions ?? {}),
+          };
+          return (
+            getBooleanOption(options, "edgeLabels.inline") === true &&
+            String(getOption(options, "edgeLabels.placement") ?? "CENTER") === "CENTER"
+          );
+        });
         // A hierarchy edge between a compound and its descendant becomes a
         // loop on the compound during decomposition. Its exterior label needs
         // clearance before equal-cross routes can be simplified.

@@ -104,44 +104,93 @@ it.each([200, 1200])("reserves an inline self-loop label above a %s-wide owner",
   expect(label.y! + label.height!).toBeLessThanOrEqual(owner.y!);
 });
 
-it("keeps inline compound-to-descendant labels clear of the compound header", async () => {
-  const { default: input } = await import("./fixtures/cross-hierarchy-viz.json");
-  const result = await new ELK().layout(structuredClone(input));
-  const owner = result.children!.find((node) => node.id === "parent")!;
-  const headers: Array<{ id: string; x: number; y: number; width: number; height: number }> = [];
-  const collectHeaders = (node: import("../src/elkjs").ElkNode, offsetX = 0, offsetY = 0) => {
-    const x = offsetX + (node.x ?? 0);
-    const y = offsetY + (node.y ?? 0);
-    if (node.id !== result.id) {
-      const minimum = String(node.layoutOptions?.["elk.nodeSize.minimum"] ?? "").match(
-        /\(([^,]+),([^)]+)\)/,
-      );
-      headers.push({
-        id: String(node.id),
-        x,
-        y,
-        width: minimum ? Number(minimum[1]) : node.width!,
-        height: minimum ? Number(minimum[2]) : node.height!,
-      });
+it.each(["label", "edge"])(
+  "keeps inline compound-to-descendant labels clear with %s options",
+  async (optionOwner) => {
+    const { default: input } = await import("./fixtures/cross-hierarchy-viz.json");
+    const fixture = structuredClone(input);
+    if (optionOwner === "edge")
+      for (const edge of fixture.edges ?? []) {
+        for (const label of edge.labels ?? []) {
+          Object.assign((edge.layoutOptions ??= {}), label.layoutOptions);
+          label.layoutOptions = {};
+        }
+      }
+    const result = await new ELK().layout(fixture);
+    const owner = result.children!.find((node) => node.id === "parent")!;
+    const headers: Array<{ id: string; x: number; y: number; width: number; height: number }> = [];
+    const collectHeaders = (node: import("../src/elkjs").ElkNode, offsetX = 0, offsetY = 0) => {
+      const x = offsetX + (node.x ?? 0);
+      const y = offsetY + (node.y ?? 0);
+      if (node.id !== result.id) {
+        const minimum = String(node.layoutOptions?.["elk.nodeSize.minimum"] ?? "").match(
+          /\(([^,]+),([^)]+)\)/,
+        );
+        headers.push({
+          id: String(node.id),
+          x,
+          y,
+          width: minimum ? Number(minimum[1]) : node.width!,
+          height: minimum ? Number(minimum[2]) : node.height!,
+        });
+      }
+      node.children?.forEach((child) => collectHeaders(child, x, y));
+    };
+    collectHeaders(result);
+    for (const edge of result.edges!)
+      for (const label of edge.labels ?? []) {
+        for (const header of headers)
+          expect(
+            label.x! >= header.x + header.width ||
+              label.x! + label.width! <= header.x ||
+              label.y! >= header.y + header.height ||
+              label.y! + label.height! <= header.y,
+            `${edge.id} / ${header.id}`,
+          ).toBe(true);
+      }
+    for (const id of ["parent-child", "child-parent"]) {
+      const edge = result.edges!.find((edge) => edge.id === id)!;
+      const label = edge.labels![0]!;
+      expect(label.y! + label.height!).toBeLessThan(owner.y!);
+      expect(edge.sections![0]!.bendPoints).toHaveLength(2);
     }
-    node.children?.forEach((child) => collectHeaders(child, x, y));
-  };
-  collectHeaders(result);
-  for (const edge of result.edges!)
-    for (const label of edge.labels ?? []) {
-      for (const header of headers)
-        expect(
-          label.x! >= header.x + header.width ||
-            label.x! + label.width! <= header.x ||
-            label.y! >= header.y + header.height ||
-            label.y! + label.height! <= header.y,
-          `${edge.id} / ${header.id}`,
-        ).toBe(true);
-    }
-  for (const id of ["parent-child", "child-parent"]) {
-    const edge = result.edges!.find((edge) => edge.id === id)!;
-    const label = edge.labels![0]!;
-    expect(label.y! + label.height!).toBeLessThan(owner.y!);
-    expect(edge.sections![0]!.bendPoints).toHaveLength(2);
-  }
-});
+  },
+);
+
+it.each(["NORTH_SOUTH", "EQUALLY"])(
+  "reserves tall south-loop labels between ranks (%s)",
+  async (distribution) => {
+    const result = await new ELK().layout({
+      id: "root",
+      layoutOptions: { "elk.direction": "DOWN", "elk.spacing.nodeNodeBetweenLayers": 30 },
+      children: [
+        {
+          id: "owner",
+          width: 200,
+          height: 100,
+          layoutOptions: { "elk.layered.edgeRouting.selfLoopDistribution": distribution },
+        },
+        { id: "next", width: 200, height: 100 },
+      ],
+      edges: [
+        { id: "forward", sources: ["owner"], targets: ["next"] },
+        ...[0, 1].map((i) => ({
+          id: `loop-${i}`,
+          sources: ["owner"],
+          targets: ["owner"],
+          labels: [
+            {
+              id: `label-${i}`,
+              width: 180,
+              height: 140,
+              layoutOptions: { "elk.edgeLabels.inline": true },
+            },
+          ],
+        })),
+      ],
+    });
+    const next = result.children!.find((node) => node.id === "next")!;
+    const label = result.edges!.find((edge) => edge.id === "loop-1")!.labels![0]!;
+    expect(label.y! + label.height!).toBeLessThanOrEqual(next.y!);
+  },
+);

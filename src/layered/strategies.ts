@@ -3447,6 +3447,8 @@ function routeEdges(style: "ORTHOGONAL" | "POLYLINE" | "SPLINES"): EdgeRouter {
       }
     }
     const northReserveByLayer = new Map<number, number>();
+    const southReserveByLayer = new Map<number, number>();
+    const southReserveOwnerIds = new Set<string>();
     for (const [id, loops] of selfLoopsByNodeId) {
       const rect = mutableRects.get(id);
       if (!rect) continue;
@@ -3456,6 +3458,37 @@ function routeEdges(style: "ORTHOGONAL" | "POLYLINE" | "SPLINES"): EdgeRouter {
       const distribution = nodeSettings?.["edgeRouting.selfLoopDistribution"] ?? "NORTH";
       const ordering = nodeSettings?.["edgeRouting.selfLoopOrdering"] ?? "STACKED";
       const splineOffset = style === "SPLINES" ? 1 : 0;
+      if (
+        style === "ORTHOGONAL" &&
+        (distribution === "NORTH_SOUTH" || distribution === "EQUALLY")
+      ) {
+        const stride = distribution === "EQUALLY" ? 4 : 2;
+        const southLoops = loops.filter((_, index) => index % stride === 1);
+        let reserve = 0;
+        for (let index = 0; index < southLoops.length; index++) {
+          const edge = southLoops[index]!;
+          if (input.edgeSettings?.(edge)?.["edgeLabels.inline"] !== true) continue;
+          const nestingIndex =
+            ordering === "REVERSE_STACKED" ? southLoops.length - index - 1 : index;
+          const trackIndex = ordering === "SEQUENCED" ? 1 : nestingIndex + 1;
+          reserve = Math.max(
+            reserve,
+            spacing * trackIndex +
+              (edge.height ?? 0) +
+              Number(input.settings["spacing.edgeLabel"] ?? 2) +
+              (distribution === "EQUALLY" ? spacing : 0),
+          );
+        }
+        if (reserve > 0) {
+          southReserveOwnerIds.add(id);
+          const boundary = rect.y + rect.height;
+          southReserveByLayer.set(
+            boundary,
+            Math.max(southReserveByLayer.get(boundary) ?? 0, reserve),
+          );
+        }
+      }
+
       if (distribution === "EQUALLY") {
         mutableRects.set(id, {
           ...rect,
@@ -3481,13 +3514,20 @@ function routeEdges(style: "ORTHOGONAL" | "POLYLINE" | "SPLINES"): EdgeRouter {
         northReserveByLayer.set(rect.y, Math.max(northReserveByLayer.get(rect.y) ?? 0, reserve));
       }
     }
+    const southReserves = [...southReserveByLayer];
     const northReserves = [...northReserveByLayer].sort(([left], [right]) => left - right);
     for (const [candidateId, candidateRect] of mutableRects) {
-      const reserve = northReserves.reduce(
-        (total, [layerY, layerReserve]) =>
-          candidateRect.y + 1e-9 >= layerY ? total + layerReserve : total,
-        0,
-      );
+      const reserve =
+        northReserves.reduce(
+          (total, [layerY, layerReserve]) =>
+            candidateRect.y + 1e-9 >= layerY ? total + layerReserve : total,
+          0,
+        ) +
+        southReserves.reduce(
+          (total, [boundary, layerReserve]) =>
+            candidateRect.y + 1e-9 >= boundary ? total + layerReserve : total,
+          0,
+        );
       if (reserve > 0) {
         mutableRects.set(candidateId, { ...candidateRect, y: candidateRect.y + reserve });
       }
@@ -3946,7 +3986,9 @@ function routeEdges(style: "ORTHOGONAL" | "POLYLINE" | "SPLINES"): EdgeRouter {
           slots === 0
             ? (existingGapByLayer[layerNo] ?? input.spacing.layer)
             : Math.max(
-                preservesNodeFlexibilityGap || (labelExtraByGap[layerNo] ?? 0) > 0
+                preservesNodeFlexibilityGap ||
+                  (labelExtraByGap[layerNo] ?? 0) > 0 ||
+                  [...southReserveOwnerIds].some((id) => flowLayerByNodeId.get(id) === layerNo)
                   ? preservedGap
                   : input.spacing.layer,
                 2 * edgeNodeSpacing + Math.max(0, slots - 1) * edgeEdgeSpacing,
