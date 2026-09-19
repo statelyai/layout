@@ -12,6 +12,108 @@ function separate(a: ElkNode, b: ElkNode) {
 }
 
 describe.each(directions)("inline label constraints (%s)", (direction) => {
+  it.each([0, 20, 48])(
+    "reserves one compact, centered label corridor with %ipx flow ports",
+    async (portFlowSize) => {
+      const horizontal = direction === "RIGHT" || direction === "LEFT";
+      const sourceSide =
+        direction === "RIGHT"
+          ? "EAST"
+          : direction === "LEFT"
+            ? "WEST"
+            : direction === "UP"
+              ? "NORTH"
+              : "SOUTH";
+      const targetSide =
+        direction === "RIGHT"
+          ? "WEST"
+          : direction === "LEFT"
+            ? "EAST"
+            : direction === "UP"
+              ? "SOUTH"
+              : "NORTH";
+      const result = await new ELK().layout({
+        id: "root",
+        layoutOptions: {
+          "elk.direction": direction,
+          "elk.layered.spacing.nodeNodeBetweenLayers": 30,
+        },
+        children: [
+          {
+            id: "source",
+            width: 180,
+            height: 96,
+            layoutOptions: { "elk.portConstraints": "FIXED_SIDE" },
+            ports: [
+              {
+                id: "source-port",
+                width: horizontal ? portFlowSize : 20,
+                height: horizontal ? 20 : portFlowSize,
+                layoutOptions: { "elk.port.side": sourceSide },
+              },
+            ],
+          },
+          {
+            id: "target",
+            width: 200,
+            height: 96,
+            layoutOptions: { "elk.portConstraints": "FIXED_SIDE" },
+            ports: [
+              {
+                id: "target-port",
+                width: horizontal ? portFlowSize : 20,
+                height: horizontal ? 20 : portFlowSize,
+                layoutOptions: { "elk.port.side": targetSide },
+              },
+            ],
+          },
+        ],
+        edges: [
+          {
+            id: "edge",
+            sources: ["source-port"],
+            targets: ["target-port"],
+            labels: [
+              {
+                id: "label",
+                text: "new event 1",
+                width: 160,
+                height: 48,
+                layoutOptions: {
+                  "elk.edgeLabels.inline": true,
+                  "elk.edgeLabels.placement": "CENTER",
+                },
+              },
+            ],
+          },
+        ],
+      });
+      const source = result.children!.find((node) => node.id === "source")!;
+      const target = result.children!.find((node) => node.id === "target")!;
+      const label = result.edges![0]!.labels![0]!;
+      const axis = horizontal ? "x" : "y";
+      const size = horizontal ? "width" : "height";
+      const crossAxis = horizontal ? "y" : "x";
+      const crossSize = horizontal ? "height" : "width";
+      const corridorStart = Math.min(source[axis]! + source[size]!, target[axis]! + target[size]!);
+      const corridorEnd = Math.max(source[axis]!, target[axis]!);
+
+      const endpointClearance = Math.max(30, portFlowSize + 10);
+      expect(corridorEnd - corridorStart).toBe(label[size]! + 2 * endpointClearance);
+      expect(
+        Math.abs(label[axis]! + label[size]! / 2 - (corridorStart + corridorEnd) / 2),
+      ).toBeLessThanOrEqual(0.5);
+      expect(source[crossAxis]! + source[crossSize]! / 2).toBe(
+        target[crossAxis]! + target[crossSize]! / 2,
+      );
+      expect(
+        Math.abs(
+          label[crossAxis]! + label[crossSize]! / 2 - (source[crossAxis]! + source[crossSize]! / 2),
+        ),
+      ).toBeLessThanOrEqual(0.5);
+    },
+  );
+
   it.each(
     ["NORTH", "NORTH_SOUTH", "EQUALLY"].flatMap((distribution) =>
       ["STACKED", "REVERSE_STACKED", "SEQUENCED"].map((ordering) => ({ distribution, ordering })),

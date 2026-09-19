@@ -3645,7 +3645,57 @@ function routeEdges(style: "ORTHOGONAL" | "POLYLINE" | "SPLINES"): EdgeRouter {
       flowLayerByNodeId.set(interval.id, flowLayers.length - 1);
     }
 
+    const increasing = input.direction === "right" || input.direction === "down";
+    const flowPortProtrusion = (edge: GraphEdge, endpoint: "source" | "target"): number => {
+      const node = nodeById.get(endpoint === "source" ? edge.sourceId : edge.targetId);
+      const portName = endpoint === "source" ? edge.sourcePort : edge.targetPort;
+      const port = node?.ports?.find((candidate) => candidate.name === portName);
+      if (!node || !port) return 0;
+      const side = input.portSettings?.(port, node)?.["port.side"];
+      const flowSide = horizontal
+        ? endpoint === "source"
+          ? input.direction === "right"
+            ? "EAST"
+            : "WEST"
+          : input.direction === "right"
+            ? "WEST"
+            : "EAST"
+        : endpoint === "source"
+          ? input.direction === "down"
+            ? "SOUTH"
+            : "NORTH"
+          : input.direction === "down"
+            ? "NORTH"
+            : "SOUTH";
+      return side === flowSide ? (horizontal ? (port.width ?? 0) : (port.height ?? 0)) : 0;
+    };
+    const adjacentNodeIds = new Map<string, Set<string>>();
+    for (const edge of input.graph.edges) {
+      const sourceNeighbors = adjacentNodeIds.get(edge.sourceId) ?? new Set<string>();
+      sourceNeighbors.add(edge.targetId);
+      adjacentNodeIds.set(edge.sourceId, sourceNeighbors);
+      const targetNeighbors = adjacentNodeIds.get(edge.targetId) ?? new Set<string>();
+      targetNeighbors.add(edge.sourceId);
+      adjacentNodeIds.set(edge.targetId, targetNeighbors);
+    }
+    const feedbackComponentNodeIds = new Set<string>();
+    for (const edge of input.graph.edges) {
+      const sourceLayer = flowLayerByNodeId.get(edge.sourceId);
+      const targetLayer = flowLayerByNodeId.get(edge.targetId);
+      if (sourceLayer === undefined || targetLayer === undefined) continue;
+      if (sourceLayer === targetLayer) continue;
+      const forward = increasing ? targetLayer > sourceLayer : targetLayer < sourceLayer;
+      if (forward) continue;
+      const pending = [edge.sourceId, edge.targetId];
+      while (pending.length > 0) {
+        const nodeId = pending.pop()!;
+        if (feedbackComponentNodeIds.has(nodeId)) continue;
+        feedbackComponentNodeIds.add(nodeId);
+        pending.push(...(adjacentNodeIds.get(nodeId) ?? []));
+      }
+    }
     const labelExtraByGap = flowLayers.slice(0, -1).map(() => 0);
+    const compactLabelCorridorGaps = new Set<number>();
     for (const edge of input.graph.edges) {
       const labelFlowSize = horizontal ? (edge.width ?? 0) : (edge.height ?? 0);
       if (labelFlowSize <= 0) continue;
@@ -3654,11 +3704,25 @@ function routeEdges(style: "ORTHOGONAL" | "POLYLINE" | "SPLINES"): EdgeRouter {
       if (sourceLayer === undefined || targetLayer === undefined) continue;
       if (Math.abs(sourceLayer - targetLayer) !== 1) continue;
       const placement = input.edgeSettings?.(edge)?.["edgeLabels.placement"] ?? "CENTER";
-      const extra =
-        placement === "CENTER"
+      const edgeNodeSpacing = Number(input.settings["spacing.edgeNodeBetweenLayers"] ?? 10);
+      // ELK models center labels as dummy layers. For an exterior port, using node-node
+      // spacing beyond the port double-counts the corridor. Treat the label as edge
+      // geometry while retaining normal layer spacing when it is the larger clearance.
+      const requiredGap =
+        labelFlowSize +
+        Math.max(input.spacing.layer, flowPortProtrusion(edge, "source") + edgeNodeSpacing) +
+        Math.max(input.spacing.layer, flowPortProtrusion(edge, "target") + edgeNodeSpacing);
+      const gap = Math.min(sourceLayer, targetLayer);
+      const availableGap = flowLayers[gap + 1]!.start - flowLayers[gap]!.end;
+      const forward = increasing ? targetLayer > sourceLayer : targetLayer < sourceLayer;
+      const compactCorridor =
+        placement === "CENTER" && forward && !feedbackComponentNodeIds.has(edge.sourceId);
+      if (compactCorridor) compactLabelCorridorGaps.add(gap);
+      const extra = compactCorridor
+        ? Math.max(0, requiredGap - availableGap)
+        : placement === "CENTER"
           ? labelFlowSize + input.spacing.layer
           : labelFlowSize + Number(input.settings["spacing.edgeLabel"] ?? 2);
-      const gap = Math.min(sourceLayer, targetLayer);
       labelExtraByGap[gap] = Math.max(labelExtraByGap[gap] ?? 0, extra);
     }
     let labelShift = 0;
@@ -4049,6 +4113,7 @@ function routeEdges(style: "ORTHOGONAL" | "POLYLINE" | "SPLINES"): EdgeRouter {
             : Math.max(
                 preservesNodeFlexibilityGap ||
                   (labelExtraByGap[layerNo] ?? 0) > 0 ||
+                  compactLabelCorridorGaps.has(layerNo) ||
                   [...selfLoopsByNodeId].some(
                     ([id, loops]) =>
                       (flowLayerByNodeId.get(id) === layerNo ||

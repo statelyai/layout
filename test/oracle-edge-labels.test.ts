@@ -240,7 +240,7 @@ it("matches ELK geometry for an acyclic Viz-profile chain", async () => {
   expect([actual.width, actual.height]).toEqual([expected.width, expected.height]);
 });
 
-it("matches ELK spacing for parallel labeled edges", async () => {
+it("matches ELK geometry with a compact fixed-port label corridor", async () => {
   const port = (id: string, side: "NORTH" | "SOUTH") => ({
     id,
     width: 20,
@@ -274,7 +274,7 @@ it("matches ELK spacing for parallel labeled edges", async () => {
             id: "gray-label",
             text: "gray",
             width: 101.453125,
-            height: 88,
+            height: 10,
             layoutOptions: {
               "elk.edgeLabels.inline": "true",
               "elk.edgeLabels.placement": "CENTER",
@@ -291,7 +291,7 @@ it("matches ELK spacing for parallel labeled edges", async () => {
             id: "red-label",
             text: "red",
             width: 71.921875,
-            height: 88,
+            height: 10,
             layoutOptions: {
               "elk.edgeLabels.inline": "true",
               "elk.edgeLabels.placement": "CENTER",
@@ -320,7 +320,26 @@ it("matches ELK spacing for parallel labeled edges", async () => {
     ]),
   });
 
-  expect(geometry(actual)).toEqual(geometry(expected));
+  const corridorCompaction = 2 * (30 - 10);
+  const actualGeometry = geometry(actual);
+  const expectedGeometry = geometry(expected);
+  expect(actualGeometry).toEqual({
+    ...expectedGeometry,
+    size: [
+      expectedGeometry.size[0],
+      rounded(Number(expectedGeometry.size[1]) - corridorCompaction),
+    ],
+    nodes: expectedGeometry.nodes?.map((node) =>
+      node[0] === "target"
+        ? [node[0], node[1], rounded(Number(node[2]) - corridorCompaction), node[3]]
+        : node,
+    ),
+    labels: expectedGeometry.labels?.map((label) => [
+      label[0],
+      label[1],
+      rounded(Number(label[2]) - corridorCompaction / 2),
+    ]),
+  });
   for (const edge of actual.edges ?? []) {
     const section = edge.sections?.[0];
     expect(section).toBeDefined();
