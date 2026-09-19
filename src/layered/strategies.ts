@@ -3683,6 +3683,7 @@ function routeEdges(style: "ORTHOGONAL" | "POLYLINE" | "SPLINES"): EdgeRouter {
       const sourceLayer = flowLayerByNodeId.get(edge.sourceId);
       const targetLayer = flowLayerByNodeId.get(edge.targetId);
       if (sourceLayer === undefined || targetLayer === undefined) continue;
+      if (sourceLayer === targetLayer) continue;
       const forward = increasing ? targetLayer > sourceLayer : targetLayer < sourceLayer;
       if (forward) continue;
       const pending = [edge.sourceId, edge.targetId];
