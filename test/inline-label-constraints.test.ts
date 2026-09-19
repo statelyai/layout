@@ -12,6 +12,103 @@ function separate(a: ElkNode, b: ElkNode) {
 }
 
 describe.each(directions)("inline label constraints (%s)", (direction) => {
+  it("reserves one compact, centered label corridor", async () => {
+    const horizontal = direction === "RIGHT" || direction === "LEFT";
+    const sourceSide =
+      direction === "RIGHT"
+        ? "EAST"
+        : direction === "LEFT"
+          ? "WEST"
+          : direction === "UP"
+            ? "NORTH"
+            : "SOUTH";
+    const targetSide =
+      direction === "RIGHT"
+        ? "WEST"
+        : direction === "LEFT"
+          ? "EAST"
+          : direction === "UP"
+            ? "SOUTH"
+            : "NORTH";
+    const result = await new ELK().layout({
+      id: "root",
+      layoutOptions: {
+        "elk.direction": direction,
+        "elk.layered.spacing.nodeNodeBetweenLayers": 30,
+      },
+      children: [
+        {
+          id: "source",
+          width: 180,
+          height: 96,
+          layoutOptions: { "elk.portConstraints": "FIXED_SIDE" },
+          ports: [
+            {
+              id: "source-port",
+              width: 20,
+              height: 20,
+              layoutOptions: { "elk.port.side": sourceSide },
+            },
+          ],
+        },
+        {
+          id: "target",
+          width: 200,
+          height: 96,
+          layoutOptions: { "elk.portConstraints": "FIXED_SIDE" },
+          ports: [
+            {
+              id: "target-port",
+              width: 20,
+              height: 20,
+              layoutOptions: { "elk.port.side": targetSide },
+            },
+          ],
+        },
+      ],
+      edges: [
+        {
+          id: "edge",
+          sources: ["source-port"],
+          targets: ["target-port"],
+          labels: [
+            {
+              id: "label",
+              width: 160,
+              height: 48,
+              layoutOptions: {
+                "elk.edgeLabels.inline": true,
+                "elk.edgeLabels.placement": "CENTER",
+              },
+            },
+          ],
+        },
+      ],
+    });
+    const source = result.children!.find((node) => node.id === "source")!;
+    const target = result.children!.find((node) => node.id === "target")!;
+    const label = result.edges![0]!.labels![0]!;
+    const axis = horizontal ? "x" : "y";
+    const size = horizontal ? "width" : "height";
+    const crossAxis = horizontal ? "y" : "x";
+    const crossSize = horizontal ? "height" : "width";
+    const corridorStart = Math.min(source[axis]! + source[size]!, target[axis]! + target[size]!);
+    const corridorEnd = Math.max(source[axis]!, target[axis]!);
+
+    expect(corridorEnd - corridorStart).toBe(label[size]! + 60);
+    expect(
+      Math.abs(label[axis]! + label[size]! / 2 - (corridorStart + corridorEnd) / 2),
+    ).toBeLessThanOrEqual(0.5);
+    expect(source[crossAxis]! + source[crossSize]! / 2).toBe(
+      target[crossAxis]! + target[crossSize]! / 2,
+    );
+    expect(
+      Math.abs(
+        label[crossAxis]! + label[crossSize]! / 2 - (source[crossAxis]! + source[crossSize]! / 2),
+      ),
+    ).toBeLessThanOrEqual(0.5);
+  });
+
   it.each(
     ["NORTH", "NORTH_SOUTH", "EQUALLY"].flatMap((distribution) =>
       ["STACKED", "REVERSE_STACKED", "SEQUENCED"].map((ordering) => ({ distribution, ordering })),

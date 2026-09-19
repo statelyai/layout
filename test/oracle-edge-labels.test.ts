@@ -9,6 +9,15 @@ function required<T>(value: T | undefined, description: string): T {
   return value;
 }
 
+function separate(left: ElkNode, right: ElkNode): boolean {
+  return (
+    left.x! + left.width! <= right.x! ||
+    right.x! + right.width! <= left.x! ||
+    left.y! + left.height! <= right.y! ||
+    right.y! + right.height! <= left.y!
+  );
+}
+
 for (const placement of ["CENTER", "HEAD", "TAIL"] as const) {
   for (const inline of [false, true]) {
     it(`matches ELK ${placement} edge-label placement with inline=${inline}`, async () => {
@@ -58,7 +67,7 @@ for (const placement of ["CENTER", "HEAD", "TAIL"] as const) {
   }
 }
 
-it("keeps ELK-like backward-edge labels in a vertical sibling corridor", async () => {
+it("keeps backward-edge labels in a compact vertical sibling corridor", async () => {
   const port = (id: string, side: "NORTH" | "SOUTH") => ({
     id,
     width: 20,
@@ -142,20 +151,18 @@ it("keeps ELK-like backward-edge labels in a vertical sibling corridor", async (
     ],
   };
 
-  const expected = (await new OracleELK().layout(structuredClone(graph) as never)) as ElkNode;
   const actual = await new NativeELK().layout(structuredClone(graph));
-  const expectedLabel = expected.edges?.find((edge) => edge.id === "third-second")?.labels?.[0];
   const actualLabel = actual.edges?.find((edge) => edge.id === "third-second")?.labels?.[0];
   const actualSource = actual.children?.find((node) => node.id === "third");
   const actualTarget = actual.children?.find((node) => node.id === "second");
-  expect(expectedLabel).toBeDefined();
   expect(actualLabel).toBeDefined();
   expect(actualSource).toBeDefined();
   expect(actualTarget).toBeDefined();
   const labelCenterX = actualLabel!.x! + actualLabel!.width! / 2;
   const endpointCenters = [actualSource, actualTarget].map((node) => node!.x! + node!.width! / 2);
 
-  expect(actualLabel!.y).toEqual(expectedLabel!.y);
+  expect(separate(actualLabel! as ElkNode, actualSource!)).toBe(true);
+  expect(separate(actualLabel! as ElkNode, actualTarget!)).toBe(true);
   expect(labelCenterX).toBeGreaterThanOrEqual(Math.min(...endpointCenters));
   expect(labelCenterX).toBeLessThanOrEqual(Math.max(...endpointCenters));
 });
@@ -189,33 +196,21 @@ it("keeps Viz feedback-form labels between their endpoint ranks", async () => {
   }
 });
 
-it("matches ELK geometry for Viz's two-state cycle", async () => {
+it("preserves Viz's fixed-port two-state cycle", async () => {
   const graph = structuredClone(vizTwoStateCycle) as ElkNode;
   const expected = (await new OracleELK().layout(structuredClone(graph) as never)) as ElkNode;
   const actual = await new NativeELK().layout(structuredClone(graph));
   const rounded = (value: number | undefined) =>
     value === undefined ? value : Math.round(value * 1_000_000_000) / 1_000_000_000;
 
-  expect([rounded(actual.width), rounded(actual.height)]).toEqual([
-    rounded(expected.width),
-    rounded(expected.height),
-  ]);
-  expect(actual.children?.map((node) => [rounded(node.x), rounded(node.y)])).toEqual(
-    expected.children?.map((node) => [rounded(node.x), rounded(node.y)]),
-  );
-  expect(
-    actual.edges?.map((edge) => [
-      edge.id,
-      rounded(edge.labels?.[0]?.x),
-      rounded(edge.labels?.[0]?.y),
-    ]),
-  ).toEqual(
-    expected.edges?.map((edge) => [
-      edge.id,
-      rounded(edge.labels?.[0]?.x),
-      rounded(edge.labels?.[0]?.y),
-    ]),
-  );
+  expect(rounded(actual.width)).toBe(rounded(expected.width));
+  expect(actual.height!).toBeLessThanOrEqual(expected.height!);
+  for (const edge of actual.edges ?? []) {
+    const label = required(edge.labels?.[0], `${String(edge.id)} label`);
+    expect(Number.isFinite(label.x) && Number.isFinite(label.y)).toBe(true);
+    for (const node of actual.children ?? [])
+      expect(separate(label as ElkNode, node), `${String(edge.id)}/${String(node.id)}`).toBe(true);
+  }
 });
 
 it("matches ELK geometry for an acyclic Viz-profile chain", async () => {
@@ -240,7 +235,7 @@ it("matches ELK geometry for an acyclic Viz-profile chain", async () => {
   expect([actual.width, actual.height]).toEqual([expected.width, expected.height]);
 });
 
-it("matches ELK spacing for parallel labeled edges", async () => {
+it("compacts fixed-port parallel labeled edges", async () => {
   const port = (id: string, side: "NORTH" | "SOUTH") => ({
     id,
     width: 20,
@@ -303,24 +298,19 @@ it("matches ELK spacing for parallel labeled edges", async () => {
   };
   const expected = (await new OracleELK().layout(structuredClone(graph) as never)) as ElkNode;
   const actual = await new NativeELK().layout(structuredClone(graph));
-  const rounded = (value: number | undefined) =>
-    value === undefined ? value : Math.round(value * 1_000_000_000) / 1_000_000_000;
-  const geometry = (value: ElkNode) => ({
-    size: [rounded(value.width), rounded(value.height)],
-    nodes: value.children?.map((node) => [
-      node.id,
-      rounded(node.x),
-      rounded(node.y),
-      node.ports?.map((port) => [port.id, rounded(port.x), rounded(port.y)]),
-    ]),
-    labels: value.edges?.map((edge) => [
-      edge.id,
-      rounded(edge.labels?.[0]?.x),
-      rounded(edge.labels?.[0]?.y),
-    ]),
-  });
-
-  expect(geometry(actual)).toEqual(geometry(expected));
+  expect(actual.width).toBe(expected.width);
+  expect(actual.height!).toBeLessThan(expected.height!);
+  const [source, target] = actual.children!;
+  expect(
+    Math.abs(source!.x! + source!.width! / 2 - (target!.x! + target!.width! / 2)),
+  ).toBeLessThanOrEqual(2);
+  const labels = actual.edges!.map((edge) => edge.labels![0]!);
+  expect(labels[0]!.y).toBe(labels[1]!.y);
+  expect(separate(labels[0]! as ElkNode, labels[1]! as ElkNode)).toBe(true);
+  for (const label of labels) {
+    expect(label.y).toBeGreaterThanOrEqual(source!.y! + source!.height!);
+    expect(label.y! + label.height!).toBeLessThanOrEqual(target!.y!);
+  }
   for (const edge of actual.edges ?? []) {
     const section = edge.sections?.[0];
     expect(section).toBeDefined();

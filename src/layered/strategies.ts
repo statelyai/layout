@@ -3645,6 +3645,21 @@ function routeEdges(style: "ORTHOGONAL" | "POLYLINE" | "SPLINES"): EdgeRouter {
       flowLayerByNodeId.set(interval.id, flowLayers.length - 1);
     }
 
+    const increasing = input.direction === "right" || input.direction === "down";
+    const feedbackGaps = new Set<number>();
+    for (const edge of input.graph.edges) {
+      const sourceLayer = flowLayerByNodeId.get(edge.sourceId);
+      const targetLayer = flowLayerByNodeId.get(edge.targetId);
+      if (sourceLayer === undefined || targetLayer === undefined) continue;
+      const forward = increasing ? targetLayer > sourceLayer : targetLayer < sourceLayer;
+      if (forward) continue;
+      for (
+        let gap = Math.min(sourceLayer, targetLayer);
+        gap < Math.max(sourceLayer, targetLayer);
+        gap++
+      )
+        feedbackGaps.add(gap);
+    }
     const labelExtraByGap = flowLayers.slice(0, -1).map(() => 0);
     for (const edge of input.graph.edges) {
       const labelFlowSize = horizontal ? (edge.width ?? 0) : (edge.height ?? 0);
@@ -3654,11 +3669,19 @@ function routeEdges(style: "ORTHOGONAL" | "POLYLINE" | "SPLINES"): EdgeRouter {
       if (sourceLayer === undefined || targetLayer === undefined) continue;
       if (Math.abs(sourceLayer - targetLayer) !== 1) continue;
       const placement = input.edgeSettings?.(edge)?.["edgeLabels.placement"] ?? "CENTER";
-      const extra =
+      const requiredGap =
         placement === "CENTER"
-          ? labelFlowSize + input.spacing.layer
-          : labelFlowSize + Number(input.settings["spacing.edgeLabel"] ?? 2);
+          ? labelFlowSize + 2 * input.spacing.layer
+          : labelFlowSize + input.spacing.layer + Number(input.settings["spacing.edgeLabel"] ?? 2);
       const gap = Math.min(sourceLayer, targetLayer);
+      const availableGap = flowLayers[gap + 1]!.start - flowLayers[gap]!.end;
+      const forward = increasing ? targetLayer > sourceLayer : targetLayer < sourceLayer;
+      const extra =
+        forward && !feedbackGaps.has(gap)
+          ? Math.max(0, requiredGap - availableGap)
+          : placement === "CENTER"
+            ? labelFlowSize + input.spacing.layer
+            : labelFlowSize + Number(input.settings["spacing.edgeLabel"] ?? 2);
       labelExtraByGap[gap] = Math.max(labelExtraByGap[gap] ?? 0, extra);
     }
     let labelShift = 0;
