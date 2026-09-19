@@ -22,7 +22,7 @@ interface SeparateExteriorLabelsInput<E extends ExteriorLabelEdge> {
   settings: (edge: E) => ExteriorLabelSettings;
 }
 
-/** Separates movable inline labels and their exterior orthogonal route tracks. */
+/** Assigns collision-free cross-axis lanes to inline labels and their route tracks. */
 export function separateExteriorLabels<E extends ExteriorLabelEdge>({
   edges,
   nodeRects,
@@ -72,18 +72,50 @@ export function separateExteriorLabels<E extends ExteriorLabelEdge>({
               {
                 cross: trackCross,
                 length: horizontalFlow ? Math.abs(next.x - point.x) : Math.abs(next.y - point.y),
+                flowStart: horizontalFlow ? Math.min(point.x, next.x) : Math.min(point.y, next.y),
+                flowEnd: horizontalFlow ? Math.max(point.x, next.x) : Math.max(point.y, next.y),
+                startIndex: index,
               },
             ]
           : [];
       })
       .sort((left, right) => right.length - left.length)[0];
-    if (!exteriorTrack) return [];
+    const routeTrack =
+      exteriorTrack ??
+      edge.points
+        .flatMap((point, index) => {
+          const next = edge.points[index + 1];
+          if (!next) return [];
+          const isFlowSegment = horizontalFlow
+            ? point.y === next.y && point.x !== next.x
+            : point.x === next.x && point.y !== next.y;
+          if (!isFlowSegment) return [];
+          const cross = horizontalFlow ? point.y : point.x;
+          return [
+            {
+              cross,
+              length: horizontalFlow ? Math.abs(next.x - point.x) : Math.abs(next.y - point.y),
+              flowStart: horizontalFlow ? Math.min(point.x, next.x) : Math.min(point.y, next.y),
+              flowEnd: horizontalFlow ? Math.max(point.x, next.x) : Math.max(point.y, next.y),
+              startIndex: index,
+            },
+          ];
+        })
+        .sort(
+          (left, right) =>
+            Math.abs(left.cross - (crossStart(labelRect) + crossEnd(labelRect)) / 2) -
+              Math.abs(right.cross - (crossStart(labelRect) + crossEnd(labelRect)) / 2) ||
+            right.length - left.length,
+        )[0];
+    if (!routeTrack) return [];
     return [
       {
         edge,
-        exteriorTrack,
+        exteriorTrack: routeTrack,
+        preserveAnchors: exteriorTrack === undefined,
         labelRect,
-        lowSide: exteriorTrack.cross < (nodeCrossStart + nodeCrossEnd) / 2,
+        lowSide:
+          (crossStart(labelRect) + crossEnd(labelRect)) / 2 < (nodeCrossStart + nodeCrossEnd) / 2,
       },
     ];
   });
@@ -104,7 +136,7 @@ export function separateExteriorLabels<E extends ExteriorLabelEdge>({
     );
   });
 
-  for (const { edge, exteriorTrack, labelRect, lowSide } of movableLabels) {
+  for (const { edge, exteriorTrack, labelRect, lowSide, preserveAnchors } of movableLabels) {
     const obstacles = [
       ...nodeRects,
       ...[...labelRectByEdgeId.entries()].flatMap(([edgeId, rect]) =>
@@ -112,28 +144,97 @@ export function separateExteriorLabels<E extends ExteriorLabelEdge>({
       ),
     ];
     let totalDelta = 0;
-    while (true) {
-      const blockers = obstacles.filter((rect) => overlaps(labelRect, rect));
-      if (blockers.length === 0) break;
-      const desiredCross = lowSide
-        ? Math.min(...blockers.map(crossStart)) -
-          spacing -
-          (horizontalFlow ? edge.height : edge.width)
-        : Math.max(...blockers.map(crossEnd)) + spacing;
-      const delta = desiredCross - crossStart(labelRect);
-      totalDelta += delta;
-      if (horizontalFlow) labelRect.y += delta;
-      else labelRect.x += delta;
+    if (preserveAnchors) {
+      const labelCrossStart = crossStart(labelRect);
+      const labelCrossSize = crossEnd(labelRect) - labelCrossStart;
+      const trackOffset = exteriorTrack.cross - labelCrossStart;
+      const candidates = new Set<number>([labelCrossStart]);
+      for (const obstacle of obstacles) {
+        candidates.add(crossStart(obstacle) - spacing - labelCrossSize);
+        candidates.add(crossEnd(obstacle) + spacing);
+        candidates.add(crossStart(obstacle) - spacing - trackOffset);
+        candidates.add(crossEnd(obstacle) + spacing - trackOffset);
+      }
+      const orderedCandidates = [...candidates].sort((left, right) => {
+        const leftPreferred = lowSide ? left <= labelCrossStart : left >= labelCrossStart;
+        const rightPreferred = lowSide ? right <= labelCrossStart : right >= labelCrossStart;
+        return (
+          Number(rightPreferred) - Number(leftPreferred) ||
+          Math.abs(left - labelCrossStart) - Math.abs(right - labelCrossStart) ||
+          left - right
+        );
+      });
+      const lineIntersects = (
+        rect: EntityRect,
+        candidateTrackCross: number,
+        connectorFlow: number,
+      ): boolean => {
+        const movedCrossStart = Math.min(exteriorTrack.cross, candidateTrackCross);
+        const movedCrossEnd = Math.max(exteriorTrack.cross, candidateTrackCross);
+        const trackIntersects =
+          exteriorTrack.flowStart < flowEnd(rect) &&
+          exteriorTrack.flowEnd > flowStart(rect) &&
+          candidateTrackCross > crossStart(rect) &&
+          candidateTrackCross < crossEnd(rect);
+        const connectorIntersects =
+          connectorFlow > flowStart(rect) &&
+          connectorFlow < flowEnd(rect) &&
+          movedCrossStart < crossEnd(rect) &&
+          movedCrossEnd > crossStart(rect);
+        return trackIntersects || connectorIntersects;
+      };
+      const candidate = orderedCandidates.find((candidateLabelCross) => {
+        const delta = candidateLabelCross - labelCrossStart;
+        const candidateLabel = horizontalFlow
+          ? { ...labelRect, y: labelRect.y + delta }
+          : { ...labelRect, x: labelRect.x + delta };
+        const candidateTrackCross = exteriorTrack.cross + delta;
+        return (
+          obstacles.every((obstacle) => !overlaps(candidateLabel, obstacle)) &&
+          nodeRects.every(
+            (nodeRect) =>
+              !lineIntersects(nodeRect, candidateTrackCross, exteriorTrack.flowStart) &&
+              !lineIntersects(nodeRect, candidateTrackCross, exteriorTrack.flowEnd),
+          )
+        );
+      });
+      if (candidate === undefined) continue;
+      totalDelta = candidate - labelCrossStart;
+      if (horizontalFlow) labelRect.y += totalDelta;
+      else labelRect.x += totalDelta;
+    } else {
+      while (true) {
+        const blockers = obstacles.filter((rect) => overlaps(labelRect, rect));
+        if (blockers.length === 0) break;
+        const desiredCross = lowSide
+          ? Math.min(...blockers.map(crossStart)) -
+            spacing -
+            (horizontalFlow ? edge.height : edge.width)
+          : Math.max(...blockers.map(crossEnd)) + spacing;
+        const delta = desiredCross - crossStart(labelRect);
+        totalDelta += delta;
+        if (horizontalFlow) labelRect.y += delta;
+        else labelRect.x += delta;
+      }
     }
     if (totalDelta === 0) continue;
     if (horizontalFlow) edge.y += totalDelta;
     else edge.x += totalDelta;
-    edge.points = edge.points.map((point) => {
-      const pointCross = horizontalFlow ? point.y : point.x;
-      if (pointCross !== exteriorTrack.cross) return point;
-      return horizontalFlow
+    if (!exteriorTrack) continue;
+    edge.points = edge.points.flatMap((point, index) => {
+      if (index !== exteriorTrack.startIndex && index !== exteriorTrack.startIndex + 1)
+        return [point];
+      const shifted = horizontalFlow
         ? { ...point, y: point.y + totalDelta }
         : { ...point, x: point.x + totalDelta };
+      // Keep authored endpoint anchors attached when the chosen track ends there.
+      return preserveAnchors && index === exteriorTrack.startIndex && index === 0
+        ? [point, shifted]
+        : preserveAnchors &&
+            index === exteriorTrack.startIndex + 1 &&
+            index === edge.points.length - 1
+          ? [shifted, point]
+          : [shifted];
     });
   }
 }

@@ -103,4 +103,43 @@ describe("exterior label separation", () => {
     separate(edges);
     expect(edges).toEqual(before);
   });
+
+  it("keeps a moved interior track clear of nodes outside its label interval", () => {
+    const edges = fixture(["moving", "head", "farther"]);
+    edges[0]!.points = [
+      { x: 130, y: 0 },
+      { x: 130, y: 300 },
+    ];
+    separateExteriorLabels({
+      edges,
+      nodeRects: [
+        { x: 0, y: 0, width: 100, height: 300 },
+        { x: 210, y: 200, width: 50, height: 50 },
+      ],
+      direction: "down",
+      spacing: 10,
+      settings: (edge) => ({ inline: edge.inline, placement: edge.placement }),
+    });
+
+    expect(edges[0]).toMatchObject({
+      x: 250,
+      points: [
+        { x: 130, y: 0 },
+        { x: 270, y: 0 },
+        { x: 270, y: 300 },
+        { x: 130, y: 300 },
+      ],
+    });
+  });
+
+  it("does not move a label without a flow-axis route segment", () => {
+    const edges = fixture(["moving", "head"]);
+    edges[0]!.points = [
+      { x: 130, y: 100 },
+      { x: 180, y: 100 },
+    ];
+    const before = structuredClone(edges[0]);
+    separate(edges);
+    expect(edges[0]).toEqual(before);
+  });
 });
