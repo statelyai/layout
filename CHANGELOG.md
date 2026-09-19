@@ -1,5 +1,11 @@
 # @statelyai/layout
 
+## 0.1.2
+
+### Patch Changes
+
+- 63e4bf8: Separate interior inline transition labels on orthogonal routes, as well as exterior labels, into collision-free cross-axis lanes. Preserve their flow coordinates and endpoint anchors when moving route tracks.
+
 ## 0.1.1
 
 ### Patch Changes
