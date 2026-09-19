@@ -3695,6 +3695,7 @@ function routeEdges(style: "ORTHOGONAL" | "POLYLINE" | "SPLINES"): EdgeRouter {
       }
     }
     const labelExtraByGap = flowLayers.slice(0, -1).map(() => 0);
+    const compactLabelCorridorGaps = new Set<number>();
     for (const edge of input.graph.edges) {
       const labelFlowSize = horizontal ? (edge.width ?? 0) : (edge.height ?? 0);
       if (labelFlowSize <= 0) continue;
@@ -3714,12 +3715,14 @@ function routeEdges(style: "ORTHOGONAL" | "POLYLINE" | "SPLINES"): EdgeRouter {
       const gap = Math.min(sourceLayer, targetLayer);
       const availableGap = flowLayers[gap + 1]!.start - flowLayers[gap]!.end;
       const forward = increasing ? targetLayer > sourceLayer : targetLayer < sourceLayer;
-      const extra =
-        placement === "CENTER" && forward && !feedbackComponentNodeIds.has(edge.sourceId)
-          ? Math.max(0, requiredGap - availableGap)
-          : placement === "CENTER"
-            ? labelFlowSize + input.spacing.layer
-            : labelFlowSize + Number(input.settings["spacing.edgeLabel"] ?? 2);
+      const compactCorridor =
+        placement === "CENTER" && forward && !feedbackComponentNodeIds.has(edge.sourceId);
+      if (compactCorridor) compactLabelCorridorGaps.add(gap);
+      const extra = compactCorridor
+        ? Math.max(0, requiredGap - availableGap)
+        : placement === "CENTER"
+          ? labelFlowSize + input.spacing.layer
+          : labelFlowSize + Number(input.settings["spacing.edgeLabel"] ?? 2);
       labelExtraByGap[gap] = Math.max(labelExtraByGap[gap] ?? 0, extra);
     }
     let labelShift = 0;
@@ -4110,6 +4113,7 @@ function routeEdges(style: "ORTHOGONAL" | "POLYLINE" | "SPLINES"): EdgeRouter {
             : Math.max(
                 preservesNodeFlexibilityGap ||
                   (labelExtraByGap[layerNo] ?? 0) > 0 ||
+                  compactLabelCorridorGaps.has(layerNo) ||
                   [...selfLoopsByNodeId].some(
                     ([id, loops]) =>
                       (flowLayerByNodeId.get(id) === layerNo ||

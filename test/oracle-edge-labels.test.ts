@@ -274,7 +274,7 @@ it("matches ELK geometry with a compact fixed-port label corridor", async () => 
             id: "gray-label",
             text: "gray",
             width: 101.453125,
-            height: 88,
+            height: 10,
             layoutOptions: {
               "elk.edgeLabels.inline": "true",
               "elk.edgeLabels.placement": "CENTER",
@@ -291,7 +291,7 @@ it("matches ELK geometry with a compact fixed-port label corridor", async () => 
             id: "red-label",
             text: "red",
             width: 71.921875,
-            height: 88,
+            height: 10,
             layoutOptions: {
               "elk.edgeLabels.inline": "true",
               "elk.edgeLabels.placement": "CENTER",
