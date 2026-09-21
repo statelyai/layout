@@ -7,26 +7,28 @@ that compatibility geometry exactly matches ELK.
 
 <!-- compatibility status derived from test/elkjs-compat and the elkjs 0.11.1 Mocha suite -->
 
-| Upstream test                 | Behaviors | Covered | Status                             |
-| ----------------------------- | --------: | ------: | ---------------------------------- |
-| `test-bug-63.js`              |         1 |       1 | Passing                            |
-| `test-bug-7.js`               |         1 |       1 | Original fixture passing           |
-| `test-bug-8.js`               |         4 |       4 | Passing                            |
-| `test-bug-klay-22.js`         |         1 |       1 | Passing                            |
-| `test-bug-klay-23.js`         |         1 |       1 | Passing                            |
-| `test-node.js`                |         2 |       1 | In-process passing; worker pending |
-| `testChangeAwareArrayList.js` |         1 |       1 | Original fixture passing           |
-| `testEntryPoints.js`          |         5 |       0 | Package/worker variants pending    |
-| `testIds.js`                  |         7 |       7 | Passing                            |
-| `testLayouters.js`            |         3 |       3 | Passing baseline behavior          |
-| `testLogging.js`              |         6 |       6 | Passing                            |
-| `testOptions.js`              |         8 |       8 | Passing                            |
-| `testParameters.js`           |         2 |       2 | Passing                            |
-| `testRaiseException.js`       |         1 |       1 | Passing                            |
-| **Total**                     |    **43** |  **37** | **86% behavior coverage**          |
+| Upstream test                 | Behaviors | Covered | Status                     |
+| ----------------------------- | --------: | ------: | -------------------------- |
+| `test-bug-63.js`              |         1 |       1 | Passing                    |
+| `test-bug-7.js`               |         1 |       1 | Original fixture passing   |
+| `test-bug-8.js`               |         4 |       4 | Passing                    |
+| `test-bug-klay-22.js`         |         1 |       1 | Passing                    |
+| `test-bug-klay-23.js`         |         1 |       1 | Passing                    |
+| `test-node.js`                |         2 |       2 | Passing                    |
+| `testChangeAwareArrayList.js` |         1 |       1 | Original fixture passing   |
+| `testEntryPoints.js`          |         5 |       5 | Passing                    |
+| `testIds.js`                  |         7 |       7 | Passing                    |
+| `testLayouters.js`            |         3 |       3 | Passing baseline behavior  |
+| `testLogging.js`              |         6 |       6 | Passing                    |
+| `testOptions.js`              |         8 |       8 | Passing                    |
+| `testParameters.js`           |         2 |       2 | Passing                    |
+| `testRaiseException.js`       |         1 |       1 | Passing                    |
+| **Total**                     |    **43** |  **43** | **100% behavior coverage** |
 
 The upstream suite has 43 `it(...)` cases at tag 0.11.1. Some adapted Vitest
-tests combine related assertions while preserving all listed behaviors.
+tests combine related assertions while preserving all listed behaviors. Packed
+package tests additionally exercise both ESM import and the upstream CommonJS
+require style for every migration entry point.
 
 ## Native algorithm status
 
@@ -43,7 +45,8 @@ tests combine related assertions while preserving all listed behaviors.
 | SPOrE overlap removal | `getSporeOverlapRemovalLayout` | Initial separation baseline; not ELK parity          |
 
 The native layered pipeline handles compound layout and cross-hierarchy
-routing. Worker execution and non-layered Java algorithm suites remain open.
+routing. The compatibility worker protocol runs in-process; browser-thread
+isolation and non-layered Java algorithm suites remain open.
 
 ## Layered option and geometry coverage
 

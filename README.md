@@ -67,6 +67,13 @@ const elk = new ELK();
 const legacyResult = await elk.layout(elkJsonGraph);
 ```
 
+Migration-compatible package aliases are also available for
+`lib/main.js`, `lib/elk-api.js`, `lib/elk.bundled.js`, `lib/elk-worker.js`,
+and `lib/elk-worker.min.js`. The worker entries implement elkjs's message
+protocol in-process, including custom `workerFactory` construction and
+termination. Both ESM imports and the original CommonJS `require()` style are
+supported.
+
 The adapter accepts ELK JSON and option aliases, translates to
 `@statelyai/graph`, runs native algorithms, and translates the result back.
 Native algorithms never consume ELK JSON directly. `getLayout` and the

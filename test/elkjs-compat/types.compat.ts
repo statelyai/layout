@@ -31,6 +31,8 @@ import NativeELK, {
   type ElkShape as NativeShape,
   type LayoutOptions as NativeLayoutOptions,
 } from "../../src/elkjs";
+import MainELK from "../../src/elkjs/main";
+import WorkerELK from "../../src/elkjs/worker-api";
 
 type Assert<T extends true> = T;
 type Same<Left, Right> = [Left] extends [Right] ? ([Right] extends [Left] ? true : false) : false;
@@ -53,6 +55,8 @@ type ConstructorArgumentsMatch = Assert<
 type InterfaceMatch = Assert<Same<NativeELKInterface, UpstreamELKInterface>>;
 
 const nativeConstructor: typeof UpstreamELK = NativeELK;
+const mainConstructor: typeof UpstreamELK = MainELK;
+const workerConstructor: typeof UpstreamELK = WorkerELK;
 
 export type ElkjsTypeCompatibility = [
   LayoutOptionsMatch,
@@ -70,4 +74,6 @@ export type ElkjsTypeCompatibility = [
   ConstructorArgumentsMatch,
   InterfaceMatch,
   typeof nativeConstructor,
+  typeof mainConstructor,
+  typeof workerConstructor,
 ];

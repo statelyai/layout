@@ -21,6 +21,8 @@ format.
    cancellation, patches, diagnostics, and measurements.
 3. The isolated `@statelyai/layout/elkjs` entry translates ELK JSON at the
    package boundary. ELK option names do not enter the native API.
+4. The pinned elkjs migration subpaths expose ESM and CommonJS adapters over an
+   in-process implementation of the elkjs worker message interface.
 
 `getLayout` and the elkjs adapter dispatch through one typed internal layout
 engine; direct native layout functions are the same underlying algorithm

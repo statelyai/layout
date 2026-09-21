@@ -174,3 +174,9 @@ exports:
 - `ElkShape`
 - `LayoutOptions`
 - `LaidOutElkNode`
+
+The compatibility package also exposes the elkjs 0.11.1 migration subpaths
+`lib/main.js`, `lib/elk-api.js`, `lib/elk.bundled.js`, `lib/elk-worker.js`, and
+`lib/elk-worker.min.js`. `elk-api.js` requires `workerUrl` or `workerFactory`;
+`main.js` and `elk.bundled.js` provide the in-process worker fallback. Every
+migration subpath supports ESM import and CommonJS require.

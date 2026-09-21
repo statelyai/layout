@@ -8,7 +8,16 @@ type PackResult = { filename: string };
 type PackageJson = { exports: Record<string, unknown> };
 
 const rootDir = resolve(dirname(fileURLToPath(import.meta.url)), "..");
-const checkedExports = new Set([".", "./elkjs", "./layered", "./lib/elk.bundled.js"]);
+const checkedExports = new Set([
+  ".",
+  "./elkjs",
+  "./layered",
+  "./lib/elk-api.js",
+  "./lib/elk.bundled.js",
+  "./lib/elk-worker.js",
+  "./lib/elk-worker.min.js",
+  "./lib/main.js",
+]);
 
 async function main(): Promise<void> {
   const packageJson = JSON.parse(
@@ -78,7 +87,11 @@ async function main(): Promise<void> {
 import { createGraph } from "@statelyai/graph";
 import { getBoxLayout, getLayeredLayout, getRandomLayout } from "@statelyai/layout";
 import ELK, { layoutStatechart, compileStatechartLayout, scoreStatechartLayout } from "@statelyai/layout/elkjs";
+import ApiELK from "@statelyai/layout/lib/elk-api.js";
 import BundledELK from "@statelyai/layout/lib/elk.bundled.js";
+import { Worker } from "@statelyai/layout/lib/elk-worker.js";
+import { Worker as MinifiedWorker } from "@statelyai/layout/lib/elk-worker.min.js";
+import MainELK from "@statelyai/layout/lib/main.js";
 import { getLayeredLayout as getLayeredLayoutFromSubpath } from "@statelyai/layout/layered";
 const graph = createGraph({ nodes: [{ id: "a" }, { id: "b" }], edges: [{ id: "ab", sourceId: "a", targetId: "b" }] });
 assert.equal(getLayeredLayout(graph).nodes.length, 2);
@@ -92,10 +105,58 @@ const policy = await layoutStatechart(policyInput, { scopes: { root: { initialNo
 assert.equal(policy.score.pathOrder, 0);
 assert.deepEqual(compileStatechartLayout(policyInput, { root: { initialNodeId: "a" } }).paths.root, ["a", "b"]);
 assert.equal(scoreStatechartLayout(policy.graph).invalid, 0);
+let workerCreated = false;
+const apiElk = new ApiELK({ workerFactory: () => { workerCreated = true; return new Worker(); } });
+assert.equal(workerCreated, true);
+assert.equal((await apiElk.layout({ id: "root" })).id, "root");
+apiElk.terminateWorker();
+const minifiedApiElk = new ApiELK({ workerFactory: () => new MinifiedWorker() });
+assert.equal((await minifiedApiElk.layout({ id: "root" })).id, "root");
+minifiedApiElk.terminateWorker();
 assert.equal((await new BundledELK().layout({ id: "root" })).id, "root");
+assert.equal((await new MainELK().layout({ id: "root" })).id, "root");
+let mainWorkerCreated = false;
+const factoryMain = new MainELK({ workerFactory: () => { mainWorkerCreated = true; return new Worker(); } });
+assert.equal(mainWorkerCreated, true);
+factoryMain.terminateWorker();
+const workerMain = new MainELK({ workerUrl: "./lib/elk-worker.js" });
+assert.equal((await workerMain.layout({ id: "root" })).id, "root");
+workerMain.terminateWorker();
+const minifiedWorkerMain = new MainELK({ workerUrl: "./lib/elk-worker.min.js" });
+assert.equal((await minifiedWorkerMain.layout({ id: "root" })).id, "root");
+minifiedWorkerMain.terminateWorker();
 `,
     );
     execFileSync("node", [runtimePath], { cwd: consumerDir, stdio: "inherit" });
+
+    const commonJsPath = join(consumerDir, "check.cjs");
+    await writeFile(
+      commonJsPath,
+      `const assert = require("node:assert/strict");
+const MainELK = require("@statelyai/layout/lib/main.js");
+const ApiELK = require("@statelyai/layout/lib/elk-api.js");
+const BundledELK = require("@statelyai/layout/lib/elk.bundled.js");
+const { Worker } = require("@statelyai/layout/lib/elk-worker.js");
+const { Worker: MinifiedWorker } = require("@statelyai/layout/lib/elk-worker.min.js");
+(async () => {
+  assert.equal((await new MainELK().layout({ id: "root" })).id, "root");
+  assert.equal((await new BundledELK().layout({ id: "root" })).id, "root");
+  const apiElk = new ApiELK({ workerFactory: () => new Worker() });
+  assert.equal((await apiElk.layout({ id: "root" })).id, "root");
+  apiElk.terminateWorker();
+  const minifiedApiElk = new ApiELK({ workerFactory: () => new MinifiedWorker() });
+  assert.equal((await minifiedApiElk.layout({ id: "root" })).id, "root");
+  minifiedApiElk.terminateWorker();
+  const workerMain = new MainELK({ workerUrl: "./lib/elk-worker.js" });
+  assert.equal((await workerMain.layout({ id: "root" })).id, "root");
+  workerMain.terminateWorker();
+  const minifiedWorkerMain = new MainELK({ workerUrl: "./lib/elk-worker.min.js" });
+  assert.equal((await minifiedWorkerMain.layout({ id: "root" })).id, "root");
+  minifiedWorkerMain.terminateWorker();
+})();
+`,
+    );
+    execFileSync("node", [commonJsPath], { cwd: consumerDir, stdio: "inherit" });
 
     const typesPath = join(consumerDir, "check.ts");
     await writeFile(
@@ -103,7 +164,9 @@ assert.equal((await new BundledELK().layout({ id: "root" })).id, "root");
       `import { createGraph } from "@statelyai/graph";
 import { getBoxLayout, getLayeredLayout, getRandomLayout, type LayoutResult } from "@statelyai/layout";
 import ELK, { layoutStatechart, type StatechartLayoutOptions, type ElkNode } from "@statelyai/layout/elkjs";
+import ApiELK from "@statelyai/layout/lib/elk-api.js";
 import BundledELK from "@statelyai/layout/lib/elk.bundled.js";
+import { Worker } from "@statelyai/layout/lib/elk-worker.js";
 import { type LayeredLayoutOptions } from "@statelyai/layout/layered";
 const graph = createGraph({ nodes: [{ id: "a" }], edges: [] });
 const options: LayeredLayoutOptions = { direction: "right" };
@@ -112,8 +175,10 @@ getBoxLayout(graph, { aspectRatio: 1.3 }).nodes[0]?.id;
 getRandomLayout(graph, { seed: 1 }).nodes[0]?.id;
 const request: Promise<ElkNode> = new ELK().layout({ id: "root" });
 const bundledRequest: Promise<ElkNode> = new BundledELK().layout({ id: "root" });
+const apiRequest: Promise<ElkNode> = new ApiELK({ workerFactory: () => new Worker() }).layout({ id: "root" });
 void request;
 void bundledRequest;
+void apiRequest;
 const policyOptions: StatechartLayoutOptions = { scopes: { root: { direction: "DOWN" } } };
 layoutStatechart({ id: "root" }, policyOptions).then((policy) => { policy.graph.id; });
 const result = undefined as unknown as LayoutResult;

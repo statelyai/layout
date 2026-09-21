@@ -15,25 +15,49 @@
   ],
   "type": "module",
   "sideEffects": false,
-  "main": "./dist/index.mjs",
+  "main": "./dist/index.cjs",
   "module": "./dist/index.mjs",
   "types": "./src/index.ts",
   "exports": {
     ".": {
       "types": "./src/index.ts",
-      "default": "./dist/index.mjs"
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.cjs"
     },
     "./elkjs": {
       "types": "./src/elkjs/index.ts",
-      "default": "./dist/elkjs/index.mjs"
+      "import": "./dist/elkjs/index.mjs",
+      "require": "./dist/elkjs/index.cjs"
+    },
+    "./lib/elk-api.js": {
+      "types": "./src/elkjs/worker-api.ts",
+      "import": "./dist/elkjs/worker-api.mjs",
+      "require": "./dist/elkjs/worker-api.cjs"
     },
     "./lib/elk.bundled.js": {
-      "types": "./src/elkjs/index.ts",
-      "default": "./dist/elkjs/index.mjs"
+      "types": "./src/elkjs/main.ts",
+      "import": "./dist/elkjs/main.mjs",
+      "require": "./dist/elkjs/main.cjs"
+    },
+    "./lib/elk-worker.js": {
+      "types": "./src/elkjs/worker.ts",
+      "import": "./dist/elkjs/worker.mjs",
+      "require": "./dist/elkjs/worker.cjs"
+    },
+    "./lib/elk-worker.min.js": {
+      "types": "./src/elkjs/worker.ts",
+      "import": "./dist/elkjs/worker.mjs",
+      "require": "./dist/elkjs/worker.cjs"
+    },
+    "./lib/main.js": {
+      "types": "./src/elkjs/main.ts",
+      "import": "./dist/elkjs/main.mjs",
+      "require": "./dist/elkjs/main.cjs"
     },
     "./layered": {
       "types": "./src/layered/index.ts",
-      "default": "./dist/layered/index.mjs"
+      "import": "./dist/layered/index.mjs",
+      "require": "./dist/layered/index.cjs"
     },
     "./package.json": "./package.json"
   },
