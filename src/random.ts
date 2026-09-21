@@ -8,6 +8,7 @@
 import type { Graph, Point, VisualGraph, VisualNode } from "@statelyai/graph";
 import { getNodeSize, type LayoutOptions } from "@statelyai/graph/layout";
 import { getFixedLayout } from "./fixed";
+import { setElkjs0111ResultPolicy } from "./internal/elkjs-compatibility";
 import { JavaRandom } from "./java-random";
 import type { LayoutPadding } from "./layered";
 import type { LayoutAlgorithm } from "./types";
@@ -33,8 +34,6 @@ const elkjs0111Behavior: RandomLayoutBehavior = {
   elkjs0111EdgeTargetBug: true,
   preserveProviderBounds: true,
 };
-
-export const elkjs0111ProviderBounds = Symbol("elkjs0111ProviderBounds");
 
 function getPadding(value: RandomLayoutOptions["padding"]): LayoutPadding {
   if (typeof value === "number") {
@@ -181,8 +180,8 @@ function getRandomLayoutWithBehavior<N, E, G, P>(
     { direction: options.direction ?? graph.direction },
   );
   if (behavior.preserveProviderBounds) {
-    Object.defineProperty(result, elkjs0111ProviderBounds, {
-      value: {
+    setElkjs0111ResultPolicy(result, {
+      providerBounds: {
         width: drawWidth + 2 * (padding.left + padding.right),
         height: drawHeight + 2 * (padding.top + padding.bottom),
       },

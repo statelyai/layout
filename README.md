@@ -81,6 +81,11 @@ compatibility adapter dispatch through one typed internal engine; direct native
 functions expose those same algorithm implementations. ELK-specific defaults
 and quirks remain local to the pinned compatibility adapter.
 
+Compatibility policies currently preserve exact elkjs 0.11.1 Random geometry
+and Box SIMPLE geometry, including provider bounds and whether edge sections
+are routed or left authored. Rectangle Packing has an exact default baseline;
+its full Java packing strategy remains in progress.
+
 The compatibility entry's named graph, edge, option, and result types are
 mutually assignable with the declarations shipped by `elkjs@0.11.1`. Its
 default class also accepts the library's broader internal graph inputs.

@@ -1,8 +1,12 @@
 import type { Graph, VisualGraph } from "@statelyai/graph";
-import { boxAlgorithm, type BoxLayoutOptions } from "../box";
+import { boxAlgorithm, elkjs0111BoxAlgorithm, type BoxLayoutOptions } from "../box";
 import { fixedAlgorithm, type FixedLayoutOptions } from "../fixed";
 import { layeredAlgorithm, type LayeredLayoutOptions } from "../layered";
-import { rectanglePackingAlgorithm, type RectanglePackingLayoutOptions } from "../packing";
+import {
+  elkjs0111RectanglePackingAlgorithm,
+  rectanglePackingAlgorithm,
+  type RectanglePackingLayoutOptions,
+} from "../packing";
 import { elkjs0111RandomAlgorithm, randomAlgorithm, type RandomLayoutOptions } from "../random";
 import {
   sporeCompactionAlgorithm,
@@ -37,7 +41,9 @@ export const builtInLayoutAlgorithms = {
 
 const elkjs0111LayoutAlgorithms = {
   ...builtInLayoutAlgorithms,
+  box: elkjs0111BoxAlgorithm,
   random: elkjs0111RandomAlgorithm,
+  rectpacking: elkjs0111RectanglePackingAlgorithm,
 } satisfies {
   [Id in BuiltInLayoutAlgorithmId]: LayoutAlgorithm<BuiltInLayoutOptionsById[Id]>;
 };

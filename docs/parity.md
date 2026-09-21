@@ -36,17 +36,25 @@ require style for every migration entry point.
 
 | Algorithm             | Native API                     | Current fidelity                                     |
 | --------------------- | ------------------------------ | ---------------------------------------------------- |
-| Box                   | `getBoxLayout`                 | Java SIMPLE node placement; grouped modes pending    |
+| Box                   | `getBoxLayout`                 | Exact SIMPLE adapter corpus; grouped modes pending   |
 | Layered               | `getLayeredLayout`             | Complete 152-option ELK 0.11.1 layered parity target |
 | Fixed                 | `getFixedLayout`               | Preserves authored geometry and routes               |
 | Random                | `getRandomLayout`              | Exact ELK adapter; corrected native edge endpoints   |
-| Rectangle packing     | `getRectanglePackingLayout`    | Deterministic shelf baseline; not ELK parity         |
+| Rectangle packing     | `getRectanglePackingLayout`    | Exact default slice; full packing parity pending     |
 | SPOrE compaction      | `getSporeCompactionLayout`     | Initial relative-direction baseline; not ELK parity  |
 | SPOrE overlap removal | `getSporeOverlapRemovalLayout` | Initial separation baseline; not ELK parity          |
 
 The native layered pipeline handles compound layout and cross-hierarchy
 routing. The compatibility worker protocol runs in-process; browser-thread
 isolation and non-layered Java algorithm suites remain open.
+
+Box SIMPLE has a 64-case differential corpus spanning empty through 15-node
+graphs, asymmetric padding, spacing, aspect ratio, priorities, interactive
+ordering, and node expansion. Its adapter also preserves authored edge routes
+and provider-owned bounds. Rectangle Packing matches the default three-node
+baseline but intentionally remains marked incomplete: an alternate three-node
+shape set already demonstrates that the native shelf strategy is not the Java
+packing strategy.
 
 ## Layered option and geometry coverage
 

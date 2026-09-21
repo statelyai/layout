@@ -6,7 +6,7 @@ import {
   type LayeredAdvancedOptions,
 } from "../layered/elk-options";
 import { executeElkjs0111Layout } from "../internal/layout-engine";
-import { elkjs0111ProviderBounds } from "../random";
+import { elkjs0111ResultPolicy, type Elkjs0111ResultPolicy } from "../internal/elkjs-compatibility";
 import type {
   ElkConstructorArguments,
   ElkLayoutAlgorithmDescription,
@@ -567,8 +567,8 @@ export default class ELK {
               algorithm: "rectpacking",
               graph: graph_,
               options: {
-                padding,
-                spacing: getNumberOption(layoutOptions, "spacing.nodeNode"),
+                padding: getOption(layoutOptions, "padding") === undefined ? 15 : padding,
+                spacing: getNumberOption(layoutOptions, "spacing.nodeNode") ?? 15,
               },
             })
           : algorithm === "random"
@@ -794,15 +794,15 @@ export default class ELK {
         );
       }
     }
-    applyLayout(graph, laidOut, padding, layoutOptions);
-    const providerBounds = (
+    const resultPolicy = (
       laidOut as typeof laidOut & {
-        [elkjs0111ProviderBounds]?: { width: number; height: number };
+        [elkjs0111ResultPolicy]?: Elkjs0111ResultPolicy;
       }
-    )[elkjs0111ProviderBounds];
-    if (providerBounds) {
-      graph.width = providerBounds.width;
-      graph.height = providerBounds.height;
+    )[elkjs0111ResultPolicy];
+    applyLayout(graph, laidOut, padding, layoutOptions, resultPolicy);
+    if (resultPolicy?.providerBounds) {
+      graph.width = resultPolicy.providerBounds.width;
+      graph.height = resultPolicy.providerBounds.height;
     }
     for (const restoration of hierarchyRestorations) {
       restoration.edge.sources = restoration.sources;
@@ -1391,6 +1391,7 @@ function applyLayout(
   graph: ReturnType<typeof getLayeredLayout>,
   padding: { top: number; right: number; bottom: number; left: number },
   layoutOptions: Readonly<Record<string, unknown>>,
+  resultPolicy?: Elkjs0111ResultPolicy,
 ): void {
   const nodeById = new Map(graph.nodes.map((node) => [node.id, node]));
   const edgeById = new Map(graph.edges.map((edge) => [edge.id, edge]));
@@ -1414,6 +1415,13 @@ function applyLayout(
     placePortLabels(child, layoutOptions);
   }
   for (const edge of root.edges ?? []) {
+    if (resultPolicy?.preserveEdgeSections) {
+      for (const section of edge.sections ?? []) {
+        section.incomingShape ??= edge.sources?.[0] ?? edge.source;
+        section.outgoingShape ??= edge.targets?.[0] ?? edge.target;
+      }
+      continue;
+    }
     const laidOutEdge = edgeById.get(String(edge.id));
     if (!laidOutEdge) {
       if (getBooleanOption(edge.layoutOptions ?? {}, "noLayout") === true) {
@@ -1470,7 +1478,9 @@ function applyLayout(
       labelY += (label.height ?? 0) + labelLabelSpacing;
     }
   }
-  normalizeElkGraphBounds(root, padding, layoutOptions);
+  if (!resultPolicy?.skipBoundsNormalization) {
+    normalizeElkGraphBounds(root, padding, layoutOptions);
+  }
 }
 
 function normalizeElkGraphBounds(

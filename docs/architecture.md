@@ -33,7 +33,9 @@ must genuinely diverge.
 
 For example, native Random routing connects the actual endpoints, while the
 pinned compatibility policy reproduces elkjs 0.11.1's source-as-target routing
-quirk and provider-sized graph bounds.
+quirk and provider-sized graph bounds. Box and Rectangle Packing preserve
+provider-owned bounds and authored edge sections rather than accepting routes
+or normalization invented by the shared fixed-geometry completion step.
 
 ## Layered pipeline
 
