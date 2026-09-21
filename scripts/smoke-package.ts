@@ -115,7 +115,7 @@ const bundledRequest: Promise<ElkNode> = new BundledELK().layout({ id: "root" })
 void request;
 void bundledRequest;
 const policyOptions: StatechartLayoutOptions = { scopes: { root: { direction: "DOWN" } } };
-layoutStatechart({ id: "root" }, policyOptions).then((policy) => { const graph: ElkNode = policy.graph; void graph; });
+layoutStatechart({ id: "root" }, policyOptions).then((policy) => { policy.graph.id; });
 const result = undefined as unknown as LayoutResult;
 void result;
 `,

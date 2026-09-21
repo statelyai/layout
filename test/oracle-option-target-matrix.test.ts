@@ -1,6 +1,7 @@
 import OracleELK from "elkjs/lib/elk.bundled.js";
 import { expect, it } from "vitest";
-import NativeELK, { type ElkEdge, type ElkLabel, type ElkNode, type ElkPort } from "../src/elkjs";
+import NativeELK from "../src/elkjs";
+import { type ElkEdge, type ElkLabel, type ElkNode, type ElkPort } from "../src/elkjs/types";
 import { elkLayeredEnumValues, elkLayeredOptionDefinitions } from "../src/layered/elk-options";
 
 type Target = (typeof elkLayeredOptionDefinitions)[number]["targets"][number];

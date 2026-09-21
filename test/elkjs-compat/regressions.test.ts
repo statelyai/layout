@@ -5,7 +5,8 @@
  *******************************************************************************/
 import { describe, expect, it } from "vitest";
 import OracleELK from "elkjs/lib/elk.bundled.js";
-import ELK, { type ElkNode } from "../../src/elkjs";
+import ELK from "../../src/elkjs";
+import { type ElkNode } from "../../src/elkjs/types";
 import bug7 from "../fixtures/elkjs-0.11.1/bug-7.json";
 import changeAwareArrayList from "../fixtures/elkjs-0.11.1/change-aware-array-list.json";
 

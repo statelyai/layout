@@ -69,7 +69,14 @@ const legacyResult = await elk.layout(elkJsonGraph);
 
 The adapter accepts ELK JSON and option aliases, translates to
 `@statelyai/graph`, runs native algorithms, and translates the result back.
-Native algorithms never consume ELK JSON directly.
+Native algorithms never consume ELK JSON directly. `getLayout` and the
+compatibility adapter dispatch through one typed internal engine; direct native
+functions expose those same algorithm implementations. ELK-specific defaults
+and quirks remain local to the pinned compatibility adapter.
+
+The compatibility entry's named graph, edge, option, and result types are
+mutually assignable with the declarations shipped by `elkjs@0.11.1`. Its
+default class also accepts the library's broader internal graph inputs.
 
 <!-- fixed-port placement and inline center-label guarantees from src/layered/index.ts and src/layered/strategies.ts -->
 

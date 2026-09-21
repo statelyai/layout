@@ -1,6 +1,7 @@
 import OracleELK from "elkjs/lib/elk.bundled.js";
 import { describe, expect, it } from "vitest";
-import NativeELK, { type ElkNode } from "../src/elkjs";
+import NativeELK from "../src/elkjs";
+import { type ElkNode } from "../src/elkjs/types";
 
 function expectNodeGeometry(actual: ElkNode, expected: ElkNode): void {
   for (const property of ["x", "y", "width", "height"] as const) {

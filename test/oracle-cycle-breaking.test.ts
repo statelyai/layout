@@ -2,7 +2,7 @@ import { createGraph } from "@statelyai/graph";
 import ELK from "elkjs/lib/elk.bundled.js";
 import { describe, expect, it } from "vitest";
 import { breakCyclesGreedily, getLayeredLayout, type CycleBreakingStrategy } from "../src";
-import type { ElkNode } from "../src/elkjs";
+import type { ElkNode } from "../src/elkjs/types";
 
 interface EdgeFixture {
   id: string;

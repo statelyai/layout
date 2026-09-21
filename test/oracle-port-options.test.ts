@@ -1,6 +1,7 @@
 import OracleELK from "elkjs/lib/elk.bundled.js";
 import { describe, expect, it } from "vitest";
-import NativeELK, { type ElkNode, type ElkPort } from "../src/elkjs";
+import NativeELK from "../src/elkjs";
+import { type ElkNode, type ElkPort } from "../src/elkjs/types";
 
 function expectPortGeometry(actual: ElkNode, expected: ElkNode) {
   const expectedNode = expected.children?.[0];

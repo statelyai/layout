@@ -1,5 +1,6 @@
 import { writeFile } from "node:fs/promises";
-import { layoutStatechart, type ElkNode } from "../src/elkjs";
+import { layoutStatechart } from "../src/elkjs";
+import type { ElkNode } from "../src/elkjs/types";
 import fixture from "../test/fixtures/babyfood-statechart.json";
 
 const result = await layoutStatechart(fixture, {

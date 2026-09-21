@@ -1,6 +1,7 @@
 import OracleELK from "elkjs/lib/elk.bundled.js";
 import { describe, expect, it } from "vitest";
-import NativeELK, { type ElkEdgeSection, type ElkNode } from "../src/elkjs";
+import NativeELK from "../src/elkjs";
+import { type ElkEdgeSection, type ElkNode } from "../src/elkjs/types";
 
 function expectPoint(actual: { x: number; y: number }, expected: { x: number; y: number }): void {
   expect(actual.x).toBeCloseTo(expected.x, 12);

@@ -1,6 +1,7 @@
 import OracleELK from "elkjs/lib/elk.bundled.js";
 import { expect, it } from "vitest";
-import NativeELK, { type ElkNode } from "../src/elkjs";
+import NativeELK from "../src/elkjs";
+import { type ElkNode } from "../src/elkjs/types";
 
 it("matches ELK activated partition ordering against edge direction", async () => {
   const graph: ElkNode = {

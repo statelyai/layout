@@ -1,11 +1,10 @@
 import { getGraphIssues, type Graph, type GraphPatch, type VisualGraph } from "@statelyai/graph";
 import { LayoutError, UnsupportedLayoutError } from "./errors";
-import { boxAlgorithm } from "./box";
-import { fixedAlgorithm } from "./fixed";
-import { layeredAlgorithm } from "./layered";
-import { rectanglePackingAlgorithm } from "./packing";
-import { randomAlgorithm } from "./random";
-import { sporeCompactionAlgorithm, sporeOverlapRemovalAlgorithm } from "./spore";
+import {
+  builtInLayoutAlgorithms,
+  executeLayoutAlgorithm,
+  getBuiltInLayoutAlgorithm,
+} from "./internal/layout-engine";
 import type {
   LayoutAlgorithm,
   LayoutDiagnostic,
@@ -16,15 +15,12 @@ import type {
   LayoutScope,
 } from "./types";
 
-const algorithms = new Map<string, LayoutAlgorithm<never>>([
-  ["box", boxAlgorithm as LayoutAlgorithm<never>],
-  ["layered", layeredAlgorithm as LayoutAlgorithm<never>],
-  ["fixed", fixedAlgorithm as LayoutAlgorithm<never>],
-  ["rectpacking", rectanglePackingAlgorithm as LayoutAlgorithm<never>],
-  ["random", randomAlgorithm as LayoutAlgorithm<never>],
-  ["sporeCompaction", sporeCompactionAlgorithm as LayoutAlgorithm<never>],
-  ["sporeOverlap", sporeOverlapRemovalAlgorithm as LayoutAlgorithm<never>],
-]);
+const algorithms = new Map<string, LayoutAlgorithm<never>>(
+  Object.entries(builtInLayoutAlgorithms).map(([id, algorithm]) => [
+    id,
+    algorithm as LayoutAlgorithm<never>,
+  ]),
+);
 
 function supportsScope(algorithm: LayoutAlgorithm<unknown>, scope: LayoutScope): boolean {
   switch (scope.mode) {
@@ -123,7 +119,9 @@ export function registerLayoutAlgorithm<O>(algorithm: LayoutAlgorithm<O>): () =>
 }
 
 export function getLayoutAlgorithm(id: string): LayoutAlgorithm<unknown> | undefined {
-  return algorithms.get(id) as LayoutAlgorithm<unknown> | undefined;
+  return (
+    (algorithms.get(id) as LayoutAlgorithm<unknown> | undefined) ?? getBuiltInLayoutAlgorithm(id)
+  );
 }
 
 /**
@@ -185,7 +183,12 @@ export async function getLayout<N, E, G, P, O = unknown>(
     },
   };
   context.throwIfAborted();
-  const graph = await algorithm.layout(request.graph, request.options as O, context);
+  const graph = await executeLayoutAlgorithm({
+    algorithm: algorithm as LayoutAlgorithm<O>,
+    graph: request.graph,
+    options: request.options as O,
+    context,
+  });
   context.throwIfAborted();
 
   return {

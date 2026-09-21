@@ -1,6 +1,7 @@
 import OracleELK from "elkjs/lib/elk.bundled.js";
 import { expect, it } from "vitest";
-import NativeELK, { type ElkNode } from "../src/elkjs";
+import NativeELK from "../src/elkjs";
+import { type ElkNode } from "../src/elkjs/types";
 
 async function expectOracleParity(graph: ElkNode): Promise<void> {
   const expected = (await new OracleELK().layout(

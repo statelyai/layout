@@ -5,11 +5,12 @@
  *******************************************************************************/
 import { describe, expect, it } from "vitest";
 import ELK from "../../src/elkjs";
+import type { ElkNode } from "../../src/elkjs/types";
 
 describe("elkjs compatibility: logging", () => {
   it("adds requested logs and clears them on the next unlogged run", async () => {
     const elk = new ELK();
-    const graph = {
+    const graph: ElkNode = {
       id: "root",
       children: [{ id: "a" }, { id: "b" }],
       edges: [{ id: "ab", sources: ["a"], targets: ["b"] }],

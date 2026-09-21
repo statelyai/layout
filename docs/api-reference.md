@@ -154,9 +154,11 @@ general registry or the other built-in algorithms.
 exports:
 
 - `ElkConstructorArguments`
+- `ELK`
 - `ElkCommonDescription`
 - `ElkEdge`
 - `ElkEdgeSection`
+- `ElkExtendedEdge`
 - `ElkGraphElement`
 - `ElkId`
 - `ElkLabel`
@@ -168,5 +170,7 @@ exports:
 - `ElkNode`
 - `ElkPoint`
 - `ElkPort`
+- `ElkPrimitiveEdge`
 - `ElkShape`
+- `LayoutOptions`
 - `LaidOutElkNode`

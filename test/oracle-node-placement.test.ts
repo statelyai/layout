@@ -2,7 +2,8 @@ import { createGraph } from "@statelyai/graph";
 import ELK from "elkjs/lib/elk.bundled.js";
 import { describe, expect, it } from "vitest";
 import { getLayeredLayout } from "../src";
-import NativeELK, { type ElkNode } from "../src/elkjs";
+import NativeELK from "../src/elkjs";
+import { type ElkNode } from "../src/elkjs/types";
 
 const edges = [
   { id: "ac", sourceId: "a", targetId: "c" },

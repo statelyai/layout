@@ -1,6 +1,7 @@
 import OracleELK from "elkjs/lib/elk.bundled.js";
 import { describe, expect, it } from "vitest";
-import NativeELK, { type ElkEdge, type ElkNode } from "../src/elkjs";
+import NativeELK from "../src/elkjs";
+import { type ElkEdge, type ElkNode } from "../src/elkjs/types";
 
 type Direction = "DOWN" | "RIGHT";
 

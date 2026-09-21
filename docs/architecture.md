@@ -22,6 +22,13 @@ format.
 3. The isolated `@statelyai/layout/elkjs` entry translates ELK JSON at the
    package boundary. ELK option names do not enter the native API.
 
+`getLayout` and the elkjs adapter dispatch through one typed internal layout
+engine; direct native layout functions are the same underlying algorithm
+implementations. ELK-specific graph translation, defaults, coercion, errors,
+and serialization remain local to the versioned compatibility adapter. A
+shared algorithm only gains a narrow compatibility policy when its behavior
+must genuinely diverge.
+
 ## Layered pipeline
 
 <!-- built-in measured phases from src/layered/index.ts -->
@@ -43,7 +50,9 @@ Compatibility has three independently measured levels:
 
 1. Input/output API compatibility through the isolated `elkjs` adapter.
 2. Algorithmic invariants and deterministic behavior.
-3. Geometry comparison against elkjs with tolerances and quality metrics.
+3. Exact normalized geometry comparison against elkjs as the compatibility
+   target.
 
-Exact coordinates are not treated as the only correctness criterion: crossing
-count, bends, area, constraint violations, and displacement matter too.
+Native layout additionally tracks quality metrics such as crossing count,
+bends, area, constraint violations, and displacement. Those metrics may justify
+native improvements, but they cannot substitute for exact elkjs compatibility.

@@ -1,7 +1,7 @@
 # Parity
 
 Parity is tracked at three separate levels. Passing API tests does not imply
-that native geometry matches ELK.
+that compatibility geometry exactly matches ELK.
 
 ## elkjs 0.11.1 public suite
 
@@ -84,6 +84,8 @@ explicitly refreshes the upstream catalog and converted ELK JSON inputs.
 1. All applicable elkjs public behaviors pass through the compatibility entry.
 2. Relevant ELK Java fixtures and invariants are ported with provenance.
 3. Algorithm phase choices and typed options match supported ELK behavior.
-4. Geometry is differential-tested with documented exact/tolerance rules.
+4. Compatibility geometry is exact after documented normalization of
+   non-layout runtime metadata; tolerance and quality tests belong to native
+   layout instead.
 5. Native-only partial, incremental, and route-only behaviors have independent
    property and benchmark coverage.
