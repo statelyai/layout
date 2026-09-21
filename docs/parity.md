@@ -39,7 +39,7 @@ require style for every migration entry point.
 | Box                   | `getBoxLayout`                 | Java SIMPLE node placement; grouped modes pending    |
 | Layered               | `getLayeredLayout`             | Complete 152-option ELK 0.11.1 layered parity target |
 | Fixed                 | `getFixedLayout`               | Preserves authored geometry and routes               |
-| Random                | `getRandomLayout`              | Seeded Java-exact nodes; edge-route parity pending   |
+| Random                | `getRandomLayout`              | Exact ELK adapter; corrected native edge endpoints   |
 | Rectangle packing     | `getRectanglePackingLayout`    | Deterministic shelf baseline; not ELK parity         |
 | SPOrE compaction      | `getSporeCompactionLayout`     | Initial relative-direction baseline; not ELK parity  |
 | SPOrE overlap removal | `getSporeOverlapRemovalLayout` | Initial separation baseline; not ELK parity          |

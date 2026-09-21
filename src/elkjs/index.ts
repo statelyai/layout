@@ -5,7 +5,8 @@ import {
   type ElkLayeredOptionValueByName,
   type LayeredAdvancedOptions,
 } from "../layered/elk-options";
-import { executeBuiltInLayout } from "../internal/layout-engine";
+import { executeElkjs0111Layout } from "../internal/layout-engine";
+import { elkjs0111ProviderBounds } from "../random";
 import type {
   ElkConstructorArguments,
   ElkLayoutAlgorithmDescription,
@@ -544,7 +545,7 @@ export default class ELK {
       algorithm === "layered" ? 12 : 0,
     );
     const laidOut = await (algorithm === "sporeCompaction"
-      ? executeBuiltInLayout({
+      ? executeElkjs0111Layout({
           algorithm: "sporeCompaction",
           graph: graph_,
           options: {
@@ -553,7 +554,7 @@ export default class ELK {
           },
         })
       : algorithm === "sporeOverlap"
-        ? executeBuiltInLayout({
+        ? executeElkjs0111Layout({
             algorithm: "sporeOverlap",
             graph: graph_,
             options: {
@@ -562,7 +563,7 @@ export default class ELK {
             },
           })
         : algorithm === "rectpacking"
-          ? executeBuiltInLayout({
+          ? executeElkjs0111Layout({
               algorithm: "rectpacking",
               graph: graph_,
               options: {
@@ -571,7 +572,7 @@ export default class ELK {
               },
             })
           : algorithm === "random"
-            ? executeBuiltInLayout({
+            ? executeElkjs0111Layout({
                 algorithm: "random",
                 graph: graph_,
                 options: {
@@ -582,7 +583,7 @@ export default class ELK {
                 },
               })
             : algorithm === "box"
-              ? executeBuiltInLayout({
+              ? executeElkjs0111Layout({
                   algorithm: "box",
                   graph: graph_,
                   options: {
@@ -600,12 +601,12 @@ export default class ELK {
                   },
                 })
               : algorithm === "fixed"
-                ? executeBuiltInLayout({
+                ? executeElkjs0111Layout({
                     algorithm: "fixed",
                     graph: graph_,
                     options: { direction: getDirection(layoutOptions) },
                   })
-                : executeBuiltInLayout({
+                : executeElkjs0111Layout({
                     algorithm: "layered",
                     graph: graph_,
                     options: {
@@ -794,6 +795,15 @@ export default class ELK {
       }
     }
     applyLayout(graph, laidOut, padding, layoutOptions);
+    const providerBounds = (
+      laidOut as typeof laidOut & {
+        [elkjs0111ProviderBounds]?: { width: number; height: number };
+      }
+    )[elkjs0111ProviderBounds];
+    if (providerBounds) {
+      graph.width = providerBounds.width;
+      graph.height = providerBounds.height;
+    }
     for (const restoration of hierarchyRestorations) {
       restoration.edge.sources = restoration.sources;
       restoration.edge.targets = restoration.targets;

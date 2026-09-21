@@ -4,6 +4,7 @@ import { getLayout } from "../src";
 import { getFixedLayout } from "../src/fixed";
 import {
   executeBuiltInLayout,
+  executeElkjs0111Layout,
   executeLayoutAlgorithm,
   getBuiltInLayoutAlgorithm,
 } from "../src/internal/layout-engine";
@@ -59,5 +60,28 @@ describe("shared layout engine", () => {
     const orchestrated = await getLayout({ graph, algorithm });
 
     expect(direct.nodes).toEqual(orchestrated.graph.nodes);
+  });
+
+  it("isolates pinned ELK quirks from improved native behavior", async () => {
+    const edgedGraph = createGraph({
+      nodes: [
+        { id: "a", width: 30, height: 20 },
+        { id: "b", width: 50, height: 40 },
+      ],
+      edges: [{ id: "ab", sourceId: "a", targetId: "b" }],
+    });
+    const native = await executeBuiltInLayout({
+      algorithm: "random",
+      graph: edgedGraph,
+      options: { seed: 123 },
+    });
+    const compatible = await executeElkjs0111Layout({
+      algorithm: "random",
+      graph: edgedGraph,
+      options: { seed: 123 },
+    });
+
+    expect(native.nodes).toEqual(compatible.nodes);
+    expect(native.edges[0]?.points).not.toEqual(compatible.edges[0]?.points);
   });
 });

@@ -31,6 +31,10 @@ and serialization remain local to the versioned compatibility adapter. A
 shared algorithm only gains a narrow compatibility policy when its behavior
 must genuinely diverge.
 
+For example, native Random routing connects the actual endpoints, while the
+pinned compatibility policy reproduces elkjs 0.11.1's source-as-target routing
+quirk and provider-sized graph bounds.
+
 ## Layered pipeline
 
 <!-- built-in measured phases from src/layered/index.ts -->

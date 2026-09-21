@@ -3,7 +3,7 @@ import { boxAlgorithm, type BoxLayoutOptions } from "../box";
 import { fixedAlgorithm, type FixedLayoutOptions } from "../fixed";
 import { layeredAlgorithm, type LayeredLayoutOptions } from "../layered";
 import { rectanglePackingAlgorithm, type RectanglePackingLayoutOptions } from "../packing";
-import { randomAlgorithm, type RandomLayoutOptions } from "../random";
+import { elkjs0111RandomAlgorithm, randomAlgorithm, type RandomLayoutOptions } from "../random";
 import {
   sporeCompactionAlgorithm,
   sporeOverlapRemovalAlgorithm,
@@ -31,6 +31,13 @@ export const builtInLayoutAlgorithms = {
   rectpacking: rectanglePackingAlgorithm,
   sporeCompaction: sporeCompactionAlgorithm,
   sporeOverlap: sporeOverlapRemovalAlgorithm,
+} satisfies {
+  [Id in BuiltInLayoutAlgorithmId]: LayoutAlgorithm<BuiltInLayoutOptionsById[Id]>;
+};
+
+const elkjs0111LayoutAlgorithms = {
+  ...builtInLayoutAlgorithms,
+  random: elkjs0111RandomAlgorithm,
 } satisfies {
   [Id in BuiltInLayoutAlgorithmId]: LayoutAlgorithm<BuiltInLayoutOptionsById[Id]>;
 };
@@ -87,6 +94,24 @@ export function executeBuiltInLayout<N, E, G, P, Id extends BuiltInLayoutAlgorit
   | Promise<VisualGraph<N, E, G, P>> {
   return executeLayoutAlgorithm({
     algorithm: builtInLayoutAlgorithms[algorithm] as LayoutAlgorithm<BuiltInLayoutOptionsById[Id]>,
+    graph,
+    options,
+    context: createDirectExecutionContext(),
+  });
+}
+
+/** Execute through the pinned elkjs 0.11.1 compatibility policy. */
+export function executeElkjs0111Layout<N, E, G, P, Id extends BuiltInLayoutAlgorithmId>({
+  algorithm,
+  graph,
+  options,
+}: ExecuteBuiltInLayoutRequest<N, E, G, P, Id>):
+  | VisualGraph<N, E, G, P>
+  | Promise<VisualGraph<N, E, G, P>> {
+  return executeLayoutAlgorithm({
+    algorithm: elkjs0111LayoutAlgorithms[algorithm] as LayoutAlgorithm<
+      BuiltInLayoutOptionsById[Id]
+    >,
     graph,
     options,
     context: createDirectExecutionContext(),

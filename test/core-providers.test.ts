@@ -51,6 +51,34 @@ describe("ELK core layout providers", () => {
     );
   });
 
+  it("preserves ELK 0.11.1 Random edge geometry in the compatibility adapter", async () => {
+    const input = {
+      id: "root",
+      layoutOptions: { "elk.algorithm": "random", "elk.randomSeed": "123" },
+      children: structuredClone(nodes),
+      edges: [
+        { id: "ab", sources: ["a"], targets: ["b"] },
+        { id: "bc", sources: ["b"], targets: ["c"] },
+      ],
+    };
+    const actual = await new ELK().layout(structuredClone(input));
+    const expected = await new OracleELK().layout(structuredClone(input));
+    const geometry = (graph: typeof actual) => ({
+      width: graph.width,
+      height: graph.height,
+      edges: graph.edges?.map((edge) => ({
+        id: edge.id,
+        sections: edge.sections?.map((section) => ({
+          startPoint: section.startPoint,
+          endPoint: section.endPoint,
+          bendPoints: section.bendPoints,
+        })),
+      })),
+    });
+
+    expect(geometry(actual)).toEqual(geometry(expected));
+  });
+
   it.each(["org.eclipse.elk.box", "org.eclipse.elk.random"])(
     "accepts the fully-qualified compatibility id %s",
     async (algorithm) => {
