@@ -49,6 +49,7 @@ const elkjs0111LayoutAlgorithms = {
 };
 
 export function getBuiltInLayoutAlgorithm(id: string): LayoutAlgorithm<unknown> | undefined {
+  if (!Object.hasOwn(builtInLayoutAlgorithms, id)) return undefined;
   return builtInLayoutAlgorithms[id as BuiltInLayoutAlgorithmId] as
     | LayoutAlgorithm<unknown>
     | undefined;

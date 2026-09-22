@@ -72,7 +72,8 @@ Migration-compatible package aliases are also available for
 and `lib/elk-worker.min.js`. The worker entries implement elkjs's message
 protocol in-process, including custom `workerFactory` construction and
 termination. Both ESM imports and the original CommonJS `require()` style are
-supported.
+supported. Worker calls merge constructor defaults with per-layout overrides;
+terminal worker errors reject pending and later requests.
 
 The adapter accepts ELK JSON and option aliases, translates to
 `@statelyai/graph`, runs native algorithms, and translates the result back.

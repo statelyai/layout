@@ -27,6 +27,8 @@ describe("shared layout engine", () => {
   it("exposes the same built-in algorithms to both adapters", () => {
     expect(getBuiltInLayoutAlgorithm("layered")?.id).toBe("layered");
     expect(getBuiltInLayoutAlgorithm("unknown")).toBeUndefined();
+    expect(getBuiltInLayoutAlgorithm("toString")).toBeUndefined();
+    expect(getBuiltInLayoutAlgorithm("__proto__")).toBeUndefined();
   });
 
   it("executes typed built-in requests", async () => {
@@ -83,5 +85,26 @@ describe("shared layout engine", () => {
 
     expect(native.nodes).toEqual(compatible.nodes);
     expect(native.edges[0]?.points).not.toEqual(compatible.edges[0]?.points);
+  });
+
+  it("keeps seeded compatibility execution repeatable", async () => {
+    const input = createGraph({
+      nodes: [
+        { id: "a", width: 30, height: 20 },
+        { id: "b", width: 50, height: 40 },
+      ],
+      edges: [{ id: "ab", sourceId: "a", targetId: "b" }],
+    });
+    const request = { algorithm: "random" as const, options: { seed: 123 } };
+    const first = await executeElkjs0111Layout({
+      ...request,
+      graph: structuredClone(input),
+    });
+    const second = await executeElkjs0111Layout({
+      ...request,
+      graph: structuredClone(input),
+    });
+
+    expect(first).toEqual(second);
   });
 });

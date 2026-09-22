@@ -27,6 +27,8 @@ interface WorkerAnswer {
 
 interface WorkerLike {
   onmessage: ((event: MessageEvent<WorkerAnswer>) => void) | null;
+  onerror: ((event: ErrorEvent) => void) | null;
+  onmessageerror: ((event: MessageEvent) => void) | null;
   postMessage(message: WorkerRequest): void;
   terminate(): void;
 }
@@ -38,6 +40,7 @@ class PromisedWorker {
     { resolve(value: unknown): void; reject(reason?: unknown): void }
   >();
   #id = 0;
+  #failure: Error | undefined;
 
   constructor(worker: WorkerLike) {
     this.#worker = worker;
@@ -48,9 +51,12 @@ class PromisedWorker {
       if (event.data.error !== undefined) resolver.reject(event.data.error);
       else resolver.resolve(event.data.data);
     };
+    worker.onerror = (event) => this.#rejectAll(event.error ?? event.message);
+    worker.onmessageerror = (event) => this.#rejectAll(event.data);
   }
 
   postMessage<T>(message: WorkerRequest): Promise<T> {
+    if (this.#failure) return Promise.reject(this.#failure);
     const id = this.#id++;
     return new Promise<T>((resolve, reject) => {
       this.#resolvers.set(id, { resolve: resolve as (value: unknown) => void, reject });
@@ -60,6 +66,13 @@ class PromisedWorker {
 
   terminate(): void {
     this.#worker.terminate();
+  }
+
+  #rejectAll(reason: unknown): void {
+    const error = reason instanceof Error ? reason : new Error(String(reason ?? "Worker failed"));
+    this.#failure = error;
+    for (const resolver of this.#resolvers.values()) resolver.reject(error);
+    this.#resolvers.clear();
   }
 }
 
@@ -96,7 +109,7 @@ export class WorkerELK implements ElkInterface {
     return this.#worker.postMessage({
       cmd: "layout",
       graph,
-      layoutOptions: args.layoutOptions ?? this.#defaultLayoutOptions,
+      layoutOptions: { ...this.#defaultLayoutOptions, ...args.layoutOptions },
       options: {
         logging: args.logging ?? false,
         measureExecutionTime: args.measureExecutionTime ?? false,

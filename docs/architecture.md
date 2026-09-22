@@ -59,7 +59,8 @@ Compatibility has three independently measured levels:
 1. Input/output API compatibility through the isolated `elkjs` adapter.
 2. Algorithmic invariants and deterministic behavior.
 3. Exact normalized geometry comparison against elkjs as the compatibility
-   target.
+   target, with floating coordinates compared after rounding to 12 decimal
+   digits only when operation order differs.
 
 Native layout additionally tracks quality metrics such as crossing count,
 bends, area, constraint violations, and displacement. Those metrics may justify
