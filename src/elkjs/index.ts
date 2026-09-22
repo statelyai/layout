@@ -1,15 +1,12 @@
 import { createGraph, type Graph } from "@statelyai/graph";
-import { getBoxLayout } from "../box";
-import { getFixedLayout } from "../fixed";
-import { getLayeredLayout } from "../layered";
+import type { getLayeredLayout } from "../layered";
 import {
   elkLayeredOptionDefinitions,
   type ElkLayeredOptionValueByName,
   type LayeredAdvancedOptions,
 } from "../layered/elk-options";
-import { getRectanglePackingLayout } from "../packing";
-import { getRandomLayout } from "../random";
-import { getSporeCompactionLayout, getSporeOverlapRemovalLayout } from "../spore";
+import { executeElkjs0111Layout } from "../internal/layout-engine";
+import { elkjs0111ResultPolicy, type Elkjs0111ResultPolicy } from "../internal/elkjs-compatibility";
 import type {
   ElkConstructorArguments,
   ElkLayoutAlgorithmDescription,
@@ -25,6 +22,11 @@ import type {
   ElkShape,
   LaidOutElkNode,
 } from "./types";
+import type {
+  ElkLayoutArguments as PublicElkLayoutArguments,
+  ElkNode as PublicElkNode,
+  LaidOutElkNode as PublicLaidOutElkNode,
+} from "./public-types";
 
 function isLayoutEdgeLabel(label: ElkLabel): boolean {
   return (
@@ -34,24 +36,27 @@ function isLayoutEdgeLabel(label: ElkLabel): boolean {
 }
 
 export type {
-  ElkConstructorArguments,
+  ELK,
+  ELKConstructorArguments,
   ElkCommonDescription,
-  ElkGraphElement,
-  ElkId,
   ElkEdge,
   ElkEdgeSection,
+  ElkExtendedEdge,
+  ElkGraphElement,
   ElkLabel,
   ElkLayoutArguments,
   ElkLayoutAlgorithmDescription,
   ElkLayoutCategoryDescription,
   ElkLayoutOptionDescription,
-  ElkLogging,
   ElkNode,
   ElkPoint,
   ElkPort,
+  ElkPrimitiveEdge,
   ElkShape,
+  LayoutOptions,
   LaidOutElkNode,
-} from "./types";
+} from "./public-types";
+export type { ElkId, ElkLogging } from "./types";
 
 export default class ELK {
   readonly #options: ElkConstructorArguments;
@@ -119,7 +124,19 @@ export default class ELK {
 
   terminateWorker(): void {}
 
-  async layout<T extends ElkNode>(
+  layout<T extends PublicElkNode>(
+    graph: T,
+    arguments_?: PublicElkLayoutArguments,
+  ): Promise<PublicElkNode & PublicLaidOutElkNode<T>>;
+  layout<T extends ElkNode>(graph: T, arguments_?: ElkLayoutArguments): Promise<LaidOutElkNode<T>>;
+  layout<T extends ElkNode>(
+    graph: T,
+    arguments_: ElkLayoutArguments = {},
+  ): Promise<LaidOutElkNode<T>> {
+    return this.#layout(graph, arguments_);
+  }
+
+  async #layout<T extends ElkNode>(
     graph: T,
     arguments_: ElkLayoutArguments = {},
   ): Promise<LaidOutElkNode<T>> {
@@ -246,7 +263,7 @@ export default class ELK {
       }
       for (const child of graph.children ?? []) {
         if ((child.children?.length ?? 0) === 0) continue;
-        await this.layout(child, {
+        await this.#layout(child, {
           ...arguments_,
           layoutOptions: {
             ...arguments_.layoutOptions,
@@ -361,7 +378,7 @@ export default class ELK {
           children: [...(child.children ?? []), ...proxyByKind.values()],
           edges: temporaryEdges,
         };
-        await this.layout(temporaryChild, {
+        await this.#layout(temporaryChild, {
           ...arguments_,
           layoutOptions: {
             ...arguments_.layoutOptions,
@@ -527,31 +544,49 @@ export default class ELK {
       getOption(layoutOptions, "padding"),
       algorithm === "layered" ? 12 : 0,
     );
-    const laidOut =
-      algorithm === "sporeCompaction"
-        ? getSporeCompactionLayout(graph_, {
+    const laidOut = await (algorithm === "sporeCompaction"
+      ? executeElkjs0111Layout({
+          algorithm: "sporeCompaction",
+          graph: graph_,
+          options: {
             padding,
             spacing: getNumberOption(layoutOptions, "spacing.nodeNode"),
-          })
-        : algorithm === "sporeOverlap"
-          ? getSporeOverlapRemovalLayout(graph_, {
+          },
+        })
+      : algorithm === "sporeOverlap"
+        ? executeElkjs0111Layout({
+            algorithm: "sporeOverlap",
+            graph: graph_,
+            options: {
               padding,
               spacing: getNumberOption(layoutOptions, "spacing.nodeNode"),
+            },
+          })
+        : algorithm === "rectpacking"
+          ? executeElkjs0111Layout({
+              algorithm: "rectpacking",
+              graph: graph_,
+              options: {
+                padding: getOption(layoutOptions, "padding") === undefined ? 15 : padding,
+                spacing: getNumberOption(layoutOptions, "spacing.nodeNode") ?? 15,
+              },
             })
-          : algorithm === "rectpacking"
-            ? getRectanglePackingLayout(graph_, {
-                padding,
-                spacing: getNumberOption(layoutOptions, "spacing.nodeNode"),
-              })
-            : algorithm === "random"
-              ? getRandomLayout(graph_, {
+          : algorithm === "random"
+            ? executeElkjs0111Layout({
+                algorithm: "random",
+                graph: graph_,
+                options: {
                   padding: getOption(layoutOptions, "padding") === undefined ? 15 : padding,
                   spacing: getNumberOption(layoutOptions, "spacing.nodeNode"),
                   aspectRatio: getNumberOption(layoutOptions, "aspectRatio"),
                   seed: getNumberOption(layoutOptions, "randomSeed"),
-                })
-              : algorithm === "box"
-                ? getBoxLayout(graph_, {
+                },
+              })
+            : algorithm === "box"
+              ? executeElkjs0111Layout({
+                  algorithm: "box",
+                  graph: graph_,
+                  options: {
                     padding: getOption(layoutOptions, "padding") === undefined ? 15 : padding,
                     spacing: getNumberOption(layoutOptions, "spacing.nodeNode"),
                     aspectRatio: getNumberOption(layoutOptions, "aspectRatio"),
@@ -563,10 +598,18 @@ export default class ELK {
                       );
                       return getNumberOption(child?.layoutOptions ?? {}, "priority");
                     },
+                  },
+                })
+              : algorithm === "fixed"
+                ? executeElkjs0111Layout({
+                    algorithm: "fixed",
+                    graph: graph_,
+                    options: { direction: getDirection(layoutOptions) },
                   })
-                : algorithm === "fixed"
-                  ? getFixedLayout(graph_, { direction: getDirection(layoutOptions) })
-                  : getLayeredLayout(graph_, {
+                : executeElkjs0111Layout({
+                    algorithm: "layered",
+                    graph: graph_,
+                    options: {
                       direction: getDirection(layoutOptions),
                       spacing: {
                         node:
@@ -638,7 +681,8 @@ export default class ELK {
                           ),
                         } as ElkLayeredOptionValueByName;
                       },
-                    });
+                    },
+                  }));
     if (hierarchyRestorations.length > 0) {
       const direction = getDirection(layoutOptions);
       const horizontal = direction === "right" || direction === "left";
@@ -750,7 +794,16 @@ export default class ELK {
         );
       }
     }
-    applyLayout(graph, laidOut, padding, layoutOptions);
+    const resultPolicy = (
+      laidOut as typeof laidOut & {
+        [elkjs0111ResultPolicy]?: Elkjs0111ResultPolicy;
+      }
+    )[elkjs0111ResultPolicy];
+    applyLayout(graph, laidOut, padding, layoutOptions, resultPolicy);
+    if (resultPolicy?.providerBounds) {
+      graph.width = resultPolicy.providerBounds.width;
+      graph.height = resultPolicy.providerBounds.height;
+    }
     for (const restoration of hierarchyRestorations) {
       restoration.edge.sources = restoration.sources;
       restoration.edge.targets = restoration.targets;
@@ -771,7 +824,7 @@ export default class ELK {
       for (const child of graph.children ?? []) {
         if ((child.children?.length ?? 0) === 0) continue;
         const position = { x: child.x, y: child.y };
-        await this.layout(child, {
+        await this.#layout(child, {
           ...arguments_,
           logging: false,
           measureExecutionTime: false,
@@ -1338,6 +1391,7 @@ function applyLayout(
   graph: ReturnType<typeof getLayeredLayout>,
   padding: { top: number; right: number; bottom: number; left: number },
   layoutOptions: Readonly<Record<string, unknown>>,
+  resultPolicy?: Elkjs0111ResultPolicy,
 ): void {
   const nodeById = new Map(graph.nodes.map((node) => [node.id, node]));
   const edgeById = new Map(graph.edges.map((edge) => [edge.id, edge]));
@@ -1361,6 +1415,13 @@ function applyLayout(
     placePortLabels(child, layoutOptions);
   }
   for (const edge of root.edges ?? []) {
+    if (resultPolicy?.preserveEdgeSections) {
+      for (const section of edge.sections ?? []) {
+        section.incomingShape ??= edge.sources?.[0] ?? edge.source;
+        section.outgoingShape ??= edge.targets?.[0] ?? edge.target;
+      }
+      continue;
+    }
     const laidOutEdge = edgeById.get(String(edge.id));
     if (!laidOutEdge) {
       if (getBooleanOption(edge.layoutOptions ?? {}, "noLayout") === true) {
@@ -1417,7 +1478,9 @@ function applyLayout(
       labelY += (label.height ?? 0) + labelLabelSpacing;
     }
   }
-  normalizeElkGraphBounds(root, padding, layoutOptions);
+  if (!resultPolicy?.skipBoundsNormalization) {
+    normalizeElkGraphBounds(root, padding, layoutOptions);
+  }
 }
 
 function normalizeElkGraphBounds(

@@ -67,9 +67,29 @@ const elk = new ELK();
 const legacyResult = await elk.layout(elkJsonGraph);
 ```
 
+Migration-compatible package aliases are also available for
+`lib/main.js`, `lib/elk-api.js`, `lib/elk.bundled.js`, `lib/elk-worker.js`,
+and `lib/elk-worker.min.js`. The worker entries implement elkjs's message
+protocol in-process, including custom `workerFactory` construction and
+termination. Both ESM imports and the original CommonJS `require()` style are
+supported. Worker calls merge constructor defaults with per-layout overrides;
+terminal worker errors reject pending and later requests.
+
 The adapter accepts ELK JSON and option aliases, translates to
 `@statelyai/graph`, runs native algorithms, and translates the result back.
-Native algorithms never consume ELK JSON directly.
+Native algorithms never consume ELK JSON directly. `getLayout` and the
+compatibility adapter dispatch through one typed internal engine; direct native
+functions expose those same algorithm implementations. ELK-specific defaults
+and quirks remain local to the pinned compatibility adapter.
+
+Compatibility policies currently preserve exact elkjs 0.11.1 Random geometry
+and Box SIMPLE geometry, including provider bounds and whether edge sections
+are routed or left authored. Rectangle Packing has an exact default baseline;
+its full Java packing strategy remains in progress.
+
+The compatibility entry's named graph, edge, option, and result types are
+mutually assignable with the declarations shipped by `elkjs@0.11.1`. Its
+default class also accepts the library's broader internal graph inputs.
 
 <!-- fixed-port placement and inline center-label guarantees from src/layered/index.ts and src/layered/strategies.ts -->
 

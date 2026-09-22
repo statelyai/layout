@@ -1,6 +1,6 @@
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { pathToFileURL } from "node:url";
-import type { ElkEdge, ElkNode } from "../src/elkjs";
+import type { ElkEdge, ElkNode } from "../src/elkjs/types";
 
 const args = Object.fromEntries(
   process.argv

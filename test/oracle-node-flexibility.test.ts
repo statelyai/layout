@@ -1,6 +1,7 @@
 import OracleELK from "elkjs/lib/elk.bundled.js";
 import { describe, expect, it } from "vitest";
-import NativeELK, { type ElkNode } from "../src/elkjs";
+import NativeELK from "../src/elkjs";
+import { type ElkNode } from "../src/elkjs/types";
 
 function fixture(
   flexibility: "PORT_POSITION" | "NODE_SIZE" | "NODE_SIZE_WHERE_SPACE_PERMITS",

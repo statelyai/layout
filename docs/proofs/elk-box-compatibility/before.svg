@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="600" height="400" viewBox="0 0 600 400">
+  <style>
+    svg { background: #0c1018; font-family: ui-sans-serif, system-ui, sans-serif; }
+    .title { fill: #f5f7fb; font-size: 24px; font-weight: 800; }
+    .metric { fill: #a9b3c7; font-size: 16px; }
+    .bounds { fill: none; stroke: #ef4444; stroke-width: 2; stroke-dasharray: 6 5; }
+    .node { fill: #183c23; stroke: #35a854; stroke-width: 2; }
+    .label { fill: #f5f7fb; font-size: 10px; font-weight: 700; text-anchor: middle; }
+    .edge { fill: none; stroke: #f59e0b; stroke-width: 2; marker-end: url(#arrow); }
+  </style>
+  <rect x="0" y="0" width="600" height="400" fill="#0c1018"/>
+  <defs><marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#fbbf24"/></marker></defs>
+  <text class="title" x="32" y="42">Before — generic completion</text>
+  <text class="metric" x="32" y="70">root 80 × 130 · generated a → b route</text>
+  <g transform="translate(160 92) scale(2)">
+    <rect class="bounds" x="0" y="0" width="80" height="130" fill="#30151d" stroke="#fb7185" stroke-width="2"/>
+    <polygon points="29,25 31,25 41,110 39,110" fill="#fbbf24"/>
+    <polygon points="36,104 44,108 40,114" fill="#fbbf24"/>
+    <rect class="node" x="15" y="15" width="30" height="20" rx="3"/><text class="label" x="30" y="28">a</text>
+    <rect class="node" x="15" y="90" width="50" height="40" rx="3"/><text class="label" x="40" y="113">b</text>
+    <rect class="node" x="60" y="15" width="20" height="60" rx="3"/><text class="label" x="70" y="48">c</text>
+  </g>
+</svg>

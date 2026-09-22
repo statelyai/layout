@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="600" height="400" viewBox="0 0 600 400">
+  <style>
+    svg { background: #0c1018; font-family: ui-sans-serif, system-ui, sans-serif; }
+    .title { fill: #f5f7fb; font-size: 24px; font-weight: 800; }
+    .metric { fill: #a9b3c7; font-size: 16px; }
+    .bounds { fill: none; stroke: #35a854; stroke-width: 2; stroke-dasharray: 6 5; }
+    .node { fill: #183c23; stroke: #35a854; stroke-width: 2; }
+    .label { fill: #f5f7fb; font-size: 10px; font-weight: 700; text-anchor: middle; }
+  </style>
+  <rect x="0" y="0" width="600" height="400" fill="#0c1018"/>
+  <text class="title" x="32" y="42">After — elkjs 0.11.1 Box</text>
+  <text class="metric" x="32" y="70">root 95 × 145 · edge remains unrouted</text>
+  <g transform="translate(160 92) scale(2)">
+    <rect class="bounds" x="0" y="0" width="95" height="145" fill="#10271a" stroke="#4ade80" stroke-width="2"/>
+    <rect class="node" x="15" y="15" width="30" height="20" rx="3"/><text class="label" x="30" y="28">a</text>
+    <rect class="node" x="15" y="90" width="50" height="40" rx="3"/><text class="label" x="40" y="113">b</text>
+    <rect class="node" x="60" y="15" width="20" height="60" rx="3"/><text class="label" x="70" y="48">c</text>
+  </g>
+</svg>

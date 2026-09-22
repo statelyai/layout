@@ -1,6 +1,7 @@
 import type { Graph, VisualGraph, VisualNode } from "@statelyai/graph";
 import { getNodeSize, type LayoutOptions } from "@statelyai/graph/layout";
 import { getFixedLayout } from "./fixed";
+import { setElkjs0111ResultPolicy } from "./internal/elkjs-compatibility";
 import type { LayoutPadding } from "./layered";
 import type { LayoutAlgorithm } from "./types";
 
@@ -70,5 +71,26 @@ export const rectanglePackingAlgorithm: LayoutAlgorithm<RectanglePackingLayoutOp
   },
   layout(graph, options) {
     return getRectanglePackingLayout(graph, options ?? {});
+  },
+};
+
+/** Pinned output policy used only by the elkjs 0.11.1 compatibility adapter. */
+export const elkjs0111RectanglePackingAlgorithm: LayoutAlgorithm<RectanglePackingLayoutOptions> = {
+  ...rectanglePackingAlgorithm,
+  layout(graph, options = {}) {
+    const result = getRectanglePackingLayout(graph, options);
+    const padding = getPadding(options.padding);
+    return setElkjs0111ResultPolicy(result, {
+      providerBounds:
+        result.nodes.length === 0
+          ? { width: 0, height: 0 }
+          : {
+              width: Math.max(...result.nodes.map((node) => node.x + node.width)) + padding.right,
+              height:
+                Math.max(...result.nodes.map((node) => node.y + node.height)) + padding.bottom,
+            },
+      preserveEdgeSections: true,
+      skipBoundsNormalization: true,
+    });
   },
 };

@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
-import ELK, { type ElkNode } from "../src/elkjs";
+import ELK from "../src/elkjs";
+import { type ElkNode } from "../src/elkjs/types";
 
 const directions = ["DOWN", "UP", "RIGHT", "LEFT"];
 function separate(a: ElkNode, b: ElkNode) {

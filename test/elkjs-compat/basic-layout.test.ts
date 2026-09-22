@@ -6,7 +6,7 @@
 import { describe, expect, it } from "vitest";
 import OracleELK from "elkjs/lib/elk.bundled.js";
 import ELK from "../../src/elkjs";
-import type { ElkNode } from "../../src/elkjs";
+import type { ElkNode } from "../../src/elkjs/types";
 
 describe("elkjs compatibility: basic layout", () => {
   it("lays out a flat layered graph", async () => {

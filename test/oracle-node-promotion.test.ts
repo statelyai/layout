@@ -1,6 +1,7 @@
 import OracleELK from "elkjs/lib/elk.bundled.js";
 import { describe, expect, it } from "vitest";
-import NativeELK, { type ElkNode } from "../src/elkjs";
+import NativeELK from "../src/elkjs";
+import { type ElkNode } from "../src/elkjs/types";
 
 function layerRanks(graph: ElkNode): number[] {
   const positions = [...new Set((graph.children ?? []).map((node) => node.x ?? 0))].sort(

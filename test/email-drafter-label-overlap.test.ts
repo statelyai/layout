@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
-import ELK, { type ElkNode } from "../src/elkjs";
+import ELK from "../src/elkjs";
+import { type ElkNode } from "../src/elkjs/types";
 import fixture from "./fixtures/email-drafter-label-overlap.json";
 
 describe.each(["DOWN", "UP", "LEFT", "RIGHT"])("email drafter labels (%s)", (direction) => {

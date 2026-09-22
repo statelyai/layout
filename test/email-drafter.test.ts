@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
-import ELK, { type ElkNode } from "../src/elkjs";
+import ELK from "../src/elkjs";
+import { type ElkNode } from "../src/elkjs/types";
 import legacyFixture from "./fixtures/email-drafter-viz.json";
 import stateAnchorFixture from "./fixtures/email-drafter-state-anchors.json";
 
@@ -119,7 +120,7 @@ it.each(["label", "edge"])(
     const result = await new ELK().layout(fixture);
     const owner = result.children!.find((node) => node.id === "parent")!;
     const headers: Array<{ id: string; x: number; y: number; width: number; height: number }> = [];
-    const collectHeaders = (node: import("../src/elkjs").ElkNode, offsetX = 0, offsetY = 0) => {
+    const collectHeaders = (node: ElkNode, offsetX = 0, offsetY = 0) => {
       const x = offsetX + (node.x ?? 0);
       const y = offsetY + (node.y ?? 0);
       if (node.id !== result.id) {

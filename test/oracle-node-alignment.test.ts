@@ -1,6 +1,7 @@
 import OracleELK from "elkjs/lib/elk.bundled.js";
 import { expect, it } from "vitest";
-import NativeELK, { type ElkNode } from "../src/elkjs";
+import NativeELK from "../src/elkjs";
+import { type ElkNode } from "../src/elkjs/types";
 
 for (const alignment of ["AUTOMATIC", "LEFT", "RIGHT", "TOP", "BOTTOM", "CENTER"] as const) {
   it(`matches ELK per-node ${alignment} alignment`, async () => {

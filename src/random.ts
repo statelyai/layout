@@ -8,6 +8,7 @@
 import type { Graph, Point, VisualGraph, VisualNode } from "@statelyai/graph";
 import { getNodeSize, type LayoutOptions } from "@statelyai/graph/layout";
 import { getFixedLayout } from "./fixed";
+import { setElkjs0111ResultPolicy } from "./internal/elkjs-compatibility";
 import { JavaRandom } from "./java-random";
 import type { LayoutPadding } from "./layered";
 import type { LayoutAlgorithm } from "./types";
@@ -18,6 +19,21 @@ export interface RandomLayoutOptions extends Pick<LayoutOptions, "direction" | "
   aspectRatio?: number;
   seed?: number;
 }
+
+interface RandomLayoutBehavior {
+  elkjs0111EdgeTargetBug: boolean;
+  preserveProviderBounds: boolean;
+}
+
+const nativeBehavior: RandomLayoutBehavior = {
+  elkjs0111EdgeTargetBug: false,
+  preserveProviderBounds: false,
+};
+
+const elkjs0111Behavior: RandomLayoutBehavior = {
+  elkjs0111EdgeTargetBug: true,
+  preserveProviderBounds: true,
+};
 
 function getPadding(value: RandomLayoutOptions["padding"]): LayoutPadding {
   if (typeof value === "number") {
@@ -55,6 +71,14 @@ export function getRandomLayout<N, E, G, P>(
   graph: Graph<N, E, G, P> | VisualGraph<N, E, G, P>,
   options: RandomLayoutOptions = {},
 ): VisualGraph<N, E, G, P> {
+  return getRandomLayoutWithBehavior(graph, options, nativeBehavior);
+}
+
+function getRandomLayoutWithBehavior<N, E, G, P>(
+  graph: Graph<N, E, G, P> | VisualGraph<N, E, G, P>,
+  options: RandomLayoutOptions,
+  behavior: RandomLayoutBehavior,
+): VisualGraph<N, E, G, P> {
   if (graph.nodes.length === 0) return getFixedLayout(graph, options);
   const random = new JavaRandom(options.seed && options.seed !== 0 ? options.seed : Date.now());
   const aspectRatio = Math.fround(options.aspectRatio ?? 1.6);
@@ -82,10 +106,36 @@ export function getRandomLayout<N, E, G, P>(
   const nodeById = new Map(nodes.map((node) => [node.id, node]));
   const totalWidth = drawWidth + padding.left + padding.right;
   const totalHeight = drawHeight + padding.top + padding.bottom;
-  const edges = graph.edges.map((edge) => {
+  const layoutEdge = (edge: (typeof graph.edges)[number]) => {
     const source = nodeById.get(edge.sourceId);
     const target = nodeById.get(edge.targetId);
     if (!source || !target) return edge;
+    if (behavior.elkjs0111EdgeTargetBug) {
+      const start = { x: source.x + source.width, y: source.y + source.height / 2 };
+      const end = { x: source.x + source.width / 2, y: source.y + source.height };
+      const bendCount = random.nextInt(5) + 1;
+      const xDifference = end.x - start.x;
+      const yDifference = end.y - start.y;
+      const maximumDeviation = Math.hypot(xDifference, yDifference) * Math.fround(0.2);
+      const xIncrement = xDifference / (bendCount + 1);
+      const yIncrement = yDifference / (bendCount + 1);
+      let x = start.x;
+      let y = start.y;
+      const points: Point[] = [start];
+      for (let index = 0; index < bendCount; index++) {
+        x += xIncrement;
+        y += yIncrement;
+        let randomX = x + random.nextFloat() * maximumDeviation - maximumDeviation / 2;
+        if (randomX < 0) randomX = 1;
+        else if (randomX > totalWidth) randomX = totalWidth - 1;
+        let randomY = y + random.nextFloat() * maximumDeviation - maximumDeviation / 2;
+        if (randomY < 0) randomY = 1;
+        else if (randomY > totalHeight) randomY = totalHeight - 1;
+        points.push({ x: randomX, y: randomY });
+      }
+      points.push(end);
+      return { ...edge, points, routing: "polyline" as const };
+    }
     const start = borderPoint(source, target);
     const end = borderPoint(target, source);
     const bendCount = random.nextInt(5) + (source === target ? 1 : 0);
@@ -119,11 +169,25 @@ export function getRandomLayout<N, E, G, P>(
     }
     points.push(end);
     return { ...edge, points, routing: "polyline" as const };
-  });
-  return getFixedLayout(
+  };
+  const edges = behavior.elkjs0111EdgeTargetBug
+    ? graph.nodes.flatMap((node) =>
+        graph.edges.filter((edge) => edge.sourceId === node.id).map(layoutEdge),
+      )
+    : graph.edges.map(layoutEdge);
+  const result = getFixedLayout(
     { ...graph, nodes, edges },
     { direction: options.direction ?? graph.direction },
   );
+  if (behavior.preserveProviderBounds) {
+    setElkjs0111ResultPolicy(result, {
+      providerBounds: {
+        width: drawWidth + 2 * (padding.left + padding.right),
+        height: drawHeight + 2 * (padding.top + padding.bottom),
+      },
+    });
+  }
+  return result;
 }
 
 export const randomAlgorithm: LayoutAlgorithm<RandomLayoutOptions> = {
@@ -138,5 +202,13 @@ export const randomAlgorithm: LayoutAlgorithm<RandomLayoutOptions> = {
   },
   layout(graph, options) {
     return getRandomLayout(graph, options ?? {});
+  },
+};
+
+/** Pinned behavior used only by the elkjs 0.11.1 compatibility adapter. */
+export const elkjs0111RandomAlgorithm: LayoutAlgorithm<RandomLayoutOptions> = {
+  ...randomAlgorithm,
+  layout(graph, options) {
+    return getRandomLayoutWithBehavior(graph, options ?? {}, elkjs0111Behavior);
   },
 };

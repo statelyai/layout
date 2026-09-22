@@ -1,6 +1,7 @@
 import OracleELK from "elkjs/lib/elk.bundled.js";
 import { expect, it } from "vitest";
-import NativeELK, { type ElkNode } from "../src/elkjs";
+import NativeELK from "../src/elkjs";
+import { type ElkNode } from "../src/elkjs/types";
 
 for (const alignment of ["H_LEFT V_TOP", "H_CENTER V_CENTER", "H_RIGHT V_BOTTOM"]) {
   it(`matches ELK fixed graph sizing with ${alignment}`, async () => {

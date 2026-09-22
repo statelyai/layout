@@ -1,32 +1,34 @@
 # Parity
 
 Parity is tracked at three separate levels. Passing API tests does not imply
-that native geometry matches ELK.
+that compatibility geometry exactly matches ELK.
 
 ## elkjs 0.11.1 public suite
 
 <!-- compatibility status derived from test/elkjs-compat and the elkjs 0.11.1 Mocha suite -->
 
-| Upstream test                 | Behaviors | Covered | Status                             |
-| ----------------------------- | --------: | ------: | ---------------------------------- |
-| `test-bug-63.js`              |         1 |       1 | Passing                            |
-| `test-bug-7.js`               |         1 |       1 | Original fixture passing           |
-| `test-bug-8.js`               |         4 |       4 | Passing                            |
-| `test-bug-klay-22.js`         |         1 |       1 | Passing                            |
-| `test-bug-klay-23.js`         |         1 |       1 | Passing                            |
-| `test-node.js`                |         2 |       1 | In-process passing; worker pending |
-| `testChangeAwareArrayList.js` |         1 |       1 | Original fixture passing           |
-| `testEntryPoints.js`          |         5 |       0 | Package/worker variants pending    |
-| `testIds.js`                  |         7 |       7 | Passing                            |
-| `testLayouters.js`            |         3 |       3 | Passing baseline behavior          |
-| `testLogging.js`              |         6 |       6 | Passing                            |
-| `testOptions.js`              |         8 |       8 | Passing                            |
-| `testParameters.js`           |         2 |       2 | Passing                            |
-| `testRaiseException.js`       |         1 |       1 | Passing                            |
-| **Total**                     |    **43** |  **37** | **86% behavior coverage**          |
+| Upstream test                 | Behaviors | Covered | Status                     |
+| ----------------------------- | --------: | ------: | -------------------------- |
+| `test-bug-63.js`              |         1 |       1 | Passing                    |
+| `test-bug-7.js`               |         1 |       1 | Original fixture passing   |
+| `test-bug-8.js`               |         4 |       4 | Passing                    |
+| `test-bug-klay-22.js`         |         1 |       1 | Passing                    |
+| `test-bug-klay-23.js`         |         1 |       1 | Passing                    |
+| `test-node.js`                |         2 |       2 | Passing                    |
+| `testChangeAwareArrayList.js` |         1 |       1 | Original fixture passing   |
+| `testEntryPoints.js`          |         5 |       5 | Passing                    |
+| `testIds.js`                  |         7 |       7 | Passing                    |
+| `testLayouters.js`            |         3 |       3 | Passing baseline behavior  |
+| `testLogging.js`              |         6 |       6 | Passing                    |
+| `testOptions.js`              |         8 |       8 | Passing                    |
+| `testParameters.js`           |         2 |       2 | Passing                    |
+| `testRaiseException.js`       |         1 |       1 | Passing                    |
+| **Total**                     |    **43** |  **43** | **100% behavior coverage** |
 
 The upstream suite has 43 `it(...)` cases at tag 0.11.1. Some adapted Vitest
-tests combine related assertions while preserving all listed behaviors.
+tests combine related assertions while preserving all listed behaviors. Packed
+package tests additionally exercise both ESM import and the upstream CommonJS
+require style for every migration entry point.
 
 ## Native algorithm status
 
@@ -34,16 +36,25 @@ tests combine related assertions while preserving all listed behaviors.
 
 | Algorithm             | Native API                     | Current fidelity                                     |
 | --------------------- | ------------------------------ | ---------------------------------------------------- |
-| Box                   | `getBoxLayout`                 | Java SIMPLE node placement; grouped modes pending    |
+| Box                   | `getBoxLayout`                 | Exact SIMPLE adapter corpus; grouped modes pending   |
 | Layered               | `getLayeredLayout`             | Complete 152-option ELK 0.11.1 layered parity target |
 | Fixed                 | `getFixedLayout`               | Preserves authored geometry and routes               |
-| Random                | `getRandomLayout`              | Seeded Java-exact nodes; edge-route parity pending   |
-| Rectangle packing     | `getRectanglePackingLayout`    | Deterministic shelf baseline; not ELK parity         |
+| Random                | `getRandomLayout`              | Exact ELK adapter; corrected native edge endpoints   |
+| Rectangle packing     | `getRectanglePackingLayout`    | Exact default slice; full packing parity pending     |
 | SPOrE compaction      | `getSporeCompactionLayout`     | Initial relative-direction baseline; not ELK parity  |
 | SPOrE overlap removal | `getSporeOverlapRemovalLayout` | Initial separation baseline; not ELK parity          |
 
 The native layered pipeline handles compound layout and cross-hierarchy
-routing. Worker execution and non-layered Java algorithm suites remain open.
+routing. The compatibility worker protocol runs in-process; browser-thread
+isolation and non-layered Java algorithm suites remain open.
+
+Box SIMPLE has a 64-case differential corpus spanning empty through 15-node
+graphs, asymmetric padding, spacing, aspect ratio, priorities, interactive
+ordering, and node expansion. Its adapter also preserves authored edge routes
+and provider-owned bounds. Rectangle Packing matches the default three-node
+baseline but intentionally remains marked incomplete: an alternate three-node
+shape set already demonstrates that the native shelf strategy is not the Java
+packing strategy.
 
 ## Layered option and geometry coverage
 
@@ -84,6 +95,9 @@ explicitly refreshes the upstream catalog and converted ELK JSON inputs.
 1. All applicable elkjs public behaviors pass through the compatibility entry.
 2. Relevant ELK Java fixtures and invariants are ported with provenance.
 3. Algorithm phase choices and typed options match supported ELK behavior.
-4. Geometry is differential-tested with documented exact/tolerance rules.
+4. Compatibility geometry is exact after documented normalization of
+   non-layout runtime metadata and, only when operation order differs, rounding
+   floating coordinates to 12 decimal digits. Tolerance and quality tests
+   belong to native layout instead.
 5. Native-only partial, incremental, and route-only behaviors have independent
    property and benchmark coverage.

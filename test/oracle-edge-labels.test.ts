@@ -1,6 +1,7 @@
 import OracleELK from "elkjs/lib/elk.bundled.js";
 import { expect, it } from "vitest";
-import NativeELK, { type ElkNode } from "../src/elkjs";
+import NativeELK from "../src/elkjs";
+import { type ElkNode } from "../src/elkjs/types";
 import vizFeedbackForm from "./fixtures/viz-feedback-form.json";
 import vizTwoStateCycle from "./fixtures/viz-two-state-cycle.json";
 

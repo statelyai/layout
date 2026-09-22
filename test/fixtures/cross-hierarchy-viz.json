@@ -189,12 +189,8 @@
   "edges": [
     {
       "id": "outside-child",
-      "sources": [
-        "outside"
-      ],
-      "targets": [
-        "child"
-      ],
+      "sources": ["outside"],
+      "targets": ["child"],
       "labels": [
         {
           "id": "outside-child:label",
@@ -210,12 +206,8 @@
     },
     {
       "id": "parent-child",
-      "sources": [
-        "parent"
-      ],
-      "targets": [
-        "child"
-      ],
+      "sources": ["parent"],
+      "targets": ["child"],
       "labels": [
         {
           "id": "parent-child:label",
@@ -231,12 +223,8 @@
     },
     {
       "id": "child-outside",
-      "sources": [
-        "child"
-      ],
-      "targets": [
-        "outside"
-      ],
+      "sources": ["child"],
+      "targets": ["outside"],
       "labels": [
         {
           "id": "child-outside:label",
@@ -252,12 +240,8 @@
     },
     {
       "id": "child-parent",
-      "sources": [
-        "child"
-      ],
-      "targets": [
-        "parent"
-      ],
+      "sources": ["child"],
+      "targets": ["parent"],
       "labels": [
         {
           "id": "child-parent:label",
@@ -273,12 +257,8 @@
     },
     {
       "id": "child-cousin",
-      "sources": [
-        "child"
-      ],
-      "targets": [
-        "cousin"
-      ],
+      "sources": ["child"],
+      "targets": ["cousin"],
       "labels": [
         {
           "id": "child-cousin:label",
@@ -294,12 +274,8 @@
     },
     {
       "id": "cousin-sibling",
-      "sources": [
-        "cousin"
-      ],
-      "targets": [
-        "sibling"
-      ],
+      "sources": ["cousin"],
+      "targets": ["sibling"],
       "labels": [
         {
           "id": "cousin-sibling:label",

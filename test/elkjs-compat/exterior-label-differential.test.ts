@@ -1,7 +1,8 @@
 import OracleELK from "elkjs/lib/elk.bundled.js";
 import { describe, expect, it } from "vitest";
 import BaselineELK from "@statelyai/layout-pre-exterior-label-separation/elkjs";
-import PatchedELK, { type ElkEdge, type ElkNode } from "../../src/elkjs";
+import PatchedELK from "../../src/elkjs";
+import { type ElkEdge, type ElkNode } from "../../src/elkjs/types";
 
 type Routing = "ORTHOGONAL" | "POLYLINE" | "SPLINES";
 type Direction = "DOWN" | "UP" | "RIGHT" | "LEFT";
