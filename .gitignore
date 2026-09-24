@@ -4,3 +4,4 @@ dist-demo/
 coverage/
 *.log
 .DS_Store
+dist-storybook/

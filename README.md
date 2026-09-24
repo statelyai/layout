@@ -216,13 +216,23 @@ pnpm install
 pnpm verify
 pnpm bench
 pnpm demo
+pnpm storybook
 pnpm changeset
 pnpm release
 ```
 
 `pnpm verify` checks Oxfmt, Oxlint, source and repository TypeScript projects,
 generated layered-option and demo-corpus freshness, tests,
-declarations/runtime builds, the demo bundle, and the packed package surface.
+declarations/runtime builds, demo and Storybook bundles, and the packed package surface.
+
+<!-- authoring stories derived from stories/Authoring.stories.tsx and package.json#scripts -->
+
+`pnpm storybook` opens the authoring workbench at `http://127.0.0.1:6018`.
+Eight stories cover edge-only routing, independently editable constraint groups,
+selected-node placement, affected-route repair, constraint conflicts, overlap
+diagnostics, nested coordinates, and unsupported incremental layout. Controls
+rerun the real API; each story shows matched before/after geometry, patches, and
+current limitations. `pnpm storybook:build` writes a static build to `dist-storybook`.
 
 <!-- exported source compatibility derived from tsconfig.json -->
 
