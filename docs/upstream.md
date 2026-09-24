@@ -5,6 +5,7 @@
 <!-- dependency versions derived from package.json -->
 
 - Public graph model: `@statelyai/graph` 2.1.x
+- Geometry constraint solver: `@lume/kiwi` 0.4.x (BSD-3-Clause; notice in `NOTICE.md`)
 - Runtime oracle: `elkjs` 0.11.x
 - Algorithm reference: Eclipse Layout Kernel
 

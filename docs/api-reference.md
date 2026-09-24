@@ -180,3 +180,16 @@ The compatibility package also exposes the elkjs 0.11.1 migration subpaths
 `lib/elk-worker.min.js`. `elk-api.js` requires `workerUrl` or `workerFactory`;
 `main.js` and `elk.bundled.js` provide the in-process worker fallback. Every
 migration subpath supports ESM import and CommonJS require.
+
+## Authoring constraints
+
+<!-- authoring constraint exports from src/constraints.ts and src/index.ts -->
+
+`c.align`, `c.distribute`, `c.pin`, `c.linear`, and `c.waypoint` construct
+serializable `LayoutConstraint` values for `getLayout({ constraints })`.
+Exports include `GeometryReference`, `GeometryAttribute`, `ConstraintStrength`,
+`AlignConstraint`, `DistributeConstraint`, `PinConstraint`, `LinearConstraint`,
+and `WaypointConstraint`.
+
+See [authoring layout](authoring-layout.md) for partial scope permissions,
+constraint strengths, failure behavior, and route-only defaults.

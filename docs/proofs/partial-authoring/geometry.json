@@ -1,0 +1,725 @@
+[
+  {
+    "title": "Edge-only routing",
+    "before": {
+      "id": "",
+      "mode": "directed",
+      "initialNodeId": null,
+      "nodes": [
+        {
+          "type": "node",
+          "id": "a",
+          "label": null,
+          "data": null,
+          "x": 30,
+          "y": 90,
+          "width": 70,
+          "height": 40
+        },
+        {
+          "type": "node",
+          "id": "b",
+          "label": null,
+          "data": null,
+          "x": 350,
+          "y": 90,
+          "width": 70,
+          "height": 40
+        },
+        {
+          "type": "node",
+          "id": "blocker",
+          "label": null,
+          "data": null,
+          "x": 170,
+          "y": 60,
+          "width": 100,
+          "height": 100
+        }
+      ],
+      "edges": [
+        {
+          "type": "edge",
+          "id": "ab",
+          "sourceId": "a",
+          "targetId": "b",
+          "label": null,
+          "data": null,
+          "points": [
+            {
+              "x": 100,
+              "y": 110
+            },
+            {
+              "x": 350,
+              "y": 110
+            }
+          ],
+          "routing": "orthogonal",
+          "x": 110,
+          "y": 200,
+          "width": 70,
+          "height": 24
+        }
+      ],
+      "data": null,
+      "direction": "right"
+    },
+    "request": {
+      "scope": {
+        "mode": "partial",
+        "edgeIds": ["ab"],
+        "edgeGeometry": "routes"
+      }
+    },
+    "after": {
+      "id": "",
+      "mode": "directed",
+      "initialNodeId": null,
+      "nodes": [
+        {
+          "type": "node",
+          "id": "a",
+          "label": null,
+          "data": null,
+          "x": 30,
+          "y": 90,
+          "width": 70,
+          "height": 40
+        },
+        {
+          "type": "node",
+          "id": "b",
+          "label": null,
+          "data": null,
+          "x": 350,
+          "y": 90,
+          "width": 70,
+          "height": 40
+        },
+        {
+          "type": "node",
+          "id": "blocker",
+          "label": null,
+          "data": null,
+          "x": 170,
+          "y": 60,
+          "width": 100,
+          "height": 100
+        }
+      ],
+      "edges": [
+        {
+          "type": "edge",
+          "id": "ab",
+          "sourceId": "a",
+          "targetId": "b",
+          "label": null,
+          "data": null,
+          "points": [
+            {
+              "x": 100,
+              "y": 110
+            },
+            {
+              "x": 100,
+              "y": 59
+            },
+            {
+              "x": 271,
+              "y": 59
+            },
+            {
+              "x": 271,
+              "y": 110
+            },
+            {
+              "x": 350,
+              "y": 110
+            }
+          ],
+          "routing": "orthogonal",
+          "x": 110,
+          "y": 200,
+          "width": 70,
+          "height": 24
+        }
+      ],
+      "data": null,
+      "direction": "right"
+    },
+    "patches": [
+      {
+        "op": "updateEdge",
+        "id": "ab",
+        "data": {
+          "points": [
+            {
+              "x": 100,
+              "y": 110
+            },
+            {
+              "x": 100,
+              "y": 59
+            },
+            {
+              "x": 271,
+              "y": 59
+            },
+            {
+              "x": 271,
+              "y": 110
+            },
+            {
+              "x": 350,
+              "y": 110
+            }
+          ]
+        },
+        "description": "Apply layout geometry"
+      }
+    ],
+    "diagnostics": []
+  },
+  {
+    "title": "Align and distribute labels",
+    "before": {
+      "id": "",
+      "mode": "directed",
+      "initialNodeId": null,
+      "nodes": [
+        {
+          "type": "node",
+          "id": "a",
+          "label": null,
+          "data": null,
+          "x": 20,
+          "y": 90,
+          "width": 70,
+          "height": 40
+        },
+        {
+          "type": "node",
+          "id": "b",
+          "label": null,
+          "data": null,
+          "x": 380,
+          "y": 90,
+          "width": 70,
+          "height": 40
+        }
+      ],
+      "edges": [
+        {
+          "type": "edge",
+          "id": "one",
+          "sourceId": "a",
+          "targetId": "b",
+          "label": null,
+          "data": null,
+          "points": [
+            {
+              "x": 90,
+              "y": 110
+            },
+            {
+              "x": 110,
+              "y": 110
+            },
+            {
+              "x": 110,
+              "y": 10
+            },
+            {
+              "x": 370,
+              "y": 10
+            },
+            {
+              "x": 370,
+              "y": 110
+            },
+            {
+              "x": 380,
+              "y": 110
+            }
+          ],
+          "x": 125,
+          "y": 20,
+          "width": 70,
+          "height": 24,
+          "routing": "polyline"
+        },
+        {
+          "type": "edge",
+          "id": "two",
+          "sourceId": "a",
+          "targetId": "b",
+          "label": null,
+          "data": null,
+          "points": [
+            {
+              "x": 90,
+              "y": 110
+            },
+            {
+              "x": 380,
+              "y": 110
+            }
+          ],
+          "x": 235,
+          "y": 100,
+          "width": 70,
+          "height": 24,
+          "routing": "polyline"
+        },
+        {
+          "type": "edge",
+          "id": "three",
+          "sourceId": "a",
+          "targetId": "b",
+          "label": null,
+          "data": null,
+          "points": [
+            {
+              "x": 90,
+              "y": 110
+            },
+            {
+              "x": 110,
+              "y": 110
+            },
+            {
+              "x": 110,
+              "y": 245
+            },
+            {
+              "x": 370,
+              "y": 245
+            },
+            {
+              "x": 370,
+              "y": 110
+            },
+            {
+              "x": 380,
+              "y": 110
+            }
+          ],
+          "x": 145,
+          "y": 210,
+          "width": 70,
+          "height": 24,
+          "routing": "polyline"
+        }
+      ],
+      "data": null,
+      "direction": "right"
+    },
+    "request": {
+      "scope": {
+        "mode": "partial",
+        "edgeIds": ["one", "two", "three"],
+        "edgeGeometry": "labels"
+      },
+      "constraints": [
+        {
+          "id": "centers",
+          "entities": [
+            {
+              "edgeId": "one",
+              "part": "label"
+            },
+            {
+              "edgeId": "two",
+              "part": "label"
+            },
+            {
+              "edgeId": "three",
+              "part": "label"
+            }
+          ],
+          "axis": "x",
+          "kind": "align"
+        },
+        {
+          "id": "gaps",
+          "entities": [
+            {
+              "edgeId": "one",
+              "part": "label"
+            },
+            {
+              "edgeId": "two",
+              "part": "label"
+            },
+            {
+              "edgeId": "three",
+              "part": "label"
+            }
+          ],
+          "axis": "y",
+          "gap": 60,
+          "kind": "distribute"
+        }
+      ]
+    },
+    "after": {
+      "id": "",
+      "mode": "directed",
+      "initialNodeId": null,
+      "nodes": [
+        {
+          "type": "node",
+          "id": "a",
+          "label": null,
+          "data": null,
+          "x": 20,
+          "y": 90,
+          "width": 70,
+          "height": 40
+        },
+        {
+          "type": "node",
+          "id": "b",
+          "label": null,
+          "data": null,
+          "x": 380,
+          "y": 90,
+          "width": 70,
+          "height": 40
+        }
+      ],
+      "edges": [
+        {
+          "type": "edge",
+          "id": "one",
+          "sourceId": "a",
+          "targetId": "b",
+          "label": null,
+          "data": null,
+          "points": [
+            {
+              "x": 90,
+              "y": 110
+            },
+            {
+              "x": 110,
+              "y": 110
+            },
+            {
+              "x": 110,
+              "y": 10
+            },
+            {
+              "x": 370,
+              "y": 10
+            },
+            {
+              "x": 370,
+              "y": 110
+            },
+            {
+              "x": 380,
+              "y": 110
+            }
+          ],
+          "x": 145,
+          "y": 20,
+          "width": 70,
+          "height": 24,
+          "routing": "polyline"
+        },
+        {
+          "type": "edge",
+          "id": "two",
+          "sourceId": "a",
+          "targetId": "b",
+          "label": null,
+          "data": null,
+          "points": [
+            {
+              "x": 90,
+              "y": 110
+            },
+            {
+              "x": 380,
+              "y": 110
+            }
+          ],
+          "x": 145,
+          "y": 104,
+          "width": 70,
+          "height": 24,
+          "routing": "polyline"
+        },
+        {
+          "type": "edge",
+          "id": "three",
+          "sourceId": "a",
+          "targetId": "b",
+          "label": null,
+          "data": null,
+          "points": [
+            {
+              "x": 90,
+              "y": 110
+            },
+            {
+              "x": 110,
+              "y": 110
+            },
+            {
+              "x": 110,
+              "y": 245
+            },
+            {
+              "x": 370,
+              "y": 245
+            },
+            {
+              "x": 370,
+              "y": 110
+            },
+            {
+              "x": 380,
+              "y": 110
+            }
+          ],
+          "x": 145,
+          "y": 188,
+          "width": 70,
+          "height": 24,
+          "routing": "polyline"
+        }
+      ],
+      "data": null,
+      "direction": "right"
+    },
+    "patches": [
+      {
+        "op": "updateEdge",
+        "id": "one",
+        "data": {
+          "x": 145
+        },
+        "description": "Apply layout geometry"
+      },
+      {
+        "op": "updateEdge",
+        "id": "two",
+        "data": {
+          "x": 145,
+          "y": 104
+        },
+        "description": "Apply layout geometry"
+      },
+      {
+        "op": "updateEdge",
+        "id": "three",
+        "data": {
+          "y": 188
+        },
+        "description": "Apply layout geometry"
+      }
+    ],
+    "diagnostics": [
+      {
+        "severity": "info",
+        "code": "ROUTE_PRESERVED",
+        "message": "Route for one was preserved; label attachment may need repair",
+        "entityIds": ["one"],
+        "geometry": "routes"
+      },
+      {
+        "severity": "info",
+        "code": "ROUTE_PRESERVED",
+        "message": "Route for two was preserved; label attachment may need repair",
+        "entityIds": ["two"],
+        "geometry": "routes"
+      },
+      {
+        "severity": "info",
+        "code": "ROUTE_PRESERVED",
+        "message": "Route for three was preserved; label attachment may need repair",
+        "entityIds": ["three"],
+        "geometry": "routes"
+      }
+    ]
+  },
+  {
+    "title": "Arrange selected nodes",
+    "before": {
+      "id": "",
+      "mode": "directed",
+      "initialNodeId": null,
+      "nodes": [
+        {
+          "type": "node",
+          "id": "a",
+          "label": null,
+          "data": null,
+          "x": 35,
+          "y": 40,
+          "width": 70,
+          "height": 40
+        },
+        {
+          "type": "node",
+          "id": "b",
+          "label": null,
+          "data": null,
+          "x": 40,
+          "y": 200,
+          "width": 70,
+          "height": 40
+        },
+        {
+          "type": "node",
+          "id": "fixed",
+          "label": null,
+          "data": null,
+          "x": 270,
+          "y": 140,
+          "width": 130,
+          "height": 80
+        }
+      ],
+      "edges": [
+        {
+          "type": "edge",
+          "id": "ab",
+          "sourceId": "a",
+          "targetId": "b",
+          "label": null,
+          "data": null,
+          "width": 0,
+          "height": 0,
+          "x": 72.5,
+          "y": 140,
+          "points": [
+            {
+              "x": 70,
+              "y": 60
+            },
+            {
+              "x": 75,
+              "y": 220
+            }
+          ],
+          "routing": "polyline"
+        }
+      ],
+      "data": null,
+      "direction": "right"
+    },
+    "request": {
+      "scope": {
+        "mode": "partial",
+        "nodeIds": ["a", "b"]
+      }
+    },
+    "after": {
+      "id": "",
+      "mode": "directed",
+      "initialNodeId": null,
+      "nodes": [
+        {
+          "type": "node",
+          "id": "a",
+          "label": null,
+          "data": null,
+          "x": 35,
+          "y": 40,
+          "width": 70,
+          "height": 40
+        },
+        {
+          "type": "node",
+          "id": "b",
+          "label": null,
+          "data": null,
+          "x": 125,
+          "y": 40,
+          "width": 70,
+          "height": 40
+        },
+        {
+          "type": "node",
+          "id": "fixed",
+          "label": null,
+          "data": null,
+          "x": 270,
+          "y": 140,
+          "width": 130,
+          "height": 80
+        }
+      ],
+      "edges": [
+        {
+          "type": "edge",
+          "id": "ab",
+          "sourceId": "a",
+          "targetId": "b",
+          "label": null,
+          "data": null,
+          "width": 0,
+          "height": 0,
+          "x": 115,
+          "y": 60,
+          "points": [
+            {
+              "x": 105,
+              "y": 60
+            },
+            {
+              "x": 125,
+              "y": 60
+            }
+          ],
+          "routing": "orthogonal"
+        }
+      ],
+      "data": null,
+      "direction": "right"
+    },
+    "patches": [
+      {
+        "op": "updateNode",
+        "id": "b",
+        "data": {
+          "x": 125,
+          "y": 40
+        },
+        "description": "Apply layout geometry"
+      },
+      {
+        "op": "updateEdge",
+        "id": "ab",
+        "data": {
+          "x": 115,
+          "y": 60,
+          "routing": "orthogonal",
+          "points": [
+            {
+              "x": 105,
+              "y": 60
+            },
+            {
+              "x": 125,
+              "y": 60
+            }
+          ]
+        },
+        "description": "Apply layout geometry"
+      }
+    ],
+    "diagnostics": [
+      {
+        "severity": "info",
+        "code": "AFFECTED_EDGES_UPDATED",
+        "message": "Repaired geometry affected by moved nodes",
+        "entityIds": ["ab"]
+      }
+    ]
+  }
+]

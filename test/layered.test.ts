@@ -312,9 +312,9 @@ describe("getLayout", () => {
     await expect(
       getLayout({
         graph,
-        scope: { mode: "partial", previous, nodeIds: ["b"] },
+        scope: { mode: "incremental", previous },
       }),
-    ).rejects.toThrow("does not support partial layout yet");
+    ).rejects.toThrow("does not support incremental layout yet");
   });
 
   it("supports AbortSignal cancellation", async () => {

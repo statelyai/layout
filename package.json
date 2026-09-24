@@ -90,6 +90,7 @@
     "validate:package": "publint --pack npm && tsx scripts/smoke-package.ts"
   },
   "dependencies": {
+    "@lume/kiwi": "^0.4.4",
     "@statelyai/graph": "^2.1.0"
   },
   "devDependencies": {

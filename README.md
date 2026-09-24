@@ -16,8 +16,9 @@ layered inventory with one simplified typed name per ELK option. Flat and
 compound graphs, cross-hierarchy edges, ports, labels, self-loops, wrapping,
 four directions, constraints, and replaceable phases are differential-tested
 against elkjs, including a curated complex state-machine corpus in both primary
-layout orientations. Partial, incremental, and route-only layout remain
-explicit unimplemented capabilities.
+layout orientations. Native layered layout also supports partial selection,
+route-only execution, and geometric constraints. Incremental layout remains
+explicitly unsupported.
 
 ## Install
 
@@ -53,6 +54,48 @@ result.patches;
 result.diagnostics;
 result.metrics;
 ```
+
+## Layout while authoring
+
+<!-- partial scopes and geometry constraints from src/types.ts and src/constraints.ts -->
+
+Select nodes and edges independently. Edge selection never moves endpoints:
+
+```ts
+import { c, getLayout } from "@statelyai/layout";
+
+const result = await getLayout({
+  graph,
+  scope: {
+    mode: "partial",
+    edgeIds: ["ab", "bc"],
+    edgeGeometry: "labels",
+    routing: "selected",
+  },
+  constraints: [
+    c.align({
+      id: "label-centers",
+      entities: [
+        { edgeId: "ab", part: "label" },
+        { edgeId: "bc", part: "label" },
+      ],
+      axis: "x",
+      anchor: "center",
+    }),
+  ],
+});
+```
+
+`nodeIds` permits position changes; `edgeIds` permits routes, label positions,
+or both. `routing: "affected"` (default) also repairs edges affected by moved
+nodes, within `edgeGeometry` permissions. Unselected nodes, dimensions, ports,
+and topology remain fixed. Results include field-specific graph patches and
+repair/conflict diagnostics. Constraints support alignment, distribution, pins,
+linear equalities/inequalities, and route waypoints.
+
+See [authoring layout](docs/authoring-layout.md) for baseline requirements,
+selection semantics, routing limits, and examples. Existing ELK compatibility
+behavior is unchanged.
 
 ## elkjs compatibility
 

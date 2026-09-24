@@ -29,10 +29,10 @@
 
 - Previous-layout objective
 - Fixed and pinned nodes
-- Partial affected-subgraph layout
-- Minimal-displacement constraint solving
+- Complete: partial node/edge selection with fixed surrounding geometry
+- Complete: native alignment, spacing, pins, and linear constraints with weak position stays
 - Expand/collapse stability
-- Route-only execution
+- Complete: route-only orthogonal execution; spline and custom partial routers remain future work
 - Time budgets and useful partial results
 
 ## M3: compatibility and breadth

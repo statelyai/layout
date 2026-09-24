@@ -8,6 +8,9 @@ importers:
 
   .:
     dependencies:
+      '@lume/kiwi':
+        specifier: ^0.4.4
+        version: 0.4.4
       '@statelyai/graph':
         specifier: ^2.1.0
         version: 2.1.0(elkjs@0.11.1)
@@ -390,6 +393,9 @@ packages:
 
   '@lezer/lr@1.4.10':
     resolution: {integrity: sha512-rnCpTIBafOx4mRp43xOxDJbFipJm/c0cia/V5TiGlhmMa+wsSdoGmUN3w5Bqrks/09Q/D4tNAmWaT8p6NRi77A==, tarball: https://registry.npmjs.org/@lezer/lr/-/lr-1.4.10.tgz}
+
+  '@lume/kiwi@0.4.4':
+    resolution: {integrity: sha512-ie0YTKgiZqD4TXlJ4eUbfi4UEoKs6YlLRYNTfPm5eUXwfudTBmPRs7Qcxz2SWKDpVTwThv3sWG6zwtyAA0nPpw==, tarball: https://registry.npmjs.org/@lume/kiwi/-/kiwi-0.4.4.tgz}
 
   '@manypkg/find-root@3.1.0':
     resolution: {integrity: sha512-BcSqCyKhBVZ5YkSzOiheMCV41kqAFptW6xGqYSTjkVTl9XQpr+pqHhwgGCOHQtjDCv7Is6EFyA14Sm5GVbVABA==, tarball: https://registry.npmjs.org/@manypkg/find-root/-/find-root-3.1.0.tgz}
@@ -1933,6 +1939,8 @@ snapshots:
   '@lezer/lr@1.4.10':
     dependencies:
       '@lezer/common': 1.5.2
+
+  '@lume/kiwi@0.4.4': {}
 
   '@manypkg/find-root@3.1.0':
     dependencies:
