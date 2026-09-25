@@ -191,3 +191,32 @@ pre {
     grid-template-columns: 1fr;
   }
 }
+.selection-canvas {
+  overflow: auto;
+  max-height: 650px;
+}
+.selection-canvas svg {
+  display: block;
+}
+.selection-canvas [role="button"] {
+  cursor: pointer;
+}
+.selection-canvas text {
+  font:
+    13px system-ui,
+    sans-serif;
+  fill: #182334;
+  pointer-events: none;
+}
+button:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+.selection-primary {
+  background: #2664b5;
+  color: white;
+  border-color: #2664b5;
+}
+.selection-primary:hover {
+  background: #1d5093;
+}

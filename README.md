@@ -225,10 +225,15 @@ pnpm release
 generated layered-option and demo-corpus freshness, tests,
 declarations/runtime builds, demo and Storybook bundles, and the packed package surface.
 
-<!-- authoring stories derived from stories/Authoring.stories.tsx and package.json#scripts -->
+<!-- authoring stories derived from stories/*.stories.tsx and package.json#scripts -->
 
 `pnpm storybook` opens the authoring workbench at `http://127.0.0.1:6018`.
-Eight stories cover edge-only routing, independently editable constraint groups,
+The **Layout / Partial selection** story starts with a fully laid-out graph.
+Click nodes (or select the review branch), choose a direction, and press
+**Auto-layout selection**. Unselected nodes remain fixed; dashed outlines show
+previous positions. Reset restores the original full layout.
+
+Eight additional stories cover edge-only routing, independently editable constraint groups,
 selected-node placement, affected-route repair, constraint conflicts, overlap
 diagnostics, nested coordinates, and unsupported incremental layout. Controls
 rerun the real API; each story shows matched before/after geometry, patches, and
