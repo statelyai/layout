@@ -16,8 +16,9 @@ layered inventory with one simplified typed name per ELK option. Flat and
 compound graphs, cross-hierarchy edges, ports, labels, self-loops, wrapping,
 four directions, constraints, and replaceable phases are differential-tested
 against elkjs, including a curated complex state-machine corpus in both primary
-layout orientations. Partial, incremental, and route-only layout remain
-explicit unimplemented capabilities.
+layout orientations. Native layered layout also supports partial selection,
+route-only execution, and geometric constraints. Incremental layout remains
+explicitly unsupported.
 
 ## Install
 
@@ -53,6 +54,48 @@ result.patches;
 result.diagnostics;
 result.metrics;
 ```
+
+## Layout while authoring
+
+<!-- partial scopes and geometry constraints from src/types.ts and src/constraints.ts -->
+
+Select nodes and edges independently. Edge selection never moves endpoints:
+
+```ts
+import { c, getLayout } from "@statelyai/layout";
+
+const result = await getLayout({
+  graph,
+  scope: {
+    mode: "partial",
+    edgeIds: ["ab", "bc"],
+    edgeGeometry: "labels",
+    routing: "selected",
+  },
+  constraints: [
+    c.align({
+      id: "label-centers",
+      entities: [
+        { edgeId: "ab", part: "label" },
+        { edgeId: "bc", part: "label" },
+      ],
+      axis: "x",
+      anchor: "center",
+    }),
+  ],
+});
+```
+
+`nodeIds` permits position changes; `edgeIds` permits routes, label positions,
+or both. `routing: "affected"` (default) also repairs edges affected by moved
+nodes, within `edgeGeometry` permissions. Unselected nodes, dimensions, ports,
+and topology remain fixed. Results include field-specific graph patches and
+repair/conflict diagnostics. Constraints support alignment, distribution, pins,
+linear equalities/inequalities, and route waypoints.
+
+See [authoring layout](docs/authoring-layout.md) for baseline requirements,
+selection semantics, routing limits, and examples. Existing ELK compatibility
+behavior is unchanged.
 
 ## elkjs compatibility
 
@@ -173,13 +216,28 @@ pnpm install
 pnpm verify
 pnpm bench
 pnpm demo
+pnpm storybook
 pnpm changeset
 pnpm release
 ```
 
 `pnpm verify` checks Oxfmt, Oxlint, source and repository TypeScript projects,
 generated layered-option and demo-corpus freshness, tests,
-declarations/runtime builds, the demo bundle, and the packed package surface.
+declarations/runtime builds, demo and Storybook bundles, and the packed package surface.
+
+<!-- authoring stories derived from stories/*.stories.tsx and package.json#scripts -->
+
+`pnpm storybook` opens the authoring workbench at `http://127.0.0.1:6018`.
+The **Layout / Partial selection** story starts with a fully laid-out graph.
+Click nodes (or select the review branch), choose a direction, and press
+**Auto-layout selection**. Unselected nodes remain fixed; dashed outlines show
+previous positions. Reset restores the original full layout.
+
+Eight additional stories cover edge-only routing, independently editable constraint groups,
+selected-node placement, affected-route repair, constraint conflicts, overlap
+diagnostics, nested coordinates, and unsupported incremental layout. Controls
+rerun the real API; each story shows matched before/after geometry, patches, and
+current limitations. `pnpm storybook:build` writes a static build to `dist-storybook`.
 
 <!-- exported source compatibility derived from tsconfig.json -->
 

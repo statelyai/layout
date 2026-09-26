@@ -69,11 +69,11 @@ function getLayoutPatches<N, E, G, P>(
         op: "updateNode",
         id: node.id,
         data: {
-          x: next.x,
-          y: next.y,
-          width: next.width,
-          height: next.height,
-          ...(next.ports === undefined ? {} : { ports: next.ports }),
+          ...(node.x === next.x ? {} : { x: next.x ?? null }),
+          ...(node.y === next.y ? {} : { y: next.y ?? null }),
+          ...(node.width === next.width ? {} : { width: next.width ?? null }),
+          ...(node.height === next.height ? {} : { height: next.height ?? null }),
+          ...(node.ports === next.ports ? {} : { ports: next.ports ?? null }),
         },
         description: "Apply layout geometry",
       });
@@ -94,12 +94,12 @@ function getLayoutPatches<N, E, G, P>(
         op: "updateEdge",
         id: edge.id,
         data: {
-          x: next.x,
-          y: next.y,
-          width: next.width,
-          height: next.height,
-          ...(next.routing === undefined ? {} : { routing: next.routing }),
-          ...(next.points === undefined ? {} : { points: next.points }),
+          ...(edge.x === next.x ? {} : { x: next.x ?? null }),
+          ...(edge.y === next.y ? {} : { y: next.y ?? null }),
+          ...(edge.width === next.width ? {} : { width: next.width ?? null }),
+          ...(edge.height === next.height ? {} : { height: next.height ?? null }),
+          ...(edge.routing === next.routing ? {} : { routing: next.routing ?? null }),
+          ...(samePoints(edge.points, next.points) ? {} : { points: next.points ?? null }),
         },
         description: "Apply layout geometry",
       });
@@ -150,6 +150,9 @@ export async function getLayout<N, E, G, P, O = unknown>(
     throw new UnsupportedLayoutError(`${algorithm.id} does not support ${scope.mode} layout yet`);
   }
 
+  if (request.constraints?.length && !algorithm.capabilities.constraints) {
+    throw new UnsupportedLayoutError(`${algorithm.id} does not support geometry constraints`);
+  }
   const issues = getGraphIssues(request.graph as Graph);
   if (issues.length > 0) {
     throw new LayoutError(issues.map((issue) => issue.message).join("; "), "INVALID_GRAPH");
@@ -157,6 +160,7 @@ export async function getLayout<N, E, G, P, O = unknown>(
 
   const context: LayoutExecutionContext = {
     scope,
+    constraints: request.constraints,
     diagnostics,
     ...(request.signal === undefined ? {} : { signal: request.signal }),
     measurePhase(id, run) {

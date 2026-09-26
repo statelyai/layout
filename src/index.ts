@@ -90,3 +90,16 @@ export type {
   NodePlacer,
   NodeSize,
 } from "./layered";
+
+export { c } from "./constraints";
+export type {
+  LayoutConstraint,
+  GeometryReference,
+  GeometryAttribute,
+  ConstraintStrength,
+  AlignConstraint,
+  DistributeConstraint,
+  PinConstraint,
+  LinearConstraint,
+  WaypointConstraint,
+} from "./constraints";

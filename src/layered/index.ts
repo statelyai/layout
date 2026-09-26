@@ -1,4 +1,5 @@
 import type { Graph, GraphEdge, GraphNode, Point, VisualGraph, VisualNode } from "@statelyai/graph";
+import { labelReferences, runPartialLayout } from "../authoring/partial";
 import { UnsupportedLayoutError } from "../errors";
 import type { LayoutAlgorithm, LayoutExecutionContext } from "../types";
 import { separateExteriorLabels } from "./separate-exterior-labels";
@@ -2679,12 +2680,39 @@ export const layeredAlgorithm: LayoutAlgorithm<LayeredLayoutOptions> = {
   capabilities: {
     full: true,
     incremental: false,
-    partial: false,
-    routeOnly: false,
+    partial: true,
+    routeOnly: true,
+    constraints: true,
     hierarchy: true,
     ports: true,
   },
   layout(graph, options, context) {
-    return runLayeredPipeline(graph, options ?? {}, context);
+    if (context.scope.mode === "partial" || context.scope.mode === "route-only") {
+      return context.measurePhase("partial-layout", () =>
+        runPartialLayout(graph, options ?? {}, context, getLayeredLayout),
+      );
+    }
+    if (context.constraints?.length && graph.nodes.some((node) => node.parentId != null))
+      throw new UnsupportedLayoutError(
+        "Full layout with geometry constraints does not support containers; use partial leaf constraints or full layout without geometry constraints",
+      );
+    const result = runLayeredPipeline(graph, options ?? {}, context);
+    if (!context.constraints?.length) return result;
+    return context.measurePhase("constraints", () =>
+      runPartialLayout(
+        result,
+        options ?? {},
+        {
+          ...context,
+          scope: {
+            mode: "partial",
+            nodeIds: result.nodes.map((n) => n.id),
+            edgeIds: [...labelReferences(context.constraints ?? [])],
+          },
+        },
+        getLayeredLayout,
+        "constraints",
+      ),
+    );
   },
 };

@@ -86,10 +86,14 @@
     "test": "vitest",
     "typecheck": "tsc --noEmit",
     "typecheck:repo": "tsc --project tsconfig.repo.json",
-    "verify": "oxfmt --check . && oxlint && tsc --noEmit && tsc --project tsconfig.repo.json && tsc --project demo/tsconfig.json && tsx scripts/generate-elk-layered-options.ts --check && tsx scripts/generate-demo-corpus.ts --check && vitest --run && tsdown && vite build --config demo/vite.config.ts && publint --pack npm && tsx scripts/smoke-package.ts",
-    "validate:package": "publint --pack npm && tsx scripts/smoke-package.ts"
+    "verify": "oxfmt --check . && oxlint && tsc --noEmit && tsc --project tsconfig.repo.json && tsc --project demo/tsconfig.json && tsc --project stories/tsconfig.json && tsx scripts/generate-elk-layered-options.ts --check && tsx scripts/generate-demo-corpus.ts --check && vitest --run && tsdown && vite build --config demo/vite.config.ts && storybook build -o dist-storybook --quiet && publint --pack npm && tsx scripts/smoke-package.ts",
+    "validate:package": "publint --pack npm && tsx scripts/smoke-package.ts",
+    "storybook": "storybook dev -p 6018 --host 127.0.0.1 --no-open",
+    "storybook:build": "storybook build -o dist-storybook",
+    "storybook:typecheck": "tsc --project stories/tsconfig.json"
   },
   "dependencies": {
+    "@lume/kiwi": "^0.4.4",
     "@statelyai/graph": "^2.1.0"
   },
   "devDependencies": {
@@ -97,6 +101,7 @@
     "@codemirror/lang-javascript": "^6.2.5",
     "@codemirror/lint": "^6.9.7",
     "@statelyai/layout-pre-exterior-label-separation": "npm:@statelyai/layout@0.0.4",
+    "@storybook/react-vite": "^10.6.0",
     "@types/node": "^25.0.3",
     "@types/react": "^19.2.18",
     "@types/react-dom": "^19.2.4",
@@ -112,6 +117,7 @@
     "react": "^19.2.8",
     "react-dom": "^19.2.8",
     "react-resizable-panels": "^4.12.2",
+    "storybook": "^10.6.0",
     "tsdown": "^0.18.1",
     "tsx": "^4.22.4",
     "typescript": "^5.9.3",

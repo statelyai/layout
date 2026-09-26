@@ -1,4 +1,5 @@
 import type { Graph, GraphPatch, VisualGraph } from "@statelyai/graph";
+import type { LayoutConstraint } from "./constraints";
 
 export type AnyGraph = Graph<unknown, unknown, unknown, unknown>;
 
@@ -12,8 +13,16 @@ export type LayoutScope =
     }
   | {
       mode: "partial";
-      previous: VisualGraph;
-      nodeIds: readonly string[];
+      /** Missing current geometry falls back to these matching entity IDs. */
+      previous?: VisualGraph;
+      /** Position permission only. Omitted or empty selects no nodes. */
+      nodeIds?: readonly string[];
+      /** Edge selection never grants permission to move endpoints. */
+      edgeIds?: readonly string[];
+      /** Defaults to affected; automatic changes obey edgeGeometry. */
+      routing?: "selected" | "affected";
+      /** Defaults to both; dimensions remain fixed. */
+      edgeGeometry?: "routes" | "labels" | "both";
     }
   | {
       mode: "route-only";
@@ -27,6 +36,8 @@ export interface LayoutDiagnostic {
   message: string;
   entityIds?: readonly string[];
   phase?: string;
+  constraintIds?: readonly string[];
+  geometry?: "node" | "routes" | "labels";
 }
 
 export interface LayoutPhaseMetrics {
@@ -42,6 +53,8 @@ export interface LayoutMetrics {
 }
 
 export interface LayoutCapabilities {
+  /** Common geometry constraints; absent means unsupported. */
+  constraints?: boolean;
   full: boolean;
   incremental: boolean;
   partial: boolean;
@@ -62,6 +75,7 @@ export interface LayoutAlgorithm<Options = unknown> {
 
 export interface LayoutExecutionContext {
   readonly scope: LayoutScope;
+  readonly constraints?: readonly LayoutConstraint[];
   readonly signal?: AbortSignal;
   readonly diagnostics: LayoutDiagnostic[];
   measurePhase<T>(id: string, run: () => T): T;
@@ -73,6 +87,7 @@ export interface LayoutRequest<N = unknown, E = unknown, G = unknown, P = unknow
   algorithm?: string | LayoutAlgorithm<O>;
   options?: O;
   scope?: LayoutScope;
+  constraints?: readonly LayoutConstraint[];
   signal?: AbortSignal;
 }
 
