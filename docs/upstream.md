@@ -49,3 +49,14 @@ through elkjs 0.11.1:
 
 Translated files retain upstream copyright and SPDX headers. Differential
 tests compare their seeded geometry with elkjs.
+
+## Partial placement inspiration
+
+The authoring placement API takes its conceptual model from yFiles
+[Partial Layout](https://docs.yworks.com/yfiles-html/dguide/partial_layout/):
+selected subgraphs are arranged separately, then placed into a fixed scene,
+with a choice between proximity to the sketch or to fixed neighbors. This
+repository implements that behavior independently; no yFiles code is included.
+The current implementation supports connected or per-node components within
+a fixed parent and a bounded translation search. It does not implement yFiles'
+clustering, orientation optimization, or full collision and routing machinery.

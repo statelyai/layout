@@ -16,17 +16,20 @@ await getLayout({
     edgeIds: ["bc"],
     routing: "affected",
     edgeGeometry: "both",
+    placement: { components: "connected", proximity: "neighbors" },
   },
 });
 ```
 
-| Field          | Meaning                                                                                                         |
-| -------------- | --------------------------------------------------------------------------------------------------------------- |
-| `nodeIds`      | Nodes whose `x` and `y` may change. Sizes, ports, parents and data stay fixed.                                  |
-| `edgeIds`      | Edges whose selected geometry may change. Does not select endpoints.                                            |
-| `edgeGeometry` | `routes`, `labels`, or `both` (default). Also limits automatic repair.                                          |
-| `routing`      | `affected` (default) includes edges invalidated by moved nodes; `selected` limits changes to explicit edge IDs. |
-| `previous`     | Optional geometry fallback, matched by current entity IDs. Current graph fields take precedence.                |
+| Field                  | Meaning                                                                                                                                                 |
+| ---------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `nodeIds`              | Nodes whose `x` and `y` may change. Sizes, ports, parents and data stay fixed.                                                                          |
+| `edgeIds`              | Edges whose selected geometry may change. Does not select endpoints.                                                                                    |
+| `edgeGeometry`         | `routes`, `labels`, or `both` (default). Also limits automatic repair.                                                                                  |
+| `routing`              | `affected` (default) includes edges invalidated by moved nodes; `selected` limits changes to explicit edge IDs.                                         |
+| `placement.components` | `connected` (default) lays out each connected selected subgraph; `single` treats each selected node independently. Components never span fixed parents. |
+| `placement.proximity`  | `sketch` (default) favors original position; `neighbors` favors the center of adjacent fixed nodes. Only valid collision-free candidates are accepted.  |
+| `previous`             | Optional geometry fallback, matched by current entity IDs. Current graph fields take precedence.                                                        |
 
 Omitted selection arrays and empty arrays both select nothing. With no selection
 and no constraints, an already visual graph is unchanged. Duplicate selected IDs
@@ -44,10 +47,13 @@ can use a zero-sized rectangle. `previous` never restores deleted entities.
 Baseline completion can produce patches for previously missing fields even on
 unselected entities; it does not move their baseline geometry.
 
-The selected nodes are arranged per parent using the layered phases. Placement
-checks surrounding rectangles and parent bounds. When no tested placement fits,
+The selected nodes are split into connected components within each fixed parent,
+then arranged with the layered phases. `single` skips inter-node arrangement.
+`neighbors` targets adjacent fixed nodes and considers placements around those
+neighbors; `sketch` keeps each component near its original location. Neither
+objective moves a fixed node. Placement checks surrounding rectangles and parent bounds. When no tested placement fits,
 positions are preserved with `PLACEMENT_BLOCKED`. This is bounded candidate
-placement, not a guarantee to discover every feasible packing. Each parent group
+placement, not a guarantee to discover every feasible packing. Each selected component
 uses at most 2,000 candidate offsets and 100,000 collision checks, with periodic
 cancellation checks.
 

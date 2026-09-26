@@ -19,6 +19,11 @@ export type LayoutScope =
       nodeIds?: readonly string[];
       /** Edge selection never grants permission to move endpoints. */
       edgeIds?: readonly string[];
+      /** Selected-node grouping and placement objective; defaults to connected/from-sketch. */
+      placement?: {
+        components?: "connected" | "single";
+        proximity?: "sketch" | "neighbors";
+      };
       /** Defaults to affected; automatic changes obey edgeGeometry. */
       routing?: "selected" | "affected";
       /** Defaults to both; dimensions remain fixed. */

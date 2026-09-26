@@ -29,6 +29,8 @@ function PartialSelection() {
   const [before, setBefore] = useState<VisualGraph>();
   const [selected, setSelected] = useState<string[]>([]);
   const [direction, setDirection] = useState<LayoutDirection>("down");
+  const [components, setComponents] = useState<"connected" | "single">("connected");
+  const [proximity, setProximity] = useState<"sketch" | "neighbors">("neighbors");
   const [result, setResult] = useState<LayoutResult>();
   const [message, setMessage] = useState("Laying out the whole graph…");
   const [busy, setBusy] = useState(true);
@@ -68,7 +70,12 @@ function PartialSelection() {
     try {
       const next = await getLayout({
         graph: previous,
-        scope: { mode: "partial", nodeIds: selected, routing: "affected" },
+        scope: {
+          mode: "partial",
+          nodeIds: selected,
+          routing: "affected",
+          placement: { components, proximity },
+        },
         options: { direction },
         signal: abort.signal,
       });
@@ -135,6 +142,26 @@ function PartialSelection() {
             {["down", "right", "up", "left"].map((value) => (
               <option key={value}>{value}</option>
             ))}
+          </select>
+        </label>
+        <label>
+          Selected components
+          <select
+            value={components}
+            onChange={(event) => setComponents(event.target.value as typeof components)}
+          >
+            <option value="connected">Connected subgraphs</option>
+            <option value="single">Each node separately</option>
+          </select>
+        </label>
+        <label>
+          Place near
+          <select
+            value={proximity}
+            onChange={(event) => setProximity(event.target.value as typeof proximity)}
+          >
+            <option value="neighbors">Fixed neighbors</option>
+            <option value="sketch">Original positions</option>
           </select>
         </label>
         <button className="selection-primary" disabled={busy || !selected.length} onClick={arrange}>
@@ -244,7 +271,12 @@ function PartialSelection() {
         <pre>
           {JSON.stringify(
             {
-              scope: { mode: "partial", nodeIds: selected, routing: "affected" },
+              scope: {
+                mode: "partial",
+                nodeIds: selected,
+                routing: "affected",
+                placement: { components, proximity },
+              },
               options: { direction },
             },
             null,

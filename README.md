@@ -86,6 +86,10 @@ const result = await getLayout({
 });
 ```
 
+`placement: { components: "connected" | "single", proximity: "sketch" | "neighbors" }`
+controls selected-subgraph grouping and placement. The partial selection story
+lets you compare these modes with a fixed surrounding graph.
+
 `nodeIds` permits position changes; `edgeIds` permits routes, label positions,
 or both. `routing: "affected"` (default) also repairs edges affected by moved
 nodes, within `edgeGeometry` permissions. Unselected nodes, dimensions, ports,

@@ -190,17 +190,55 @@ export function runPartialLayout<N, E, G, P>(
     throw new LayoutError("Spacing must be finite and non-negative", "INVALID_OPTIONS");
   context.throwIfAborted();
   if (selectedNodes.size && phase === "selection") {
-    // The existing layered phases plan the selection, never the surrounding graph.
-    // Keep parents separate so selection does not reparent or resize anything.
-    const groups = new Map<string | null, VisualNode<N, P>[]>();
-    for (const node of nodes)
-      if (selectedNodes.has(node.id)) {
-        const group = groups.get(node.parentId ?? null) ?? [];
-        group.push(node);
-        groups.set(node.parentId ?? null, group);
+    // A component cannot cross a fixed parent boundary. Connected selections
+    // get one internal layout; disconnected selections can settle independently.
+    const mode =
+      scope.mode === "partial" ? (scope.placement?.components ?? "connected") : "connected";
+    const proximity =
+      scope.mode === "partial" ? (scope.placement?.proximity ?? "sketch") : "sketch";
+    if (
+      (mode !== "connected" && mode !== "single") ||
+      (proximity !== "sketch" && proximity !== "neighbors")
+    )
+      throw new LayoutError("Invalid partial placement options", "INVALID_OPTIONS");
+    const adjacency = new Map(
+      nodes.filter((n) => selectedNodes.has(n.id)).map((n) => [n.id, new Set<string>()]),
+    );
+    if (mode === "connected")
+      for (const edge of edges) {
+        const source = byId.get(edge.sourceId),
+          target = byId.get(edge.targetId);
+        if (
+          source &&
+          target &&
+          source.parentId === target.parentId &&
+          adjacency.has(source.id) &&
+          adjacency.has(target.id)
+        ) {
+          adjacency.get(source.id)!.add(target.id);
+          adjacency.get(target.id)!.add(source.id);
+        }
       }
+    const groups: VisualNode<N, P>[][] = [];
+    const seen = new Set<string>();
+    for (const node of nodes) {
+      if (!selectedNodes.has(node.id) || seen.has(node.id)) continue;
+      const members = new Set<string>([node.id]);
+      const pending = [node.id];
+      seen.add(node.id);
+      while (pending.length) {
+        context.throwIfAborted();
+        for (const neighbor of adjacency.get(pending.pop()!) ?? [])
+          if (!seen.has(neighbor)) {
+            seen.add(neighbor);
+            members.add(neighbor);
+            pending.push(neighbor);
+          }
+      }
+      groups.push(nodes.filter((candidate) => members.has(candidate.id)));
+    }
     const placed = new Map(nodes.map((n) => [n.id, n]));
-    for (const group of groups.values()) {
+    for (const group of groups) {
       const ids = new Set(group.map((n) => n.id));
       const local = arrange(
         {
@@ -222,6 +260,47 @@ export function runPartialLayout<N, E, G, P>(
       const obstacles = [...placed.values()].filter((n) => !ids.has(n.id));
       const fixedLabels = edges.filter((e) => geometry === "routes" || !selectedEdges.has(e.id));
       const candidates: Point[] = [{ x: 0, y: 0 }];
+      // Fixed neighbors supply a placement target, while all fixed geometry
+      // remains an obstacle. The component is translated as one rigid unit.
+      const neighbors = edges.flatMap((edge) => {
+        const other = ids.has(edge.sourceId)
+          ? edge.targetId
+          : ids.has(edge.targetId)
+            ? edge.sourceId
+            : undefined;
+        const fixed = other && !selectedNodes.has(other) ? placed.get(other) : undefined;
+        return fixed ? [fixed] : [];
+      });
+      const bounds = {
+        x: Math.min(...proposed.map((n) => n.x)),
+        y: Math.min(...proposed.map((n) => n.y)),
+        width:
+          Math.max(...proposed.map((n) => n.x + n.width)) - Math.min(...proposed.map((n) => n.x)),
+        height:
+          Math.max(...proposed.map((n) => n.y + n.height)) - Math.min(...proposed.map((n) => n.y)),
+      };
+      const center = { x: bounds.x + bounds.width / 2, y: bounds.y + bounds.height / 2 };
+      const target =
+        neighbors.length && proximity === "neighbors"
+          ? {
+              x: neighbors.reduce((sum, n) => sum + n.x + n.width / 2, 0) / neighbors.length,
+              y: neighbors.reduce((sum, n) => sum + n.y + n.height / 2, 0) / neighbors.length,
+            }
+          : center;
+      if (neighbors.length && proximity === "neighbors") {
+        candidates.push({ x: target.x - center.x, y: target.y - center.y });
+        for (const neighbor of neighbors.slice(0, 400)) {
+          context.throwIfAborted();
+          const middleX = neighbor.x + neighbor.width / 2;
+          const middleY = neighbor.y + neighbor.height / 2;
+          candidates.push(
+            { x: neighbor.x + neighbor.width + gap - bounds.x, y: middleY - center.y },
+            { x: neighbor.x - gap - bounds.x - bounds.width, y: middleY - center.y },
+            { x: middleX - center.x, y: neighbor.y + neighbor.height + gap - bounds.y },
+            { x: middleX - center.x, y: neighbor.y - gap - bounds.y - bounds.height },
+          );
+        }
+      }
       // Bound both allocation and collision work in densely blocked scenes.
       candidateGeneration: for (const obstacle of [...obstacles, ...fixedLabels])
         for (const node of proposed) {
@@ -234,7 +313,10 @@ export function runPartialLayout<N, E, G, P>(
             { x: 0, y: obstacle.y - gap - node.y - node.height },
           );
         }
-      candidates.sort((a, b) => Math.abs(a.x) + Math.abs(a.y) - Math.abs(b.x) - Math.abs(b.y));
+      const score = (offset: Point) =>
+        Math.hypot(center.x + offset.x - target.x, center.y + offset.y - target.y) +
+        0.001 * Math.hypot(offset.x, offset.y);
+      candidates.sort((a, b) => score(a) - score(b));
       let comparisons = 0;
       const budget = () => {
         if (++comparisons % 128 === 0) context.throwIfAborted();

@@ -182,6 +182,61 @@ describe("partial authoring layout", () => {
       getLayout({ graph, scope: { mode: "partial", nodeIds: ["parent"] } }),
     ).rejects.toMatchObject({ code: "UNSUPPORTED_LAYOUT" });
   });
+  it("places disconnected selected components near their own fixed neighbors", async () => {
+    const graph = getFixedLayout(
+      createGraph({
+        nodes: [
+          { id: "a", x: 0, y: 0, width: 40, height: 40 },
+          { id: "b", x: 0, y: 250, width: 40, height: 40 },
+          { id: "fixed-a", x: 300, y: 0, width: 40, height: 40 },
+          { id: "fixed-b", x: 300, y: 250, width: 40, height: 40 },
+        ],
+        edges: [
+          { id: "a-link", sourceId: "a", targetId: "fixed-a" },
+          { id: "b-link", sourceId: "b", targetId: "fixed-b" },
+        ],
+      }),
+      { direction: "right" },
+    );
+    const base = {
+      graph,
+      scope: { mode: "partial" as const, nodeIds: ["a", "b"], routing: "selected" as const },
+    };
+    const sketch = await getLayout(base);
+    const near = await getLayout({
+      ...base,
+      scope: { ...base.scope, placement: { proximity: "neighbors" as const } },
+    });
+    expect(sketch.graph.nodes[0]).toMatchObject({ x: 0, y: 0 });
+    expect(sketch.graph.nodes[1]).toMatchObject({ x: 0, y: 250 });
+    expect(near.graph.nodes[0]!.x).toBeGreaterThan(sketch.graph.nodes[0]!.x);
+    expect(near.graph.nodes[1]!.x).toBeGreaterThan(sketch.graph.nodes[1]!.x);
+    expect(near.graph.nodes[2]).toEqual(graph.nodes[2]);
+    expect(near.graph.nodes[3]).toEqual(graph.nodes[3]);
+    expect(near.graph.nodes[0]!.y).toBeLessThan(near.graph.nodes[1]!.y);
+  });
+
+  it("can lay out connected selected nodes together or place them singly", async () => {
+    const graph = getFixedLayout(
+      createGraph({
+        nodes: [
+          { id: "a", x: 0, y: 0, width: 40, height: 40 },
+          { id: "b", x: 240, y: 0, width: 40, height: 40 },
+        ],
+        edges: [{ id: "ab", sourceId: "a", targetId: "b" }],
+      }),
+      { direction: "right" },
+    );
+    const scope = { mode: "partial" as const, nodeIds: ["a", "b"], routing: "selected" as const };
+    const connected = await getLayout({ graph, scope });
+    const single = await getLayout({
+      graph,
+      scope: { ...scope, placement: { components: "single" as const } },
+    });
+    expect(single.graph.nodes.map((n) => [n.x, n.y])).toEqual(graph.nodes.map((n) => [n.x, n.y]));
+    expect(connected.graph.nodes[1]!.x - connected.graph.nodes[0]!.x).toBeLessThan(240);
+  });
+
   it("arranges selected nodes around fixed nodes with deterministic output", async () => {
     const graph = fixture();
     const request = { graph, scope: { mode: "partial" as const, nodeIds: ["a", "b"] } };
