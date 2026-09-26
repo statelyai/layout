@@ -1,5 +1,20 @@
 # @statelyai/layout
 
+## 0.2.0
+
+### Minor Changes
+
+- 0331017: Add native partial layout with independent node and edge selection, route/label
+  permissions, affected-edge repair, and route-only orthogonal routing. Preserve
+  unselected geometry and emit field-specific patches and repair diagnostics.
+  
+  Add serializable alignment, distribution, pin, linear, and waypoint constraints
+  with required/soft strengths. Keep full ELK compatibility behavior unchanged.
+
+### Patch Changes
+
+- b7cf7c2: Route native and elkjs-compatible layout through one typed internal engine seam, align the compatibility entry's public types with elkjs 0.11.1, reproduce its Random and Box SIMPLE geometry without weakening native behavior, preserve provider output policy for non-routing algorithms, and provide its ESM and CommonJS main, bundled, API, and worker package aliases with merged layout defaults and terminal error propagation.
+
 ## 0.1.3
 
 ### Patch Changes
