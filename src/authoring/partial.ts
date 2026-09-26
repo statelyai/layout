@@ -43,7 +43,7 @@ function onRoute(point: Point, points: readonly Point[] | undefined): boolean {
     }) ?? false
   );
 }
-function labelReferences(constraints: readonly LayoutConstraint[]): Set<string> {
+export function labelReferences(constraints: readonly LayoutConstraint[]): Set<string> {
   const ids = new Set<string>();
   const add = (ref: GeometryReference) => {
     if ("edgeId" in ref) ids.add(ref.edgeId);
@@ -67,7 +67,7 @@ export function runPartialLayout<N, E, G, P>(
   options: LayeredLayoutOptions,
   context: LayoutExecutionContext,
   arrange: Arrange,
-  arrangeNodes = true,
+  phase: "selection" | "constraints" = "selection",
 ): VisualGraph<N, E, G, P> {
   const scope = context.scope;
   if (scope.mode !== "partial" && scope.mode !== "route-only")
@@ -161,7 +161,7 @@ export function runPartialLayout<N, E, G, P>(
   });
   const authored: VisualGraph<N, E, G, P> = {
     ...input,
-    direction: input.direction ?? options.direction ?? scope.previous?.direction ?? "down",
+    direction: options.direction ?? input.direction ?? scope.previous?.direction ?? "down",
     nodes,
     edges,
   };
@@ -170,21 +170,26 @@ export function runPartialLayout<N, E, G, P>(
   edges = baseline.edges;
   let graph = baseline;
   const byId = new Map(nodes.map((n) => [n.id, n]));
+  const ancestorSets = new Map<string, Set<string>>();
   const ancestors = (id: string): Set<string> => {
+    const cached = ancestorSets.get(id);
+    if (cached) return cached;
     const result = new Set<string>();
     let parent = byId.get(id)?.parentId;
     while (parent != null && !result.has(parent)) {
       result.add(parent);
       parent = byId.get(parent)?.parentId;
     }
+    ancestorSets.set(id, result);
     return result;
   };
+  for (const node of nodes) ancestors(node.id);
   const direction = options.direction ?? input.direction ?? scope.previous?.direction ?? "down";
   const gap = options.spacing?.node ?? 20;
   if (!finite(gap) || gap < 0)
     throw new LayoutError("Spacing must be finite and non-negative", "INVALID_OPTIONS");
   context.throwIfAborted();
-  if (selectedNodes.size && arrangeNodes) {
+  if (selectedNodes.size && phase === "selection") {
     // The existing layered phases plan the selection, never the surrounding graph.
     // Keep parents separate so selection does not reparent or resize anything.
     const groups = new Map<string | null, VisualNode<N, P>[]>();
@@ -217,8 +222,11 @@ export function runPartialLayout<N, E, G, P>(
       const obstacles = [...placed.values()].filter((n) => !ids.has(n.id));
       const fixedLabels = edges.filter((e) => geometry === "routes" || !selectedEdges.has(e.id));
       const candidates: Point[] = [{ x: 0, y: 0 }];
-      for (const obstacle of [...obstacles, ...fixedLabels])
+      // Bound both allocation and collision work in densely blocked scenes.
+      candidateGeneration: for (const obstacle of [...obstacles, ...fixedLabels])
         for (const node of proposed) {
+          context.throwIfAborted();
+          if (candidates.length + 4 > 2000) break candidateGeneration;
           candidates.push(
             { x: obstacle.x + obstacle.width + gap - node.x, y: 0 },
             { x: obstacle.x - gap - node.x - node.width, y: 0 },
@@ -227,8 +235,15 @@ export function runPartialLayout<N, E, G, P>(
           );
         }
       candidates.sort((a, b) => Math.abs(a.x) + Math.abs(a.y) - Math.abs(b.x) - Math.abs(b.y));
-      const fits = (offset: Point) =>
-        proposed.every((n) => {
+      let comparisons = 0;
+      const budget = () => {
+        if (++comparisons % 128 === 0) context.throwIfAborted();
+        return comparisons <= 100000;
+      };
+      const fits = (offset: Point) => {
+        context.throwIfAborted();
+        return proposed.every((n) => {
+          if (!budget()) return false;
           const translated = { ...n, x: n.x + offset.x, y: n.y + offset.y };
           const parent = n.parentId == null ? undefined : placed.get(n.parentId);
           if (
@@ -240,16 +255,18 @@ export function runPartialLayout<N, E, G, P>(
           )
             return false;
           return (
-            !fixedLabels.some((label) => overlaps(translated, label, gap)) &&
+            fixedLabels.every((label) => budget() && !overlaps(translated, label, gap)) &&
             obstacles.every(
               (o) =>
-                ancestors(n.id).has(o.id) ||
-                ancestors(o.id).has(n.id) ||
-                !overlaps(translated, o, gap),
+                budget() &&
+                (ancestors(n.id).has(o.id) ||
+                  ancestors(o.id).has(n.id) ||
+                  !overlaps(translated, o, gap)),
             )
           );
         });
-      const offset = candidates.find(fits);
+      };
+      const offset = candidates.find((candidate) => comparisons <= 100000 && fits(candidate));
       if (offset)
         for (const n of proposed) placed.set(n.id, { ...n, x: n.x + offset.x, y: n.y + offset.y });
       else
@@ -257,7 +274,7 @@ export function runPartialLayout<N, E, G, P>(
           severity: "warning",
           code: "PLACEMENT_BLOCKED",
           message:
-            "Selected nodes could not fit without moving fixed geometry; preserved their positions",
+            "No placement found within the search budget without moving fixed geometry; preserved selected positions",
           entityIds: [...ids],
           geometry: "node",
         });
@@ -311,9 +328,18 @@ export function runPartialLayout<N, E, G, P>(
       context.throwIfAborted();
       const needsRepair = affected(edge);
       const allowed = selectedEdges.has(edge.id) || (routing === "affected" && needsRepair);
-      const routeAllowed = allowed && geometry !== "labels";
-      const labelAllowed = allowed && geometry !== "routes" && !constrainedLabels.has(edge.id);
       const waypoints = constraints.filter((c) => c.kind === "waypoint" && c.edgeId === edge.id);
+      // Full constraints grant label permissions independently of route repair.
+      const routeAllowed =
+        phase === "constraints"
+          ? needsRepair ||
+            waypoints.some(
+              (c) =>
+                c.kind === "waypoint" &&
+                (edge.routing === "splines" || !onRoute(c.point, edge.points)),
+            )
+          : allowed && geometry !== "labels";
+      const labelAllowed = allowed && geometry !== "routes" && !constrainedLabels.has(edge.id);
       const source = resultNodes.get(edge.sourceId)!;
       const target = resultNodes.get(edge.targetId)!;
       let next = edge;
@@ -399,7 +425,7 @@ export function runPartialLayout<N, E, G, P>(
             geometry: "routes",
           });
         }
-      if (labelAllowed) {
+      if (labelAllowed && (next.points?.length ?? 0) >= 2) {
         const midpoint = getPolylineMidpoint(next.points ?? []);
         const candidates = [
           { x: midpoint.x - next.width / 2, y: midpoint.y - next.height / 2 },

@@ -1,5 +1,5 @@
 import type { Graph, GraphEdge, GraphNode, Point, VisualGraph, VisualNode } from "@statelyai/graph";
-import { runPartialLayout } from "../authoring/partial";
+import { labelReferences, runPartialLayout } from "../authoring/partial";
 import { UnsupportedLayoutError } from "../errors";
 import type { LayoutAlgorithm, LayoutExecutionContext } from "../types";
 import { separateExteriorLabels } from "./separate-exterior-labels";
@@ -2692,6 +2692,10 @@ export const layeredAlgorithm: LayoutAlgorithm<LayeredLayoutOptions> = {
         runPartialLayout(graph, options ?? {}, context, getLayeredLayout),
       );
     }
+    if (context.constraints?.length && graph.nodes.some((node) => node.parentId != null))
+      throw new UnsupportedLayoutError(
+        "Full layout with geometry constraints does not support containers; use partial leaf constraints or full layout without geometry constraints",
+      );
     const result = runLayeredPipeline(graph, options ?? {}, context);
     if (!context.constraints?.length) return result;
     return context.measurePhase("constraints", () =>
@@ -2703,11 +2707,11 @@ export const layeredAlgorithm: LayoutAlgorithm<LayeredLayoutOptions> = {
           scope: {
             mode: "partial",
             nodeIds: result.nodes.map((n) => n.id),
-            edgeIds: result.edges.map((e) => e.id),
+            edgeIds: [...labelReferences(context.constraints ?? [])],
           },
         },
         getLayeredLayout,
-        false,
+        "constraints",
       ),
     );
   },

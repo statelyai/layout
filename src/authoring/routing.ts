@@ -74,11 +74,36 @@ function connect(
   check: () => void,
 ): Point[] | undefined {
   if (start.x === end.x && start.y === end.y) return [start];
-  const xs = [...new Set([start.x, end.x, ...obstacles.flatMap((r) => [r.x, r.x + r.width])])].sort(
-    (a, b) => a - b,
-  );
+  // Distant geometry must not exhaust the local grid budget. Each attempt still
+  // collision-checks against the entire scene, including excluded rectangles.
+  for (let attempt = 0; attempt < 8; attempt++) {
+    check();
+    const margin = 64 * 2 ** attempt;
+    const left = Math.min(start.x, end.x) - margin;
+    const right = Math.max(start.x, end.x) + margin;
+    const top = Math.min(start.y, end.y) - margin;
+    const bottom = Math.max(start.y, end.y) + margin;
+    const local = obstacles.filter(
+      (r) => r.x <= right && r.x + r.width >= left && r.y <= bottom && r.y + r.height >= top,
+    );
+    const result = search(start, end, local, obstacles, check);
+    if (result || local.length === obstacles.length) return result;
+  }
+  return undefined;
+}
+
+function search(
+  start: Point,
+  end: Point,
+  gridObstacles: readonly EntityRect[],
+  obstacles: readonly EntityRect[],
+  check: () => void,
+): Point[] | undefined {
+  const xs = [
+    ...new Set([start.x, end.x, ...gridObstacles.flatMap((r) => [r.x, r.x + r.width])]),
+  ].sort((a, b) => a - b);
   const ys = [
-    ...new Set([start.y, end.y, ...obstacles.flatMap((r) => [r.y, r.y + r.height])]),
+    ...new Set([start.y, end.y, ...gridObstacles.flatMap((r) => [r.y, r.y + r.height])]),
   ].sort((a, b) => a - b);
   // Bound interactive work; the caller returns a diagnostic without inventing a route.
   if (xs.length * ys.length > 40000) return undefined;

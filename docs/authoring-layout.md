@@ -33,7 +33,9 @@ and no constraints, an already visual graph is unchanged. Duplicate selected IDs
 are deduplicated; unknown IDs fail with `INVALID_SELECTION`. Selecting a container fails with `UNSUPPORTED_LAYOUT`; authoring currently
 supports nested leaf edits with fixed ancestors. This prevents implicitly moving
 unselected descendants. Resizing ancestors and reparenting are not supported.
-Full layout without geometry constraints continues to support containers.
+Full layout without geometry constraints continues to support containers. Full
+compound layout with geometry constraints explicitly fails with `UNSUPPORTED_LAYOUT`;
+use partial constraints on leaves when ancestors must remain fixed.
 
 Fixed entities must have finite geometry in `graph` or `previous`; otherwise
 layout fails with `MISSING_GEOMETRY`. New selected nodes can use measurement and
@@ -45,7 +47,9 @@ unselected entities; it does not move their baseline geometry.
 The selected nodes are arranged per parent using the layered phases. Placement
 checks surrounding rectangles and parent bounds. When no tested placement fits,
 positions are preserved with `PLACEMENT_BLOCKED`. This is bounded candidate
-placement, not a guarantee to discover every feasible packing.
+placement, not a guarantee to discover every feasible packing. Each parent group
+uses at most 2,000 candidate offsets and 100,000 collision checks, with periodic
+cancellation checks.
 
 ## Routes and labels
 
@@ -57,8 +61,10 @@ package's null-to-clear semantics.
 The partial router uses orthogonal rectangle visibility paths and named port
 positions. It avoids node interiors and other label rectangles. Common ancestor
 containers are traversable. Search is bounded to 40,000 visibility-grid vertices
-per segment. Failure preserves the previous route with `ROUTE_BLOCKED`. Supplied
-spline routing or custom `routeEdges` strategies fail explicitly; partial
+per attempt, using nearby obstacles to build the grid while checking routes against
+all obstacles. Up to eight attempts expand the search neighborhood. Failure preserves the previous route with `ROUTE_BLOCKED`. Supplied
+spline routing or custom `routeEdges` strategies fail explicitly when route repair
+is requested; partial
 routing currently produces orthogonal paths. It does not optimize crossings
 between edges or preserve arbitrary old bends as hard constraints.
 
@@ -71,6 +77,12 @@ Routes-only changes that detach a previously intersecting label report
 `LABEL_REPAIR_REQUIRED`. Moved labels overlapping nodes or other labels report
 `LABEL_OVERLAP`; routes newly crossed by moved labels report repair needs.
 Labels that participate in geometric constraints retain their solved positions.
+Labels without a usable route retain their authored rectangle.
+
+The full-layout constraint pass selects only constraint-referenced labels. It
+repairs routes invalidated by moved nodes or unsatisfied waypoints; unrelated
+routes and labels retain the layered pipeline output. Spline/custom routing is
+allowed when the constraint pass needs no route repair.
 
 ```ts
 // Legacy scope: omitted edgeIds means all edges; [] means none.

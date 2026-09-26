@@ -1,6 +1,8 @@
 import { createGraph, applyPatches } from "@statelyai/graph";
 import { describe, expect, it } from "vitest";
 import { c, getLayout, getFixedLayout } from "../src";
+import { runPartialLayout } from "../src/authoring/partial";
+import type { LayoutExecutionContext } from "../src/types";
 import { routeCrosses } from "../src/authoring/routing";
 
 function fixture() {
@@ -517,4 +519,189 @@ it("rejects cyclic parent frames without recursing indefinitely", async () => {
   await expect(
     getLayout({ graph, scope: { mode: "partial", edgeIds: ["ab"] } }),
   ).rejects.toMatchObject({ code: "INVALID_GRAPH" });
+});
+
+describe("review regressions", () => {
+  it("persists the partial direction override for subsequent requests", async () => {
+    const first = await getLayout({
+      graph: fixture(),
+      options: { direction: "down" },
+      scope: { mode: "partial", edgeIds: ["ab"], edgeGeometry: "routes" },
+    });
+    expect(first.graph.direction).toBe("down");
+    const next = await getLayout({
+      graph: first.graph,
+      scope: { mode: "partial", edgeIds: ["ab"], edgeGeometry: "routes" },
+    });
+    expect(next.graph.edges).toEqual(first.graph.edges);
+  });
+  it.each([undefined, []])(
+    "preserves authored labels without a usable route: %j",
+    async (points) => {
+      const graph = fixture();
+      graph.edges[0]!.points = points;
+      const result = await getLayout({
+        graph,
+        scope: { mode: "partial", edgeIds: ["ab"], edgeGeometry: "labels" },
+      });
+      expect(result.graph.edges).toEqual(graph.edges);
+    },
+  );
+  it("routes local edges with many distant obstacles and a required waypoint", async () => {
+    const graph = fixture();
+    graph.nodes.push(
+      ...Array.from({ length: 150 }, (_, i) => ({
+        ...graph.nodes[2]!,
+        id: `far-${i}`,
+        x: 10000 + i * 100,
+        y: 10000 + i * 100,
+        width: 30,
+        height: 30,
+      })),
+    );
+    const result = await getLayout({
+      graph,
+      scope: { mode: "partial", edgeIds: ["ab"], edgeGeometry: "routes" },
+      constraints: [c.waypoint({ id: "via", edgeId: "ab", point: { x: 110, y: 100 } })],
+    });
+    expect(result.diagnostics.some((d) => d.code === "ROUTE_BLOCKED")).toBe(false);
+    for (const node of graph.nodes)
+      expect(routeCrosses(result.graph.edges[0]!.points, node)).toBe(false);
+  });
+  it.each(["ORTHOGONAL", "SPLINES"] as const)(
+    "preserves unrelated full-layout edges with %s routing",
+    async (edgeRouting) => {
+      const graph = fixture();
+      const options = { settings: { edgeRouting } };
+      const baseline = await getLayout({ graph, options });
+      const result = await getLayout({
+        graph,
+        options,
+        constraints: [c.pin({ id: "island", entity: { nodeId: "obstacle" }, x: 5000, y: 5000 })],
+      });
+      expect(result.graph.edges).toEqual(baseline.graph.edges);
+    },
+  );
+  it("changes only a constraint-referenced label with custom full routing", async () => {
+    const graph = fixture();
+    const options = {
+      strategies: {
+        routeEdges: () => ({
+          pointsByEdgeId: new Map([
+            [
+              "ab",
+              [
+                { x: 80, y: 20 },
+                { x: 320, y: 20 },
+              ],
+            ],
+          ]),
+        }),
+      },
+    };
+    const baseline = await getLayout({ graph, options });
+    const result = await getLayout({
+      graph,
+      options,
+      constraints: [
+        c.pin({ id: "label", entity: { edgeId: "ab", part: "label" }, x: 500, y: 500 }),
+      ],
+    });
+    expect(result.graph.edges[0]!.points).toEqual(baseline.graph.edges[0]!.points);
+    expect(result.graph.edges[0]).toMatchObject({ x: 500, y: 500 });
+  });
+  it("explicitly rejects constrained full compound layout", async () => {
+    const graph = createGraph({
+      nodes: [{ id: "parent" }, { id: "child", parentId: "parent" }],
+      edges: [],
+    });
+    await expect(
+      getLayout({ graph, constraints: [c.pin({ id: "pin", entity: { nodeId: "child" }, x: 20 })] }),
+    ).rejects.toMatchObject({ code: "UNSUPPORTED_LAYOUT" });
+  });
+});
+
+describe("bounded authoring work", () => {
+  function blocked() {
+    return getFixedLayout(
+      createGraph({
+        nodes: [
+          { id: "parent", x: 0, y: 0, width: 10, height: 10 },
+          { id: "child", parentId: "parent", x: 0, y: 0, width: 20, height: 20 },
+          ...Array.from({ length: 800 }, (_, i) => ({
+            id: `fixed-${i}`,
+            x: i * 30,
+            y: i * 30,
+            width: 25,
+            height: 25,
+          })),
+        ],
+        edges: [],
+      }),
+    );
+  }
+  it("bounds blocked candidate generation/evaluation and preserves the input", () => {
+    const graph = blocked();
+    let checks = 0;
+    const context: LayoutExecutionContext = {
+      scope: { mode: "partial", nodeIds: ["child"] },
+      diagnostics: [],
+      measurePhase: (_, run) => run(),
+      throwIfAborted: () => {
+        checks++;
+      },
+    };
+    const result = runPartialLayout(graph, {}, context, (input) => input as typeof graph);
+    expect(result.nodes).toEqual(graph.nodes);
+    expect(context.diagnostics.some((d) => d.code === "PLACEMENT_BLOCKED")).toBe(true);
+    expect(checks).toBeGreaterThan(1);
+    expect(checks).toBeLessThan(3000);
+  });
+  it("checks cancellation during candidate generation", () => {
+    const graph = blocked();
+    let checks = 0;
+    expect(() =>
+      runPartialLayout(
+        graph,
+        {},
+        {
+          scope: { mode: "partial", nodeIds: ["child"] },
+          diagnostics: [],
+          measurePhase: (_, run) => run(),
+          throwIfAborted: () => {
+            if (++checks === 10) throw new Error("cancelled");
+          },
+        },
+        (input) => input as typeof graph,
+      ),
+    ).toThrow("cancelled");
+    expect(checks).toBe(10);
+  });
+  it("repairs a moved endpoint but preserves an unrelated full-layout edge", async () => {
+    const graph = createGraph({
+      nodes: ["a", "b", "c", "d"].map((id) => ({ id, width: 60, height: 40 })),
+      edges: [
+        { id: "ab", sourceId: "a", targetId: "b" },
+        { id: "cd", sourceId: "c", targetId: "d" },
+      ],
+    });
+    const baseline = await getLayout({ graph });
+    const result = await getLayout({
+      graph,
+      constraints: [c.pin({ id: "move", entity: { nodeId: "a" }, x: 2000, y: 2000 })],
+    });
+    expect(result.graph.edges.find((e) => e.id === "ab")!.points).not.toEqual(
+      baseline.graph.edges.find((e) => e.id === "ab")!.points,
+    );
+    expect(result.graph.edges.find((e) => e.id === "cd")).toEqual(
+      baseline.graph.edges.find((e) => e.id === "cd"),
+    );
+    await expect(
+      getLayout({
+        graph,
+        options: { settings: { edgeRouting: "SPLINES" } },
+        constraints: [c.pin({ id: "move", entity: { nodeId: "a" }, x: 2000, y: 2000 })],
+      }),
+    ).rejects.toMatchObject({ code: "UNSUPPORTED_LAYOUT" });
+  });
 });
