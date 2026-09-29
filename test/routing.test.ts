@@ -111,13 +111,15 @@ describe("routing dependencies", () => {
     expect(result.snapshot.routes.get("ab")!.status).toBe("routed");
     avoids(result.snapshot.routes.get("ab")!, { x: 120, y: -20, width: 60, height: 80 });
   });
-  it("retains a valid previous detour when explicitly requested", () => {
+  it("shortens a detour when its obstacle moves away", () => {
     const g = graph(),
-      previous = orthogonalRouting.route(g, { preserveRoutes: true }),
+      previous = orthogonalRouting.route(g),
       next = move(g, "block", { y: 200 }),
       update = orthogonalRouting.update(next, previous, getDiff(g, next));
-    expect(update.snapshot.routes.get("ab")).toBe(previous.routes.get("ab"));
-    expect(update.patches).toEqual([]);
+    expect(update.snapshot.routes.get("ab")).toEqual(
+      orthogonalRouting.route(next).routes.get("ab"),
+    );
+    expect(update.patches.map((p) => p.edgeId)).toEqual(["ab"]);
   });
   it("retries fallback routes when blocking geometry is removed", () => {
     const g = move(graph(), "block", { x: -100, y: -100, width: 500, height: 500 }),
@@ -350,18 +352,15 @@ it("reports search-budget fallback separately from blocked geometry", () => {
   expect(route.diagnostics.map((d) => d.code)).toContain("SEARCH_BUDGET");
   visible(route);
 });
-it("repairs attachments while preserving the old interior corridor", () => {
+it("routes moved attachments identically to fresh routing", () => {
   const g = graph(),
-    previous = orthogonalRouting.route(g, { preserveRoutes: true }),
+    previous = orthogonalRouting.route(g),
     next = move(g, "a", { y: 5 });
-  const original = previous.routes.get("ab")!.sections[0]!.path;
   const result = orthogonalRouting
     .update(next, previous, getDiff(g, next))
     .snapshot.routes.get("ab")!;
   expect(result.status).toBe("routed");
-  const oldInterior = original.segments.slice(1, -1).map((s) => s.to);
-  const nextPoints = flattenPath(result.sections[0]!.path);
-  for (const p of oldInterior) expect(nextPoints).toContainEqual(p);
+  expect(result).toEqual(orthogonalRouting.route(next).routes.get("ab"));
   avoids(result, { x: 120, y: -20, width: 60, height: 80 });
 });
 it("updates endpoint references even when reconnected nodes share coordinates", () => {
@@ -476,9 +475,9 @@ it.each(Object.keys(routingStrategies) as (keyof typeof routingStrategies)[])(
   },
 );
 
-it("orthogonal stability mode cannot accumulate bends during diagonal dragging", () => {
+it("orthogonal routing cannot accumulate bends during diagonal dragging", () => {
   let g: RoutingGraph = graph();
-  let snapshot = orthogonalRouting.route(g, { preserveRoutes: true });
+  let snapshot = orthogonalRouting.route(g);
   const initialCount = snapshot.routes.get("ab")!.sections[0]!.path.segments.length;
   for (let frame = 1; frame <= 80; frame++) {
     const next = move(g, "a", { x: -frame, y: frame / 2 });
@@ -515,6 +514,37 @@ it.each(Object.keys(routingStrategies) as (keyof typeof routingStrategies)[])(
       [120, -20],
     ]) {
       const next = move(g, "block", { x, y });
+      const update = strategy.update(next, snapshot, getDiff(g, next));
+      expect([...update.snapshot.routes]).toEqual([...strategy.route(next).routes]);
+      expect(update.snapshot.routes.get("cd")).toBe(snapshot.routes.get("cd"));
+      snapshot = update.snapshot;
+      g = next;
+    }
+  },
+);
+
+it.each(Object.keys(routingStrategies) as (keyof typeof routingStrategies)[])(
+  "%s mixed node and label updates equal fresh routing at every frame",
+  (style) => {
+    const strategy = routingStrategies[style];
+    const base = graph();
+    let g: RoutingGraph = {
+      ...base,
+      edges: base.edges.map((e) =>
+        e.id === "ab" ? { ...e, x: 210, y: 120, width: 50, height: 24 } : e,
+      ),
+    };
+    let snapshot = strategy.route(g);
+    for (let frame = 0; frame < 16; frame++) {
+      const next: RoutingGraph =
+        frame % 2
+          ? move(g, "a", { x: -frame * 2, y: frame * 3 })
+          : {
+              ...g,
+              edges: g.edges.map((e) =>
+                e.id === "ab" ? { ...e, x: 200 + frame * 2, y: 80 + frame * 4 } : e,
+              ),
+            };
       const update = strategy.update(next, snapshot, getDiff(g, next));
       expect([...update.snapshot.routes]).toEqual([...strategy.route(next).routes]);
       expect(update.snapshot.routes.get("cd")).toBe(snapshot.routes.get("cd"));

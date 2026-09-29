@@ -85,8 +85,6 @@ export interface RoutingSettings {
   readonly bendPenalty?: number;
   readonly maxSearchNodes?: number;
   readonly organicIterations?: number;
-  /** Opt into history-dependent corridor preservation. Default false: canonical rerouting of affected edges. */
-  readonly preserveRoutes?: boolean;
   readonly edges?: Readonly<Record<string, EdgeRoutingSettings>>;
 }
 export interface RoutingMetrics {

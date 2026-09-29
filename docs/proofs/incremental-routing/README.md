@@ -69,3 +69,12 @@ recomputed, two reused, and no browser errors.
 
 - [Same endpoint reached from opposite directions](history-independent.png)
 - [After 40 diagonal drag frames](diagonal-drag-fixed.png)
+
+## Final routing contract
+
+History preservation has been removed from the API and strategy implementations.
+Previous paths are used only as cached outputs for identity reuse and patches.
+Strategies receive current geometry and settings, never previous drawn paths.
+Mixed node/label drag tests compare every frame with fresh routing for all twelve
+strategies while retaining unrelated route identity. The earlier opt-in stability
+checks above describe intermediate versions, not the final public contract.

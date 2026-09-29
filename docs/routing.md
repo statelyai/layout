@@ -67,13 +67,10 @@ therefore converge to the same routes. The spatial index tracks searched regions
 well as drawn geometry, so an obstacle moving away can open a better route without
 requiring a full-graph recomputation.
 
-Set `preserveRoutes: true` to opt into history-dependent corridor stability. This
-remains a pure function of the graph, previous snapshot, diff, and settings, but
-its output intentionally depends on the previous routes. Linear attachment repairs
-reject retracing, self-crossings, and growing bend counts. Affected curved routes
-are rebuilt; unrelated routes remain shared. Valid shared trunks are retained.
-In this mode, removing an obstacle need not shorten a still-valid detour. Failed
-routes in the changed region are retried in either mode.
+Previous drawn paths are cached outputs only, never routing constraints. For the
+same graph and settings, incremental route geometry must equal fresh routing.
+Snapshots retain prior graph geometry and dependency indexes to identify affected
+edges; unaffected outputs retain identity. There is no history-preservation mode.
 
 Settings omitted on update retain the previous settings. Supplied settings
 replace the settings object, using defaults for omitted fields. Configuration
@@ -130,7 +127,6 @@ produce separate sections with a fixed gap, and group updates are atomic.
 | `bendPenalty`       | `10`       | Bend cost during path search                                                      |
 | `maxSearchNodes`    | `4000`     | Per-edge search expansion and visibility-graph size budget                        |
 | `organicIterations` | `12`       | Elastic-string relaxation iterations                                              |
-| `preserveRoutes`    | `false`    | Opt into history-dependent corridor preservation                                  |
 | `edges`             | `{}`       | Per-edge `sourceSide`, `targetSide`, ordered world-space `waypoints`, and `group` |
 
 Every graph edge gets drawable geometry even when constraints are infeasible.
@@ -143,8 +139,8 @@ API settings or stale diffs throw; they are programming errors, not route failur
 The search is bounded and deterministic. Curve clearance recursively subdivides overlapping control hulls and actual arc
 sweeps instead of treating their bounding boxes as occupied. Unresolved numerical
 contacts are conservatively rejected; tight corridors may remain piecewise linear. Curves are not guaranteed
-where the requested radius cannot fit. Route selection is deterministic; opt-in preservation favors stability over
-shorter routes. Independent crossings are permitted; bus/parallel routing coordinates
+where the requested radius cannot fit. Route selection is deterministic. Search minimizes length plus bend penalties
+within its bounded visibility graph; this is not a global crossing optimum. Independent crossings are permitted; bus/parallel routing coordinates
 explicit peers. Search costs do not claim a globally crossing-minimal solution.
 
 ## Geometry and rendering

@@ -96,10 +96,16 @@ function calculate(
 ): { state: State; patches: RoutePatch[] } {
   let routes = state.routes,
     routeIndex = state.routeIndex;
+  const input = {
+    nodes: state.nodes,
+    edges: state.edges,
+    groups: state.groups,
+    obstacles: state.obstacles,
+    settings: state.settings,
+  };
   const patches: RoutePatch[] = [],
     batch: Batch = {
       plans: new Map(),
-      previous: state.settings === previous?.settings ? previous : undefined,
     };
   counts.affectedEdges = affected.size;
   counts.reusedEdges = Math.max(
@@ -118,14 +124,7 @@ function calculate(
       continue;
     }
     batch.dependencyBounds = undefined;
-    let route = routeEdge(
-      edge,
-      state,
-      style,
-      state.settings === previous?.settings ? oldRoute : undefined,
-      counts,
-      batch,
-    );
+    let route = routeEdge(edge, input, style, counts, batch);
     if (oldRoute && JSON.stringify(oldRoute) === JSON.stringify(route)) route = oldRoute;
     // Invalidate all spatial reads, including corridors rejected during search.
     // An obstacle leaving those regions can change the canonical route too.

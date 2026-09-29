@@ -33,6 +33,8 @@ import {
   type SearchContext,
 } from "./search";
 
+type RoutingInput = Pick<State, "nodes" | "edges" | "groups" | "obstacles" | "settings">;
+
 export type Metrics = { -readonly [K in keyof RoutingMetrics]: RoutingMetrics[K] };
 interface Terminal {
   point: RoutePoint;
@@ -45,11 +47,10 @@ interface Plan {
 }
 export interface Batch {
   readonly plans: Map<string, Plan | null>;
-  readonly previous?: State;
   dependencyBounds?: RouteBounds;
 }
 function contextFor(
-  state: State,
+  state: RoutingInput,
   excluded: ReadonlySet<string>,
   endpoints: ReadonlySet<string>,
   metrics: Metrics,
@@ -89,34 +90,6 @@ function safe(path: RoutePath, context: SearchContext): boolean {
   }
   return true;
 }
-function hasSpur(points: readonly RoutePoint[]): boolean {
-  for (let i = 1; i < points.length; i++) {
-    const a = points[i - 1]!,
-      b = points[i]!;
-    for (let j = i + 1; j < points.length; j++) {
-      const c = points[j - 1]!,
-        d = points[j]!;
-      const dx = b.x - a.x,
-        dy = b.y - a.y,
-        ex = d.x - c.x,
-        ey = d.y - c.y;
-      const cross = dx * ey - dy * ex;
-      if (Math.abs(cross) < 1e-8) {
-        if (Math.abs(dx * (c.y - a.y) - dy * (c.x - a.x)) > 1e-8) continue;
-        const length = dx * dx + dy * dy;
-        if (!length) continue;
-        const t = ((c.x - a.x) * dx + (c.y - a.y) * dy) / length;
-        const u = ((d.x - a.x) * dx + (d.y - a.y) * dy) / length;
-        if (Math.min(1, Math.max(t, u)) - Math.max(0, Math.min(t, u)) > 1e-8) return true;
-      } else if (j > i + 1) {
-        const t = ((c.x - a.x) * ey - (c.y - a.y) * ex) / cross;
-        const u = ((c.x - a.x) * dy - (c.y - a.y) * dx) / cross;
-        if (t >= 0 && t <= 1 && u >= 0 && u <= 1) return true;
-      }
-    }
-  }
-  return false;
-}
 function cubic(start: Terminal, end: Terminal): RoutePath {
   const amount = Math.max(20, distance(start.point, end.point) / 2),
     a = vector(start.side),
@@ -133,7 +106,11 @@ function cubic(start: Terminal, end: Terminal): RoutePath {
     ],
   };
 }
-function curve(points: readonly RoutePoint[], state: State, context: SearchContext): RoutePath {
+function curve(
+  points: readonly RoutePoint[],
+  state: RoutingInput,
+  context: SearchContext,
+): RoutePath {
   const path = pathFromPoints(points);
   for (let radius = state.settings.radius; radius > 0.01; radius /= 2) {
     const rounded = roundCorners(path, { radius });
@@ -142,7 +119,11 @@ function curve(points: readonly RoutePoint[], state: State, context: SearchConte
   return path;
 }
 /** Elastic string relaxation, constrained by collision checks on each proposed move. */
-function organic(points: readonly RoutePoint[], state: State, context: SearchContext): RoutePath {
+function organic(
+  points: readonly RoutePoint[],
+  state: RoutingInput,
+  context: SearchContext,
+): RoutePath {
   let samples: RoutePoint[] = [];
   for (let i = 1; i < points.length; i++) {
     const a = points[i - 1]!,
@@ -181,7 +162,7 @@ function organic(points: readonly RoutePoint[], state: State, context: SearchCon
 }
 function groupPlan(
   key: string,
-  state: State,
+  state: RoutingInput,
   metrics: Metrics,
   batch: Batch,
   style: RouteStyle,
@@ -209,20 +190,6 @@ function groupPlan(
     metrics,
     batch,
   );
-  if (state.settings.preserveRoutes && batch.previous) {
-    const peer = batch.previous.groups.get(key)?.keys().next().value;
-    const prior =
-      peer === undefined
-        ? undefined
-        : batch.previous.routes
-            .get(peer)
-            ?.sections.find((section) => section.sharedId === `trunk:${key}`);
-    if (prior && safe(prior.path, context)) {
-      const plan = { id: `trunk:${key}`, path: prior.path };
-      batch.plans.set(key, plan);
-      return plan;
-    }
-  }
   const bounds = rectangles.reduce(union),
     spacing = state.settings.clearance + state.settings.edgeSpacing + 1;
   let result: Plan | null = null;
@@ -255,9 +222,8 @@ function groupPlan(
 }
 export function routeEdge(
   edge: EdgeGeometry,
-  state: State,
+  state: RoutingInput,
   style: RouteStyle,
-  previous: Route | undefined,
   metrics: Metrics,
   batch: Batch,
 ): Route {
@@ -379,34 +345,6 @@ export function routeEdge(
   const group = groupKey(edge, style, config),
     peers = group ? [...(state.groups.get(group)?.keys() ?? [])] : [];
   const grouped = group !== undefined && peers.length > 1 && style !== "parallel";
-  if (
-    config.preserveRoutes &&
-    previous?.status === "routed" &&
-    !diagnostics.length &&
-    !grouped &&
-    style !== "parallel"
-  ) {
-    const sections = previous.sections;
-    if (
-      sections.length === (label ? 2 : 1) &&
-      JSON.stringify(sections[0]!.from) === JSON.stringify(source.ref) &&
-      JSON.stringify(sections.at(-1)!.to) === JSON.stringify(target.ref) &&
-      distance(sections[0]!.path.start, source.point) < 1e-8 &&
-      distance(
-        sections[0]!.path.segments.at(-1)?.to ?? sections[0]!.path.start,
-        firstTarget.point,
-      ) < 1e-8 &&
-      (!lastSource || distance(sections[1]!.path.start, lastSource.point) < 1e-8) &&
-      distance(
-        sections.at(-1)!.path.segments.at(-1)?.to ?? sections.at(-1)!.path.start,
-        target.point,
-      ) < 1e-8 &&
-      sections.every((s) => safe(s.path, context))
-    ) {
-      metrics.reusedEdges++;
-      return previous;
-    }
-  }
   metrics.routedEdges++;
   const sections: RouteSection[] = [];
   const stub = (t: Terminal) => {
@@ -414,53 +352,7 @@ export function routeEdge(
       length = config.clearance + 1;
     return { x: t.point.x + v.x * length, y: t.point.y + v.y * length };
   };
-  function repairPath(old: RoutePath, a: Terminal, b: Terminal): RoutePath | undefined {
-    // Repair only linear backbones. Reattaching to successive curve samples creates
-    // staircases; changed curved edges are rebuilt, unrelated routes remain shared.
-    if (old.segments.length < 3 || old.segments.some((s) => s.kind !== "line")) return;
-    const mode =
-      style === "polyline" || style === "organic"
-        ? "polyline"
-        : style === "octilinear"
-          ? "octilinear"
-          : "orthogonal";
-    const start = stub(a),
-      end = stub(b);
-    if (!clear(a.point, start, context) || !clear(end, b.point, context)) return;
-    for (let first = 1; first <= Math.min(3, old.segments.length - 2); first++) {
-      for (let cut = 1; cut <= Math.min(3, old.segments.length - first - 1); cut++) {
-        const last = old.segments.length - cut;
-        const middle: RoutePath = {
-          start: old.segments[first - 1]!.to,
-          segments: old.segments.slice(first, last),
-        };
-        if (!safe(middle, context)) continue;
-        const prefix = findPath(start, middle.start, mode, context);
-        if (!prefix) continue;
-        const suffix = findPath(middle.segments.at(-1)!.to, end, mode, context);
-        if (!suffix) continue;
-        const repaired: RoutePath = {
-          start: a.point,
-          segments: [
-            ...pathFromPoints(simplify([a.point, ...prefix])).segments,
-            ...middle.segments,
-            ...pathFromPoints(simplify([...suffix, b.point])).segments,
-          ],
-        };
-        const points = simplify([repaired.start, ...repaired.segments.map((s) => s.to)]);
-        // Reject retracing and crossings introduced at either attachment join.
-        if (hasSpur(points) || points.length > old.segments.length + 1) continue;
-        const compact = pathFromPoints(points);
-        if (safe(compact, context)) return compact;
-      }
-    }
-  }
-  function connection(
-    a: Terminal,
-    b: Terminal,
-    via: readonly RoutePoint[] = [],
-    old?: RoutePath,
-  ): RoutePath {
+  function connection(a: Terminal, b: Terminal, via: readonly RoutePoint[] = []): RoutePath {
     let path: RoutePath | undefined;
     if (distance(a.point, b.point) < 1e-8 && !via.length) {
       report("CONSTRAINT_VIOLATION", "Coincident terminals; rendered a visible loop fallback");
@@ -472,16 +364,6 @@ export function routeEdge(
         { x: a.point.x, y: a.point.y - gap },
         b.point,
       ]);
-    }
-    if (
-      old &&
-      config.preserveRoutes &&
-      !via.length &&
-      !loop &&
-      !["straight", "bezier", "parallel", "curved", "organic", "bundle"].includes(style)
-    ) {
-      const repaired = repairPath(old, a, b);
-      if (repaired) return repaired;
     }
     if (
       loop &&
@@ -628,26 +510,14 @@ export function routeEdge(
       id: `${edge.id}:0`,
       from: source.ref,
       to: firstTarget.ref,
-      path: connection(
-        source,
-        firstTarget,
-        via,
-        previous?.status === "routed" && !grouped ? previous.sections[0]?.path : undefined,
-      ),
+      path: connection(source, firstTarget, via),
     });
   if (lastSource)
     sections.push({
       id: `${edge.id}:label-target`,
       from: lastSource.ref,
       to: target.ref,
-      path: connection(
-        lastSource,
-        target,
-        [],
-        previous?.status === "routed" && previous.sections.length === 2
-          ? previous.sections[1]?.path
-          : undefined,
-      ),
+      path: connection(lastSource, target),
     });
   metrics.searchNodes += searchContext.visited + (searchContext === context ? 0 : context.visited);
   return {

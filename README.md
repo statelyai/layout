@@ -74,6 +74,9 @@ const route = snapshot.routes.get("ab");
 const paths = route?.sections.map((section) => toSvgPath(section.path));
 ```
 
+Incremental results match fresh routing for the same graph and settings. Previous
+paths are cached outputs, never constraints on new routes.
+
 Every strategy supports incremental updates with immutable snapshots and shared
 indexes. Nodes, ports, and labels stay fixed. Every edge receives a route;
 fallbacks expose status and diagnostics. Native TypeScript strategies cover

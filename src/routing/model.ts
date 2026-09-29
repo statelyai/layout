@@ -36,7 +36,6 @@ export interface Settings {
   readonly bendPenalty: number;
   readonly maxSearchNodes: number;
   readonly organicIterations: number;
-  readonly preserveRoutes: boolean;
   readonly edges: NonNullable<RoutingSettings["edges"]>;
 }
 export function settings(input: RoutingSettings = {}): Settings {
@@ -48,7 +47,6 @@ export function settings(input: RoutingSettings = {}): Settings {
     bendPenalty: input.bendPenalty ?? 10,
     maxSearchNodes: input.maxSearchNodes ?? 4000,
     organicIterations: input.organicIterations ?? 12,
-    preserveRoutes: input.preserveRoutes ?? false,
     edges: structuredClone(input.edges ?? {}),
   };
   for (const [key, value] of Object.entries(result))
