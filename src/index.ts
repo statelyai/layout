@@ -103,3 +103,5 @@ export type {
   LinearConstraint,
   WaypointConstraint,
 } from "./constraints";
+
+export * from "./routing";

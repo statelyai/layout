@@ -5,7 +5,9 @@
 `@statelyai/graph` is the only public graph model. Layout reads `Graph` or
 `VisualGraph` and returns `VisualGraph` plus ordinary `GraphPatch` values.
 Hierarchy uses `parentId`, ports use `GraphPort`, node geometry uses
-`x`/`y`/`width`/`height`, and edge routes use `points` and `routing`.
+`x`/`y`/`width`/`height`, and layout edge routes use `points` and `routing`. Standalone routing consumes
+the same graph and returns structured route snapshots and patches; it does not
+introduce a second graph model. See [routing](routing.md).
 
 Algorithm implementations may compile IDs to indexed arrays for hot loops.
 That representation is private, temporary, and never becomes an interchange
@@ -21,7 +23,9 @@ format.
    cancellation, patches, diagnostics, and measurements.
 3. The isolated `@statelyai/layout/elkjs` entry translates ELK JSON at the
    package boundary. ELK option names do not enter the native API.
-4. The pinned elkjs migration subpaths expose ESM and CommonJS adapters over an
+4. `@statelyai/layout/routing` exports standalone strategies, immutable snapshots,
+   incremental patches, and renderer-independent path utilities.
+5. The pinned elkjs migration subpaths expose ESM and CommonJS adapters over an
    in-process implementation of the elkjs worker message interface.
 
 `getLayout` and the elkjs adapter dispatch through one typed internal layout
@@ -36,6 +40,18 @@ pinned compatibility policy reproduces elkjs 0.11.1's source-as-target routing
 quirk and provider-sized graph bounds. Box and Rectangle Packing preserve
 provider-owned bounds and authored edge sections rather than accepting routes
 or normalization invented by the shared fixed-geometry completion step.
+
+## Routing snapshots
+
+<!-- immutable routing implementation from src/routing/engine.ts -->
+
+Standalone routing is a separate operation from node placement. Every built-in
+strategy has `route` and `update`; the latter accepts the previous immutable
+snapshot and a native `GraphDiff`. Persistent maps and spatial indexes copy only
+changed branches. Routing state belongs to the caller's snapshot rather than a
+global cache or mutable session. World-coordinate route sections represent lines,
+curves, label gaps, and shared junctions. Renderers read one snapshot per geometry
+revision. Full layout's existing ELK compatibility contract remains unchanged.
 
 ## Layered pipeline
 

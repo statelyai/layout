@@ -12,6 +12,7 @@ const checkedExports = new Set([
   ".",
   "./elkjs",
   "./layered",
+  "./routing",
   "./lib/elk-api.js",
   "./lib/elk.bundled.js",
   "./lib/elk-worker.js",
@@ -84,8 +85,9 @@ async function main(): Promise<void> {
     await writeFile(
       runtimePath,
       `import assert from "node:assert/strict";
-import { createGraph } from "@statelyai/graph";
+import { createGraph, getDiff } from "@statelyai/graph";
 import { getBoxLayout, getLayeredLayout, getRandomLayout, getLayout, c } from "@statelyai/layout";
+import { orthogonalRouting, toSvgPath, applyRoutePatches, getLayoutRoutes } from "@statelyai/layout/routing";
 import ELK, { layoutStatechart, compileStatechartLayout, scoreStatechartLayout } from "@statelyai/layout/elkjs";
 import ApiELK from "@statelyai/layout/lib/elk-api.js";
 import BundledELK from "@statelyai/layout/lib/elk.bundled.js";
@@ -99,6 +101,14 @@ assert.equal(getBoxLayout(graph).nodes.length, 2);
 assert.equal(getRandomLayout(graph, { seed: 1 }).nodes.length, 2);
 assert.equal(getLayeredLayoutFromSubpath(graph).edges.length, 1);
 const visual = getLayeredLayout(graph);
+const routing = orthogonalRouting.route(visual);
+assert.equal(routing.routes.size, 1);
+assert.match(toSvgPath(routing.routes.get("ab").sections[0].path), /^M /);
+const moved = { ...visual, nodes: visual.nodes.map((n, i) => i === 0 ? { ...n, y: n.y + 10 } : n) };
+const routeUpdate = orthogonalRouting.update(moved, routing, getDiff(visual, moved));
+assert.equal(routeUpdate.base, routing);
+assert.deepEqual([...applyRoutePatches(routing.routes, routeUpdate.patches)], [...routeUpdate.snapshot.routes]);
+assert.equal(getLayoutRoutes(visual).size, 1);
 const partial = await getLayout({ graph: visual, scope: { mode: "partial", edgeIds: ["ab"], edgeGeometry: "labels" }, constraints: [c.pin({ id: "label", entity: { edgeId: "ab", part: "label" }, x: 123 })] });
 assert.equal(partial.graph.edges[0].x, 123);
 assert.deepEqual(partial.graph.nodes, visual.nodes);
@@ -139,6 +149,7 @@ minifiedWorkerMain.terminateWorker();
       commonJsPath,
       `const assert = require("node:assert/strict");
 const { getLayout, c } = require("@statelyai/layout");
+const { orthogonalRouting, toSvgPath } = require("@statelyai/layout/routing");
 const { createGraph } = require("@statelyai/graph");
 const MainELK = require("@statelyai/layout/lib/main.js");
 const ApiELK = require("@statelyai/layout/lib/elk-api.js");
@@ -148,6 +159,8 @@ const { Worker: MinifiedWorker } = require("@statelyai/layout/lib/elk-worker.min
 (async () => {
   const native = await getLayout({ graph: createGraph({ nodes: [{ id: "a" }], edges: [] }), constraints: [c.pin({ id: "pin", entity: { nodeId: "a" }, x: 42 })] });
   assert.equal(native.graph.nodes[0].x, 42);
+  assert.equal(orthogonalRouting.route(native.graph).routes.size, 0);
+  assert.equal(toSvgPath({ start: { x: 0, y: 0 }, segments: [{ kind: "line", to: { x: 10, y: 20 } }] }), "M 0 0 L 10 20");
   assert.equal((await new MainELK().layout({ id: "root" })).id, "root");
   assert.equal((await new BundledELK().layout({ id: "root" })).id, "root");
   const apiElk = new ApiELK({ workerFactory: () => new Worker() });
@@ -170,15 +183,20 @@ const { Worker: MinifiedWorker } = require("@statelyai/layout/lib/elk-worker.min
     const typesPath = join(consumerDir, "check.ts");
     await writeFile(
       typesPath,
-      `import { createGraph } from "@statelyai/graph";
+      `import { createGraph, getDiff } from "@statelyai/graph";
 import { getBoxLayout, getLayeredLayout, getRandomLayout, getLayout, c, type LayoutResult } from "@statelyai/layout";
 import ELK, { layoutStatechart, type StatechartLayoutOptions, type ElkNode } from "@statelyai/layout/elkjs";
 import ApiELK from "@statelyai/layout/lib/elk-api.js";
 import BundledELK from "@statelyai/layout/lib/elk.bundled.js";
 import { Worker } from "@statelyai/layout/lib/elk-worker.js";
 import { type LayeredLayoutOptions } from "@statelyai/layout/layered";
+import { orthogonalRouting, type RoutingStrategy, type RoutingSnapshot } from "@statelyai/layout/routing";
 const graph = createGraph({ nodes: [{ id: "a" }], edges: [] });
 const options: LayeredLayoutOptions = { direction: "right" };
+const snapshot: RoutingSnapshot = orthogonalRouting.route(graph);
+const update = orthogonalRouting.update(graph, snapshot, getDiff(graph, graph));
+const asyncStrategy: RoutingStrategy = { id: "custom-worker", route: async (g, s) => orthogonalRouting.route(g, s), update: async (g, p, d, s) => orthogonalRouting.update(g, p, d, s) };
+void update; void asyncStrategy;
 getLayout({ graph, scope: { mode: "partial", edgeIds: [], edgeGeometry: "labels" }, constraints: [c.align({ id: "alignment", entities: [{ nodeId: "a" }], axis: "x" })] });
 getLayeredLayout(graph, options).nodes[0]?.id;
 getBoxLayout(graph, { aspectRatio: 1.3 }).nodes[0]?.id;

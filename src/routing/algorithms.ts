@@ -1,0 +1,614 @@
+import type {
+  Route,
+  RouteBounds,
+  RouteEndpoint,
+  RoutePath,
+  RoutePoint,
+  RouteSection,
+  RouteSide,
+  RouteStyle,
+  RoutingDiagnostic,
+  RoutingMetrics,
+} from "./types";
+import {
+  anchor,
+  ancestors,
+  center,
+  groupKey,
+  labelRect,
+  sideToward,
+  vector,
+  worldRect,
+  type EdgeGeometry,
+  type State,
+} from "./model";
+import { distance, getPathBounds, pathFromPoints, roundCorners } from "./path";
+import { inflate, union } from "./spatial";
+import {
+  clear,
+  findPath,
+  pointsBounds,
+  segmentBounds,
+  simplify,
+  type SearchContext,
+} from "./search";
+
+export type Metrics = { -readonly [K in keyof RoutingMetrics]: RoutingMetrics[K] };
+interface Terminal {
+  point: RoutePoint;
+  side: RouteSide;
+  ref: RouteEndpoint;
+}
+interface Plan {
+  path: RoutePath;
+  id: string;
+}
+export interface Batch {
+  readonly plans: Map<string, Plan | null>;
+  readonly previous?: State;
+}
+function contextFor(
+  state: State,
+  excluded: ReadonlySet<string>,
+  endpoints: ReadonlySet<string>,
+  metrics: Metrics,
+  padding = 0,
+): SearchContext {
+  return {
+    maxSearchNodes: state.settings.maxSearchNodes,
+    bendPenalty: state.settings.bendPenalty,
+    visited: 0,
+    budgetExceeded: false,
+    obstacles(bounds) {
+      const ids = state.obstacles.query(inflate(bounds, state.settings.clearance + padding));
+      metrics.obstacleCandidates += ids.length;
+      return ids
+        .filter((id) => !excluded.has(id))
+        .map((id) =>
+          inflate(
+            state.obstacles.bounds.get(id)!,
+            endpoints.has(id) ? 0 : state.settings.clearance + padding,
+          ),
+        );
+    },
+  };
+}
+function safe(path: RoutePath, context: SearchContext): boolean {
+  // A conservative hull test proves clearance for curves without sampling gaps.
+  let start = path.start;
+  for (const segment of path.segments) {
+    if (segment.kind === "line") {
+      if (!clear(start, segment.to, context)) return false;
+    } else {
+      const bounds = getPathBounds({ start, segments: [segment] });
+      if (
+        context
+          .obstacles(bounds)
+          .some(
+            (r) =>
+              bounds.x < r.x + r.width &&
+              bounds.x + bounds.width > r.x &&
+              bounds.y < r.y + r.height &&
+              bounds.y + bounds.height > r.y,
+          )
+      )
+        return false;
+    }
+    start = segment.to;
+  }
+  return true;
+}
+function cubic(start: Terminal, end: Terminal): RoutePath {
+  const amount = Math.max(20, distance(start.point, end.point) / 2),
+    a = vector(start.side),
+    b = vector(end.side);
+  return {
+    start: start.point,
+    segments: [
+      {
+        kind: "cubic",
+        control1: { x: start.point.x + a.x * amount, y: start.point.y + a.y * amount },
+        control2: { x: end.point.x + b.x * amount, y: end.point.y + b.y * amount },
+        to: end.point,
+      },
+    ],
+  };
+}
+function curve(points: readonly RoutePoint[], state: State, context: SearchContext): RoutePath {
+  const path = pathFromPoints(points);
+  for (let radius = state.settings.radius; radius > 0.01; radius /= 2) {
+    const rounded = roundCorners(path, { radius });
+    if (safe(rounded, context)) return rounded;
+  }
+  return path;
+}
+/** Elastic string relaxation, constrained by collision checks on each proposed move. */
+function organic(points: readonly RoutePoint[], state: State, context: SearchContext): RoutePath {
+  let samples: RoutePoint[] = [];
+  for (let i = 1; i < points.length; i++) {
+    const a = points[i - 1]!,
+      b = points[i]!,
+      count = Math.min(16, Math.max(2, Math.ceil(distance(a, b) / 32)));
+    for (let j = 0; j < count; j++)
+      samples.push({ x: a.x + ((b.x - a.x) * j) / count, y: a.y + ((b.y - a.y) * j) / count });
+  }
+  samples.push(points.at(-1)!);
+  for (let iteration = 0; iteration < state.settings.organicIterations; iteration++) {
+    const next = [...samples];
+    for (let i = 1; i < samples.length - 1; i++) {
+      const p = samples[i]!,
+        a = samples[i - 1]!,
+        b = samples[i + 1]!;
+      let x = (a.x + b.x - 2 * p.x) * 0.2,
+        y = (a.y + b.y - 2 * p.y) * 0.2;
+      for (const r of context.obstacles(inflate({ ...p, width: 0, height: 0 }, 24))) {
+        const q = {
+            x: Math.max(r.x, Math.min(r.x + r.width, p.x)),
+            y: Math.max(r.y, Math.min(r.y + r.height, p.y)),
+          },
+          d = distance(p, q);
+        if (d > 0 && d < 24) {
+          x += ((p.x - q.x) / d) * (24 - d) * 0.2;
+          y += ((p.y - q.y) / d) * (24 - d) * 0.2;
+        }
+      }
+      const candidate = { x: p.x + x, y: p.y + y };
+      if (clear(next[i - 1]!, candidate, context) && clear(candidate, b, context))
+        next[i] = candidate;
+    }
+    samples = next;
+  }
+  return curve(simplify(samples), state, context);
+}
+function groupPlan(
+  key: string,
+  state: State,
+  metrics: Metrics,
+  batch: Batch,
+  style: RouteStyle,
+): Plan | null {
+  if (batch.plans.has(key)) return batch.plans.get(key)!;
+  const edges = [...(state.groups.get(key)?.keys() ?? [])].map((id) => state.edges.get(id)!);
+  const nodes = [...new Set(edges.flatMap((e) => [e.sourceId, e.targetId]))];
+  const rectangles = nodes
+    .map((id) => state.nodes.get(id))
+    .map((n) => n && worldRect(n, state))
+    .filter((r): r is RouteBounds => r !== undefined);
+  if (rectangles.length !== nodes.length || !rectangles.length) {
+    batch.plans.set(key, null);
+    return null;
+  }
+  const common = new Set(ancestors(nodes[0]!, state));
+  for (const id of nodes.slice(1)) {
+    const set = new Set(ancestors(id, state));
+    for (const parent of common) if (!set.has(parent)) common.delete(parent);
+  }
+  const context = contextFor(
+    state,
+    new Set([...common].map((id) => `n:${id}`)),
+    new Set(),
+    metrics,
+  );
+  if (state.settings.preserveRoutes && batch.previous) {
+    const peer = batch.previous.groups.get(key)?.keys().next().value;
+    const prior =
+      peer === undefined
+        ? undefined
+        : batch.previous.routes
+            .get(peer)
+            ?.sections.find((section) => section.sharedId === `trunk:${key}`);
+    if (prior && safe(prior.path, context)) {
+      const plan = { id: `trunk:${key}`, path: prior.path };
+      batch.plans.set(key, plan);
+      return plan;
+    }
+  }
+  const bounds = rectangles.reduce(union),
+    spacing = state.settings.clearance + state.settings.edgeSpacing + 1;
+  let result: Plan | null = null;
+  for (let attempt = 1; attempt <= 8; attempt++) {
+    const x = bounds.x + bounds.width + spacing * attempt;
+    const start = { x, y: bounds.y - spacing },
+      end = { x, y: bounds.y + bounds.height + spacing };
+    let trunkStart = start,
+      trunkEnd = end;
+    if (style === "fan" && new Set(edges.map((e) => e.sourceId)).size === 1) {
+      const node = state.nodes.get(edges[0]!.sourceId)!,
+        bounds = worldRect(node, state)!;
+      // Common fan-out: one shared stem, independent branches after its junction.
+      trunkStart = { x: bounds.x + bounds.width + spacing, y: bounds.y + bounds.height / 2 };
+      trunkEnd = { x, y: trunkStart.y };
+      if (distance(trunkStart, trunkEnd) < spacing) trunkEnd = { x: x + spacing, y: trunkStart.y };
+    }
+    const points = findPath(trunkStart, trunkEnd, "orthogonal", context);
+    if (points) {
+      result = {
+        id: `trunk:${key}`,
+        path: style === "bundle" ? curve(points, state, context) : pathFromPoints(points),
+      };
+      break;
+    }
+  }
+  metrics.searchNodes += context.visited;
+  batch.plans.set(key, result);
+  return result;
+}
+export function routeEdge(
+  edge: EdgeGeometry,
+  state: State,
+  style: RouteStyle,
+  previous: Route | undefined,
+  metrics: Metrics,
+  batch: Batch,
+): Route {
+  const config = state.settings,
+    perEdge = config.edges[edge.id] ?? {},
+    diagnostics: RoutingDiagnostic[] = [];
+  const report = (code: RoutingDiagnostic["code"], message: string) => {
+    if (!diagnostics.some((d) => d.code === code))
+      diagnostics.push({ code, message, edgeId: edge.id });
+  };
+  const sourceNode = state.nodes.get(edge.sourceId),
+    targetNode = state.nodes.get(edge.targetId);
+  const sourceRect = sourceNode && worldRect(sourceNode, state),
+    targetRect = targetNode && worldRect(targetNode, state);
+  if (!sourceRect || !targetRect)
+    report("MISSING_GEOMETRY", "Missing endpoint geometry; rendered a fallback connection");
+  const sourceBounds = sourceRect ?? { x: 0, y: 0, width: 0, height: 0 },
+    targetBounds = targetRect ?? {
+      x: sourceBounds.x + 40,
+      y: sourceBounds.y + 40,
+      width: 0,
+      height: 0,
+    };
+  const loop = edge.sourceId === edge.targetId;
+  function terminal(source: boolean): Terminal {
+    const node = source ? sourceNode : targetNode,
+      bounds = source ? sourceBounds : targetBounds,
+      other = source ? targetBounds : sourceBounds;
+    const name = source ? edge.sourcePort : edge.targetPort;
+    let side =
+      (source ? perEdge.sourceSide : perEdge.targetSide) ??
+      (loop ? (source ? "right" : "top") : sideToward(center(bounds), center(other)));
+    let point = anchor(bounds, side);
+    if (name !== undefined) {
+      const port = node?.ports?.find((p) => p.name === name);
+      if (
+        port &&
+        Number.isFinite(port.x) &&
+        Number.isFinite(port.y) &&
+        Number.isFinite(port.width ?? 0) &&
+        Number.isFinite(port.height ?? 0)
+      ) {
+        point = {
+          x: bounds.x + port.x! + (port.width ?? 0) / 2,
+          y: bounds.y + port.y! + (port.height ?? 0) / 2,
+        };
+        if (!(source ? perEdge.sourceSide : perEdge.targetSide))
+          side = sideToward(center(bounds), point);
+      } else
+        report("MISSING_PORT", `Port ${name} has no positioned geometry; used the node boundary`);
+    }
+    return {
+      point,
+      side,
+      ref: {
+        kind: "node",
+        nodeId: source ? edge.sourceId : edge.targetId,
+        ...(name === undefined ? {} : { port: name }),
+      },
+    };
+  }
+  const source = terminal(true),
+    target = terminal(false),
+    label = labelRect(edge, state);
+  const excluded = new Set(
+    [...ancestors(edge.sourceId, state), ...ancestors(edge.targetId, state)]
+      .filter((id) => id !== edge.sourceId && id !== edge.targetId)
+      .map((id) => `n:${id}`),
+  );
+  const context = contextFor(
+    state,
+    excluded,
+    new Set([`n:${edge.sourceId}`, `n:${edge.targetId}`, `e:${edge.id}`]),
+    metrics,
+  );
+  const searchContext = ["curved", "organic", "bundle"].includes(style)
+    ? contextFor(
+        state,
+        excluded,
+        new Set([`n:${edge.sourceId}`, `n:${edge.targetId}`, `e:${edge.id}`]),
+        metrics,
+        config.radius * 2,
+      )
+    : context;
+  const firstTarget: Terminal = label
+    ? {
+        point: anchor(label, sideToward(center(label), source.point)),
+        side: sideToward(center(label), source.point),
+        ref: { kind: "label", edgeId: edge.id },
+      }
+    : target;
+  const lastSource: Terminal | undefined = label
+    ? {
+        point: anchor(label, sideToward(center(label), target.point)),
+        side: sideToward(center(label), target.point),
+        ref: { kind: "label", edgeId: edge.id },
+      }
+    : undefined;
+  const group = groupKey(edge, style, config),
+    peers = group ? [...(state.groups.get(group)?.keys() ?? [])] : [];
+  const grouped = group !== undefined && peers.length > 1 && style !== "parallel";
+  if (
+    config.preserveRoutes &&
+    previous?.status === "routed" &&
+    !diagnostics.length &&
+    !grouped &&
+    style !== "parallel"
+  ) {
+    const sections = previous.sections;
+    if (
+      sections.length === (label ? 2 : 1) &&
+      JSON.stringify(sections[0]!.from) === JSON.stringify(source.ref) &&
+      JSON.stringify(sections.at(-1)!.to) === JSON.stringify(target.ref) &&
+      distance(sections[0]!.path.start, source.point) < 1e-8 &&
+      distance(
+        sections[0]!.path.segments.at(-1)?.to ?? sections[0]!.path.start,
+        firstTarget.point,
+      ) < 1e-8 &&
+      (!lastSource || distance(sections[1]!.path.start, lastSource.point) < 1e-8) &&
+      distance(
+        sections.at(-1)!.path.segments.at(-1)?.to ?? sections.at(-1)!.path.start,
+        target.point,
+      ) < 1e-8 &&
+      sections.every((s) => safe(s.path, context))
+    ) {
+      metrics.reusedEdges++;
+      return previous;
+    }
+  }
+  metrics.routedEdges++;
+  const sections: RouteSection[] = [];
+  const stub = (t: Terminal) => {
+    const v = vector(t.side),
+      length = config.clearance + 1;
+    return { x: t.point.x + v.x * length, y: t.point.y + v.y * length };
+  };
+  function repairPath(old: RoutePath, a: Terminal, b: Terminal): RoutePath | undefined {
+    if (old.segments.length < 3) return;
+    const mode =
+      style === "polyline" || style === "organic"
+        ? "polyline"
+        : style === "octilinear"
+          ? "octilinear"
+          : "orthogonal";
+    const start = stub(a),
+      end = stub(b);
+    if (!clear(a.point, start, context) || !clear(end, b.point, context)) return;
+    for (let first = 1; first <= Math.min(3, old.segments.length - 2); first++) {
+      for (let cut = 1; cut <= Math.min(3, old.segments.length - first - 1); cut++) {
+        const last = old.segments.length - cut;
+        const middle: RoutePath = {
+          start: old.segments[first - 1]!.to,
+          segments: old.segments.slice(first, last),
+        };
+        if (!safe(middle, context)) continue;
+        const prefix = findPath(start, middle.start, mode, context);
+        if (!prefix) continue;
+        const suffix = findPath(middle.segments.at(-1)!.to, end, mode, context);
+        if (!suffix) continue;
+        const repaired: RoutePath = {
+          start: a.point,
+          segments: [
+            ...pathFromPoints(simplify([a.point, ...prefix])).segments,
+            ...middle.segments,
+            ...pathFromPoints(simplify([...suffix, b.point])).segments,
+          ],
+        };
+        if (safe(repaired, context)) return repaired;
+      }
+    }
+  }
+  function connection(
+    a: Terminal,
+    b: Terminal,
+    via: readonly RoutePoint[] = [],
+    old?: RoutePath,
+  ): RoutePath {
+    let path: RoutePath | undefined;
+    if (distance(a.point, b.point) < 1e-8 && !via.length) {
+      report("CONSTRAINT_VIOLATION", "Coincident terminals; rendered a visible loop fallback");
+      const gap = config.clearance + config.edgeSpacing + 10;
+      return pathFromPoints([
+        a.point,
+        { x: a.point.x + gap, y: a.point.y },
+        { x: a.point.x + gap, y: a.point.y - gap },
+        { x: a.point.x, y: a.point.y - gap },
+        b.point,
+      ]);
+    }
+    if (
+      old &&
+      config.preserveRoutes &&
+      !via.length &&
+      !loop &&
+      !["straight", "bezier", "parallel"].includes(style)
+    ) {
+      const repaired = repairPath(old, a, b);
+      if (repaired) return repaired;
+    }
+    if (
+      loop &&
+      !via.length &&
+      a.ref.kind === "node" &&
+      b.ref.kind === "node" &&
+      a.side === "right" &&
+      b.side === "top"
+    ) {
+      const r = inflate(sourceBounds, config.clearance + config.edgeSpacing + 1);
+      const points = [
+        a.point,
+        { x: r.x + r.width, y: a.point.y },
+        { x: r.x + r.width, y: r.y },
+        { x: b.point.x, y: r.y },
+        b.point,
+      ];
+      const loopPath = pathFromPoints(points);
+      if (safe(loopPath, context))
+        return ["curved", "bezier", "bundle"].includes(style)
+          ? curve(points, state, context)
+          : style === "organic"
+            ? organic(points, state, context)
+            : loopPath;
+    }
+    if (style === "straight" && !via.length && !loop) path = pathFromPoints([a.point, b.point]);
+    else if (style === "bezier" && !via.length && !loop) path = cubic(a, b);
+    else {
+      const start = stub(a),
+        end = stub(b),
+        waypoints = [...via];
+      if (loop && !waypoints.length) {
+        const r = inflate(sourceBounds, config.clearance + config.edgeSpacing + 1);
+        waypoints.push({ x: r.x + r.width, y: r.y });
+      }
+      if (style === "parallel" && peers.length > 1) {
+        // Find a feasible corridor before choosing lanes; an arbitrary midpoint
+        // may be inside an obstacle even when good parallel routes exist.
+        const base = findPath(start, end, "polyline", context);
+        const mid =
+          base && base.length > 2
+            ? base[Math.floor(base.length / 2)]!
+            : center(segmentBounds(start, end));
+        const d = Math.max(1, distance(start, end)),
+          rank = peers.indexOf(edge.id) + 1;
+        const orientation = edge.sourceId < edge.targetId ? 1 : -1;
+        for (const sign of [orientation, -orientation]) {
+          const lane = {
+            x: mid.x - ((end.y - start.y) / d) * config.edgeSpacing * rank * sign,
+            y: mid.y + ((end.x - start.x) / d) * config.edgeSpacing * rank * sign,
+          };
+          if (clear(lane, lane, context)) {
+            waypoints.push(lane);
+            break;
+          }
+        }
+        if (waypoints.length === via.length)
+          report("CONSTRAINT_VIOLATION", "No clear parallel lane; rendered an individual route");
+      }
+      const points: RoutePoint[] = [a.point],
+        anchors = [start, ...waypoints, end];
+      const searchStyle =
+        style === "polyline" || style === "organic" || style === "parallel"
+          ? "polyline"
+          : style === "octilinear"
+            ? "octilinear"
+            : "orthogonal";
+      let ok = clear(a.point, start, context) && clear(end, b.point, context);
+      for (let i = 1; ok && i < anchors.length; i++) {
+        let found = findPath(anchors[i - 1]!, anchors[i]!, searchStyle, searchContext);
+        if (!found && searchContext !== context && !searchContext.budgetExceeded) {
+          // Extra curve room is optional: tight channels may use safe line segments.
+          const narrow = { ...searchContext, obstacles: context.obstacles };
+          found = findPath(anchors[i - 1]!, anchors[i]!, searchStyle, narrow);
+          searchContext.visited = narrow.visited;
+          searchContext.budgetExceeded = narrow.budgetExceeded;
+        }
+        if (found) points.push(...found.slice(i === 1 ? 0 : 1));
+        else ok = false;
+      }
+      points.push(b.point);
+      if (ok) {
+        const simple = simplify(points);
+        path =
+          style === "curved" || style === "bundle" || style === "bezier"
+            ? curve(simple, state, context)
+            : style === "organic"
+              ? organic(simple, state, context)
+              : pathFromPoints(simple);
+      }
+    }
+    if (path && safe(path, context)) return path;
+    report(
+      searchContext.budgetExceeded ? "SEARCH_BUDGET" : "ROUTE_BLOCKED",
+      "Preferred route unavailable; fallback may cross obstacles or violate routing constraints",
+    );
+    // Always keep every endpoint and authored waypoint visible, even if no feasible path exists.
+    if (loop && !via.length) {
+      const r = inflate(sourceBounds, config.clearance + config.edgeSpacing + 1);
+      return pathFromPoints([
+        a.point,
+        { x: r.x + r.width, y: a.point.y },
+        { x: r.x + r.width, y: r.y },
+        { x: b.point.x, y: r.y },
+        b.point,
+      ]);
+    }
+    return pathFromPoints([a.point, ...via, b.point]);
+  }
+  const via = perEdge.waypoints ?? [];
+  if (via.some((p) => !Number.isFinite(p.x) || !Number.isFinite(p.y)))
+    throw new RangeError(`Non-finite waypoint on ${edge.id}`);
+  const plan = grouped ? groupPlan(group!, state, metrics, batch, style) : undefined;
+  if (grouped && !plan)
+    report("ROUTE_BLOCKED", "Shared trunk unavailable; used individual fallback routing");
+  if (plan) {
+    const start = plan.path.start,
+      end = plan.path.segments.at(-1)?.to ?? start;
+    const j0: Terminal = {
+      point: start,
+      side: sideToward(start, source.point),
+      ref: { kind: "junction", id: `${plan.id}:start` },
+    };
+    const j1: Terminal = {
+      point: end,
+      side: sideToward(end, firstTarget.point),
+      ref: { kind: "junction", id: `${plan.id}:end` },
+    };
+    sections.push(
+      { id: `${edge.id}:source`, from: source.ref, to: j0.ref, path: connection(source, j0, via) },
+      { id: `${edge.id}:trunk`, sharedId: plan.id, from: j0.ref, to: j1.ref, path: plan.path },
+      {
+        id: `${edge.id}:target`,
+        from: j1.ref,
+        to: firstTarget.ref,
+        path: connection(j1, firstTarget),
+      },
+    );
+  } else
+    sections.push({
+      id: `${edge.id}:0`,
+      from: source.ref,
+      to: firstTarget.ref,
+      path: connection(
+        source,
+        firstTarget,
+        via,
+        previous?.status === "routed" && !grouped ? previous.sections[0]?.path : undefined,
+      ),
+    });
+  if (lastSource)
+    sections.push({
+      id: `${edge.id}:label-target`,
+      from: lastSource.ref,
+      to: target.ref,
+      path: connection(
+        lastSource,
+        target,
+        [],
+        previous?.status === "routed" && previous.sections.length === 2
+          ? previous.sections[1]?.path
+          : undefined,
+      ),
+    });
+  metrics.searchNodes += searchContext.visited + (searchContext === context ? 0 : context.visited);
+  return {
+    edgeId: edge.id,
+    sections,
+    status: diagnostics.length ? "fallback" : "routed",
+    diagnostics,
+  };
+}
+export function routeBounds(route: Route): RouteBounds {
+  return route.sections.map((s) => getPathBounds(s.path)).reduce(union);
+}
+export { pointsBounds };

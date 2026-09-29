@@ -59,7 +59,12 @@
       "import": "./dist/layered/index.mjs",
       "require": "./dist/layered/index.cjs"
     },
-    "./package.json": "./package.json"
+    "./package.json": "./package.json",
+    "./routing": {
+      "types": "./src/routing/index.ts",
+      "import": "./dist/routing/index.mjs",
+      "require": "./dist/routing/index.cjs"
+    }
   },
   "publishConfig": {
     "access": "public"
