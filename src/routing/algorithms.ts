@@ -46,12 +46,14 @@ interface Plan {
 export interface Batch {
   readonly plans: Map<string, Plan | null>;
   readonly previous?: State;
+  dependencyBounds?: RouteBounds;
 }
 function contextFor(
   state: State,
   excluded: ReadonlySet<string>,
   endpoints: ReadonlySet<string>,
   metrics: Metrics,
+  batch: Batch,
   padding = 0,
 ): SearchContext {
   return {
@@ -60,7 +62,11 @@ function contextFor(
     visited: 0,
     budgetExceeded: false,
     obstacles(bounds) {
-      const ids = state.obstacles.query(inflate(bounds, state.settings.clearance + padding));
+      const queried = inflate(bounds, state.settings.clearance + padding);
+      batch.dependencyBounds = batch.dependencyBounds
+        ? union(batch.dependencyBounds, queried)
+        : queried;
+      const ids = state.obstacles.query(queried);
       metrics.obstacleCandidates += ids.length;
       return ids
         .filter((id) => !excluded.has(id))
@@ -201,6 +207,7 @@ function groupPlan(
     new Set([...common].map((id) => `n:${id}`)),
     new Set(),
     metrics,
+    batch,
   );
   if (state.settings.preserveRoutes && batch.previous) {
     const peer = batch.previous.groups.get(key)?.keys().next().value;
@@ -325,6 +332,7 @@ export function routeEdge(
     excluded,
     new Set([`n:${edge.sourceId}`, `n:${edge.targetId}`, `e:${edge.id}`]),
     metrics,
+    batch,
   );
   const searchContext = ["curved", "organic", "bundle", "bezier"].includes(style)
     ? contextFor(
@@ -332,6 +340,7 @@ export function routeEdge(
         excluded,
         new Set([`n:${edge.sourceId}`, `n:${edge.targetId}`, `e:${edge.id}`]),
         metrics,
+        batch,
         config.radius * 2,
       )
     : context;
@@ -440,7 +449,7 @@ export function routeEdge(
         };
         const points = simplify([repaired.start, ...repaired.segments.map((s) => s.to)]);
         // Reject retracing and crossings introduced at either attachment join.
-        if (hasSpur(points)) continue;
+        if (hasSpur(points) || points.length > old.segments.length + 1) continue;
         const compact = pathFromPoints(points);
         if (safe(compact, context)) return compact;
       }

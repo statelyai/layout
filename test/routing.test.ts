@@ -111,9 +111,9 @@ describe("routing dependencies", () => {
     expect(result.snapshot.routes.get("ab")!.status).toBe("routed");
     avoids(result.snapshot.routes.get("ab")!, { x: 120, y: -20, width: 60, height: 80 });
   });
-  it("retains a valid previous detour after its obstacle moves away", () => {
+  it("retains a valid previous detour when explicitly requested", () => {
     const g = graph(),
-      previous = orthogonalRouting.route(g),
+      previous = orthogonalRouting.route(g, { preserveRoutes: true }),
       next = move(g, "block", { y: 200 }),
       update = orthogonalRouting.update(next, previous, getDiff(g, next));
     expect(update.snapshot.routes.get("ab")).toBe(previous.routes.get("ab"));
@@ -352,7 +352,7 @@ it("reports search-budget fallback separately from blocked geometry", () => {
 });
 it("repairs attachments while preserving the old interior corridor", () => {
   const g = graph(),
-    previous = orthogonalRouting.route(g),
+    previous = orthogonalRouting.route(g, { preserveRoutes: true }),
     next = move(g, "a", { y: 5 });
   const original = previous.routes.get("ab")!.sections[0]!.path;
   const result = orthogonalRouting
@@ -455,3 +455,71 @@ it("aligns a label attachment with an adjacent terminal inside its border span",
     expect(section.path.segments[0]!.to.y).toBe(22);
   }
 });
+
+it.each(Object.keys(routingStrategies) as (keyof typeof routingStrategies)[])(
+  "%s reaches identical geometry from opposite drag histories",
+  (style) => {
+    const strategy = routingStrategies[style];
+    const final = graph();
+    const arrive = (from: number) => {
+      let g = move(final, "b", { y: from });
+      let snapshot = strategy.route(g);
+      for (let frame = 1; frame <= 20; frame++) {
+        const next = move(g, "b", { y: from * (1 - frame / 20) });
+        snapshot = strategy.update(next, snapshot, getDiff(g, next)).snapshot;
+        g = next;
+      }
+      return [...snapshot.routes];
+    };
+    expect(arrive(-200)).toEqual([...strategy.route(final).routes]);
+    expect(arrive(200)).toEqual([...strategy.route(final).routes]);
+  },
+);
+
+it("orthogonal stability mode cannot accumulate bends during diagonal dragging", () => {
+  let g: RoutingGraph = graph();
+  let snapshot = orthogonalRouting.route(g, { preserveRoutes: true });
+  const initialCount = snapshot.routes.get("ab")!.sections[0]!.path.segments.length;
+  for (let frame = 1; frame <= 80; frame++) {
+    const next = move(g, "a", { x: -frame, y: frame / 2 });
+    snapshot = orthogonalRouting.update(next, snapshot, getDiff(g, next)).snapshot;
+    g = next;
+    expect(snapshot.routes.get("ab")!.sections[0]!.path.segments.length).toBeLessThanOrEqual(
+      initialCount + 2,
+    );
+  }
+});
+
+it("removing a nonincident obstacle restores the fresh-route result", () => {
+  const g = graph(),
+    previous = orthogonalRouting.route(g);
+  const next = move(g, "block", { y: 500 });
+  const result = orthogonalRouting.update(next, previous, getDiff(g, next));
+  expect([...result.snapshot.routes]).toEqual([...orthogonalRouting.route(next).routes]);
+  expect(result.snapshot.routes.get("cd")).toBe(previous.routes.get("cd"));
+});
+
+it.each(Object.keys(routingStrategies) as (keyof typeof routingStrategies)[])(
+  "%s incremental obstacle changes match a fresh route",
+  (style) => {
+    const strategy = routingStrategies[style];
+    const base = graph();
+    let g: RoutingGraph = { ...base, edges: [...base.edges, { ...base.edges[0]!, id: "peer" }] };
+    let snapshot = strategy.route(g);
+    for (const [x, y] of [
+      [200, 100],
+      [120, -20],
+      [100, -120],
+      [140, 0],
+      [150, 500],
+      [120, -20],
+    ]) {
+      const next = move(g, "block", { x, y });
+      const update = strategy.update(next, snapshot, getDiff(g, next));
+      expect([...update.snapshot.routes]).toEqual([...strategy.route(next).routes]);
+      expect(update.snapshot.routes.get("cd")).toBe(snapshot.routes.get("cd"));
+      snapshot = update.snapshot;
+      g = next;
+    }
+  },
+);

@@ -52,3 +52,20 @@ Rechecked the full catalog after the fix: only straight routing had fallbacks
 (two obstructed sections); the other eleven strategies had none. Lines-only
 rendering after dragging had zero curve commands and zero fallback sections.
 The browser reported no page errors.
+
+## History independence and diagonal drag regression
+
+Default updates now match fresh routing across opposite endpoint drag histories
+for all twelve strategies. Each strategy also has obstacle-movement differential
+tests with parallel/group peers; unrelated route identity is retained.
+An 80-frame diagonal drag regression exercises opt-in preservation and checks that
+orthogonal bend counts cannot grow into a staircase. Earlier checks only moved
+one coordinate and missed this pattern.
+
+Browser verification: dragging Review from below and above to exactly the same
+coordinates produced byte-identical SVG paths for every edge. A subsequent
+40-frame diagonal Start drag retained compact orthogonal paths, with three routes
+recomputed, two reused, and no browser errors.
+
+- [Same endpoint reached from opposite directions](history-independent.png)
+- [After 40 diagonal drag frames](diagonal-drag-fixed.png)

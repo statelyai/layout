@@ -1,5 +1,5 @@
 import type { GraphDiff } from "@statelyai/graph";
-import { routeBounds, routeEdge, type Metrics } from "./algorithms";
+import { routeBounds, routeEdge, type Metrics, type Batch } from "./algorithms";
 import {
   edgeGeometry,
   freeze,
@@ -14,7 +14,7 @@ import {
   type State,
 } from "./model";
 import { PersistentMap } from "./persistent";
-import { inflate, SpatialIndex } from "./spatial";
+import { inflate, SpatialIndex, union } from "./spatial";
 import type {
   NativeRoutingStrategy,
   Route,
@@ -97,7 +97,7 @@ function calculate(
   let routes = state.routes,
     routeIndex = state.routeIndex;
   const patches: RoutePatch[] = [],
-    batch = {
+    batch: Batch = {
       plans: new Map(),
       previous: state.settings === previous?.settings ? previous : undefined,
     };
@@ -117,6 +117,7 @@ function calculate(
       }
       continue;
     }
+    batch.dependencyBounds = undefined;
     let route = routeEdge(
       edge,
       state,
@@ -126,10 +127,16 @@ function calculate(
       batch,
     );
     if (oldRoute && JSON.stringify(oldRoute) === JSON.stringify(route)) route = oldRoute;
+    // Invalidate all spatial reads, including corridors rejected during search.
+    // An obstacle leaving those regions can change the canonical route too.
+    const drawnBounds = routeBounds(route);
+    routeIndex = routeIndex.set(
+      id,
+      batch.dependencyBounds ? union(batch.dependencyBounds, drawnBounds) : drawnBounds,
+    );
     if (route === oldRoute) continue;
     route = freeze(route);
     routes = routes.set(id, route);
-    routeIndex = routeIndex.set(id, routeBounds(route));
     patches.push({ op: "set", edgeId: id, route });
   }
   return { state: { ...state, routes, routeIndex }, patches };

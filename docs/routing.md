@@ -61,15 +61,19 @@ and new obstacle bounds. Moving a parent also updates descendant geometry;
 changing a shared trunk/branch invalidates its routing group. Large obstacles,
 group changes, or settings changes can legitimately affect many routes.
 
-Unchanged routes retain identity. Valid previous routes are preferred by default; moved endpoints on linear routes first attempt
-to repair attachments while retaining the interior corridor. Repairs that retrace
-or cross themselves are rejected. Affected curved routes are rebuilt to avoid
-accumulating corners across drag frames; unrelated routes remain shared. Shared
-trunks are retained while valid.
-Set `preserveRoutes: false` to recompute affected routes without that preference.
-To optimize every route afresh, call `route` again. Removing an obstacle does
-not force a still-valid detour to jump to a shorter route. Failed routes in the
-changed region are retried.
+Unchanged routes retain identity. By default, affected routes are recalculated
+from current geometry, without preserving earlier corridors. Opposite drag histories
+therefore converge to the same routes. The spatial index tracks searched regions as
+well as drawn geometry, so an obstacle moving away can open a better route without
+requiring a full-graph recomputation.
+
+Set `preserveRoutes: true` to opt into history-dependent corridor stability. This
+remains a pure function of the graph, previous snapshot, diff, and settings, but
+its output intentionally depends on the previous routes. Linear attachment repairs
+reject retracing, self-crossings, and growing bend counts. Affected curved routes
+are rebuilt; unrelated routes remain shared. Valid shared trunks are retained.
+In this mode, removing an obstacle need not shorten a still-valid detour. Failed
+routes in the changed region are retried in either mode.
 
 Settings omitted on update retain the previous settings. Supplied settings
 replace the settings object, using defaults for omitted fields. Configuration
@@ -126,7 +130,7 @@ produce separate sections with a fixed gap, and group updates are atomic.
 | `bendPenalty`       | `10`       | Bend cost during path search                                                      |
 | `maxSearchNodes`    | `4000`     | Per-edge search expansion and visibility-graph size budget                        |
 | `organicIterations` | `12`       | Elastic-string relaxation iterations                                              |
-| `preserveRoutes`    | `true`     | Keep existing valid routes                                                        |
+| `preserveRoutes`    | `false`    | Opt into history-dependent corridor preservation                                  |
 | `edges`             | `{}`       | Per-edge `sourceSide`, `targetSide`, ordered world-space `waypoints`, and `group` |
 
 Every graph edge gets drawable geometry even when constraints are infeasible.
@@ -139,8 +143,8 @@ API settings or stale diffs throw; they are programming errors, not route failur
 The search is bounded and deterministic. Curve clearance recursively subdivides overlapping control hulls and actual arc
 sweeps instead of treating their bounding boxes as occupied. Unresolved numerical
 contacts are conservatively rejected; tight corridors may remain piecewise linear. Curves are not guaranteed
-where the requested radius cannot fit. Route stability is preferred over global
-optimality. Independent crossings are permitted; bus/parallel routing coordinates
+where the requested radius cannot fit. Route selection is deterministic; opt-in preservation favors stability over
+shorter routes. Independent crossings are permitted; bus/parallel routing coordinates
 explicit peers. Search costs do not claim a globally crossing-minimal solution.
 
 ## Geometry and rendering

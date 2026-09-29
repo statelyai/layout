@@ -48,7 +48,7 @@ export function settings(input: RoutingSettings = {}): Settings {
     bendPenalty: input.bendPenalty ?? 10,
     maxSearchNodes: input.maxSearchNodes ?? 4000,
     organicIterations: input.organicIterations ?? 12,
-    preserveRoutes: input.preserveRoutes ?? true,
+    preserveRoutes: input.preserveRoutes ?? false,
     edges: structuredClone(input.edges ?? {}),
   };
   for (const [key, value] of Object.entries(result))
