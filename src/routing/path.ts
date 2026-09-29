@@ -1,3 +1,4 @@
+import { crossesRect } from "../authoring/routing";
 import type { RouteBounds, RoutePath, RoutePoint, RouteSegment } from "./types";
 
 export const distance = (a: RoutePoint, b: RoutePoint): number => Math.hypot(a.x - b.x, a.y - b.y);
@@ -255,4 +256,69 @@ export function toSvgPath(
       }
     }),
   ].join(" ");
+}
+
+/** Test curve geometry, subdividing conservative bounds only where they overlap. */
+export function segmentCrossesRect(
+  start: RoutePoint,
+  segment: RouteSegment,
+  rect: RouteBounds,
+): boolean {
+  const overlaps = (points: readonly RoutePoint[]) => {
+    const xs = points.map((p) => p.x),
+      ys = points.map((p) => p.y);
+    return (
+      Math.min(...xs) < rect.x + rect.width &&
+      Math.max(...xs) > rect.x &&
+      Math.min(...ys) < rect.y + rect.height &&
+      Math.max(...ys) > rect.y
+    );
+  };
+  const inside = (p: RoutePoint) =>
+    p.x > rect.x && p.x < rect.x + rect.width && p.y > rect.y && p.y < rect.y + rect.height;
+  function bezier(controls: readonly RoutePoint[], depth: number): boolean {
+    if (!overlaps(controls)) return false;
+    if (inside(controls[0]!) || inside(controls.at(-1)!)) return true;
+    if (depth === 32) return true; // Unresolved subpixel contact stays conservative.
+    const left = [controls[0]!],
+      right = [controls.at(-1)!];
+    let row = [...controls];
+    while (row.length > 1) {
+      row = row.slice(1).map((p, i) => lerp(row[i]!, p, 0.5));
+      left.push(row[0]!);
+      right.unshift(row.at(-1)!);
+    }
+    return bezier(left, depth + 1) || bezier(right, depth + 1);
+  }
+  if (segment.kind === "line") return crossesRect(start, segment.to, rect);
+  if (segment.kind === "quadratic") return bezier([start, segment.control, segment.to], 0);
+  if (segment.kind === "cubic")
+    return bezier([start, segment.control1, segment.control2, segment.to], 0);
+  const arc = arcCenter(start, segment);
+  if (!arc) return crossesRect(start, segment.to, rect);
+  const point = (t: number): RoutePoint => ({
+    x: arc.center.x + arc.c * arc.rx * Math.cos(t) - arc.s * arc.ry * Math.sin(t),
+    y: arc.center.y + arc.s * arc.rx * Math.cos(t) + arc.c * arc.ry * Math.sin(t),
+  });
+  function interval(a: number, b: number, depth: number): boolean {
+    const points = [point(a), point(b)];
+    // Exact extrema of each rotated ellipse coordinate within this subarc.
+    for (const base of [
+      Math.atan2(-arc!.s * arc!.ry, arc!.c * arc!.rx),
+      Math.atan2(arc!.c * arc!.ry, arc!.s * arc!.rx),
+    ]) {
+      for (let k = Math.ceil((a - base) / Math.PI); base + k * Math.PI < b; k++)
+        points.push(point(base + k * Math.PI));
+    }
+    if (!overlaps(points)) return false;
+    if (inside(points[0]!) || inside(points[1]!)) return true;
+    if (depth === 32) return true;
+    const middle = (a + b) / 2;
+    return interval(a, middle, depth + 1) || interval(middle, b, depth + 1);
+  }
+  return interval(
+    Math.min(arc.theta, arc.theta + arc.delta),
+    Math.max(arc.theta, arc.theta + arc.delta),
+    0,
+  );
 }

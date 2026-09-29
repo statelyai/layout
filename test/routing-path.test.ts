@@ -1,3 +1,4 @@
+import { segmentCrossesRect } from "../src/routing/path";
 import { describe, expect, it } from "vitest";
 import {
   flattenPath,
@@ -110,5 +111,52 @@ describe("route geometry", () => {
     expect(getPathLength(path)).toBe(0);
     expect(getPointAtLength(path, 10)).toEqual({ x: 2, y: 3 });
     expect(getTangentAtLength(path, 0)).toEqual({ x: 0, y: 0 });
+  });
+});
+
+describe("curve obstacle intersection", () => {
+  it("distinguishes a cubic hull overlap from an actual thin obstacle crossing", () => {
+    const segment = cubic.segments[0]!;
+    expect(segmentCrossesRect(cubic.start, segment, { x: 45, y: 10, width: 10, height: 10 })).toBe(
+      false,
+    );
+    expect(
+      segmentCrossesRect(cubic.start, segment, {
+        x: 49.999,
+        y: 74.999,
+        width: 0.002,
+        height: 0.002,
+      }),
+    ).toBe(true);
+  });
+  it("detects quadratic crossings without treating the whole hull as occupied", () => {
+    const segment = {
+      kind: "quadratic" as const,
+      control: { x: 50, y: 100 },
+      to: { x: 100, y: 0 },
+    };
+    expect(segmentCrossesRect({ x: 0, y: 0 }, segment, { x: 49, y: 49, width: 2, height: 2 })).toBe(
+      true,
+    );
+    expect(segmentCrossesRect({ x: 0, y: 0 }, segment, { x: 49, y: 89, width: 2, height: 2 })).toBe(
+      false,
+    );
+  });
+  it("uses the actual arc sweep instead of the full ellipse", () => {
+    const segment = {
+      kind: "arc" as const,
+      rx: 10,
+      ry: 10,
+      rotation: 0,
+      largeArc: false,
+      sweep: true,
+      to: { x: 10, y: 0 },
+    };
+    const start = { x: 0, y: 10 };
+    expect(segmentCrossesRect(start, segment, { x: 8, y: 8, width: 1, height: 1 })).toBe(false);
+    expect(segmentCrossesRect(start, segment, { x: 2.9, y: 2.9, width: 0.1, height: 0.1 })).toBe(
+      true,
+    );
+    expect(segmentCrossesRect(start, segment, { x: 15, y: 15, width: 1, height: 1 })).toBe(false);
   });
 });

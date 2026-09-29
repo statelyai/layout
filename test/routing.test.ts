@@ -388,3 +388,70 @@ it("routes parallel lanes around an obstacle instead of pinning lanes inside it"
   });
   expect(new Set(paths).size).toBe(3);
 });
+
+it("accepts a clear diagonal bezier even when an obstacle overlaps its bounding box", () => {
+  const g = createGraph({
+    id: "curve-clear",
+    nodes: [
+      { id: "a", x: 0, y: 200, width: 40, height: 40 },
+      { id: "b", x: 400, y: 0, width: 40, height: 40 },
+      { id: "block", x: 90, y: 35, width: 40, height: 40 },
+    ],
+    edges: [{ id: "ab", sourceId: "a", targetId: "b" }],
+  });
+  const route = routingStrategies.bezier.route(g).routes.get("ab")!;
+  expect(route.status).toBe("routed");
+  expect(route.sections[0]!.path.segments[0]!.kind).toBe("cubic");
+  avoids(route, { x: 82, y: 27, width: 56, height: 56 });
+});
+
+it.each(["orthogonal", "curved"] as const)(
+  "%s stays compact across repeated drag frames",
+  (style) => {
+    const strategy = routingStrategies[style];
+    let g: RoutingGraph = graph();
+    let snapshot = strategy.route(g);
+    for (let y = 3; y <= 240; y += 3) {
+      const next = move(g, "a", { y });
+      snapshot = strategy.update(next, snapshot, getDiff(g, next)).snapshot;
+      g = next;
+      const route = snapshot.routes.get("ab")!;
+      expect(route.status).toBe("routed");
+      const path = route.sections[0]!.path;
+      expect(path.segments.length).toBeLessThanOrEqual(15);
+      const points = [path.start, ...path.segments.map((s) => s.to)];
+      for (let i = 2; i < points.length; i++) {
+        const a = points[i - 2]!,
+          b = points[i - 1]!,
+          c = points[i]!;
+        const cross = (b.x - a.x) * (c.y - b.y) - (b.y - a.y) * (c.x - b.x);
+        const dot = (b.x - a.x) * (c.x - b.x) + (b.y - a.y) * (c.y - b.y);
+        expect(Math.abs(cross) < 1e-8 && dot < -1e-8).toBe(false);
+      }
+    }
+  },
+);
+
+it("searches a curved detour when the direct bezier is obstructed", () => {
+  const route = routingStrategies.bezier.route(graph()).routes.get("ab")!;
+  expect(route.status).toBe("routed");
+  avoids(route, { x: 112, y: -28, width: 76, height: 96 });
+  expect(route.sections[0]!.path.segments.some((s) => s.kind !== "line")).toBe(true);
+});
+
+it("aligns a label attachment with an adjacent terminal inside its border span", () => {
+  const g = createGraph({
+    id: "label-align",
+    nodes: [
+      { id: "a", x: 0, y: 0, width: 80, height: 44 },
+      { id: "b", x: 350, y: 0, width: 80, height: 44 },
+    ],
+    edges: [{ id: "ab", sourceId: "a", targetId: "b", x: 200, y: 10, width: 72, height: 26 }],
+  });
+  const route = orthogonalRouting.route(g).routes.get("ab")!;
+  for (const section of route.sections) {
+    expect(section.path.start.y).toBe(22);
+    expect(section.path.segments).toHaveLength(1);
+    expect(section.path.segments[0]!.to.y).toBe(22);
+  }
+});

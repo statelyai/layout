@@ -22,7 +22,7 @@ import {
   type EdgeGeometry,
   type State,
 } from "./model";
-import { distance, getPathBounds, pathFromPoints, roundCorners } from "./path";
+import { distance, getPathBounds, pathFromPoints, roundCorners, segmentCrossesRect } from "./path";
 import { inflate, union } from "./spatial";
 import {
   clear,
@@ -74,29 +74,42 @@ function contextFor(
   };
 }
 function safe(path: RoutePath, context: SearchContext): boolean {
-  // A conservative hull test proves clearance for curves without sampling gaps.
   let start = path.start;
   for (const segment of path.segments) {
-    if (segment.kind === "line") {
-      if (!clear(start, segment.to, context)) return false;
-    } else {
-      const bounds = getPathBounds({ start, segments: [segment] });
-      if (
-        context
-          .obstacles(bounds)
-          .some(
-            (r) =>
-              bounds.x < r.x + r.width &&
-              bounds.x + bounds.width > r.x &&
-              bounds.y < r.y + r.height &&
-              bounds.y + bounds.height > r.y,
-          )
-      )
-        return false;
-    }
+    const bounds = getPathBounds({ start, segments: [segment] });
+    if (context.obstacles(bounds).some((rect) => segmentCrossesRect(start, segment, rect)))
+      return false;
     start = segment.to;
   }
   return true;
+}
+function hasSpur(points: readonly RoutePoint[]): boolean {
+  for (let i = 1; i < points.length; i++) {
+    const a = points[i - 1]!,
+      b = points[i]!;
+    for (let j = i + 1; j < points.length; j++) {
+      const c = points[j - 1]!,
+        d = points[j]!;
+      const dx = b.x - a.x,
+        dy = b.y - a.y,
+        ex = d.x - c.x,
+        ey = d.y - c.y;
+      const cross = dx * ey - dy * ex;
+      if (Math.abs(cross) < 1e-8) {
+        if (Math.abs(dx * (c.y - a.y) - dy * (c.x - a.x)) > 1e-8) continue;
+        const length = dx * dx + dy * dy;
+        if (!length) continue;
+        const t = ((c.x - a.x) * dx + (c.y - a.y) * dy) / length;
+        const u = ((d.x - a.x) * dx + (d.y - a.y) * dy) / length;
+        if (Math.min(1, Math.max(t, u)) - Math.max(0, Math.min(t, u)) > 1e-8) return true;
+      } else if (j > i + 1) {
+        const t = ((c.x - a.x) * ey - (c.y - a.y) * ex) / cross;
+        const u = ((c.x - a.x) * dy - (c.y - a.y) * dx) / cross;
+        if (t >= 0 && t <= 1 && u >= 0 && u <= 1) return true;
+      }
+    }
+  }
+  return false;
 }
 function cubic(start: Terminal, end: Terminal): RoutePath {
   const amount = Math.max(20, distance(start.point, end.point) / 2),
@@ -313,7 +326,7 @@ export function routeEdge(
     new Set([`n:${edge.sourceId}`, `n:${edge.targetId}`, `e:${edge.id}`]),
     metrics,
   );
-  const searchContext = ["curved", "organic", "bundle"].includes(style)
+  const searchContext = ["curved", "organic", "bundle", "bezier"].includes(style)
     ? contextFor(
         state,
         excluded,
@@ -322,16 +335,34 @@ export function routeEdge(
         config.radius * 2,
       )
     : context;
+  const labelAnchor = (toward: RoutePoint) => {
+    const side = sideToward(center(label!), toward),
+      point = anchor(label!, side);
+    // Border attachments may slide within the label; avoid tiny center-offset jogs.
+    if (
+      (side === "left" || side === "right") &&
+      toward.y > label!.y &&
+      toward.y < label!.y + label!.height
+    )
+      return { x: point.x, y: toward.y };
+    if (
+      (side === "top" || side === "bottom") &&
+      toward.x > label!.x &&
+      toward.x < label!.x + label!.width
+    )
+      return { x: toward.x, y: point.y };
+    return point;
+  };
   const firstTarget: Terminal = label
     ? {
-        point: anchor(label, sideToward(center(label), source.point)),
+        point: labelAnchor(source.point),
         side: sideToward(center(label), source.point),
         ref: { kind: "label", edgeId: edge.id },
       }
     : target;
   const lastSource: Terminal | undefined = label
     ? {
-        point: anchor(label, sideToward(center(label), target.point)),
+        point: labelAnchor(target.point),
         side: sideToward(center(label), target.point),
         ref: { kind: "label", edgeId: edge.id },
       }
@@ -375,7 +406,9 @@ export function routeEdge(
     return { x: t.point.x + v.x * length, y: t.point.y + v.y * length };
   };
   function repairPath(old: RoutePath, a: Terminal, b: Terminal): RoutePath | undefined {
-    if (old.segments.length < 3) return;
+    // Repair only linear backbones. Reattaching to successive curve samples creates
+    // staircases; changed curved edges are rebuilt, unrelated routes remain shared.
+    if (old.segments.length < 3 || old.segments.some((s) => s.kind !== "line")) return;
     const mode =
       style === "polyline" || style === "organic"
         ? "polyline"
@@ -405,7 +438,11 @@ export function routeEdge(
             ...pathFromPoints(simplify([...suffix, b.point])).segments,
           ],
         };
-        if (safe(repaired, context)) return repaired;
+        const points = simplify([repaired.start, ...repaired.segments.map((s) => s.to)]);
+        // Reject retracing and crossings introduced at either attachment join.
+        if (hasSpur(points)) continue;
+        const compact = pathFromPoints(points);
+        if (safe(compact, context)) return compact;
       }
     }
   }
@@ -432,7 +469,7 @@ export function routeEdge(
       config.preserveRoutes &&
       !via.length &&
       !loop &&
-      !["straight", "bezier", "parallel"].includes(style)
+      !["straight", "bezier", "parallel", "curved", "organic", "bundle"].includes(style)
     ) {
       const repaired = repairPath(old, a, b);
       if (repaired) return repaired;
@@ -462,8 +499,11 @@ export function routeEdge(
             : loopPath;
     }
     if (style === "straight" && !via.length && !loop) path = pathFromPoints([a.point, b.point]);
-    else if (style === "bezier" && !via.length && !loop) path = cubic(a, b);
-    else {
+    else if (style === "bezier" && !via.length && !loop) {
+      const direct = cubic(a, b);
+      if (safe(direct, context)) return direct;
+    }
+    if (!path) {
       const start = stub(a),
         end = stub(b),
         waypoints = [...via];

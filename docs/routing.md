@@ -61,9 +61,11 @@ and new obstacle bounds. Moving a parent also updates descendant geometry;
 changing a shared trunk/branch invalidates its routing group. Large obstacles,
 group changes, or settings changes can legitimately affect many routes.
 
-Unchanged routes retain identity. Valid previous routes are preferred by default; moved endpoints first attempt
-to repair attachments while retaining the interior corridor, and shared trunks
-are retained while valid.
+Unchanged routes retain identity. Valid previous routes are preferred by default; moved endpoints on linear routes first attempt
+to repair attachments while retaining the interior corridor. Repairs that retrace
+or cross themselves are rejected. Affected curved routes are rebuilt to avoid
+accumulating corners across drag frames; unrelated routes remain shared. Shared
+trunks are retained while valid.
 Set `preserveRoutes: false` to recompute affected routes without that preference.
 To optimize every route afresh, call `route` again. Removing an obstacle does
 not force a still-valid detour to jump to a shorter route. Failed routes in the
@@ -87,7 +89,7 @@ snapshot: its geometry/index state and revision may have advanced.
 | Export              | Routing behavior                                        |
 | ------------------- | ------------------------------------------------------- |
 | `straightRouting`   | Direct line; reports fallback if it crosses obstacles   |
-| `bezierRouting`     | Cubic connection using endpoint exit directions         |
+| `bezierRouting`     | Cubic connection; obstacle-aware curved detours         |
 | `orthogonalRouting` | Rectilinear visibility grid and A* search               |
 | `polylineRouting`   | Arbitrary-angle obstacle-corner visibility graph        |
 | `octilinearRouting` | Horizontal, vertical, and 45-degree visibility links    |
@@ -134,8 +136,9 @@ Fallbacks preserve endpoints and authored waypoints but may cross obstacles or
 violate the preferred routing style. They never silently disappear. Malformed
 API settings or stale diffs throw; they are programming errors, not route failures.
 
-The search is bounded and deterministic. Curve clearance uses conservative hull
-checks; tight corridors may remain piecewise linear. Curves are not guaranteed
+The search is bounded and deterministic. Curve clearance recursively subdivides overlapping control hulls and actual arc
+sweeps instead of treating their bounding boxes as occupied. Unresolved numerical
+contacts are conservatively rejected; tight corridors may remain piecewise linear. Curves are not guaranteed
 where the requested radius cannot fit. Route stability is preferred over global
 optimality. Independent crossings are permitted; bus/parallel routing coordinates
 explicit peers. Search costs do not claim a globally crossing-minimal solution.
