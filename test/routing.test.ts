@@ -10,6 +10,7 @@ import {
   type RoutingGraph,
 } from "../src/routing";
 import { crossesRect } from "../src/authoring/routing";
+import { findPath } from "../src/routing/search";
 
 function graph() {
   return createGraph({
@@ -351,6 +352,27 @@ it("reports search-budget fallback separately from blocked geometry", () => {
   expect(route.status).toBe("fallback");
   expect(route.diagnostics.map((d) => d.code)).toContain("SEARCH_BUDGET");
   visible(route);
+});
+it("checks each polyline visibility pair at most once per search attempt", () => {
+  let visibilityChecks = 0;
+  const context = {
+    obstacles: () => {
+      visibilityChecks++;
+      return [{ x: 40, y: -20, width: 20, height: 40 }];
+    },
+    maxSearchNodes: 4000,
+    bendPenalty: 5,
+    visited: 0,
+    budgetExceeded: false,
+  };
+  const result = findPath({ x: 0, y: 0 }, { x: 100, y: 0 }, "polyline", context);
+  expect(result).toEqual([
+    { x: 0, y: 0 },
+    { x: 40, y: -20 },
+    { x: 60, y: -20 },
+    { x: 100, y: 0 },
+  ]);
+  expect(visibilityChecks).toBeLessThanOrEqual(17);
 });
 it("routes moved attachments identically to fresh routing", () => {
   const g = graph(),

@@ -198,7 +198,17 @@ export function findPath(
     const queue = new Queue<{ index: number; previous: number; key: string; cost: number }>();
     const costs = new Map<string, number>(),
       parents = new Map<string, string>(),
-      vertices = new Map<string, number>();
+      vertices = new Map<string, number>(),
+      visibility = new Map<number, boolean>();
+    const visible = (a: number, b: number) => {
+      const key = a < b ? a * points.length + b : b * points.length + a;
+      let result = visibility.get(key);
+      if (result === undefined) {
+        result = clear(points[a]!, points[b]!, context);
+        visibility.set(key, result);
+      }
+      return result;
+    };
     const first = `${from}:-1`;
     costs.set(first, 0);
     vertices.set(first, from);
@@ -220,7 +230,7 @@ export function findPath(
       for (const next of neighbors(current.index)) {
         if (next === current.index || next === current.previous) continue;
         const b = points[next]!;
-        if (!clear(a, b, context)) continue;
+        if (!visible(current.index, next)) continue;
         const before =
           current.previous < 0 ? terminals.incoming : delta(points[current.previous]!, a);
         const step = delta(a, b);
