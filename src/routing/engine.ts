@@ -1,4 +1,6 @@
 import type { GraphDiff } from "@statelyai/graph";
+import { conflictCost, reservations, reservationBounds, outsideTerminal } from "./coordination";
+import { segmentBounds } from "./search";
 import { routeBounds, routeEdge, type Metrics, type Batch } from "./algorithms";
 import {
   edgeGeometry,
@@ -14,7 +16,7 @@ import {
   type State,
 } from "./model";
 import { PersistentMap } from "./persistent";
-import { inflate, SpatialIndex, union } from "./spatial";
+import { inflate, intersects, SpatialIndex, union } from "./spatial";
 import type {
   NativeRoutingStrategy,
   Route,
@@ -108,16 +110,68 @@ function calculate(
     batch: Batch = {
       plans: new Map(),
     };
-  counts.affectedEdges = affected.size;
-  counts.reusedEdges = Math.max(
-    0,
-    routes.size - [...affected].filter((id) => routes.has(id)).length,
-  );
-  for (const id of [...affected].sort()) {
+  const pending = new Set(affected);
+  const processed = new Set<string>();
+  const priorities = new Map<string, string>();
+  const priority = (id: string) => {
+    let result = priorities.get(id);
+    if (result !== undefined) return result;
+    const edge = state.edges.get(id) ?? previous?.edges.get(id);
+    const key = edge && groupKey(edge, style, state.settings);
+    result = key
+      ? ((state.edges.has(id) ? state.groups : previous?.groups)?.get(key)?.keys().next().value ??
+        id)
+      : id;
+    priorities.set(id, result);
+    return result;
+  };
+  const later = (candidate: string, id: string) =>
+    priority(candidate) > priority(id) || (priority(candidate) === priority(id) && candidate > id);
+  const invalidate = (id: string, bounds: ReturnType<typeof routeBounds>) => {
+    for (const candidate of routeIndex.query(inflate(bounds, state.settings.edgeSpacing))) {
+      if (!later(candidate, id) || processed.has(candidate)) continue;
+      pending.add(candidate);
+      const edge = state.edges.get(candidate);
+      const key = edge && groupKey(edge, style, state.settings);
+      if (key)
+        for (const peer of state.groups.get(key)?.keys() ?? [])
+          if (!processed.has(peer)) pending.add(peer);
+    }
+  };
+  // Changing a group's first ID changes its priority relative to nearby groups.
+  // Seed these dependencies before processing, including readers now ordered earlier.
+  if (previous)
+    for (const id of affected) {
+      const edge = previous.edges.get(id);
+      if (!edge) continue;
+      const key = groupKey(edge, style, previous.settings);
+      const oldPriority = key ? (previous.groups.get(key)?.keys().next().value ?? id) : id;
+      if (oldPriority === priority(id)) continue;
+      const oldRoute = previous.routes.get(id);
+      if (oldRoute)
+        for (const candidate of previous.routeIndex.query(
+          inflate(routeBounds(oldRoute), state.settings.edgeSpacing),
+        )) {
+          pending.add(candidate);
+          const current = state.edges.get(candidate);
+          const group = current && groupKey(current, style, state.settings);
+          if (group) for (const peer of state.groups.get(group)?.keys() ?? []) pending.add(peer);
+        }
+    }
+  const segmentCache = new Map<string, ReturnType<typeof reservations>>();
+  while (pending.size) {
+    const id = [...pending].sort(
+      (a, b) =>
+        (priority(a) < priority(b) ? -1 : priority(a) > priority(b) ? 1 : 0) ||
+        (a < b ? -1 : a > b ? 1 : 0),
+    )[0]!;
+    pending.delete(id);
+    processed.add(id);
     const edge = state.edges.get(id),
       oldRoute = previous?.routes.get(id);
     if (!edge) {
       if (routes.has(id)) {
+        invalidate(id, routeBounds(routes.get(id)!));
         routes = routes.delete(id);
         routeIndex = routeIndex.set(id);
         patches.push({ op: "delete", edgeId: id });
@@ -125,11 +179,71 @@ function calculate(
       continue;
     }
     batch.dependencyBounds = undefined;
+    const query = (bounds: ReturnType<typeof routeBounds>) => {
+      const area = inflate(bounds, state.settings.edgeSpacing);
+      batch.dependencyBounds = batch.dependencyBounds ? union(batch.dependencyBounds, area) : area;
+      const result: ReturnType<typeof reservations> = [];
+      const shared = new Set<string>();
+      for (const otherId of routeIndex.query(area)) {
+        if (!later(id, otherId)) continue;
+        const other = state.edges.get(otherId),
+          route = routes.get(otherId);
+        if (!other || !route) continue;
+        if (
+          ["bus", "fan", "bundle"].includes(style) &&
+          groupKey(other, style, state.settings) === groupKey(edge, style, state.settings)
+        )
+          continue;
+        const terminalRegions = [edge.sourceId, edge.targetId]
+          .filter((node) => node === other.sourceId || node === other.targetId)
+          .flatMap((id) => {
+            const node = state.nodes.get(id),
+              bounds = node && worldRect(node, state);
+            return bounds
+              ? [inflate(bounds, state.settings.clearance + state.settings.edgeSpacing * 2 + 1)]
+              : [];
+          });
+        let segments = segmentCache.get(otherId);
+        if (!segments) {
+          segments = reservations(route);
+          segmentCache.set(otherId, segments);
+        }
+        const outside = terminalRegions.reduce(
+          (segments, rect) => segments.flatMap((segment) => outsideTerminal(segment, rect)),
+          segments,
+        );
+        for (const segment of outside) {
+          if (!intersects(segmentBounds(segment.a, segment.b), area)) continue;
+          if (segment.sharedId !== undefined) {
+            const key = JSON.stringify([segment.sharedId, segment.a, segment.b]);
+            if (shared.has(key)) continue;
+            shared.add(key);
+          }
+          result.push(segment);
+        }
+      }
+      return result;
+    };
+    batch.edgeCost = (a, b) =>
+      query(segmentBounds(a, b)).reduce(
+        (cost, other) => cost + conflictCost(a, b, other, state.settings),
+        0,
+      );
+    batch.conflicts = (a, b) =>
+      query(segmentBounds(a, b)).some(
+        (other) =>
+          conflictCost(a, b, other, { ...state.settings, crossingPenalty: 1, overlapPenalty: 1 }) >
+          1e-8,
+      );
+    batch.guides = (bounds) =>
+      query(bounds).map((segment) => reservationBounds(segment, state.settings.edgeSpacing));
     let route = routeEdge(edge, input, style, counts, batch);
     if (oldRoute && JSON.stringify(oldRoute) === JSON.stringify(route)) route = oldRoute;
-    // Invalidate all spatial reads, including corridors rejected during search.
-    // An obstacle leaving those regions can change the canonical route too.
     const drawnBounds = routeBounds(route);
+    if (route !== oldRoute) {
+      if (oldRoute) invalidate(id, routeBounds(oldRoute));
+      invalidate(id, drawnBounds);
+    }
     routeIndex = routeIndex.set(
       id,
       batch.dependencyBounds ? union(batch.dependencyBounds, drawnBounds) : drawnBounds,
@@ -137,8 +251,15 @@ function calculate(
     if (route === oldRoute) continue;
     route = freeze(route);
     routes = routes.set(id, route);
+    segmentCache.delete(id);
     patches.push({ op: "set", edgeId: id, route });
   }
+  counts.affectedEdges = processed.size;
+  counts.reusedEdges = Math.max(
+    0,
+    state.routes.size - [...processed].filter((id) => state.routes.has(id)).length,
+  );
+  patches.sort((a, b) => (a.edgeId < b.edgeId ? -1 : a.edgeId > b.edgeId ? 1 : 0));
   return { state: { ...state, routes, routeIndex }, patches };
 }
 function descendants(state: State, ids: Set<string>) {

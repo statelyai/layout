@@ -34,6 +34,8 @@ export interface Settings {
   readonly radius: number;
   readonly edgeSpacing: number;
   readonly bendPenalty: number;
+  readonly crossingPenalty: number;
+  readonly overlapPenalty: number;
   readonly maxSearchNodes: number;
   readonly organicIterations: number;
   readonly edges: NonNullable<RoutingSettings["edges"]>;
@@ -45,6 +47,8 @@ export function settings(input: RoutingSettings = {}): Settings {
     radius: input.radius ?? 10,
     edgeSpacing: input.edgeSpacing ?? 12,
     bendPenalty: input.bendPenalty ?? 10,
+    crossingPenalty: input.crossingPenalty ?? 80,
+    overlapPenalty: input.overlapPenalty ?? 8,
     maxSearchNodes: input.maxSearchNodes ?? 4000,
     organicIterations: input.organicIterations ?? 12,
     edges: structuredClone(input.edges ?? {}),
@@ -209,6 +213,6 @@ export function groupKey(edge: EdgeGeometry, style: string, config: Settings): s
   if (style === "bus" || style === "bundle" || style === "fan")
     return group !== undefined
       ? `group:${group}`
-      : `source:${edge.sourceId}:${edge.sourcePort ?? ""}`;
+      : `source:${JSON.stringify([edge.sourceId, edge.sourcePort ?? null])}`;
   return `pair:${JSON.stringify([edge.sourceId, edge.targetId].sort())}`;
 }

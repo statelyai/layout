@@ -403,7 +403,8 @@ it("routes parallel lanes around an obstacle instead of pinning lanes inside it"
     };
   const routes = routingStrategies.parallel.route(g).routes;
   const paths = [...routes.values()].map((route) => {
-    expect(route.status).toBe("routed");
+    // Soft costs may retain a compact crossing, but never hide obstacle/search failures.
+    expect(route.diagnostics.every((d) => d.code === "ROUTE_CONFLICT")).toBe(true);
     avoids(route, { x: 120, y: -20, width: 60, height: 80 });
     return toSvgPath(route.sections[0]!.path);
   });
@@ -753,4 +754,143 @@ it("orders shared-side attachments by destination geometry before edge IDs", () 
   expect(routes.get("upper")!.sections[0]!.path.start.y).toBeLessThan(
     routes.get("lower")!.sections[0]!.path.start.y,
   );
+});
+
+describe("coordination of unrelated routes", () => {
+  const crossingGraph = () =>
+    createGraph({
+      id: "crossing",
+      nodes: [
+        { id: "left", x: 0, y: 100, width: 20, height: 20 },
+        { id: "right", x: 200, y: 100, width: 20, height: 20 },
+        { id: "top", x: 100, y: 0, width: 20, height: 20 },
+        { id: "bottom", x: 100, y: 200, width: 20, height: 20 },
+      ],
+      edges: [
+        { id: "a", sourceId: "left", targetId: "right" },
+        { id: "z", sourceId: "top", targetId: "bottom" },
+      ],
+    });
+  it("prices crossings and prefers a compact clear alternative", () => {
+    const g = crossingGraph();
+    const result = orthogonalRouting.route(g, { crossingPenalty: 500 });
+    const points = flattenPath(result.routes.get("z")!.sections[0]!.path);
+    expect(points.some((p) => p.x < 20 || p.x > 200)).toBe(true);
+    expect(result.routes.get("z")!.diagnostics).toEqual([]);
+  });
+  it("allows a crossing when avoiding it would require a disproportionate detour", () => {
+    const result = orthogonalRouting.route(crossingGraph(), { crossingPenalty: 1 });
+    expect(result.routes.get("z")!.diagnostics.map((d) => d.code)).toContain("ROUTE_CONFLICT");
+    expect(flattenPath(result.routes.get("z")!.sections[0]!.path)).toHaveLength(2);
+  });
+  it.each(Object.entries(routingStrategies))(
+    "%s keeps route coordination independent of drag history",
+    (_name, strategy) => {
+      const original = crossingGraph();
+      const config = { crossingPenalty: 500 };
+      let g = original,
+        snapshot = strategy.route(g, config);
+      for (const y of [130, 70, 160, 100]) {
+        const next = move(g, "left", { y });
+        snapshot = strategy.update(next, snapshot, getDiff(g, next)).snapshot;
+        expect([...snapshot.routes]).toEqual([...strategy.route(next, config).routes]);
+        g = next;
+      }
+      const reversed = { ...g, nodes: [...g.nodes].reverse(), edges: [...g.edges].reverse() };
+      expect([...strategy.route(reversed, config).routes]).toEqual([...snapshot.routes]);
+    },
+  );
+  it("reorders group dependencies when the first peer is removed", () => {
+    const g = crossingGraph();
+    const withPeer = { ...g, edges: [...g.edges, { ...g.edges[0]!, id: "zz" }] };
+    const withoutLeader = { ...withPeer, edges: withPeer.edges.filter((e) => e.id !== "a") };
+    const config = { crossingPenalty: 500 };
+    const previous = orthogonalRouting.route(withPeer, config);
+    const update = orthogonalRouting.update(
+      withoutLeader,
+      previous,
+      getDiff(withPeer, withoutLeader),
+    );
+    expect([...update.snapshot.routes]).toEqual([
+      ...orthogonalRouting.route(withoutLeader, config).routes,
+    ]);
+  });
+  it("keeps unavoidable straight crossings visible and reports the conflict", () => {
+    const result = routingStrategies.straight.route(crossingGraph());
+    expect(result.routes.get("z")!.diagnostics.map((d) => d.code)).toContain("ROUTE_CONFLICT");
+    visible(result.routes.get("z")!);
+  });
+  it("updates route dependencies when an earlier edge is added or removed", () => {
+    const full = crossingGraph();
+    const single = { ...full, edges: full.edges.filter((e) => e.id === "z") };
+    const config = { crossingPenalty: 500 };
+    const before = orthogonalRouting.route(single, config);
+    const added = orthogonalRouting.update(full, before, getDiff(single, full));
+    expect([...added.snapshot.routes]).toEqual([...orthogonalRouting.route(full, config).routes]);
+    const removed = orthogonalRouting.update(single, added.snapshot, getDiff(full, single));
+    expect([...removed.snapshot.routes]).toEqual([...before.routes]);
+  });
+});
+
+it.each(["bus", "fan", "bundle"] as const)(
+  "%s separates colon-containing source/port tuples",
+  (style) => {
+    const g = createGraph({
+      id: "colon",
+      nodes: [
+        { id: "a:b", x: 0, y: 0, width: 40, height: 40, ports: [{ name: "c", x: 40, y: 20 }] },
+        { id: "a", x: 0, y: 200, width: 40, height: 40, ports: [{ name: "b:c", x: 40, y: 20 }] },
+        { id: "b", x: 300, y: 0, width: 40, height: 40 },
+        { id: "c", x: 300, y: 200, width: 40, height: 40 },
+      ],
+      edges: [
+        { id: "one", sourceId: "a:b", sourcePort: "c", targetId: "b" },
+        { id: "two", sourceId: "a", sourcePort: "b:c", targetId: "c" },
+      ],
+    });
+    const result = routingStrategies[style].route(g);
+    for (const route of result.routes.values())
+      expect(route.sections.some((s) => s.sharedId)).toBe(false);
+  },
+);
+
+it("encodes missing and empty port values without a group-key collision", async () => {
+  const { groupKey, settings } = await import("../src/routing/model");
+  const edge = { id: "edge", sourceId: "source", targetId: "target" };
+  for (const style of ["bus", "fan", "bundle"])
+    expect(groupKey(edge, style, settings())).not.toBe(
+      groupKey({ ...edge, sourcePort: "" }, style, settings()),
+    );
+});
+
+it("routes away from a parallel reserved corridor without treating it as an obstacle", async () => {
+  const { conflictCost, reservationBounds } = await import("../src/routing/coordination");
+  const { settings } = await import("../src/routing/model");
+  const config = settings();
+  const reservation = { a: { x: 80, y: 0 }, b: { x: 220, y: 0 } };
+  const context = {
+    obstacles: () => [],
+    guides: () => [reservationBounds(reservation, config.edgeSpacing)],
+    edgeCost: (a: { x: number; y: number }, b: { x: number; y: number }) =>
+      conflictCost(a, b, reservation, config),
+    maxSearchNodes: 4000,
+    bendPenalty: 10,
+    visited: 0,
+    budgetExceeded: false,
+  };
+  const path = findPath({ x: 0, y: 0 }, { x: 300, y: 0 }, "orthogonal", context)!;
+  expect(path.some((p) => Math.abs(p.y) >= config.edgeSpacing)).toBe(true);
+  expect(path.slice(1).reduce((sum, b, i) => sum + context.edgeCost(path[i]!, b), 0)).toBe(0);
+});
+
+it("reports conflicts beyond shared terminal regions without flagging attachments", () => {
+  const base = graph();
+  const g = {
+    ...base,
+    edges: [base.edges[0]!, { ...base.edges[0]!, id: "ab2" }, { ...base.edges[0]!, id: "ab3" }],
+  };
+  const routes = routingStrategies.parallel.route(g).routes;
+  expect(routes.get("ab3")!.diagnostics.map((d) => d.code)).toContain("ROUTE_CONFLICT");
+  expect(routes.get("ab")!.diagnostics).toEqual([]);
+  routes.forEach(visible);
 });

@@ -105,3 +105,32 @@ all-strategy incremental/fresh comparisons and 1,000-edge locality checks remain
 This is local visual and geometric proof. It does not establish globally optimal
 crossing minimization or minimum edge separation everywhere: unrelated routes can
 still cross or share a corridor, and grouped routes intentionally share geometry.
+
+## Unrelated-route coordination — 2026-09-30
+
+Unrelated groups now use a stable current-graph priority, soft crossing/overlap
+costs, and spatially local route dependencies. Finite costs allow a compact
+crossing; residual conflicts carry `ROUTE_CONFLICT` and remain drawable. Shared
+trunks are counted once; peers sharing graph terminals retain lane coordination,
+with conflict checks beyond their common attachment region.
+Source/port tuple encoding also prevents colon-delimiter group collisions.
+
+The [coordination comparison](coordination.png) shows the same fixed graph with
+crossing cost zero versus 800: the crossing is visibly reported on the left,
+while a clear detour appears on the right. This compares settings on the new
+implementation, not screenshots of two revisions. The [current catalog](coordinated-catalog.png)
+shows all twelve strategies, with the same two expected straight obstacle
+fallbacks and no other fallback sections. Browser reported no page errors.
+
+Regressions cover compact crossing retention, parallel corridor separation,
+edge-only addition/removal, group-priority changes, colon-containing IDs/ports,
+and opposite drag histories/input permutations for all twelve strategies.
+The full local suite passed 1,586 tests; tracked-file formatting, lint, all
+four typechecks, generated data checks, library/demo/Storybook builds, and package
+consumer smoke passed. Repository-wide formatting additionally encounters the
+unrelated untracked `.impeccable/hook.cache.json`; it was preserved. Existing
+lint/build/package suggestions remain warnings.
+
+The [octilinear incremental check](coordinated-incremental.png) moved the label
+and obstacle through the playground controls: revision 2 reported three routes
+recomputed, two reused, and three patches, with no page errors.

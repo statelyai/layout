@@ -79,7 +79,8 @@ paths are cached outputs, never constraints on new routes.
 
 Every strategy supports incremental updates with immutable snapshots and shared
 indexes. Nodes, ports, and labels stay fixed. Every edge receives a route;
-fallbacks expose status and diagnostics. Native TypeScript strategies cover
+fallbacks expose status and diagnostics. Deterministic soft crossing/overlap costs
+coordinate unrelated groups; residual conflicts stay visible and reported. Native TypeScript strategies cover
 straight, Bézier, orthogonal, polyline, octilinear, curved, organic, parallel,
 self-loop, fan, bus, and bundled routes. Render curves directly or flatten them
 for a lines-only renderer. ELK/native layout adapters preserve existing output.

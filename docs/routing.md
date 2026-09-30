@@ -113,8 +113,7 @@ nets represented by native binary edges. All ungrouped styles coordinate both di
 Unnamed attachments on a shared node side are distributed deterministically;
 named ports remain fixed. Duplicate connections use separate obstacle-clearance
 lanes. Spacing compresses when the node side cannot fit the requested distance.
-This reduces coincident paths but does not guarantee edge separation everywhere
-or eliminate crossings between unrelated edges.
+Unrelated groups are routed in stable ID order with soft crossing and parallel-overlap costs. Requested `edgeSpacing` guides candidate corridors; it is not a hard separation constraint.
 
 Shared-source groups try an interior stem toward target nodes or labels first;
 exterior candidates on all four sides are ranked by estimated total connection
@@ -134,13 +133,17 @@ attachments whose placement depends on them.
 | `radius`            | `10`       | Curve/rounding radius, reduced where needed for safe geometry                     |
 | `edgeSpacing`       | `12`       | Shared-terminal spacing, duplicate-edge lanes, and shared corridors               |
 | `bendPenalty`       | `10`       | Bend cost including terminal directions; backward turns cost four times as much   |
+| `crossingPenalty`   | `80`       | Soft cost per intersection with an earlier unrelated route                        |
+| `overlapPenalty`    | `8`        | Cost per unit of parallel overlap within `edgeSpacing`                            |
 | `maxSearchNodes`    | `4000`     | Per-edge search expansion and visibility-graph size budget                        |
 | `organicIterations` | `12`       | Elastic-string relaxation iterations                                              |
 | `edges`             | `{}`       | Per-edge `sourceSide`, `targetSide`, ordered world-space `waypoints`, and `group` |
 
 Every graph edge gets drawable geometry even when constraints are infeasible.
 `Route.status` is `"routed"` or `"fallback"`; `Route.diagnostics` explains missing
-geometry/ports, blocked paths, exhausted search budgets, or violated constraints.
+geometry/ports, blocked paths, exhausted search budgets, violated constraints, or
+residual crossings/overlaps (`ROUTE_CONFLICT`). Conflicts remain reported
+even if their search penalties are zero.
 Fallbacks preserve endpoints and authored waypoints but may cross obstacles or
 violate the preferred routing style. They never silently disappear. Malformed
 API settings or stale diffs throw; they are programming errors, not route failures.
@@ -148,9 +151,9 @@ API settings or stale diffs throw; they are programming errors, not route failur
 The search is bounded and deterministic. Curve clearance recursively subdivides overlapping control hulls and actual arc
 sweeps instead of treating their bounding boxes as occupied. Unresolved numerical
 contacts are conservatively rejected; tight corridors may remain piecewise linear. Curves are not guaranteed
-where the requested radius cannot fit. Route selection is deterministic. Search minimizes length plus bend penalties
-within its bounded visibility graph; this is not a global crossing optimum. Independent crossings are permitted; bus/parallel routing coordinates
-explicit peers. Search costs do not claim a globally crossing-minimal solution.
+where the requested radius cannot fit. Route selection is deterministic. Search prices length, bends, unrelated crossings, and parallel overlaps within its bounded visibility graph. Finite costs retain a compact crossing when avoiding it requires an excessive detour. This is a deterministic greedy strategy, not a global crossing optimum. Straight routes, fixed ports, and authored waypoints may leave conflicts. Intentional shared trunks are exempt and counted once. Shared-terminal peers retain their existing lane coordination; crossing/overlap costs also apply outside their common attachment region. Curve conflict costs use a 0.5-unit polyline approximation.
+
+Reservations are derived from canonical routes for the current graph in stable edge-group order, never from drag history. Spatial reads include empty corridors; additions, removals, priority changes, and moved routes invalidate later dependent groups. Unaffected canonical outputs may be reused.
 
 ## Geometry and rendering
 

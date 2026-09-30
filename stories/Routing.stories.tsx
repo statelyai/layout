@@ -293,3 +293,44 @@ export const Catalog: Story = {
     </div>
   ),
 };
+
+export const Coordination: Story = {
+  render: () => {
+    const graph = createGraph({
+      id: "coordination",
+      nodes: [
+        { id: "Left", x: 40, y: 180, width: 80, height: 40 },
+        { id: "Right", x: 480, y: 180, width: 80, height: 40 },
+        { id: "Top", x: 260, y: 30, width: 80, height: 40 },
+        { id: "Bottom", x: 260, y: 350, width: 80, height: 40 },
+      ],
+      edges: [
+        { id: "a", sourceId: "Left", targetId: "Right" },
+        { id: "z", sourceId: "Top", targetId: "Bottom" },
+      ],
+    });
+    return (
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns: "1fr 1fr",
+          padding: 24,
+          gap: 24,
+          font: "16px system-ui",
+        }}
+      >
+        {[0, 800].map((crossingPenalty) => (
+          <section key={crossingPenalty}>
+            <h2>
+              {crossingPenalty ? "Compact clear detour" : "Crossing retained, conflict reported"}
+            </h2>
+            <Canvas
+              graph={graph}
+              snapshot={routingStrategies.orthogonal.route(graph, { crossingPenalty })}
+            />
+          </section>
+        ))}
+      </div>
+    );
+  },
+};

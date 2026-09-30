@@ -5,6 +5,8 @@ import type { RouteBounds, RoutePoint } from "./types";
 
 export interface SearchContext {
   obstacles(bounds: RouteBounds): readonly RouteBounds[];
+  edgeCost?(a: RoutePoint, b: RoutePoint): number;
+  guides?(bounds: RouteBounds): readonly RouteBounds[];
   readonly maxSearchNodes: number;
   readonly bendPenalty: number;
   visited: number;
@@ -96,7 +98,8 @@ export function findPath(
       aligned ||
       (style === "octilinear" && Math.abs(start.x - end.x) === Math.abs(start.y - end.y))) &&
     clear(start, end, context) &&
-    attachmentCost([start, end]) === 0
+    attachmentCost([start, end]) === 0 &&
+    (context.edgeCost?.(start, end) ?? 0) === 0
   )
     return [start, end];
   if (style === "orthogonal") {
@@ -107,12 +110,20 @@ export function findPath(
       .filter((bend) => clear(start, bend, context) && clear(bend, end, context))
       .map((bend) => simplify([start, bend, end]));
     candidates.sort((a, b) => attachmentCost(a) - attachmentCost(b));
-    if (candidates.length && attachmentCost(candidates[0]!) === 0) return candidates[0];
+    if (
+      candidates.length &&
+      attachmentCost(candidates[0]!) === 0 &&
+      candidates[0]!
+        .slice(1)
+        .every((p, i) => (context.edgeCost?.(candidates[0]![i]!, p) ?? 0) === 0)
+    )
+      return candidates[0];
   }
   for (let attempt = 0; attempt < 5 && context.visited < context.maxSearchNodes; attempt++) {
     const area = inflate(segmentBounds(start, end), 32 * 2 ** attempt);
-    const obstacles = context.obstacles(area);
-    const corners = obstacles.flatMap((r) => [
+    const guides = context.guides?.(area) ?? [];
+    const obstacles = context.obstacles(guides.reduce(union, area));
+    const corners = [...obstacles, ...guides].flatMap((r) => [
       { x: r.x, y: r.y },
       { x: r.x + r.width, y: r.y },
       { x: r.x, y: r.y + r.height },
@@ -199,7 +210,8 @@ export function findPath(
     const costs = new Map<string, number>(),
       parents = new Map<string, string>(),
       vertices = new Map<string, number>(),
-      visibility = new Map<number, boolean>();
+      visibility = new Map<number, boolean>(),
+      edgeCosts = new Map<number, number>();
     const visible = (a: number, b: number) => {
       const key = a < b ? a * points.length + b : b * points.length + a;
       let result = visibility.get(key);
@@ -236,7 +248,13 @@ export function findPath(
         const step = delta(a, b);
         const bend =
           turnCost(before, step) + (next === to ? turnCost(step, terminals.outgoing) : 0);
-        const cost = current.cost + distance(a, b) + bend;
+        const pair = Math.min(current.index, next) * points.length + Math.max(current.index, next);
+        let edgeCost = edgeCosts.get(pair);
+        if (edgeCost === undefined) {
+          edgeCost = context.edgeCost?.(a, b) ?? 0;
+          edgeCosts.set(pair, edgeCost);
+        }
+        const cost = current.cost + distance(a, b) + bend + edgeCost;
         const key = `${next}:${current.index}`;
         if (cost >= (costs.get(key) ?? Infinity)) continue;
         costs.set(key, cost);

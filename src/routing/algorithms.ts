@@ -22,6 +22,7 @@ import {
   type EdgeGeometry,
   type State,
 } from "./model";
+import { pathReservations } from "./coordination";
 import { distance, getPathBounds, pathFromPoints, roundCorners, segmentCrossesRect } from "./path";
 import { inflate, union } from "./spatial";
 import {
@@ -51,6 +52,9 @@ interface Plan {
 export interface Batch {
   readonly plans: Map<string, Plan | null>;
   dependencyBounds?: RouteBounds;
+  edgeCost?(a: RoutePoint, b: RoutePoint): number;
+  conflicts?(a: RoutePoint, b: RoutePoint): boolean;
+  guides?(bounds: RouteBounds): readonly RouteBounds[];
 }
 function contextFor(
   state: RoutingInput,
@@ -61,6 +65,8 @@ function contextFor(
   padding = 0,
 ): SearchContext {
   return {
+    edgeCost: (a, b) => batch.edgeCost?.(a, b) ?? 0,
+    guides: (bounds) => batch.guides?.(bounds) ?? [],
     maxSearchNodes: state.settings.maxSearchNodes,
     bendPenalty: state.settings.bendPenalty,
     visited: 0,
@@ -82,6 +88,16 @@ function contextFor(
         );
     },
   };
+}
+function pathLength(path: RoutePath): number {
+  return pathReservations(path).reduce((sum, segment) => sum + distance(segment.a, segment.b), 0);
+}
+function pathCost(path: RoutePath, context: SearchContext): number {
+  return pathReservations(path).reduce(
+    (sum, segment) =>
+      sum + distance(segment.a, segment.b) + (context.edgeCost?.(segment.a, segment.b) ?? 0),
+    0,
+  );
 }
 function safe(path: RoutePath, context: SearchContext): boolean {
   let start = path.start;
@@ -420,7 +436,7 @@ export function routeEdge(
     return { x: t.point.x + v.x * length, y: t.point.y + v.y * length };
   };
   function connection(a: Terminal, b: Terminal, via: readonly RoutePoint[] = []): RoutePath {
-    let path: RoutePath | undefined;
+    let path: RoutePath | undefined, preferred: RoutePath | undefined;
     if (distance(a.point, b.point) < 1e-8 && !via.length) {
       report("CONSTRAINT_VIOLATION", "Coincident terminals; rendered a visible loop fallback");
       const gap = config.clearance + config.edgeSpacing + 10;
@@ -459,7 +475,10 @@ export function routeEdge(
     if (style === "straight" && !via.length && !loop) path = pathFromPoints([a.point, b.point]);
     else if (style === "bezier" && !via.length && !loop) {
       const direct = cubic(a, b);
-      if (safe(direct, context)) return direct;
+      if (safe(direct, context)) {
+        if (pathCost(direct, context) === pathLength(direct)) return direct;
+        preferred = direct;
+      }
     }
     if (!path) {
       const start = stub(a),
@@ -480,7 +499,8 @@ export function routeEdge(
         const d = Math.max(1, distance(start, end)),
           rank = peers.indexOf(edge.id) + 1;
         const orientation = edge.sourceId < edge.targetId ? 1 : -1;
-        for (const sign of [orientation, -orientation]) {
+        if (base && base.length > 2) waypoints.push(mid);
+        for (const sign of base && base.length > 2 ? [] : [orientation, -orientation]) {
           const lane = {
             x: mid.x - ((end.y - start.y) / d) * config.edgeSpacing * rank * sign,
             y: mid.y + ((end.x - start.x) / d) * config.edgeSpacing * rank * sign,
@@ -530,6 +550,11 @@ export function routeEdge(
               : pathFromPoints(simple);
       }
     }
+    if (
+      preferred &&
+      (!path || !safe(path, context) || pathCost(preferred, context) <= pathCost(path, context))
+    )
+      return preferred;
     if (path && safe(path, context)) return path;
     report(
       searchContext.budgetExceeded ? "SEARCH_BUDGET" : "ROUTE_BLOCKED",
@@ -591,6 +616,15 @@ export function routeEdge(
       to: target.ref,
       path: connection(lastSource, target),
     });
+  if (
+    sections.some((section) =>
+      pathReservations(section.path).some((segment) => batch.conflicts?.(segment.a, segment.b)),
+    )
+  )
+    report(
+      "ROUTE_CONFLICT",
+      "Route crosses or overlaps another edge; retained a compact visible path",
+    );
   metrics.searchNodes += searchContext.visited + (searchContext === context ? 0 : context.visited);
   return {
     edgeId: edge.id,

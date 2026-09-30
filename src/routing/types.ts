@@ -38,6 +38,7 @@ export interface RouteSection {
 export type RoutingDiagnosticCode =
   | "MISSING_GEOMETRY"
   | "MISSING_PORT"
+  | "ROUTE_CONFLICT"
   | "ROUTE_BLOCKED"
   | "SEARCH_BUDGET"
   | "CONSTRAINT_VIOLATION";
@@ -83,6 +84,10 @@ export interface RoutingSettings {
   readonly radius?: number;
   readonly edgeSpacing?: number;
   readonly bendPenalty?: number;
+  /** Soft cost per crossing; finite costs keep detours proportionate. Default 80. */
+  readonly crossingPenalty?: number;
+  /** Cost per unit of parallel overlap within edgeSpacing. Default 8. */
+  readonly overlapPenalty?: number;
   readonly maxSearchNodes?: number;
   readonly organicIterations?: number;
   readonly edges?: Readonly<Record<string, EdgeRoutingSettings>>;

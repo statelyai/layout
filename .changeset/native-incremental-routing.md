@@ -7,3 +7,5 @@ Add native TypeScript edge routing with immutable snapshots, incremental native 
 Incremental routing produces the same geometry as fresh routing for the same graph and settings. Previous snapshots cache graph geometry, spatial dependencies, and unaffected results; previous drawn paths do not constrain routing.
 
 Account for endpoint directions in route search, complete octilinear diagonal/grid intersections, distribute shared-node attachments and duplicate-edge corridors, and prefer interior source-facing shared trunks. Incremental invalidation includes coordinated neighbors.
+
+Coordinate unrelated groups with deterministic soft crossing/overlap costs, report residual conflicts, and incrementally invalidate route dependencies. Encode source/port group keys without delimiter collisions.
