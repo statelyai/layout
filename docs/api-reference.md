@@ -193,3 +193,20 @@ and `WaypointConstraint`.
 
 See [authoring layout](authoring-layout.md) for partial scope permissions,
 constraint strengths, failure behavior, and route-only defaults.
+
+## Standalone routing
+
+<!-- routing exports from src/routing/index.ts and src/elkjs/routes.ts -->
+
+`@statelyai/layout/routing` (also exported from the root) provides
+`routingStrategies`, the twelve named `*Routing` strategies, `applyRoutePatches`,
+`pathFromPoints`, `pathFromSplinePoints`, `flattenPath`, `roundCorners`,
+`toSvgPath`, `getPathBounds`, `getPathLength`, `getPointAtLength`,
+`getTangentAtLength`, `getLayoutRoutes`, `routeToPolylines`, and
+`routeToGraphPatch`. `@statelyai/layout/elkjs` additionally exports `getElkRoutes`.
+
+Every native strategy supports synchronous `route(graph, settings?)` and
+`update(graph, previousSnapshot, graphDiff, settings?)`. The extensible
+`RoutingStrategy` interface also permits promises. Results preserve fixed
+geometry and contain explicit fallback status. See the [routing reference](routing.md)
+for signatures, snapshot ownership, options, capabilities, and limitations.

@@ -1901,3 +1901,6 @@ export type {
   StatechartLayoutScore,
   StatechartLayoutPlan,
 } from "./statechart";
+
+export { getElkRoutes } from "./routes";
+export type { ElkRouteOptions } from "./routes";

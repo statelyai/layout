@@ -4,8 +4,9 @@ Native TypeScript graph layout algorithms built directly on
 [`@statelyai/graph`](https://github.com/statelyai/graph).
 
 This is not a new graph interchange format. Public APIs consume `Graph` and
-return `VisualGraph`; positions remain node fields and routes remain
-`GraphEdge.points`.
+return `VisualGraph`; positions remain node fields. Standalone routing adds
+immutable structured routes and incremental patches alongside the existing
+`GraphEdge.points` layout output.
 
 ## Status
 
@@ -54,6 +55,38 @@ result.patches;
 result.diagnostics;
 result.metrics;
 ```
+
+## Standalone incremental routing
+
+<!-- routing API and strategy catalog from src/routing/index.ts -->
+
+```ts
+import { getDiff } from "@statelyai/graph";
+import { orthogonalRouting, toSvgPath } from "@statelyai/layout/routing";
+
+const previous = orthogonalRouting.route(graph);
+const { snapshot, patches } = orthogonalRouting.update(
+  nextGraph,
+  previous,
+  getDiff(graph, nextGraph),
+);
+const route = snapshot.routes.get("ab");
+const paths = route?.sections.map((section) => toSvgPath(section.path));
+```
+
+Incremental results match fresh routing for the same graph and settings. Previous
+paths are cached outputs, never constraints on new routes.
+
+Every strategy supports incremental updates with immutable snapshots and shared
+indexes. Nodes, ports, and labels stay fixed. Every edge receives a route;
+fallbacks expose status and diagnostics. Deterministic soft crossing/overlap costs
+coordinate unrelated groups; residual conflicts stay visible and reported. Native TypeScript strategies cover
+straight, Bézier, orthogonal, polyline, octilinear, curved, organic, parallel,
+self-loop, fan, bus, and bundled routes. Render curves directly or flatten them
+for a lines-only renderer. ELK/native layout adapters preserve existing output.
+
+For efficient dragging, supply the edit's diff directly: `getDiff` scans the
+whole graph. See [routing contracts, algorithms, and examples](docs/routing.md).
 
 ## Layout while authoring
 
