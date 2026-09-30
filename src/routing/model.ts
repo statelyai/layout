@@ -210,6 +210,5 @@ export function groupKey(edge: EdgeGeometry, style: string, config: Settings): s
     return group !== undefined
       ? `group:${group}`
       : `source:${edge.sourceId}:${edge.sourcePort ?? ""}`;
-  if (style === "parallel") return `pair:${JSON.stringify([edge.sourceId, edge.targetId].sort())}`;
-  return undefined;
+  return `pair:${JSON.stringify([edge.sourceId, edge.targetId].sort())}`;
 }

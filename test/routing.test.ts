@@ -553,3 +553,182 @@ it.each(Object.keys(routingStrategies) as (keyof typeof routingStrategies)[])(
     }
   },
 );
+
+it.each(["orthogonal", "octilinear", "polyline", "curved", "bezier"] as const)(
+  "%s separates duplicate connections",
+  (style) => {
+    const base = graph();
+    const g = { ...base, edges: [...base.edges, { ...base.edges[0]!, id: "peer" }] };
+    const result = routingStrategies[style].route(g);
+    expect(result.routes.get("ab")!.status).toBe("routed");
+    expect(result.routes.get("peer")!.status).toBe("routed");
+    expect(result.routes.get("ab")!.sections[0]!.path).not.toEqual(
+      result.routes.get("peer")!.sections[0]!.path,
+    );
+  },
+);
+
+it("octilinear includes attachment directions when selecting bends", () => {
+  const g = createGraph({
+    id: "octilinear-hook",
+    nodes: [
+      { id: "a", x: 0, y: 0, width: 40, height: 40 },
+      { id: "b", x: 120, y: 70, width: 80, height: 44 },
+    ],
+    edges: [{ id: "ab", sourceId: "a", targetId: "b", x: 40, y: 30, width: 72, height: 26 }],
+  });
+  const route = routingStrategies.octilinear.route(g).routes.get("ab")!;
+  const path = route.sections[1]!.path;
+  const points = [path.start, ...path.segments.map((s) => s.to)];
+  for (let i = 2; i < points.length; i++) {
+    const a = points[i - 2]!,
+      b = points[i - 1]!,
+      c = points[i]!;
+    expect((b.x - a.x) * (c.x - b.x) + (b.y - a.y) * (c.y - b.y)).toBeGreaterThanOrEqual(-1e-8);
+  }
+});
+
+it.each(["bus", "bundle"] as const)(
+  "%s selects an interior shared corridor when clear",
+  (style) => {
+    const g = createGraph({
+      id: "interior-bus",
+      nodes: [
+        { id: "a", x: 0, y: 80, width: 40, height: 40 },
+        { id: "b", x: 300, y: 0, width: 40, height: 40 },
+        { id: "c", x: 300, y: 160, width: 40, height: 40 },
+      ],
+      edges: [
+        { id: "ab", sourceId: "a", targetId: "b" },
+        { id: "ac", sourceId: "a", targetId: "c" },
+      ],
+    });
+    const route = routingStrategies[style].route(g).routes.get("ab")!;
+    const trunk = route.sections.find((s) => s.sharedId)!;
+    expect(trunk.path.start.x).toBeGreaterThan(40);
+    expect(trunk.path.start.x).toBeLessThan(300);
+  },
+);
+
+it("spreads shared-terminal edges and invalidates neighbors when a target changes sides", () => {
+  const g = createGraph({
+    id: "fanout",
+    nodes: [
+      { id: "a", x: 0, y: 0, width: 60, height: 60 },
+      { id: "b", x: 300, y: -40, width: 40, height: 40 },
+      { id: "c", x: 300, y: 80, width: 40, height: 40 },
+    ],
+    edges: [
+      { id: "ab", sourceId: "a", targetId: "b" },
+      { id: "ac", sourceId: "a", targetId: "c" },
+    ],
+  });
+  const previous = orthogonalRouting.route(g);
+  expect(previous.routes.get("ab")!.sections[0]!.path.start).not.toEqual(
+    previous.routes.get("ac")!.sections[0]!.path.start,
+  );
+  const next = move(g, "b", { x: -200, y: 0 });
+  const result = orthogonalRouting.update(next, previous, getDiff(g, next));
+  expect([...result.snapshot.routes]).toEqual([...orthogonalRouting.route(next).routes]);
+});
+
+it.each(["bus", "fan", "bundle"] as const)(
+  "%s junctions can branch around an adjacent obstacle without artificial exit stubs",
+  (style) => {
+    const g = createGraph({
+      id: "junction-obstacle",
+      nodes: [
+        { id: "a", x: 30, y: 80, width: 80, height: 44 },
+        { id: "b", x: 380, y: 40, width: 80, height: 44 },
+        { id: "c", x: 380, y: 230, width: 80, height: 44 },
+        { id: "obstacle", x: 200, y: 60, width: 70, height: 110 },
+      ],
+      edges: [
+        { id: "ab", sourceId: "a", targetId: "b" },
+        { id: "ac", sourceId: "a", targetId: "c", x: 210, y: 240, width: 72, height: 26 },
+      ],
+    });
+    const routes = routingStrategies[style].route(g).routes;
+    for (const route of routes.values()) {
+      expect(route.status).toBe("routed");
+      avoids(route, { x: 200, y: 60, width: 70, height: 110 });
+    }
+  },
+);
+
+it("label-only movement does not invalidate shared-node attachment peers", () => {
+  const g = createGraph({
+    id: "label-locality",
+    nodes: [
+      { id: "a", x: 0, y: 0, width: 60, height: 60 },
+      { id: "b", x: 300, y: -40, width: 40, height: 40 },
+      { id: "c", x: 300, y: 180, width: 40, height: 40 },
+    ],
+    edges: [
+      { id: "ab", sourceId: "a", targetId: "b" },
+      { id: "ac", sourceId: "a", targetId: "c", x: 160, y: 180, width: 60, height: 24 },
+    ],
+  });
+  const prior = orthogonalRouting.route(g);
+  const next = { ...g, edges: g.edges.map((e) => (e.id === "ac" ? { ...e, x: 180, y: 200 } : e)) };
+  const result = orthogonalRouting.update(next, prior, getDiff(g, next));
+  expect(result.snapshot.metrics.routedEdges).toBe(1);
+  expect(result.snapshot.routes.get("ab")).toBe(prior.routes.get("ab"));
+  expect([...result.snapshot.routes]).toEqual([...orthogonalRouting.route(next).routes]);
+});
+
+it("keeps duplicate octilinear corridors ordered at their target attachments", () => {
+  const g = createGraph({
+    id: "ordered-lanes",
+    nodes: [
+      { id: "a", x: 30, y: 80, width: 80, height: 44 },
+      { id: "b", x: 380, y: 40, width: 80, height: 44 },
+      { id: "c", x: 380, y: 230, width: 80, height: 44 },
+      { id: "block", x: 200, y: 60, width: 70, height: 110 },
+    ],
+    edges: [
+      { id: "parallel", sourceId: "a", targetId: "b" },
+      { id: "review", sourceId: "a", targetId: "b" },
+      { id: "publish", sourceId: "a", targetId: "c", x: 210, y: 240, width: 72, height: 26 },
+    ],
+  });
+  const result = routingStrategies.octilinear.route(g);
+  const paths = ["parallel", "review"].map((id) =>
+    flattenPath(result.routes.get(id)!.sections[0]!.path),
+  );
+  for (let i = 1; i < paths[0]!.length; i++)
+    for (let j = 1; j < paths[1]!.length; j++) {
+      const a = paths[0]![i - 1]!,
+        b = paths[0]![i]!,
+        c = paths[1]![j - 1]!,
+        d = paths[1]![j]!;
+      const dx = b.x - a.x,
+        dy = b.y - a.y,
+        ex = d.x - c.x,
+        ey = d.y - c.y,
+        cross = dx * ey - dy * ex;
+      if (Math.abs(cross) < 1e-8) continue;
+      const t = ((c.x - a.x) * ey - (c.y - a.y) * ex) / cross,
+        u = ((c.x - a.x) * dy - (c.y - a.y) * dx) / cross;
+      expect(t > 1e-8 && t < 1 - 1e-8 && u > 1e-8 && u < 1 - 1e-8).toBe(false);
+    }
+});
+
+it("orders shared-side attachments by destination geometry before edge IDs", () => {
+  const g = createGraph({
+    id: "terminal-order",
+    nodes: [
+      { id: "a", x: 0, y: 0, width: 60, height: 60 },
+      { id: "b", x: 300, y: -40, width: 40, height: 40 },
+      { id: "c", x: 300, y: 80, width: 40, height: 40 },
+    ],
+    edges: [
+      { id: "lower", sourceId: "a", targetId: "c" },
+      { id: "upper", sourceId: "a", targetId: "b" },
+    ],
+  });
+  const routes = orthogonalRouting.route(g).routes;
+  expect(routes.get("upper")!.sections[0]!.path.start.y).toBeLessThan(
+    routes.get("lower")!.sections[0]!.path.start.y,
+  );
+});

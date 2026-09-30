@@ -78,3 +78,30 @@ Strategies receive current geometry and settings, never previous drawn paths.
 Mixed node/label drag tests compare every frame with fresh routing for all twelve
 strategies while retaining unrelated route identity. The earlier opt-in stability
 checks above describe intermediate versions, not the final public contract.
+
+## Routing quality pass — 2026-09-30
+
+Added endpoint-aware search costs (including stronger backward-turn penalties)
+and both horizontal and vertical grid intersections for octilinear diagonals.
+The label-to-Publish hook now takes a forward diagonal followed by a horizontal
+attachment. Duplicate connections receive distributed node attachments, staggered
+attachment lengths, and distinct obstacle-clearance lanes. Shared-side incident
+edges receive distributed unnamed attachments; positioned ports remain fixed.
+
+Shared-source bus/fan/bundle routes now try an interior stem toward target nodes
+or labels before exterior alternatives ranked by estimated connection length.
+Junctions no longer inherit artificial port exit stubs. Catalog browser checks
+showed zero fallback sections for all eleven obstacle-aware/group strategies;
+straight retained its two expected obstacle-crossing fallbacks. No page errors.
+
+Regression tests cover duplicate-path separation, octilinear attachment hooks and
+lane crossings, interior shared corridors, branching beside an obstacle, neighbor
+invalidation when a target switches sides, and label-only update locality. Existing
+all-strategy incremental/fresh comparisons and 1,000-edge locality checks remain.
+
+- [Updated strategy catalog](quality-catalog.png)
+- [Octilinear label attachment after dragging](quality-octilinear.png)
+
+This is local visual and geometric proof. It does not establish globally optimal
+crossing minimization or minimum edge separation everywhere: unrelated routes can
+still cross or share a corridor, and grouped routes intentionally share geometry.

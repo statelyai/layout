@@ -98,6 +98,7 @@ function calculate(
     routeIndex = state.routeIndex;
   const input = {
     nodes: state.nodes,
+    incident: state.incident,
     edges: state.edges,
     groups: state.groups,
     obstacles: state.obstacles,
@@ -271,6 +272,30 @@ function updateState(
     invalidateObstacle(`e:${id}`, edge && labelRect(edge, state));
     affected.add(id);
   }
+  // Terminal placement depends on current incident edges, including neighbors
+  // whose other endpoint changes side or whose connection is added/deleted.
+  if (!["bus", "fan", "bundle"].includes(style))
+    for (const id of changedEdges) {
+      const before = prior.edges.get(id),
+        after = state.edges.get(id);
+      const changesAttachment =
+        !before ||
+        !after ||
+        before.sourceId !== after.sourceId ||
+        before.targetId !== after.targetId ||
+        before.sourcePort !== after.sourcePort ||
+        before.targetPort !== after.targetPort ||
+        [before.sourceId, before.targetId, after.sourceId, after.targetId].some((nodeId) =>
+          changedNodes.has(nodeId),
+        );
+      if (!changesAttachment) continue;
+      for (const version of [prior, state]) {
+        const edge = version.edges.get(id);
+        if (!edge) continue;
+        for (const nodeId of [edge.sourceId, edge.targetId])
+          for (const peer of version.incident.get(nodeId)?.keys() ?? []) affected.add(peer);
+      }
+    }
   // A changed branch/trunk may affect every member, but never unrelated groups.
   for (const id of [...affected])
     for (const version of [prior, state]) {

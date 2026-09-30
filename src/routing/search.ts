@@ -78,22 +78,37 @@ export function findPath(
   end: RoutePoint,
   style: "orthogonal" | "polyline" | "octilinear",
   context: SearchContext,
+  terminals: { incoming?: RoutePoint; outgoing?: RoutePoint } = {},
 ): RoutePoint[] | undefined {
+  const turnCost = (a: RoutePoint | undefined, b: RoutePoint | undefined) => {
+    if (!a || !b || !Math.hypot(a.x, a.y) || !Math.hypot(b.x, b.y)) return 0;
+    const dot = a.x * b.x + a.y * b.y,
+      cross = a.x * b.y - a.y * b.x;
+    return dot < -1e-8 ? context.bendPenalty * 4 : Math.abs(cross) > 1e-8 ? context.bendPenalty : 0;
+  };
+  const delta = (a: RoutePoint, b: RoutePoint) => ({ x: b.x - a.x, y: b.y - a.y });
+  const attachmentCost = (points: RoutePoint[]) =>
+    turnCost(terminals.incoming, delta(points[0]!, points[1]!)) +
+    turnCost(delta(points.at(-2)!, points.at(-1)!), terminals.outgoing);
   const aligned = start.x === end.x || start.y === end.y;
   if (
     (style === "polyline" ||
       aligned ||
       (style === "octilinear" && Math.abs(start.x - end.x) === Math.abs(start.y - end.y))) &&
-    clear(start, end, context)
+    clear(start, end, context) &&
+    attachmentCost([start, end]) === 0
   )
     return [start, end];
-  if (style === "orthogonal")
-    for (const bend of [
+  if (style === "orthogonal") {
+    const candidates = [
       { x: start.x, y: end.y },
       { x: end.x, y: start.y },
-    ])
-      if (clear(start, bend, context) && clear(bend, end, context))
-        return simplify([start, bend, end]);
+    ]
+      .filter((bend) => clear(start, bend, context) && clear(bend, end, context))
+      .map((bend) => simplify([start, bend, end]));
+    candidates.sort((a, b) => attachmentCost(a) - attachmentCost(b));
+    if (candidates.length && attachmentCost(candidates[0]!) === 0) return candidates[0];
+  }
   for (let attempt = 0; attempt < 5 && context.visited < context.maxSearchNodes; attempt++) {
     const area = inflate(segmentBounds(start, end), 32 * 2 ** attempt);
     const obstacles = context.obstacles(area);
@@ -128,6 +143,12 @@ export function findPath(
             for (const sign of [-1, 1]) {
               const y = p.y + sign * (x - p.x);
               if (y >= area.y && y <= area.y + area.height) extra.push({ x, y });
+            }
+        for (const p of [start, end, ...corners])
+          for (const y of ys)
+            for (const sign of [-1, 1]) {
+              const x = p.x + sign * (y - p.y);
+              if (x >= area.x && x <= area.x + area.width) extra.push({ x, y });
             }
         const unique = new Map(points.map((p) => [`${p.x}:${p.y}`, p]));
         for (const p of extra) unique.set(`${p.x}:${p.y}`, p);
@@ -200,11 +221,11 @@ export function findPath(
         if (next === current.index || next === current.previous) continue;
         const b = points[next]!;
         if (!clear(a, b, context)) continue;
-        const before = current.previous < 0 ? undefined : points[current.previous];
+        const before =
+          current.previous < 0 ? terminals.incoming : delta(points[current.previous]!, a);
+        const step = delta(a, b);
         const bend =
-          before && Math.abs((a.x - before.x) * (b.y - a.y) - (a.y - before.y) * (b.x - a.x)) > 1e-8
-            ? context.bendPenalty
-            : 0;
+          turnCost(before, step) + (next === to ? turnCost(step, terminals.outgoing) : 0);
         const cost = current.cost + distance(a, b) + bend;
         const key = `${next}:${current.index}`;
         if (cost >= (costs.get(key) ?? Infinity)) continue;

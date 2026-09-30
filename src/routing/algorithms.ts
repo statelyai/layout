@@ -33,7 +33,10 @@ import {
   type SearchContext,
 } from "./search";
 
-type RoutingInput = Pick<State, "nodes" | "edges" | "groups" | "obstacles" | "settings">;
+type RoutingInput = Pick<
+  State,
+  "nodes" | "edges" | "groups" | "obstacles" | "settings" | "incident"
+>;
 
 export type Metrics = { -readonly [K in keyof RoutingMetrics]: RoutingMetrics[K] };
 interface Terminal {
@@ -193,28 +196,60 @@ function groupPlan(
   const bounds = rectangles.reduce(union),
     spacing = state.settings.clearance + state.settings.edgeSpacing + 1;
   let result: Plan | null = null;
-  for (let attempt = 1; attempt <= 8; attempt++) {
-    const x = bounds.x + bounds.width + spacing * attempt;
-    const start = { x, y: bounds.y - spacing },
-      end = { x, y: bounds.y + bounds.height + spacing };
-    let trunkStart = start,
-      trunkEnd = end;
-    if (style === "fan" && new Set(edges.map((e) => e.sourceId)).size === 1) {
-      const node = state.nodes.get(edges[0]!.sourceId)!,
-        bounds = worldRect(node, state)!;
-      // Common fan-out: one shared stem, independent branches after its junction.
-      trunkStart = { x: bounds.x + bounds.width + spacing, y: bounds.y + bounds.height / 2 };
-      trunkEnd = { x, y: trunkStart.y };
-      if (distance(trunkStart, trunkEnd) < spacing) trunkEnd = { x: x + spacing, y: trunkStart.y };
-    }
-    const points = findPath(trunkStart, trunkEnd, "orthogonal", context);
-    if (points) {
-      result = {
-        id: `trunk:${key}`,
-        path: style === "bundle" ? curve(points, state, context) : pathFromPoints(points),
-      };
-      break;
-    }
+  const targets = edges.map(
+    (e) => labelRect(e, state) ?? worldRect(state.nodes.get(e.targetId)!, state)!,
+  );
+  const sources = edges.map((e) => worldRect(state.nodes.get(e.sourceId)!, state)!);
+  const candidates: { start: RoutePoint; end: RoutePoint }[] = [];
+  if (new Set(edges.map((e) => e.sourceId)).size === 1) {
+    const source = sources[0]!,
+      target = targets.reduce(union);
+    const side = sideToward(center(source), center(target)),
+      v = vector(side);
+    const port = edges[0]!.sourcePort;
+    const named =
+      port === undefined
+        ? undefined
+        : state.nodes.get(edges[0]!.sourceId)!.ports?.find((p) => p.name === port);
+    const attachment =
+      named && Number.isFinite(named.x) && Number.isFinite(named.y)
+        ? {
+            x: source.x + named.x! + (named.width ?? 0) / 2,
+            y: source.y + named.y! + (named.height ?? 0) / 2,
+          }
+        : anchor(source, side);
+    const start = { x: attachment.x + v.x * spacing, y: attachment.y + v.y * spacing };
+    const end =
+      side === "right"
+        ? { x: target.x - spacing, y: start.y }
+        : side === "left"
+          ? { x: target.x + target.width + spacing, y: start.y }
+          : side === "bottom"
+            ? { x: start.x, y: target.y - spacing }
+            : { x: start.x, y: target.y + target.height + spacing };
+    if ((end.x - start.x) * v.x + (end.y - start.y) * v.y > 1e-8) candidates.push({ start, end });
+  }
+  // Try the source-facing interior corridor before exterior alternatives.
+  const xs = [bounds.x - spacing, bounds.x + bounds.width + spacing];
+  const ys = [bounds.y - spacing, bounds.y + bounds.height + spacing];
+  const exterior = [
+    ...xs.map((x) => ({ start: { x, y: ys[0]! }, end: { x, y: ys[1]! } })),
+    ...ys.map((y) => ({ start: { x: xs[0]!, y }, end: { x: xs[1]!, y } })),
+  ].flatMap((p) => [p, { start: p.end, end: p.start }]);
+  const score = (p: { start: RoutePoint; end: RoutePoint }) =>
+    distance(p.start, p.end) +
+    sources.reduce((sum, r) => sum + distance(center(r), p.start), 0) +
+    targets.reduce((sum, r) => sum + distance(p.end, center(r)), 0);
+  exterior.sort((a, b) => score(a) - score(b));
+  candidates.push(...exterior);
+  for (const candidate of candidates) {
+    const points = findPath(candidate.start, candidate.end, "orthogonal", context);
+    if (!points) continue;
+    result = {
+      id: `trunk:${key}`,
+      path: style === "bundle" ? curve(points, state, context) : pathFromPoints(points),
+    };
+    break;
   }
   metrics.searchNodes += context.visited;
   batch.plans.set(key, result);
@@ -248,6 +283,10 @@ export function routeEdge(
       height: 0,
     };
   const loop = edge.sourceId === edge.targetId;
+  const group = groupKey(edge, style, config),
+    peers = group ? [...(state.groups.get(group)?.keys() ?? [])] : [];
+  const grouped = peers.length > 1 && ["bus", "bundle", "fan"].includes(style);
+  const lane = !grouped && peers.length > 1 ? peers.length - 1 - peers.indexOf(edge.id) : 0;
   function terminal(source: boolean): Terminal {
     const node = source ? sourceNode : targetNode,
       bounds = source ? sourceBounds : targetBounds,
@@ -257,6 +296,32 @@ export function routeEdge(
       (source ? perEdge.sourceSide : perEdge.targetSide) ??
       (loop ? (source ? "right" : "top") : sideToward(center(bounds), center(other)));
     let point = anchor(bounds, side);
+    if (name === undefined && !["bus", "fan", "bundle"].includes(style) && !loop) {
+      const nodeId = source ? edge.sourceId : edge.targetId;
+      const adjacent = [...(state.incident.get(nodeId)?.keys() ?? [])].filter((id) => {
+        const e = state.edges.get(id)!;
+        if (e.sourceId === e.targetId) return false;
+        const from = e.sourceId === nodeId;
+        if ((from ? e.sourcePort : e.targetPort) !== undefined) return false;
+        const otherNode = state.nodes.get(from ? e.targetId : e.sourceId);
+        const rect = otherNode && worldRect(otherNode, state);
+        if (!rect) return false;
+        const explicit = from ? config.edges[id]?.sourceSide : config.edges[id]?.targetSide;
+        return (explicit ?? sideToward(center(bounds), center(rect))) === side;
+      });
+      const horizontal = side === "left" || side === "right";
+      const projected = (id: string) => {
+        const e = state.edges.get(id)!;
+        const n = state.nodes.get(e.sourceId === nodeId ? e.targetId : e.sourceId)!;
+        const p = center(worldRect(n, state)!);
+        return horizontal ? p.y : p.x;
+      };
+      adjacent.sort((a, b) => projected(a) - projected(b) || (a < b ? -1 : a > b ? 1 : 0));
+      const span = horizontal ? bounds.height : bounds.width;
+      const spacing = Math.min(config.edgeSpacing, (span * 0.7) / Math.max(1, adjacent.length - 1));
+      const shift = (adjacent.indexOf(edge.id) - (adjacent.length - 1) / 2) * spacing;
+      point = horizontal ? { x: point.x, y: point.y + shift } : { x: point.x + shift, y: point.y };
+    }
     if (name !== undefined) {
       const port = node?.ports?.find((p) => p.name === name);
       if (
@@ -299,6 +364,7 @@ export function routeEdge(
     new Set([`n:${edge.sourceId}`, `n:${edge.targetId}`, `e:${edge.id}`]),
     metrics,
     batch,
+    lane * config.edgeSpacing,
   );
   const searchContext = ["curved", "organic", "bundle", "bezier"].includes(style)
     ? contextFor(
@@ -307,7 +373,7 @@ export function routeEdge(
         new Set([`n:${edge.sourceId}`, `n:${edge.targetId}`, `e:${edge.id}`]),
         metrics,
         batch,
-        config.radius * 2,
+        config.radius * 2 + lane * config.edgeSpacing,
       )
     : context;
   const labelAnchor = (toward: RoutePoint) => {
@@ -342,14 +408,15 @@ export function routeEdge(
         ref: { kind: "label", edgeId: edge.id },
       }
     : undefined;
-  const group = groupKey(edge, style, config),
-    peers = group ? [...(state.groups.get(group)?.keys() ?? [])] : [];
-  const grouped = group !== undefined && peers.length > 1 && style !== "parallel";
   metrics.routedEdges++;
   const sections: RouteSection[] = [];
   const stub = (t: Terminal) => {
+    if (t.ref.kind === "junction") return t.point;
     const v = vector(t.side),
-      length = config.clearance + 1;
+      length =
+        config.clearance +
+        1 +
+        (!grouped && peers.length > 1 ? peers.indexOf(edge.id) : 0) * config.edgeSpacing;
     return { x: t.point.x + v.x * length, y: t.point.y + v.y * length };
   };
   function connection(a: Terminal, b: Terminal, via: readonly RoutePoint[] = []): RoutePath {
@@ -436,11 +503,16 @@ export function routeEdge(
             : "orthogonal";
       let ok = clear(a.point, start, context) && clear(end, b.point, context);
       for (let i = 1; ok && i < anchors.length; i++) {
-        let found = findPath(anchors[i - 1]!, anchors[i]!, searchStyle, searchContext);
+        const directions = {
+          incoming: i === 1 && a.ref.kind !== "junction" ? vector(a.side) : undefined,
+          outgoing:
+            i === anchors.length - 1 ? { x: -vector(b.side).x, y: -vector(b.side).y } : undefined,
+        };
+        let found = findPath(anchors[i - 1]!, anchors[i]!, searchStyle, searchContext, directions);
         if (!found && searchContext !== context && !searchContext.budgetExceeded) {
           // Extra curve room is optional: tight channels may use safe line segments.
           const narrow = { ...searchContext, obstacles: context.obstacles };
-          found = findPath(anchors[i - 1]!, anchors[i]!, searchStyle, narrow);
+          found = findPath(anchors[i - 1]!, anchors[i]!, searchStyle, narrow, directions);
           searchContext.visited = narrow.visited;
           searchContext.budgetExceeded = narrow.budgetExceeded;
         }

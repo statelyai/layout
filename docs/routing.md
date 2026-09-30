@@ -109,10 +109,19 @@ layout behavior remains in its separate compatibility adapter.
 
 Bus, fan, and bundle membership defaults to a shared source/port. Set
 `edges[edgeId].group` to form explicit groups, including many-source/many-target
-nets represented by native binary edges. Parallel routing groups both directions
-of the same node pair. Sections connect terminals and junctions. Identical
+nets represented by native binary edges. All ungrouped styles coordinate both directions of the same node pair.
+Unnamed attachments on a shared node side are distributed deterministically;
+named ports remain fixed. Duplicate connections use separate obstacle-clearance
+lanes. Spacing compresses when the node side cannot fit the requested distance.
+This reduces coincident paths but does not guarantee edge separation everywhere
+or eliminate crossings between unrelated edges.
+
+Shared-source groups try an interior stem toward target nodes or labels first;
+exterior candidates on all four sides are ranked by estimated total connection
+length. Junctions have no artificial port exit stubs. Sections connect terminals and junctions. Identical
 `sharedId` values identify identical trunk geometry: draw it once. Labels still
-produce separate sections with a fixed gap, and group updates are atomic.
+produce separate sections with a fixed gap, and group updates are atomic. Changes to incident edges also invalidate neighboring
+attachments whose placement depends on them.
 
 ## Options and fallback behavior
 
@@ -123,8 +132,8 @@ produce separate sections with a fixed gap, and group updates are atomic.
 | `coordinateSpace`   | `"parent"` | Native parent-relative geometry, or resolved world geometry                       |
 | `clearance`         | `8`        | Preferred obstacle clearance; attachment nodes use their actual bounds            |
 | `radius`            | `10`       | Curve/rounding radius, reduced where needed for safe geometry                     |
-| `edgeSpacing`       | `12`       | Parallel lanes and shared corridor spacing                                        |
-| `bendPenalty`       | `10`       | Bend cost during path search                                                      |
+| `edgeSpacing`       | `12`       | Shared-terminal spacing, duplicate-edge lanes, and shared corridors               |
+| `bendPenalty`       | `10`       | Bend cost including terminal directions; backward turns cost four times as much   |
 | `maxSearchNodes`    | `4000`     | Per-edge search expansion and visibility-graph size budget                        |
 | `organicIterations` | `12`       | Elastic-string relaxation iterations                                              |
 | `edges`             | `{}`       | Per-edge `sourceSide`, `targetSide`, ordered world-space `waypoints`, and `group` |
