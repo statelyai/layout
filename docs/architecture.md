@@ -68,6 +68,12 @@ cycle breaking
 Each phase is replaceable through a typed strategy. Phase outputs are small,
 read-only artifacts keyed by the IDs already owned by `@statelyai/graph`.
 
+Native flat layered output gets an obstacle-aware routing repair when its tracks
+cross node interiors. Valid tracks and custom routers retain their geometry.
+The repair returns cached structured label sections, just like compound routing.
+The pinned elkjs provider bypasses this native repair to retain its established
+flat geometry contract.
+
 ## Compatibility target
 
 Compatibility has three independently measured levels:

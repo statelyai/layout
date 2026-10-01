@@ -115,6 +115,21 @@ named ports remain fixed. Duplicate connections use separate obstacle-clearance
 lanes. Spacing compresses when the node side cannot fit the requested distance.
 Unrelated groups are routed in stable ID order with soft crossing and parallel-overlap costs. Requested `edgeSpacing` guides candidate corridors; it is not a hard separation constraint.
 
+Label sections reserve their already drawn leg so the return leg avoids retracing
+it. If both endpoints face the same label side, the exit uses the opposite side.
+Terminal leads cannot reverse immediately back over themselves. When preferred
+clearance or soft reservations prevent routing, orthogonal-family strategies
+retry against actual obstacle bounds within the remaining search budget, then
+attempt bounded conflict reduction without discarding the feasible path.
+
+Native layered layout repairs flat tracks that cross node interiors and moves
+colliding labels clear of nodes and port leads before rerouting. Compound ports
+use actual node dimensions rather than boundary-label envelopes. Parent/child
+connections use inward content attachments in both directions, choosing a clear
+content side when a child blocks the preferred lead. Layered completion uses a
+40,000-node routing budget; standalone routing retains the default below.
+The pinned elkjs adapter retains its established flat track geometry.
+
 Shared-source groups try an interior stem toward target nodes or labels first;
 exterior candidates on all four sides are ranked by estimated total connection
 length. Junctions have no artificial port exit stubs. Sections connect terminals and junctions. Identical

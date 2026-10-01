@@ -1,4 +1,5 @@
 import { layoutCompounds, type CompoundVisualGraph } from "./compound";
+import { repairFlatRouting } from "./native-routing";
 import type { Graph, GraphEdge, GraphNode, Point, VisualGraph, VisualNode } from "@statelyai/graph";
 import { labelReferences, runPartialLayout } from "../authoring/partial";
 import { UnsupportedLayoutError } from "../errors";
@@ -2592,7 +2593,10 @@ export function getLayeredLayout<N, E, G, P>(
   graph: Graph<N, E, G, P> | VisualGraph<N, E, G, P>,
   options: LayeredLayoutOptions = {},
 ): CompoundVisualGraph<N, E, G, P> {
-  const result = runLayeredPipeline(graph, options) as CompoundVisualGraph<N, E, G, P>;
+  const result = repairFlatRouting(
+    runLayeredPipeline(graph, options),
+    options,
+  ) as CompoundVisualGraph<N, E, G, P>;
   return {
     ...result,
     compoundGeometry: result.compoundGeometry ?? new Map(),
@@ -2621,7 +2625,10 @@ export const layeredAlgorithm: LayoutAlgorithm<LayeredLayoutOptions> = {
       throw new UnsupportedLayoutError(
         "Full layout with geometry constraints does not support containers; use partial leaf constraints or full layout without geometry constraints",
       );
-    const result = runLayeredPipeline(graph, options ?? {}, context);
+    const result = repairFlatRouting(
+      runLayeredPipeline(graph, options ?? {}, context),
+      options ?? {},
+    );
     if (!context.constraints?.length) return result;
     return context.measurePhase("constraints", () =>
       runPartialLayout(
@@ -2639,5 +2646,13 @@ export const layeredAlgorithm: LayoutAlgorithm<LayeredLayoutOptions> = {
         "constraints",
       ),
     );
+  },
+};
+
+/** The pinned ELK adapter retains its established placement/routing contract. */
+export const elkjs0111LayeredAlgorithm: LayoutAlgorithm<LayeredLayoutOptions> = {
+  ...layeredAlgorithm,
+  layout(graph, options, context) {
+    return runLayeredPipeline(graph, options ?? {}, context);
   },
 };

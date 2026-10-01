@@ -22,7 +22,14 @@ import {
   type EdgeGeometry,
   type State,
 } from "./model";
-import { pathReservations } from "./coordination";
+import {
+  pathReservations,
+  conflictCost,
+  outsideTerminal,
+  reservationBounds,
+  type Reservation,
+} from "./coordination";
+import { crossesRect } from "../authoring/routing";
 import { distance, getPathBounds, pathFromPoints, roundCorners, segmentCrossesRect } from "./path";
 import { inflate, union } from "./spatial";
 import {
@@ -67,7 +74,10 @@ function contextFor(
   return {
     edgeCost: (a, b) => batch.edgeCost?.(a, b) ?? 0,
     guides: (bounds) => batch.guides?.(bounds) ?? [],
-    maxSearchNodes: state.settings.maxSearchNodes,
+    // Reserve part of the edge budget for a hard-obstacle retry, rather than
+    // spending it all optimizing soft route reservations.
+    maxSearchNodes: Math.max(1, Math.floor(state.settings.maxSearchNodes / 2)),
+    maxGridNodes: state.settings.maxSearchNodes,
     bendPenalty: state.settings.bendPenalty,
     visited: 0,
     budgetExceeded: false,
@@ -388,6 +398,40 @@ export function routeEdge(
       } else
         report("MISSING_PORT", `Port ${name} has no positioned geometry; used the node boundary`);
     }
+    if (attachment && name === undefined && !(source ? perEdge.sourceSide : perEdge.targetSide)) {
+      const excludedParents = new Set(
+        [...ancestors(edge.sourceId, state), ...ancestors(edge.targetId, state)].filter(
+          (id) => id !== edge.sourceId && id !== edge.targetId,
+        ),
+      );
+      const blocked = (p: RoutePoint, s: RouteSide) => {
+        const sign = attachment.facing === "inward" ? -1 : 1,
+          v = vector(s);
+        const lead = { x: p.x + v.x * sign, y: p.y + v.y * sign };
+        return state.obstacles.query(segmentBounds(p, lead)).some((id) => {
+          if (
+            id === `n:${source ? edge.sourceId : edge.targetId}` ||
+            (id.startsWith("n:") && excludedParents.has(id.slice(2)))
+          )
+            return false;
+          return crossesRect(p, lead, state.obstacles.bounds.get(id)!);
+        });
+      };
+      if (blocked(point, side)) {
+        const toward = center(labelRect(edge, state) ?? other);
+        for (const alternative of ["left", "right", "top", "bottom"] as const) {
+          const p = { ...anchor(bounds, alternative) };
+          if (alternative === "left" || alternative === "right")
+            p.y = Math.max(bounds.y, Math.min(bounds.y + bounds.height, toward.y));
+          else p.x = Math.max(bounds.x, Math.min(bounds.x + bounds.width, toward.x));
+          if (!blocked(p, alternative)) {
+            side = alternative;
+            point = p;
+            break;
+          }
+        }
+      }
+    }
     return {
       point,
       side:
@@ -429,6 +473,18 @@ export function routeEdge(
         config.radius * 2 + lane * config.edgeSpacing,
       )
     : context;
+  const drawn: Reservation[] = [];
+  const selfCost = (a: RoutePoint, b: RoutePoint) =>
+    drawn.reduce((cost, segment) => cost + conflictCost(a, b, segment, config), 0);
+  for (const ctx of new Set([context, searchContext])) {
+    const cost = ctx.edgeCost,
+      guides = ctx.guides;
+    ctx.edgeCost = (a, b) => (cost?.(a, b) ?? 0) + selfCost(a, b);
+    ctx.guides = (bounds) => [
+      ...(guides?.(bounds) ?? []),
+      ...drawn.map((s) => reservationBounds(s, config.edgeSpacing)),
+    ];
+  }
   const labelAnchor = (toward: RoutePoint) => {
     const side = sideToward(center(label!), toward),
       point = anchor(label!, side);
@@ -456,8 +512,21 @@ export function routeEdge(
     : target;
   const lastSource: Terminal | undefined = label
     ? {
-        point: labelAnchor(target.point),
-        side: sideToward(center(label), target.point),
+        point:
+          firstTarget.side === sideToward(center(label), target.point)
+            ? anchor(
+                label,
+                ({ left: "right", right: "left", top: "bottom", bottom: "top" } as const)[
+                  firstTarget.side
+                ],
+              )
+            : labelAnchor(target.point),
+        side:
+          firstTarget.side === sideToward(center(label), target.point)
+            ? ({ left: "right", right: "left", top: "bottom", bottom: "top" } as const)[
+                firstTarget.side
+              ]
+            : sideToward(center(label), target.point),
         ref: { kind: "label", edgeId: edge.id },
       }
     : undefined;
@@ -521,10 +590,6 @@ export function routeEdge(
       const start = stub(a),
         end = stub(b),
         waypoints = [...via];
-      if (loop && !waypoints.length) {
-        const r = inflate(sourceBounds, config.clearance + config.edgeSpacing + 1);
-        waypoints.push({ x: r.x + r.width, y: r.y });
-      }
       if (style === "parallel" && peers.length > 1) {
         // Find a feasible corridor before choosing lanes; an arbitrary midpoint
         // may be inside an obstacle even when good parallel routes exist.
@@ -593,6 +658,167 @@ export function routeEdge(
     )
       return preferred;
     if (path && safe(path, context)) return path;
+    // Clearance and soft edge reservations must not turn a feasible connection
+    // into an obstacle-crossing fallback. Retry against the hard geometry with
+    // short terminal leads and a fresh, bounded search budget.
+    if (!["straight", "bezier", "polyline", "organic", "parallel"].includes(style)) {
+      const hard = {
+        ...contextFor(
+          state,
+          excluded,
+          new Set([`n:${edge.sourceId}`, `n:${edge.targetId}`, `e:${edge.id}`]),
+          metrics,
+          batch,
+          -config.clearance,
+        ),
+        maxSearchNodes: Math.max(
+          0,
+          config.maxSearchNodes -
+            searchContext.visited -
+            (searchContext === context ? 0 : context.visited),
+        ),
+      };
+      hard.guides = undefined;
+      hard.edgeCost = selfCost;
+      const lead = (t: Terminal) => ({
+        x: t.point.x + vector(t.side).x,
+        y: t.point.y + vector(t.side).y,
+      });
+      const start = lead(a),
+        end = lead(b),
+        anchors = [start, ...via, end];
+      const points = [a.point];
+      let ok = clear(a.point, start, hard) && clear(end, b.point, hard);
+      for (let i = 1; ok && i < anchors.length; i++) {
+        const found = findPath(
+          anchors[i - 1]!,
+          anchors[i]!,
+          style === "octilinear" ? "octilinear" : "orthogonal",
+          hard,
+          {
+            incoming: i === 1 ? vector(a.side) : undefined,
+            outgoing:
+              i === anchors.length - 1 ? { x: -vector(b.side).x, y: -vector(b.side).y } : undefined,
+          },
+        );
+        if (found) points.push(...found.slice(i === 1 ? 0 : 1));
+        else ok = false;
+      }
+      points.push(b.point);
+      const retry = pathFromPoints(simplify(points));
+      searchContext.visited += hard.visited;
+      if (ok && safe(retry, hard)) {
+        let separated = retry;
+        // Shift whole interior tracks, retaining their orthogonal neighboring
+        // legs. This provides parallel lanes even when a crowded visibility
+        // grid cannot afford another global optimization search.
+        for (let pass = 0; pass < 6; pass++) {
+          const track = [separated.start, ...separated.segments.map((s) => s.to)];
+          let best = separated,
+            bestCost = pathCost(separated, context);
+          for (let i = 1; i < track.length - 2; i++) {
+            const p = track[i]!,
+              q = track[i + 1]!;
+            if ((context.edgeCost?.(p, q) ?? 0) === 0) continue;
+            const horizontal = p.y === q.y;
+            if (!horizontal && p.x !== q.x) continue;
+            for (const offset of [
+              -config.edgeSpacing,
+              config.edgeSpacing,
+              -config.edgeSpacing * 2,
+              config.edgeSpacing * 2,
+              -config.edgeSpacing / 2,
+              config.edgeSpacing / 2,
+              -config.edgeSpacing / 3,
+              config.edgeSpacing / 3,
+              -config.edgeSpacing * 4,
+              config.edgeSpacing * 4,
+            ]) {
+              const candidatePoints = track.map((r, j) =>
+                j === i || j === i + 1
+                  ? horizontal
+                    ? { x: r.x, y: r.y + offset }
+                    : { x: r.x + offset, y: r.y }
+                  : r,
+              );
+              if (
+                candidatePoints
+                  .slice(1)
+                  .some((r, j) => r.x !== candidatePoints[j]!.x && r.y !== candidatePoints[j]!.y)
+              )
+                continue;
+              const candidate = pathFromPoints(simplify(candidatePoints));
+              const segments = pathReservations(candidate);
+              const retraces = segments.some((s, j) =>
+                segments.slice(j + 1).some((t) => {
+                  if (s.a.x === s.b.x && t.a.x === t.b.x && s.a.x === t.a.x)
+                    return (
+                      Math.min(Math.max(s.a.y, s.b.y), Math.max(t.a.y, t.b.y)) -
+                        Math.max(Math.min(s.a.y, s.b.y), Math.min(t.a.y, t.b.y)) >
+                      1e-8
+                    );
+                  if (s.a.y === s.b.y && t.a.y === t.b.y && s.a.y === t.a.y)
+                    return (
+                      Math.min(Math.max(s.a.x, s.b.x), Math.max(t.a.x, t.b.x)) -
+                        Math.max(Math.min(s.a.x, s.b.x), Math.min(t.a.x, t.b.x)) >
+                      1e-8
+                    );
+                  return false;
+                }),
+              );
+              if (retraces || !safe(candidate, hard)) continue;
+              const cost = pathCost(candidate, context);
+              if (cost < bestCost) {
+                best = candidate;
+                bestCost = cost;
+              }
+            }
+          }
+          if (best === separated) break;
+          separated = best;
+        }
+        // Keep the feasible path even if soft optimization runs out of budget.
+        // A few nearby reservation guides allow separated tracks without
+        // rebuilding a grid from every earlier route in the scene.
+        if (!via.length && pathCost(retry, context) > pathLength(retry)) {
+          const remaining = Math.max(
+            0,
+            config.maxSearchNodes -
+              searchContext.visited -
+              (searchContext === context ? 0 : context.visited),
+          );
+          const optimized = {
+            ...hard,
+            visited: 0,
+            budgetExceeded: false,
+            maxSearchNodes: Math.min(2000, remaining),
+            edgeCost: (a: RoutePoint, b: RoutePoint) =>
+              (batch.edgeCost?.(a, b) ?? 0) + selfCost(a, b),
+            guides: (bounds: RouteBounds) => (batch.guides?.(bounds) ?? []).slice(0, 8),
+          };
+          const found = findPath(
+            start,
+            end,
+            style === "octilinear" ? "octilinear" : "orthogonal",
+            optimized,
+            {
+              incoming: vector(a.side),
+              outgoing: { x: -vector(b.side).x, y: -vector(b.side).y },
+            },
+          );
+          searchContext.visited += optimized.visited;
+          if (found) {
+            const candidate = pathFromPoints(simplify([a.point, ...found, b.point]));
+            if (
+              safe(candidate, hard) &&
+              pathCost(candidate, context) < pathCost(separated, context)
+            )
+              return candidate;
+          }
+        }
+        return separated;
+      }
+    }
     report(
       searchContext.budgetExceeded ? "SEARCH_BUDGET" : "ROUTE_BLOCKED",
       "Preferred route unavailable; fallback may cross obstacles or violate routing constraints",
@@ -646,13 +872,21 @@ export function routeEdge(
       to: firstTarget.ref,
       path: connection(source, firstTarget, via),
     });
-  if (lastSource)
+  if (lastSource) {
+    let segments = sections.flatMap((s) => pathReservations(s.path));
+    // The two legs meet at a label and, for a self-loop, at their node. Sharing
+    // those attachment regions is legitimate; retracing a distant trunk is not.
+    const shared = [label!, ...(loop ? [sourceBounds] : [])];
+    for (const rect of shared)
+      segments = segments.flatMap((s) => outsideTerminal(s, inflate(rect, config.clearance + 1)));
+    drawn.push(...segments);
     sections.push({
       id: `${edge.id}:label-target`,
       from: lastSource.ref,
       to: target.ref,
       path: connection(lastSource, target),
     });
+  }
   if (
     sections.some((section) =>
       pathReservations(section.path).some((segment) => batch.conflicts?.(segment.a, segment.b)),

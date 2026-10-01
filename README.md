@@ -278,6 +278,11 @@ API coverage separately from native algorithm fidelity.
 
 ## Development
 
+<!-- heuristic corpus generation from scripts/generate-heuristic-corpus.mjs -->
+
+For seeded native Stately layout examples and aesthetic review notes, see the
+[heuristic review corpus](docs/heuristics/README.md).
+
 <!-- scripts derived from package.json#scripts -->
 
 ```bash

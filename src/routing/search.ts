@@ -8,6 +8,7 @@ export interface SearchContext {
   edgeCost?(a: RoutePoint, b: RoutePoint): number;
   guides?(bounds: RouteBounds): readonly RouteBounds[];
   readonly maxSearchNodes: number;
+  readonly maxGridNodes?: number;
   readonly bendPenalty: number;
   visited: number;
   budgetExceeded: boolean;
@@ -82,6 +83,7 @@ export function findPath(
   context: SearchContext,
   terminals: { incoming?: RoutePoint; outgoing?: RoutePoint } = {},
 ): RoutePoint[] | undefined {
+  const maxGridNodes = context.maxGridNodes ?? context.maxSearchNodes;
   const turnCost = (a: RoutePoint | undefined, b: RoutePoint | undefined) => {
     if (!a || !b || !Math.hypot(a.x, a.y) || !Math.hypot(b.x, b.y)) return 0;
     const dot = a.x * b.x + a.y * b.y,
@@ -140,7 +142,7 @@ export function findPath(
       const ys = [
         ...new Set([start.y, end.y, area.y, area.y + area.height, ...corners.map((p) => p.y)]),
       ].sort((a, b) => a - b);
-      if (xs.length * ys.length > context.maxSearchNodes) {
+      if (xs.length * ys.length > maxGridNodes) {
         context.budgetExceeded = true;
         return undefined;
       }
@@ -164,7 +166,7 @@ export function findPath(
         const unique = new Map(points.map((p) => [`${p.x}:${p.y}`, p]));
         for (const p of extra) unique.set(`${p.x}:${p.y}`, p);
         points = [...unique.values()];
-        if (points.length > context.maxSearchNodes) {
+        if (points.length > maxGridNodes) {
           context.budgetExceeded = true;
           return undefined;
         }
@@ -200,7 +202,7 @@ export function findPath(
             i + width < points.length ? i + width : -1,
           ].filter((v) => v >= 0);
     }
-    if (points.length > context.maxSearchNodes) {
+    if (points.length > maxGridNodes) {
       context.budgetExceeded = true;
       return undefined;
     }
@@ -246,6 +248,18 @@ export function findPath(
         const before =
           current.previous < 0 ? terminals.incoming : delta(points[current.previous]!, a);
         const step = delta(a, b);
+        const reverses = (incoming: RoutePoint | undefined, outgoing: RoutePoint | undefined) =>
+          incoming &&
+          outgoing &&
+          Math.abs(incoming.x * outgoing.y - incoming.y * outgoing.x) < 1e-8 &&
+          incoming.x * outgoing.x + incoming.y * outgoing.y < -1e-8;
+        // A terminal lead must leave/enter its boundary in the chosen direction.
+        // Paying a bend penalty to immediately retrace that lead is not a turn.
+        if (
+          (current.previous < 0 && reverses(terminals.incoming, step)) ||
+          (next === to && reverses(step, terminals.outgoing))
+        )
+          continue;
         const bend =
           turnCost(before, step) + (next === to ? turnCost(step, terminals.outgoing) : 0);
         const pair = Math.min(current.index, next) * points.length + Math.max(current.index, next);
