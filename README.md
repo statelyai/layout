@@ -56,6 +56,42 @@ result.diagnostics;
 result.metrics;
 ```
 
+## Native compound geometry
+
+<!-- compound geometry options and output from src/layered/types.ts and src/layered/compound.ts -->
+
+```ts
+const result = getLayeredLayout(graph, {
+  direction: "down",
+  padding: { top: 24, right: 40, bottom: 24, left: 40 },
+  compound: (node) => ({
+    header: { width: 200, height: 60, side: "top" },
+    direction: "right",
+  }),
+  edgeAttachment: (edge) => ({
+    source: "content", // Use "outer" for an outward/reentering transition.
+  }),
+});
+result.compoundGeometry.get("parent"); // { bounds, header, content }
+result.compoundRoutes; // World-space sections, label gaps, routing diagnostics.
+```
+
+Each scope reserves children and measured labels before its ancestors are laid
+out. Header measurements cannot replace finalized compound dimensions. Node
+positions and compound bounds are parent-relative; edge label positions and
+routes are world-relative, marked by `edgeCoordinateSpace: "world"`. Header and content rectangles are local to the
+compound. For ancestor-to-descendant edges, content attachments leave inward;
+outer attachments leave outward. Explicit ports retain their node-local geometry.
+The native compound router emits orthogonal route sections for the original endpoints.
+Use `compoundRoutes` or `getLayoutRoutes(result)` to retain label gaps and
+fallback diagnostics; legacy `edge.points` flattens the sections. `getLayout`
+also reports routing diagnostics in its result. Compound routing currently uses
+orthogonal sections independently of the flat layout routing setting.
+
+These options belong to the native contract; they do not change the pinned
+ELK compatibility contract. The existing simplified advanced options still
+map to ELK option IDs, but identical geometry is not guaranteed between contracts.
+
 ## Standalone incremental routing
 
 <!-- routing API and strategy catalog from src/routing/index.ts -->

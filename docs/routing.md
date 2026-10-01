@@ -219,3 +219,14 @@ latency guarantee.
 Storybook's **Routing / Incremental / Playground** supports node/label dragging,
 strategy selection, fallback styling, a lines-only renderer, and update metrics.
 **Catalog** displays all strategies on the same fixture.
+
+## Content boundary attachments
+
+<!-- RouteAttachment and EdgeRoutingSettings from src/routing/types.ts -->
+
+`edges[id].sourceAttachment` and `targetAttachment` accept a node-local
+`bounds` rectangle and `facing: "inward" | "outward"`. This separates an
+attachment boundary from the node's outer obstacle. Routes with an explicit attachment
+may traverse that endpoint's interior; other node and label obstacles remain
+active. Compound layout supplies header obstacles so inward routes cannot
+cut through the header. Named port positions remain relative to the outer node.

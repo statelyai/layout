@@ -1,7 +1,7 @@
 import { LayoutError } from "../errors";
 import type { VisualGraph, Point } from "@statelyai/graph";
 
-/** Native compound nodes and sibling edges are parent-relative; crossing edges are world-relative. */
+/** Legacy sibling edges are parent-relative; native compound output marks world-space edges. */
 function frames<N, E, G, P>(graph: VisualGraph<N, E, G, P>) {
   const nodes = new Map(graph.nodes.map((n) => [n.id, n]));
   const offsets = new Map<string, Point>();
@@ -33,6 +33,7 @@ function frames<N, E, G, P>(graph: VisualGraph<N, E, G, P>) {
       const target = nodes.get(edge.targetId)!;
       return [
         edge.id,
+        (graph as VisualGraph & { edgeCoordinateSpace?: string }).edgeCoordinateSpace !== "world" &&
         (source.parentId ?? null) === (target.parentId ?? null)
           ? offset(source.id)
           : { x: 0, y: 0 },
@@ -44,8 +45,15 @@ function frames<N, E, G, P>(graph: VisualGraph<N, E, G, P>) {
 
 export function worldGeometry<N, E, G, P>(graph: VisualGraph<N, E, G, P>): VisualGraph<N, E, G, P> {
   const offsets = frames(graph);
+  const base = { ...graph } as VisualGraph<N, E, G, P> & {
+    compoundRoutes?: unknown;
+    compoundGeometry?: unknown;
+  };
+  // Authoring may change nodes, labels, or paths. Never carry derived full-layout caches.
+  delete base.compoundRoutes;
+  delete base.compoundGeometry;
   return {
-    ...graph,
+    ...base,
     nodes: graph.nodes.map((n) => {
       const p = offsets.nodes.get(n.id)!;
       return p.x === 0 && p.y === 0 ? n : { ...n, x: n.x + p.x, y: n.y + p.y };

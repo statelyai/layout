@@ -37,6 +37,7 @@ export {
   toSvgPath,
 } from "./path";
 export type {
+  RouteAttachment,
   EdgeRoutingSettings,
   NativeRoutingStrategy,
   Route,

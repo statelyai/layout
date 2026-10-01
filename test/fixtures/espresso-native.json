@@ -1,0 +1,732 @@
+{
+  "id": "espressoBar",
+  "nodes": [
+    {
+      "id": "espressoBar.intake",
+      "label": "intake",
+      "parentId": null,
+      "width": 134.671875,
+      "height": 52
+    },
+    {
+      "id": "espressoBar.intake.idle",
+      "label": "idle",
+      "parentId": "espressoBar.intake",
+      "width": 77.734375,
+      "height": 52
+    },
+    {
+      "id": "espressoBar.intake.parsing",
+      "label": "parsing",
+      "parentId": "espressoBar.intake",
+      "width": 217.6875,
+      "height": 211.328125
+    },
+    {
+      "id": "espressoBar.intake.clarifying",
+      "label": "clarifying",
+      "parentId": "espressoBar.intake",
+      "width": 173.4375,
+      "height": 52
+    },
+    {
+      "id": "espressoBar.intake.clarifying.asking",
+      "label": "asking",
+      "parentId": "espressoBar.intake.clarifying",
+      "width": 112.625,
+      "height": 52
+    },
+    {
+      "id": "espressoBar.intake.clarifying.routing",
+      "label": "routing",
+      "parentId": "espressoBar.intake.clarifying",
+      "width": 118.765625,
+      "height": 52
+    },
+    {
+      "id": "espressoBar.portafilter",
+      "label": "portafilter",
+      "parentId": null,
+      "width": 180.265625,
+      "height": 52
+    },
+    {
+      "id": "espressoBar.portafilter.empty",
+      "label": "empty",
+      "parentId": "espressoBar.portafilter",
+      "width": 303.890625,
+      "height": 80
+    },
+    {
+      "id": "espressoBar.portafilter.grinding",
+      "label": "grinding",
+      "parentId": "espressoBar.portafilter",
+      "width": 361.859375,
+      "height": 80
+    },
+    {
+      "id": "espressoBar.portafilter.grounds",
+      "label": "grounds",
+      "parentId": "espressoBar.portafilter",
+      "width": 189.15625,
+      "height": 80
+    },
+    {
+      "id": "espressoBar.portafilter.tamping",
+      "label": "tamping",
+      "parentId": "espressoBar.portafilter",
+      "width": 130.953125,
+      "height": 52
+    },
+    {
+      "id": "espressoBar.portafilter.tamped",
+      "label": "tamped",
+      "parentId": "espressoBar.portafilter",
+      "width": 274.8125,
+      "height": 80
+    },
+    {
+      "id": "espressoBar.portafilter.lockingIn",
+      "label": "lockingIn",
+      "parentId": "espressoBar.portafilter",
+      "width": 141.84375,
+      "height": 52
+    },
+    {
+      "id": "espressoBar.portafilter.locked",
+      "label": "locked",
+      "parentId": "espressoBar.portafilter",
+      "width": 351.96875,
+      "height": 80
+    },
+    {
+      "id": "espressoBar.portafilter.pulling",
+      "label": "pulling",
+      "parentId": "espressoBar.portafilter",
+      "width": 287.859375,
+      "height": 80
+    },
+    {
+      "id": "espressoBar.portafilter.spent",
+      "label": "spent",
+      "parentId": "espressoBar.portafilter",
+      "width": 355.734375,
+      "height": 80
+    },
+    {
+      "id": "espressoBar.portafilter.knocking",
+      "label": "knocking",
+      "parentId": "espressoBar.portafilter",
+      "width": 142.609375,
+      "height": 52
+    },
+    {
+      "id": "espressoBar.pitcher",
+      "label": "pitcher",
+      "parentId": null,
+      "width": 145.90625,
+      "height": 52
+    },
+    {
+      "id": "espressoBar.pitcher.empty",
+      "label": "empty",
+      "parentId": "espressoBar.pitcher",
+      "width": 348.109375,
+      "height": 80
+    },
+    {
+      "id": "espressoBar.pitcher.steaming",
+      "label": "steaming",
+      "parentId": "espressoBar.pitcher",
+      "width": 353.421875,
+      "height": 80
+    },
+    {
+      "id": "espressoBar.pitcher.steamed",
+      "label": "steamed",
+      "parentId": "espressoBar.pitcher",
+      "width": 420,
+      "height": 96
+    },
+    {
+      "id": "espressoBar.pitcher.pouring",
+      "label": "pouring",
+      "parentId": "espressoBar.pitcher",
+      "width": 125.953125,
+      "height": 52
+    },
+    {
+      "id": "espressoBar.pitcher.dumping",
+      "label": "dumping",
+      "parentId": "espressoBar.pitcher",
+      "width": 138.25,
+      "height": 52
+    },
+    {
+      "id": "espressoBar.hands",
+      "label": "hands",
+      "parentId": null,
+      "width": 167.34375,
+      "height": 52
+    },
+    {
+      "id": "espressoBar.hands.jev",
+      "label": "jev",
+      "parentId": "espressoBar.hands",
+      "width": 98.125,
+      "height": 52
+    },
+    {
+      "id": "espressoBar.hands.jev.free",
+      "label": "free",
+      "parentId": "espressoBar.hands.jev",
+      "width": 82.734375,
+      "height": 52
+    },
+    {
+      "id": "espressoBar.hands.jev.busy",
+      "label": "busy",
+      "parentId": "espressoBar.hands.jev",
+      "width": 93,
+      "height": 52
+    },
+    {
+      "id": "espressoBar.hands.you",
+      "label": "you",
+      "parentId": "espressoBar.hands",
+      "width": 107,
+      "height": 52
+    },
+    {
+      "id": "espressoBar.hands.you.free",
+      "label": "free",
+      "parentId": "espressoBar.hands.you",
+      "width": 82.734375,
+      "height": 52
+    },
+    {
+      "id": "espressoBar.hands.you.busy",
+      "label": "busy",
+      "parentId": "espressoBar.hands.you",
+      "width": 93,
+      "height": 52
+    },
+    {
+      "id": "espressoBar.equipment",
+      "label": "equipment",
+      "parentId": null,
+      "width": 220.09375,
+      "height": 52
+    },
+    {
+      "id": "espressoBar.equipment.grinder",
+      "label": "grinder",
+      "parentId": "espressoBar.equipment",
+      "width": 148.375,
+      "height": 52
+    },
+    {
+      "id": "espressoBar.equipment.grinder.ok",
+      "label": "ok",
+      "parentId": "espressoBar.equipment.grinder",
+      "width": 64.28125,
+      "height": 52
+    },
+    {
+      "id": "espressoBar.equipment.grinder.broken",
+      "label": "broken",
+      "parentId": "espressoBar.equipment.grinder",
+      "width": 116.609375,
+      "height": 52
+    },
+    {
+      "id": "espressoBar.equipment.grinder.repairing",
+      "label": "repairing",
+      "parentId": "espressoBar.equipment.grinder",
+      "width": 140.140625,
+      "height": 52
+    },
+    {
+      "id": "espressoBar.equipment.groupHead",
+      "label": "groupHead",
+      "parentId": "espressoBar.equipment",
+      "width": 193.390625,
+      "height": 52
+    },
+    {
+      "id": "espressoBar.equipment.groupHead.ok",
+      "label": "ok",
+      "parentId": "espressoBar.equipment.groupHead",
+      "width": 64.28125,
+      "height": 52
+    },
+    {
+      "id": "espressoBar.equipment.groupHead.broken",
+      "label": "broken",
+      "parentId": "espressoBar.equipment.groupHead",
+      "width": 116.609375,
+      "height": 52
+    },
+    {
+      "id": "espressoBar.equipment.groupHead.repairing",
+      "label": "repairing",
+      "parentId": "espressoBar.equipment.groupHead",
+      "width": 140.140625,
+      "height": 52
+    },
+    {
+      "id": "espressoBar.equipment.steamWand",
+      "label": "steamWand",
+      "parentId": "espressoBar.equipment",
+      "width": 200.640625,
+      "height": 52
+    },
+    {
+      "id": "espressoBar.equipment.steamWand.ok",
+      "label": "ok",
+      "parentId": "espressoBar.equipment.steamWand",
+      "width": 64.28125,
+      "height": 52
+    },
+    {
+      "id": "espressoBar.equipment.steamWand.broken",
+      "label": "broken",
+      "parentId": "espressoBar.equipment.steamWand",
+      "width": 116.609375,
+      "height": 52
+    },
+    {
+      "id": "espressoBar.equipment.steamWand.repairing",
+      "label": "repairing",
+      "parentId": "espressoBar.equipment.steamWand",
+      "width": 140.140625,
+      "height": 52
+    }
+  ],
+  "edges": [
+    {
+      "id": "root.intake.idle-order.submit-0",
+      "sourceId": "espressoBar.intake.idle",
+      "targetId": "espressoBar.intake.parsing",
+      "label": "order.submit",
+      "width": 250.78125,
+      "height": 162
+    },
+    {
+      "id": "root.intake.parsing-invoke-parseOrder-done-0",
+      "sourceId": "espressoBar.intake.parsing",
+      "targetId": "espressoBar.intake.idle",
+      "label": "@statelyai.invoke.done.parseOrder",
+      "width": 389.265625,
+      "height": 162
+    },
+    {
+      "id": "root.intake.parsing-invoke-parseOrder-done-1",
+      "sourceId": "espressoBar.intake.parsing",
+      "targetId": "espressoBar.intake.clarifying",
+      "label": "@statelyai.invoke.done.parseOrder",
+      "width": 249.6875,
+      "height": 114
+    },
+    {
+      "id": "root.intake.parsing-invoke-parseOrder-done-2",
+      "sourceId": "espressoBar.intake.parsing",
+      "targetId": "espressoBar.intake.idle",
+      "label": "@statelyai.invoke.done.parseOrder",
+      "width": 407.5,
+      "height": 114
+    },
+    {
+      "id": "root.intake.parsing-invoke-parseOrder-error-0",
+      "sourceId": "espressoBar.intake.parsing",
+      "targetId": "espressoBar.intake.idle",
+      "label": "@statelyai.invoke.error.parseOrder",
+      "width": 430,
+      "height": 90
+    },
+    {
+      "id": "root.intake.clarifying-order.confirm-0",
+      "sourceId": "espressoBar.intake.clarifying",
+      "targetId": "espressoBar.intake.idle",
+      "label": "order.confirm",
+      "width": 430,
+      "height": 118
+    },
+    {
+      "id": "root.intake.clarifying-order.cancel-0",
+      "sourceId": "espressoBar.intake.clarifying",
+      "targetId": "espressoBar.intake.idle",
+      "label": "order.cancel",
+      "width": 366.484375,
+      "height": 134
+    },
+    {
+      "id": "root.intake.clarifying.asking-order.reply-0",
+      "sourceId": "espressoBar.intake.clarifying.asking",
+      "targetId": "espressoBar.intake.clarifying.routing",
+      "label": "order.reply",
+      "width": 250.78125,
+      "height": 188.65625
+    },
+    {
+      "id": "root.intake.clarifying.routing-jev.decided-0",
+      "sourceId": "espressoBar.intake.clarifying.routing",
+      "targetId": "espressoBar.intake.clarifying.asking",
+      "label": "jev.decided",
+      "width": 430,
+      "height": 90
+    },
+    {
+      "id": "root.intake.clarifying.routing-jev.failed-0",
+      "sourceId": "espressoBar.intake.clarifying.routing",
+      "targetId": "espressoBar.intake.clarifying.asking",
+      "label": "jev.failed",
+      "width": 365.21875,
+      "height": 114
+    },
+    {
+      "id": "root.portafilter-bar.reset-0",
+      "sourceId": "espressoBar.portafilter",
+      "targetId": "espressoBar.portafilter.empty",
+      "label": "bar.reset",
+      "width": 88.515625,
+      "height": 40
+    },
+    {
+      "id": "root.portafilter.empty-barista.grindBeans-0",
+      "sourceId": "espressoBar.portafilter.empty",
+      "targetId": "espressoBar.portafilter.grinding",
+      "label": "barista.grindBeans",
+      "width": 430,
+      "height": 166
+    },
+    {
+      "id": "root.portafilter.grinding-BREAK-0",
+      "sourceId": "espressoBar.portafilter.grinding",
+      "targetId": "espressoBar.portafilter.empty",
+      "label": "BREAK",
+      "width": 174.671875,
+      "height": 63
+    },
+    {
+      "id": "root.portafilter.grinding-after-grind-0",
+      "sourceId": "espressoBar.portafilter.grinding",
+      "targetId": "espressoBar.portafilter.grounds",
+      "label": "xstate.after.grind.root.portafilter.grinding",
+      "width": 136.984375,
+      "height": 40
+    },
+    {
+      "id": "root.portafilter.grounds-barista.tamp-0",
+      "sourceId": "espressoBar.portafilter.grounds",
+      "targetId": "espressoBar.portafilter.tamping",
+      "label": "barista.tamp",
+      "width": 430,
+      "height": 166
+    },
+    {
+      "id": "root.portafilter.grounds-barista.knockOut-0",
+      "sourceId": "espressoBar.portafilter.grounds",
+      "targetId": "espressoBar.portafilter.knocking",
+      "label": "barista.knockOut",
+      "width": 430,
+      "height": 202
+    },
+    {
+      "id": "root.portafilter.tamping-after-tamp-0",
+      "sourceId": "espressoBar.portafilter.tamping",
+      "targetId": "espressoBar.portafilter.tamped",
+      "label": "xstate.after.tamp.root.portafilter.tamping",
+      "width": 136.015625,
+      "height": 40
+    },
+    {
+      "id": "root.portafilter.tamped-barista.lockIn-0",
+      "sourceId": "espressoBar.portafilter.tamped",
+      "targetId": "espressoBar.portafilter.lockingIn",
+      "label": "barista.lockIn",
+      "width": 430,
+      "height": 166
+    },
+    {
+      "id": "root.portafilter.tamped-barista.knockOut-0",
+      "sourceId": "espressoBar.portafilter.tamped",
+      "targetId": "espressoBar.portafilter.knocking",
+      "label": "barista.knockOut",
+      "width": 430,
+      "height": 202
+    },
+    {
+      "id": "root.portafilter.lockingIn-BREAK-0",
+      "sourceId": "espressoBar.portafilter.lockingIn",
+      "targetId": "espressoBar.portafilter.tamped",
+      "label": "BREAK",
+      "width": 186.71875,
+      "height": 63
+    },
+    {
+      "id": "root.portafilter.lockingIn-after-lockIn-0",
+      "sourceId": "espressoBar.portafilter.lockingIn",
+      "targetId": "espressoBar.portafilter.locked",
+      "label": "xstate.after.lockIn.root.portafilter.lockingIn",
+      "width": 142.375,
+      "height": 40
+    },
+    {
+      "id": "root.portafilter.locked-barista.extract-0",
+      "sourceId": "espressoBar.portafilter.locked",
+      "targetId": "espressoBar.portafilter.pulling",
+      "label": "barista.extract",
+      "width": 430,
+      "height": 166
+    },
+    {
+      "id": "root.portafilter.locked-barista.knockOut-0",
+      "sourceId": "espressoBar.portafilter.locked",
+      "targetId": "espressoBar.portafilter.knocking",
+      "label": "barista.knockOut",
+      "width": 430,
+      "height": 202
+    },
+    {
+      "id": "root.portafilter.pulling-BREAK-0",
+      "sourceId": "espressoBar.portafilter.pulling",
+      "targetId": "espressoBar.portafilter.locked",
+      "label": "BREAK",
+      "width": 186.71875,
+      "height": 113
+    },
+    {
+      "id": "root.portafilter.pulling-after-pull-0",
+      "sourceId": "espressoBar.portafilter.pulling",
+      "targetId": "espressoBar.portafilter.spent",
+      "label": "xstate.after.pull.root.portafilter.pulling",
+      "width": 430,
+      "height": 138
+    },
+    {
+      "id": "root.portafilter.spent-barista.knockOut-0",
+      "sourceId": "espressoBar.portafilter.spent",
+      "targetId": "espressoBar.portafilter.knocking",
+      "label": "barista.knockOut",
+      "width": 430,
+      "height": 202
+    },
+    {
+      "id": "root.portafilter.knocking-after-knockOut-0",
+      "sourceId": "espressoBar.portafilter.knocking",
+      "targetId": "espressoBar.portafilter.empty",
+      "label": "xstate.after.knockOut.root.portafilter.knocking",
+      "width": 167.09375,
+      "height": 40
+    },
+    {
+      "id": "root.pitcher-bar.reset-0",
+      "sourceId": "espressoBar.pitcher",
+      "targetId": "espressoBar.pitcher.empty",
+      "label": "bar.reset",
+      "width": 88.515625,
+      "height": 40
+    },
+    {
+      "id": "root.pitcher.empty-barista.steamMilk-0",
+      "sourceId": "espressoBar.pitcher.empty",
+      "targetId": "espressoBar.pitcher.steaming",
+      "label": "barista.steamMilk",
+      "width": 430,
+      "height": 166
+    },
+    {
+      "id": "root.pitcher.steaming-BREAK-0",
+      "sourceId": "espressoBar.pitcher.steaming",
+      "targetId": "espressoBar.pitcher.empty",
+      "label": "BREAK",
+      "width": 186.71875,
+      "height": 113
+    },
+    {
+      "id": "root.pitcher.steaming-after-steam-0",
+      "sourceId": "espressoBar.pitcher.steaming",
+      "targetId": "espressoBar.pitcher.steamed",
+      "label": "xstate.after.steam.root.pitcher.steaming",
+      "width": 143.171875,
+      "height": 40
+    },
+    {
+      "id": "root.pitcher.steamed-barista.pourMilk-0",
+      "sourceId": "espressoBar.pitcher.steamed",
+      "targetId": "espressoBar.pitcher.pouring",
+      "label": "barista.pourMilk",
+      "width": 430,
+      "height": 166
+    },
+    {
+      "id": "root.pitcher.steamed-barista.dumpPitcher-0",
+      "sourceId": "espressoBar.pitcher.steamed",
+      "targetId": "espressoBar.pitcher.dumping",
+      "label": "barista.dumpPitcher",
+      "width": 430,
+      "height": 166
+    },
+    {
+      "id": "root.pitcher.pouring-after-pour-0",
+      "sourceId": "espressoBar.pitcher.pouring",
+      "targetId": "espressoBar.pitcher.empty",
+      "label": "xstate.after.pour.root.pitcher.pouring",
+      "width": 430,
+      "height": 138
+    },
+    {
+      "id": "root.pitcher.dumping-after-dumpPitcher-0",
+      "sourceId": "espressoBar.pitcher.dumping",
+      "targetId": "espressoBar.pitcher.empty",
+      "label": "xstate.after.dumpPitcher.root.pitcher.dumping",
+      "width": 188.34375,
+      "height": 90
+    },
+    {
+      "id": "root.hands.jev-bar.reset-0",
+      "sourceId": "espressoBar.hands.jev",
+      "targetId": "espressoBar.hands.jev.free",
+      "label": "bar.reset",
+      "width": 88.515625,
+      "height": 40
+    },
+    {
+      "id": "root.hands.jev.free-always-0",
+      "sourceId": "espressoBar.hands.jev.free",
+      "targetId": "espressoBar.hands.jev.busy",
+      "label": "",
+      "width": 466.40625,
+      "height": 64
+    },
+    {
+      "id": "root.hands.jev.busy-after-jevHands-0",
+      "sourceId": "espressoBar.hands.jev.busy",
+      "targetId": "espressoBar.hands.jev.free",
+      "label": "xstate.after.jevHands.root.hands.jev.busy",
+      "width": 311.109375,
+      "height": 90
+    },
+    {
+      "id": "root.hands.you-bar.reset-0",
+      "sourceId": "espressoBar.hands.you",
+      "targetId": "espressoBar.hands.you.free",
+      "label": "bar.reset",
+      "width": 88.515625,
+      "height": 40
+    },
+    {
+      "id": "root.hands.you.free-always-0",
+      "sourceId": "espressoBar.hands.you.free",
+      "targetId": "espressoBar.hands.you.busy",
+      "label": "",
+      "width": 470.84375,
+      "height": 64
+    },
+    {
+      "id": "root.hands.you.busy-after-yourHands-0",
+      "sourceId": "espressoBar.hands.you.busy",
+      "targetId": "espressoBar.hands.you.free",
+      "label": "xstate.after.yourHands.root.hands.you.busy",
+      "width": 311.109375,
+      "height": 90
+    },
+    {
+      "id": "root.equipment.grinder-bar.reset-0",
+      "sourceId": "espressoBar.equipment.grinder",
+      "targetId": "espressoBar.equipment.grinder.ok",
+      "label": "bar.reset",
+      "width": 88.515625,
+      "height": 40
+    },
+    {
+      "id": "root.equipment.grinder.ok-BREAK-0",
+      "sourceId": "espressoBar.equipment.grinder.ok",
+      "targetId": "espressoBar.equipment.grinder.broken",
+      "label": "BREAK",
+      "width": 174.671875,
+      "height": 63
+    },
+    {
+      "id": "root.equipment.grinder.broken-barista.repair-0",
+      "sourceId": "espressoBar.equipment.grinder.broken",
+      "targetId": "espressoBar.equipment.grinder.repairing",
+      "label": "barista.repair",
+      "width": 575.4375,
+      "height": 141
+    },
+    {
+      "id": "root.equipment.grinder.repairing-after-repair-0",
+      "sourceId": "espressoBar.equipment.grinder.repairing",
+      "targetId": "espressoBar.equipment.grinder.ok",
+      "label": "xstate.after.repair.root.equipment.grinder.repairing",
+      "width": 141.28125,
+      "height": 40
+    },
+    {
+      "id": "root.equipment.groupHead-bar.reset-0",
+      "sourceId": "espressoBar.equipment.groupHead",
+      "targetId": "espressoBar.equipment.groupHead.ok",
+      "label": "bar.reset",
+      "width": 88.515625,
+      "height": 40
+    },
+    {
+      "id": "root.equipment.groupHead.ok-BREAK-0",
+      "sourceId": "espressoBar.equipment.groupHead.ok",
+      "targetId": "espressoBar.equipment.groupHead.broken",
+      "label": "BREAK",
+      "width": 186.71875,
+      "height": 63
+    },
+    {
+      "id": "root.equipment.groupHead.broken-barista.repair-0",
+      "sourceId": "espressoBar.equipment.groupHead.broken",
+      "targetId": "espressoBar.equipment.groupHead.repairing",
+      "label": "barista.repair",
+      "width": 575.4375,
+      "height": 141
+    },
+    {
+      "id": "root.equipment.groupHead.repairing-after-repair-0",
+      "sourceId": "espressoBar.equipment.groupHead.repairing",
+      "targetId": "espressoBar.equipment.groupHead.ok",
+      "label": "xstate.after.repair.root.equipment.groupHead.repairing",
+      "width": 141.28125,
+      "height": 40
+    },
+    {
+      "id": "root.equipment.steamWand-bar.reset-0",
+      "sourceId": "espressoBar.equipment.steamWand",
+      "targetId": "espressoBar.equipment.steamWand.ok",
+      "label": "bar.reset",
+      "width": 88.515625,
+      "height": 40
+    },
+    {
+      "id": "root.equipment.steamWand.ok-BREAK-0",
+      "sourceId": "espressoBar.equipment.steamWand.ok",
+      "targetId": "espressoBar.equipment.steamWand.broken",
+      "label": "BREAK",
+      "width": 186.71875,
+      "height": 63
+    },
+    {
+      "id": "root.equipment.steamWand.broken-barista.repair-0",
+      "sourceId": "espressoBar.equipment.steamWand.broken",
+      "targetId": "espressoBar.equipment.steamWand.repairing",
+      "label": "barista.repair",
+      "width": 575.4375,
+      "height": 141
+    },
+    {
+      "id": "root.equipment.steamWand.repairing-after-repair-0",
+      "sourceId": "espressoBar.equipment.steamWand.repairing",
+      "targetId": "espressoBar.equipment.steamWand.ok",
+      "label": "xstate.after.repair.root.equipment.steamWand.repairing",
+      "width": 141.28125,
+      "height": 40
+    }
+  ]
+}

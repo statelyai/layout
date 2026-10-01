@@ -1,4 +1,4 @@
-import { createGraph } from "@statelyai/graph";
+import { createGraph, type VisualGraph } from "@statelyai/graph";
 import { getElkLayout } from "@statelyai/graph/layout/elk";
 import { describe, expect, it } from "vitest";
 import { getLayeredLayout } from "../src";
@@ -23,7 +23,7 @@ describe("elkjs oracle", () => {
       algorithm: "layered",
       direction: "right",
     });
-    const x = (layout: typeof native, id: string) =>
+    const x = (layout: VisualGraph, id: string) =>
       layout.nodes.find((node) => node.id === id)?.x ?? Number.NaN;
 
     expect(native.nodes.map((node) => node.id)).toEqual(oracle.nodes.map((node) => node.id));

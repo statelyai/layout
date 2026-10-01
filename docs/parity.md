@@ -45,7 +45,9 @@ require style for every migration entry point.
 | SPOrE overlap removal | `getSporeOverlapRemovalLayout` | Initial separation baseline; not ELK parity          |
 
 The native layered pipeline handles compound layout and cross-hierarchy
-routing. The compatibility worker protocol runs in-process; browser-thread
+routing, with complete occupied envelopes reserved before ancestor placement.
+Native compound routing currently emits orthogonal sections; its geometry and
+label placement are not pinned to compatibility output. The compatibility worker protocol runs in-process; browser-thread
 isolation and non-layered Java algorithm suites remain open.
 
 Box SIMPLE has a 64-case differential corpus spanning empty through 15-node

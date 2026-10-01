@@ -1,4 +1,5 @@
 import type { GraphPatch, Point, VisualGraph } from "@statelyai/graph";
+import { hasCurrentRouteGeometry } from "./layout-cache";
 import { worldGeometry } from "../authoring/coordinates";
 import { freeze } from "./model";
 import { flattenPath, pathFromPoints } from "./path";
@@ -21,6 +22,9 @@ export function pathFromSplinePoints(points: readonly RoutePoint[]): RoutePath {
 }
 /** Normalize routes from any native layout algorithm, without running layout again. */
 export function getLayoutRoutes(graph: VisualGraph): ReadonlyMap<string, Route> {
+  const compound = graph as VisualGraph & { compoundRoutes?: ReadonlyMap<string, Route> };
+  if (compound.compoundRoutes?.size && hasCurrentRouteGeometry(graph, compound.compoundRoutes))
+    return compound.compoundRoutes;
   const world = worldGeometry(graph),
     nodes = new Map(world.nodes.map((n) => [n.id, n]));
   let result = new PersistentMap<Route>();

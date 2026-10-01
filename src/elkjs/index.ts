@@ -1,5 +1,4 @@
-import { createGraph, type Graph } from "@statelyai/graph";
-import type { getLayeredLayout } from "../layered";
+import { createGraph, type Graph, type VisualGraph } from "@statelyai/graph";
 import {
   elkLayeredOptionDefinitions,
   type ElkLayeredOptionValueByName,
@@ -1388,7 +1387,7 @@ function toSection(edge: ElkEdge, points: readonly ElkPoint[]) {
 
 function applyLayout(
   root: ElkNode,
-  graph: ReturnType<typeof getLayeredLayout>,
+  graph: VisualGraph,
   padding: { top: number; right: number; bottom: number; left: number },
   layoutOptions: Readonly<Record<string, unknown>>,
   resultPolicy?: Elkjs0111ResultPolicy,
