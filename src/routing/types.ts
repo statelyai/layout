@@ -70,7 +70,14 @@ export type RouteStyle =
   | "bus"
   | "bundle";
 export type RouteSide = "left" | "right" | "top" | "bottom";
+export interface RouteAttachment {
+  /** Node-local attachment rectangle, independent of its outer obstacle bounds. */
+  readonly bounds: RouteBounds;
+  readonly facing?: "inward" | "outward";
+}
 export interface EdgeRoutingSettings {
+  readonly sourceAttachment?: RouteAttachment;
+  readonly targetAttachment?: RouteAttachment;
   readonly sourceSide?: RouteSide;
   readonly targetSide?: RouteSide;
   readonly waypoints?: readonly RoutePoint[];

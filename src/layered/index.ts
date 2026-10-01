@@ -1,3 +1,4 @@
+import { layoutCompounds, type CompoundVisualGraph } from "./compound";
 import type { Graph, GraphEdge, GraphNode, Point, VisualGraph, VisualNode } from "@statelyai/graph";
 import { labelReferences, runPartialLayout } from "../authoring/partial";
 import { UnsupportedLayoutError } from "../errors";
@@ -61,6 +62,8 @@ import {
   joinFoldedMultiEdgeRoutes,
 } from "./multi-edge-wrapping";
 
+export type { CompoundVisualGraph } from "./compound";
+
 export type {
   AcyclicOrientation,
   CrossingMinimizer,
@@ -69,6 +72,9 @@ export type {
   EdgeRoutes,
   LayerAssigner,
   LayerAssignment,
+  CompoundLayoutOptions,
+  CompoundLayoutGeometry,
+  CompoundEdgeAttachment,
   LayeredLayoutOptions,
   LayeredPhaseInput,
   LayeredSpacing,
@@ -1182,106 +1188,20 @@ function runCompoundPipeline<N, E, G, P>(
   options: LayeredLayoutOptions,
   context?: LayoutExecutionContext,
 ): VisualGraph<N, E, G, P> {
-  const nodes = graph.nodes.map((node) => ({ ...node })) as VisualNode<N, P>[];
-  const nodeById = new Map(nodes.map((node) => [node.id, node]));
-  const depth = (node: GraphNode): number => {
-    let value = 0;
-    let parentId = node.parentId;
-    const seen = new Set<string>();
-    while (parentId != null && !seen.has(parentId)) {
-      seen.add(parentId);
-      value++;
-      parentId = nodeById.get(parentId)?.parentId;
-    }
-    return value;
-  };
-  const parentIds = [
-    ...new Set(nodes.flatMap((node) => (node.parentId == null ? [] : [node.parentId]))),
-  ].sort((left, right) => depth(nodeById.get(right)!) - depth(nodeById.get(left)!));
-  const edgeById = new Map(graph.edges.map((edge) => [edge.id, { ...edge }]));
-  const padding = typeof options.padding === "number" ? options.padding : 12;
-
-  const layoutSiblings = (parentId: string | null): void => {
-    const siblings = nodes.filter((node) => (node.parentId ?? null) === parentId);
-    if (siblings.length === 0) return;
-    const siblingIds = new Set(siblings.map((node) => node.id));
-    const siblingEdges = graph.edges.filter(
-      (edge) => siblingIds.has(edge.sourceId) && siblingIds.has(edge.targetId),
-    );
-    const flatNodes = siblings.map((node) => ({ ...node, parentId: null }));
-    const flatGraph = {
-      ...graph,
-      nodes: flatNodes,
-      edges: siblingEdges,
-    } as Graph<N, E, G, P>;
-    const result = runLayeredPipeline(flatGraph, options, context);
-    for (const laidOut of result.nodes) {
-      const node = nodeById.get(laidOut.id);
-      if (!node) continue;
-      Object.assign(node, laidOut, { parentId });
-    }
-    for (const edge of result.edges) edgeById.set(edge.id, edge);
-  };
-
-  for (const parentId of parentIds) {
-    layoutSiblings(parentId);
-    const parent = nodeById.get(parentId);
-    if (!parent) continue;
-    const children = nodes.filter((node) => node.parentId === parentId);
-    const right = Math.max(0, ...children.map((node) => (node.x ?? 0) + (node.width ?? 0)));
-    const bottom = Math.max(0, ...children.map((node) => (node.y ?? 0) + (node.height ?? 0)));
-    parent.width = Math.max(parent.width ?? 0, right + padding);
-    parent.height = Math.max(parent.height ?? 0, bottom + padding);
-  }
-
-  const roots = nodes.filter((node) => node.parentId == null);
-  if (roots.length === 1 && parentIds.includes(roots[0]!.id)) {
-    Object.assign(roots[0]!, { x: 0, y: 0 });
-  } else {
-    layoutSiblings(null);
-  }
-
-  const absoluteRect = (id: string): { x: number; y: number; width: number; height: number } => {
-    const node = nodeById.get(id);
-    if (!node) return { x: 0, y: 0, width: 0, height: 0 };
-    let x = node.x ?? 0;
-    let y = node.y ?? 0;
-    let parentId = node.parentId;
-    const seen = new Set<string>();
-    while (parentId != null && !seen.has(parentId)) {
-      seen.add(parentId);
-      const parent = nodeById.get(parentId);
-      if (!parent) break;
-      x += parent.x ?? 0;
-      y += parent.y ?? 0;
-      parentId = parent.parentId;
-    }
-    return { x, y, width: node.width ?? 0, height: node.height ?? 0 };
-  };
-  for (const edge of graph.edges) {
-    if (edgeById.get(edge.id)?.points !== undefined) continue;
-    const source = absoluteRect(edge.sourceId);
-    const target = absoluteRect(edge.targetId);
-    const start = { x: source.x + source.width, y: source.y + source.height / 2 };
-    const end = { x: target.x, y: target.y + target.height / 2 };
-    const track = (start.x + end.x) / 2;
-    const points = [start, { x: track, y: start.y }, { x: track, y: end.y }, end];
-    edgeById.set(edge.id, {
-      ...edge,
-      points,
-      x: track,
-      y: (start.y + end.y) / 2,
-      width: edge.width ?? 0,
-      height: edge.height ?? 0,
-      routing: "orthogonal",
-    });
-  }
-
-  return {
-    ...graph,
-    nodes,
-    edges: graph.edges.map((edge) => edgeById.get(edge.id) ?? edge),
-  } as VisualGraph<N, E, G, P>;
+  const result = layoutCompounds(graph, options, (scope, local) =>
+    runLayeredPipeline(scope, local, context),
+  );
+  for (const route of result.compoundRoutes.values())
+    for (const diagnostic of route.diagnostics)
+      context?.diagnostics.push({
+        severity: "warning",
+        code: diagnostic.code,
+        message: diagnostic.message,
+        entityIds: [route.edgeId],
+        phase: "compound-routing",
+        geometry: "routes",
+      });
+  return result;
 }
 
 function runLayeredPipeline<N, E, G, P>(
@@ -2671,8 +2591,13 @@ function runLayeredPipeline<N, E, G, P>(
 export function getLayeredLayout<N, E, G, P>(
   graph: Graph<N, E, G, P> | VisualGraph<N, E, G, P>,
   options: LayeredLayoutOptions = {},
-): VisualGraph<N, E, G, P> {
-  return runLayeredPipeline(graph, options);
+): CompoundVisualGraph<N, E, G, P> {
+  const result = runLayeredPipeline(graph, options) as CompoundVisualGraph<N, E, G, P>;
+  return {
+    ...result,
+    compoundGeometry: result.compoundGeometry ?? new Map(),
+    compoundRoutes: result.compoundRoutes ?? new Map(),
+  };
 }
 
 export const layeredAlgorithm: LayoutAlgorithm<LayeredLayoutOptions> = {

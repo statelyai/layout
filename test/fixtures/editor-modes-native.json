@@ -1,0 +1,87 @@
+{
+  "id": "editorModes",
+  "nodes": [
+    {
+      "id": "edit",
+      "label": "Edit Mode",
+      "width": 188,
+      "height": 64
+    },
+    {
+      "id": "simulation",
+      "label": "Simulation Mode",
+      "width": 280,
+      "height": 64
+    },
+    {
+      "id": "recording",
+      "label": "Simulating & Story Recording",
+      "parentId": "simulation",
+      "width": 464,
+      "height": 64
+    },
+    {
+      "id": "playback",
+      "label": "Story Playback",
+      "parentId": "simulation",
+      "width": 260,
+      "height": 64
+    },
+    {
+      "id": "loading",
+      "label": "Loading Version",
+      "width": 276,
+      "height": 188
+    }
+  ],
+  "edges": [
+    {
+      "id": "Simulate",
+      "sourceId": "edit",
+      "targetId": "simulation",
+      "label": "Simulate",
+      "width": 104,
+      "height": 48
+    },
+    {
+      "id": "Edit",
+      "sourceId": "simulation",
+      "targetId": "edit",
+      "label": "Edit",
+      "width": 72,
+      "height": 48
+    },
+    {
+      "id": "Select story",
+      "sourceId": "simulation",
+      "targetId": "playback",
+      "label": "Select story",
+      "width": 136,
+      "height": 88
+    },
+    {
+      "id": "Select version",
+      "sourceId": "edit",
+      "targetId": "loading",
+      "label": "Select version",
+      "width": 152,
+      "height": 48
+    },
+    {
+      "id": "done",
+      "sourceId": "loading",
+      "targetId": "simulation",
+      "label": "done",
+      "width": 310,
+      "height": 48
+    },
+    {
+      "id": "error",
+      "sourceId": "loading",
+      "targetId": "edit",
+      "label": "error",
+      "width": 310,
+      "height": 48
+    }
+  ]
+}

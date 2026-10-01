@@ -69,24 +69,28 @@ Import these exports from `@statelyai/layout`.
 
 ### Layered types
 
-| Type                   | Description                                       |
-| ---------------------- | ------------------------------------------------- |
-| `AcyclicOrientation`   | Reversed edge IDs selected during cycle breaking. |
-| `CrossingMinimizer`    | Crossing minimization function.                   |
-| `CycleBreaker`         | Cycle-breaking function.                          |
-| `EdgeRouter`           | Edge-routing function.                            |
-| `EdgeRoutes`           | Route points keyed by edge ID.                    |
-| `LayerAssigner`        | Layer-assignment function.                        |
-| `LayerAssignment`      | Layer numbers keyed by node ID.                   |
-| `LayeredLayoutOptions` | Options for layered layout.                       |
-| `LayeredPhaseInput`    | Common input supplied to layered phases.          |
-| `LayeredSpacing`       | Node and layer spacing.                           |
-| `LayeredStrategies`    | Optional phase replacements.                      |
-| `LayoutPadding`        | Top, right, bottom, and left padding.             |
-| `LayerOrder`           | Ordered node IDs grouped by layer.                |
-| `NodePlacement`        | Node rectangles keyed by node ID.                 |
-| `NodePlacer`           | Node-placement function.                          |
-| `NodeSize`             | Node width and height.                            |
+| Type                     | Description                                                                |
+| ------------------------ | -------------------------------------------------------------------------- |
+| `AcyclicOrientation`     | Reversed edge IDs selected during cycle breaking.                          |
+| `CrossingMinimizer`      | Crossing minimization function.                                            |
+| `CycleBreaker`           | Cycle-breaking function.                                                   |
+| `EdgeRouter`             | Edge-routing function.                                                     |
+| `EdgeRoutes`             | Route points keyed by edge ID.                                             |
+| `LayerAssigner`          | Layer-assignment function.                                                 |
+| `LayerAssignment`        | Layer numbers keyed by node ID.                                            |
+| `LayeredLayoutOptions`   | Options for layered layout.                                                |
+| `LayeredPhaseInput`      | Common input supplied to layered phases.                                   |
+| `LayeredSpacing`         | Node and layer spacing.                                                    |
+| `LayeredStrategies`      | Optional phase replacements.                                               |
+| `CompoundLayoutOptions`  | Per-compound header, content padding, direction, and minimum content size. |
+| `CompoundLayoutGeometry` | Parent-relative outer bounds and local header/content rectangles.          |
+| `CompoundEdgeAttachment` | Content or outer endpoint boundary intent.                                 |
+| `CompoundVisualGraph`    | Native output with compound geometry and world-space route sections.       |
+| `LayoutPadding`          | Top, right, bottom, and left padding.                                      |
+| `LayerOrder`             | Ordered node IDs grouped by layer.                                         |
+| `NodePlacement`          | Node rectangles keyed by node ID.                                          |
+| `NodePlacer`             | Node-placement function.                                                   |
+| `NodeSize`               | Node width and height.                                                     |
 
 ### Layered option types
 
@@ -147,6 +151,14 @@ The error code is `UNSUPPORTED_LAYOUT`.
 `@statelyai/layout/layered` exports the layered layout function, algorithm,
 strategy functions, and layered types listed above. It does not export the
 general registry or the other built-in algorithms.
+
+`LayeredLayoutOptions.compound(node)` reserves each compound's complete occupied
+geometry before ancestor placement. `edgeAttachment(edge)` selects inward
+content boundaries or outward reentry hooks. `getLayeredLayout` returns
+`compoundGeometry` and `compoundRoutes` maps in addition to the visual graph.
+Node positions/outer bounds are parent-relative; label positions and route
+sections are world-relative. See [native compound geometry](../README.md#native-compound-geometry)
+and the [matched visual proof](images/native-compound/README.md).
 
 ## elkjs entry point
 

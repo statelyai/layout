@@ -22,7 +22,7 @@ format.
 2. `getLayout(request)` adds algorithm selection, execution scope,
    cancellation, patches, diagnostics, and measurements.
 3. The isolated `@statelyai/layout/elkjs` entry translates ELK JSON at the
-   package boundary. ELK option names do not enter the native API.
+   package boundary. Native compound geometry evolves independently of the pinned compatibility policy.
 4. `@statelyai/layout/routing` exports standalone strategies, immutable snapshots,
    incremental patches, and renderer-independent path utilities.
 5. The pinned elkjs migration subpaths expose ESM and CommonJS adapters over an

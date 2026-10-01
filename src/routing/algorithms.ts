@@ -305,14 +305,46 @@ export function routeEdge(
   const lane = !grouped && peers.length > 1 ? peers.length - 1 - peers.indexOf(edge.id) : 0;
   function terminal(source: boolean): Terminal {
     const node = source ? sourceNode : targetNode,
-      bounds = source ? sourceBounds : targetBounds,
+      outer = source ? sourceBounds : targetBounds,
+      attachment = source ? perEdge.sourceAttachment : perEdge.targetAttachment,
+      bounds = attachment
+        ? {
+            ...attachment.bounds,
+            x: outer.x + attachment.bounds.x,
+            y: outer.y + attachment.bounds.y,
+          }
+        : outer,
       other = source ? targetBounds : sourceBounds;
     const name = source ? edge.sourcePort : edge.targetPort;
     let side =
       (source ? perEdge.sourceSide : perEdge.targetSide) ??
       (loop ? (source ? "right" : "top") : sideToward(center(bounds), center(other)));
     let point = anchor(bounds, side);
-    if (name === undefined && !["bus", "fan", "bundle"].includes(style) && !loop) {
+    if (attachment) {
+      const toward = labelRect(edge, state) ?? other;
+      side =
+        (source ? perEdge.sourceSide : perEdge.targetSide) ??
+        sideToward(center(bounds), center(toward));
+      point = anchor(bounds, side);
+      const margin = Math.min(config.clearance, Math.min(bounds.width, bounds.height) / 2);
+      if (side === "left" || side === "right")
+        point = {
+          ...point,
+          y: Math.max(
+            bounds.y + margin,
+            Math.min(bounds.y + bounds.height - margin, center(toward).y),
+          ),
+        };
+      else
+        point = {
+          ...point,
+          x: Math.max(
+            bounds.x + margin,
+            Math.min(bounds.x + bounds.width - margin, center(toward).x),
+          ),
+        };
+    }
+    if (!attachment && name === undefined && !["bus", "fan", "bundle"].includes(style) && !loop) {
       const nodeId = source ? edge.sourceId : edge.targetId;
       const adjacent = [...(state.incident.get(nodeId)?.keys() ?? [])].filter((id) => {
         const e = state.edges.get(id)!;
@@ -348,17 +380,20 @@ export function routeEdge(
         Number.isFinite(port.height ?? 0)
       ) {
         point = {
-          x: bounds.x + port.x! + (port.width ?? 0) / 2,
-          y: bounds.y + port.y! + (port.height ?? 0) / 2,
+          x: outer.x + port.x! + (port.width ?? 0) / 2,
+          y: outer.y + port.y! + (port.height ?? 0) / 2,
         };
         if (!(source ? perEdge.sourceSide : perEdge.targetSide))
-          side = sideToward(center(bounds), point);
+          side = sideToward(center(outer), point);
       } else
         report("MISSING_PORT", `Port ${name} has no positioned geometry; used the node boundary`);
     }
     return {
       point,
-      side,
+      side:
+        attachment?.facing === "inward"
+          ? ({ left: "right", right: "left", top: "bottom", bottom: "top" } as const)[side]
+          : side,
       ref: {
         kind: "node",
         nodeId: source ? edge.sourceId : edge.targetId,
@@ -374,6 +409,8 @@ export function routeEdge(
       .filter((id) => id !== edge.sourceId && id !== edge.targetId)
       .map((id) => `n:${id}`),
   );
+  if (perEdge.sourceAttachment !== undefined) excluded.add(`n:${edge.sourceId}`);
+  if (perEdge.targetAttachment !== undefined) excluded.add(`n:${edge.targetId}`);
   const context = contextFor(
     state,
     excluded,
