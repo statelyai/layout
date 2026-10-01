@@ -1,5 +1,18 @@
 # @statelyai/layout
 
+## 0.3.0
+
+### Minor Changes
+
+- 1c05bea: Solve native compound layout from complete occupied envelopes: measured header bands, asymmetric content padding, children, and edge labels. Retain finalized compound sizes during ancestor placement and return explicit compound geometry and world-space route sections. Add inward content attachments and outward reentry hooks without changing the pinned ELK compatibility contract.
+- 7fa4f37: Add native TypeScript edge routing with immutable snapshots, incremental native graph diffs, persistent spatial/dependency indexes, route patches, and explicit fallback diagnostics. Include straight, Bézier, orthogonal, polyline, octilinear, curved, organic, parallel, self-loop, fan, bus, and bundle strategies; structured line/curve/arc geometry; SVG and polyline rendering utilities; and adapters for native layout and ELK section geometry.
+  
+  Incremental routing produces the same geometry as fresh routing for the same graph and settings. Previous snapshots cache graph geometry, spatial dependencies, and unaffected results; previous drawn paths do not constrain routing.
+  
+  Account for endpoint directions in route search, complete octilinear diagonal/grid intersections, distribute shared-node attachments and duplicate-edge corridors, and prefer interior source-facing shared trunks. Incremental invalidation includes coordinated neighbors.
+  
+  Coordinate unrelated groups with deterministic soft crossing/overlap costs, report residual conflicts, and incrementally invalidate route dependencies. Encode source/port group keys without delimiter collisions.
+
 ## 0.2.0
 
 ### Minor Changes
