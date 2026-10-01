@@ -1,4 +1,5 @@
 import { orthogonalRouting, routeToPolylines } from "../routing";
+import { recordRouteGeometry } from "../routing/layout-cache";
 import type { EdgeRoutingSettings, Route } from "../routing/types";
 import type {
   EntityRect,
@@ -16,6 +17,8 @@ export type CompoundVisualGraph<N = unknown, E = unknown, G = unknown, P = unkno
   G,
   P
 > & {
+  /** Nodes remain parent-relative; edge rectangles and points are world-space. */
+  readonly edgeCoordinateSpace?: "world";
   readonly compoundGeometry: ReadonlyMap<string, CompoundLayoutGeometry>;
   /** World-space route sections preserve label gaps and fallback diagnostics. */
   readonly compoundRoutes: ReadonlyMap<string, Route>;
@@ -69,7 +72,12 @@ export function layoutCompounds<N, E, G, P>(
     const scope = owner(edge);
     owned.set(scope, [...(owned.get(scope) ?? []), edge]);
   }
-  const edges = new Map(graph.edges.map((e) => [e.id, { ...e }]));
+  const edges = new Map(
+    graph.edges.map((e) => [
+      e.id,
+      { ...e, x: 0, y: 0, width: e.width ?? 0, height: e.height ?? 0 },
+    ]),
+  );
   const localLabels = new Map<string, { scope: string | null; rect: EntityRect }>();
   const compoundGeometry = new Map<string, CompoundLayoutGeometry>();
   const childScopes = [
@@ -131,12 +139,12 @@ export function layoutCompounds<N, E, G, P>(
     // A label is an occupied vertex in the scope's placement problem, including
     // adjacent-layer and feedback edges. It cannot be added after node placement.
     const labels = projected.filter((edge) => (edge.width ?? 0) > 0 && (edge.height ?? 0) > 0);
-    const used = new Set(graph.nodes.map((node) => node.id));
+    const used = new Set([...graph.nodes, ...graph.edges].map((entity) => entity.id));
     const labelIds = new Map<string, string>();
     for (const edge of labels) {
       let id = `__layout_label_${edge.id}`;
-      while (used.has(id)) id += "_";
-      used.add(id);
+      while ([id, `${id}_source`, `${id}_target`].some((key) => used.has(key))) id += "_";
+      for (const key of [id, `${id}_source`, `${id}_target`]) used.add(key);
       labelIds.set(edge.id, id);
       sizes.set(id, { width: edge.width!, height: edge.height! });
     }
@@ -395,12 +403,15 @@ export function layoutCompounds<N, E, G, P>(
   }
   for (const [id, geometry] of compoundGeometry)
     geometry.bounds = { ...geometry.bounds, x: byId.get(id)!.x, y: byId.get(id)!.y };
-  return {
+  const result: CompoundVisualGraph<N, E, G, P> = {
     ...graph,
+    edgeCoordinateSpace: "world",
     direction: options.direction ?? graph.direction ?? "right",
     nodes,
     edges: graph.edges.map((e) => edges.get(e.id)!) as VisualGraph<N, E, G, P>["edges"],
     compoundGeometry,
     compoundRoutes: snapshot.routes,
   };
+  recordRouteGeometry(result, snapshot.routes);
+  return result;
 }

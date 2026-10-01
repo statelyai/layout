@@ -157,7 +157,11 @@ geometry before ancestor placement. `edgeAttachment(edge)` selects inward
 content boundaries or outward reentry hooks. `getLayeredLayout` returns
 `compoundGeometry` and `compoundRoutes` maps in addition to the visual graph.
 Node positions/outer bounds are parent-relative; label positions and route
-sections are world-relative. See [native compound geometry](../README.md#native-compound-geometry)
+sections are world-relative (`edgeCoordinateSpace: "world"`). Unlabeled edges
+have finite zero-sized label rectangles. Authoring discards full-layout geometry
+and route caches; `getLayoutRoutes` also checks cached sections against current
+geometry before using them. Ancestor/descendant labels are always reserved
+beside the child boundary; this is structural rather than a label option. See [native compound geometry](../README.md#native-compound-geometry)
 and the [matched visual proof](images/native-compound/README.md).
 
 ## elkjs entry point

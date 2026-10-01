@@ -70,7 +70,6 @@ const result = getLayeredLayout(graph, {
   }),
   edgeAttachment: (edge) => ({
     source: "content", // Use "outer" for an outward/reentering transition.
-    label: "target-boundary",
   }),
 });
 result.compoundGeometry.get("parent"); // { bounds, header, content }
@@ -80,7 +79,7 @@ result.compoundRoutes; // World-space sections, label gaps, routing diagnostics.
 Each scope reserves children and measured labels before its ancestors are laid
 out. Header measurements cannot replace finalized compound dimensions. Node
 positions and compound bounds are parent-relative; edge label positions and
-routes are world-relative. Header and content rectangles are local to the
+routes are world-relative, marked by `edgeCoordinateSpace: "world"`. Header and content rectangles are local to the
 compound. For ancestor-to-descendant edges, content attachments leave inward;
 outer attachments leave outward. Explicit ports retain their node-local geometry.
 The native compound router emits orthogonal route sections for the original endpoints.

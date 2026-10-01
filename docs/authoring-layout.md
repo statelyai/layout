@@ -98,7 +98,9 @@ to both routes and labels; use `edgeGeometry: "routes"` for equivalent permissio
 
 ## Coordinate frames
 
-Native compound nodes and sibling edges use parent-relative coordinates;
+Native compound nodes use parent-relative coordinates. Full native compound output
+marks labels and edge points with `edgeCoordinateSpace: "world"`; legacy sibling
+edges without that marker use parent-relative coordinates;
 cross-container edges use world coordinates, matching the existing compound
 pipeline. Authoring converts to a world-coordinate working scene, then returns
 geometry and patches in those original frames. Geometric constraints, including

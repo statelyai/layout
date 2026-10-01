@@ -109,7 +109,6 @@ export interface CompoundEdgeAttachment {
   /** Content attachments leave toward the interior; outer attachments leave outward. */
   source?: "content" | "outer";
   target?: "content" | "outer";
-  label?: "target-boundary";
 }
 
 export interface LayeredLayoutOptions {

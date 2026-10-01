@@ -1,7 +1,7 @@
 import { createGraph } from "@statelyai/graph";
 import { expect, it } from "vitest";
 import { getLayeredLayout } from "../src";
-import { getLayoutRoutes, orthogonalRouting } from "../src/routing";
+import { getLayoutRoutes, orthogonalRouting, routeToPolylines } from "../src/routing";
 
 const input = () =>
   createGraph({
@@ -24,8 +24,7 @@ for (const direction of ["up", "down", "left", "right"] as const) {
       direction,
       padding: { top: 11, right: 23, bottom: 17, left: 29 },
       compound: () => ({ header: { width: 220, height: 60, side: "top" } }),
-      edgeAttachment: (edge) =>
-        edge.id === "enter" ? { source: "content", label: "target-boundary" } : undefined,
+      edgeAttachment: (edge) => (edge.id === "enter" ? { source: "content" } : undefined),
     });
     const root = result.nodes.find((n) => n.id === "root")!;
     const content = result.compoundGeometry.get("root")!.content;
@@ -93,7 +92,6 @@ it("uses inward content attachments for parent-child edges and outer hooks for r
     compound: () => ({ header: { width: 200, height: 60 } }),
     edgeAttachment: (edge) => ({
       source: edge.id === "reenter" ? "outer" : "content",
-      label: "target-boundary",
     }),
   });
   const geometry = result.compoundGeometry.get("group")!;
@@ -199,4 +197,77 @@ it("preserves a forward labeled chain under model-order cycle breaking", () => {
   const [a, b, c] = ["a", "b", "c"].map((id) => result.nodes.find((n) => n.id === id)!);
   expect(b!.y).toBeGreaterThan(a!.y + a!.height);
   expect(c!.y).toBeGreaterThan(b!.y + b!.height);
+});
+
+it("returns finite zero-sized visual rectangles for unlabeled compound edges", () => {
+  const graph = input();
+  graph.edges.forEach((edge) => {
+    delete edge.width;
+    delete edge.height;
+  });
+  const result = getLayeredLayout(graph);
+  for (const edge of result.edges) {
+    expect(edge).toMatchObject({ width: 0, height: 0 });
+    expect(Number.isFinite(edge.x) && Number.isFinite(edge.y)).toBe(true);
+    expect(edge.points!.length).toBeGreaterThan(1);
+  }
+});
+
+it("allocates label vertices and legs outside all original identifiers", () => {
+  const graph = input();
+  graph.edges.push({ ...graph.edges[0]!, id: "__layout_label_ab_source" });
+  graph.nodes.push({ ...graph.nodes[2]!, id: "__layout_label_ab__target" });
+  const callbacks = new Set<string>();
+  const result = getLayeredLayout(graph, {
+    edgeSettings: (edge) => {
+      callbacks.add(edge.id);
+      expect(graph.edges.some((original) => original.id === edge.id)).toBe(true);
+      return {};
+    },
+  });
+  expect(callbacks.has("ab")).toBe(true);
+  expect(callbacks.has("__layout_label_ab_source")).toBe(true);
+  expect(result.edges.map((edge) => edge.id)).toEqual(graph.edges.map((edge) => edge.id));
+  const a = result.edges.find((edge) => edge.id === "ab")!;
+  const b = result.edges.find((edge) => edge.id === "__layout_label_ab_source")!;
+  expect(a.x !== b.x || a.y !== b.y).toBe(true);
+});
+
+it("normalizes compound edge geometry once and discards stale sections after authoring", async () => {
+  const { getLayout } = await import("../src");
+  const { worldGeometry, nativeGeometry } = await import("../src/authoring/coordinates");
+  const result = getLayeredLayout(input());
+  expect(result.nodes.find((node) => node.id === "root")!.x).not.toBe(0);
+  const world = worldGeometry(result);
+  expect(world.edges).toEqual(result.edges);
+  expect(nativeGeometry(world, result).edges).toEqual(result.edges);
+  const authored = await getLayout({
+    graph: result,
+    scope: { mode: "route-only", previous: result, edgeIds: ["ab"] },
+  });
+  expect(authored.graph.edges.find((edge) => edge.id === "ab")).toMatchObject({
+    x: result.edges[0]!.x,
+    y: result.edges[0]!.y,
+  });
+  expect("compoundRoutes" in authored.graph).toBe(false);
+  const routes = getLayoutRoutes(authored.graph);
+  expect(routes).not.toBe(result.compoundRoutes);
+  expect(routeToPolylines(routes.get("ab")!).flat()).toEqual(authored.graph.edges[0]!.points);
+});
+
+it("rejects full-layout cached routes after external geometry edits", () => {
+  const result = getLayeredLayout(input());
+  const edited = {
+    ...result,
+    edges: result.edges.map((edge) => ({
+      ...edge,
+      points: [
+        { x: 10, y: 20 },
+        { x: 30, y: 20 },
+      ],
+    })),
+  };
+  const routes = getLayoutRoutes(edited);
+  expect(routes).not.toBe(result.compoundRoutes);
+  expect(routeToPolylines(routes.get("ab")!).flat()).toEqual(edited.edges[0]!.points);
 });
