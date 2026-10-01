@@ -33,6 +33,16 @@ The disconnected profile reserves an isolated leaf. Profile constraints
 stratify coverage; these are not uniformly sampled arbitrary graphs.
 Layout failures are recorded and cause a nonzero exit, never resampled.
 
+The initial acceptance goal is ELK-level human readability on identical inputs,
+including edge routing. Passing validity checks alone does not establish parity.
+Compare crossings, retracing, shared tracks, bends, detours, label clearance,
+node placement, and compactness separately; an aggregate score must not hide a
+regression in a critical criterion. Use the authored rubric for visual judgment,
+then validate on fresh held-out seeds across the same complexity profiles.
+ELK's own defects are not acceptable correctness targets, and unavoidable
+crossings remain graded penalties. Record parity as unproven until that review
+and held-out evaluation pass.
+
 Author the aesthetic rules before changing the algorithm. For each rule,
 record severity, applicability, exceptions, and an example graph/element ID.
 Keep validity invariants separate from graded aesthetic penalties. Crossings
