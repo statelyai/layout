@@ -1,4 +1,9 @@
 import { routeOrthogonalSegments } from "./orthogonal-segments";
+import {
+  createOrthogonalHypersegments,
+  countOrthogonalHypersegmentCrossings,
+  type OrthogonalPort,
+} from "./orthogonal-hypersegments";
 import { recordCycleRandom, crossingRandom, phaseRandomByInput } from "./cycle-random";
 import type { EntityRect, GraphEdge, GraphNode, GraphPort, Point } from "@statelyai/graph";
 import { LayoutError } from "../errors";
@@ -1773,6 +1778,46 @@ function minimizeCrossingsWithLayerSweep(
             );
           }
           consumed += fixedOrderNodes.has(nodeId) ? 1 : edgeIds.length;
+        }
+        const countedPorts = new Map<string, OrthogonalPort>();
+        const key = (edge: GraphEdge, source: boolean) => {
+          const [sourceId, targetId] = getOrientedEndpoints(edge, orientation);
+          const nodeId = source ? sourceId : targetId;
+          const reversed = orientation.reversedEdgeIds.has(edge.id);
+          const name = source !== reversed ? edge.sourcePort : edge.targetPort;
+          const node = input.graph.nodes.find((n) => n.id === nodeId)!;
+          if (name !== undefined) return JSON.stringify([nodeId, "port", name]);
+          if (input.settings.mergeEdges === true || input.nodeSettings?.(node)?.hypernode === true)
+            return JSON.stringify([nodeId, "implicit", source]);
+          return JSON.stringify([edge.id, "edge", source]);
+        };
+        const connections = between.map((edge) => {
+          const source = key(edge, true),
+            target = key(edge, false);
+          if (!countedPorts.has(source))
+            countedPorts.set(source, {
+              id: source,
+              side: "source",
+              position: sourceRanks.get(edge.id) ?? 0,
+            });
+          if (!countedPorts.has(target))
+            countedPorts.set(target, {
+              id: target,
+              side: "target",
+              position: targetRanks.get(edge.id) ?? 0,
+            });
+          return { source, target };
+        });
+        if (countedPorts.size < between.length * 2) {
+          const ports: OrthogonalPort[] = [];
+          for (const side of ["source", "target"] as const) {
+            const ordered = [...countedPorts.values()]
+              .filter((p) => p.side === side)
+              .sort((a, b) => a.position - b.position);
+            ports.push(...ordered.map((p, position) => ({ ...p, position })));
+          }
+          crossings += countOrthogonalHypersegmentCrossings(ports, connections);
+          continue;
         }
         const orderedTargets = between
           .map((edge) => ({
@@ -3764,7 +3809,6 @@ function routeEdges(style: "ORTHOGONAL" | "POLYLINE" | "SPLINES"): EdgeRouter {
     >();
     if (
       style === "ORTHOGONAL" &&
-      input.settings.mergeEdges !== true &&
       (input.settings["wrapping.strategy"] ?? "OFF") === "OFF" &&
       input.settings.hierarchyHandling !== "INCLUDE_CHILDREN" &&
       (input.settings["layerUnzipping.strategy"] ?? "NONE") === "NONE"
@@ -3835,13 +3879,49 @@ function routeEdges(style: "ORTHOGONAL" | "POLYLINE" | "SPLINES"): EdgeRouter {
             minimumDifference(candidates.map(({ sourceCross }) => sourceCross)),
             minimumDifference(candidates.map(({ targetCross }) => targetCross)),
           );
+        const ports: OrthogonalPort[] = [];
+        const byPort = new Map<string, OrthogonalPort>();
+        const portByCandidate = new Map<
+          (typeof candidates)[number],
+          { source: string; target: string }
+        >();
+        const portKey = (candidate: (typeof candidates)[number], side: "source" | "target") => {
+          const edge = candidate.edge;
+          const sourceIsBefore =
+            flowLayerByNodeId.get(edge.sourceId)! < flowLayerByNodeId.get(edge.targetId)!;
+          const graphSource = (side === "source") === (sourceIsBefore === increasing);
+          const nodeId = graphSource ? edge.sourceId : edge.targetId;
+          const name = graphSource ? edge.sourcePort : edge.targetPort;
+          const node = nodeById.get(nodeId)!;
+          if (name !== undefined) return JSON.stringify(["port", nodeId, name]);
+          if (input.settings.mergeEdges === true || input.nodeSettings?.(node)?.hypernode === true)
+            return JSON.stringify(["implicit", nodeId, side]);
+          return JSON.stringify(["edge", edge.id, side]);
+        };
+        for (const side of ["source", "target"] as const)
+          for (const candidate of candidates) {
+            const key = portKey(candidate, side);
+            if (!byPort.has(key)) {
+              const position =
+                (side === "source") === increasing ? candidate.sourceCross : candidate.targetCross;
+              const port = { id: key, side, position };
+              byPort.set(key, port);
+              ports.push(port);
+            }
+          }
+        for (const candidate of candidates)
+          portByCandidate.set(candidate, {
+            source: portKey(candidate, "source"),
+            target: portKey(candidate, "target"),
+          });
+        const grouped = createOrthogonalHypersegments(
+          ports,
+          candidates.map((candidate) => portByCandidate.get(candidate)!),
+        );
         const random =
           phaseRandomByInput.get(input) ?? new JavaRandom(input.settings.randomSeed ?? 1);
         const result = routeOrthogonalSegments(
-          candidates.map((candidate) => ({
-            incoming: [increasing ? candidate.sourceCross : candidate.targetCross],
-            outgoing: [increasing ? candidate.targetCross : candidate.sourceCross],
-          })),
+          grouped.segments,
           0.5 * edgeEdgeSpacing,
           criticalThreshold,
           random,
@@ -3851,8 +3931,10 @@ function routeEdges(style: "ORTHOGONAL" | "POLYLINE" | "SPLINES"): EdgeRouter {
           if (Math.abs(segment.start - segment.end) >= 1e-3)
             maximumSlot = Math.max(maximumSlot, segment.slot);
         }
-        for (const [index, candidate] of candidates.entries()) {
-          const segment = result.segments[index]!;
+        for (const candidate of candidates) {
+          const segment =
+            result.segments[grouped.segmentByPort.get(portByCandidate.get(candidate)!.source)!]!;
+          candidate.straight = Math.abs(segment.start - segment.end) < 1e-3;
           candidate.slot = increasing ? segment.slot : maximumSlot - segment.slot;
           if (segment.partner !== undefined) {
             const partner = result.segments[segment.partner]!;

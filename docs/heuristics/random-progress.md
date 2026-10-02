@@ -754,3 +754,38 @@ and [frozen source/replay archive](./segment-engine/sources-and-replays.tar.gz).
 Browser verification confirmed paired diagrams and visible oracle errors.
 Next: build the same connected shared-port hypersegments as ELK, then align
 compound boundary preprocessing and replay the broader parity corpus.
+
+## Shared-port hypersegments, crossing counts and junctions
+
+Native connected-port creation now follows ELK traversal and segment grouping.
+Its shared-port crossing estimate replaces the per-edge estimate for merged
+connections; the old counter forced extra sweeps despite ELK reporting zero
+crossings. Native ELK-compatible output also emits deduplicated junction metadata.
+
+All 512 grouping boundaries and 512 crossing-count boundaries match the actual
+unmodified worker. All 200 end-to-end shared-port graphs (50 seeds × four
+directions) match root/node/port geometry, complete routes and junction coordinates.
+Before this change, 48/200 matched. Inputs have 2–4 nodes per layer and at most
+four connections per port. This establishes that subset, not general parity.
+
+Full suite: 1,877 pass / 113 fail / 1,990; the same 113 failure names as before.
+Selected changes on clean HEAD pass 238 focused tests and source TypeScript.
+Local source/repository TypeScript pass after correcting a numeric-id test message.
+
+The full saved corpus exposes two new native compaction cycles: graph 3
+(seed 3468128618) and graph 5 (3468144456). These are retained as failures,
+with the native error visible beside real ELK. Graph 10 also worsens from
+375 crossings/321 bends to 384/326 versus ELK's 125/274. Two existing ELK
+hierarchy errors remain visible separately. Full parity still fails.
+An exploratory physical-order compaction change resolves graph 5 but leaves
+graph 3 failing; it is preserved separately and has not been adopted.
+
+[1,024 direct worker comparisons](./hypersegments/direct-probe.json),
+[200 full shared-port inputs/outputs](./hypersegments/shared-port-random.json),
+[full corpus replay](./hypersegments/native-random-probe.json),
+[unchanged full-suite failures](./hypersegments/full-suite-delta.json),
+[same-scale native / real ELK proof](./hypersegments/index.html),
+and [source/replay archive](./hypersegments/sources-and-replays.tar.gz).
+
+Next: fix compaction ownership/order for inverted-port and label dummies without
+dropping constraints, then align compound boundary preprocessing. PR remains draft.

@@ -1,3 +1,4 @@
+import { applyOrthogonalJunctions } from "./orthogonal-junctions";
 import { createGraph, type Graph, type VisualGraph } from "@statelyai/graph";
 import {
   elkLayeredOptionDefinitions,
@@ -1476,6 +1477,28 @@ function applyLayout(
   }
   if (!resultPolicy?.skipBoundsNormalization) {
     normalizeElkGraphBounds(root, padding, layoutOptions);
+  }
+  if (
+    !resultPolicy?.preserveEdgeSections &&
+    String(getOption(layoutOptions, "edgeRouting") ?? "ORTHOGONAL") === "ORTHOGONAL"
+  ) {
+    const direction = getDirection(layoutOptions);
+    applyOrthogonalJunctions(
+      root,
+      direction === "right" || direction === "left",
+      direction === "right" || direction === "down",
+      getBooleanOption(layoutOptions, "layered.mergeEdges") === true,
+      new Set(
+        (root.children ?? [])
+          .filter((n) => getBooleanOption(n.layoutOptions ?? {}, "hypernode") === true)
+          .map((n) => String(n.id)),
+      ),
+      new Set(
+        (root.edges ?? [])
+          .filter((e) => getBooleanOption(e.layoutOptions ?? {}, "noLayout") === true)
+          .map((e) => String(e.id)),
+      ),
+    );
   }
 }
 

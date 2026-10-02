@@ -276,3 +276,94 @@ export function elkOrthogonalSegments(data: OrthogonalSegmentsOracleInput) {
     nextFloat: context.$nextInternal(random, 24) / 2 ** 24,
   };
 }
+
+export function elkOrthogonalHypersegments(data: {
+  ports: { id: string; side: "source" | "target"; position: number }[];
+  connections: { source: string; target: string }[];
+}) {
+  const graph = new context.LGraph(),
+    sourceNodes = new context.ArrayList(),
+    targetNodes = new context.ArrayList();
+  context.$clinit_PortSide();
+  const byId = new Map(
+    data.ports.map((p) => {
+      const node = new context.LNode(graph),
+        port = new context.LPort();
+      context.$setNode(port, node);
+      port.side = p.side === "source" ? context.EAST_0 : context.WEST_0;
+      port.pos.y_0 = p.position;
+      (p.side === "source" ? sourceNodes : targetNodes).add_2(node);
+      return [p.id, port];
+    }),
+  );
+  for (const c of data.connections) {
+    const edge = new context.LEdge();
+    context.$setSource_0(edge, byId.get(c.source));
+    context.$setTarget_0(edge, byId.get(c.target));
+  }
+  const segments = new context.ArrayList(),
+    portMap = new context.HashMap();
+  const generator = {
+    routingStrategy: {
+      getSourcePortSide: () => context.EAST_0,
+      getPortPositionOnHyperNode: (p: any) => p.pos.y_0,
+    },
+  };
+  context.$createHyperEdgeSegments(generator, sourceNodes, context.EAST_0, segments, portMap);
+  context.$createHyperEdgeSegments(generator, targetNodes, context.WEST_0, segments, portMap);
+  const all = Array.from(segments.array) as any[];
+  const coords = (values: any) => {
+    const result: number[] = [];
+    const iterator = context.$listIterator_2(values, 0);
+    while (iterator.currentNode !== values.tail) result.push(context.$next_9(iterator));
+    return result;
+  };
+  const idByPort = new Map([...byId].map(([id, p]) => [p, id]));
+  return {
+    segments: all.map((s) => ({
+      ports: Array.from(s.ports.array, (p: any) => idByPort.get(p)),
+      incoming: coords(s.incomingConnectionCoordinates),
+      outgoing: coords(s.outgoingConnectionCoordinates),
+    })),
+    segmentByPort: new Map(
+      data.ports.flatMap((p) => {
+        const segment = all.find((s) => s.ports.array.includes(byId.get(p.id)));
+        return segment ? [[p.id, all.indexOf(segment)] as [string, number]] : [];
+      }),
+    ),
+  };
+}
+
+export function elkHypersegmentCrossings(data: {
+  ports: { id: string; side: "source" | "target"; position: number }[];
+  connections: { source: string; target: string }[];
+}) {
+  const graph = new context.LGraph(),
+    sourceLayer = new context.Layer(graph),
+    targetLayer = new context.Layer(graph);
+  const sourceNodes: any[] = [],
+    targetNodes: any[] = [];
+  context.$clinit_PortSide();
+  const byId = new Map(
+    data.ports.map((p, index) => {
+      const node = new context.LNode(graph),
+        port = new context.LPort();
+      node.layer = p.side === "source" ? sourceLayer : targetLayer;
+      context.$setNode(port, node);
+      port.id_0 = index;
+      port.side = p.side === "source" ? context.EAST_0 : context.WEST_0;
+      (p.side === "source" ? sourceNodes : targetNodes).push(node);
+      return [p.id, port];
+    }),
+  );
+  for (const c of data.connections) {
+    const e = new context.LEdge();
+    context.$setSource_0(e, byId.get(c.source));
+    context.$setTarget_0(e, byId.get(c.target));
+  }
+  return context.$countCrossings_1(
+    new context.HyperedgeCrossingsCounter(Array(data.ports.length).fill(0)),
+    sourceNodes,
+    targetNodes,
+  );
+}
