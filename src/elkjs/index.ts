@@ -28,10 +28,7 @@ import type {
 } from "./public-types";
 
 function isLayoutEdgeLabel(label: ElkLabel): boolean {
-  return (
-    getBooleanOption(label.layoutOptions ?? {}, "noLayout") !== true &&
-    (Boolean(label.text) || label.width !== undefined || label.height !== undefined)
-  );
+  return getBooleanOption(label.layoutOptions ?? {}, "noLayout") !== true && Boolean(label.text);
 }
 
 export type {

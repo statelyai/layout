@@ -199,6 +199,11 @@ exports:
 - `LayoutOptions`
 - `LaidOutElkNode`
 
+Edge labels with missing or empty `text`, or `noLayout: true`, are preserved in
+compatibility output but do not reserve layout space. Width and height alone do
+not activate an edge label. Authored coordinates remain unchanged; omitted
+coordinates default to zero.
+
 The compatibility package also exposes the elkjs 0.11.1 migration subpaths
 `lib/main.js`, `lib/elk-api.js`, `lib/elk.bundled.js`, `lib/elk-worker.js`, and
 `lib/elk-worker.min.js`. `elk-api.js` requires `workerUrl` or `workerFactory`;
