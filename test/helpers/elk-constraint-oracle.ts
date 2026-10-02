@@ -179,3 +179,36 @@ export function elkCrossPortOrder(data: CrossPortOracleInput): {
     associates: Array.from(context.$getProperty(owner, context.BARYCENTER_ASSOCIATES).array, label),
   };
 }
+
+export interface OrthogonalCycleOracleInput {
+  count: number;
+  dependencies: { source: number; target: number; weight: number; critical: boolean }[];
+  criticalOnly: boolean;
+  seed: number;
+}
+export function elkOrthogonalCycles(data: OrthogonalCycleOracleInput) {
+  const nodes = Array.from({ length: data.count }, () => new context.HyperEdgeSegment(null));
+  context.$clinit_HyperEdgeSegmentDependency$DependencyType();
+  for (const d of data.dependencies)
+    new context.HyperEdgeSegmentDependency(
+      d.critical ? context.CRITICAL : context.REGULAR,
+      nodes[d.source],
+      nodes[d.target],
+      d.weight,
+    );
+  const list = new context.ArrayList();
+  for (const node of nodes) list.add_2(node);
+  const random = new context.Random();
+  context.$setSeed(random, Math.floor(data.seed / 2 ** 24), data.seed % 2 ** 24);
+  const backwards = context.detectCycles(list, data.criticalOnly, random);
+  return {
+    marks: nodes.map((n) => n.mark),
+    backwards: Array.from(backwards.array, (d: any) => ({
+      source: nodes.indexOf(d.source),
+      target: nodes.indexOf(d.target),
+      weight: d.weight,
+      critical: d.type_0 === context.CRITICAL,
+    })),
+    nextFloat: context.$nextInternal(random, 24) / 2 ** 24,
+  };
+}

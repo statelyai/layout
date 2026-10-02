@@ -1,4 +1,5 @@
-import { recordCycleRandom, crossingRandom } from "./cycle-random";
+import { detectOrthogonalCycles, type OrthogonalDependency } from "./orthogonal-cycle-order";
+import { recordCycleRandom, crossingRandom, phaseRandomByInput } from "./cycle-random";
 import type { EntityRect, GraphEdge, GraphNode, GraphPort, Point } from "@statelyai/graph";
 import { LayoutError } from "../errors";
 import { JavaRandom } from "../java-random";
@@ -16,7 +17,6 @@ import type {
   NodePlacer,
 } from "./types";
 
-const phaseRandomByInput = new WeakMap<LayeredPhaseInput, JavaRandom>();
 import { nodeNodeSpacing } from "./spacing";
 import type { ElkLayeredOptionValueByName } from "./elk-options";
 import { conservativeSpline } from "./spline-bezier";
@@ -836,17 +836,28 @@ export function applyGreedySwitch(
 ): LayerOrder {
   if (input.settings["crossingMinimization.strategy"] === "INTERACTIVE") return order;
   if (input.settings["crossingMinimization.semiInteractive"] === true) return order;
+  const type = input.settings["crossingMinimization.greedySwitch.type"] ?? "TWO_SIDED";
+  const threshold = input.settings["crossingMinimization.greedySwitch.activationThreshold"] ?? 40;
+  const originalNodeCount = input.graph.nodes.filter(
+    (node) => !node.id.startsWith("__layout_dummy:"),
+  ).length;
+  if (type === "OFF" || (threshold !== 0 && threshold <= originalNodeCount)) return order;
+  if (order.layers.length === 0 || (order.layers.length === 1 && order.layers[0]?.length === 1))
+    return order;
+  const random = phaseRandomByInput.get(input) ?? crossingRandom(input);
+  // ELK initializes another layer-sweep processor for greedy switching. It
+  // consumes a saved seed, chooses a distributor for ONE_SIDED, then draws
+  // the sweep direction. Routing continues with this same graph RNG state.
+  random.nextLong();
+  if (type === "ONE_SIDED") random.nextBoolean();
+  let forward = random.nextBoolean();
+  phaseRandomByInput.set(input, random);
   const modelOrderStrategy = input.settings["considerModelOrder.strategy"] ?? "NONE";
   if (
     (modelOrderStrategy === "NODES_AND_EDGES" || modelOrderStrategy === "PREFER_NODES") &&
     (input.settings["crossingMinimization.forceNodeModelOrder"] === true ||
       Number(input.settings["considerModelOrder.crossingCounterNodeInfluence"] ?? 0) >= 1)
   ) {
-    return order;
-  }
-  const type = input.settings["crossingMinimization.greedySwitch.type"] ?? "TWO_SIDED";
-  const threshold = input.settings["crossingMinimization.greedySwitch.activationThreshold"] ?? 40;
-  if (type === "OFF" || (threshold !== 0 && threshold <= input.graph.nodes.length)) {
     return order;
   }
   const layers = order.layers.map((layer) => [...layer]);
@@ -925,9 +936,11 @@ export function applyGreedySwitch(
     }
     return changed;
   };
-  while (sweep(true) || sweep(false)) {
-    // Repeat until every adjacent exchange is locally optimal.
-  }
+  let improved: boolean;
+  do {
+    improved = sweep(forward);
+    forward = !forward;
+  } while (improved);
   return { ...order, layers };
 }
 
@@ -1606,7 +1619,7 @@ function sortLayerByAdjacentPosition(
 
 function minimizeCrossingsWithLayerSweep(
   statistic: "mean" | "median",
-  sweeps = 4,
+  sweeps = 7,
 ): CrossingMinimizer {
   return (input, orientation, assignment) => {
     const exactPortSweep =
@@ -3896,28 +3909,34 @@ function routeEdges(style: "ORTHOGONAL" | "POLYLINE" | "SPLINES"): EdgeRouter {
         }
 
         const nonStraight = candidates.filter(({ straight }) => !straight);
-        let splitCycle = false;
-        for (let left = 0; left < candidates.length - 1 && !splitCycle; left++) {
-          for (let right = left + 1; right < candidates.length; right++) {
-            if (
-              dependencies[left]?.has(right) &&
-              dependencies[right]?.has(left) &&
-              criticalDependencies.has(`${left}:${right}`) &&
-              criticalDependencies.has(`${right}:${left}`)
-            ) {
-              const random =
-                phaseRandomByInput.get(input) ?? new JavaRandom(input.settings.randomSeed ?? 1);
-              const detour = random.nextInt(2) === 0 ? candidates[right]! : candidates[left]!;
-              const central = detour === candidates[left] ? candidates[right]! : candidates[left]!;
-              detour.slot = 0;
-              detour.secondSlot = 2;
-              detour.crossover = (detour.sourceCross + central.sourceCross) / 2;
-              central.slot = 1;
-              removeDependency(left, right);
-              removeDependency(right, left);
-              splitCycle = true;
-              break;
-            }
+        if (criticalDependencies.size >= 2) {
+          const graph: OrthogonalDependency[] = dependencyWeights.flatMap((targets, source) =>
+            [...targets].map(([target, weight]) => ({
+              source,
+              target,
+              weight,
+              critical: criticalDependencies.has(`${source}:${target}`),
+            })),
+          );
+          const random =
+            phaseRandomByInput.get(input) ?? new JavaRandom(input.settings.randomSeed ?? 1);
+          const cycle = detectOrthogonalCycles(candidates.length, graph, true, random);
+          const split = new Set<number>();
+          for (const dependency of cycle.backwards) {
+            const { source, target } = dependency;
+            // The cycle detector's backwards dependency selects the split source,
+            // not the randomly selected ordering source (which is its opposite).
+            if (split.has(source) || split.has(target)) continue;
+            if (!dependencies[target]?.has(source)) continue;
+            const detour = candidates[source]!,
+              central = candidates[target]!;
+            detour.slot = 0;
+            detour.secondSlot = 2;
+            detour.crossover = (detour.sourceCross + central.sourceCross) / 2;
+            central.slot = 1;
+            removeDependency(source, target);
+            removeDependency(target, source);
+            split.add(source);
           }
         }
 

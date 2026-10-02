@@ -673,3 +673,42 @@ Source manifests were checked after every process terminated. Archive contains n
 absolute dependency symlinks. Both ordering oracle probes record the unmodified
 worker hash. PR remains draft; goal active. No full-suite green, remote CI or
 complete parity claim.
+
+## Orthogonal cycle ordering and shared routing RNG
+
+Native selected the opposite edge when splitting a critical routing cycle on
+saved default DAG seed 56. Ported ELK's weighted segment ordering: its backwards
+dependency selects the split source. All 512 seeded dependency graphs match
+actual unmodified elkjs worker marks, backwards dependencies and next random
+value exactly. This ports cycle ordering; the full segment splitter, merged
+hypersegments and regular dependency routing still need work.
+
+Seed 14 exposed skipped greedy-switch RNG initialization and a later graph copy
+losing the advanced state. Native now uses seven default crossing attempts,
+consumes greedy-switch initialization/direction draws and carries the shared RNG
+through inherited phase inputs. All 100 default random DAGs match complete
+ELK placement and route geometry, including both saved failures.
+
+Validation: 117 focused local tests pass; clean HEAD plus this selected production
+change passes 105 focused tests and source TypeScript. Source/repository TypeScript
+passes locally. Full sequential local suite: **1,674 pass / 113 fail / 1,787**.
+Compared with the preceding 114 failures, seed 56 resolves; no failures introduced.
+No assertion or timeout changes.
+
+The same ten full flat/hierarchical random inputs improve graph 3 from 15
+crossings/88 bends to 14/87 and graph 5 from 108/271 to 104/266. Its area drops
+from 5,863,526.5 to 4,625,360. The other eight inputs have unchanged quality
+scores. Two hierarchy oracle errors remain separate. The broader gate still
+fails. This
+is concrete default DAG progress, not complete parity. Larger integration remains
+local; PR remains draft and the goal active. Next: port the full orthogonal
+segment splitter and regular-cycle handling, then replay the saved broader corpus.
+
+Evidence: [512 complete direct oracle comparisons](./orthogonal-cycles/direct-probe.json),
+[full random replay](./orthogonal-cycles/native-random-probe.json),
+[full-suite delta](./orthogonal-cycles/full-suite-delta.json),
+[seed 14 before](./orthogonal-cycles/dag-14-before.json) and
+[after](./orthogonal-cycles/dag-14-after.json),
+[seed 56 before](./orthogonal-cycles/dag-56-before.json) and
+[after](./orthogonal-cycles/dag-56-after.json),
+[frozen sources and replay scripts](./orthogonal-cycles/sources-and-replays.tar.gz).
