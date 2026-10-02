@@ -12,7 +12,7 @@ parity gate fails. Preserve these regressions in subsequent replays.
 
 # Stately / ELK baseline
 
-Source: `f913778e2fb2d9126f9e744b933e2de5e97ab4db` (working tree includes baseline tooling changes); elkjs 0.11.1. 10 graphs; seeds 130363. Review seed: 20261001; other seeds are fresh evaluation samples, not sealed holdouts after this run.
+Source: `f913778e2fb2d9126f9e744b933e2de5e97ab4db` (uncommitted candidate source changes); elkjs 0.11.1. 10 graphs; seeds 130363. Seed 130363 was already observed; this is regression replay coverage.
 
 All metrics use the same geometry scorer. Lower is better; no combined score or parity claim. Missing/error layouts are reported separately, never dropped or resampled.
 
