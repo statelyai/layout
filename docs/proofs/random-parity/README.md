@@ -53,3 +53,13 @@ retain the full comparison. Native after matches bounds, node/label coordinates
 and route points within the existing floating coordinate tolerance on these six
 fixtures. The full integration suite and random parity gate still fail; these
 local source changes are uncommitted and not a release or broad parity claim.
+
+## Directional center-label phase repair (local WIP)
+
+[Matching image proof](center-label-directions.svg) shows one DOWN non-inline
+fixture before the local phase correction, after correction, and with real ELK
+0.11.1. Input, dimensions, viewport and scale are identical. Native now places
+the label on the same physical side as ELK. The [16 paired directional inputs,
+outputs and source hashes](center-label-directions-results.json) cover four
+layout directions, inline/non-inline, text and missing-text cases. These match
+geometry in focused tests; random and full-suite parity still fail.

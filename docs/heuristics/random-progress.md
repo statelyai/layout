@@ -265,3 +265,40 @@ existing coordinate tolerance. This narrow proof does not replace the failed
 random parity gate or establish hierarchy/direction parity. The completed
 160-input replay above belongs to the earlier frozen prototype, before switching,
 and must not be attributed to this integration.
+
+## Native directional labels and a fresh real-ELK corpus
+
+Native label dummies previously put LEFT/UP input ports on the opposite physical
+face. Four custom-initial-router fixtures now check every label port against its
+declared physical boundary; LEFT/UP fail before correction, all four pass after.
+Vertical label dimensions use a maximum against edge thickness, while horizontal
+labels accumulate their heights. Vertical label sides map to the corresponding
+physical cross-axis sides. These follow the source phase rules, without a bounds
+or half-pixel adjustment. All 16 paired RIGHT/LEFT/DOWN/UP, inline/non-inline,
+text/missing-text fixtures now match bounds, node/label coordinates and routes.
+
+The compatibility importer also requires nonempty edge-label text, just like
+real ELK. Dimensioned missing/empty labels preserve their authored coordinates
+and sizes without reserving layout space. Sixteen exact oracle regressions fail
+against unchanged 683f949 and pass in a source snapshot with only that importer
+correction. [The retained validation report](empty-edge-label-import-probe.json)
+also records four failed legacy assertions that expect textless label boxes to
+participate in layout. Their assertions remain unchanged. The clean broader run
+has 22 passes and four failures; current local phase fixtures have 42 passes.
+Source/repository typechecks, changed-file lint and formatting pass.
+
+[New matching directional image proof](../proofs/random-parity/center-label-directions.svg)
+uses identical input, DOWN direction, dimensions, viewport and scale. The paired
+outputs and source hashes are saved alongside it. The larger native phase,
+including direction/port corrections, remains uncommitted.
+
+A fresh seed was drawn and saved before execution: 3468112780. The current native
+source was hashed before build, and hashes were rechecked after terminal
+completion. [The complete 10-input real-ELK evaluation](vertical-center-fresh-parity/baseline.json)
+retains every graph and output: zero native geometry failures, eight comparable
+outputs and two hierarchical oracle errors (expected hierarchical port counts
+5 and 1, but found 0). ELK wins crossings and bends on all eight comparable
+cases. The strict gate fails. No graphs were discarded or resampled. These
+fresh results belong to the uncommitted native phase, not the shipped importer
+correction alone. Compaction, crossing minimization, route channels and compound
+coordination still need substantial work.
