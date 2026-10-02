@@ -212,3 +212,67 @@ export function elkOrthogonalCycles(data: OrthogonalCycleOracleInput) {
     nextFloat: context.$nextInternal(random, 24) / 2 ** 24,
   };
 }
+
+export interface OrthogonalSegmentsOracleInput {
+  segments: { incoming: number[]; outgoing: number[] }[];
+  conflictThreshold: number;
+  criticalThreshold: number;
+  seed: number;
+}
+export function elkOrthogonalSegments(data: OrthogonalSegmentsOracleInput) {
+  const nodes = data.segments.map((s) => {
+    const n = new context.HyperEdgeSegment(null);
+    for (const value of s.incoming) context.$add_7(n.incomingConnectionCoordinates, value);
+    for (const value of s.outgoing) context.$add_7(n.outgoingConnectionCoordinates, value);
+    context.$recomputeExtent(n);
+    return n;
+  });
+  const list = new context.ArrayList();
+  for (const n of nodes) list.add_2(n);
+  const generator = {
+    conflictThreshold: data.conflictThreshold,
+    criticalConflictThreshold: data.criticalThreshold,
+  };
+  let criticalCount = 0;
+  for (let a = 0; a < nodes.length - 1; a++)
+    for (let b = a + 1; b < nodes.length; b++)
+      criticalCount += context.$createDependencyIfNecessary(generator, nodes[a], nodes[b]);
+  const random = new context.Random();
+  context.$setSeed(random, Math.floor(data.seed / 2 ** 24), data.seed % 2 ** 24);
+  if (criticalCount >= 2)
+    context.$splitSegments(
+      new context.HyperEdgeSegmentSplitter(generator),
+      context.detectCycles(list, true, random),
+      list,
+      data.criticalThreshold,
+    );
+  context.breakNonCriticalCycles(list, random);
+  context.topologicalNumbering(list);
+  const all = Array.from(list.array) as any[];
+  const coords = (values: any) => {
+    const output: number[] = [];
+    const iterator = context.$listIterator_2(values, 0);
+    while (iterator.currentNode !== values.tail) output.push(context.$next_9(iterator));
+    return output;
+  };
+  return {
+    segments: all.map((n) => ({
+      incoming: coords(n.incomingConnectionCoordinates),
+      outgoing: coords(n.outgoingConnectionCoordinates),
+      start: n.startPosition,
+      end: n.endPosition,
+      slot: n.routingSlot,
+      ...(n.splitPartner ? { partner: all.indexOf(n.splitPartner) } : {}),
+      ...(n.splitBy ? { splitBy: all.indexOf(n.splitBy) } : {}),
+    })),
+    dependencies: all.flatMap((n, source) =>
+      Array.from(n.outgoingSegmentDependencies.array, (d: any) => ({
+        source,
+        target: all.indexOf(d.target),
+        critical: d.type_0 === context.CRITICAL,
+        weight: d.weight,
+      })),
+    ),
+    nextFloat: context.$nextInternal(random, 24) / 2 ** 24,
+  };
+}

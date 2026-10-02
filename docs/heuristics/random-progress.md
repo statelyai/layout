@@ -712,3 +712,45 @@ Evidence: [512 complete direct oracle comparisons](./orthogonal-cycles/direct-pr
 [seed 56 before](./orthogonal-cycles/dag-56-before.json) and
 [after](./orthogonal-cycles/dag-56-after.json),
 [frozen sources and replay scripts](./orthogonal-cycles/sources-and-replays.tar.gz).
+
+## Complete orthogonal segment splitting and regular-cycle routing
+
+Replaced the approximate critical-cycle detours and direction-specific regular
+cycle removal with a native port of ELK's segment dependency creation, critical
+split selection, free-area rating/consumption, dependency reconstruction,
+regular-cycle reversal and topological track numbering. The core supports
+multiple incoming/outgoing connections and split partners. The production adapter
+still creates one segment per edge; grouping shared ports into hypersegments
+and matching compound boundary handling remain necessary.
+
+All **1,024** seeded mixed segment graphs match the actual unmodified elkjs worker
+for complete split geometry, dependency order/weights/types, slots and next RNG
+value. Includes source-only, target-only and merged connections; 99 cases split.
+The second 512 include fractional and negative coordinates. The first JSON
+probe reported 925 equal cases because it compared object key insertion order;
+deep strict comparison matches all 1,024, consistent with the unchanged Vitest
+assertion. The original probe is retained in the archive.
+
+Initial integration introduced five LEFT routing failures. Native's physical
+left-to-right endpoints did not match ELK's logical flow. Converting endpoint
+roles and reflecting slots resolves all five without assertion changes. Preserve
+the initial full-suite result: 1,670 pass / 118 fail / 1,788. Corrected sequential
+full suite: **1,675 pass / 113 fail / 1,788**, with exactly the preceding 113
+failure names. All 247 focused local pipeline checks pass; clean HEAD plus this
+selected production change passes 236 tests and source TypeScript. Local source
+and repository TypeScript also pass.
+
+The same ten saved full random inputs retain zero measured native geometry
+defects. Graph 10 improves from 376 to 375 crossings, with 321 bends unchanged;
+the other nine retain identical metrics. Two hierarchy oracle errors remain
+visible. The broad quality gate still fails: graph 10 has 375 crossings/321
+bends versus real ELK's 125/274. PR remains draft; full parity is unproven.
+
+[Complete 1,024 oracle inputs/outputs](./segment-engine/direct-probe.json),
+[full native random replay](./segment-engine/native-random-probe.json),
+[initial/corrected full-suite delta](./segment-engine/full-suite-delta.json),
+[same-scale Stately / real ELK diagrams](./segment-engine/index.html),
+and [frozen source/replay archive](./segment-engine/sources-and-replays.tar.gz).
+Browser verification confirmed paired diagrams and visible oracle errors.
+Next: build the same connected shared-port hypersegments as ELK, then align
+compound boundary preprocessing and replay the broader parity corpus.

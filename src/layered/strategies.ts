@@ -1,4 +1,4 @@
-import { detectOrthogonalCycles, type OrthogonalDependency } from "./orthogonal-cycle-order";
+import { routeOrthogonalSegments } from "./orthogonal-segments";
 import { recordCycleRandom, crossingRandom, phaseRandomByInput } from "./cycle-random";
 import type { EntityRect, GraphEdge, GraphNode, GraphPort, Point } from "@statelyai/graph";
 import { LayoutError } from "../errors";
@@ -3814,7 +3814,12 @@ function routeEdges(style: "ORTHOGONAL" | "POLYLINE" | "SPLINES"): EdgeRouter {
         // so dependency-cycle tie breaking observes cross-axis order.
         candidates.sort(
           (left, right) =>
-            left.sourceCross - right.sourceCross || left.targetCross - right.targetCross,
+            (increasing
+              ? left.sourceCross - right.sourceCross
+              : left.targetCross - right.targetCross) ||
+            (increasing
+              ? left.targetCross - right.targetCross
+              : left.sourceCross - right.sourceCross),
         );
         const minimumDifference = (values: readonly number[]) => {
           const distinct = [...new Set(values)].sort((left, right) => left - right);
@@ -3830,261 +3835,33 @@ function routeEdges(style: "ORTHOGONAL" | "POLYLINE" | "SPLINES"): EdgeRouter {
             minimumDifference(candidates.map(({ sourceCross }) => sourceCross)),
             minimumDifference(candidates.map(({ targetCross }) => targetCross)),
           );
-        const dependencies = candidates.map(() => new Set<number>());
-        const dependencyWeights = candidates.map(() => new Map<number, number>());
-        const criticalDependencies = new Set<string>();
-        const addDependency = (source: number, target: number, critical = false, weight = 1) => {
-          dependencies[source]?.add(target);
-          dependencyWeights[source]?.set(target, weight);
-          if (critical) criticalDependencies.add(`${source}:${target}`);
-        };
-        const removeDependency = (source: number, target: number) => {
-          dependencies[source]?.delete(target);
-          dependencyWeights[source]?.delete(target);
-          criticalDependencies.delete(`${source}:${target}`);
-        };
-        const conflicts = (left: number, right: number) => {
-          const difference = Math.abs(left - right);
-          if (difference < criticalThreshold) return -1;
-          return difference < 0.5 * edgeEdgeSpacing ? 1 : 0;
-        };
-        const crossesExtent = (position: number, candidate: (typeof candidates)[number]) =>
-          position >= Math.min(candidate.sourceCross, candidate.targetCross) &&
-          position <= Math.max(candidate.sourceCross, candidate.targetCross)
-            ? 1
-            : 0;
-
-        for (let left = 0; left < candidates.length - 1; left++) {
-          for (let right = left + 1; right < candidates.length; right++) {
-            const first = candidates[left]!;
-            const second = candidates[right]!;
-            if (first.straight || second.straight) continue;
-            const conflictsFirst = conflicts(first.targetCross, second.sourceCross);
-            const conflictsSecond = conflicts(second.targetCross, first.sourceCross);
-            if (conflictsFirst < 0 || conflictsSecond < 0) {
-              if (conflictsFirst < 0) addDependency(right, left, true);
-              if (conflictsSecond < 0) addDependency(left, right, true);
-              continue;
-            }
-            const firstPenalty =
-              conflictsFirst +
-              16 *
-                (crossesExtent(first.targetCross, second) +
-                  crossesExtent(second.sourceCross, first));
-            const secondPenalty =
-              conflictsSecond +
-              16 *
-                (crossesExtent(second.targetCross, first) +
-                  crossesExtent(first.sourceCross, second));
-            if (firstPenalty < secondPenalty)
-              addDependency(left, right, false, secondPenalty - firstPenalty);
-            else if (firstPenalty > secondPenalty)
-              addDependency(right, left, false, firstPenalty - secondPenalty);
-            else if (firstPenalty > 0) {
-              addDependency(left, right, false, 0);
-              addDependency(right, left, false, 0);
-            }
-          }
-        }
-
-        if (input.direction === "left") {
-          for (let left = 0; left < candidates.length - 1; left++) {
-            for (let right = left + 1; right < candidates.length; right++) {
-              const leftDummy = candidates[left]!.edge.id.includes("::segment:");
-              const rightDummy = candidates[right]!.edge.id.includes("::segment:");
-              if (leftDummy === rightDummy) continue;
-              const dummy = leftDummy ? left : right;
-              const ordinary = leftDummy ? right : left;
-              const candidate = candidates[dummy]!;
-              if (
-                Math.abs(candidate.sourceCross - candidate.targetCross) < edgeEdgeSpacing &&
-                dependencies[dummy]?.has(ordinary)
-              ) {
-                removeDependency(dummy, ordinary);
-                dependencies[ordinary]?.add(dummy);
-                dependencyWeights[ordinary]?.set(dummy, 1);
-              }
-            }
-          }
-        }
-
-        const nonStraight = candidates.filter(({ straight }) => !straight);
-        if (criticalDependencies.size >= 2) {
-          const graph: OrthogonalDependency[] = dependencyWeights.flatMap((targets, source) =>
-            [...targets].map(([target, weight]) => ({
-              source,
-              target,
-              weight,
-              critical: criticalDependencies.has(`${source}:${target}`),
-            })),
-          );
-          const random =
-            phaseRandomByInput.get(input) ?? new JavaRandom(input.settings.randomSeed ?? 1);
-          const cycle = detectOrthogonalCycles(candidates.length, graph, true, random);
-          const split = new Set<number>();
-          for (const dependency of cycle.backwards) {
-            const { source, target } = dependency;
-            // The cycle detector's backwards dependency selects the split source,
-            // not the randomly selected ordering source (which is its opposite).
-            if (split.has(source) || split.has(target)) continue;
-            if (!dependencies[target]?.has(source)) continue;
-            const detour = candidates[source]!,
-              central = candidates[target]!;
-            detour.slot = 0;
-            detour.secondSlot = 2;
-            detour.crossover = (detour.sourceCross + central.sourceCross) / 2;
-            central.slot = 1;
-            removeDependency(source, target);
-            removeDependency(target, source);
-            split.add(source);
-          }
-        }
-
-        if (horizontal) {
-          for (let left = 0; left < candidates.length - 1; left++) {
-            for (let right = left + 1; right < candidates.length; right++) {
-              if (
-                dependencies[left]?.has(right) &&
-                dependencies[right]?.has(left) &&
-                !criticalDependencies.has(`${left}:${right}`) &&
-                !criticalDependencies.has(`${right}:${left}`)
-              ) {
-                const lowerSource =
-                  candidates[left]!.sourceCross < candidates[right]!.sourceCross ? left : right;
-                const higherSource = lowerSource === left ? right : left;
-                removeDependency(lowerSource, higherSource);
-              }
-            }
-          }
-
-          const visiting = new Set<number>();
-          const visited = new Set<number>();
-          const removeCycles = (source: number) => {
-            visiting.add(source);
-            for (const target of dependencies[source] ?? []) {
-              if (visiting.has(target)) removeDependency(source, target);
-              else if (!visited.has(target)) removeCycles(target);
-            }
-            visiting.delete(source);
-            visited.add(source);
-          };
-          for (let index = 0; index < candidates.length; index++) removeCycles(index);
-        } else {
-          const marks = candidates.map((_, index) => -index - 1);
-          const inWeight = candidates.map(() => 0);
-          const outWeight = candidates.map(() => 0);
-          for (const [source, targets] of dependencyWeights.entries()) {
-            for (const [target, weight] of targets) {
-              outWeight[source] = (outWeight[source] ?? 0) + weight;
-              inWeight[target] = (inWeight[target] ?? 0) + weight;
-            }
-          }
-          const sources = inWeight.flatMap((weight, index) =>
-            weight === 0 && (outWeight[index] ?? 0) > 0 ? [index] : [],
-          );
-          const sinks = outWeight.flatMap((weight, index) => (weight === 0 ? [index] : []));
-          const unprocessed = new Set(candidates.map((_, index) => index));
-          const update = (node: number) => {
-            for (const [target, weight] of dependencyWeights[node] ?? []) {
-              if (!unprocessed.has(target) || weight <= 0) continue;
-              inWeight[target] = (inWeight[target] ?? 0) - weight;
-              if ((inWeight[target] ?? 0) <= 0 && (outWeight[target] ?? 0) > 0)
-                sources.push(target);
-            }
-            for (let source = 0; source < candidates.length; source++) {
-              const weight = dependencyWeights[source]?.get(node);
-              if (!unprocessed.has(source) || weight === undefined || weight <= 0) continue;
-              outWeight[source] = (outWeight[source] ?? 0) - weight;
-              if ((outWeight[source] ?? 0) <= 0 && (inWeight[source] ?? 0) > 0) sinks.push(source);
-            }
-          };
-          const random =
-            phaseRandomByInput.get(input) ?? new JavaRandom(input.settings.randomSeed ?? 1);
-          const markBase = candidates.length;
-          let nextSink = markBase - 1;
-          let nextSource = markBase + 1;
-          while (unprocessed.size > 0) {
-            while (sinks.length > 0) {
-              const sink = sinks.shift()!;
-              if (!unprocessed.delete(sink)) continue;
-              marks[sink] = nextSink--;
-              update(sink);
-            }
-            while (sources.length > 0) {
-              const source = sources.shift()!;
-              if (!unprocessed.delete(source)) continue;
-              marks[source] = nextSource++;
-              update(source);
-            }
-            if (unprocessed.size === 0) break;
-            const ordered = [...unprocessed].sort((left, right) => marks[left]! - marks[right]!);
-            let maximum = Number.NEGATIVE_INFINITY;
-            let maxima: number[] = [];
-            for (const candidate of ordered) {
-              const outflow = (outWeight[candidate] ?? 0) - (inWeight[candidate] ?? 0);
-              if (outflow > maximum) {
-                maximum = outflow;
-                maxima = [candidate];
-              } else if (outflow === maximum) maxima.push(candidate);
-            }
-            const selected = maxima[random.nextInt(maxima.length)]!;
-            unprocessed.delete(selected);
-            marks[selected] = nextSource++;
-            update(selected);
-          }
-          const shift = candidates.length + 1;
-          for (let index = 0; index < marks.length; index++) {
-            if (marks[index]! < markBase) marks[index]! += shift;
-          }
-          const reversed: Array<[number, number, number]> = [];
-          for (const [source, targets] of dependencyWeights.entries()) {
-            for (const [target, weight] of targets) {
-              if (
-                marks[source]! <= marks[target]! ||
-                criticalDependencies.has(`${source}:${target}`)
-              )
-                continue;
-              removeDependency(source, target);
-              if (weight > 0) reversed.push([target, source, weight]);
-            }
-          }
-          for (const [source, target, weight] of reversed)
-            addDependency(source, target, false, weight);
-        }
-
-        const incoming = candidates.map(() => 0);
-        for (const targets of dependencies) {
-          for (const target of targets) incoming[target] = (incoming[target] ?? 0) + 1;
-        }
-        const queue = incoming.flatMap((count, index) => (count === 0 ? [index] : []));
-        let maximumSlot = Math.max(
-          0,
-          ...candidates.map(({ secondSlot, slot }) => secondSlot ?? slot ?? 0),
+        const random =
+          phaseRandomByInput.get(input) ?? new JavaRandom(input.settings.randomSeed ?? 1);
+        const result = routeOrthogonalSegments(
+          candidates.map((candidate) => ({
+            incoming: [increasing ? candidate.sourceCross : candidate.targetCross],
+            outgoing: [increasing ? candidate.targetCross : candidate.sourceCross],
+          })),
+          0.5 * edgeEdgeSpacing,
+          criticalThreshold,
+          random,
         );
-        for (let queueIndex = 0; queueIndex < queue.length; queueIndex++) {
-          const source = queue[queueIndex]!;
-          const sourceSlot = candidates[source]?.slot ?? 0;
-          for (const target of dependencies[source] ?? []) {
-            const targetCandidate = candidates[target];
-            if (!targetCandidate) continue;
-            targetCandidate.slot = Math.max(targetCandidate.slot ?? 0, sourceSlot + 1);
-            maximumSlot = Math.max(maximumSlot, targetCandidate.slot);
-            incoming[target]!--;
-            if (incoming[target] === 0) queue.push(target);
+        let maximumSlot = -1;
+        for (const segment of result.segments) {
+          if (Math.abs(segment.start - segment.end) >= 1e-3)
+            maximumSlot = Math.max(maximumSlot, segment.slot);
+        }
+        for (const [index, candidate] of candidates.entries()) {
+          const segment = result.segments[index]!;
+          candidate.slot = increasing ? segment.slot : maximumSlot - segment.slot;
+          if (segment.partner !== undefined) {
+            const partner = result.segments[segment.partner]!;
+            candidate.secondSlot = increasing ? partner.slot : maximumSlot - segment.slot;
+            if (!increasing) candidate.slot = maximumSlot - partner.slot;
+            candidate.crossover = segment.outgoing[0];
           }
         }
-        // ELK's topological numbering moves target-only hyperedge segments to
-        // the rightmost slot. Ordinary edges map to those segments here; long-
-        // edge dummy segments retain their dependency-derived rank.
-        for (const candidate of nonStraight) {
-          if (
-            !candidate.edge.id.includes("::segment:") &&
-            Math.abs(candidate.sourceCross - candidate.targetCross) < edgeEdgeSpacing / 2
-          ) {
-            candidate.slot = maximumSlot;
-          }
-        }
-        return nonStraight.length === 0 ? 0 : maximumSlot + 1;
+        return maximumSlot + 1;
       });
 
       const existingGapByLayer = flowLayers
