@@ -1,7 +1,12 @@
 import type { VisualGraph } from "@statelyai/graph";
 import type { LayeredLayoutOptions } from "./types";
 import { routeCrosses } from "../authoring/routing";
-import { orthogonalRouting, routeToPolylines } from "../routing";
+import {
+  orthogonalRouting,
+  routeToPolylines,
+  type EdgeRoutingSettings,
+  type RouteSide,
+} from "../routing";
 import { recordRouteGeometry } from "../routing/layout-cache";
 
 /** Keep valid layered tracks; repair infeasible port leads and obstacle crossings. */
@@ -126,9 +131,66 @@ export function repairFlatRouting<N, E, G, P>(
       edge.y = best.y;
     }
   }
+  const nodes = new Map(graph.nodes.map((node) => [node.id, node]));
+  const fixedImplicitSide = (
+    nodeId: string,
+    portName: string | undefined,
+    point: { x: number; y: number } | undefined,
+    away: { x: number; y: number } | undefined,
+  ): RouteSide | undefined => {
+    const node = nodes.get(nodeId);
+    if (
+      !node ||
+      portName !== undefined ||
+      !point ||
+      !["FIXED_SIDE", "FIXED_ORDER", "FIXED_RATIO", "FIXED_POS"].includes(
+        String(options.nodeSettings?.(node)?.portConstraints),
+      )
+    )
+      return undefined;
+    // Fixed implicit attachments are assigned before reversal. Repair must
+    // preserve the initial face, including special self-loop attachments.
+    const faces: [RouteSide, number][] = [
+      ["left", Math.abs(point.x - node.x)],
+      ["right", Math.abs(point.x - node.x - node.width)],
+      ["top", Math.abs(point.y - node.y)],
+      ["bottom", Math.abs(point.y - node.y - node.height)],
+    ];
+    const leadSide: RouteSide | undefined =
+      away && (Math.abs(away.x - point.x) > 1e-8 || Math.abs(away.y - point.y) > 1e-8)
+        ? Math.abs(away.x - point.x) >= Math.abs(away.y - point.y)
+          ? away.x > point.x
+            ? "right"
+            : "left"
+          : away.y > point.y
+            ? "bottom"
+            : "top"
+        : undefined;
+    faces.sort((a, b) => a[1] - b[1] || Number(b[0] === leadSide) - Number(a[0] === leadSide));
+    return faces[0]![1] < 1e-6 ? faces[0]![0] : undefined;
+  };
+  const attachments: Record<string, EdgeRoutingSettings> = Object.fromEntries(
+    graph.edges.map((edge) => [
+      edge.id,
+      {
+        sourceSide: fixedImplicitSide(
+          edge.sourceId,
+          edge.sourcePort,
+          edge.points?.[0],
+          edge.points?.[1],
+        ),
+        targetSide: fixedImplicitSide(
+          edge.targetId,
+          edge.targetPort,
+          edge.points?.at(-1),
+          edge.points?.at(-2),
+        ),
+      },
+    ]),
+  );
   const snapshot = orthogonalRouting.route(
     { ...graph, edges },
-    { coordinateSpace: "world", maxSearchNodes: 40000 },
+    { coordinateSpace: "world", maxSearchNodes: 40000, edges: attachments },
   );
   const result = {
     ...graph,
