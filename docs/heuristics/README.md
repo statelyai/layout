@@ -118,3 +118,5 @@ The [160-graph random evaluation](random-progress.md) records the current native
 phase/routing corrections, a replay of observed counterexamples, and a fresh
 random draw against real ELK. The strict parity gate still fails on crossings
 and bends. Full per-graph results and matching visual proof remain available.
+
+The [constraint orientation probe](constraint-orientation-probe.md) retains ten further measurements, including larger-case quality regressions. It precedes the later fixed-endpoint repair; parity still fails.
