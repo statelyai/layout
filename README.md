@@ -371,3 +371,9 @@ initial-state and preferred-path hints into scoped settings, then selects among
 at most three fresh layout attempts. It returns all quality scores, including
 remaining defects. See [statechart policies](docs/statechart-layout.md) for the
 API, supported controls, tradeoffs and reproducible visual comparison.
+
+For the strict seeded hierarchy comparison with real ELK, run
+`pnpm test:parity:compound`. See the
+[compound baseline](./docs/heuristics/compound-baseline/README.md) for preserved
+failures and side-by-side diagrams. This gate currently fails; native parity
+remains work in progress.

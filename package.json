@@ -95,7 +95,8 @@
     "validate:package": "publint --pack npm && tsx scripts/smoke-package.ts",
     "storybook": "storybook dev -p 6018 --host 127.0.0.1 --no-open",
     "storybook:build": "storybook build -o dist-storybook",
-    "storybook:typecheck": "tsc --project stories/tsconfig.json"
+    "storybook:typecheck": "tsc --project stories/tsconfig.json",
+    "test:parity:compound": "tsx scripts/check-compound-parity.ts"
   },
   "dependencies": {
     "@lume/kiwi": "^0.4.4",

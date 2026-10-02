@@ -1,0 +1,83 @@
+diff --git a/src/elkjs/index.ts b/src/elkjs/index.ts
+index 36982f9..7884e0a 100644
+--- a/src/elkjs/index.ts
++++ b/src/elkjs/index.ts
+@@ -136,6 +136,7 @@ export default class ELK {
+   async #layout<T extends ElkNode>(
+     graph: T,
+     arguments_: ElkLayoutArguments = {},
++    compoundLayout = false,
+   ): Promise<LaidOutElkNode<T>> {
+     const startedAt = performance.now();
+     if (graph === undefined || graph === null) {
+@@ -383,7 +384,7 @@ export default class ELK {
+           },
+           logging: false,
+           measureExecutionTime: false,
+-        });
++        }, true);
+         const childPadding = parsePadding(
+           getOption({ ...layoutOptions, ...child.layoutOptions }, "padding"),
+           12,
+@@ -629,6 +630,11 @@ export default class ELK {
+                       },
+                       settings: {
+                         ...getLayeredSettings(layoutOptions),
++                        // ELK's compound pipeline runs each scope directly; it
++                        // never splits and packs disconnected components.
++                        ...((compoundLayout || (hasHierarchy && !separateHierarchy && !topdownLayout))
++                          ? { separateConnectedComponents: false }
++                          : {}),
+                         ...(hierarchyHandling === "INCLUDE_CHILDREN" &&
+                         getOption(
+                           layoutOptions,
+@@ -719,49 +725,6 @@ export default class ELK {
+           }
+         }
+       }
+-      const modelOrder = new Map(
+-        (graph.children ?? []).map((node, index) => [String(node.id), index]),
+-      );
+-      const flowLayers = new Map<number, (typeof laidOut.nodes)[number][]>();
+-      for (const node of laidOut.nodes) {
+-        const flow = horizontal ? (node.x ?? 0) : (node.y ?? 0);
+-        const layer = flowLayers.get(flow) ?? [];
+-        layer.push(node);
+-        flowLayers.set(flow, layer);
+-      }
+-      for (const layer of flowLayers.values()) {
+-        layer.sort(
+-          (left, right) =>
+-            (modelOrder.get(left.id) ?? Number.MAX_SAFE_INTEGER) -
+-            (modelOrder.get(right.id) ?? Number.MAX_SAFE_INTEGER),
+-        );
+-        let crossEnd = Number.NEGATIVE_INFINITY;
+-        for (const node of layer) {
+-          const authoredCross = horizontal ? (node.y ?? 0) : (node.x ?? 0);
+-          const compactedCross = Math.max(
+-            authoredCross,
+-            crossEnd === Number.NEGATIVE_INFINITY ? authoredCross : crossEnd + nodeSpacing,
+-          );
+-          const delta = compactedCross - authoredCross;
+-          if (horizontal) node.y = compactedCross;
+-          else node.x = compactedCross;
+-          if (Math.abs(delta) > 1e-9) {
+-            for (const edge of laidOut.edges) {
+-              const points = edge.points;
+-              if (!points || points.length === 0) continue;
+-              if (edge.sourceId === node.id) {
+-                if (horizontal) points[0]!.y += delta;
+-                else points[0]!.x += delta;
+-              }
+-              if (edge.targetId === node.id) {
+-                if (horizontal) points.at(-1)!.y += delta;
+-                else points.at(-1)!.x += delta;
+-              }
+-            }
+-          }
+-          crossEnd = compactedCross + (horizontal ? node.height : node.width);
+-        }
+-      }
+       const edgeNodeSpacing = getNumberOption(layoutOptions, "spacing.edgeNodeBetweenLayers") ?? 10;
+       for (const restoration of hierarchyRestorations) {
+         const nativeEdge = laidOut.edges.find((edge) => edge.id === String(restoration.edge.id));

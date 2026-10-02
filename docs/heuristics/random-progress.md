@@ -826,3 +826,22 @@ and [source/validation archive](./joined-compaction/sources-and-replays.tar.gz).
 
 Next: align compound boundary preprocessing and the remaining label/feedback
 geometry against real ELK. Keep PR draft and the goal active.
+
+## Reproducible compound phase baseline
+
+Added a strict 100-case hierarchy gate (`pnpm test:parity:compound`): 25 fixed
+seeds × four directions, retaining every cross-boundary input and complete
+native/real ELK outputs. At native commit `93293b0`, zero complete matches,
+5,612 differing values and zero engine errors. Numeric comparisons retain the
+existing 12-decimal oracle tolerance. Endpoint/container ownership and complete
+route sections are included, not just crossings or bends.
+
+The real worker trace proves the compound pipeline bypasses component packing
+and uses external-port dummies, shared hierarchy phase boundaries and
+parent-port geometry transfer. A partial component-only fix was tested and
+reverted because it broke the existing explicit descendant-port case. No
+production change or claim of hierarchy parity was retained.
+
+[Inputs, differences, rejected experiment and phase diagnosis](./compound-baseline/README.md)
+and [100 equal-scale native / real ELK comparisons](./compound-baseline/index.html)
+are retained. The native external-port hierarchy foundation remains required.

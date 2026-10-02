@@ -123,3 +123,9 @@ before cycle breaking. Real elkjs regressions cover mixed shared and separate
 WEST ports, whole feedback nodes, and preservation of implicit fixed endpoint
 sides in all four layout directions. These close specific fidelity gaps;
 random crossing and bend parity remains incomplete.
+
+`pnpm test:parity:compound` runs a reproducible 100-case hierarchy gate against
+real elkjs and exits nonzero for any geometry, ownership or engine-error
+mismatch. Its [initial baseline and phase diagnosis](./heuristics/compound-baseline/README.md)
+retains all failing inputs and equal-scale comparisons. All 100 currently fail;
+the existing small hierarchy examples do not demonstrate general parity.
