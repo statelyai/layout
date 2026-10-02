@@ -95,3 +95,5 @@ where both engines return a layout; failures remain listed separately. Reports
 retain individual metrics,
 engine failures, source revision, working-tree state, elkjs version, and scorer
 and generator hashes. They do not measure runtime or establish aesthetic parity.
+
+The [routing repair report](after-routing-repair.md) and [raw results](after-routing-repair.json) preserve the same 30 inputs and scorer after the correctness fixes. The initial baseline remains unchanged. Matching visual proof is in [native routing repair](../proofs/native-routing/README.md).
