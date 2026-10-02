@@ -544,13 +544,68 @@ export function routeEdge(
   function connection(a: Terminal, b: Terminal, via: readonly RoutePoint[] = []): RoutePath {
     let path: RoutePath | undefined, preferred: RoutePath | undefined;
     if (distance(a.point, b.point) < 1e-8 && !via.length) {
-      report("CONSTRAINT_VIOLATION", "Coincident terminals; rendered a visible loop fallback");
+      const v = vector(a.side),
+        tangent = { x: -v.y, y: v.x };
       const gap = config.clearance + config.edgeSpacing + 10;
+      const candidates: RoutePath[] = [];
+      // A loop at one port must extend out along that port's normal. The
+      // common initial/return lead stays inside the shared attachment region.
+      for (const extent of [
+        config.clearance + 1,
+        (config.clearance + 1) * 2,
+        gap,
+        gap * 2,
+        gap * 3,
+      ])
+        for (const sign of [1, -1]) {
+          const lead = Math.min(config.clearance + 1, extent / 3);
+          const at = (normal: number, lateral: number) => ({
+            x: a.point.x + v.x * normal + tangent.x * lateral,
+            y: a.point.y + v.y * normal + tangent.y * lateral,
+          });
+          const candidate = pathFromPoints([
+            a.point,
+            at(lead, 0),
+            at(lead, sign * extent),
+            at(extent, sign * extent),
+            at(extent, 0),
+            b.point,
+          ]);
+          if (safe(candidate, context)) candidates.push(candidate);
+        }
+      if (!candidates.length) {
+        // Optional clearance may hide a real corridor beside a label or node.
+        const hard = contextFor(
+          state,
+          excluded,
+          new Set([`n:${edge.sourceId}`, `n:${edge.targetId}`, `e:${edge.id}`]),
+          metrics,
+          batch,
+          -config.clearance,
+        );
+        for (const extent of [config.clearance + 1, gap, gap * 2])
+          for (const sign of [1, -1]) {
+            const at = (normal: number, lateral: number) => ({
+              x: a.point.x + v.x * normal + tangent.x * lateral,
+              y: a.point.y + v.y * normal + tangent.y * lateral,
+            });
+            const candidate = pathFromPoints([
+              a.point,
+              at(1, 0),
+              at(1, sign * extent),
+              at(extent, sign * extent),
+              at(extent, 0),
+              b.point,
+            ]);
+            if (safe(candidate, hard)) candidates.push(candidate);
+          }
+      }
+      candidates.sort((x, y) => pathCost(x, context) - pathCost(y, context));
+      if (candidates.length) return candidates[0]!;
+      report("CONSTRAINT_VIOLATION", "Coincident terminals; no clear outward loop corridor");
       return pathFromPoints([
         a.point,
-        { x: a.point.x + gap, y: a.point.y },
-        { x: a.point.x + gap, y: a.point.y - gap },
-        { x: a.point.x, y: a.point.y - gap },
+        { x: a.point.x + v.x * gap, y: a.point.y + v.y * gap },
         b.point,
       ]);
     }
@@ -587,8 +642,20 @@ export function routeEdge(
       }
     }
     if (!path) {
-      const start = stub(a),
-        end = stub(b),
+      const alignedFacing =
+        (a.point.x === b.point.x || a.point.y === b.point.y) &&
+        (b.point.x - a.point.x) * vector(a.side).x + (b.point.y - a.point.y) * vector(a.side).y >
+          0 &&
+        (a.point.x - b.point.x) * vector(b.side).x + (a.point.y - b.point.y) * vector(b.side).y > 0;
+      const boundedStub = (t: Terminal) => {
+        const p = stub(t),
+          gap = distance(a.point, b.point) / 3;
+        if (!alignedFacing || distance(t.point, p) <= gap) return p;
+        const v = vector(t.side);
+        return { x: t.point.x + v.x * gap, y: t.point.y + v.y * gap };
+      };
+      const start = boundedStub(a),
+        end = boundedStub(b),
         waypoints = [...via];
       if (style === "parallel" && peers.length > 1) {
         // Find a feasible corridor before choosing lanes; an arbitrary midpoint

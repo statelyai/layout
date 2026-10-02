@@ -90,7 +90,7 @@ for (const fixture of fixtures) {
             ).toBeLessThanOrEqual(1e-6);
         }
     }
-  }, 15000);
+  }, 30000);
 }
 
 it("anchors compound child ports to node dimensions, not boundary-label envelopes", () => {

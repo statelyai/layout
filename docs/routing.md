@@ -117,13 +117,19 @@ Unrelated groups are routed in stable ID order with soft crossing and parallel-o
 
 Label sections reserve their already drawn leg so the return leg avoids retracing
 it. If both endpoints face the same label side, the exit uses the opposite side.
-Terminal leads cannot reverse immediately back over themselves. When preferred
+Terminal leads cannot reverse immediately back over themselves. Near-identical
+fractional visibility-grid tracks are merged so tiny steps cannot bypass that
+constraint. Facing leads in a short aligned gap are shortened to avoid overlap.
+Coincident-port loops follow the port's outward normal, trying smaller corridors
+when neighboring geometry blocks the larger loop. When preferred
 clearance or soft reservations prevent routing, orthogonal-family strategies
-retry against actual obstacle bounds within the remaining search budget, then
+first try bounded, conflict-free two-bend corridors, then retry against actual
+obstacle bounds within the remaining search budget and
 attempt bounded conflict reduction without discarding the feasible path.
 
-Native layered layout repairs flat tracks that cross node interiors and moves
-colliding labels clear of nodes and port leads before rerouting. Compound ports
+Native layered layout repairs flat tracks that cross node interiors, as well as
+label-only collisions. Label clearance accounts for positioned port centers and
+their exit leads before rerouting. Compound ports
 use actual node dimensions rather than boundary-label envelopes. Parent/child
 connections use inward content attachments in both directions, choosing a clear
 content side when a child blocks the preferred lead. Layered completion uses a

@@ -16,23 +16,46 @@ export function repairFlatRouting<N, E, G, P>(
     options.strategies?.routeEdges
   )
     return graph;
-  if (!graph.edges.some((edge) => graph.nodes.some((node) => routeCrosses(edge.points, node))))
-    return graph;
-  const edges = graph.edges.map((edge) => ({ ...edge }));
   const overlaps = (
     a: { x: number; y: number; width: number; height: number },
     b: { x: number; y: number; width: number; height: number },
   ) => a.x < b.x + b.width && a.x + a.width > b.x && a.y < b.y + b.height && a.y + a.height > b.y;
+  // Leave room for port centers outside the node and their 9px exit leads.
+  const portClearance = (n: (typeof graph.nodes)[number]) => {
+    const reach = Math.max(
+      0,
+      ...(n.ports ?? []).flatMap((p) => [
+        -(p.x ?? 0) - (p.width ?? 0) / 2,
+        -(p.y ?? 0) - (p.height ?? 0) / 2,
+        (p.x ?? 0) + (p.width ?? 0) / 2 - n.width,
+        (p.y ?? 0) + (p.height ?? 0) / 2 - n.height,
+      ]),
+    );
+    const margin = 9 + reach;
+    return {
+      x: n.x - margin,
+      y: n.y - margin,
+      width: n.width + 2 * margin,
+      height: n.height + 2 * margin,
+    };
+  };
+  const labels = graph.edges.filter((e) => e.width > 0 && e.height > 0);
+  const labelCollision = labels.some(
+    (e, i) =>
+      graph.nodes.some((n) => overlaps(e, portClearance(n))) ||
+      labels.slice(i + 1).some((other) => overlaps(e, other)),
+  );
+  if (
+    !labelCollision &&
+    !graph.edges.some((edge) => graph.nodes.some((node) => routeCrosses(edge.points, node)))
+  )
+    return graph;
+  const edges = graph.edges.map((edge) => ({ ...edge }));
   // The original track may put an exterior label partly inside a node. Move
   // only colliding labels before routing their actual boundary connections.
   for (const edge of edges.filter((e) => e.width > 0 && e.height > 0)) {
     const obstacles = [
-      ...graph.nodes.map((n) => ({
-        x: n.x - 8,
-        y: n.y - 8,
-        width: n.width + 16,
-        height: n.height + 16,
-      })),
+      ...graph.nodes.map(portClearance),
       ...edges.filter((e) => e.id !== edge.id && e.width > 0 && e.height > 0),
     ];
     if (!obstacles.some((rect) => overlaps(edge, rect))) continue;

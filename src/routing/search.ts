@@ -121,6 +121,39 @@ export function findPath(
     )
       return candidates[0];
   }
+  if (style === "orthogonal") {
+    // Try clear two-bend corridors before constructing a large visibility grid.
+    // Peer guides supply separated lanes; only conflict-free, forward-facing
+    // paths qualify, so this shortcut does not trade validity for speed.
+    const area = inflate(segmentBounds(start, end), 32);
+    const rects = [...context.obstacles(area), ...(context.guides?.(area) ?? [])];
+    const tracks = (axis: "x" | "y") => {
+      const size = axis === "x" ? "width" : "height";
+      const mid = (start[axis] + end[axis]) / 2;
+      return [...new Set([mid, ...rects.flatMap((r) => [r[axis], r[axis] + r[size]])])]
+        .sort((a, b) => Math.abs(a - mid) - Math.abs(b - mid))
+        .slice(0, 24);
+    };
+    const candidates = [
+      ...tracks("x").map((x) => simplify([start, { x, y: start.y }, { x, y: end.y }, end])),
+      ...tracks("y").map((y) => simplify([start, { x: start.x, y }, { x: end.x, y }, end])),
+    ].filter(
+      (points) =>
+        points.length > 1 &&
+        attachmentCost(points) === 0 &&
+        points
+          .slice(1)
+          .every(
+            (p, i) =>
+              clear(points[i]!, p, context) && (context.edgeCost?.(points[i]!, p) ?? 0) === 0,
+          ),
+    );
+    const cost = (points: RoutePoint[]) =>
+      points.slice(1).reduce((sum, p, i) => sum + distance(points[i]!, p), 0) +
+      (points.length - 2) * context.bendPenalty;
+    candidates.sort((a, b) => cost(a) - cost(b));
+    if (candidates.length) return candidates[0];
+  }
   for (let attempt = 0; attempt < 5 && context.visited < context.maxSearchNodes; attempt++) {
     const area = inflate(segmentBounds(start, end), 32 * 2 ** attempt);
     const guides = context.guides?.(area) ?? [];
@@ -136,12 +169,33 @@ export function findPath(
       points = [start, end, ...corners];
       neighbors = () => points.map((_, i) => i);
     } else {
-      const xs = [
-        ...new Set([start.x, end.x, area.x, area.x + area.width, ...corners.map((p) => p.x)]),
-      ].sort((a, b) => a - b);
-      const ys = [
-        ...new Set([start.y, end.y, area.y, area.y + area.height, ...corners.map((p) => p.y)]),
-      ].sort((a, b) => a - b);
+      // Fractional compound offsets can produce almost-identical grid tracks.
+      // Zero-length steps between them bypass terminal direction constraints.
+      const coordinates = (values: number[]) => {
+        const endpoints = values.slice(0, 2);
+        const sorted = [...values].sort((a, b) => a - b);
+        const unique: number[] = [];
+        for (const value of sorted) {
+          if (unique.length && Math.abs(value - unique.at(-1)!) < 1e-8) continue;
+          unique.push(value);
+        }
+        // Preserve exact terminal values so reconstructed leads stay aligned.
+        return unique.map((value) => endpoints.find((p) => Math.abs(p - value) < 1e-8) ?? value);
+      };
+      const xs = coordinates([
+        start.x,
+        end.x,
+        area.x,
+        area.x + area.width,
+        ...corners.map((p) => p.x),
+      ]);
+      const ys = coordinates([
+        start.y,
+        end.y,
+        area.y,
+        area.y + area.height,
+        ...corners.map((p) => p.y),
+      ]);
       if (xs.length * ys.length > maxGridNodes) {
         context.budgetExceeded = true;
         return undefined;
