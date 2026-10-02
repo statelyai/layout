@@ -67,3 +67,115 @@ export function elkResolveConstraints(data: ConstraintOracleInput): {
     ),
   };
 }
+
+export interface BarycenterOracleInput {
+  layer: string[];
+  visits: [string, (number | string)[]][];
+  associates: [string, string[]][];
+  seed: number;
+  forward: boolean;
+}
+/** Real LPorts/LEdges preserve the supplied port and incident-edge visitation order. */
+export function elkAssociatedBarycenters(data: BarycenterOracleInput): {
+  scores: Record<string, number | undefined>;
+  nextFloat: number;
+} {
+  const graph = new context.LGraph();
+  const free = new context.Layer(graph),
+    fixed = new context.Layer(graph);
+  free.id_0 = 0;
+  fixed.id_0 = 1;
+  const nodes = data.layer.map((id, index) => {
+    const node = new context.LNode(graph);
+    node.layer = free;
+    node.id_0 = index;
+    node.name = id;
+    return node;
+  });
+  const byId = new Map(nodes.map((node) => [node.name, node]));
+  const ranks: number[] = [];
+  for (const [id, visits] of data.visits)
+    for (const visit of visits) {
+      const port = new context.LPort();
+      context.$setNode(port, byId.get(id));
+      const opposite = new context.LPort();
+      if (typeof visit === "number") {
+        const owner = new context.LNode(graph);
+        owner.layer = fixed;
+        context.$setNode(opposite, owner);
+        opposite.id_0 = ranks.length;
+        ranks.push(visit);
+      } else context.$setNode(opposite, byId.get(visit));
+      const edge = new context.LEdge();
+      context.$setSource_0(edge, data.forward ? opposite : port);
+      context.$setTarget_0(edge, data.forward ? port : opposite);
+    }
+  context.$clinit_InternalProperties_1();
+  for (const [id, ids] of data.associates) {
+    const list = new context.ArrayList();
+    for (const associate of ids) list.add_2(byId.get(associate));
+    context.$setProperty_0(byId.get(id), context.BARYCENTER_ASSOCIATES, list);
+  }
+  const random = new context.Random();
+  context.$setSeed(random, Math.floor(data.seed / 2 ** 24), data.seed % 2 ** 24);
+  const states = nodes.map((node) => new context.BarycenterHeuristic$BarycenterState(node));
+  const heuristic = { random_0: random, portRanks: ranks, barycenterState: [states, []] };
+  const list = new context.ArrayList();
+  for (const node of nodes) list.add_2(node);
+  context.$calculateBarycenters(heuristic, list, data.forward);
+  return {
+    scores: Object.fromEntries(
+      nodes.map((node, i) => [node.name, states[i].barycenter ?? undefined]),
+    ),
+    nextFloat: context.$nextInternal(random, 24) / 2 ** 24,
+  };
+}
+
+export interface CrossPortOracleInput {
+  ports: { id: string; side: "NORTH" | "SOUTH"; x: number; input: boolean; output: boolean }[];
+}
+export function elkCrossPortOrder(data: CrossPortOracleInput): {
+  order: string[];
+  associates: string[];
+} {
+  const graph = new context.LGraph();
+  const layers = Array.from({ length: 3 }, (_, i) => {
+    const layer = new context.Layer(graph);
+    layer.id_0 = i;
+    graph.layers.add_2(layer);
+    return layer;
+  });
+  const owner = new context.LNode(graph);
+  owner.name = "owner";
+  context.$setLayer_0(owner, layers[1]);
+  context.$clinit_LayeredOptions();
+  context.$clinit_PortConstraints();
+  context.$setProperty_0(owner, context.PORT_CONSTRAINTS_0, context.FIXED_POS);
+  const ordered = [...data.ports].sort((a, b) =>
+    a.side !== b.side ? (a.side === "NORTH" ? -1 : 1) : a.side === "NORTH" ? a.x - b.x : b.x - a.x,
+  );
+  for (const entry of ordered) {
+    const port = new context.LPort();
+    port.name = entry.id;
+    port.pos.x_0 = entry.x;
+    context.$setSide(port, entry.side === "NORTH" ? context.NORTH_1 : context.SOUTH_0);
+    context.$setNode(port, owner);
+    for (const incoming of [true, false])
+      if (incoming ? entry.input : entry.output) {
+        const neighbor = new context.LNode(graph);
+        context.$setLayer_0(neighbor, layers[incoming ? 0 : 2]);
+        const opposite = new context.LPort();
+        context.$setNode(opposite, neighbor);
+        const edge = new context.LEdge();
+        context.$setSource_0(edge, incoming ? opposite : port);
+        context.$setTarget_0(edge, incoming ? port : opposite);
+      }
+  }
+  new context.NorthSouthPortPreprocessor().process(graph, { begin() {}, done_1() {} });
+  const label = (node: any): string =>
+    node === owner ? "owner" : context.$getProperty(node.ports.array[0], context.ORIGIN_0).name;
+  return {
+    order: Array.from(layers[1].nodes.array, label),
+    associates: Array.from(context.$getProperty(owner, context.BARYCENTER_ASSOCIATES).array, label),
+  };
+}

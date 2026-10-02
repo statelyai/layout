@@ -145,9 +145,36 @@ export function insertNorthSouthPortDummies(expansion: LongEdgeExpansion): North
   for (const node of nodes)
     if (origins.has(node.id))
       node.ports?.sort((a, b) => Number(a.name === "output") - Number(b.name === "output"));
+  // ELK creates each side's input, output, then mixed-role dummies in
+  // canonical flow order. Barycenter associates retain that creation order;
+  // insertion at one northern index reverses it in the layer itself.
+  const roleOrder = (origin: CrossPortOrigin) =>
+    origin.input && origin.output ? 2 : origin.input ? 0 : 1;
+  const negativeFlow = input.direction === "left" || input.direction === "up";
+  const orderedOrigins = input.graph.nodes.flatMap((node) => {
+    const entries = [...origins].filter(([, origin]) => origin.node.id === node.id);
+    const constraints = input.nodeSettings?.(node)?.portConstraints;
+    const coordinate = (origin: CrossPortOrigin) => {
+      if (constraints === "FIXED_POS" || constraints === "FIXED_RATIO")
+        return (vertical ? (origin.port.y ?? 0) : (origin.port.x ?? 0)) * (negativeFlow ? -1 : 1);
+      const index = node.ports?.indexOf(origin.port) ?? 0;
+      return origin.beforeOwner ? index : -index;
+    };
+    return entries.sort(
+      ([, a], [, b]) =>
+        Number(!a.beforeOwner) - Number(!b.beforeOwner) ||
+        roleOrder(a) - roleOrder(b) ||
+        coordinate(a) - coordinate(b),
+    );
+  });
+  origins.clear();
+  for (const [id, origin] of orderedOrigins) origins.set(id, origin);
   const seed = expansion.assignment.seedOrder ?? input.graph.nodes.map((n) => n.id);
   const seedOrder = seed.flatMap((id) => [
-    ...[...origins].filter(([, o]) => o.node.id === id && o.beforeOwner).map(([dummy]) => dummy),
+    ...[...origins]
+      .filter(([, o]) => o.node.id === id && o.beforeOwner)
+      .map(([dummy]) => dummy)
+      .reverse(),
     id,
     ...[...origins].filter(([, o]) => o.node.id === id && !o.beforeOwner).map(([dummy]) => dummy),
   ]);

@@ -19,7 +19,9 @@ ports, labels, self-loops, wrapping, directions, constraints, and phase override
 A development-only oracle compares native constraint-group resolution against
 unmodified elkjs internals on 512 seeded intermediate graphs, including complete
 node order and barycenters. This validates that phase independently of the
-unfinished pipeline integration.
+unfinished pipeline integration. Ordered barycenter traversal has 512 seeded
+port-graph comparisons; cross-port layer and associate order has 256 seeded
+mixed-role comparisons.
 That coverage does not establish broad geometry or aesthetic parity: native
 hierarchy placement and routing still diverge materially from real ELK. The
 [side-by-side random corpus](docs/heuristics/README.md) uses the actual elkjs

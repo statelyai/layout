@@ -616,3 +616,60 @@ The custom-route-fixed integration archive captures the final source afterward;
 it is not a pre-execution attestation. Archive contains source/test trees only,
 with no absolute dependency/resource symlinks. Clean phase checks are separate
 from the rejected larger pipeline. No remote CI or released parity claim.
+
+### Port visitation and cross-port ordering (2026-10-02)
+
+The native barycenter helper visited all fixed-layer ranks before all same-layer
+neighbors. ELK interleaves them in port/incident-edge order, so recursion and
+partial sums can change, especially in same-layer cycles. An unmodified real
+elkjs LPort/LEdge oracle compares all scores and the next random value on 512
+seeded ordered port graphs: **284 exact before, 512 exact after**. Self-loops
+remain ignored; associates are visited after incident edges. The local sweep
+now supplies ordered visits, preserving edge order inside each shared port.
+
+Cross-port dummy creation also had a distinct ordering bug: native used global
+edge encounter order for both layer seed and barycenter associates. ELK creates
+input, output, then mixed-role dummies per side, and northern insertion reverses
+the creation order in the layer. The fixed-position helper now preserves those
+two separate orders. On 256 seeded RIGHT mixed-role north/south port sets,
+complete layer and associate order changes from **41 exact to 256 exact**,
+against the actual installed NorthSouthPortPreprocessor. This is a phase test;
+full directional/hierarchical fidelity remains incomplete.
+
+Clean HEAD plus only the committed phase/helper changes passes **33 tests**
+(including the existing 512 exact constraint-group comparisons) and source
+TypeScript. Larger pipeline callers remain local/uncommitted. Local directional
+grouped profiles remain exact, and source/repository TypeScript and changed-file
+format/lint pass.
+
+Both complete native ten-graph experiments retain full before/after/ELK inputs,
+outputs, errors and pre-execution frozen source hashes. Crossings and bends are
+unchanged on all ten graphs after either correction. Native geometry counters
+still report zero defects, but the strict random quality gate remains red. These
+are faithful phase corrections, not evidence of full layout/routing parity.
+
+Final sequential full local suite: **1,672 passes / 114 failures / 1,786 tests**.
+Exactly the same 114 failure names remain as before this turn. A concurrent run
+had 115 failures, including the 512 constraint oracle timing out at the unchanged
+5,000ms limit while the full random replay was running. Preserve that failure;
+after both jobs finished, the clean focused run and sequential full rerun pass
+that same oracle without timeout changes. No assertions or tolerances weakened.
+
+A next routing reproducer is saved: generated default DAG seed 56 matches ELK
+placement but native edge e2-3 uses six points where ELK uses four. This isolates
+an extra native routing detour to inspect next; no cause or fix claimed yet.
+
+Evidence under [port-visitation](./port-visitation/):
+
+- [512 ordered barycenter inputs and exact before/after/oracle outputs](./port-visitation/ordered-barycenter-direct-probe.json)
+- [256 cross-port creation/layer orders](./port-visitation/cross-port-order-direct-probe.json)
+- [Complete barycenter random replay](./port-visitation/ordered-barycenter-native-probe.json)
+- [Complete cross-port random replay](./port-visitation/cross-port-ordered-native-probe.json)
+- [Full-suite failure delta](./port-visitation/full-suite-delta.json)
+- [Seed 56 full input/native/ELK routing reproducer](./port-visitation/dag-56-routing-probe.json)
+- [Frozen source snapshots and replays](./port-visitation/sources-and-replays.tar.gz)
+
+Source manifests were checked after every process terminated. Archive contains no
+absolute dependency symlinks. Both ordering oracle probes record the unmodified
+worker hash. PR remains draft; goal active. No full-suite green, remote CI or
+complete parity claim.

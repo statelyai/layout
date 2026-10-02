@@ -31,6 +31,7 @@ export function associatedBarycenters(
   sameLayerNeighbors: ReadonlyMap<string, readonly string[]>,
   associates: ReadonlyMap<string, readonly string[]>,
   random?: JavaRandom,
+  orderedVisits?: ReadonlyMap<string, readonly (number | string)[]>,
 ): Map<string, number | undefined> {
   const states = new Map(
     layer.map((id) => [
@@ -42,19 +43,27 @@ export function associatedBarycenters(
     const state = states.get(id);
     if (!state || state.visited) return;
     state.visited = true;
-    for (const rank of ranks.get(id) ?? []) {
-      state.degree++;
-      state.weight += rank;
-    }
-    for (const neighbor of [...(sameLayerNeighbors.get(id) ?? []), ...(associates.get(id) ?? [])]) {
-      if (neighbor === id) continue;
+    const includeNeighbor = (neighbor: string): void => {
       calculate(neighbor);
       const other = states.get(neighbor);
       if (other) {
         state.degree += other.degree;
         state.weight += other.weight;
       }
+    };
+    // ELK walks ports, then their incident edges. Same-layer recursion must
+    // occur at that exact position, before any later fixed-layer rank.
+    const visits = orderedVisits?.get(id) ?? [
+      ...(ranks.get(id) ?? []),
+      ...(sameLayerNeighbors.get(id) ?? []),
+    ];
+    for (const visit of visits) {
+      if (typeof visit === "number") {
+        state.degree++;
+        state.weight += visit;
+      } else if (visit !== id) includeNeighbor(visit);
     }
+    for (const associate of associates.get(id) ?? []) includeNeighbor(associate);
     if (state.degree > 0) {
       state.weight += random ? random.nextFloat() * Math.fround(0.07) - Math.fround(0.07) / 2 : 0;
       state.barycenter = state.weight / state.degree;
