@@ -123,8 +123,7 @@ constraint. Facing leads in a short aligned gap are shortened to avoid overlap.
 Coincident-port loops follow the port's outward normal, trying smaller corridors
 when neighboring geometry blocks the larger loop. When preferred
 clearance or soft reservations prevent routing, orthogonal-family strategies
-first try bounded, conflict-free two-bend corridors, then retry against actual
-obstacle bounds within the remaining search budget and
+retry against actual obstacle bounds within the remaining search budget, then
 attempt bounded conflict reduction without discarding the feasible path.
 
 Native layered layout repairs flat tracks that cross node interiors, as well as
