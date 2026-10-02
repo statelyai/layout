@@ -141,3 +141,25 @@ uncommitted inverted-port phase and committed roundoff correction. It remains
 a native-only diagnostic using retained prior measurements, not a new frozen
 real-ELK comparison. Center-label insertion remains an isolated prototype;
 its label positions and route joins still differ from ELK. **Parity is incomplete.**
+
+## Completed frozen native replay
+
+The [hashed source snapshot replay](inverted-port-roundoff-replay.json) completed
+all 160 original inputs without geometry failures or synthetic-port leaks.
+Every source hash was rechecked after completion. This snapshot includes the
+uncommitted inverted-port phase and the roundoff correction; it does not include
+the isolated center-label prototype. No inputs were resampled.
+
+Against retained native measurements, total crossings decrease from 14,359 to
+13,410 and bends from 22,875 to 22,009. Crossings improve on 82 cases but regress
+on 62; bends improve on 98 but regress on 53. Shared edge-track length increases
+from 36,523.22 to 36,822.78, with 83 cases regressing. Geometry validity therefore
+does not establish aesthetic parity.
+
+Against the retained real-ELK measurements, ELK still wins crossings on 105 and
+bends on 128 of the 143 comparable inputs; 17 prior oracle errors remain separate.
+This is a native-only diagnostic, not a fresh full-engine benchmark. The strict
+parity gate remains failed. The remaining center-label prototype mismatch is
+already visible before routing: at label height 1 the feedback label is at
+y=6 versus ELK's 6.5, and post-compaction chooses a different horizontal position.
+Continue porting the native label and placement phases without altering assertions.
