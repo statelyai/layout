@@ -3361,5 +3361,1103 @@
         }
       ]
     }
+  },
+  {
+    "seed": 155921,
+    "id": 9,
+    "direction": "up",
+    "input": {
+      "nodes": [
+        {
+          "id": "G1",
+          "width": 140,
+          "height": 36,
+          "parentId": null
+        },
+        {
+          "id": "G2",
+          "width": 140,
+          "height": 36,
+          "parentId": null
+        },
+        {
+          "id": "G3",
+          "width": 140,
+          "height": 36,
+          "parentId": "G1"
+        },
+        {
+          "id": "G4",
+          "width": 140,
+          "height": 36,
+          "parentId": "G2"
+        },
+        {
+          "id": "G5",
+          "width": 140,
+          "height": 36,
+          "parentId": "G3"
+        },
+        {
+          "id": "N1",
+          "width": 95,
+          "height": 93,
+          "ports": [
+            {
+              "name": "west",
+              "direction": "inout",
+              "width": 6,
+              "height": 6,
+              "x": 0,
+              "y": 46.5,
+              "data": {
+                "side": "WEST"
+              }
+            },
+            {
+              "name": "north",
+              "direction": "inout",
+              "width": 6,
+              "height": 6,
+              "x": 47.5,
+              "y": 0,
+              "data": {
+                "side": "NORTH"
+              }
+            },
+            {
+              "name": "south",
+              "direction": "inout",
+              "width": 6,
+              "height": 6,
+              "x": 47.5,
+              "y": 93,
+              "data": {
+                "side": "SOUTH"
+              }
+            }
+          ],
+          "parentId": "G1"
+        },
+        {
+          "id": "N2",
+          "width": 90,
+          "height": 81,
+          "ports": [
+            {
+              "name": "west",
+              "direction": "inout",
+              "width": 6,
+              "height": 6,
+              "x": 0,
+              "y": 40.5,
+              "data": {
+                "side": "WEST"
+              }
+            },
+            {
+              "name": "east",
+              "direction": "inout",
+              "width": 6,
+              "height": 6,
+              "x": 90,
+              "y": 40.5,
+              "data": {
+                "side": "EAST"
+              }
+            }
+          ],
+          "parentId": "G2"
+        },
+        {
+          "id": "N3",
+          "width": 110,
+          "height": 62,
+          "ports": [
+            {
+              "name": "west",
+              "direction": "inout",
+              "width": 6,
+              "height": 6,
+              "x": 0,
+              "y": 31,
+              "data": {
+                "side": "WEST"
+              }
+            }
+          ],
+          "parentId": "G3"
+        },
+        {
+          "id": "N4",
+          "width": 96,
+          "height": 90,
+          "ports": [
+            {
+              "name": "north",
+              "direction": "inout",
+              "width": 6,
+              "height": 6,
+              "x": 48,
+              "y": 0,
+              "data": {
+                "side": "NORTH"
+              }
+            },
+            {
+              "name": "south",
+              "direction": "inout",
+              "width": 6,
+              "height": 6,
+              "x": 48,
+              "y": 90,
+              "data": {
+                "side": "SOUTH"
+              }
+            }
+          ],
+          "parentId": "G4"
+        },
+        {
+          "id": "N5",
+          "width": 133,
+          "height": 93,
+          "ports": [
+            {
+              "name": "east",
+              "direction": "inout",
+              "width": 6,
+              "height": 6,
+              "x": 133,
+              "y": 46.5,
+              "data": {
+                "side": "EAST"
+              }
+            },
+            {
+              "name": "south",
+              "direction": "inout",
+              "width": 6,
+              "height": 6,
+              "x": 66.5,
+              "y": 93,
+              "data": {
+                "side": "SOUTH"
+              }
+            }
+          ],
+          "parentId": "G5"
+        },
+        {
+          "id": "N6",
+          "width": 111,
+          "height": 89,
+          "ports": [
+            {
+              "name": "west",
+              "direction": "inout",
+              "width": 6,
+              "height": 6,
+              "x": 0,
+              "y": 44.5,
+              "data": {
+                "side": "WEST"
+              }
+            },
+            {
+              "name": "north",
+              "direction": "inout",
+              "width": 6,
+              "height": 6,
+              "x": 55.5,
+              "y": 0,
+              "data": {
+                "side": "NORTH"
+              }
+            },
+            {
+              "name": "south",
+              "direction": "inout",
+              "width": 6,
+              "height": 6,
+              "x": 55.5,
+              "y": 89,
+              "data": {
+                "side": "SOUTH"
+              }
+            }
+          ],
+          "parentId": "G1"
+        },
+        {
+          "id": "N7",
+          "width": 143,
+          "height": 85,
+          "ports": [
+            {
+              "name": "north",
+              "direction": "inout",
+              "width": 6,
+              "height": 6,
+              "x": 71.5,
+              "y": 0,
+              "data": {
+                "side": "NORTH"
+              }
+            }
+          ],
+          "parentId": null
+        },
+        {
+          "id": "N8",
+          "width": 97,
+          "height": 90,
+          "ports": [
+            {
+              "name": "west",
+              "direction": "inout",
+              "width": 6,
+              "height": 6,
+              "x": 0,
+              "y": 45,
+              "data": {
+                "side": "WEST"
+              }
+            },
+            {
+              "name": "east",
+              "direction": "inout",
+              "width": 6,
+              "height": 6,
+              "x": 97,
+              "y": 45,
+              "data": {
+                "side": "EAST"
+              }
+            },
+            {
+              "name": "north",
+              "direction": "inout",
+              "width": 6,
+              "height": 6,
+              "x": 48.5,
+              "y": 0,
+              "data": {
+                "side": "NORTH"
+              }
+            },
+            {
+              "name": "south",
+              "direction": "inout",
+              "width": 6,
+              "height": 6,
+              "x": 48.5,
+              "y": 90,
+              "data": {
+                "side": "SOUTH"
+              }
+            }
+          ],
+          "parentId": "G3"
+        },
+        {
+          "id": "N9",
+          "width": 142,
+          "height": 76,
+          "ports": [
+            {
+              "name": "west",
+              "direction": "inout",
+              "width": 6,
+              "height": 6,
+              "x": 0,
+              "y": 38,
+              "data": {
+                "side": "WEST"
+              }
+            },
+            {
+              "name": "south",
+              "direction": "inout",
+              "width": 6,
+              "height": 6,
+              "x": 71,
+              "y": 76,
+              "data": {
+                "side": "SOUTH"
+              }
+            }
+          ],
+          "parentId": "G4"
+        },
+        {
+          "id": "N10",
+          "width": 89,
+          "height": 62,
+          "ports": [
+            {
+              "name": "west",
+              "direction": "inout",
+              "width": 6,
+              "height": 6,
+              "x": 0,
+              "y": 31,
+              "data": {
+                "side": "WEST"
+              }
+            },
+            {
+              "name": "south",
+              "direction": "inout",
+              "width": 6,
+              "height": 6,
+              "x": 44.5,
+              "y": 62,
+              "data": {
+                "side": "SOUTH"
+              }
+            }
+          ],
+          "parentId": "G4"
+        },
+        {
+          "id": "N11",
+          "width": 117,
+          "height": 63,
+          "ports": [
+            {
+              "name": "east",
+              "direction": "inout",
+              "width": 6,
+              "height": 6,
+              "x": 117,
+              "y": 31.5,
+              "data": {
+                "side": "EAST"
+              }
+            },
+            {
+              "name": "north",
+              "direction": "inout",
+              "width": 6,
+              "height": 6,
+              "x": 58.5,
+              "y": 0,
+              "data": {
+                "side": "NORTH"
+              }
+            },
+            {
+              "name": "south",
+              "direction": "inout",
+              "width": 6,
+              "height": 6,
+              "x": 58.5,
+              "y": 63,
+              "data": {
+                "side": "SOUTH"
+              }
+            }
+          ],
+          "parentId": "G2"
+        },
+        {
+          "id": "N12",
+          "width": 142,
+          "height": 93,
+          "ports": [
+            {
+              "name": "west",
+              "direction": "inout",
+              "width": 6,
+              "height": 6,
+              "x": 0,
+              "y": 46.5,
+              "data": {
+                "side": "WEST"
+              }
+            },
+            {
+              "name": "east",
+              "direction": "inout",
+              "width": 6,
+              "height": 6,
+              "x": 142,
+              "y": 46.5,
+              "data": {
+                "side": "EAST"
+              }
+            },
+            {
+              "name": "north",
+              "direction": "inout",
+              "width": 6,
+              "height": 6,
+              "x": 71,
+              "y": 0,
+              "data": {
+                "side": "NORTH"
+              }
+            }
+          ],
+          "parentId": "G3"
+        },
+        {
+          "id": "N13",
+          "width": 156,
+          "height": 63,
+          "ports": [
+            {
+              "name": "west",
+              "direction": "inout",
+              "width": 6,
+              "height": 6,
+              "x": 0,
+              "y": 31.5,
+              "data": {
+                "side": "WEST"
+              }
+            },
+            {
+              "name": "east",
+              "direction": "inout",
+              "width": 6,
+              "height": 6,
+              "x": 156,
+              "y": 31.5,
+              "data": {
+                "side": "EAST"
+              }
+            }
+          ],
+          "parentId": "G2"
+        },
+        {
+          "id": "N14",
+          "width": 103,
+          "height": 58,
+          "ports": [
+            {
+              "name": "west",
+              "direction": "inout",
+              "width": 6,
+              "height": 6,
+              "x": 0,
+              "y": 29,
+              "data": {
+                "side": "WEST"
+              }
+            },
+            {
+              "name": "east",
+              "direction": "inout",
+              "width": 6,
+              "height": 6,
+              "x": 103,
+              "y": 29,
+              "data": {
+                "side": "EAST"
+              }
+            },
+            {
+              "name": "south",
+              "direction": "inout",
+              "width": 6,
+              "height": 6,
+              "x": 51.5,
+              "y": 58,
+              "data": {
+                "side": "SOUTH"
+              }
+            }
+          ],
+          "parentId": "G2"
+        },
+        {
+          "id": "N15",
+          "width": 85,
+          "height": 52,
+          "ports": [
+            {
+              "name": "east",
+              "direction": "inout",
+              "width": 6,
+              "height": 6,
+              "x": 85,
+              "y": 26,
+              "data": {
+                "side": "EAST"
+              }
+            },
+            {
+              "name": "south",
+              "direction": "inout",
+              "width": 6,
+              "height": 6,
+              "x": 42.5,
+              "y": 52,
+              "data": {
+                "side": "SOUTH"
+              }
+            }
+          ],
+          "parentId": "G2"
+        },
+        {
+          "id": "N16",
+          "width": 90,
+          "height": 92,
+          "ports": [
+            {
+              "name": "west",
+              "direction": "inout",
+              "width": 6,
+              "height": 6,
+              "x": 0,
+              "y": 46,
+              "data": {
+                "side": "WEST"
+              }
+            },
+            {
+              "name": "east",
+              "direction": "inout",
+              "width": 6,
+              "height": 6,
+              "x": 90,
+              "y": 46,
+              "data": {
+                "side": "EAST"
+              }
+            },
+            {
+              "name": "south",
+              "direction": "inout",
+              "width": 6,
+              "height": 6,
+              "x": 45,
+              "y": 92,
+              "data": {
+                "side": "SOUTH"
+              }
+            }
+          ],
+          "parentId": "G5"
+        },
+        {
+          "id": "N17",
+          "width": 94,
+          "height": 56,
+          "ports": [
+            {
+              "name": "east",
+              "direction": "inout",
+              "width": 6,
+              "height": 6,
+              "x": 94,
+              "y": 28,
+              "data": {
+                "side": "EAST"
+              }
+            },
+            {
+              "name": "south",
+              "direction": "inout",
+              "width": 6,
+              "height": 6,
+              "x": 47,
+              "y": 56,
+              "data": {
+                "side": "SOUTH"
+              }
+            }
+          ],
+          "parentId": null
+        },
+        {
+          "id": "N18",
+          "width": 90,
+          "height": 82,
+          "ports": [
+            {
+              "name": "west",
+              "direction": "inout",
+              "width": 6,
+              "height": 6,
+              "x": 0,
+              "y": 41,
+              "data": {
+                "side": "WEST"
+              }
+            }
+          ],
+          "parentId": "G2"
+        },
+        {
+          "id": "N19",
+          "width": 141,
+          "height": 92,
+          "ports": [
+            {
+              "name": "west",
+              "direction": "inout",
+              "width": 6,
+              "height": 6,
+              "x": 0,
+              "y": 46,
+              "data": {
+                "side": "WEST"
+              }
+            },
+            {
+              "name": "east",
+              "direction": "inout",
+              "width": 6,
+              "height": 6,
+              "x": 141,
+              "y": 46,
+              "data": {
+                "side": "EAST"
+              }
+            }
+          ],
+          "parentId": null
+        },
+        {
+          "id": "N20",
+          "width": 149,
+          "height": 98,
+          "ports": [
+            {
+              "name": "south",
+              "direction": "inout",
+              "width": 6,
+              "height": 6,
+              "x": 74.5,
+              "y": 98,
+              "data": {
+                "side": "SOUTH"
+              }
+            }
+          ],
+          "parentId": "G2"
+        },
+        {
+          "id": "N21",
+          "width": 136,
+          "height": 50,
+          "ports": [
+            {
+              "name": "west",
+              "direction": "inout",
+              "width": 6,
+              "height": 6,
+              "x": 0,
+              "y": 25,
+              "data": {
+                "side": "WEST"
+              }
+            },
+            {
+              "name": "east",
+              "direction": "inout",
+              "width": 6,
+              "height": 6,
+              "x": 136,
+              "y": 25,
+              "data": {
+                "side": "EAST"
+              }
+            },
+            {
+              "name": "north",
+              "direction": "inout",
+              "width": 6,
+              "height": 6,
+              "x": 68,
+              "y": 0,
+              "data": {
+                "side": "NORTH"
+              }
+            }
+          ],
+          "parentId": "G2"
+        },
+        {
+          "id": "N22",
+          "width": 127,
+          "height": 56,
+          "ports": [
+            {
+              "name": "north",
+              "direction": "inout",
+              "width": 6,
+              "height": 6,
+              "x": 63.5,
+              "y": 0,
+              "data": {
+                "side": "NORTH"
+              }
+            }
+          ],
+          "parentId": "G3"
+        },
+        {
+          "id": "N23",
+          "width": 153,
+          "height": 65,
+          "ports": [
+            {
+              "name": "east",
+              "direction": "inout",
+              "width": 6,
+              "height": 6,
+              "x": 153,
+              "y": 32.5,
+              "data": {
+                "side": "EAST"
+              }
+            },
+            {
+              "name": "north",
+              "direction": "inout",
+              "width": 6,
+              "height": 6,
+              "x": 76.5,
+              "y": 0,
+              "data": {
+                "side": "NORTH"
+              }
+            }
+          ],
+          "parentId": "G3"
+        },
+        {
+          "id": "N24",
+          "width": 143,
+          "height": 87,
+          "ports": [
+            {
+              "name": "south",
+              "direction": "inout",
+              "width": 6,
+              "height": 6,
+              "x": 71.5,
+              "y": 87,
+              "data": {
+                "side": "SOUTH"
+              }
+            }
+          ],
+          "parentId": "G1"
+        }
+      ],
+      "edges": [
+        {
+          "id": "E1",
+          "sourceId": "N1",
+          "targetId": "N2",
+          "sourcePort": "north",
+          "width": 0,
+          "height": 0
+        },
+        {
+          "id": "E2",
+          "sourceId": "G1",
+          "targetId": "N1",
+          "width": 30,
+          "height": 22
+        },
+        {
+          "id": "E3",
+          "sourceId": "N24",
+          "targetId": "N1",
+          "sourcePort": "south",
+          "targetPort": "south",
+          "width": 0,
+          "height": 0
+        },
+        {
+          "id": "E4",
+          "sourceId": "N2",
+          "targetId": "N3",
+          "targetPort": "west",
+          "width": 0,
+          "height": 0
+        },
+        {
+          "id": "E5",
+          "sourceId": "N3",
+          "targetId": "N1",
+          "sourcePort": "west",
+          "targetPort": "south",
+          "width": 30,
+          "height": 22
+        },
+        {
+          "id": "E6",
+          "sourceId": "N4",
+          "targetId": "N4",
+          "sourcePort": "north",
+          "width": 0,
+          "height": 0
+        },
+        {
+          "id": "E7",
+          "sourceId": "N5",
+          "targetId": "N6",
+          "targetPort": "west",
+          "width": 0,
+          "height": 0
+        },
+        {
+          "id": "E8",
+          "sourceId": "N5",
+          "targetId": "N6",
+          "sourcePort": "east",
+          "width": 0,
+          "height": 0
+        },
+        {
+          "id": "E9",
+          "sourceId": "N13",
+          "targetId": "N12",
+          "targetPort": "west",
+          "width": 30,
+          "height": 22
+        },
+        {
+          "id": "E10",
+          "sourceId": "N17",
+          "targetId": "N14",
+          "sourcePort": "south",
+          "targetPort": "east",
+          "width": 37,
+          "height": 22
+        },
+        {
+          "id": "E11",
+          "sourceId": "G5",
+          "targetId": "N22",
+          "width": 0,
+          "height": 0
+        },
+        {
+          "id": "E12",
+          "sourceId": "N12",
+          "targetId": "N23",
+          "sourcePort": "west",
+          "width": 37,
+          "height": 22
+        },
+        {
+          "id": "E13",
+          "sourceId": "N11",
+          "targetId": "G5",
+          "sourcePort": "north",
+          "width": 37,
+          "height": 22
+        },
+        {
+          "id": "E14",
+          "sourceId": "N7",
+          "targetId": "G3",
+          "sourcePort": "north",
+          "width": 37,
+          "height": 22
+        },
+        {
+          "id": "E15",
+          "sourceId": "N1",
+          "targetId": "N15",
+          "width": 37,
+          "height": 22
+        },
+        {
+          "id": "E16",
+          "sourceId": "N8",
+          "targetId": "N15",
+          "sourcePort": "north",
+          "width": 0,
+          "height": 0
+        },
+        {
+          "id": "E17",
+          "sourceId": "N24",
+          "targetId": "N16",
+          "width": 0,
+          "height": 0
+        },
+        {
+          "id": "E18",
+          "sourceId": "N5",
+          "targetId": "N21",
+          "targetPort": "west",
+          "width": 37,
+          "height": 22
+        },
+        {
+          "id": "E19",
+          "sourceId": "N22",
+          "targetId": "N6",
+          "sourcePort": "north",
+          "width": 0,
+          "height": 0
+        },
+        {
+          "id": "E20",
+          "sourceId": "N18",
+          "targetId": "N17",
+          "sourcePort": "west",
+          "targetPort": "south",
+          "width": 0,
+          "height": 0
+        },
+        {
+          "id": "E21",
+          "sourceId": "G2",
+          "targetId": "N20",
+          "width": 37,
+          "height": 22
+        },
+        {
+          "id": "E22",
+          "sourceId": "N16",
+          "targetId": "N5",
+          "sourcePort": "east",
+          "targetPort": "south",
+          "width": 37,
+          "height": 22
+        },
+        {
+          "id": "E23",
+          "sourceId": "N6",
+          "targetId": "N19",
+          "sourcePort": "south",
+          "targetPort": "east",
+          "width": 0,
+          "height": 0
+        },
+        {
+          "id": "E24",
+          "sourceId": "N14",
+          "targetId": "N10",
+          "width": 37,
+          "height": 22
+        },
+        {
+          "id": "E25",
+          "sourceId": "N8",
+          "targetId": "G1",
+          "sourcePort": "north",
+          "width": 0,
+          "height": 0
+        },
+        {
+          "id": "E26",
+          "sourceId": "N24",
+          "targetId": "G3",
+          "width": 37,
+          "height": 22
+        },
+        {
+          "id": "E27",
+          "sourceId": "N22",
+          "targetId": "N18",
+          "sourcePort": "north",
+          "width": 37,
+          "height": 22
+        },
+        {
+          "id": "E28",
+          "sourceId": "N9",
+          "targetId": "N16",
+          "sourcePort": "west",
+          "targetPort": "east",
+          "width": 0,
+          "height": 0
+        },
+        {
+          "id": "E29",
+          "sourceId": "N12",
+          "targetId": "N18",
+          "width": 0,
+          "height": 0
+        },
+        {
+          "id": "E30",
+          "sourceId": "N19",
+          "targetId": "G1",
+          "width": 0,
+          "height": 0
+        },
+        {
+          "id": "E31",
+          "sourceId": "N10",
+          "targetId": "N8",
+          "sourcePort": "south",
+          "targetPort": "north",
+          "width": 0,
+          "height": 0
+        },
+        {
+          "id": "E32",
+          "sourceId": "N14",
+          "targetId": "G2",
+          "sourcePort": "west",
+          "width": 0,
+          "height": 0
+        },
+        {
+          "id": "E33",
+          "sourceId": "N23",
+          "targetId": "N18",
+          "sourcePort": "east",
+          "targetPort": "west",
+          "width": 0,
+          "height": 0
+        },
+        {
+          "id": "E34",
+          "sourceId": "N6",
+          "targetId": "N18",
+          "targetPort": "west",
+          "width": 37,
+          "height": 22
+        },
+        {
+          "id": "E35",
+          "sourceId": "N12",
+          "targetId": "N1",
+          "targetPort": "north",
+          "width": 37,
+          "height": 22
+        },
+        {
+          "id": "E36",
+          "sourceId": "N3",
+          "targetId": "G1",
+          "sourcePort": "west",
+          "width": 37,
+          "height": 22
+        },
+        {
+          "id": "E37",
+          "sourceId": "N15",
+          "targetId": "N7",
+          "sourcePort": "south",
+          "width": 37,
+          "height": 22
+        },
+        {
+          "id": "E38",
+          "sourceId": "N6",
+          "targetId": "N2",
+          "sourcePort": "west",
+          "width": 0,
+          "height": 0
+        }
+      ]
+    }
   }
 ]

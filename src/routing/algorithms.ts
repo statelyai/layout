@@ -746,10 +746,11 @@ export function routeEdge(
     }
     if (
       preferred &&
+      Number.isFinite(pathCost(preferred, context)) &&
       (!path || !safe(path, context) || pathCost(preferred, context) <= pathCost(path, context))
     )
       return preferred;
-    if (path && safe(path, context)) return path;
+    if (path && safe(path, context) && Number.isFinite(pathCost(path, context))) return path;
     // Clearance and soft edge reservations must not turn a feasible connection
     // into an obstacle-crossing fallback. Retry against the hard geometry with
     // short terminal leads and a fresh, bounded search budget.
@@ -805,7 +806,7 @@ export function routeEdge(
       points.push(b.point);
       const retry = pathFromPoints(simplify(points));
       searchContext.visited += hard.visited;
-      if (ok && safe(retry, hard)) {
+      if (ok && safe(retry, hard) && Number.isFinite(pathCost(retry, hard))) {
         let separated = retry;
         // Shift whole interior tracks, retaining their orthogonal neighboring
         // legs. This provides parallel lanes even when a crowded visibility
@@ -974,8 +975,13 @@ export function routeEdge(
     let segments = sections.flatMap((s) => pathReservations(s.path));
     // The two legs meet at a label and, for a self-loop, at their node. Sharing
     // those attachment regions is legitimate; retracing a distant trunk is not.
-    const shared = [label!, ...(loop ? [inflate(sourceBounds, config.clearance + 1)] : [])];
-    for (const rect of shared) segments = segments.flatMap((s) => outsideTerminal(s, rect));
+    // Label interiors are gaps, but strokes along their borders remain visible
+    // and must stay reserved. Node attachment regions include their borders.
+    segments = segments.flatMap((s) => outsideTerminal(s, label!, false));
+    if (loop)
+      segments = segments.flatMap((s) =>
+        outsideTerminal(s, inflate(sourceBounds, config.clearance + 1)),
+      );
     drawn.push(...segments);
     sections.push({
       id: `${edge.id}:label-target`,

@@ -59,7 +59,11 @@ export function conflictCost(
 }
 
 /** Remove only the common terminal's attachment region from soft reservations. */
-export function outsideTerminal(segment: Reservation, rect: RouteBounds): Reservation[] {
+export function outsideTerminal(
+  segment: Reservation,
+  rect: RouteBounds,
+  closed = true,
+): Reservation[] {
   let lo = 0,
     hi = 1;
   const dx = segment.b.x - segment.a.x,
@@ -69,7 +73,8 @@ export function outsideTerminal(segment: Reservation, rect: RouteBounds): Reserv
     [segment.a.y, dy, rect.y, rect.y + rect.height],
   ] as const) {
     if (Math.abs(delta) < 1e-8) {
-      if (start < min || start > max) return [segment];
+      if (closed ? start < min || start > max : start <= min + 1e-8 || start >= max - 1e-8)
+        return [segment];
     } else {
       const a = (min - start) / delta,
         b = (max - start) / delta;
@@ -77,7 +82,7 @@ export function outsideTerminal(segment: Reservation, rect: RouteBounds): Reserv
       hi = Math.min(hi, Math.max(a, b));
     }
   }
-  if (lo > hi) return [segment];
+  if (closed ? lo > hi : lo >= hi) return [segment];
   const at = (t: number) => ({ x: segment.a.x + dx * t, y: segment.a.y + dy * t });
   return [
     ...(lo > 1e-8 ? [{ ...segment, b: at(lo) }] : []),
