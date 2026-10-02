@@ -24,7 +24,10 @@ export function crossesRect(a: Point, b: Point, rect: EntityRect): boolean {
     const min = rect[axis],
       max = min + (axis === "x" ? rect.width : rect.height);
     if (Math.abs(delta) < 1e-10) {
-      if (a[axis] <= min || a[axis] >= max) return false;
+      // Scope transforms can put a boundary point a few ulps inside a
+      // rectangle. Match the existing intersection tolerance for parallel
+      // segments so legal boundary travel is not reported as penetration.
+      if (a[axis] <= min + 1e-10 || a[axis] >= max - 1e-10) return false;
     } else {
       const t1 = (min - a[axis]) / delta,
         t2 = (max - a[axis]) / delta;

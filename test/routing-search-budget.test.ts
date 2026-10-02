@@ -100,3 +100,64 @@ it("keeps the final child approach free while routing an ancestor edge through a
       expect(crossesRect(a, b, { x: 250, y: 50, width: 200, height: 200 })).toBe(false);
     }
 });
+
+for (const reverse of [false, true]) {
+  it(`routes an inward ${reverse ? "target" : "source"} attachment along a child boundary despite coordinate roundoff`, () => {
+    // Seed 1791673957 / graph 10, E36: content normalization places
+    // its top a few ulps inside a child edge. Boundary travel remains legal.
+    const graph = createGraph({
+      nodes: [
+        { id: "g", x: 0, y: 0, width: 600, height: 300 },
+        {
+          id: "t",
+          parentId: "g",
+          x: 250,
+          y: 20,
+          width: 100,
+          height: 56,
+          ports: [{ name: "west", x: -6, y: 28, width: 6, height: 6 }],
+        },
+        { id: "left", parentId: "g", x: 20, y: 40, width: 80, height: 80 },
+        { id: "right", parentId: "g", x: 500, y: 40, width: 80, height: 80 },
+        { id: "bottom", parentId: "g", x: 250, y: 230, width: 100, height: 50 },
+      ],
+      edges: [
+        reverse
+          ? { id: "e", sourceId: "t", sourcePort: "west", targetId: "g" }
+          : { id: "e", sourceId: "g", targetId: "t", targetPort: "west" },
+      ],
+    });
+    const route = orthogonalRouting
+      .route(graph, {
+        coordinateSpace: "world",
+        edges: {
+          e: {
+            [reverse ? "targetAttachment" : "sourceAttachment"]: {
+              bounds: { x: 20, y: 20 + 1e-13, width: 560, height: 260 - 1e-13 },
+              facing: "inward",
+            },
+          },
+        },
+      })
+      .routes.get("e")!;
+    expect(route.diagnostics).toEqual([]);
+    const points = routeToPolylines(route)[0]!;
+    const attachment = reverse ? points.at(-1)! : points[0]!;
+    expect(
+      attachment.x === 20 ||
+        attachment.x === 580 ||
+        Math.abs(attachment.y - 20) < 1e-10 ||
+        attachment.y === 280,
+    ).toBe(true);
+    for (let i = 1; i < points.length; i++) {
+      const a = points[i - 1]!,
+        b = points[i]!;
+      expect(a.x === b.x || a.y === b.y).toBe(true);
+      for (const node of graph.nodes.filter((n) => n.id !== "g"))
+        expect(
+          crossesRect(a, b, { x: node.x!, y: node.y!, width: node.width!, height: node.height! }),
+        ).toBe(false);
+    }
+    expect(reverse ? points[0] : points.at(-1)).toEqual({ x: 247, y: 51 });
+  });
+}
