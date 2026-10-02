@@ -74,3 +74,36 @@ edgeCrossings: total 14359 → 14219; 56 cases improve, 43 regress. Against reta
 bends: total 22875 → 22810; 48 cases improve, 44 regress. Against retained oracle outputs: 15 native wins, 0 ties, 128 ELK wins.
 
 Seventeen oracle errors remain unverified. **Parity remains incomplete.**
+
+## Inverted-port phase in progress
+
+The native candidate adds same-layer inverted-port dummies before crossing
+minimization. Eight real-ELK fixtures cover inverted source/target ports in all
+four directions. The initial full run reports 1665 passes and seven failures:
+five feedback regressions and two 5-second timeouts. The ELK bug #7 timeout
+passes on unchanged isolated retry; the option-fuzz timeout remains unverified.
+
+[Initial random probe](inverted-port-first-probe.json) retains 25 evaluated
+inputs and the first failure, seed 155921 / graph 5 (two node overlaps).
+Source hashes and dirty base revision are recorded. No resampling. The native
+long-edge splitter had exempted fixed-side feedback edges, violating proper
+layering after inverted-port insertion. Removing that exemption eliminates the
+overlap in the minimized case and restores three feedback fixtures. Four
+expansion tests now cover reversed fixed-side edges spanning one and three
+layers, endpoint identity, label-dummy retention, and the proper-layer invariant.
+
+Commit `493045b` fixes a separate label-separation defect: moving only one
+fragment of a track creates diagonals at retained dummy junctions. Move the
+complete collinear track. The regression fails before the change; 22 focused
+and compatibility tests pass afterward. The candidate also preserves feedback
+turns through post-compaction and chooses label tracks across retained junctions.
+Its vertical feedback fixture now passes unchanged, including orthogonality
+and clearance outside the route envelope.
+
+The candidate still fails the two-node feedback oracle's exact height:
+10 versus ELK's 10.5. It remains uncommitted and is **not parity**. Source and
+repository typechecks and changed-file lint pass. A new native-only 160-input
+replay is running from the candidate loaded before the subsequent label-track
+selection correction; it must not be reported as validation of the final source
+or as a frozen real-ELK comparison. Keep both the initial failure and later
+results. The strict parity gate remains failed.
