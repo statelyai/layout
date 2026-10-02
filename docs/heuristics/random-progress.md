@@ -107,3 +107,13 @@ replay is running from the candidate loaded before the subsequent label-track
 selection correction; it must not be reported as validation of the final source
 or as a frozen real-ELK comparison. Keep both the initial failure and later
 results. The strict parity gate remains failed.
+
+A [label-height differential probe](feedback-label-height-probe.json) isolates
+the remaining feedback mismatch. Both engines use the same retained input;
+label heights vary across 0, 1, 2, 4, and 8. Zero-height bounds match (50 × 9.5).
+The height mismatch grows with actual labels: native/ELK heights are 10/10.5,
+10.5/12, 14/16, and 22/24. ELK shifts the feedback lane as label height grows;
+the native candidate does not reserve equivalent space. The gap is therefore
+larger than a rounding discrepancy. Native label position also differs. Next:
+trace and port center-label dummy insertion/placement, preserving this sweep
+and the original exact assertion.
