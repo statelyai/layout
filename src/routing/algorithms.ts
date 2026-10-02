@@ -974,9 +974,8 @@ export function routeEdge(
     let segments = sections.flatMap((s) => pathReservations(s.path));
     // The two legs meet at a label and, for a self-loop, at their node. Sharing
     // those attachment regions is legitimate; retracing a distant trunk is not.
-    const shared = [label!, ...(loop ? [sourceBounds] : [])];
-    for (const rect of shared)
-      segments = segments.flatMap((s) => outsideTerminal(s, inflate(rect, config.clearance + 1)));
+    const shared = [label!, ...(loop ? [inflate(sourceBounds, config.clearance + 1)] : [])];
+    for (const rect of shared) segments = segments.flatMap((s) => outsideTerminal(s, rect));
     drawn.push(...segments);
     sections.push({
       id: `${edge.id}:label-target`,

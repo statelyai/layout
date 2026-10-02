@@ -71,7 +71,7 @@ export function repairFlatRouting<N, E, G, P>(
       const a = points[i - 1]!,
         b = points[i]!;
       if (Math.abs(a.x - b.x) > 1e-8 && Math.abs(a.y - b.y) > 1e-8) return true;
-      for (let j = i + 2; j < points.length; j++) {
+      for (let j = i + 1; j < points.length; j++) {
         const c = points[j - 1]!,
           d = points[j]!;
         const horizontal =
