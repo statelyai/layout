@@ -113,3 +113,8 @@ current source and runs actual elkjs; it never substitutes the native facade.
 Passing this finite gate is necessary evidence, not universal parity or a
 replacement for the authored aesthetic rubric. No tolerance was introduced to
 make existing failures pass.
+
+The [160-graph random evaluation](random-progress.md) records the current native
+phase/routing corrections, a replay of observed counterexamples, and a fresh
+random draw against real ELK. The strict parity gate still fails on crossings
+and bends. Full per-graph results and matching visual proof remain available.

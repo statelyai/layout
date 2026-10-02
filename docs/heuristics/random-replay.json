@@ -1,0 +1,7466 @@
+{
+  "schemaVersion": 1,
+  "scorerSha256": "47c6460645eaf80176e35261cea876b1e07021cb1ad892600396f1ee20a4fbf4",
+  "generatorSha256": "77238861735358932f3fd513330d22a7611347cfb4e548b35e3678cc98baf292",
+  "revision": "ceef0b107cee294e10f1538ee9f9cea67b43e255",
+  "workingTreeDirty": true,
+  "elkVersion": "0.11.1",
+  "seeds": [
+    104729, 130363, 155921, 196613, 228017, 262147, 1665807580, 3645706015, 1837645124, 1111884325,
+    1791673957, 3792909357, 3169259577, 1521506603
+  ],
+  "reviewSeed": 20261001,
+  "rows": [
+    {
+      "seed": 104729,
+      "graph": 1,
+      "title": "Flat · small",
+      "direction": "right",
+      "revision": "ceef0b107cee294e10f1538ee9f9cea67b43e255",
+      "stately": {
+        "metrics": {
+          "missingNodes": 0,
+          "missingRoutes": 0,
+          "nonFinite": 0,
+          "diagonals": 0,
+          "nodeHits": 0,
+          "nodeOverlaps": 0,
+          "labelNodeOverlaps": 0,
+          "labelOverlaps": 0,
+          "edgeLabelHits": 0,
+          "selfRetraceLength": 0,
+          "edgeCrossings": 2,
+          "edgeOverlapLength": 33,
+          "bends": 29,
+          "routeLength": 2536.5,
+          "area": 272612
+        }
+      },
+      "elk": {
+        "metrics": {
+          "missingNodes": 0,
+          "missingRoutes": 0,
+          "nonFinite": 0,
+          "diagonals": 0,
+          "nodeHits": 0,
+          "nodeOverlaps": 0,
+          "labelNodeOverlaps": 0,
+          "labelOverlaps": 0,
+          "edgeLabelHits": 0,
+          "selfRetraceLength": 0,
+          "edgeCrossings": 3,
+          "edgeOverlapLength": 1735,
+          "bends": 25,
+          "routeLength": 3855,
+          "area": 316844
+        }
+      }
+    },
+    {
+      "seed": 104729,
+      "graph": 2,
+      "title": "Flat · cycles",
+      "direction": "down",
+      "revision": "ceef0b107cee294e10f1538ee9f9cea67b43e255",
+      "stately": {
+        "metrics": {
+          "missingNodes": 0,
+          "missingRoutes": 0,
+          "nonFinite": 0,
+          "diagonals": 0,
+          "nodeHits": 0,
+          "nodeOverlaps": 0,
+          "labelNodeOverlaps": 0,
+          "labelOverlaps": 0,
+          "edgeLabelHits": 0,
+          "selfRetraceLength": 0,
+          "edgeCrossings": 5,
+          "edgeOverlapLength": 59,
+          "bends": 56,
+          "routeLength": 4720,
+          "area": 700377
+        }
+      },
+      "elk": {
+        "metrics": {
+          "missingNodes": 0,
+          "missingRoutes": 0,
+          "nonFinite": 0,
+          "diagonals": 0,
+          "nodeHits": 0,
+          "nodeOverlaps": 0,
+          "labelNodeOverlaps": 0,
+          "labelOverlaps": 0,
+          "edgeLabelHits": 0,
+          "selfRetraceLength": 4,
+          "edgeCrossings": 2,
+          "edgeOverlapLength": 737,
+          "bends": 33,
+          "routeLength": 4743,
+          "area": 729155
+        }
+      }
+    },
+    {
+      "seed": 104729,
+      "graph": 3,
+      "title": "Flat · mixed ports",
+      "direction": "right",
+      "revision": "ceef0b107cee294e10f1538ee9f9cea67b43e255",
+      "stately": {
+        "metrics": {
+          "missingNodes": 0,
+          "missingRoutes": 0,
+          "nonFinite": 0,
+          "diagonals": 0,
+          "nodeHits": 0,
+          "nodeOverlaps": 0,
+          "labelNodeOverlaps": 0,
+          "labelOverlaps": 0,
+          "edgeLabelHits": 0,
+          "selfRetraceLength": 0,
+          "edgeCrossings": 18,
+          "edgeOverlapLength": 97,
+          "bends": 96,
+          "routeLength": 10517.8,
+          "area": 1014130
+        }
+      },
+      "elk": {
+        "metrics": {
+          "missingNodes": 0,
+          "missingRoutes": 0,
+          "nonFinite": 0,
+          "diagonals": 0,
+          "nodeHits": 0,
+          "nodeOverlaps": 0,
+          "labelNodeOverlaps": 0,
+          "labelOverlaps": 0,
+          "edgeLabelHits": 0,
+          "selfRetraceLength": 8,
+          "edgeCrossings": 6,
+          "edgeOverlapLength": 1422.8333333333335,
+          "bends": 47,
+          "routeLength": 7831.5,
+          "area": 1119825
+        }
+      }
+    },
+    {
+      "seed": 104729,
+      "graph": 4,
+      "title": "Flat · disconnected",
+      "direction": "left",
+      "revision": "ceef0b107cee294e10f1538ee9f9cea67b43e255",
+      "stately": {
+        "metrics": {
+          "missingNodes": 0,
+          "missingRoutes": 0,
+          "nonFinite": 0,
+          "diagonals": 0,
+          "nodeHits": 0,
+          "nodeOverlaps": 0,
+          "labelNodeOverlaps": 0,
+          "labelOverlaps": 0,
+          "edgeLabelHits": 0,
+          "selfRetraceLength": 0,
+          "edgeCrossings": 11,
+          "edgeOverlapLength": 86.85000000000002,
+          "bends": 130,
+          "routeLength": 10074.65,
+          "area": 1355326
+        }
+      },
+      "elk": {
+        "metrics": {
+          "missingNodes": 0,
+          "missingRoutes": 0,
+          "nonFinite": 0,
+          "diagonals": 0,
+          "nodeHits": 0,
+          "nodeOverlaps": 0,
+          "labelNodeOverlaps": 0,
+          "labelOverlaps": 0,
+          "edgeLabelHits": 4,
+          "selfRetraceLength": 12,
+          "edgeCrossings": 6,
+          "edgeOverlapLength": 5217.666666666667,
+          "bends": 58,
+          "routeLength": 14896.666666666664,
+          "area": 2482591.5
+        }
+      }
+    },
+    {
+      "seed": 104729,
+      "graph": 5,
+      "title": "Flat · denser",
+      "direction": "down",
+      "revision": "ceef0b107cee294e10f1538ee9f9cea67b43e255",
+      "stately": {
+        "metrics": {
+          "missingNodes": 0,
+          "missingRoutes": 0,
+          "nonFinite": 0,
+          "diagonals": 0,
+          "nodeHits": 0,
+          "nodeOverlaps": 0,
+          "labelNodeOverlaps": 0,
+          "labelOverlaps": 0,
+          "edgeLabelHits": 0,
+          "selfRetraceLength": 0,
+          "edgeCrossings": 95,
+          "edgeOverlapLength": 110.08333333333314,
+          "bends": 226,
+          "routeLength": 51717.48333333334,
+          "area": 5850924
+        }
+      },
+      "elk": {
+        "metrics": {
+          "missingNodes": 0,
+          "missingRoutes": 0,
+          "nonFinite": 0,
+          "diagonals": 0,
+          "nodeHits": 0,
+          "nodeOverlaps": 0,
+          "labelNodeOverlaps": 0,
+          "labelOverlaps": 0,
+          "edgeLabelHits": 3,
+          "selfRetraceLength": 0,
+          "edgeCrossings": 76,
+          "edgeOverlapLength": 5363,
+          "bends": 161,
+          "routeLength": 47351.5,
+          "area": 4445118
+        }
+      }
+    },
+    {
+      "seed": 104729,
+      "graph": 6,
+      "title": "Hierarchy · two groups",
+      "direction": "right",
+      "revision": "ceef0b107cee294e10f1538ee9f9cea67b43e255",
+      "stately": {
+        "metrics": {
+          "missingNodes": 0,
+          "missingRoutes": 0,
+          "nonFinite": 0,
+          "diagonals": 0,
+          "nodeHits": 0,
+          "nodeOverlaps": 0,
+          "labelNodeOverlaps": 0,
+          "labelOverlaps": 0,
+          "edgeLabelHits": 0,
+          "selfRetraceLength": 0,
+          "edgeCrossings": 8,
+          "edgeOverlapLength": 17.33333333333337,
+          "bends": 52,
+          "routeLength": 5103.333333333334,
+          "area": 490261
+        }
+      },
+      "elk": {
+        "metrics": {
+          "missingNodes": 0,
+          "missingRoutes": 0,
+          "nonFinite": 0,
+          "diagonals": 0,
+          "nodeHits": 0,
+          "nodeOverlaps": 0,
+          "labelNodeOverlaps": 0,
+          "labelOverlaps": 0,
+          "edgeLabelHits": 0,
+          "selfRetraceLength": 4,
+          "edgeCrossings": 7,
+          "edgeOverlapLength": 1019.5,
+          "bends": 42,
+          "routeLength": 7215.5,
+          "area": 584781
+        }
+      }
+    },
+    {
+      "seed": 104729,
+      "graph": 7,
+      "title": "Hierarchy · nested",
+      "direction": "down",
+      "revision": "ceef0b107cee294e10f1538ee9f9cea67b43e255",
+      "stately": {
+        "metrics": {
+          "missingNodes": 0,
+          "missingRoutes": 0,
+          "nonFinite": 0,
+          "diagonals": 0,
+          "nodeHits": 0,
+          "nodeOverlaps": 0,
+          "labelNodeOverlaps": 0,
+          "labelOverlaps": 0,
+          "edgeLabelHits": 0,
+          "selfRetraceLength": 0,
+          "edgeCrossings": 63,
+          "edgeOverlapLength": 54,
+          "bends": 117,
+          "routeLength": 21484.5,
+          "area": 1462961.5000000002
+        }
+      },
+      "elk": {
+        "metrics": {
+          "missingNodes": 0,
+          "missingRoutes": 0,
+          "nonFinite": 0,
+          "diagonals": 0,
+          "nodeHits": 0,
+          "nodeOverlaps": 0,
+          "labelNodeOverlaps": 0,
+          "labelOverlaps": 0,
+          "edgeLabelHits": 0,
+          "selfRetraceLength": 0,
+          "edgeCrossings": 67,
+          "edgeOverlapLength": 164,
+          "bends": 121,
+          "routeLength": 36203.5,
+          "area": 3578400
+        }
+      }
+    },
+    {
+      "seed": 104729,
+      "graph": 8,
+      "title": "Hierarchy · mixed ports",
+      "direction": "right",
+      "revision": "ceef0b107cee294e10f1538ee9f9cea67b43e255",
+      "stately": {
+        "metrics": {
+          "missingNodes": 0,
+          "missingRoutes": 0,
+          "nonFinite": 0,
+          "diagonals": 0,
+          "nodeHits": 0,
+          "nodeOverlaps": 0,
+          "labelNodeOverlaps": 0,
+          "labelOverlaps": 0,
+          "edgeLabelHits": 0,
+          "selfRetraceLength": 0,
+          "edgeCrossings": 55,
+          "edgeOverlapLength": 1,
+          "bends": 145,
+          "routeLength": 27029.16666666666,
+          "area": 2367729
+        }
+      },
+      "elk": {
+        "metrics": {
+          "missingNodes": 0,
+          "missingRoutes": 0,
+          "nonFinite": 0,
+          "diagonals": 0,
+          "nodeHits": 0,
+          "nodeOverlaps": 0,
+          "labelNodeOverlaps": 0,
+          "labelOverlaps": 0,
+          "edgeLabelHits": 0,
+          "selfRetraceLength": 0,
+          "edgeCrossings": 24,
+          "edgeOverlapLength": 1004.0000000000001,
+          "bends": 108,
+          "routeLength": 33749.66666666667,
+          "area": 2753542
+        }
+      }
+    },
+    {
+      "seed": 104729,
+      "graph": 9,
+      "title": "Hierarchy · deeper",
+      "direction": "up",
+      "revision": "ceef0b107cee294e10f1538ee9f9cea67b43e255",
+      "stately": {
+        "metrics": {
+          "missingNodes": 0,
+          "missingRoutes": 0,
+          "nonFinite": 0,
+          "diagonals": 0,
+          "nodeHits": 0,
+          "nodeOverlaps": 0,
+          "labelNodeOverlaps": 0,
+          "labelOverlaps": 0,
+          "edgeLabelHits": 0,
+          "selfRetraceLength": 0,
+          "edgeCrossings": 145,
+          "edgeOverlapLength": 212,
+          "bends": 220,
+          "routeLength": 50777.083333333336,
+          "area": 3628308
+        }
+      },
+      "elk": {
+        "error": "Error: java.lang.IllegalStateException: Expected 3 hierarchical ports, but found only 0."
+      }
+    },
+    {
+      "seed": 104729,
+      "graph": 10,
+      "title": "Hierarchy · denser",
+      "direction": "right",
+      "revision": "ceef0b107cee294e10f1538ee9f9cea67b43e255",
+      "stately": {
+        "metrics": {
+          "missingNodes": 0,
+          "missingRoutes": 0,
+          "nonFinite": 0,
+          "diagonals": 0,
+          "nodeHits": 0,
+          "nodeOverlaps": 0,
+          "labelNodeOverlaps": 0,
+          "labelOverlaps": 0,
+          "edgeLabelHits": 0,
+          "selfRetraceLength": 0,
+          "edgeCrossings": 436,
+          "edgeOverlapLength": 2028,
+          "bends": 330,
+          "routeLength": 109994.83333333333,
+          "area": 5479619.999999999
+        }
+      },
+      "elk": {
+        "metrics": {
+          "missingNodes": 0,
+          "missingRoutes": 0,
+          "nonFinite": 0,
+          "diagonals": 0,
+          "nodeHits": 0,
+          "nodeOverlaps": 0,
+          "labelNodeOverlaps": 0,
+          "labelOverlaps": 0,
+          "edgeLabelHits": 0,
+          "selfRetraceLength": 0,
+          "edgeCrossings": 229,
+          "edgeOverlapLength": 12649.833333333334,
+          "bends": 311,
+          "routeLength": 163644.66666666666,
+          "area": 9532240
+        }
+      }
+    },
+    {
+      "seed": 130363,
+      "graph": 1,
+      "title": "Flat · small",
+      "direction": "right",
+      "revision": "ceef0b107cee294e10f1538ee9f9cea67b43e255",
+      "stately": {
+        "metrics": {
+          "missingNodes": 0,
+          "missingRoutes": 0,
+          "nonFinite": 0,
+          "diagonals": 0,
+          "nodeHits": 0,
+          "nodeOverlaps": 0,
+          "labelNodeOverlaps": 0,
+          "labelOverlaps": 0,
+          "edgeLabelHits": 0,
+          "selfRetraceLength": 0,
+          "edgeCrossings": 6,
+          "edgeOverlapLength": 27.5,
+          "bends": 27,
+          "routeLength": 2415.5,
+          "area": 240453.5
+        }
+      },
+      "elk": {
+        "metrics": {
+          "missingNodes": 0,
+          "missingRoutes": 0,
+          "nonFinite": 0,
+          "diagonals": 0,
+          "nodeHits": 0,
+          "nodeOverlaps": 0,
+          "labelNodeOverlaps": 0,
+          "labelOverlaps": 0,
+          "edgeLabelHits": 0,
+          "selfRetraceLength": 0,
+          "edgeCrossings": 0,
+          "edgeOverlapLength": 155,
+          "bends": 16,
+          "routeLength": 2201,
+          "area": 383656
+        }
+      }
+    },
+    {
+      "seed": 130363,
+      "graph": 2,
+      "title": "Flat · cycles",
+      "direction": "down",
+      "revision": "ceef0b107cee294e10f1538ee9f9cea67b43e255",
+      "stately": {
+        "metrics": {
+          "missingNodes": 0,
+          "missingRoutes": 0,
+          "nonFinite": 0,
+          "diagonals": 0,
+          "nodeHits": 0,
+          "nodeOverlaps": 0,
+          "labelNodeOverlaps": 0,
+          "labelOverlaps": 0,
+          "edgeLabelHits": 0,
+          "selfRetraceLength": 0,
+          "edgeCrossings": 6,
+          "edgeOverlapLength": 78.5,
+          "bends": 64,
+          "routeLength": 6587.5,
+          "area": 636400
+        }
+      },
+      "elk": {
+        "metrics": {
+          "missingNodes": 0,
+          "missingRoutes": 0,
+          "nonFinite": 0,
+          "diagonals": 0,
+          "nodeHits": 0,
+          "nodeOverlaps": 0,
+          "labelNodeOverlaps": 0,
+          "labelOverlaps": 0,
+          "edgeLabelHits": 0,
+          "selfRetraceLength": 0,
+          "edgeCrossings": 2,
+          "edgeOverlapLength": 192,
+          "bends": 32,
+          "routeLength": 4912.5,
+          "area": 623238
+        }
+      }
+    },
+    {
+      "seed": 130363,
+      "graph": 3,
+      "title": "Flat · mixed ports",
+      "direction": "right",
+      "revision": "ceef0b107cee294e10f1538ee9f9cea67b43e255",
+      "stately": {
+        "metrics": {
+          "missingNodes": 0,
+          "missingRoutes": 0,
+          "nonFinite": 0,
+          "diagonals": 0,
+          "nodeHits": 0,
+          "nodeOverlaps": 0,
+          "labelNodeOverlaps": 0,
+          "labelOverlaps": 0,
+          "edgeLabelHits": 0,
+          "selfRetraceLength": 0,
+          "edgeCrossings": 9,
+          "edgeOverlapLength": 28,
+          "bends": 100,
+          "routeLength": 8020.366666666668,
+          "area": 901125
+        }
+      },
+      "elk": {
+        "metrics": {
+          "missingNodes": 0,
+          "missingRoutes": 0,
+          "nonFinite": 0,
+          "diagonals": 0,
+          "nodeHits": 0,
+          "nodeOverlaps": 0,
+          "labelNodeOverlaps": 0,
+          "labelOverlaps": 0,
+          "edgeLabelHits": 0,
+          "selfRetraceLength": 4,
+          "edgeCrossings": 15,
+          "edgeOverlapLength": 749.5,
+          "bends": 53,
+          "routeLength": 11171.5,
+          "area": 1156187.5
+        }
+      }
+    },
+    {
+      "seed": 130363,
+      "graph": 4,
+      "title": "Flat · disconnected",
+      "direction": "left",
+      "revision": "ceef0b107cee294e10f1538ee9f9cea67b43e255",
+      "stately": {
+        "metrics": {
+          "missingNodes": 0,
+          "missingRoutes": 0,
+          "nonFinite": 0,
+          "diagonals": 0,
+          "nodeHits": 0,
+          "nodeOverlaps": 0,
+          "labelNodeOverlaps": 0,
+          "labelOverlaps": 0,
+          "edgeLabelHits": 0,
+          "selfRetraceLength": 0,
+          "edgeCrossings": 13,
+          "edgeOverlapLength": 35,
+          "bends": 115,
+          "routeLength": 9827.666666666664,
+          "area": 1369816
+        }
+      },
+      "elk": {
+        "metrics": {
+          "missingNodes": 0,
+          "missingRoutes": 0,
+          "nonFinite": 0,
+          "diagonals": 0,
+          "nodeHits": 0,
+          "nodeOverlaps": 0,
+          "labelNodeOverlaps": 0,
+          "labelOverlaps": 0,
+          "edgeLabelHits": 2,
+          "selfRetraceLength": 8,
+          "edgeCrossings": 11,
+          "edgeOverlapLength": 585.1666666666666,
+          "bends": 64,
+          "routeLength": 14273.166666666666,
+          "area": 1784945.5
+        }
+      }
+    },
+    {
+      "seed": 130363,
+      "graph": 5,
+      "title": "Flat · denser",
+      "direction": "down",
+      "revision": "ceef0b107cee294e10f1538ee9f9cea67b43e255",
+      "stately": {
+        "metrics": {
+          "missingNodes": 0,
+          "missingRoutes": 0,
+          "nonFinite": 0,
+          "diagonals": 0,
+          "nodeHits": 0,
+          "nodeOverlaps": 0,
+          "labelNodeOverlaps": 0,
+          "labelOverlaps": 0,
+          "edgeLabelHits": 0,
+          "selfRetraceLength": 0,
+          "edgeCrossings": 88,
+          "edgeOverlapLength": 90.83333333333326,
+          "bends": 256,
+          "routeLength": 40452.816666666666,
+          "area": 3877800.5
+        }
+      },
+      "elk": {
+        "metrics": {
+          "missingNodes": 0,
+          "missingRoutes": 0,
+          "nonFinite": 0,
+          "diagonals": 0,
+          "nodeHits": 0,
+          "nodeOverlaps": 0,
+          "labelNodeOverlaps": 0,
+          "labelOverlaps": 0,
+          "edgeLabelHits": 5,
+          "selfRetraceLength": 0,
+          "edgeCrossings": 71,
+          "edgeOverlapLength": 3958,
+          "bends": 144,
+          "routeLength": 46242.666666666664,
+          "area": 6965434
+        }
+      }
+    },
+    {
+      "seed": 130363,
+      "graph": 6,
+      "title": "Hierarchy · two groups",
+      "direction": "right",
+      "revision": "ceef0b107cee294e10f1538ee9f9cea67b43e255",
+      "stately": {
+        "metrics": {
+          "missingNodes": 0,
+          "missingRoutes": 0,
+          "nonFinite": 0,
+          "diagonals": 0,
+          "nodeHits": 0,
+          "nodeOverlaps": 0,
+          "labelNodeOverlaps": 0,
+          "labelOverlaps": 0,
+          "edgeLabelHits": 0,
+          "selfRetraceLength": 0,
+          "edgeCrossings": 16,
+          "edgeOverlapLength": 8,
+          "bends": 60,
+          "routeLength": 7544.666666666666,
+          "area": 688534
+        }
+      },
+      "elk": {
+        "metrics": {
+          "missingNodes": 0,
+          "missingRoutes": 0,
+          "nonFinite": 0,
+          "diagonals": 0,
+          "nodeHits": 0,
+          "nodeOverlaps": 0,
+          "labelNodeOverlaps": 0,
+          "labelOverlaps": 0,
+          "edgeLabelHits": 0,
+          "selfRetraceLength": 0,
+          "edgeCrossings": 3,
+          "edgeOverlapLength": 522.5,
+          "bends": 39,
+          "routeLength": 7086.5,
+          "area": 489062
+        }
+      }
+    },
+    {
+      "seed": 130363,
+      "graph": 7,
+      "title": "Hierarchy · nested",
+      "direction": "down",
+      "revision": "ceef0b107cee294e10f1538ee9f9cea67b43e255",
+      "stately": {
+        "metrics": {
+          "missingNodes": 0,
+          "missingRoutes": 0,
+          "nonFinite": 0,
+          "diagonals": 0,
+          "nodeHits": 0,
+          "nodeOverlaps": 0,
+          "labelNodeOverlaps": 0,
+          "labelOverlaps": 0,
+          "edgeLabelHits": 0,
+          "selfRetraceLength": 0,
+          "edgeCrossings": 11,
+          "edgeOverlapLength": 65.5,
+          "bends": 109,
+          "routeLength": 13076.833333333336,
+          "area": 1262853.5
+        }
+      },
+      "elk": {
+        "metrics": {
+          "missingNodes": 0,
+          "missingRoutes": 0,
+          "nonFinite": 0,
+          "diagonals": 0,
+          "nodeHits": 0,
+          "nodeOverlaps": 0,
+          "labelNodeOverlaps": 0,
+          "labelOverlaps": 0,
+          "edgeLabelHits": 0,
+          "selfRetraceLength": 4,
+          "edgeCrossings": 27,
+          "edgeOverlapLength": 2252,
+          "bends": 88,
+          "routeLength": 17628,
+          "area": 2442917
+        }
+      }
+    },
+    {
+      "seed": 130363,
+      "graph": 8,
+      "title": "Hierarchy · mixed ports",
+      "direction": "right",
+      "revision": "ceef0b107cee294e10f1538ee9f9cea67b43e255",
+      "stately": {
+        "metrics": {
+          "missingNodes": 0,
+          "missingRoutes": 0,
+          "nonFinite": 0,
+          "diagonals": 0,
+          "nodeHits": 0,
+          "nodeOverlaps": 0,
+          "labelNodeOverlaps": 0,
+          "labelOverlaps": 0,
+          "edgeLabelHits": 0,
+          "selfRetraceLength": 0,
+          "edgeCrossings": 134,
+          "edgeOverlapLength": 62,
+          "bends": 175,
+          "routeLength": 31437.833333333325,
+          "area": 1754262.3333333333
+        }
+      },
+      "elk": {
+        "metrics": {
+          "missingNodes": 0,
+          "missingRoutes": 0,
+          "nonFinite": 0,
+          "diagonals": 0,
+          "nodeHits": 0,
+          "nodeOverlaps": 0,
+          "labelNodeOverlaps": 0,
+          "labelOverlaps": 0,
+          "edgeLabelHits": 0,
+          "selfRetraceLength": 0,
+          "edgeCrossings": 28,
+          "edgeOverlapLength": 3517.7000000000003,
+          "bends": 130,
+          "routeLength": 37998.6,
+          "area": 2141988
+        }
+      }
+    },
+    {
+      "seed": 130363,
+      "graph": 9,
+      "title": "Hierarchy · deeper",
+      "direction": "up",
+      "revision": "ceef0b107cee294e10f1538ee9f9cea67b43e255",
+      "stately": {
+        "metrics": {
+          "missingNodes": 0,
+          "missingRoutes": 0,
+          "nonFinite": 0,
+          "diagonals": 0,
+          "nodeHits": 0,
+          "nodeOverlaps": 0,
+          "labelNodeOverlaps": 0,
+          "labelOverlaps": 0,
+          "edgeLabelHits": 0,
+          "selfRetraceLength": 0,
+          "edgeCrossings": 117,
+          "edgeOverlapLength": 148.83333333333337,
+          "bends": 210,
+          "routeLength": 52996.99999999999,
+          "area": 4028482
+        }
+      },
+      "elk": {
+        "error": "Error: java.lang.IllegalStateException: Expected 5 hierarchical ports, but found only 0."
+      }
+    },
+    {
+      "seed": 130363,
+      "graph": 10,
+      "title": "Hierarchy · denser",
+      "direction": "right",
+      "revision": "ceef0b107cee294e10f1538ee9f9cea67b43e255",
+      "stately": {
+        "metrics": {
+          "missingNodes": 0,
+          "missingRoutes": 0,
+          "nonFinite": 0,
+          "diagonals": 0,
+          "nodeHits": 0,
+          "nodeOverlaps": 0,
+          "labelNodeOverlaps": 0,
+          "labelOverlaps": 0,
+          "edgeLabelHits": 0,
+          "selfRetraceLength": 0,
+          "edgeCrossings": 352,
+          "edgeOverlapLength": 997.5,
+          "bends": 273,
+          "routeLength": 82355.74999999997,
+          "area": 4136465.6666666665
+        }
+      },
+      "elk": {
+        "metrics": {
+          "missingNodes": 0,
+          "missingRoutes": 0,
+          "nonFinite": 0,
+          "diagonals": 0,
+          "nodeHits": 0,
+          "nodeOverlaps": 0,
+          "labelNodeOverlaps": 0,
+          "labelOverlaps": 0,
+          "edgeLabelHits": 0,
+          "selfRetraceLength": 0,
+          "edgeCrossings": 144,
+          "edgeOverlapLength": 13937.666666666666,
+          "bends": 298,
+          "routeLength": 130265.5,
+          "area": 5876178
+        }
+      }
+    },
+    {
+      "seed": 155921,
+      "graph": 1,
+      "title": "Flat · small",
+      "direction": "right",
+      "revision": "ceef0b107cee294e10f1538ee9f9cea67b43e255",
+      "stately": {
+        "metrics": {
+          "missingNodes": 0,
+          "missingRoutes": 0,
+          "nonFinite": 0,
+          "diagonals": 0,
+          "nodeHits": 0,
+          "nodeOverlaps": 0,
+          "labelNodeOverlaps": 0,
+          "labelOverlaps": 0,
+          "edgeLabelHits": 0,
+          "selfRetraceLength": 0,
+          "edgeCrossings": 0,
+          "edgeOverlapLength": 17,
+          "bends": 23,
+          "routeLength": 2408,
+          "area": 253341
+        }
+      },
+      "elk": {
+        "metrics": {
+          "missingNodes": 0,
+          "missingRoutes": 0,
+          "nonFinite": 0,
+          "diagonals": 0,
+          "nodeHits": 0,
+          "nodeOverlaps": 0,
+          "labelNodeOverlaps": 0,
+          "labelOverlaps": 0,
+          "edgeLabelHits": 2,
+          "selfRetraceLength": 0,
+          "edgeCrossings": 2,
+          "edgeOverlapLength": 420.5,
+          "bends": 16,
+          "routeLength": 2692.5,
+          "area": 296155
+        }
+      }
+    },
+    {
+      "seed": 155921,
+      "graph": 2,
+      "title": "Flat · cycles",
+      "direction": "down",
+      "revision": "ceef0b107cee294e10f1538ee9f9cea67b43e255",
+      "stately": {
+        "metrics": {
+          "missingNodes": 0,
+          "missingRoutes": 0,
+          "nonFinite": 0,
+          "diagonals": 0,
+          "nodeHits": 0,
+          "nodeOverlaps": 0,
+          "labelNodeOverlaps": 0,
+          "labelOverlaps": 0,
+          "edgeLabelHits": 0,
+          "selfRetraceLength": 0,
+          "edgeCrossings": 8,
+          "edgeOverlapLength": 122.5,
+          "bends": 50,
+          "routeLength": 4870,
+          "area": 723690
+        }
+      },
+      "elk": {
+        "metrics": {
+          "missingNodes": 0,
+          "missingRoutes": 0,
+          "nonFinite": 0,
+          "diagonals": 0,
+          "nodeHits": 0,
+          "nodeOverlaps": 0,
+          "labelNodeOverlaps": 0,
+          "labelOverlaps": 0,
+          "edgeLabelHits": 0,
+          "selfRetraceLength": 0,
+          "edgeCrossings": 1,
+          "edgeOverlapLength": 1372.5,
+          "bends": 38,
+          "routeLength": 6262.5,
+          "area": 629160
+        }
+      }
+    },
+    {
+      "seed": 155921,
+      "graph": 3,
+      "title": "Flat · mixed ports",
+      "direction": "right",
+      "revision": "ceef0b107cee294e10f1538ee9f9cea67b43e255",
+      "stately": {
+        "metrics": {
+          "missingNodes": 0,
+          "missingRoutes": 0,
+          "nonFinite": 0,
+          "diagonals": 0,
+          "nodeHits": 0,
+          "nodeOverlaps": 0,
+          "labelNodeOverlaps": 0,
+          "labelOverlaps": 0,
+          "edgeLabelHits": 0,
+          "selfRetraceLength": 0,
+          "edgeCrossings": 12,
+          "edgeOverlapLength": 100.5,
+          "bends": 112,
+          "routeLength": 11986.666666666668,
+          "area": 1374105
+        }
+      },
+      "elk": {
+        "metrics": {
+          "missingNodes": 0,
+          "missingRoutes": 0,
+          "nonFinite": 0,
+          "diagonals": 0,
+          "nodeHits": 0,
+          "nodeOverlaps": 0,
+          "labelNodeOverlaps": 0,
+          "labelOverlaps": 0,
+          "edgeLabelHits": 2,
+          "selfRetraceLength": 4,
+          "edgeCrossings": 7,
+          "edgeOverlapLength": 1538.1666666666665,
+          "bends": 57,
+          "routeLength": 11287.166666666668,
+          "area": 1215025
+        }
+      }
+    },
+    {
+      "seed": 155921,
+      "graph": 4,
+      "title": "Flat · disconnected",
+      "direction": "left",
+      "revision": "ceef0b107cee294e10f1538ee9f9cea67b43e255",
+      "stately": {
+        "metrics": {
+          "missingNodes": 0,
+          "missingRoutes": 0,
+          "nonFinite": 0,
+          "diagonals": 0,
+          "nodeHits": 0,
+          "nodeOverlaps": 0,
+          "labelNodeOverlaps": 0,
+          "labelOverlaps": 0,
+          "edgeLabelHits": 0,
+          "selfRetraceLength": 0,
+          "edgeCrossings": 18,
+          "edgeOverlapLength": 101.5,
+          "bends": 115,
+          "routeLength": 12128.75,
+          "area": 1532641
+        }
+      },
+      "elk": {
+        "metrics": {
+          "missingNodes": 0,
+          "missingRoutes": 0,
+          "nonFinite": 0,
+          "diagonals": 0,
+          "nodeHits": 0,
+          "nodeOverlaps": 0,
+          "labelNodeOverlaps": 0,
+          "labelOverlaps": 0,
+          "edgeLabelHits": 0,
+          "selfRetraceLength": 8,
+          "edgeCrossings": 9,
+          "edgeOverlapLength": 904,
+          "bends": 63,
+          "routeLength": 13589.5,
+          "area": 1607931.5
+        }
+      }
+    },
+    {
+      "seed": 155921,
+      "graph": 5,
+      "title": "Flat · denser",
+      "direction": "down",
+      "revision": "ceef0b107cee294e10f1538ee9f9cea67b43e255",
+      "stately": {
+        "metrics": {
+          "missingNodes": 0,
+          "missingRoutes": 0,
+          "nonFinite": 0,
+          "diagonals": 0,
+          "nodeHits": 0,
+          "nodeOverlaps": 0,
+          "labelNodeOverlaps": 0,
+          "labelOverlaps": 0,
+          "edgeLabelHits": 0,
+          "selfRetraceLength": 0,
+          "edgeCrossings": 64,
+          "edgeOverlapLength": 201.39999999999998,
+          "bends": 218,
+          "routeLength": 43544.61666666667,
+          "area": 5882700.75
+        }
+      },
+      "elk": {
+        "metrics": {
+          "missingNodes": 0,
+          "missingRoutes": 0,
+          "nonFinite": 0,
+          "diagonals": 0,
+          "nodeHits": 0,
+          "nodeOverlaps": 0,
+          "labelNodeOverlaps": 0,
+          "labelOverlaps": 0,
+          "edgeLabelHits": 2,
+          "selfRetraceLength": 8,
+          "edgeCrossings": 74,
+          "edgeOverlapLength": 22325,
+          "bends": 139,
+          "routeLength": 56189.833333333336,
+          "area": 5790893.5
+        }
+      }
+    },
+    {
+      "seed": 155921,
+      "graph": 6,
+      "title": "Hierarchy · two groups",
+      "direction": "right",
+      "revision": "ceef0b107cee294e10f1538ee9f9cea67b43e255",
+      "stately": {
+        "metrics": {
+          "missingNodes": 0,
+          "missingRoutes": 0,
+          "nonFinite": 0,
+          "diagonals": 0,
+          "nodeHits": 0,
+          "nodeOverlaps": 0,
+          "labelNodeOverlaps": 0,
+          "labelOverlaps": 0,
+          "edgeLabelHits": 0,
+          "selfRetraceLength": 0,
+          "edgeCrossings": 9,
+          "edgeOverlapLength": 18,
+          "bends": 58,
+          "routeLength": 7931.249999999999,
+          "area": 570210.8333333334
+        }
+      },
+      "elk": {
+        "metrics": {
+          "missingNodes": 0,
+          "missingRoutes": 0,
+          "nonFinite": 0,
+          "diagonals": 0,
+          "nodeHits": 0,
+          "nodeOverlaps": 0,
+          "labelNodeOverlaps": 0,
+          "labelOverlaps": 0,
+          "edgeLabelHits": 0,
+          "selfRetraceLength": 4,
+          "edgeCrossings": 2,
+          "edgeOverlapLength": 93,
+          "bends": 29,
+          "routeLength": 8167,
+          "area": 858228
+        }
+      }
+    },
+    {
+      "seed": 155921,
+      "graph": 7,
+      "title": "Hierarchy · nested",
+      "direction": "down",
+      "revision": "ceef0b107cee294e10f1538ee9f9cea67b43e255",
+      "stately": {
+        "metrics": {
+          "missingNodes": 0,
+          "missingRoutes": 0,
+          "nonFinite": 0,
+          "diagonals": 0,
+          "nodeHits": 0,
+          "nodeOverlaps": 0,
+          "labelNodeOverlaps": 0,
+          "labelOverlaps": 0,
+          "edgeLabelHits": 0,
+          "selfRetraceLength": 0,
+          "edgeCrossings": 17,
+          "edgeOverlapLength": 85,
+          "bends": 76,
+          "routeLength": 10385.166666666666,
+          "area": 1465088.3333333333
+        }
+      },
+      "elk": {
+        "metrics": {
+          "missingNodes": 0,
+          "missingRoutes": 0,
+          "nonFinite": 0,
+          "diagonals": 0,
+          "nodeHits": 0,
+          "nodeOverlaps": 0,
+          "labelNodeOverlaps": 0,
+          "labelOverlaps": 0,
+          "edgeLabelHits": 0,
+          "selfRetraceLength": 0,
+          "edgeCrossings": 29,
+          "edgeOverlapLength": 172.16666666666674,
+          "bends": 89,
+          "routeLength": 24442.166666666668,
+          "area": 2881032
+        }
+      }
+    },
+    {
+      "seed": 155921,
+      "graph": 8,
+      "title": "Hierarchy · mixed ports",
+      "direction": "right",
+      "revision": "ceef0b107cee294e10f1538ee9f9cea67b43e255",
+      "stately": {
+        "metrics": {
+          "missingNodes": 0,
+          "missingRoutes": 0,
+          "nonFinite": 0,
+          "diagonals": 0,
+          "nodeHits": 0,
+          "nodeOverlaps": 0,
+          "labelNodeOverlaps": 0,
+          "labelOverlaps": 0,
+          "edgeLabelHits": 0,
+          "selfRetraceLength": 0,
+          "edgeCrossings": 85,
+          "edgeOverlapLength": 67.5,
+          "bends": 162,
+          "routeLength": 38880.833333333336,
+          "area": 2605547
+        }
+      },
+      "elk": {
+        "metrics": {
+          "missingNodes": 0,
+          "missingRoutes": 0,
+          "nonFinite": 0,
+          "diagonals": 0,
+          "nodeHits": 0,
+          "nodeOverlaps": 0,
+          "labelNodeOverlaps": 0,
+          "labelOverlaps": 0,
+          "edgeLabelHits": 0,
+          "selfRetraceLength": 0,
+          "edgeCrossings": 28,
+          "edgeOverlapLength": 5945.333333333334,
+          "bends": 120,
+          "routeLength": 41211.333333333336,
+          "area": 2985284
+        }
+      }
+    },
+    {
+      "seed": 155921,
+      "graph": 9,
+      "title": "Hierarchy · deeper",
+      "direction": "up",
+      "revision": "ceef0b107cee294e10f1538ee9f9cea67b43e255",
+      "stately": {
+        "metrics": {
+          "missingNodes": 0,
+          "missingRoutes": 0,
+          "nonFinite": 0,
+          "diagonals": 0,
+          "nodeHits": 0,
+          "nodeOverlaps": 0,
+          "labelNodeOverlaps": 0,
+          "labelOverlaps": 0,
+          "edgeLabelHits": 0,
+          "selfRetraceLength": 0,
+          "edgeCrossings": 164,
+          "edgeOverlapLength": 84,
+          "bends": 219,
+          "routeLength": 52061.5,
+          "area": 2600898
+        }
+      },
+      "elk": {
+        "error": "Error: java.lang.IllegalStateException: Expected 1 hierarchical ports, but found only 0."
+      }
+    },
+    {
+      "seed": 155921,
+      "graph": 10,
+      "title": "Hierarchy · denser",
+      "direction": "right",
+      "revision": "ceef0b107cee294e10f1538ee9f9cea67b43e255",
+      "stately": {
+        "metrics": {
+          "missingNodes": 0,
+          "missingRoutes": 0,
+          "nonFinite": 0,
+          "diagonals": 0,
+          "nodeHits": 0,
+          "nodeOverlaps": 0,
+          "labelNodeOverlaps": 0,
+          "labelOverlaps": 0,
+          "edgeLabelHits": 0,
+          "selfRetraceLength": 0,
+          "edgeCrossings": 383,
+          "edgeOverlapLength": 521.6666666666666,
+          "bends": 318,
+          "routeLength": 111219.08333333334,
+          "area": 5947234.333333334
+        }
+      },
+      "elk": {
+        "metrics": {
+          "missingNodes": 0,
+          "missingRoutes": 0,
+          "nonFinite": 0,
+          "diagonals": 0,
+          "nodeHits": 0,
+          "nodeOverlaps": 0,
+          "labelNodeOverlaps": 0,
+          "labelOverlaps": 0,
+          "edgeLabelHits": 2,
+          "selfRetraceLength": 4,
+          "edgeCrossings": 199,
+          "edgeOverlapLength": 7594.75,
+          "bends": 297,
+          "routeLength": 150120.8333333333,
+          "area": 7788198
+        }
+      }
+    },
+    {
+      "seed": 196613,
+      "graph": 1,
+      "title": "Flat · small",
+      "direction": "right",
+      "revision": "ceef0b107cee294e10f1538ee9f9cea67b43e255",
+      "stately": {
+        "metrics": {
+          "missingNodes": 0,
+          "missingRoutes": 0,
+          "nonFinite": 0,
+          "diagonals": 0,
+          "nodeHits": 0,
+          "nodeOverlaps": 0,
+          "labelNodeOverlaps": 0,
+          "labelOverlaps": 0,
+          "edgeLabelHits": 0,
+          "selfRetraceLength": 0,
+          "edgeCrossings": 2,
+          "edgeOverlapLength": 34,
+          "bends": 38,
+          "routeLength": 2897.5,
+          "area": 268025
+        }
+      },
+      "elk": {
+        "metrics": {
+          "missingNodes": 0,
+          "missingRoutes": 0,
+          "nonFinite": 0,
+          "diagonals": 0,
+          "nodeHits": 0,
+          "nodeOverlaps": 0,
+          "labelNodeOverlaps": 0,
+          "labelOverlaps": 0,
+          "edgeLabelHits": 0,
+          "selfRetraceLength": 4,
+          "edgeCrossings": 0,
+          "edgeOverlapLength": 350,
+          "bends": 15,
+          "routeLength": 2590.5,
+          "area": 307632
+        }
+      }
+    },
+    {
+      "seed": 196613,
+      "graph": 2,
+      "title": "Flat · cycles",
+      "direction": "down",
+      "revision": "ceef0b107cee294e10f1538ee9f9cea67b43e255",
+      "stately": {
+        "metrics": {
+          "missingNodes": 0,
+          "missingRoutes": 0,
+          "nonFinite": 0,
+          "diagonals": 0,
+          "nodeHits": 0,
+          "nodeOverlaps": 0,
+          "labelNodeOverlaps": 0,
+          "labelOverlaps": 0,
+          "edgeLabelHits": 0,
+          "selfRetraceLength": 0,
+          "edgeCrossings": 21,
+          "edgeOverlapLength": 18,
+          "bends": 57,
+          "routeLength": 7074.233333333334,
+          "area": 704940
+        }
+      },
+      "elk": {
+        "metrics": {
+          "missingNodes": 0,
+          "missingRoutes": 0,
+          "nonFinite": 0,
+          "diagonals": 0,
+          "nodeHits": 0,
+          "nodeOverlaps": 0,
+          "labelNodeOverlaps": 0,
+          "labelOverlaps": 0,
+          "edgeLabelHits": 0,
+          "selfRetraceLength": 4,
+          "edgeCrossings": 1,
+          "edgeOverlapLength": 1008.5,
+          "bends": 27,
+          "routeLength": 5982.5,
+          "area": 639750
+        }
+      }
+    },
+    {
+      "seed": 196613,
+      "graph": 3,
+      "title": "Flat · mixed ports",
+      "direction": "right",
+      "revision": "ceef0b107cee294e10f1538ee9f9cea67b43e255",
+      "stately": {
+        "metrics": {
+          "missingNodes": 0,
+          "missingRoutes": 0,
+          "nonFinite": 0,
+          "diagonals": 0,
+          "nodeHits": 0,
+          "nodeOverlaps": 0,
+          "labelNodeOverlaps": 0,
+          "labelOverlaps": 0,
+          "edgeLabelHits": 0,
+          "selfRetraceLength": 0,
+          "edgeCrossings": 6,
+          "edgeOverlapLength": 36,
+          "bends": 92,
+          "routeLength": 8723.333333333332,
+          "area": 1131266.5
+        }
+      },
+      "elk": {
+        "metrics": {
+          "missingNodes": 0,
+          "missingRoutes": 0,
+          "nonFinite": 0,
+          "diagonals": 0,
+          "nodeHits": 0,
+          "nodeOverlaps": 0,
+          "labelNodeOverlaps": 0,
+          "labelOverlaps": 0,
+          "edgeLabelHits": 7,
+          "selfRetraceLength": 0,
+          "edgeCrossings": 16,
+          "edgeOverlapLength": 1576,
+          "bends": 57,
+          "routeLength": 12076.5,
+          "area": 1444898
+        }
+      }
+    },
+    {
+      "seed": 196613,
+      "graph": 4,
+      "title": "Flat · disconnected",
+      "direction": "left",
+      "revision": "ceef0b107cee294e10f1538ee9f9cea67b43e255",
+      "stately": {
+        "metrics": {
+          "missingNodes": 0,
+          "missingRoutes": 0,
+          "nonFinite": 0,
+          "diagonals": 0,
+          "nodeHits": 0,
+          "nodeOverlaps": 0,
+          "labelNodeOverlaps": 0,
+          "labelOverlaps": 0,
+          "edgeLabelHits": 0,
+          "selfRetraceLength": 0,
+          "edgeCrossings": 11,
+          "edgeOverlapLength": 50.75,
+          "bends": 113,
+          "routeLength": 9879.666666666664,
+          "area": 1065935
+        }
+      },
+      "elk": {
+        "metrics": {
+          "missingNodes": 0,
+          "missingRoutes": 0,
+          "nonFinite": 0,
+          "diagonals": 0,
+          "nodeHits": 0,
+          "nodeOverlaps": 0,
+          "labelNodeOverlaps": 0,
+          "labelOverlaps": 0,
+          "edgeLabelHits": 2,
+          "selfRetraceLength": 0,
+          "edgeCrossings": 12,
+          "edgeOverlapLength": 1520.5,
+          "bends": 56,
+          "routeLength": 13160.5,
+          "area": 1659696
+        }
+      }
+    },
+    {
+      "seed": 196613,
+      "graph": 5,
+      "title": "Flat · denser",
+      "direction": "down",
+      "revision": "ceef0b107cee294e10f1538ee9f9cea67b43e255",
+      "stately": {
+        "metrics": {
+          "missingNodes": 0,
+          "missingRoutes": 0,
+          "nonFinite": 0,
+          "diagonals": 0,
+          "nodeHits": 0,
+          "nodeOverlaps": 0,
+          "labelNodeOverlaps": 0,
+          "labelOverlaps": 0,
+          "edgeLabelHits": 0,
+          "selfRetraceLength": 0,
+          "edgeCrossings": 117,
+          "edgeOverlapLength": 219.25,
+          "bends": 253,
+          "routeLength": 41381.783333333326,
+          "area": 3446940
+        }
+      },
+      "elk": {
+        "metrics": {
+          "missingNodes": 0,
+          "missingRoutes": 0,
+          "nonFinite": 0,
+          "diagonals": 0,
+          "nodeHits": 0,
+          "nodeOverlaps": 0,
+          "labelNodeOverlaps": 0,
+          "labelOverlaps": 0,
+          "edgeLabelHits": 4,
+          "selfRetraceLength": 0,
+          "edgeCrossings": 75,
+          "edgeOverlapLength": 7880.166666666665,
+          "bends": 151,
+          "routeLength": 56327.166666666664,
+          "area": 6237510
+        }
+      }
+    },
+    {
+      "seed": 196613,
+      "graph": 6,
+      "title": "Hierarchy · two groups",
+      "direction": "right",
+      "revision": "ceef0b107cee294e10f1538ee9f9cea67b43e255",
+      "stately": {
+        "metrics": {
+          "missingNodes": 0,
+          "missingRoutes": 0,
+          "nonFinite": 0,
+          "diagonals": 0,
+          "nodeHits": 0,
+          "nodeOverlaps": 0,
+          "labelNodeOverlaps": 0,
+          "labelOverlaps": 0,
+          "edgeLabelHits": 0,
+          "selfRetraceLength": 0,
+          "edgeCrossings": 12,
+          "edgeOverlapLength": 21,
+          "bends": 44,
+          "routeLength": 5382.666666666666,
+          "area": 471576
+        }
+      },
+      "elk": {
+        "metrics": {
+          "missingNodes": 0,
+          "missingRoutes": 0,
+          "nonFinite": 0,
+          "diagonals": 0,
+          "nodeHits": 0,
+          "nodeOverlaps": 0,
+          "labelNodeOverlaps": 0,
+          "labelOverlaps": 0,
+          "edgeLabelHits": 0,
+          "selfRetraceLength": 0,
+          "edgeCrossings": 0,
+          "edgeOverlapLength": 944,
+          "bends": 34,
+          "routeLength": 6493.5,
+          "area": 668112.5
+        }
+      }
+    },
+    {
+      "seed": 196613,
+      "graph": 7,
+      "title": "Hierarchy · nested",
+      "direction": "down",
+      "revision": "ceef0b107cee294e10f1538ee9f9cea67b43e255",
+      "stately": {
+        "metrics": {
+          "missingNodes": 0,
+          "missingRoutes": 0,
+          "nonFinite": 0,
+          "diagonals": 0,
+          "nodeHits": 0,
+          "nodeOverlaps": 0,
+          "labelNodeOverlaps": 0,
+          "labelOverlaps": 0,
+          "edgeLabelHits": 0,
+          "selfRetraceLength": 0,
+          "edgeCrossings": 28,
+          "edgeOverlapLength": 18,
+          "bends": 105,
+          "routeLength": 15282,
+          "area": 989818
+        }
+      },
+      "elk": {
+        "metrics": {
+          "missingNodes": 0,
+          "missingRoutes": 0,
+          "nonFinite": 0,
+          "diagonals": 0,
+          "nodeHits": 0,
+          "nodeOverlaps": 0,
+          "labelNodeOverlaps": 0,
+          "labelOverlaps": 0,
+          "edgeLabelHits": 0,
+          "selfRetraceLength": 4,
+          "edgeCrossings": 75,
+          "edgeOverlapLength": 5677.5,
+          "bends": 115,
+          "routeLength": 31717.5,
+          "area": 3040548.5
+        }
+      }
+    },
+    {
+      "seed": 196613,
+      "graph": 8,
+      "title": "Hierarchy · mixed ports",
+      "direction": "right",
+      "revision": "ceef0b107cee294e10f1538ee9f9cea67b43e255",
+      "stately": {
+        "metrics": {
+          "missingNodes": 0,
+          "missingRoutes": 0,
+          "nonFinite": 0,
+          "diagonals": 0,
+          "nodeHits": 0,
+          "nodeOverlaps": 0,
+          "labelNodeOverlaps": 0,
+          "labelOverlaps": 0,
+          "edgeLabelHits": 0,
+          "selfRetraceLength": 0,
+          "edgeCrossings": 63,
+          "edgeOverlapLength": 55,
+          "bends": 165,
+          "routeLength": 26104.666666666664,
+          "area": 1949769.6666666667
+        }
+      },
+      "elk": {
+        "metrics": {
+          "missingNodes": 0,
+          "missingRoutes": 0,
+          "nonFinite": 0,
+          "diagonals": 0,
+          "nodeHits": 0,
+          "nodeOverlaps": 0,
+          "labelNodeOverlaps": 0,
+          "labelOverlaps": 0,
+          "edgeLabelHits": 0,
+          "selfRetraceLength": 4,
+          "edgeCrossings": 39,
+          "edgeOverlapLength": 4418,
+          "bends": 119,
+          "routeLength": 45107,
+          "area": 3097805.5
+        }
+      }
+    },
+    {
+      "seed": 196613,
+      "graph": 9,
+      "title": "Hierarchy · deeper",
+      "direction": "up",
+      "revision": "ceef0b107cee294e10f1538ee9f9cea67b43e255",
+      "stately": {
+        "metrics": {
+          "missingNodes": 0,
+          "missingRoutes": 0,
+          "nonFinite": 0,
+          "diagonals": 0,
+          "nodeHits": 0,
+          "nodeOverlaps": 0,
+          "labelNodeOverlaps": 0,
+          "labelOverlaps": 0,
+          "edgeLabelHits": 0,
+          "selfRetraceLength": 0,
+          "edgeCrossings": 202,
+          "edgeOverlapLength": 304,
+          "bends": 230,
+          "routeLength": 66186.41666666669,
+          "area": 4799446
+        }
+      },
+      "elk": {
+        "error": "Error: java.lang.IllegalStateException: Expected 5 hierarchical ports, but found only 0."
+      }
+    },
+    {
+      "seed": 196613,
+      "graph": 10,
+      "title": "Hierarchy · denser",
+      "direction": "right",
+      "revision": "ceef0b107cee294e10f1538ee9f9cea67b43e255",
+      "stately": {
+        "metrics": {
+          "missingNodes": 0,
+          "missingRoutes": 0,
+          "nonFinite": 0,
+          "diagonals": 0,
+          "nodeHits": 0,
+          "nodeOverlaps": 0,
+          "labelNodeOverlaps": 0,
+          "labelOverlaps": 0,
+          "edgeLabelHits": 0,
+          "selfRetraceLength": 0,
+          "edgeCrossings": 410,
+          "edgeOverlapLength": 1222,
+          "bends": 374,
+          "routeLength": 109010.66666666666,
+          "area": 5701531
+        }
+      },
+      "elk": {
+        "metrics": {
+          "missingNodes": 0,
+          "missingRoutes": 0,
+          "nonFinite": 0,
+          "diagonals": 0,
+          "nodeHits": 0,
+          "nodeOverlaps": 0,
+          "labelNodeOverlaps": 0,
+          "labelOverlaps": 0,
+          "edgeLabelHits": 0,
+          "selfRetraceLength": 0,
+          "edgeCrossings": 202,
+          "edgeOverlapLength": 7214,
+          "bends": 292,
+          "routeLength": 127167.66666666667,
+          "area": 6647268
+        }
+      }
+    },
+    {
+      "seed": 228017,
+      "graph": 1,
+      "title": "Flat · small",
+      "direction": "right",
+      "revision": "ceef0b107cee294e10f1538ee9f9cea67b43e255",
+      "stately": {
+        "metrics": {
+          "missingNodes": 0,
+          "missingRoutes": 0,
+          "nonFinite": 0,
+          "diagonals": 0,
+          "nodeHits": 0,
+          "nodeOverlaps": 0,
+          "labelNodeOverlaps": 0,
+          "labelOverlaps": 0,
+          "edgeLabelHits": 0,
+          "selfRetraceLength": 0,
+          "edgeCrossings": 2,
+          "edgeOverlapLength": 0,
+          "bends": 33,
+          "routeLength": 2107.5,
+          "area": 299624
+        }
+      },
+      "elk": {
+        "metrics": {
+          "missingNodes": 0,
+          "missingRoutes": 0,
+          "nonFinite": 0,
+          "diagonals": 0,
+          "nodeHits": 0,
+          "nodeOverlaps": 0,
+          "labelNodeOverlaps": 0,
+          "labelOverlaps": 0,
+          "edgeLabelHits": 0,
+          "selfRetraceLength": 0,
+          "edgeCrossings": 0,
+          "edgeOverlapLength": 133,
+          "bends": 14,
+          "routeLength": 2519,
+          "area": 411000
+        }
+      }
+    },
+    {
+      "seed": 228017,
+      "graph": 2,
+      "title": "Flat · cycles",
+      "direction": "down",
+      "revision": "ceef0b107cee294e10f1538ee9f9cea67b43e255",
+      "stately": {
+        "metrics": {
+          "missingNodes": 0,
+          "missingRoutes": 0,
+          "nonFinite": 0,
+          "diagonals": 0,
+          "nodeHits": 0,
+          "nodeOverlaps": 0,
+          "labelNodeOverlaps": 0,
+          "labelOverlaps": 0,
+          "edgeLabelHits": 0,
+          "selfRetraceLength": 0,
+          "edgeCrossings": 3,
+          "edgeOverlapLength": 88,
+          "bends": 49,
+          "routeLength": 4198.5,
+          "area": 1009883
+        }
+      },
+      "elk": {
+        "metrics": {
+          "missingNodes": 0,
+          "missingRoutes": 0,
+          "nonFinite": 0,
+          "diagonals": 0,
+          "nodeHits": 0,
+          "nodeOverlaps": 0,
+          "labelNodeOverlaps": 0,
+          "labelOverlaps": 0,
+          "edgeLabelHits": 0,
+          "selfRetraceLength": 4,
+          "edgeCrossings": 1,
+          "edgeOverlapLength": 352,
+          "bends": 26,
+          "routeLength": 4825,
+          "area": 674304
+        }
+      }
+    },
+    {
+      "seed": 228017,
+      "graph": 3,
+      "title": "Flat · mixed ports",
+      "direction": "right",
+      "revision": "ceef0b107cee294e10f1538ee9f9cea67b43e255",
+      "stately": {
+        "metrics": {
+          "missingNodes": 0,
+          "missingRoutes": 0,
+          "nonFinite": 0,
+          "diagonals": 0,
+          "nodeHits": 0,
+          "nodeOverlaps": 0,
+          "labelNodeOverlaps": 0,
+          "labelOverlaps": 0,
+          "edgeLabelHits": 0,
+          "selfRetraceLength": 0,
+          "edgeCrossings": 7,
+          "edgeOverlapLength": 57.125,
+          "bends": 106,
+          "routeLength": 10400.4,
+          "area": 1128216
+        }
+      },
+      "elk": {
+        "metrics": {
+          "missingNodes": 0,
+          "missingRoutes": 0,
+          "nonFinite": 0,
+          "diagonals": 0,
+          "nodeHits": 0,
+          "nodeOverlaps": 0,
+          "labelNodeOverlaps": 0,
+          "labelOverlaps": 0,
+          "edgeLabelHits": 0,
+          "selfRetraceLength": 0,
+          "edgeCrossings": 3,
+          "edgeOverlapLength": 2199,
+          "bends": 52,
+          "routeLength": 9300.5,
+          "area": 1432268.5
+        }
+      }
+    },
+    {
+      "seed": 228017,
+      "graph": 4,
+      "title": "Flat · disconnected",
+      "direction": "left",
+      "revision": "ceef0b107cee294e10f1538ee9f9cea67b43e255",
+      "stately": {
+        "metrics": {
+          "missingNodes": 0,
+          "missingRoutes": 0,
+          "nonFinite": 0,
+          "diagonals": 0,
+          "nodeHits": 0,
+          "nodeOverlaps": 0,
+          "labelNodeOverlaps": 0,
+          "labelOverlaps": 0,
+          "edgeLabelHits": 0,
+          "selfRetraceLength": 0,
+          "edgeCrossings": 14,
+          "edgeOverlapLength": 240.5,
+          "bends": 126,
+          "routeLength": 11857.5,
+          "area": 1570514.5
+        }
+      },
+      "elk": {
+        "metrics": {
+          "missingNodes": 0,
+          "missingRoutes": 0,
+          "nonFinite": 0,
+          "diagonals": 0,
+          "nodeHits": 0,
+          "nodeOverlaps": 0,
+          "labelNodeOverlaps": 0,
+          "labelOverlaps": 0,
+          "edgeLabelHits": 3,
+          "selfRetraceLength": 4,
+          "edgeCrossings": 10,
+          "edgeOverlapLength": 2046,
+          "bends": 64,
+          "routeLength": 16029.5,
+          "area": 2459968
+        }
+      }
+    },
+    {
+      "seed": 228017,
+      "graph": 5,
+      "title": "Flat · denser",
+      "direction": "down",
+      "revision": "ceef0b107cee294e10f1538ee9f9cea67b43e255",
+      "stately": {
+        "metrics": {
+          "missingNodes": 0,
+          "missingRoutes": 0,
+          "nonFinite": 0,
+          "diagonals": 0,
+          "nodeHits": 0,
+          "nodeOverlaps": 0,
+          "labelNodeOverlaps": 0,
+          "labelOverlaps": 0,
+          "edgeLabelHits": 0,
+          "selfRetraceLength": 0,
+          "edgeCrossings": 113,
+          "edgeOverlapLength": 174.79166666666652,
+          "bends": 261,
+          "routeLength": 45283.816666666666,
+          "area": 3972380
+        }
+      },
+      "elk": {
+        "metrics": {
+          "missingNodes": 0,
+          "missingRoutes": 0,
+          "nonFinite": 0,
+          "diagonals": 0,
+          "nodeHits": 0,
+          "nodeOverlaps": 0,
+          "labelNodeOverlaps": 0,
+          "labelOverlaps": 0,
+          "edgeLabelHits": 1,
+          "selfRetraceLength": 4,
+          "edgeCrossings": 60,
+          "edgeOverlapLength": 6181.8,
+          "bends": 131,
+          "routeLength": 60559.93333333334,
+          "area": 7761715.5
+        }
+      }
+    },
+    {
+      "seed": 228017,
+      "graph": 6,
+      "title": "Hierarchy · two groups",
+      "direction": "right",
+      "revision": "ceef0b107cee294e10f1538ee9f9cea67b43e255",
+      "stately": {
+        "metrics": {
+          "missingNodes": 0,
+          "missingRoutes": 0,
+          "nonFinite": 0,
+          "diagonals": 0,
+          "nodeHits": 0,
+          "nodeOverlaps": 0,
+          "labelNodeOverlaps": 0,
+          "labelOverlaps": 0,
+          "edgeLabelHits": 0,
+          "selfRetraceLength": 0,
+          "edgeCrossings": 2,
+          "edgeOverlapLength": 24,
+          "bends": 46,
+          "routeLength": 6571.666666666667,
+          "area": 928646
+        }
+      },
+      "elk": {
+        "metrics": {
+          "missingNodes": 0,
+          "missingRoutes": 0,
+          "nonFinite": 0,
+          "diagonals": 0,
+          "nodeHits": 0,
+          "nodeOverlaps": 0,
+          "labelNodeOverlaps": 0,
+          "labelOverlaps": 0,
+          "edgeLabelHits": 0,
+          "selfRetraceLength": 4,
+          "edgeCrossings": 1,
+          "edgeOverlapLength": 172.5,
+          "bends": 24,
+          "routeLength": 5575.5,
+          "area": 567671.5
+        }
+      }
+    },
+    {
+      "seed": 228017,
+      "graph": 7,
+      "title": "Hierarchy · nested",
+      "direction": "down",
+      "revision": "ceef0b107cee294e10f1538ee9f9cea67b43e255",
+      "stately": {
+        "metrics": {
+          "missingNodes": 0,
+          "missingRoutes": 0,
+          "nonFinite": 0,
+          "diagonals": 0,
+          "nodeHits": 0,
+          "nodeOverlaps": 0,
+          "labelNodeOverlaps": 0,
+          "labelOverlaps": 0,
+          "edgeLabelHits": 0,
+          "selfRetraceLength": 0,
+          "edgeCrossings": 40,
+          "edgeOverlapLength": 61.5,
+          "bends": 102,
+          "routeLength": 18710.5,
+          "area": 1127528
+        }
+      },
+      "elk": {
+        "error": "Error: java.lang.IllegalStateException: Expected 7 hierarchical ports, but found only 0."
+      }
+    },
+    {
+      "seed": 228017,
+      "graph": 8,
+      "title": "Hierarchy · mixed ports",
+      "direction": "right",
+      "revision": "ceef0b107cee294e10f1538ee9f9cea67b43e255",
+      "stately": {
+        "metrics": {
+          "missingNodes": 0,
+          "missingRoutes": 0,
+          "nonFinite": 0,
+          "diagonals": 0,
+          "nodeHits": 0,
+          "nodeOverlaps": 0,
+          "labelNodeOverlaps": 0,
+          "labelOverlaps": 0,
+          "edgeLabelHits": 0,
+          "selfRetraceLength": 0,
+          "edgeCrossings": 84,
+          "edgeOverlapLength": 31,
+          "bends": 156,
+          "routeLength": 32018.833333333325,
+          "area": 2165425
+        }
+      },
+      "elk": {
+        "metrics": {
+          "missingNodes": 0,
+          "missingRoutes": 0,
+          "nonFinite": 0,
+          "diagonals": 0,
+          "nodeHits": 0,
+          "nodeOverlaps": 0,
+          "labelNodeOverlaps": 0,
+          "labelOverlaps": 0,
+          "edgeLabelHits": 0,
+          "selfRetraceLength": 0,
+          "edgeCrossings": 23,
+          "edgeOverlapLength": 1857.1666666666667,
+          "bends": 115,
+          "routeLength": 38261,
+          "area": 3080349
+        }
+      }
+    },
+    {
+      "seed": 228017,
+      "graph": 9,
+      "title": "Hierarchy · deeper",
+      "direction": "up",
+      "revision": "ceef0b107cee294e10f1538ee9f9cea67b43e255",
+      "stately": {
+        "metrics": {
+          "missingNodes": 0,
+          "missingRoutes": 0,
+          "nonFinite": 0,
+          "diagonals": 0,
+          "nodeHits": 0,
+          "nodeOverlaps": 0,
+          "labelNodeOverlaps": 0,
+          "labelOverlaps": 0,
+          "edgeLabelHits": 0,
+          "selfRetraceLength": 0,
+          "edgeCrossings": 161,
+          "edgeOverlapLength": 613,
+          "bends": 215,
+          "routeLength": 53860.666666666664,
+          "area": 2604280
+        }
+      },
+      "elk": {
+        "error": "TypeError: Cannot read properties of null (reading 'p')"
+      }
+    },
+    {
+      "seed": 228017,
+      "graph": 10,
+      "title": "Hierarchy · denser",
+      "direction": "right",
+      "revision": "ceef0b107cee294e10f1538ee9f9cea67b43e255",
+      "stately": {
+        "metrics": {
+          "missingNodes": 0,
+          "missingRoutes": 0,
+          "nonFinite": 0,
+          "diagonals": 0,
+          "nodeHits": 0,
+          "nodeOverlaps": 0,
+          "labelNodeOverlaps": 0,
+          "labelOverlaps": 0,
+          "edgeLabelHits": 0,
+          "selfRetraceLength": 0,
+          "edgeCrossings": 408,
+          "edgeOverlapLength": 612.0833333333335,
+          "bends": 304,
+          "routeLength": 96489.33333333334,
+          "area": 6166945.499999999
+        }
+      },
+      "elk": {
+        "metrics": {
+          "missingNodes": 0,
+          "missingRoutes": 0,
+          "nonFinite": 0,
+          "diagonals": 0,
+          "nodeHits": 0,
+          "nodeOverlaps": 0,
+          "labelNodeOverlaps": 0,
+          "labelOverlaps": 0,
+          "edgeLabelHits": 0,
+          "selfRetraceLength": 4,
+          "edgeCrossings": 149,
+          "edgeOverlapLength": 7041.833333333334,
+          "bends": 253,
+          "routeLength": 136138.83333333334,
+          "area": 8028057.5
+        }
+      }
+    },
+    {
+      "seed": 262147,
+      "graph": 1,
+      "title": "Flat · small",
+      "direction": "right",
+      "revision": "ceef0b107cee294e10f1538ee9f9cea67b43e255",
+      "stately": {
+        "metrics": {
+          "missingNodes": 0,
+          "missingRoutes": 0,
+          "nonFinite": 0,
+          "diagonals": 0,
+          "nodeHits": 0,
+          "nodeOverlaps": 0,
+          "labelNodeOverlaps": 0,
+          "labelOverlaps": 0,
+          "edgeLabelHits": 0,
+          "selfRetraceLength": 0,
+          "edgeCrossings": 6,
+          "edgeOverlapLength": 21.5,
+          "bends": 30,
+          "routeLength": 2406.5,
+          "area": 294462
+        }
+      },
+      "elk": {
+        "metrics": {
+          "missingNodes": 0,
+          "missingRoutes": 0,
+          "nonFinite": 0,
+          "diagonals": 0,
+          "nodeHits": 0,
+          "nodeOverlaps": 0,
+          "labelNodeOverlaps": 0,
+          "labelOverlaps": 0,
+          "edgeLabelHits": 0,
+          "selfRetraceLength": 0,
+          "edgeCrossings": 0,
+          "edgeOverlapLength": 501,
+          "bends": 14,
+          "routeLength": 3283.5,
+          "area": 380912
+        }
+      }
+    },
+    {
+      "seed": 262147,
+      "graph": 2,
+      "title": "Flat · cycles",
+      "direction": "down",
+      "revision": "ceef0b107cee294e10f1538ee9f9cea67b43e255",
+      "stately": {
+        "metrics": {
+          "missingNodes": 0,
+          "missingRoutes": 0,
+          "nonFinite": 0,
+          "diagonals": 0,
+          "nodeHits": 0,
+          "nodeOverlaps": 0,
+          "labelNodeOverlaps": 0,
+          "labelOverlaps": 0,
+          "edgeLabelHits": 0,
+          "selfRetraceLength": 0,
+          "edgeCrossings": 6,
+          "edgeOverlapLength": 57,
+          "bends": 41,
+          "routeLength": 4475.625,
+          "area": 423996
+        }
+      },
+      "elk": {
+        "metrics": {
+          "missingNodes": 0,
+          "missingRoutes": 0,
+          "nonFinite": 0,
+          "diagonals": 0,
+          "nodeHits": 0,
+          "nodeOverlaps": 0,
+          "labelNodeOverlaps": 0,
+          "labelOverlaps": 0,
+          "edgeLabelHits": 1,
+          "selfRetraceLength": 0,
+          "edgeCrossings": 5,
+          "edgeOverlapLength": 220.33333333333331,
+          "bends": 32,
+          "routeLength": 5532.333333333334,
+          "area": 662547
+        }
+      }
+    },
+    {
+      "seed": 262147,
+      "graph": 3,
+      "title": "Flat · mixed ports",
+      "direction": "right",
+      "revision": "ceef0b107cee294e10f1538ee9f9cea67b43e255",
+      "stately": {
+        "metrics": {
+          "missingNodes": 0,
+          "missingRoutes": 0,
+          "nonFinite": 0,
+          "diagonals": 0,
+          "nodeHits": 0,
+          "nodeOverlaps": 0,
+          "labelNodeOverlaps": 0,
+          "labelOverlaps": 0,
+          "edgeLabelHits": 0,
+          "selfRetraceLength": 0,
+          "edgeCrossings": 21,
+          "edgeOverlapLength": 42,
+          "bends": 98,
+          "routeLength": 12275,
+          "area": 1103137.5
+        }
+      },
+      "elk": {
+        "metrics": {
+          "missingNodes": 0,
+          "missingRoutes": 0,
+          "nonFinite": 0,
+          "diagonals": 0,
+          "nodeHits": 0,
+          "nodeOverlaps": 0,
+          "labelNodeOverlaps": 0,
+          "labelOverlaps": 0,
+          "edgeLabelHits": 0,
+          "selfRetraceLength": 0,
+          "edgeCrossings": 13,
+          "edgeOverlapLength": 2099.666666666667,
+          "bends": 62,
+          "routeLength": 15335.833333333334,
+          "area": 1522340
+        }
+      }
+    },
+    {
+      "seed": 262147,
+      "graph": 4,
+      "title": "Flat · disconnected",
+      "direction": "left",
+      "revision": "ceef0b107cee294e10f1538ee9f9cea67b43e255",
+      "stately": {
+        "metrics": {
+          "missingNodes": 0,
+          "missingRoutes": 0,
+          "nonFinite": 0,
+          "diagonals": 0,
+          "nodeHits": 0,
+          "nodeOverlaps": 0,
+          "labelNodeOverlaps": 0,
+          "labelOverlaps": 0,
+          "edgeLabelHits": 0,
+          "selfRetraceLength": 0,
+          "edgeCrossings": 19,
+          "edgeOverlapLength": 111,
+          "bends": 104,
+          "routeLength": 9357.166666666668,
+          "area": 1328756
+        }
+      },
+      "elk": {
+        "metrics": {
+          "missingNodes": 0,
+          "missingRoutes": 0,
+          "nonFinite": 0,
+          "diagonals": 0,
+          "nodeHits": 0,
+          "nodeOverlaps": 0,
+          "labelNodeOverlaps": 0,
+          "labelOverlaps": 0,
+          "edgeLabelHits": 0,
+          "selfRetraceLength": 8,
+          "edgeCrossings": 10,
+          "edgeOverlapLength": 1608.4999999999998,
+          "bends": 62,
+          "routeLength": 13314.833333333332,
+          "area": 1598790
+        }
+      }
+    },
+    {
+      "seed": 262147,
+      "graph": 5,
+      "title": "Flat · denser",
+      "direction": "down",
+      "revision": "ceef0b107cee294e10f1538ee9f9cea67b43e255",
+      "stately": {
+        "metrics": {
+          "missingNodes": 0,
+          "missingRoutes": 0,
+          "nonFinite": 0,
+          "diagonals": 0,
+          "nodeHits": 0,
+          "nodeOverlaps": 0,
+          "labelNodeOverlaps": 0,
+          "labelOverlaps": 0,
+          "edgeLabelHits": 0,
+          "selfRetraceLength": 0,
+          "edgeCrossings": 102,
+          "edgeOverlapLength": 298.5,
+          "bends": 202,
+          "routeLength": 39849.66666666666,
+          "area": 4188824.5
+        }
+      },
+      "elk": {
+        "metrics": {
+          "missingNodes": 0,
+          "missingRoutes": 0,
+          "nonFinite": 0,
+          "diagonals": 0,
+          "nodeHits": 0,
+          "nodeOverlaps": 0,
+          "labelNodeOverlaps": 0,
+          "labelOverlaps": 0,
+          "edgeLabelHits": 0,
+          "selfRetraceLength": 0,
+          "edgeCrossings": 74,
+          "edgeOverlapLength": 3683.749999999999,
+          "bends": 151,
+          "routeLength": 47298.583333333336,
+          "area": 5477500
+        }
+      }
+    },
+    {
+      "seed": 262147,
+      "graph": 6,
+      "title": "Hierarchy · two groups",
+      "direction": "right",
+      "revision": "ceef0b107cee294e10f1538ee9f9cea67b43e255",
+      "stately": {
+        "metrics": {
+          "missingNodes": 0,
+          "missingRoutes": 0,
+          "nonFinite": 0,
+          "diagonals": 0,
+          "nodeHits": 0,
+          "nodeOverlaps": 0,
+          "labelNodeOverlaps": 0,
+          "labelOverlaps": 0,
+          "edgeLabelHits": 0,
+          "selfRetraceLength": 0,
+          "edgeCrossings": 10,
+          "edgeOverlapLength": 20,
+          "bends": 59,
+          "routeLength": 5589,
+          "area": 443451.6666666666
+        }
+      },
+      "elk": {
+        "metrics": {
+          "missingNodes": 0,
+          "missingRoutes": 0,
+          "nonFinite": 0,
+          "diagonals": 0,
+          "nodeHits": 0,
+          "nodeOverlaps": 0,
+          "labelNodeOverlaps": 0,
+          "labelOverlaps": 0,
+          "edgeLabelHits": 0,
+          "selfRetraceLength": 0,
+          "edgeCrossings": 2,
+          "edgeOverlapLength": 224.5,
+          "bends": 38,
+          "routeLength": 6761,
+          "area": 682768
+        }
+      }
+    },
+    {
+      "seed": 262147,
+      "graph": 7,
+      "title": "Hierarchy · nested",
+      "direction": "down",
+      "revision": "ceef0b107cee294e10f1538ee9f9cea67b43e255",
+      "stately": {
+        "metrics": {
+          "missingNodes": 0,
+          "missingRoutes": 0,
+          "nonFinite": 0,
+          "diagonals": 0,
+          "nodeHits": 0,
+          "nodeOverlaps": 0,
+          "labelNodeOverlaps": 0,
+          "labelOverlaps": 0,
+          "edgeLabelHits": 0,
+          "selfRetraceLength": 0,
+          "edgeCrossings": 36,
+          "edgeOverlapLength": 152,
+          "bends": 115,
+          "routeLength": 16903,
+          "area": 1281885
+        }
+      },
+      "elk": {
+        "error": "Error: java.lang.IllegalStateException: Expected 2 hierarchical ports, but found only 0."
+      }
+    },
+    {
+      "seed": 262147,
+      "graph": 8,
+      "title": "Hierarchy · mixed ports",
+      "direction": "right",
+      "revision": "ceef0b107cee294e10f1538ee9f9cea67b43e255",
+      "stately": {
+        "metrics": {
+          "missingNodes": 0,
+          "missingRoutes": 0,
+          "nonFinite": 0,
+          "diagonals": 0,
+          "nodeHits": 0,
+          "nodeOverlaps": 0,
+          "labelNodeOverlaps": 0,
+          "labelOverlaps": 0,
+          "edgeLabelHits": 0,
+          "selfRetraceLength": 0,
+          "edgeCrossings": 96,
+          "edgeOverlapLength": 113,
+          "bends": 172,
+          "routeLength": 31115.83333333334,
+          "area": 1750431.6666666665
+        }
+      },
+      "elk": {
+        "metrics": {
+          "missingNodes": 0,
+          "missingRoutes": 0,
+          "nonFinite": 0,
+          "diagonals": 0,
+          "nodeHits": 0,
+          "nodeOverlaps": 0,
+          "labelNodeOverlaps": 0,
+          "labelOverlaps": 0,
+          "edgeLabelHits": 0,
+          "selfRetraceLength": 0,
+          "edgeCrossings": 48,
+          "edgeOverlapLength": 3732.333333333333,
+          "bends": 129,
+          "routeLength": 38059.66666666667,
+          "area": 2198490
+        }
+      }
+    },
+    {
+      "seed": 262147,
+      "graph": 9,
+      "title": "Hierarchy · deeper",
+      "direction": "up",
+      "revision": "ceef0b107cee294e10f1538ee9f9cea67b43e255",
+      "stately": {
+        "metrics": {
+          "missingNodes": 0,
+          "missingRoutes": 0,
+          "nonFinite": 0,
+          "diagonals": 0,
+          "nodeHits": 0,
+          "nodeOverlaps": 0,
+          "labelNodeOverlaps": 0,
+          "labelOverlaps": 0,
+          "edgeLabelHits": 0,
+          "selfRetraceLength": 0,
+          "edgeCrossings": 151,
+          "edgeOverlapLength": 472,
+          "bends": 237,
+          "routeLength": 65306.333333333336,
+          "area": 4038779.9999999995
+        }
+      },
+      "elk": {
+        "metrics": {
+          "missingNodes": 0,
+          "missingRoutes": 0,
+          "nonFinite": 0,
+          "diagonals": 17,
+          "nodeHits": 19,
+          "nodeOverlaps": 0,
+          "labelNodeOverlaps": 0,
+          "labelOverlaps": 0,
+          "edgeLabelHits": 13,
+          "selfRetraceLength": 4,
+          "edgeCrossings": 148,
+          "edgeOverlapLength": 46697.5,
+          "bends": 278,
+          "routeLength": 117748.73135160835,
+          "area": 9389465.5
+        }
+      }
+    },
+    {
+      "seed": 262147,
+      "graph": 10,
+      "title": "Hierarchy · denser",
+      "direction": "right",
+      "revision": "ceef0b107cee294e10f1538ee9f9cea67b43e255",
+      "stately": {
+        "metrics": {
+          "missingNodes": 0,
+          "missingRoutes": 0,
+          "nonFinite": 0,
+          "diagonals": 0,
+          "nodeHits": 0,
+          "nodeOverlaps": 0,
+          "labelNodeOverlaps": 0,
+          "labelOverlaps": 0,
+          "edgeLabelHits": 0,
+          "selfRetraceLength": 0,
+          "edgeCrossings": 313,
+          "edgeOverlapLength": 241.5,
+          "bends": 315,
+          "routeLength": 113257.50000000006,
+          "area": 6957307.499999999
+        }
+      },
+      "elk": {
+        "metrics": {
+          "missingNodes": 0,
+          "missingRoutes": 0,
+          "nonFinite": 0,
+          "diagonals": 0,
+          "nodeHits": 0,
+          "nodeOverlaps": 0,
+          "labelNodeOverlaps": 0,
+          "labelOverlaps": 0,
+          "edgeLabelHits": 0,
+          "selfRetraceLength": 4,
+          "edgeCrossings": 175,
+          "edgeOverlapLength": 8739,
+          "bends": 270,
+          "routeLength": 140128.66666666663,
+          "area": 8749183
+        }
+      }
+    },
+    {
+      "seed": 1665807580,
+      "graph": 1,
+      "title": "Flat · small",
+      "direction": "right",
+      "revision": "ceef0b107cee294e10f1538ee9f9cea67b43e255",
+      "stately": {
+        "metrics": {
+          "missingNodes": 0,
+          "missingRoutes": 0,
+          "nonFinite": 0,
+          "diagonals": 0,
+          "nodeHits": 0,
+          "nodeOverlaps": 0,
+          "labelNodeOverlaps": 0,
+          "labelOverlaps": 0,
+          "edgeLabelHits": 0,
+          "selfRetraceLength": 0,
+          "edgeCrossings": 1,
+          "edgeOverlapLength": 9,
+          "bends": 33,
+          "routeLength": 3843.5,
+          "area": 391509
+        }
+      },
+      "elk": {
+        "metrics": {
+          "missingNodes": 0,
+          "missingRoutes": 0,
+          "nonFinite": 0,
+          "diagonals": 0,
+          "nodeHits": 0,
+          "nodeOverlaps": 0,
+          "labelNodeOverlaps": 0,
+          "labelOverlaps": 0,
+          "edgeLabelHits": 0,
+          "selfRetraceLength": 4,
+          "edgeCrossings": 2,
+          "edgeOverlapLength": 84,
+          "bends": 15,
+          "routeLength": 3198.6666666666665,
+          "area": 334965
+        }
+      }
+    },
+    {
+      "seed": 1665807580,
+      "graph": 2,
+      "title": "Flat · cycles",
+      "direction": "down",
+      "revision": "ceef0b107cee294e10f1538ee9f9cea67b43e255",
+      "stately": {
+        "metrics": {
+          "missingNodes": 0,
+          "missingRoutes": 0,
+          "nonFinite": 0,
+          "diagonals": 0,
+          "nodeHits": 0,
+          "nodeOverlaps": 0,
+          "labelNodeOverlaps": 0,
+          "labelOverlaps": 0,
+          "edgeLabelHits": 0,
+          "selfRetraceLength": 0,
+          "edgeCrossings": 7,
+          "edgeOverlapLength": 17,
+          "bends": 46,
+          "routeLength": 4464.416666666667,
+          "area": 451701.25
+        }
+      },
+      "elk": {
+        "metrics": {
+          "missingNodes": 0,
+          "missingRoutes": 0,
+          "nonFinite": 0,
+          "diagonals": 0,
+          "nodeHits": 0,
+          "nodeOverlaps": 0,
+          "labelNodeOverlaps": 0,
+          "labelOverlaps": 0,
+          "edgeLabelHits": 0,
+          "selfRetraceLength": 0,
+          "edgeCrossings": 3,
+          "edgeOverlapLength": 158,
+          "bends": 25,
+          "routeLength": 4949.5,
+          "area": 812696
+        }
+      }
+    },
+    {
+      "seed": 1665807580,
+      "graph": 3,
+      "title": "Flat · mixed ports",
+      "direction": "right",
+      "revision": "ceef0b107cee294e10f1538ee9f9cea67b43e255",
+      "stately": {
+        "metrics": {
+          "missingNodes": 0,
+          "missingRoutes": 0,
+          "nonFinite": 0,
+          "diagonals": 0,
+          "nodeHits": 0,
+          "nodeOverlaps": 0,
+          "labelNodeOverlaps": 0,
+          "labelOverlaps": 0,
+          "edgeLabelHits": 0,
+          "selfRetraceLength": 0,
+          "edgeCrossings": 9,
+          "edgeOverlapLength": 22.5,
+          "bends": 77,
+          "routeLength": 8496.833333333334,
+          "area": 1031412
+        }
+      },
+      "elk": {
+        "metrics": {
+          "missingNodes": 0,
+          "missingRoutes": 0,
+          "nonFinite": 0,
+          "diagonals": 0,
+          "nodeHits": 0,
+          "nodeOverlaps": 0,
+          "labelNodeOverlaps": 0,
+          "labelOverlaps": 0,
+          "edgeLabelHits": 0,
+          "selfRetraceLength": 0,
+          "edgeCrossings": 10,
+          "edgeOverlapLength": 809.25,
+          "bends": 56,
+          "routeLength": 11261.5,
+          "area": 1441150
+        }
+      }
+    },
+    {
+      "seed": 1665807580,
+      "graph": 4,
+      "title": "Flat · disconnected",
+      "direction": "left",
+      "revision": "ceef0b107cee294e10f1538ee9f9cea67b43e255",
+      "stately": {
+        "metrics": {
+          "missingNodes": 0,
+          "missingRoutes": 0,
+          "nonFinite": 0,
+          "diagonals": 0,
+          "nodeHits": 0,
+          "nodeOverlaps": 0,
+          "labelNodeOverlaps": 0,
+          "labelOverlaps": 0,
+          "edgeLabelHits": 0,
+          "selfRetraceLength": 0,
+          "edgeCrossings": 18,
+          "edgeOverlapLength": 27,
+          "bends": 121,
+          "routeLength": 12079.083333333334,
+          "area": 1511757
+        }
+      },
+      "elk": {
+        "metrics": {
+          "missingNodes": 0,
+          "missingRoutes": 0,
+          "nonFinite": 0,
+          "diagonals": 0,
+          "nodeHits": 0,
+          "nodeOverlaps": 0,
+          "labelNodeOverlaps": 0,
+          "labelOverlaps": 0,
+          "edgeLabelHits": 0,
+          "selfRetraceLength": 0,
+          "edgeCrossings": 18,
+          "edgeOverlapLength": 2326,
+          "bends": 75,
+          "routeLength": 16220,
+          "area": 2033977
+        }
+      }
+    },
+    {
+      "seed": 1665807580,
+      "graph": 5,
+      "title": "Flat · denser",
+      "direction": "down",
+      "revision": "ceef0b107cee294e10f1538ee9f9cea67b43e255",
+      "stately": {
+        "metrics": {
+          "missingNodes": 0,
+          "missingRoutes": 0,
+          "nonFinite": 0,
+          "diagonals": 0,
+          "nodeHits": 0,
+          "nodeOverlaps": 0,
+          "labelNodeOverlaps": 0,
+          "labelOverlaps": 0,
+          "edgeLabelHits": 0,
+          "selfRetraceLength": 0,
+          "edgeCrossings": 108,
+          "edgeOverlapLength": 126.7000000000001,
+          "bends": 243,
+          "routeLength": 42261.466666666645,
+          "area": 5051276.5
+        }
+      },
+      "elk": {
+        "metrics": {
+          "missingNodes": 0,
+          "missingRoutes": 0,
+          "nonFinite": 0,
+          "diagonals": 0,
+          "nodeHits": 0,
+          "nodeOverlaps": 0,
+          "labelNodeOverlaps": 0,
+          "labelOverlaps": 0,
+          "edgeLabelHits": 1,
+          "selfRetraceLength": 0,
+          "edgeCrossings": 57,
+          "edgeOverlapLength": 3039.5,
+          "bends": 148,
+          "routeLength": 42903,
+          "area": 5983720
+        }
+      }
+    },
+    {
+      "seed": 1665807580,
+      "graph": 6,
+      "title": "Hierarchy · two groups",
+      "direction": "right",
+      "revision": "ceef0b107cee294e10f1538ee9f9cea67b43e255",
+      "stately": {
+        "metrics": {
+          "missingNodes": 0,
+          "missingRoutes": 0,
+          "nonFinite": 0,
+          "diagonals": 0,
+          "nodeHits": 0,
+          "nodeOverlaps": 0,
+          "labelNodeOverlaps": 0,
+          "labelOverlaps": 0,
+          "edgeLabelHits": 0,
+          "selfRetraceLength": 0,
+          "edgeCrossings": 8,
+          "edgeOverlapLength": 0,
+          "bends": 54,
+          "routeLength": 7565.666666666666,
+          "area": 502094.6666666666
+        }
+      },
+      "elk": {
+        "metrics": {
+          "missingNodes": 0,
+          "missingRoutes": 0,
+          "nonFinite": 0,
+          "diagonals": 0,
+          "nodeHits": 0,
+          "nodeOverlaps": 0,
+          "labelNodeOverlaps": 0,
+          "labelOverlaps": 0,
+          "edgeLabelHits": 0,
+          "selfRetraceLength": 0,
+          "edgeCrossings": 2,
+          "edgeOverlapLength": 79.5,
+          "bends": 37,
+          "routeLength": 8748.5,
+          "area": 684440
+        }
+      }
+    },
+    {
+      "seed": 1665807580,
+      "graph": 7,
+      "title": "Hierarchy · nested",
+      "direction": "down",
+      "revision": "ceef0b107cee294e10f1538ee9f9cea67b43e255",
+      "stately": {
+        "metrics": {
+          "missingNodes": 0,
+          "missingRoutes": 0,
+          "nonFinite": 0,
+          "diagonals": 0,
+          "nodeHits": 0,
+          "nodeOverlaps": 0,
+          "labelNodeOverlaps": 0,
+          "labelOverlaps": 0,
+          "edgeLabelHits": 0,
+          "selfRetraceLength": 0,
+          "edgeCrossings": 23,
+          "edgeOverlapLength": 81.5,
+          "bends": 106,
+          "routeLength": 19303.333333333332,
+          "area": 1981934.4999999998
+        }
+      },
+      "elk": {
+        "metrics": {
+          "missingNodes": 0,
+          "missingRoutes": 0,
+          "nonFinite": 0,
+          "diagonals": 0,
+          "nodeHits": 0,
+          "nodeOverlaps": 0,
+          "labelNodeOverlaps": 0,
+          "labelOverlaps": 0,
+          "edgeLabelHits": 0,
+          "selfRetraceLength": 0,
+          "edgeCrossings": 31,
+          "edgeOverlapLength": 1891.5,
+          "bends": 95,
+          "routeLength": 31360,
+          "area": 3559112
+        }
+      }
+    },
+    {
+      "seed": 1665807580,
+      "graph": 8,
+      "title": "Hierarchy · mixed ports",
+      "direction": "right",
+      "revision": "ceef0b107cee294e10f1538ee9f9cea67b43e255",
+      "stately": {
+        "metrics": {
+          "missingNodes": 0,
+          "missingRoutes": 0,
+          "nonFinite": 0,
+          "diagonals": 0,
+          "nodeHits": 0,
+          "nodeOverlaps": 0,
+          "labelNodeOverlaps": 0,
+          "labelOverlaps": 0,
+          "edgeLabelHits": 0,
+          "selfRetraceLength": 0,
+          "edgeCrossings": 131,
+          "edgeOverlapLength": 459.25,
+          "bends": 167,
+          "routeLength": 36118.25,
+          "area": 1606128.9999999998
+        }
+      },
+      "elk": {
+        "metrics": {
+          "missingNodes": 0,
+          "missingRoutes": 0,
+          "nonFinite": 0,
+          "diagonals": 0,
+          "nodeHits": 0,
+          "nodeOverlaps": 0,
+          "labelNodeOverlaps": 0,
+          "labelOverlaps": 0,
+          "edgeLabelHits": 0,
+          "selfRetraceLength": 0,
+          "edgeCrossings": 39,
+          "edgeOverlapLength": 3279.9166666666665,
+          "bends": 131,
+          "routeLength": 45373.666666666664,
+          "area": 2398149
+        }
+      }
+    },
+    {
+      "seed": 1665807580,
+      "graph": 9,
+      "title": "Hierarchy · deeper",
+      "direction": "up",
+      "revision": "ceef0b107cee294e10f1538ee9f9cea67b43e255",
+      "stately": {
+        "metrics": {
+          "missingNodes": 0,
+          "missingRoutes": 0,
+          "nonFinite": 0,
+          "diagonals": 0,
+          "nodeHits": 0,
+          "nodeOverlaps": 0,
+          "labelNodeOverlaps": 0,
+          "labelOverlaps": 0,
+          "edgeLabelHits": 0,
+          "selfRetraceLength": 0,
+          "edgeCrossings": 138,
+          "edgeOverlapLength": 292.5,
+          "bends": 233,
+          "routeLength": 48268.33333333334,
+          "area": 3547236
+        }
+      },
+      "elk": {
+        "metrics": {
+          "missingNodes": 0,
+          "missingRoutes": 0,
+          "nonFinite": 0,
+          "diagonals": 0,
+          "nodeHits": 0,
+          "nodeOverlaps": 0,
+          "labelNodeOverlaps": 0,
+          "labelOverlaps": 0,
+          "edgeLabelHits": 0,
+          "selfRetraceLength": 4,
+          "edgeCrossings": 278,
+          "edgeOverlapLength": 5841.75,
+          "bends": 262,
+          "routeLength": 131623.9166666667,
+          "area": 12518625
+        }
+      }
+    },
+    {
+      "seed": 1665807580,
+      "graph": 10,
+      "title": "Hierarchy · denser",
+      "direction": "right",
+      "revision": "ceef0b107cee294e10f1538ee9f9cea67b43e255",
+      "stately": {
+        "metrics": {
+          "missingNodes": 0,
+          "missingRoutes": 0,
+          "nonFinite": 0,
+          "diagonals": 0,
+          "nodeHits": 0,
+          "nodeOverlaps": 0,
+          "labelNodeOverlaps": 0,
+          "labelOverlaps": 0,
+          "edgeLabelHits": 0,
+          "selfRetraceLength": 0,
+          "edgeCrossings": 606,
+          "edgeOverlapLength": 457.33333333333303,
+          "bends": 338,
+          "routeLength": 122636.16666666666,
+          "area": 6190760.333333333
+        }
+      },
+      "elk": {
+        "metrics": {
+          "missingNodes": 0,
+          "missingRoutes": 0,
+          "nonFinite": 0,
+          "diagonals": 0,
+          "nodeHits": 0,
+          "nodeOverlaps": 0,
+          "labelNodeOverlaps": 0,
+          "labelOverlaps": 0,
+          "edgeLabelHits": 0,
+          "selfRetraceLength": 0,
+          "edgeCrossings": 188,
+          "edgeOverlapLength": 4799.5,
+          "bends": 356,
+          "routeLength": 184319.6,
+          "area": 8402224
+        }
+      }
+    },
+    {
+      "seed": 3645706015,
+      "graph": 1,
+      "title": "Flat · small",
+      "direction": "right",
+      "revision": "ceef0b107cee294e10f1538ee9f9cea67b43e255",
+      "stately": {
+        "metrics": {
+          "missingNodes": 0,
+          "missingRoutes": 0,
+          "nonFinite": 0,
+          "diagonals": 0,
+          "nodeHits": 0,
+          "nodeOverlaps": 0,
+          "labelNodeOverlaps": 0,
+          "labelOverlaps": 0,
+          "edgeLabelHits": 0,
+          "selfRetraceLength": 0,
+          "edgeCrossings": 2,
+          "edgeOverlapLength": 0,
+          "bends": 27,
+          "routeLength": 2707.5,
+          "area": 287716
+        }
+      },
+      "elk": {
+        "metrics": {
+          "missingNodes": 0,
+          "missingRoutes": 0,
+          "nonFinite": 0,
+          "diagonals": 0,
+          "nodeHits": 0,
+          "nodeOverlaps": 0,
+          "labelNodeOverlaps": 0,
+          "labelOverlaps": 0,
+          "edgeLabelHits": 0,
+          "selfRetraceLength": 0,
+          "edgeCrossings": 0,
+          "edgeOverlapLength": 138,
+          "bends": 16,
+          "routeLength": 3211.5,
+          "area": 298936
+        }
+      }
+    },
+    {
+      "seed": 3645706015,
+      "graph": 2,
+      "title": "Flat · cycles",
+      "direction": "down",
+      "revision": "ceef0b107cee294e10f1538ee9f9cea67b43e255",
+      "stately": {
+        "metrics": {
+          "missingNodes": 0,
+          "missingRoutes": 0,
+          "nonFinite": 0,
+          "diagonals": 0,
+          "nodeHits": 0,
+          "nodeOverlaps": 0,
+          "labelNodeOverlaps": 0,
+          "labelOverlaps": 0,
+          "edgeLabelHits": 0,
+          "selfRetraceLength": 0,
+          "edgeCrossings": 9,
+          "edgeOverlapLength": 57.250000000000114,
+          "bends": 50,
+          "routeLength": 5196.333333333333,
+          "area": 582759
+        }
+      },
+      "elk": {
+        "metrics": {
+          "missingNodes": 0,
+          "missingRoutes": 0,
+          "nonFinite": 0,
+          "diagonals": 0,
+          "nodeHits": 0,
+          "nodeOverlaps": 0,
+          "labelNodeOverlaps": 0,
+          "labelOverlaps": 0,
+          "edgeLabelHits": 0,
+          "selfRetraceLength": 4,
+          "edgeCrossings": 1,
+          "edgeOverlapLength": 866.3333333333334,
+          "bends": 28,
+          "routeLength": 5544.333333333333,
+          "area": 996187.5
+        }
+      }
+    },
+    {
+      "seed": 3645706015,
+      "graph": 3,
+      "title": "Flat · mixed ports",
+      "direction": "right",
+      "revision": "ceef0b107cee294e10f1538ee9f9cea67b43e255",
+      "stately": {
+        "metrics": {
+          "missingNodes": 0,
+          "missingRoutes": 0,
+          "nonFinite": 0,
+          "diagonals": 0,
+          "nodeHits": 0,
+          "nodeOverlaps": 0,
+          "labelNodeOverlaps": 0,
+          "labelOverlaps": 0,
+          "edgeLabelHits": 0,
+          "selfRetraceLength": 0,
+          "edgeCrossings": 21,
+          "edgeOverlapLength": 85,
+          "bends": 98,
+          "routeLength": 11848.833333333332,
+          "area": 1676654
+        }
+      },
+      "elk": {
+        "metrics": {
+          "missingNodes": 0,
+          "missingRoutes": 0,
+          "nonFinite": 0,
+          "diagonals": 0,
+          "nodeHits": 0,
+          "nodeOverlaps": 0,
+          "labelNodeOverlaps": 0,
+          "labelOverlaps": 0,
+          "edgeLabelHits": 1,
+          "selfRetraceLength": 0,
+          "edgeCrossings": 8,
+          "edgeOverlapLength": 1066.9999999999998,
+          "bends": 49,
+          "routeLength": 15443.833333333332,
+          "area": 1347255
+        }
+      }
+    },
+    {
+      "seed": 3645706015,
+      "graph": 4,
+      "title": "Flat · disconnected",
+      "direction": "left",
+      "revision": "ceef0b107cee294e10f1538ee9f9cea67b43e255",
+      "stately": {
+        "metrics": {
+          "missingNodes": 0,
+          "missingRoutes": 0,
+          "nonFinite": 0,
+          "diagonals": 0,
+          "nodeHits": 0,
+          "nodeOverlaps": 0,
+          "labelNodeOverlaps": 0,
+          "labelOverlaps": 0,
+          "edgeLabelHits": 0,
+          "selfRetraceLength": 0,
+          "edgeCrossings": 14,
+          "edgeOverlapLength": 46.166666666666515,
+          "bends": 118,
+          "routeLength": 13995.166666666666,
+          "area": 1479115.5
+        }
+      },
+      "elk": {
+        "metrics": {
+          "missingNodes": 0,
+          "missingRoutes": 0,
+          "nonFinite": 0,
+          "diagonals": 0,
+          "nodeHits": 0,
+          "nodeOverlaps": 0,
+          "labelNodeOverlaps": 0,
+          "labelOverlaps": 0,
+          "edgeLabelHits": 0,
+          "selfRetraceLength": 8,
+          "edgeCrossings": 16,
+          "edgeOverlapLength": 670.5,
+          "bends": 65,
+          "routeLength": 16309,
+          "area": 2315351
+        }
+      }
+    },
+    {
+      "seed": 3645706015,
+      "graph": 5,
+      "title": "Flat · denser",
+      "direction": "down",
+      "revision": "ceef0b107cee294e10f1538ee9f9cea67b43e255",
+      "stately": {
+        "metrics": {
+          "missingNodes": 0,
+          "missingRoutes": 0,
+          "nonFinite": 0,
+          "diagonals": 0,
+          "nodeHits": 0,
+          "nodeOverlaps": 0,
+          "labelNodeOverlaps": 0,
+          "labelOverlaps": 0,
+          "edgeLabelHits": 0,
+          "selfRetraceLength": 0,
+          "edgeCrossings": 115,
+          "edgeOverlapLength": 103,
+          "bends": 258,
+          "routeLength": 46227.008333333324,
+          "area": 5880686
+        }
+      },
+      "elk": {
+        "metrics": {
+          "missingNodes": 0,
+          "missingRoutes": 0,
+          "nonFinite": 0,
+          "diagonals": 0,
+          "nodeHits": 0,
+          "nodeOverlaps": 0,
+          "labelNodeOverlaps": 0,
+          "labelOverlaps": 0,
+          "edgeLabelHits": 1,
+          "selfRetraceLength": 0,
+          "edgeCrossings": 90,
+          "edgeOverlapLength": 5312.833333333333,
+          "bends": 141,
+          "routeLength": 61795.33333333333,
+          "area": 6491565
+        }
+      }
+    },
+    {
+      "seed": 3645706015,
+      "graph": 6,
+      "title": "Hierarchy · two groups",
+      "direction": "right",
+      "revision": "ceef0b107cee294e10f1538ee9f9cea67b43e255",
+      "stately": {
+        "metrics": {
+          "missingNodes": 0,
+          "missingRoutes": 0,
+          "nonFinite": 0,
+          "diagonals": 0,
+          "nodeHits": 0,
+          "nodeOverlaps": 0,
+          "labelNodeOverlaps": 0,
+          "labelOverlaps": 0,
+          "edgeLabelHits": 0,
+          "selfRetraceLength": 0,
+          "edgeCrossings": 13,
+          "edgeOverlapLength": 23.999999999999943,
+          "bends": 50,
+          "routeLength": 6551,
+          "area": 685416.6666666667
+        }
+      },
+      "elk": {
+        "metrics": {
+          "missingNodes": 0,
+          "missingRoutes": 0,
+          "nonFinite": 0,
+          "diagonals": 0,
+          "nodeHits": 0,
+          "nodeOverlaps": 0,
+          "labelNodeOverlaps": 0,
+          "labelOverlaps": 0,
+          "edgeLabelHits": 0,
+          "selfRetraceLength": 0,
+          "edgeCrossings": 0,
+          "edgeOverlapLength": 519.5,
+          "bends": 33,
+          "routeLength": 7824.5,
+          "area": 635968
+        }
+      }
+    },
+    {
+      "seed": 3645706015,
+      "graph": 7,
+      "title": "Hierarchy · nested",
+      "direction": "down",
+      "revision": "ceef0b107cee294e10f1538ee9f9cea67b43e255",
+      "stately": {
+        "metrics": {
+          "missingNodes": 0,
+          "missingRoutes": 0,
+          "nonFinite": 0,
+          "diagonals": 0,
+          "nodeHits": 0,
+          "nodeOverlaps": 0,
+          "labelNodeOverlaps": 0,
+          "labelOverlaps": 0,
+          "edgeLabelHits": 0,
+          "selfRetraceLength": 0,
+          "edgeCrossings": 47,
+          "edgeOverlapLength": 206.5,
+          "bends": 135,
+          "routeLength": 18147.25,
+          "area": 1090286.8333333335
+        }
+      },
+      "elk": {
+        "error": "TypeError: Cannot read properties of null (reading 'p')"
+      }
+    },
+    {
+      "seed": 3645706015,
+      "graph": 8,
+      "title": "Hierarchy · mixed ports",
+      "direction": "right",
+      "revision": "ceef0b107cee294e10f1538ee9f9cea67b43e255",
+      "stately": {
+        "metrics": {
+          "missingNodes": 0,
+          "missingRoutes": 0,
+          "nonFinite": 0,
+          "diagonals": 0,
+          "nodeHits": 0,
+          "nodeOverlaps": 0,
+          "labelNodeOverlaps": 0,
+          "labelOverlaps": 0,
+          "edgeLabelHits": 0,
+          "selfRetraceLength": 0,
+          "edgeCrossings": 70,
+          "edgeOverlapLength": 104.5,
+          "bends": 141,
+          "routeLength": 27907.833333333336,
+          "area": 2173470
+        }
+      },
+      "elk": {
+        "metrics": {
+          "missingNodes": 0,
+          "missingRoutes": 0,
+          "nonFinite": 0,
+          "diagonals": 0,
+          "nodeHits": 0,
+          "nodeOverlaps": 0,
+          "labelNodeOverlaps": 0,
+          "labelOverlaps": 0,
+          "edgeLabelHits": 0,
+          "selfRetraceLength": 0,
+          "edgeCrossings": 25,
+          "edgeOverlapLength": 1947.5,
+          "bends": 123,
+          "routeLength": 44938.5,
+          "area": 3360856.5
+        }
+      }
+    },
+    {
+      "seed": 3645706015,
+      "graph": 9,
+      "title": "Hierarchy · deeper",
+      "direction": "up",
+      "revision": "ceef0b107cee294e10f1538ee9f9cea67b43e255",
+      "stately": {
+        "metrics": {
+          "missingNodes": 0,
+          "missingRoutes": 0,
+          "nonFinite": 0,
+          "diagonals": 0,
+          "nodeHits": 0,
+          "nodeOverlaps": 0,
+          "labelNodeOverlaps": 0,
+          "labelOverlaps": 0,
+          "edgeLabelHits": 0,
+          "selfRetraceLength": 0,
+          "edgeCrossings": 178,
+          "edgeOverlapLength": 3270.5,
+          "bends": 208,
+          "routeLength": 57380.500000000015,
+          "area": 3644256.0000000005
+        }
+      },
+      "elk": {
+        "error": "Error: java.lang.IllegalStateException: Expected 6 hierarchical ports, but found only 0."
+      }
+    },
+    {
+      "seed": 3645706015,
+      "graph": 10,
+      "title": "Hierarchy · denser",
+      "direction": "right",
+      "revision": "ceef0b107cee294e10f1538ee9f9cea67b43e255",
+      "stately": {
+        "metrics": {
+          "missingNodes": 0,
+          "missingRoutes": 0,
+          "nonFinite": 0,
+          "diagonals": 0,
+          "nodeHits": 0,
+          "nodeOverlaps": 0,
+          "labelNodeOverlaps": 0,
+          "labelOverlaps": 0,
+          "edgeLabelHits": 0,
+          "selfRetraceLength": 0,
+          "edgeCrossings": 293,
+          "edgeOverlapLength": 459,
+          "bends": 271,
+          "routeLength": 95006.91666666669,
+          "area": 5401725.166666666
+        }
+      },
+      "elk": {
+        "metrics": {
+          "missingNodes": 0,
+          "missingRoutes": 0,
+          "nonFinite": 0,
+          "diagonals": 0,
+          "nodeHits": 0,
+          "nodeOverlaps": 0,
+          "labelNodeOverlaps": 0,
+          "labelOverlaps": 0,
+          "edgeLabelHits": 0,
+          "selfRetraceLength": 4,
+          "edgeCrossings": 134,
+          "edgeOverlapLength": 6736.5,
+          "bends": 255,
+          "routeLength": 146224.6666666667,
+          "area": 7406465
+        }
+      }
+    },
+    {
+      "seed": 1837645124,
+      "graph": 1,
+      "title": "Flat · small",
+      "direction": "right",
+      "revision": "ceef0b107cee294e10f1538ee9f9cea67b43e255",
+      "stately": {
+        "metrics": {
+          "missingNodes": 0,
+          "missingRoutes": 0,
+          "nonFinite": 0,
+          "diagonals": 0,
+          "nodeHits": 0,
+          "nodeOverlaps": 0,
+          "labelNodeOverlaps": 0,
+          "labelOverlaps": 0,
+          "edgeLabelHits": 0,
+          "selfRetraceLength": 0,
+          "edgeCrossings": 2,
+          "edgeOverlapLength": 4,
+          "bends": 22,
+          "routeLength": 1537,
+          "area": 229770
+        }
+      },
+      "elk": {
+        "metrics": {
+          "missingNodes": 0,
+          "missingRoutes": 0,
+          "nonFinite": 0,
+          "diagonals": 0,
+          "nodeHits": 0,
+          "nodeOverlaps": 0,
+          "labelNodeOverlaps": 0,
+          "labelOverlaps": 0,
+          "edgeLabelHits": 0,
+          "selfRetraceLength": 0,
+          "edgeCrossings": 0,
+          "edgeOverlapLength": 120.5,
+          "bends": 13,
+          "routeLength": 1992.5,
+          "area": 257295
+        }
+      }
+    },
+    {
+      "seed": 1837645124,
+      "graph": 2,
+      "title": "Flat · cycles",
+      "direction": "down",
+      "revision": "ceef0b107cee294e10f1538ee9f9cea67b43e255",
+      "stately": {
+        "metrics": {
+          "missingNodes": 0,
+          "missingRoutes": 0,
+          "nonFinite": 0,
+          "diagonals": 0,
+          "nodeHits": 0,
+          "nodeOverlaps": 0,
+          "labelNodeOverlaps": 0,
+          "labelOverlaps": 0,
+          "edgeLabelHits": 0,
+          "selfRetraceLength": 0,
+          "edgeCrossings": 1,
+          "edgeOverlapLength": 12,
+          "bends": 54,
+          "routeLength": 4140.5,
+          "area": 702408
+        }
+      },
+      "elk": {
+        "metrics": {
+          "missingNodes": 0,
+          "missingRoutes": 0,
+          "nonFinite": 0,
+          "diagonals": 0,
+          "nodeHits": 0,
+          "nodeOverlaps": 0,
+          "labelNodeOverlaps": 0,
+          "labelOverlaps": 0,
+          "edgeLabelHits": 0,
+          "selfRetraceLength": 4,
+          "edgeCrossings": 0,
+          "edgeOverlapLength": 2138.5,
+          "bends": 31,
+          "routeLength": 5698,
+          "area": 651541
+        }
+      }
+    },
+    {
+      "seed": 1837645124,
+      "graph": 3,
+      "title": "Flat · mixed ports",
+      "direction": "right",
+      "revision": "ceef0b107cee294e10f1538ee9f9cea67b43e255",
+      "stately": {
+        "metrics": {
+          "missingNodes": 0,
+          "missingRoutes": 0,
+          "nonFinite": 0,
+          "diagonals": 0,
+          "nodeHits": 0,
+          "nodeOverlaps": 0,
+          "labelNodeOverlaps": 0,
+          "labelOverlaps": 0,
+          "edgeLabelHits": 0,
+          "selfRetraceLength": 0,
+          "edgeCrossings": 20,
+          "edgeOverlapLength": 197.5,
+          "bends": 91,
+          "routeLength": 13097.5,
+          "area": 1086844.5
+        }
+      },
+      "elk": {
+        "metrics": {
+          "missingNodes": 0,
+          "missingRoutes": 0,
+          "nonFinite": 0,
+          "diagonals": 0,
+          "nodeHits": 0,
+          "nodeOverlaps": 0,
+          "labelNodeOverlaps": 0,
+          "labelOverlaps": 0,
+          "edgeLabelHits": 5,
+          "selfRetraceLength": 4,
+          "edgeCrossings": 15,
+          "edgeOverlapLength": 2528,
+          "bends": 60,
+          "routeLength": 13376.5,
+          "area": 1259544
+        }
+      }
+    },
+    {
+      "seed": 1837645124,
+      "graph": 4,
+      "title": "Flat · disconnected",
+      "direction": "left",
+      "revision": "ceef0b107cee294e10f1538ee9f9cea67b43e255",
+      "stately": {
+        "metrics": {
+          "missingNodes": 0,
+          "missingRoutes": 0,
+          "nonFinite": 0,
+          "diagonals": 0,
+          "nodeHits": 0,
+          "nodeOverlaps": 0,
+          "labelNodeOverlaps": 0,
+          "labelOverlaps": 0,
+          "edgeLabelHits": 0,
+          "selfRetraceLength": 0,
+          "edgeCrossings": 30,
+          "edgeOverlapLength": 130.66666666666652,
+          "bends": 127,
+          "routeLength": 15836.75,
+          "area": 1441111.5
+        }
+      },
+      "elk": {
+        "metrics": {
+          "missingNodes": 0,
+          "missingRoutes": 0,
+          "nonFinite": 0,
+          "diagonals": 0,
+          "nodeHits": 0,
+          "nodeOverlaps": 0,
+          "labelNodeOverlaps": 0,
+          "labelOverlaps": 0,
+          "edgeLabelHits": 0,
+          "selfRetraceLength": 12,
+          "edgeCrossings": 7,
+          "edgeOverlapLength": 1068.5,
+          "bends": 59,
+          "routeLength": 14309,
+          "area": 2003656
+        }
+      }
+    },
+    {
+      "seed": 1837645124,
+      "graph": 5,
+      "title": "Flat · denser",
+      "direction": "down",
+      "revision": "ceef0b107cee294e10f1538ee9f9cea67b43e255",
+      "stately": {
+        "metrics": {
+          "missingNodes": 0,
+          "missingRoutes": 0,
+          "nonFinite": 0,
+          "diagonals": 0,
+          "nodeHits": 0,
+          "nodeOverlaps": 0,
+          "labelNodeOverlaps": 0,
+          "labelOverlaps": 0,
+          "edgeLabelHits": 0,
+          "selfRetraceLength": 0,
+          "edgeCrossings": 151,
+          "edgeOverlapLength": 137.60000000000002,
+          "bends": 221,
+          "routeLength": 47655.65,
+          "area": 4355847
+        }
+      },
+      "elk": {
+        "metrics": {
+          "missingNodes": 0,
+          "missingRoutes": 0,
+          "nonFinite": 0,
+          "diagonals": 0,
+          "nodeHits": 0,
+          "nodeOverlaps": 0,
+          "labelNodeOverlaps": 0,
+          "labelOverlaps": 0,
+          "edgeLabelHits": 11,
+          "selfRetraceLength": 0,
+          "edgeCrossings": 81,
+          "edgeOverlapLength": 6694,
+          "bends": 135,
+          "routeLength": 50682,
+          "area": 4736970
+        }
+      }
+    },
+    {
+      "seed": 1837645124,
+      "graph": 6,
+      "title": "Hierarchy · two groups",
+      "direction": "right",
+      "revision": "ceef0b107cee294e10f1538ee9f9cea67b43e255",
+      "stately": {
+        "metrics": {
+          "missingNodes": 0,
+          "missingRoutes": 0,
+          "nonFinite": 0,
+          "diagonals": 0,
+          "nodeHits": 0,
+          "nodeOverlaps": 0,
+          "labelNodeOverlaps": 0,
+          "labelOverlaps": 0,
+          "edgeLabelHits": 0,
+          "selfRetraceLength": 0,
+          "edgeCrossings": 7,
+          "edgeOverlapLength": 0,
+          "bends": 56,
+          "routeLength": 7958.333333333333,
+          "area": 533250.6666666666
+        }
+      },
+      "elk": {
+        "metrics": {
+          "missingNodes": 0,
+          "missingRoutes": 0,
+          "nonFinite": 0,
+          "diagonals": 0,
+          "nodeHits": 0,
+          "nodeOverlaps": 0,
+          "labelNodeOverlaps": 0,
+          "labelOverlaps": 0,
+          "edgeLabelHits": 0,
+          "selfRetraceLength": 0,
+          "edgeCrossings": 1,
+          "edgeOverlapLength": 161.5,
+          "bends": 32,
+          "routeLength": 7146,
+          "area": 774928
+        }
+      }
+    },
+    {
+      "seed": 1837645124,
+      "graph": 7,
+      "title": "Hierarchy · nested",
+      "direction": "down",
+      "revision": "ceef0b107cee294e10f1538ee9f9cea67b43e255",
+      "stately": {
+        "metrics": {
+          "missingNodes": 0,
+          "missingRoutes": 0,
+          "nonFinite": 0,
+          "diagonals": 0,
+          "nodeHits": 0,
+          "nodeOverlaps": 0,
+          "labelNodeOverlaps": 0,
+          "labelOverlaps": 0,
+          "edgeLabelHits": 0,
+          "selfRetraceLength": 0,
+          "edgeCrossings": 12,
+          "edgeOverlapLength": 12,
+          "bends": 102,
+          "routeLength": 13109.25,
+          "area": 1197756
+        }
+      },
+      "elk": {
+        "metrics": {
+          "missingNodes": 0,
+          "missingRoutes": 0,
+          "nonFinite": 0,
+          "diagonals": 0,
+          "nodeHits": 0,
+          "nodeOverlaps": 0,
+          "labelNodeOverlaps": 0,
+          "labelOverlaps": 0,
+          "edgeLabelHits": 1,
+          "selfRetraceLength": 4,
+          "edgeCrossings": 28,
+          "edgeOverlapLength": 828.5,
+          "bends": 83,
+          "routeLength": 18891,
+          "area": 2674175
+        }
+      }
+    },
+    {
+      "seed": 1837645124,
+      "graph": 8,
+      "title": "Hierarchy · mixed ports",
+      "direction": "right",
+      "revision": "ceef0b107cee294e10f1538ee9f9cea67b43e255",
+      "stately": {
+        "metrics": {
+          "missingNodes": 0,
+          "missingRoutes": 0,
+          "nonFinite": 0,
+          "diagonals": 0,
+          "nodeHits": 0,
+          "nodeOverlaps": 0,
+          "labelNodeOverlaps": 0,
+          "labelOverlaps": 0,
+          "edgeLabelHits": 0,
+          "selfRetraceLength": 0,
+          "edgeCrossings": 74,
+          "edgeOverlapLength": 9.166666666666686,
+          "bends": 179,
+          "routeLength": 33828.66666666666,
+          "area": 1815489.3333333333
+        }
+      },
+      "elk": {
+        "metrics": {
+          "missingNodes": 0,
+          "missingRoutes": 0,
+          "nonFinite": 0,
+          "diagonals": 0,
+          "nodeHits": 0,
+          "nodeOverlaps": 0,
+          "labelNodeOverlaps": 0,
+          "labelOverlaps": 0,
+          "edgeLabelHits": 0,
+          "selfRetraceLength": 0,
+          "edgeCrossings": 36,
+          "edgeOverlapLength": 2694,
+          "bends": 119,
+          "routeLength": 48894,
+          "area": 3482048
+        }
+      }
+    },
+    {
+      "seed": 1837645124,
+      "graph": 9,
+      "title": "Hierarchy · deeper",
+      "direction": "up",
+      "revision": "ceef0b107cee294e10f1538ee9f9cea67b43e255",
+      "stately": {
+        "metrics": {
+          "missingNodes": 0,
+          "missingRoutes": 0,
+          "nonFinite": 0,
+          "diagonals": 0,
+          "nodeHits": 0,
+          "nodeOverlaps": 0,
+          "labelNodeOverlaps": 0,
+          "labelOverlaps": 0,
+          "edgeLabelHits": 0,
+          "selfRetraceLength": 0,
+          "edgeCrossings": 115,
+          "edgeOverlapLength": 693,
+          "bends": 212,
+          "routeLength": 48720.83333333334,
+          "area": 3071509
+        }
+      },
+      "elk": {
+        "error": "Error: java.lang.IllegalStateException: Expected 3 hierarchical ports, but found only 0."
+      }
+    },
+    {
+      "seed": 1837645124,
+      "graph": 10,
+      "title": "Hierarchy · denser",
+      "direction": "right",
+      "revision": "ceef0b107cee294e10f1538ee9f9cea67b43e255",
+      "stately": {
+        "metrics": {
+          "missingNodes": 0,
+          "missingRoutes": 0,
+          "nonFinite": 0,
+          "diagonals": 0,
+          "nodeHits": 0,
+          "nodeOverlaps": 0,
+          "labelNodeOverlaps": 0,
+          "labelOverlaps": 0,
+          "edgeLabelHits": 0,
+          "selfRetraceLength": 0,
+          "edgeCrossings": 460,
+          "edgeOverlapLength": 254.9000000000001,
+          "bends": 305,
+          "routeLength": 131255.09999999992,
+          "area": 9847018.666666666
+        }
+      },
+      "elk": {
+        "metrics": {
+          "missingNodes": 0,
+          "missingRoutes": 0,
+          "nonFinite": 0,
+          "diagonals": 0,
+          "nodeHits": 0,
+          "nodeOverlaps": 0,
+          "labelNodeOverlaps": 0,
+          "labelOverlaps": 0,
+          "edgeLabelHits": 18,
+          "selfRetraceLength": 0,
+          "edgeCrossings": 221,
+          "edgeOverlapLength": 13069.166666666666,
+          "bends": 281,
+          "routeLength": 146531.33333333334,
+          "area": 8602548
+        }
+      }
+    },
+    {
+      "seed": 1111884325,
+      "graph": 1,
+      "title": "Flat · small",
+      "direction": "right",
+      "revision": "ceef0b107cee294e10f1538ee9f9cea67b43e255",
+      "stately": {
+        "metrics": {
+          "missingNodes": 0,
+          "missingRoutes": 0,
+          "nonFinite": 0,
+          "diagonals": 0,
+          "nodeHits": 0,
+          "nodeOverlaps": 0,
+          "labelNodeOverlaps": 0,
+          "labelOverlaps": 0,
+          "edgeLabelHits": 0,
+          "selfRetraceLength": 0,
+          "edgeCrossings": 1,
+          "edgeOverlapLength": 0,
+          "bends": 11,
+          "routeLength": 2042,
+          "area": 400736.5
+        }
+      },
+      "elk": {
+        "metrics": {
+          "missingNodes": 0,
+          "missingRoutes": 0,
+          "nonFinite": 0,
+          "diagonals": 0,
+          "nodeHits": 0,
+          "nodeOverlaps": 0,
+          "labelNodeOverlaps": 0,
+          "labelOverlaps": 0,
+          "edgeLabelHits": 0,
+          "selfRetraceLength": 0,
+          "edgeCrossings": 1,
+          "edgeOverlapLength": 4,
+          "bends": 15,
+          "routeLength": 2412,
+          "area": 195657
+        }
+      }
+    },
+    {
+      "seed": 1111884325,
+      "graph": 2,
+      "title": "Flat · cycles",
+      "direction": "down",
+      "revision": "ceef0b107cee294e10f1538ee9f9cea67b43e255",
+      "stately": {
+        "metrics": {
+          "missingNodes": 0,
+          "missingRoutes": 0,
+          "nonFinite": 0,
+          "diagonals": 0,
+          "nodeHits": 0,
+          "nodeOverlaps": 0,
+          "labelNodeOverlaps": 0,
+          "labelOverlaps": 0,
+          "edgeLabelHits": 0,
+          "selfRetraceLength": 0,
+          "edgeCrossings": 10,
+          "edgeOverlapLength": 100.25,
+          "bends": 69,
+          "routeLength": 7100,
+          "area": 719458
+        }
+      },
+      "elk": {
+        "metrics": {
+          "missingNodes": 0,
+          "missingRoutes": 0,
+          "nonFinite": 0,
+          "diagonals": 0,
+          "nodeHits": 0,
+          "nodeOverlaps": 0,
+          "labelNodeOverlaps": 0,
+          "labelOverlaps": 0,
+          "edgeLabelHits": 0,
+          "selfRetraceLength": 0,
+          "edgeCrossings": 3,
+          "edgeOverlapLength": 432.16666666666663,
+          "bends": 32,
+          "routeLength": 6412.666666666666,
+          "area": 803012.5
+        }
+      }
+    },
+    {
+      "seed": 1111884325,
+      "graph": 3,
+      "title": "Flat · mixed ports",
+      "direction": "right",
+      "revision": "ceef0b107cee294e10f1538ee9f9cea67b43e255",
+      "stately": {
+        "metrics": {
+          "missingNodes": 0,
+          "missingRoutes": 0,
+          "nonFinite": 0,
+          "diagonals": 0,
+          "nodeHits": 0,
+          "nodeOverlaps": 0,
+          "labelNodeOverlaps": 0,
+          "labelOverlaps": 0,
+          "edgeLabelHits": 0,
+          "selfRetraceLength": 0,
+          "edgeCrossings": 8,
+          "edgeOverlapLength": 92,
+          "bends": 76,
+          "routeLength": 7776.75,
+          "area": 1157490.25
+        }
+      },
+      "elk": {
+        "metrics": {
+          "missingNodes": 0,
+          "missingRoutes": 0,
+          "nonFinite": 0,
+          "diagonals": 0,
+          "nodeHits": 0,
+          "nodeOverlaps": 0,
+          "labelNodeOverlaps": 0,
+          "labelOverlaps": 0,
+          "edgeLabelHits": 0,
+          "selfRetraceLength": 0,
+          "edgeCrossings": 13,
+          "edgeOverlapLength": 1337.0666666666668,
+          "bends": 49,
+          "routeLength": 9846.866666666667,
+          "area": 879742.5
+        }
+      }
+    },
+    {
+      "seed": 1111884325,
+      "graph": 4,
+      "title": "Flat · disconnected",
+      "direction": "left",
+      "revision": "ceef0b107cee294e10f1538ee9f9cea67b43e255",
+      "stately": {
+        "metrics": {
+          "missingNodes": 0,
+          "missingRoutes": 0,
+          "nonFinite": 0,
+          "diagonals": 0,
+          "nodeHits": 0,
+          "nodeOverlaps": 0,
+          "labelNodeOverlaps": 0,
+          "labelOverlaps": 0,
+          "edgeLabelHits": 0,
+          "selfRetraceLength": 0,
+          "edgeCrossings": 7,
+          "edgeOverlapLength": 85.40000000000009,
+          "bends": 111,
+          "routeLength": 9728.766666666666,
+          "area": 1583453.5
+        }
+      },
+      "elk": {
+        "metrics": {
+          "missingNodes": 0,
+          "missingRoutes": 0,
+          "nonFinite": 0,
+          "diagonals": 0,
+          "nodeHits": 0,
+          "nodeOverlaps": 0,
+          "labelNodeOverlaps": 0,
+          "labelOverlaps": 0,
+          "edgeLabelHits": 0,
+          "selfRetraceLength": 0,
+          "edgeCrossings": 9,
+          "edgeOverlapLength": 754.5,
+          "bends": 63,
+          "routeLength": 12352.5,
+          "area": 1601055
+        }
+      }
+    },
+    {
+      "seed": 1111884325,
+      "graph": 5,
+      "title": "Flat · denser",
+      "direction": "down",
+      "revision": "ceef0b107cee294e10f1538ee9f9cea67b43e255",
+      "stately": {
+        "metrics": {
+          "missingNodes": 0,
+          "missingRoutes": 0,
+          "nonFinite": 0,
+          "diagonals": 0,
+          "nodeHits": 0,
+          "nodeOverlaps": 0,
+          "labelNodeOverlaps": 0,
+          "labelOverlaps": 0,
+          "edgeLabelHits": 0,
+          "selfRetraceLength": 0,
+          "edgeCrossings": 86,
+          "edgeOverlapLength": 274.25,
+          "bends": 235,
+          "routeLength": 36916.33333333333,
+          "area": 3820277.5
+        }
+      },
+      "elk": {
+        "metrics": {
+          "missingNodes": 0,
+          "missingRoutes": 0,
+          "nonFinite": 0,
+          "diagonals": 0,
+          "nodeHits": 0,
+          "nodeOverlaps": 0,
+          "labelNodeOverlaps": 0,
+          "labelOverlaps": 0,
+          "edgeLabelHits": 6,
+          "selfRetraceLength": 0,
+          "edgeCrossings": 117,
+          "edgeOverlapLength": 8825.166666666668,
+          "bends": 149,
+          "routeLength": 60306.33333333333,
+          "area": 4982442
+        }
+      }
+    },
+    {
+      "seed": 1111884325,
+      "graph": 6,
+      "title": "Hierarchy · two groups",
+      "direction": "right",
+      "revision": "ceef0b107cee294e10f1538ee9f9cea67b43e255",
+      "stately": {
+        "metrics": {
+          "missingNodes": 0,
+          "missingRoutes": 0,
+          "nonFinite": 0,
+          "diagonals": 0,
+          "nodeHits": 0,
+          "nodeOverlaps": 0,
+          "labelNodeOverlaps": 0,
+          "labelOverlaps": 0,
+          "edgeLabelHits": 0,
+          "selfRetraceLength": 0,
+          "edgeCrossings": 12,
+          "edgeOverlapLength": 0,
+          "bends": 62,
+          "routeLength": 6786,
+          "area": 462705.00000000006
+        }
+      },
+      "elk": {
+        "metrics": {
+          "missingNodes": 0,
+          "missingRoutes": 0,
+          "nonFinite": 0,
+          "diagonals": 0,
+          "nodeHits": 0,
+          "nodeOverlaps": 0,
+          "labelNodeOverlaps": 0,
+          "labelOverlaps": 0,
+          "edgeLabelHits": 0,
+          "selfRetraceLength": 0,
+          "edgeCrossings": 1,
+          "edgeOverlapLength": 174,
+          "bends": 41,
+          "routeLength": 7361.5,
+          "area": 589248
+        }
+      }
+    },
+    {
+      "seed": 1111884325,
+      "graph": 7,
+      "title": "Hierarchy · nested",
+      "direction": "down",
+      "revision": "ceef0b107cee294e10f1538ee9f9cea67b43e255",
+      "stately": {
+        "metrics": {
+          "missingNodes": 0,
+          "missingRoutes": 0,
+          "nonFinite": 0,
+          "diagonals": 0,
+          "nodeHits": 0,
+          "nodeOverlaps": 0,
+          "labelNodeOverlaps": 0,
+          "labelOverlaps": 0,
+          "edgeLabelHits": 0,
+          "selfRetraceLength": 0,
+          "edgeCrossings": 41,
+          "edgeOverlapLength": 118.5,
+          "bends": 103,
+          "routeLength": 19339.833333333336,
+          "area": 1038994.6666666667
+        }
+      },
+      "elk": {
+        "metrics": {
+          "missingNodes": 0,
+          "missingRoutes": 0,
+          "nonFinite": 0,
+          "diagonals": 2,
+          "nodeHits": 0,
+          "nodeOverlaps": 0,
+          "labelNodeOverlaps": 0,
+          "labelOverlaps": 0,
+          "edgeLabelHits": 0,
+          "selfRetraceLength": 0,
+          "edgeCrossings": 53,
+          "edgeOverlapLength": 3546.6666666666665,
+          "bends": 125,
+          "routeLength": 34044.86483795766,
+          "area": 3462635
+        }
+      }
+    },
+    {
+      "seed": 1111884325,
+      "graph": 8,
+      "title": "Hierarchy · mixed ports",
+      "direction": "right",
+      "revision": "ceef0b107cee294e10f1538ee9f9cea67b43e255",
+      "stately": {
+        "metrics": {
+          "missingNodes": 0,
+          "missingRoutes": 0,
+          "nonFinite": 0,
+          "diagonals": 0,
+          "nodeHits": 0,
+          "nodeOverlaps": 0,
+          "labelNodeOverlaps": 0,
+          "labelOverlaps": 0,
+          "edgeLabelHits": 0,
+          "selfRetraceLength": 0,
+          "edgeCrossings": 42,
+          "edgeOverlapLength": 76.33333333333331,
+          "bends": 162,
+          "routeLength": 26115.249999999993,
+          "area": 2152047.333333333
+        }
+      },
+      "elk": {
+        "metrics": {
+          "missingNodes": 0,
+          "missingRoutes": 0,
+          "nonFinite": 0,
+          "diagonals": 0,
+          "nodeHits": 0,
+          "nodeOverlaps": 0,
+          "labelNodeOverlaps": 0,
+          "labelOverlaps": 0,
+          "edgeLabelHits": 0,
+          "selfRetraceLength": 4,
+          "edgeCrossings": 14,
+          "edgeOverlapLength": 1248.5,
+          "bends": 91,
+          "routeLength": 30840,
+          "area": 2981844
+        }
+      }
+    },
+    {
+      "seed": 1111884325,
+      "graph": 9,
+      "title": "Hierarchy · deeper",
+      "direction": "up",
+      "revision": "ceef0b107cee294e10f1538ee9f9cea67b43e255",
+      "stately": {
+        "metrics": {
+          "missingNodes": 0,
+          "missingRoutes": 0,
+          "nonFinite": 0,
+          "diagonals": 0,
+          "nodeHits": 0,
+          "nodeOverlaps": 0,
+          "labelNodeOverlaps": 0,
+          "labelOverlaps": 0,
+          "edgeLabelHits": 0,
+          "selfRetraceLength": 0,
+          "edgeCrossings": 191,
+          "edgeOverlapLength": 506.16666666666663,
+          "bends": 232,
+          "routeLength": 64425.999999999985,
+          "area": 3833226
+        }
+      },
+      "elk": {
+        "error": "Error: java.lang.IllegalStateException: Expected 8 hierarchical ports, but found only 0."
+      }
+    },
+    {
+      "seed": 1111884325,
+      "graph": 10,
+      "title": "Hierarchy · denser",
+      "direction": "right",
+      "revision": "ceef0b107cee294e10f1538ee9f9cea67b43e255",
+      "stately": {
+        "metrics": {
+          "missingNodes": 0,
+          "missingRoutes": 0,
+          "nonFinite": 0,
+          "diagonals": 0,
+          "nodeHits": 0,
+          "nodeOverlaps": 0,
+          "labelNodeOverlaps": 0,
+          "labelOverlaps": 0,
+          "edgeLabelHits": 0,
+          "selfRetraceLength": 0,
+          "edgeCrossings": 311,
+          "edgeOverlapLength": 202.83333333333331,
+          "bends": 305,
+          "routeLength": 114952.0833333333,
+          "area": 10187148.999999998
+        }
+      },
+      "elk": {
+        "metrics": {
+          "missingNodes": 0,
+          "missingRoutes": 0,
+          "nonFinite": 0,
+          "diagonals": 0,
+          "nodeHits": 0,
+          "nodeOverlaps": 0,
+          "labelNodeOverlaps": 0,
+          "labelOverlaps": 0,
+          "edgeLabelHits": 0,
+          "selfRetraceLength": 0,
+          "edgeCrossings": 138,
+          "edgeOverlapLength": 7082.033333333335,
+          "bends": 269,
+          "routeLength": 121306.86666666665,
+          "area": 8297751
+        }
+      }
+    },
+    {
+      "seed": 1791673957,
+      "graph": 1,
+      "title": "Flat · small",
+      "direction": "right",
+      "revision": "ceef0b107cee294e10f1538ee9f9cea67b43e255",
+      "stately": {
+        "metrics": {
+          "missingNodes": 0,
+          "missingRoutes": 0,
+          "nonFinite": 0,
+          "diagonals": 0,
+          "nodeHits": 0,
+          "nodeOverlaps": 0,
+          "labelNodeOverlaps": 0,
+          "labelOverlaps": 0,
+          "edgeLabelHits": 0,
+          "selfRetraceLength": 0,
+          "edgeCrossings": 1,
+          "edgeOverlapLength": 9,
+          "bends": 25,
+          "routeLength": 2282.5,
+          "area": 354487
+        }
+      },
+      "elk": {
+        "metrics": {
+          "missingNodes": 0,
+          "missingRoutes": 0,
+          "nonFinite": 0,
+          "diagonals": 0,
+          "nodeHits": 0,
+          "nodeOverlaps": 0,
+          "labelNodeOverlaps": 0,
+          "labelOverlaps": 0,
+          "edgeLabelHits": 0,
+          "selfRetraceLength": 0,
+          "edgeCrossings": 2,
+          "edgeOverlapLength": 128,
+          "bends": 19,
+          "routeLength": 3465.5,
+          "area": 350280
+        }
+      }
+    },
+    {
+      "seed": 1791673957,
+      "graph": 2,
+      "title": "Flat · cycles",
+      "direction": "down",
+      "revision": "ceef0b107cee294e10f1538ee9f9cea67b43e255",
+      "stately": {
+        "metrics": {
+          "missingNodes": 0,
+          "missingRoutes": 0,
+          "nonFinite": 0,
+          "diagonals": 0,
+          "nodeHits": 0,
+          "nodeOverlaps": 0,
+          "labelNodeOverlaps": 0,
+          "labelOverlaps": 0,
+          "edgeLabelHits": 0,
+          "selfRetraceLength": 0,
+          "edgeCrossings": 9,
+          "edgeOverlapLength": 250.65000000000003,
+          "bends": 59,
+          "routeLength": 6441.8,
+          "area": 815470.5
+        }
+      },
+      "elk": {
+        "metrics": {
+          "missingNodes": 0,
+          "missingRoutes": 0,
+          "nonFinite": 0,
+          "diagonals": 0,
+          "nodeHits": 0,
+          "nodeOverlaps": 0,
+          "labelNodeOverlaps": 0,
+          "labelOverlaps": 0,
+          "edgeLabelHits": 1,
+          "selfRetraceLength": 0,
+          "edgeCrossings": 3,
+          "edgeOverlapLength": 1302.8333333333333,
+          "bends": 31,
+          "routeLength": 5702.583333333333,
+          "area": 762888
+        }
+      }
+    },
+    {
+      "seed": 1791673957,
+      "graph": 3,
+      "title": "Flat · mixed ports",
+      "direction": "right",
+      "revision": "ceef0b107cee294e10f1538ee9f9cea67b43e255",
+      "stately": {
+        "metrics": {
+          "missingNodes": 0,
+          "missingRoutes": 0,
+          "nonFinite": 0,
+          "diagonals": 0,
+          "nodeHits": 0,
+          "nodeOverlaps": 0,
+          "labelNodeOverlaps": 0,
+          "labelOverlaps": 0,
+          "edgeLabelHits": 0,
+          "selfRetraceLength": 0,
+          "edgeCrossings": 28,
+          "edgeOverlapLength": 31.5,
+          "bends": 116,
+          "routeLength": 15026.125,
+          "area": 1314505.5
+        }
+      },
+      "elk": {
+        "metrics": {
+          "missingNodes": 0,
+          "missingRoutes": 0,
+          "nonFinite": 0,
+          "diagonals": 0,
+          "nodeHits": 0,
+          "nodeOverlaps": 0,
+          "labelNodeOverlaps": 0,
+          "labelOverlaps": 0,
+          "edgeLabelHits": 0,
+          "selfRetraceLength": 8,
+          "edgeCrossings": 10,
+          "edgeOverlapLength": 1661.0000000000005,
+          "bends": 55,
+          "routeLength": 16658.16666666667,
+          "area": 1646316
+        }
+      }
+    },
+    {
+      "seed": 1791673957,
+      "graph": 4,
+      "title": "Flat · disconnected",
+      "direction": "left",
+      "revision": "ceef0b107cee294e10f1538ee9f9cea67b43e255",
+      "stately": {
+        "metrics": {
+          "missingNodes": 0,
+          "missingRoutes": 0,
+          "nonFinite": 0,
+          "diagonals": 0,
+          "nodeHits": 0,
+          "nodeOverlaps": 0,
+          "labelNodeOverlaps": 0,
+          "labelOverlaps": 0,
+          "edgeLabelHits": 0,
+          "selfRetraceLength": 0,
+          "edgeCrossings": 13,
+          "edgeOverlapLength": 32,
+          "bends": 124,
+          "routeLength": 14187.2,
+          "area": 1684788
+        }
+      },
+      "elk": {
+        "metrics": {
+          "missingNodes": 0,
+          "missingRoutes": 0,
+          "nonFinite": 0,
+          "diagonals": 0,
+          "nodeHits": 0,
+          "nodeOverlaps": 0,
+          "labelNodeOverlaps": 0,
+          "labelOverlaps": 0,
+          "edgeLabelHits": 1,
+          "selfRetraceLength": 4,
+          "edgeCrossings": 16,
+          "edgeOverlapLength": 1966.5,
+          "bends": 74,
+          "routeLength": 15080.5,
+          "area": 2276696.5
+        }
+      }
+    },
+    {
+      "seed": 1791673957,
+      "graph": 5,
+      "title": "Flat · denser",
+      "direction": "down",
+      "revision": "ceef0b107cee294e10f1538ee9f9cea67b43e255",
+      "stately": {
+        "metrics": {
+          "missingNodes": 0,
+          "missingRoutes": 0,
+          "nonFinite": 0,
+          "diagonals": 0,
+          "nodeHits": 0,
+          "nodeOverlaps": 0,
+          "labelNodeOverlaps": 0,
+          "labelOverlaps": 0,
+          "edgeLabelHits": 0,
+          "selfRetraceLength": 0,
+          "edgeCrossings": 92,
+          "edgeOverlapLength": 454.116666666667,
+          "bends": 254,
+          "routeLength": 34280.06666666666,
+          "area": 3535546
+        }
+      },
+      "elk": {
+        "metrics": {
+          "missingNodes": 0,
+          "missingRoutes": 0,
+          "nonFinite": 0,
+          "diagonals": 0,
+          "nodeHits": 0,
+          "nodeOverlaps": 0,
+          "labelNodeOverlaps": 0,
+          "labelOverlaps": 0,
+          "edgeLabelHits": 3,
+          "selfRetraceLength": 4,
+          "edgeCrossings": 105,
+          "edgeOverlapLength": 15405.833333333332,
+          "bends": 144,
+          "routeLength": 67726.66666666666,
+          "area": 6268626
+        }
+      }
+    },
+    {
+      "seed": 1791673957,
+      "graph": 6,
+      "title": "Hierarchy · two groups",
+      "direction": "right",
+      "revision": "ceef0b107cee294e10f1538ee9f9cea67b43e255",
+      "stately": {
+        "metrics": {
+          "missingNodes": 0,
+          "missingRoutes": 0,
+          "nonFinite": 0,
+          "diagonals": 0,
+          "nodeHits": 0,
+          "nodeOverlaps": 0,
+          "labelNodeOverlaps": 0,
+          "labelOverlaps": 0,
+          "edgeLabelHits": 0,
+          "selfRetraceLength": 0,
+          "edgeCrossings": 4,
+          "edgeOverlapLength": 25.666666666666714,
+          "bends": 55,
+          "routeLength": 4526.833333333334,
+          "area": 565906
+        }
+      },
+      "elk": {
+        "metrics": {
+          "missingNodes": 0,
+          "missingRoutes": 0,
+          "nonFinite": 0,
+          "diagonals": 0,
+          "nodeHits": 0,
+          "nodeOverlaps": 0,
+          "labelNodeOverlaps": 0,
+          "labelOverlaps": 0,
+          "edgeLabelHits": 0,
+          "selfRetraceLength": 0,
+          "edgeCrossings": 0,
+          "edgeOverlapLength": 56,
+          "bends": 31,
+          "routeLength": 5981.5,
+          "area": 929383
+        }
+      }
+    },
+    {
+      "seed": 1791673957,
+      "graph": 7,
+      "title": "Hierarchy · nested",
+      "direction": "down",
+      "revision": "ceef0b107cee294e10f1538ee9f9cea67b43e255",
+      "stately": {
+        "metrics": {
+          "missingNodes": 0,
+          "missingRoutes": 0,
+          "nonFinite": 0,
+          "diagonals": 0,
+          "nodeHits": 0,
+          "nodeOverlaps": 0,
+          "labelNodeOverlaps": 0,
+          "labelOverlaps": 0,
+          "edgeLabelHits": 0,
+          "selfRetraceLength": 0,
+          "edgeCrossings": 28,
+          "edgeOverlapLength": 423.5,
+          "bends": 114,
+          "routeLength": 15934.166666666668,
+          "area": 1286366.6666666667
+        }
+      },
+      "elk": {
+        "metrics": {
+          "missingNodes": 0,
+          "missingRoutes": 0,
+          "nonFinite": 0,
+          "diagonals": 0,
+          "nodeHits": 0,
+          "nodeOverlaps": 0,
+          "labelNodeOverlaps": 0,
+          "labelOverlaps": 0,
+          "edgeLabelHits": 0,
+          "selfRetraceLength": 0,
+          "edgeCrossings": 72,
+          "edgeOverlapLength": 1282.5,
+          "bends": 111,
+          "routeLength": 29291.5,
+          "area": 2299146
+        }
+      }
+    },
+    {
+      "seed": 1791673957,
+      "graph": 8,
+      "title": "Hierarchy · mixed ports",
+      "direction": "right",
+      "revision": "ceef0b107cee294e10f1538ee9f9cea67b43e255",
+      "stately": {
+        "metrics": {
+          "missingNodes": 0,
+          "missingRoutes": 0,
+          "nonFinite": 0,
+          "diagonals": 0,
+          "nodeHits": 0,
+          "nodeOverlaps": 0,
+          "labelNodeOverlaps": 0,
+          "labelOverlaps": 0,
+          "edgeLabelHits": 0,
+          "selfRetraceLength": 0,
+          "edgeCrossings": 69,
+          "edgeOverlapLength": 53,
+          "bends": 192,
+          "routeLength": 30707.16666666666,
+          "area": 1976400
+        }
+      },
+      "elk": {
+        "metrics": {
+          "missingNodes": 0,
+          "missingRoutes": 0,
+          "nonFinite": 0,
+          "diagonals": 0,
+          "nodeHits": 0,
+          "nodeOverlaps": 0,
+          "labelNodeOverlaps": 0,
+          "labelOverlaps": 0,
+          "edgeLabelHits": 2,
+          "selfRetraceLength": 0,
+          "edgeCrossings": 35,
+          "edgeOverlapLength": 3160.25,
+          "bends": 119,
+          "routeLength": 43230.5,
+          "area": 2967872
+        }
+      }
+    },
+    {
+      "seed": 1791673957,
+      "graph": 9,
+      "title": "Hierarchy · deeper",
+      "direction": "up",
+      "revision": "ceef0b107cee294e10f1538ee9f9cea67b43e255",
+      "stately": {
+        "metrics": {
+          "missingNodes": 0,
+          "missingRoutes": 0,
+          "nonFinite": 0,
+          "diagonals": 0,
+          "nodeHits": 0,
+          "nodeOverlaps": 0,
+          "labelNodeOverlaps": 0,
+          "labelOverlaps": 0,
+          "edgeLabelHits": 0,
+          "selfRetraceLength": 0,
+          "edgeCrossings": 151,
+          "edgeOverlapLength": 453.5,
+          "bends": 205,
+          "routeLength": 56867.16666666668,
+          "area": 4588753.333333334
+        }
+      },
+      "elk": {
+        "metrics": {
+          "missingNodes": 0,
+          "missingRoutes": 0,
+          "nonFinite": 0,
+          "diagonals": 0,
+          "nodeHits": 0,
+          "nodeOverlaps": 0,
+          "labelNodeOverlaps": 0,
+          "labelOverlaps": 0,
+          "edgeLabelHits": 1,
+          "selfRetraceLength": 0,
+          "edgeCrossings": 356,
+          "edgeOverlapLength": 8017.5,
+          "bends": 269,
+          "routeLength": 127539,
+          "area": 9906813
+        }
+      }
+    },
+    {
+      "seed": 1791673957,
+      "graph": 10,
+      "title": "Hierarchy · denser",
+      "direction": "right",
+      "revision": "ceef0b107cee294e10f1538ee9f9cea67b43e255",
+      "stately": {
+        "metrics": {
+          "missingNodes": 0,
+          "missingRoutes": 0,
+          "nonFinite": 0,
+          "diagonals": 0,
+          "nodeHits": 0,
+          "nodeOverlaps": 0,
+          "labelNodeOverlaps": 0,
+          "labelOverlaps": 0,
+          "edgeLabelHits": 0,
+          "selfRetraceLength": 0,
+          "edgeCrossings": 419,
+          "edgeOverlapLength": 187.16666666666669,
+          "bends": 341,
+          "routeLength": 133537.1666666666,
+          "area": 6939349.999999999
+        }
+      },
+      "elk": {
+        "metrics": {
+          "missingNodes": 0,
+          "missingRoutes": 0,
+          "nonFinite": 0,
+          "diagonals": 0,
+          "nodeHits": 0,
+          "nodeOverlaps": 0,
+          "labelNodeOverlaps": 0,
+          "labelOverlaps": 0,
+          "edgeLabelHits": 0,
+          "selfRetraceLength": 0,
+          "edgeCrossings": 155,
+          "edgeOverlapLength": 11741.833333333332,
+          "bends": 294,
+          "routeLength": 143948.3333333333,
+          "area": 8507710
+        }
+      }
+    },
+    {
+      "seed": 3792909357,
+      "graph": 1,
+      "title": "Flat · small",
+      "direction": "right",
+      "revision": "ceef0b107cee294e10f1538ee9f9cea67b43e255",
+      "stately": {
+        "metrics": {
+          "missingNodes": 0,
+          "missingRoutes": 0,
+          "nonFinite": 0,
+          "diagonals": 0,
+          "nodeHits": 0,
+          "nodeOverlaps": 0,
+          "labelNodeOverlaps": 0,
+          "labelOverlaps": 0,
+          "edgeLabelHits": 0,
+          "selfRetraceLength": 0,
+          "edgeCrossings": 2,
+          "edgeOverlapLength": 9,
+          "bends": 32,
+          "routeLength": 2055,
+          "area": 295797.5
+        }
+      },
+      "elk": {
+        "metrics": {
+          "missingNodes": 0,
+          "missingRoutes": 0,
+          "nonFinite": 0,
+          "diagonals": 0,
+          "nodeHits": 0,
+          "nodeOverlaps": 0,
+          "labelNodeOverlaps": 0,
+          "labelOverlaps": 0,
+          "edgeLabelHits": 0,
+          "selfRetraceLength": 0,
+          "edgeCrossings": 0,
+          "edgeOverlapLength": 89,
+          "bends": 14,
+          "routeLength": 2818,
+          "area": 357048
+        }
+      }
+    },
+    {
+      "seed": 3792909357,
+      "graph": 2,
+      "title": "Flat · cycles",
+      "direction": "down",
+      "revision": "ceef0b107cee294e10f1538ee9f9cea67b43e255",
+      "stately": {
+        "metrics": {
+          "missingNodes": 0,
+          "missingRoutes": 0,
+          "nonFinite": 0,
+          "diagonals": 0,
+          "nodeHits": 0,
+          "nodeOverlaps": 0,
+          "labelNodeOverlaps": 0,
+          "labelOverlaps": 0,
+          "edgeLabelHits": 0,
+          "selfRetraceLength": 0,
+          "edgeCrossings": 2,
+          "edgeOverlapLength": 37,
+          "bends": 51,
+          "routeLength": 4491.666666666666,
+          "area": 784135
+        }
+      },
+      "elk": {
+        "metrics": {
+          "missingNodes": 0,
+          "missingRoutes": 0,
+          "nonFinite": 0,
+          "diagonals": 0,
+          "nodeHits": 0,
+          "nodeOverlaps": 0,
+          "labelNodeOverlaps": 0,
+          "labelOverlaps": 0,
+          "edgeLabelHits": 0,
+          "selfRetraceLength": 4,
+          "edgeCrossings": 4,
+          "edgeOverlapLength": 447,
+          "bends": 34,
+          "routeLength": 7841,
+          "area": 839510
+        }
+      }
+    },
+    {
+      "seed": 3792909357,
+      "graph": 3,
+      "title": "Flat · mixed ports",
+      "direction": "right",
+      "revision": "ceef0b107cee294e10f1538ee9f9cea67b43e255",
+      "stately": {
+        "metrics": {
+          "missingNodes": 0,
+          "missingRoutes": 0,
+          "nonFinite": 0,
+          "diagonals": 0,
+          "nodeHits": 0,
+          "nodeOverlaps": 0,
+          "labelNodeOverlaps": 0,
+          "labelOverlaps": 0,
+          "edgeLabelHits": 0,
+          "selfRetraceLength": 0,
+          "edgeCrossings": 20,
+          "edgeOverlapLength": 37.16666666666663,
+          "bends": 99,
+          "routeLength": 11139.666666666664,
+          "area": 1175745
+        }
+      },
+      "elk": {
+        "metrics": {
+          "missingNodes": 0,
+          "missingRoutes": 0,
+          "nonFinite": 0,
+          "diagonals": 0,
+          "nodeHits": 0,
+          "nodeOverlaps": 0,
+          "labelNodeOverlaps": 0,
+          "labelOverlaps": 0,
+          "edgeLabelHits": 0,
+          "selfRetraceLength": 4,
+          "edgeCrossings": 6,
+          "edgeOverlapLength": 433.5,
+          "bends": 49,
+          "routeLength": 12889.5,
+          "area": 1428507
+        }
+      }
+    },
+    {
+      "seed": 3792909357,
+      "graph": 4,
+      "title": "Flat · disconnected",
+      "direction": "left",
+      "revision": "ceef0b107cee294e10f1538ee9f9cea67b43e255",
+      "stately": {
+        "metrics": {
+          "missingNodes": 0,
+          "missingRoutes": 0,
+          "nonFinite": 0,
+          "diagonals": 0,
+          "nodeHits": 0,
+          "nodeOverlaps": 0,
+          "labelNodeOverlaps": 0,
+          "labelOverlaps": 0,
+          "edgeLabelHits": 0,
+          "selfRetraceLength": 0,
+          "edgeCrossings": 13,
+          "edgeOverlapLength": 51,
+          "bends": 122,
+          "routeLength": 11702.25,
+          "area": 1480421
+        }
+      },
+      "elk": {
+        "metrics": {
+          "missingNodes": 0,
+          "missingRoutes": 0,
+          "nonFinite": 0,
+          "diagonals": 0,
+          "nodeHits": 0,
+          "nodeOverlaps": 0,
+          "labelNodeOverlaps": 0,
+          "labelOverlaps": 0,
+          "edgeLabelHits": 2,
+          "selfRetraceLength": 0,
+          "edgeCrossings": 15,
+          "edgeOverlapLength": 3180.666666666668,
+          "bends": 60,
+          "routeLength": 14234.5,
+          "area": 1540957
+        }
+      }
+    },
+    {
+      "seed": 3792909357,
+      "graph": 5,
+      "title": "Flat · denser",
+      "direction": "down",
+      "revision": "ceef0b107cee294e10f1538ee9f9cea67b43e255",
+      "stately": {
+        "metrics": {
+          "missingNodes": 0,
+          "missingRoutes": 0,
+          "nonFinite": 0,
+          "diagonals": 0,
+          "nodeHits": 0,
+          "nodeOverlaps": 0,
+          "labelNodeOverlaps": 0,
+          "labelOverlaps": 0,
+          "edgeLabelHits": 0,
+          "selfRetraceLength": 0,
+          "edgeCrossings": 68,
+          "edgeOverlapLength": 412.33333333333337,
+          "bends": 230,
+          "routeLength": 34032.833333333336,
+          "area": 3348990.5
+        }
+      },
+      "elk": {
+        "metrics": {
+          "missingNodes": 0,
+          "missingRoutes": 0,
+          "nonFinite": 0,
+          "diagonals": 0,
+          "nodeHits": 0,
+          "nodeOverlaps": 0,
+          "labelNodeOverlaps": 0,
+          "labelOverlaps": 0,
+          "edgeLabelHits": 0,
+          "selfRetraceLength": 0,
+          "edgeCrossings": 57,
+          "edgeOverlapLength": 7037.833333333335,
+          "bends": 139,
+          "routeLength": 42522.33333333333,
+          "area": 4713254
+        }
+      }
+    },
+    {
+      "seed": 3792909357,
+      "graph": 6,
+      "title": "Hierarchy · two groups",
+      "direction": "right",
+      "revision": "ceef0b107cee294e10f1538ee9f9cea67b43e255",
+      "stately": {
+        "metrics": {
+          "missingNodes": 0,
+          "missingRoutes": 0,
+          "nonFinite": 0,
+          "diagonals": 0,
+          "nodeHits": 0,
+          "nodeOverlaps": 0,
+          "labelNodeOverlaps": 0,
+          "labelOverlaps": 0,
+          "edgeLabelHits": 0,
+          "selfRetraceLength": 0,
+          "edgeCrossings": 9,
+          "edgeOverlapLength": 16,
+          "bends": 46,
+          "routeLength": 5501.666666666666,
+          "area": 506290
+        }
+      },
+      "elk": {
+        "metrics": {
+          "missingNodes": 0,
+          "missingRoutes": 0,
+          "nonFinite": 0,
+          "diagonals": 0,
+          "nodeHits": 0,
+          "nodeOverlaps": 0,
+          "labelNodeOverlaps": 0,
+          "labelOverlaps": 0,
+          "edgeLabelHits": 0,
+          "selfRetraceLength": 4,
+          "edgeCrossings": 1,
+          "edgeOverlapLength": 574,
+          "bends": 29,
+          "routeLength": 5243.333333333333,
+          "area": 592156
+        }
+      }
+    },
+    {
+      "seed": 3792909357,
+      "graph": 7,
+      "title": "Hierarchy · nested",
+      "direction": "down",
+      "revision": "ceef0b107cee294e10f1538ee9f9cea67b43e255",
+      "stately": {
+        "metrics": {
+          "missingNodes": 0,
+          "missingRoutes": 0,
+          "nonFinite": 0,
+          "diagonals": 0,
+          "nodeHits": 0,
+          "nodeOverlaps": 0,
+          "labelNodeOverlaps": 0,
+          "labelOverlaps": 0,
+          "edgeLabelHits": 0,
+          "selfRetraceLength": 0,
+          "edgeCrossings": 41,
+          "edgeOverlapLength": 145.5,
+          "bends": 101,
+          "routeLength": 22994.166666666664,
+          "area": 1373998
+        }
+      },
+      "elk": {
+        "error": "Error: java.lang.IllegalStateException: Expected 6 hierarchical ports, but found only 0."
+      }
+    },
+    {
+      "seed": 3792909357,
+      "graph": 8,
+      "title": "Hierarchy · mixed ports",
+      "direction": "right",
+      "revision": "ceef0b107cee294e10f1538ee9f9cea67b43e255",
+      "stately": {
+        "metrics": {
+          "missingNodes": 0,
+          "missingRoutes": 0,
+          "nonFinite": 0,
+          "diagonals": 0,
+          "nodeHits": 0,
+          "nodeOverlaps": 0,
+          "labelNodeOverlaps": 0,
+          "labelOverlaps": 0,
+          "edgeLabelHits": 0,
+          "selfRetraceLength": 0,
+          "edgeCrossings": 72,
+          "edgeOverlapLength": 321.66666666666663,
+          "bends": 169,
+          "routeLength": 37192.23666666666,
+          "area": 2543758
+        }
+      },
+      "elk": {
+        "metrics": {
+          "missingNodes": 0,
+          "missingRoutes": 0,
+          "nonFinite": 0,
+          "diagonals": 0,
+          "nodeHits": 0,
+          "nodeOverlaps": 0,
+          "labelNodeOverlaps": 0,
+          "labelOverlaps": 0,
+          "edgeLabelHits": 0,
+          "selfRetraceLength": 0,
+          "edgeCrossings": 50,
+          "edgeOverlapLength": 5797,
+          "bends": 128,
+          "routeLength": 49790.166666666664,
+          "area": 3030450
+        }
+      }
+    },
+    {
+      "seed": 3792909357,
+      "graph": 9,
+      "title": "Hierarchy · deeper",
+      "direction": "up",
+      "revision": "ceef0b107cee294e10f1538ee9f9cea67b43e255",
+      "stately": {
+        "metrics": {
+          "missingNodes": 0,
+          "missingRoutes": 0,
+          "nonFinite": 0,
+          "diagonals": 0,
+          "nodeHits": 0,
+          "nodeOverlaps": 0,
+          "labelNodeOverlaps": 0,
+          "labelOverlaps": 0,
+          "edgeLabelHits": 0,
+          "selfRetraceLength": 0,
+          "edgeCrossings": 107,
+          "edgeOverlapLength": 70,
+          "bends": 233,
+          "routeLength": 49953.999999999985,
+          "area": 3477973.4999999995
+        }
+      },
+      "elk": {
+        "error": "Error: java.lang.IllegalStateException: Expected 4 hierarchical ports, but found only 0."
+      }
+    },
+    {
+      "seed": 3792909357,
+      "graph": 10,
+      "title": "Hierarchy · denser",
+      "direction": "right",
+      "revision": "ceef0b107cee294e10f1538ee9f9cea67b43e255",
+      "stately": {
+        "metrics": {
+          "missingNodes": 0,
+          "missingRoutes": 0,
+          "nonFinite": 0,
+          "diagonals": 0,
+          "nodeHits": 0,
+          "nodeOverlaps": 0,
+          "labelNodeOverlaps": 0,
+          "labelOverlaps": 0,
+          "edgeLabelHits": 0,
+          "selfRetraceLength": 0,
+          "edgeCrossings": 655,
+          "edgeOverlapLength": 2199,
+          "bends": 336,
+          "routeLength": 134363.49999999997,
+          "area": 6324525.333333333
+        }
+      },
+      "elk": {
+        "metrics": {
+          "missingNodes": 0,
+          "missingRoutes": 0,
+          "nonFinite": 0,
+          "diagonals": 0,
+          "nodeHits": 0,
+          "nodeOverlaps": 0,
+          "labelNodeOverlaps": 0,
+          "labelOverlaps": 0,
+          "edgeLabelHits": 0,
+          "selfRetraceLength": 0,
+          "edgeCrossings": 205,
+          "edgeOverlapLength": 9066.25,
+          "bends": 318,
+          "routeLength": 151017.5,
+          "area": 6203549
+        }
+      }
+    },
+    {
+      "seed": 3169259577,
+      "graph": 1,
+      "title": "Flat · small",
+      "direction": "right",
+      "revision": "ceef0b107cee294e10f1538ee9f9cea67b43e255",
+      "stately": {
+        "metrics": {
+          "missingNodes": 0,
+          "missingRoutes": 0,
+          "nonFinite": 0,
+          "diagonals": 0,
+          "nodeHits": 0,
+          "nodeOverlaps": 0,
+          "labelNodeOverlaps": 0,
+          "labelOverlaps": 0,
+          "edgeLabelHits": 0,
+          "selfRetraceLength": 0,
+          "edgeCrossings": 4,
+          "edgeOverlapLength": 0,
+          "bends": 29,
+          "routeLength": 1916.5,
+          "area": 202878
+        }
+      },
+      "elk": {
+        "metrics": {
+          "missingNodes": 0,
+          "missingRoutes": 0,
+          "nonFinite": 0,
+          "diagonals": 0,
+          "nodeHits": 0,
+          "nodeOverlaps": 0,
+          "labelNodeOverlaps": 0,
+          "labelOverlaps": 0,
+          "edgeLabelHits": 0,
+          "selfRetraceLength": 4,
+          "edgeCrossings": 1,
+          "edgeOverlapLength": 108,
+          "bends": 17,
+          "routeLength": 3419.5,
+          "area": 361368
+        }
+      }
+    },
+    {
+      "seed": 3169259577,
+      "graph": 2,
+      "title": "Flat · cycles",
+      "direction": "down",
+      "revision": "ceef0b107cee294e10f1538ee9f9cea67b43e255",
+      "stately": {
+        "metrics": {
+          "missingNodes": 0,
+          "missingRoutes": 0,
+          "nonFinite": 0,
+          "diagonals": 0,
+          "nodeHits": 0,
+          "nodeOverlaps": 0,
+          "labelNodeOverlaps": 0,
+          "labelOverlaps": 0,
+          "edgeLabelHits": 0,
+          "selfRetraceLength": 0,
+          "edgeCrossings": 7,
+          "edgeOverlapLength": 141,
+          "bends": 64,
+          "routeLength": 5664,
+          "area": 802740
+        }
+      },
+      "elk": {
+        "metrics": {
+          "missingNodes": 0,
+          "missingRoutes": 0,
+          "nonFinite": 0,
+          "diagonals": 0,
+          "nodeHits": 0,
+          "nodeOverlaps": 0,
+          "labelNodeOverlaps": 0,
+          "labelOverlaps": 0,
+          "edgeLabelHits": 2,
+          "selfRetraceLength": 0,
+          "edgeCrossings": 2,
+          "edgeOverlapLength": 1574.5,
+          "bends": 38,
+          "routeLength": 5298.5,
+          "area": 486381
+        }
+      }
+    },
+    {
+      "seed": 3169259577,
+      "graph": 3,
+      "title": "Flat · mixed ports",
+      "direction": "right",
+      "revision": "ceef0b107cee294e10f1538ee9f9cea67b43e255",
+      "stately": {
+        "metrics": {
+          "missingNodes": 0,
+          "missingRoutes": 0,
+          "nonFinite": 0,
+          "diagonals": 0,
+          "nodeHits": 0,
+          "nodeOverlaps": 0,
+          "labelNodeOverlaps": 0,
+          "labelOverlaps": 0,
+          "edgeLabelHits": 0,
+          "selfRetraceLength": 0,
+          "edgeCrossings": 20,
+          "edgeOverlapLength": 47,
+          "bends": 95,
+          "routeLength": 9601.949999999999,
+          "area": 1121058
+        }
+      },
+      "elk": {
+        "metrics": {
+          "missingNodes": 0,
+          "missingRoutes": 0,
+          "nonFinite": 0,
+          "diagonals": 0,
+          "nodeHits": 0,
+          "nodeOverlaps": 0,
+          "labelNodeOverlaps": 0,
+          "labelOverlaps": 0,
+          "edgeLabelHits": 4,
+          "selfRetraceLength": 4,
+          "edgeCrossings": 19,
+          "edgeOverlapLength": 3667.6666666666665,
+          "bends": 59,
+          "routeLength": 14524.499999999998,
+          "area": 1321194
+        }
+      }
+    },
+    {
+      "seed": 3169259577,
+      "graph": 4,
+      "title": "Flat · disconnected",
+      "direction": "left",
+      "revision": "ceef0b107cee294e10f1538ee9f9cea67b43e255",
+      "stately": {
+        "metrics": {
+          "missingNodes": 0,
+          "missingRoutes": 0,
+          "nonFinite": 0,
+          "diagonals": 0,
+          "nodeHits": 0,
+          "nodeOverlaps": 0,
+          "labelNodeOverlaps": 0,
+          "labelOverlaps": 0,
+          "edgeLabelHits": 0,
+          "selfRetraceLength": 0,
+          "edgeCrossings": 11,
+          "edgeOverlapLength": 83,
+          "bends": 113,
+          "routeLength": 12465,
+          "area": 1513041
+        }
+      },
+      "elk": {
+        "metrics": {
+          "missingNodes": 0,
+          "missingRoutes": 0,
+          "nonFinite": 0,
+          "diagonals": 0,
+          "nodeHits": 0,
+          "nodeOverlaps": 0,
+          "labelNodeOverlaps": 0,
+          "labelOverlaps": 0,
+          "edgeLabelHits": 0,
+          "selfRetraceLength": 0,
+          "edgeCrossings": 16,
+          "edgeOverlapLength": 814.5,
+          "bends": 60,
+          "routeLength": 14864.5,
+          "area": 2152137
+        }
+      }
+    },
+    {
+      "seed": 3169259577,
+      "graph": 5,
+      "title": "Flat · denser",
+      "direction": "down",
+      "revision": "ceef0b107cee294e10f1538ee9f9cea67b43e255",
+      "stately": {
+        "metrics": {
+          "missingNodes": 0,
+          "missingRoutes": 0,
+          "nonFinite": 0,
+          "diagonals": 0,
+          "nodeHits": 0,
+          "nodeOverlaps": 0,
+          "labelNodeOverlaps": 0,
+          "labelOverlaps": 0,
+          "edgeLabelHits": 0,
+          "selfRetraceLength": 0,
+          "edgeCrossings": 81,
+          "edgeOverlapLength": 355.83333333333337,
+          "bends": 232,
+          "routeLength": 42469.41666666666,
+          "area": 4843796.5
+        }
+      },
+      "elk": {
+        "metrics": {
+          "missingNodes": 0,
+          "missingRoutes": 0,
+          "nonFinite": 0,
+          "diagonals": 0,
+          "nodeHits": 0,
+          "nodeOverlaps": 0,
+          "labelNodeOverlaps": 0,
+          "labelOverlaps": 0,
+          "edgeLabelHits": 3,
+          "selfRetraceLength": 4,
+          "edgeCrossings": 67,
+          "edgeOverlapLength": 6451.466666666667,
+          "bends": 136,
+          "routeLength": 48128.566666666666,
+          "area": 4682796
+        }
+      }
+    },
+    {
+      "seed": 3169259577,
+      "graph": 6,
+      "title": "Hierarchy · two groups",
+      "direction": "right",
+      "revision": "ceef0b107cee294e10f1538ee9f9cea67b43e255",
+      "stately": {
+        "metrics": {
+          "missingNodes": 0,
+          "missingRoutes": 0,
+          "nonFinite": 0,
+          "diagonals": 0,
+          "nodeHits": 0,
+          "nodeOverlaps": 0,
+          "labelNodeOverlaps": 0,
+          "labelOverlaps": 0,
+          "edgeLabelHits": 0,
+          "selfRetraceLength": 0,
+          "edgeCrossings": 7,
+          "edgeOverlapLength": 18,
+          "bends": 42,
+          "routeLength": 4228.5,
+          "area": 499324
+        }
+      },
+      "elk": {
+        "metrics": {
+          "missingNodes": 0,
+          "missingRoutes": 0,
+          "nonFinite": 0,
+          "diagonals": 0,
+          "nodeHits": 0,
+          "nodeOverlaps": 0,
+          "labelNodeOverlaps": 0,
+          "labelOverlaps": 0,
+          "edgeLabelHits": 0,
+          "selfRetraceLength": 0,
+          "edgeCrossings": 1,
+          "edgeOverlapLength": 152,
+          "bends": 30,
+          "routeLength": 4348,
+          "area": 459584
+        }
+      }
+    },
+    {
+      "seed": 3169259577,
+      "graph": 7,
+      "title": "Hierarchy · nested",
+      "direction": "down",
+      "revision": "ceef0b107cee294e10f1538ee9f9cea67b43e255",
+      "stately": {
+        "metrics": {
+          "missingNodes": 0,
+          "missingRoutes": 0,
+          "nonFinite": 0,
+          "diagonals": 0,
+          "nodeHits": 0,
+          "nodeOverlaps": 0,
+          "labelNodeOverlaps": 0,
+          "labelOverlaps": 0,
+          "edgeLabelHits": 0,
+          "selfRetraceLength": 0,
+          "edgeCrossings": 33,
+          "edgeOverlapLength": 118.5,
+          "bends": 87,
+          "routeLength": 15217.166666666664,
+          "area": 1146252
+        }
+      },
+      "elk": {
+        "metrics": {
+          "missingNodes": 0,
+          "missingRoutes": 0,
+          "nonFinite": 0,
+          "diagonals": 0,
+          "nodeHits": 0,
+          "nodeOverlaps": 0,
+          "labelNodeOverlaps": 0,
+          "labelOverlaps": 0,
+          "edgeLabelHits": 0,
+          "selfRetraceLength": 0,
+          "edgeCrossings": 41,
+          "edgeOverlapLength": 2460,
+          "bends": 85,
+          "routeLength": 22892,
+          "area": 2368730
+        }
+      }
+    },
+    {
+      "seed": 3169259577,
+      "graph": 8,
+      "title": "Hierarchy · mixed ports",
+      "direction": "right",
+      "revision": "ceef0b107cee294e10f1538ee9f9cea67b43e255",
+      "stately": {
+        "metrics": {
+          "missingNodes": 0,
+          "missingRoutes": 0,
+          "nonFinite": 0,
+          "diagonals": 0,
+          "nodeHits": 0,
+          "nodeOverlaps": 0,
+          "labelNodeOverlaps": 0,
+          "labelOverlaps": 0,
+          "edgeLabelHits": 0,
+          "selfRetraceLength": 0,
+          "edgeCrossings": 84,
+          "edgeOverlapLength": 25,
+          "bends": 162,
+          "routeLength": 35641.333333333336,
+          "area": 2239962.5
+        }
+      },
+      "elk": {
+        "metrics": {
+          "missingNodes": 0,
+          "missingRoutes": 0,
+          "nonFinite": 0,
+          "diagonals": 0,
+          "nodeHits": 0,
+          "nodeOverlaps": 0,
+          "labelNodeOverlaps": 0,
+          "labelOverlaps": 0,
+          "edgeLabelHits": 0,
+          "selfRetraceLength": 0,
+          "edgeCrossings": 44,
+          "edgeOverlapLength": 1662,
+          "bends": 119,
+          "routeLength": 37609.83333333333,
+          "area": 2416214
+        }
+      }
+    },
+    {
+      "seed": 3169259577,
+      "graph": 9,
+      "title": "Hierarchy · deeper",
+      "direction": "up",
+      "revision": "ceef0b107cee294e10f1538ee9f9cea67b43e255",
+      "stately": {
+        "metrics": {
+          "missingNodes": 0,
+          "missingRoutes": 0,
+          "nonFinite": 0,
+          "diagonals": 0,
+          "nodeHits": 0,
+          "nodeOverlaps": 0,
+          "labelNodeOverlaps": 0,
+          "labelOverlaps": 0,
+          "edgeLabelHits": 0,
+          "selfRetraceLength": 0,
+          "edgeCrossings": 133,
+          "edgeOverlapLength": 185.5,
+          "bends": 242,
+          "routeLength": 58080.666666666664,
+          "area": 4054907.666666667
+        }
+      },
+      "elk": {
+        "metrics": {
+          "missingNodes": 0,
+          "missingRoutes": 0,
+          "nonFinite": 0,
+          "diagonals": 0,
+          "nodeHits": 0,
+          "nodeOverlaps": 0,
+          "labelNodeOverlaps": 0,
+          "labelOverlaps": 0,
+          "edgeLabelHits": 0,
+          "selfRetraceLength": 0,
+          "edgeCrossings": 212,
+          "edgeOverlapLength": 9980.166666666666,
+          "bends": 250,
+          "routeLength": 118517,
+          "area": 12453080
+        }
+      }
+    },
+    {
+      "seed": 3169259577,
+      "graph": 10,
+      "title": "Hierarchy · denser",
+      "direction": "right",
+      "revision": "ceef0b107cee294e10f1538ee9f9cea67b43e255",
+      "stately": {
+        "metrics": {
+          "missingNodes": 0,
+          "missingRoutes": 0,
+          "nonFinite": 0,
+          "diagonals": 0,
+          "nodeHits": 0,
+          "nodeOverlaps": 0,
+          "labelNodeOverlaps": 0,
+          "labelOverlaps": 0,
+          "edgeLabelHits": 0,
+          "selfRetraceLength": 0,
+          "edgeCrossings": 220,
+          "edgeOverlapLength": 236.9999999999999,
+          "bends": 299,
+          "routeLength": 94725,
+          "area": 4753464.333333333
+        }
+      },
+      "elk": {
+        "metrics": {
+          "missingNodes": 0,
+          "missingRoutes": 0,
+          "nonFinite": 0,
+          "diagonals": 0,
+          "nodeHits": 0,
+          "nodeOverlaps": 0,
+          "labelNodeOverlaps": 0,
+          "labelOverlaps": 0,
+          "edgeLabelHits": 0,
+          "selfRetraceLength": 0,
+          "edgeCrossings": 127,
+          "edgeOverlapLength": 14426.833333333332,
+          "bends": 268,
+          "routeLength": 148850.83333333337,
+          "area": 6414268.5
+        }
+      }
+    },
+    {
+      "seed": 1521506603,
+      "graph": 1,
+      "title": "Flat · small",
+      "direction": "right",
+      "revision": "ceef0b107cee294e10f1538ee9f9cea67b43e255",
+      "stately": {
+        "metrics": {
+          "missingNodes": 0,
+          "missingRoutes": 0,
+          "nonFinite": 0,
+          "diagonals": 0,
+          "nodeHits": 0,
+          "nodeOverlaps": 0,
+          "labelNodeOverlaps": 0,
+          "labelOverlaps": 0,
+          "edgeLabelHits": 0,
+          "selfRetraceLength": 0,
+          "edgeCrossings": 0,
+          "edgeOverlapLength": 61.916666666666686,
+          "bends": 29,
+          "routeLength": 2013.9166666666667,
+          "area": 345000
+        }
+      },
+      "elk": {
+        "metrics": {
+          "missingNodes": 0,
+          "missingRoutes": 0,
+          "nonFinite": 0,
+          "diagonals": 0,
+          "nodeHits": 0,
+          "nodeOverlaps": 0,
+          "labelNodeOverlaps": 0,
+          "labelOverlaps": 0,
+          "edgeLabelHits": 0,
+          "selfRetraceLength": 0,
+          "edgeCrossings": 0,
+          "edgeOverlapLength": 2088,
+          "bends": 19,
+          "routeLength": 4040,
+          "area": 284616
+        }
+      }
+    },
+    {
+      "seed": 1521506603,
+      "graph": 2,
+      "title": "Flat · cycles",
+      "direction": "down",
+      "revision": "ceef0b107cee294e10f1538ee9f9cea67b43e255",
+      "stately": {
+        "metrics": {
+          "missingNodes": 0,
+          "missingRoutes": 0,
+          "nonFinite": 0,
+          "diagonals": 0,
+          "nodeHits": 0,
+          "nodeOverlaps": 0,
+          "labelNodeOverlaps": 0,
+          "labelOverlaps": 0,
+          "edgeLabelHits": 0,
+          "selfRetraceLength": 0,
+          "edgeCrossings": 12,
+          "edgeOverlapLength": 276,
+          "bends": 59,
+          "routeLength": 5297.25,
+          "area": 390476
+        }
+      },
+      "elk": {
+        "metrics": {
+          "missingNodes": 0,
+          "missingRoutes": 0,
+          "nonFinite": 0,
+          "diagonals": 0,
+          "nodeHits": 0,
+          "nodeOverlaps": 0,
+          "labelNodeOverlaps": 0,
+          "labelOverlaps": 0,
+          "edgeLabelHits": 0,
+          "selfRetraceLength": 0,
+          "edgeCrossings": 6,
+          "edgeOverlapLength": 519.5,
+          "bends": 29,
+          "routeLength": 5829,
+          "area": 580203
+        }
+      }
+    },
+    {
+      "seed": 1521506603,
+      "graph": 3,
+      "title": "Flat · mixed ports",
+      "direction": "right",
+      "revision": "ceef0b107cee294e10f1538ee9f9cea67b43e255",
+      "stately": {
+        "metrics": {
+          "missingNodes": 0,
+          "missingRoutes": 0,
+          "nonFinite": 0,
+          "diagonals": 0,
+          "nodeHits": 0,
+          "nodeOverlaps": 0,
+          "labelNodeOverlaps": 0,
+          "labelOverlaps": 0,
+          "edgeLabelHits": 0,
+          "selfRetraceLength": 0,
+          "edgeCrossings": 10,
+          "edgeOverlapLength": 33,
+          "bends": 96,
+          "routeLength": 8902,
+          "area": 1264920
+        }
+      },
+      "elk": {
+        "metrics": {
+          "missingNodes": 0,
+          "missingRoutes": 0,
+          "nonFinite": 0,
+          "diagonals": 0,
+          "nodeHits": 0,
+          "nodeOverlaps": 0,
+          "labelNodeOverlaps": 0,
+          "labelOverlaps": 0,
+          "edgeLabelHits": 0,
+          "selfRetraceLength": 4,
+          "edgeCrossings": 4,
+          "edgeOverlapLength": 2110.5,
+          "bends": 59,
+          "routeLength": 11409,
+          "area": 1404180
+        }
+      }
+    },
+    {
+      "seed": 1521506603,
+      "graph": 4,
+      "title": "Flat · disconnected",
+      "direction": "left",
+      "revision": "ceef0b107cee294e10f1538ee9f9cea67b43e255",
+      "stately": {
+        "metrics": {
+          "missingNodes": 0,
+          "missingRoutes": 0,
+          "nonFinite": 0,
+          "diagonals": 0,
+          "nodeHits": 0,
+          "nodeOverlaps": 0,
+          "labelNodeOverlaps": 0,
+          "labelOverlaps": 0,
+          "edgeLabelHits": 0,
+          "selfRetraceLength": 0,
+          "edgeCrossings": 8,
+          "edgeOverlapLength": 73.66666666666663,
+          "bends": 102,
+          "routeLength": 9533.1,
+          "area": 1377060
+        }
+      },
+      "elk": {
+        "metrics": {
+          "missingNodes": 0,
+          "missingRoutes": 0,
+          "nonFinite": 0,
+          "diagonals": 0,
+          "nodeHits": 0,
+          "nodeOverlaps": 0,
+          "labelNodeOverlaps": 0,
+          "labelOverlaps": 0,
+          "edgeLabelHits": 0,
+          "selfRetraceLength": 8,
+          "edgeCrossings": 6,
+          "edgeOverlapLength": 1180.5,
+          "bends": 55,
+          "routeLength": 11238.833333333332,
+          "area": 1512116
+        }
+      }
+    },
+    {
+      "seed": 1521506603,
+      "graph": 5,
+      "title": "Flat · denser",
+      "direction": "down",
+      "revision": "ceef0b107cee294e10f1538ee9f9cea67b43e255",
+      "stately": {
+        "metrics": {
+          "missingNodes": 0,
+          "missingRoutes": 0,
+          "nonFinite": 0,
+          "diagonals": 0,
+          "nodeHits": 0,
+          "nodeOverlaps": 0,
+          "labelNodeOverlaps": 0,
+          "labelOverlaps": 0,
+          "edgeLabelHits": 0,
+          "selfRetraceLength": 0,
+          "edgeCrossings": 63,
+          "edgeOverlapLength": 149.33333333333331,
+          "bends": 226,
+          "routeLength": 44250.96666666667,
+          "area": 4708317
+        }
+      },
+      "elk": {
+        "metrics": {
+          "missingNodes": 0,
+          "missingRoutes": 0,
+          "nonFinite": 0,
+          "diagonals": 0,
+          "nodeHits": 0,
+          "nodeOverlaps": 0,
+          "labelNodeOverlaps": 0,
+          "labelOverlaps": 0,
+          "edgeLabelHits": 2,
+          "selfRetraceLength": 0,
+          "edgeCrossings": 62,
+          "edgeOverlapLength": 10331.5,
+          "bends": 131,
+          "routeLength": 49925.5,
+          "area": 6544247.5
+        }
+      }
+    },
+    {
+      "seed": 1521506603,
+      "graph": 6,
+      "title": "Hierarchy · two groups",
+      "direction": "right",
+      "revision": "ceef0b107cee294e10f1538ee9f9cea67b43e255",
+      "stately": {
+        "metrics": {
+          "missingNodes": 0,
+          "missingRoutes": 0,
+          "nonFinite": 0,
+          "diagonals": 0,
+          "nodeHits": 0,
+          "nodeOverlaps": 0,
+          "labelNodeOverlaps": 0,
+          "labelOverlaps": 0,
+          "edgeLabelHits": 0,
+          "selfRetraceLength": 0,
+          "edgeCrossings": 20,
+          "edgeOverlapLength": 0,
+          "bends": 60,
+          "routeLength": 4926.166666666666,
+          "area": 387796
+        }
+      },
+      "elk": {
+        "metrics": {
+          "missingNodes": 0,
+          "missingRoutes": 0,
+          "nonFinite": 0,
+          "diagonals": 0,
+          "nodeHits": 0,
+          "nodeOverlaps": 0,
+          "labelNodeOverlaps": 0,
+          "labelOverlaps": 0,
+          "edgeLabelHits": 0,
+          "selfRetraceLength": 0,
+          "edgeCrossings": 1,
+          "edgeOverlapLength": 309.8333333333333,
+          "bends": 38,
+          "routeLength": 5301.833333333334,
+          "area": 450402
+        }
+      }
+    },
+    {
+      "seed": 1521506603,
+      "graph": 7,
+      "title": "Hierarchy · nested",
+      "direction": "down",
+      "revision": "ceef0b107cee294e10f1538ee9f9cea67b43e255",
+      "stately": {
+        "metrics": {
+          "missingNodes": 0,
+          "missingRoutes": 0,
+          "nonFinite": 0,
+          "diagonals": 0,
+          "nodeHits": 0,
+          "nodeOverlaps": 0,
+          "labelNodeOverlaps": 0,
+          "labelOverlaps": 0,
+          "edgeLabelHits": 0,
+          "selfRetraceLength": 0,
+          "edgeCrossings": 27,
+          "edgeOverlapLength": 34.5,
+          "bends": 110,
+          "routeLength": 15250.166666666668,
+          "area": 1197456
+        }
+      },
+      "elk": {
+        "error": "Error: java.lang.IllegalStateException: Expected 2 hierarchical ports, but found only 0."
+      }
+    },
+    {
+      "seed": 1521506603,
+      "graph": 8,
+      "title": "Hierarchy · mixed ports",
+      "direction": "right",
+      "revision": "ceef0b107cee294e10f1538ee9f9cea67b43e255",
+      "stately": {
+        "metrics": {
+          "missingNodes": 0,
+          "missingRoutes": 0,
+          "nonFinite": 0,
+          "diagonals": 0,
+          "nodeHits": 0,
+          "nodeOverlaps": 0,
+          "labelNodeOverlaps": 0,
+          "labelOverlaps": 0,
+          "edgeLabelHits": 0,
+          "selfRetraceLength": 0,
+          "edgeCrossings": 97,
+          "edgeOverlapLength": 165.83333333333331,
+          "bends": 166,
+          "routeLength": 30974.16666666666,
+          "area": 1936146.3333333335
+        }
+      },
+      "elk": {
+        "metrics": {
+          "missingNodes": 0,
+          "missingRoutes": 0,
+          "nonFinite": 0,
+          "diagonals": 0,
+          "nodeHits": 0,
+          "nodeOverlaps": 0,
+          "labelNodeOverlaps": 0,
+          "labelOverlaps": 0,
+          "edgeLabelHits": 0,
+          "selfRetraceLength": 0,
+          "edgeCrossings": 60,
+          "edgeOverlapLength": 3697.5,
+          "bends": 135,
+          "routeLength": 46123.833333333336,
+          "area": 2648633
+        }
+      }
+    },
+    {
+      "seed": 1521506603,
+      "graph": 9,
+      "title": "Hierarchy · deeper",
+      "direction": "up",
+      "revision": "ceef0b107cee294e10f1538ee9f9cea67b43e255",
+      "stately": {
+        "metrics": {
+          "missingNodes": 0,
+          "missingRoutes": 0,
+          "nonFinite": 0,
+          "diagonals": 0,
+          "nodeHits": 0,
+          "nodeOverlaps": 0,
+          "labelNodeOverlaps": 0,
+          "labelOverlaps": 0,
+          "edgeLabelHits": 0,
+          "selfRetraceLength": 0,
+          "edgeCrossings": 195,
+          "edgeOverlapLength": 687,
+          "bends": 225,
+          "routeLength": 55442.333333333336,
+          "area": 3169319.6666666665
+        }
+      },
+      "elk": {
+        "metrics": {
+          "missingNodes": 0,
+          "missingRoutes": 0,
+          "nonFinite": 0,
+          "diagonals": 0,
+          "nodeHits": 0,
+          "nodeOverlaps": 0,
+          "labelNodeOverlaps": 0,
+          "labelOverlaps": 0,
+          "edgeLabelHits": 0,
+          "selfRetraceLength": 4,
+          "edgeCrossings": 318,
+          "edgeOverlapLength": 12243.75,
+          "bends": 279,
+          "routeLength": 139544.25,
+          "area": 13014862
+        }
+      }
+    },
+    {
+      "seed": 1521506603,
+      "graph": 10,
+      "title": "Hierarchy · denser",
+      "direction": "right",
+      "revision": "ceef0b107cee294e10f1538ee9f9cea67b43e255",
+      "stately": {
+        "metrics": {
+          "missingNodes": 0,
+          "missingRoutes": 0,
+          "nonFinite": 0,
+          "diagonals": 0,
+          "nodeHits": 0,
+          "nodeOverlaps": 0,
+          "labelNodeOverlaps": 0,
+          "labelOverlaps": 0,
+          "edgeLabelHits": 0,
+          "selfRetraceLength": 0,
+          "edgeCrossings": 397,
+          "edgeOverlapLength": 720.3333333333338,
+          "bends": 319,
+          "routeLength": 92254.74999999996,
+          "area": 5243234.333333334
+        }
+      },
+      "elk": {
+        "metrics": {
+          "missingNodes": 0,
+          "missingRoutes": 0,
+          "nonFinite": 0,
+          "diagonals": 0,
+          "nodeHits": 0,
+          "nodeOverlaps": 0,
+          "labelNodeOverlaps": 0,
+          "labelOverlaps": 0,
+          "edgeLabelHits": 2,
+          "selfRetraceLength": 0,
+          "edgeCrossings": 142,
+          "edgeOverlapLength": 6597.299999999999,
+          "bends": 256,
+          "routeLength": 121194.43333333332,
+          "area": 6574347
+        }
+      }
+    }
+  ],
+  "comparison": {
+    "missingNodes": {
+      "statelyBetter": 0,
+      "tied": 126,
+      "elkBetter": 0
+    },
+    "missingRoutes": {
+      "statelyBetter": 0,
+      "tied": 126,
+      "elkBetter": 0
+    },
+    "nonFinite": {
+      "statelyBetter": 0,
+      "tied": 126,
+      "elkBetter": 0
+    },
+    "diagonals": {
+      "statelyBetter": 2,
+      "tied": 124,
+      "elkBetter": 0
+    },
+    "nodeHits": {
+      "statelyBetter": 1,
+      "tied": 125,
+      "elkBetter": 0
+    },
+    "nodeOverlaps": {
+      "statelyBetter": 0,
+      "tied": 126,
+      "elkBetter": 0
+    },
+    "labelNodeOverlaps": {
+      "statelyBetter": 0,
+      "tied": 126,
+      "elkBetter": 0
+    },
+    "labelOverlaps": {
+      "statelyBetter": 0,
+      "tied": 126,
+      "elkBetter": 0
+    },
+    "edgeLabelHits": {
+      "statelyBetter": 34,
+      "tied": 92,
+      "elkBetter": 0
+    },
+    "selfRetraceLength": {
+      "statelyBetter": 46,
+      "tied": 80,
+      "elkBetter": 0
+    },
+    "edgeCrossings": {
+      "statelyBetter": 31,
+      "tied": 3,
+      "elkBetter": 92
+    },
+    "edgeOverlapLength": {
+      "statelyBetter": 126,
+      "tied": 0,
+      "elkBetter": 0
+    },
+    "bends": {
+      "statelyBetter": 12,
+      "tied": 0,
+      "elkBetter": 114
+    },
+    "routeLength": {
+      "statelyBetter": 109,
+      "tied": 0,
+      "elkBetter": 17
+    },
+    "area": {
+      "statelyBetter": 102,
+      "tied": 0,
+      "elkBetter": 24
+    }
+  },
+  "parity": {
+    "passed": false,
+    "policy": "Native geometry invariants pass on every graph; crossings and bends no worse than real ELK on each graph; oracle failures remain unverified.",
+    "failures": [
+      {
+        "id": "104729/1",
+        "metric": "bends",
+        "native": 29,
+        "oracle": 25
+      },
+      {
+        "id": "104729/2",
+        "metric": "edgeCrossings",
+        "native": 5,
+        "oracle": 2
+      },
+      {
+        "id": "104729/2",
+        "metric": "bends",
+        "native": 56,
+        "oracle": 33
+      },
+      {
+        "id": "104729/3",
+        "metric": "edgeCrossings",
+        "native": 18,
+        "oracle": 6
+      },
+      {
+        "id": "104729/3",
+        "metric": "bends",
+        "native": 96,
+        "oracle": 47
+      },
+      {
+        "id": "104729/4",
+        "metric": "edgeCrossings",
+        "native": 11,
+        "oracle": 6
+      },
+      {
+        "id": "104729/4",
+        "metric": "bends",
+        "native": 130,
+        "oracle": 58
+      },
+      {
+        "id": "104729/5",
+        "metric": "edgeCrossings",
+        "native": 95,
+        "oracle": 76
+      },
+      {
+        "id": "104729/5",
+        "metric": "bends",
+        "native": 226,
+        "oracle": 161
+      },
+      {
+        "id": "104729/6",
+        "metric": "edgeCrossings",
+        "native": 8,
+        "oracle": 7
+      },
+      {
+        "id": "104729/6",
+        "metric": "bends",
+        "native": 52,
+        "oracle": 42
+      },
+      {
+        "id": "104729/8",
+        "metric": "edgeCrossings",
+        "native": 55,
+        "oracle": 24
+      },
+      {
+        "id": "104729/8",
+        "metric": "bends",
+        "native": 145,
+        "oracle": 108
+      },
+      {
+        "id": "104729/9",
+        "reason": "oracle layout failed; parity unverified"
+      },
+      {
+        "id": "104729/10",
+        "metric": "edgeCrossings",
+        "native": 436,
+        "oracle": 229
+      },
+      {
+        "id": "104729/10",
+        "metric": "bends",
+        "native": 330,
+        "oracle": 311
+      },
+      {
+        "id": "130363/1",
+        "metric": "edgeCrossings",
+        "native": 6,
+        "oracle": 0
+      },
+      {
+        "id": "130363/1",
+        "metric": "bends",
+        "native": 27,
+        "oracle": 16
+      },
+      {
+        "id": "130363/2",
+        "metric": "edgeCrossings",
+        "native": 6,
+        "oracle": 2
+      },
+      {
+        "id": "130363/2",
+        "metric": "bends",
+        "native": 64,
+        "oracle": 32
+      },
+      {
+        "id": "130363/3",
+        "metric": "bends",
+        "native": 100,
+        "oracle": 53
+      },
+      {
+        "id": "130363/4",
+        "metric": "edgeCrossings",
+        "native": 13,
+        "oracle": 11
+      },
+      {
+        "id": "130363/4",
+        "metric": "bends",
+        "native": 115,
+        "oracle": 64
+      },
+      {
+        "id": "130363/5",
+        "metric": "edgeCrossings",
+        "native": 88,
+        "oracle": 71
+      },
+      {
+        "id": "130363/5",
+        "metric": "bends",
+        "native": 256,
+        "oracle": 144
+      },
+      {
+        "id": "130363/6",
+        "metric": "edgeCrossings",
+        "native": 16,
+        "oracle": 3
+      },
+      {
+        "id": "130363/6",
+        "metric": "bends",
+        "native": 60,
+        "oracle": 39
+      },
+      {
+        "id": "130363/7",
+        "metric": "bends",
+        "native": 109,
+        "oracle": 88
+      },
+      {
+        "id": "130363/8",
+        "metric": "edgeCrossings",
+        "native": 134,
+        "oracle": 28
+      },
+      {
+        "id": "130363/8",
+        "metric": "bends",
+        "native": 175,
+        "oracle": 130
+      },
+      {
+        "id": "130363/9",
+        "reason": "oracle layout failed; parity unverified"
+      },
+      {
+        "id": "130363/10",
+        "metric": "edgeCrossings",
+        "native": 352,
+        "oracle": 144
+      },
+      {
+        "id": "155921/1",
+        "metric": "bends",
+        "native": 23,
+        "oracle": 16
+      },
+      {
+        "id": "155921/2",
+        "metric": "edgeCrossings",
+        "native": 8,
+        "oracle": 1
+      },
+      {
+        "id": "155921/2",
+        "metric": "bends",
+        "native": 50,
+        "oracle": 38
+      },
+      {
+        "id": "155921/3",
+        "metric": "edgeCrossings",
+        "native": 12,
+        "oracle": 7
+      },
+      {
+        "id": "155921/3",
+        "metric": "bends",
+        "native": 112,
+        "oracle": 57
+      },
+      {
+        "id": "155921/4",
+        "metric": "edgeCrossings",
+        "native": 18,
+        "oracle": 9
+      },
+      {
+        "id": "155921/4",
+        "metric": "bends",
+        "native": 115,
+        "oracle": 63
+      },
+      {
+        "id": "155921/5",
+        "metric": "bends",
+        "native": 218,
+        "oracle": 139
+      },
+      {
+        "id": "155921/6",
+        "metric": "edgeCrossings",
+        "native": 9,
+        "oracle": 2
+      },
+      {
+        "id": "155921/6",
+        "metric": "bends",
+        "native": 58,
+        "oracle": 29
+      },
+      {
+        "id": "155921/8",
+        "metric": "edgeCrossings",
+        "native": 85,
+        "oracle": 28
+      },
+      {
+        "id": "155921/8",
+        "metric": "bends",
+        "native": 162,
+        "oracle": 120
+      },
+      {
+        "id": "155921/9",
+        "reason": "oracle layout failed; parity unverified"
+      },
+      {
+        "id": "155921/10",
+        "metric": "edgeCrossings",
+        "native": 383,
+        "oracle": 199
+      },
+      {
+        "id": "155921/10",
+        "metric": "bends",
+        "native": 318,
+        "oracle": 297
+      },
+      {
+        "id": "196613/1",
+        "metric": "edgeCrossings",
+        "native": 2,
+        "oracle": 0
+      },
+      {
+        "id": "196613/1",
+        "metric": "bends",
+        "native": 38,
+        "oracle": 15
+      },
+      {
+        "id": "196613/2",
+        "metric": "edgeCrossings",
+        "native": 21,
+        "oracle": 1
+      },
+      {
+        "id": "196613/2",
+        "metric": "bends",
+        "native": 57,
+        "oracle": 27
+      },
+      {
+        "id": "196613/3",
+        "metric": "bends",
+        "native": 92,
+        "oracle": 57
+      },
+      {
+        "id": "196613/4",
+        "metric": "bends",
+        "native": 113,
+        "oracle": 56
+      },
+      {
+        "id": "196613/5",
+        "metric": "edgeCrossings",
+        "native": 117,
+        "oracle": 75
+      },
+      {
+        "id": "196613/5",
+        "metric": "bends",
+        "native": 253,
+        "oracle": 151
+      },
+      {
+        "id": "196613/6",
+        "metric": "edgeCrossings",
+        "native": 12,
+        "oracle": 0
+      },
+      {
+        "id": "196613/6",
+        "metric": "bends",
+        "native": 44,
+        "oracle": 34
+      },
+      {
+        "id": "196613/8",
+        "metric": "edgeCrossings",
+        "native": 63,
+        "oracle": 39
+      },
+      {
+        "id": "196613/8",
+        "metric": "bends",
+        "native": 165,
+        "oracle": 119
+      },
+      {
+        "id": "196613/9",
+        "reason": "oracle layout failed; parity unverified"
+      },
+      {
+        "id": "196613/10",
+        "metric": "edgeCrossings",
+        "native": 410,
+        "oracle": 202
+      },
+      {
+        "id": "196613/10",
+        "metric": "bends",
+        "native": 374,
+        "oracle": 292
+      },
+      {
+        "id": "228017/1",
+        "metric": "edgeCrossings",
+        "native": 2,
+        "oracle": 0
+      },
+      {
+        "id": "228017/1",
+        "metric": "bends",
+        "native": 33,
+        "oracle": 14
+      },
+      {
+        "id": "228017/2",
+        "metric": "edgeCrossings",
+        "native": 3,
+        "oracle": 1
+      },
+      {
+        "id": "228017/2",
+        "metric": "bends",
+        "native": 49,
+        "oracle": 26
+      },
+      {
+        "id": "228017/3",
+        "metric": "edgeCrossings",
+        "native": 7,
+        "oracle": 3
+      },
+      {
+        "id": "228017/3",
+        "metric": "bends",
+        "native": 106,
+        "oracle": 52
+      },
+      {
+        "id": "228017/4",
+        "metric": "edgeCrossings",
+        "native": 14,
+        "oracle": 10
+      },
+      {
+        "id": "228017/4",
+        "metric": "bends",
+        "native": 126,
+        "oracle": 64
+      },
+      {
+        "id": "228017/5",
+        "metric": "edgeCrossings",
+        "native": 113,
+        "oracle": 60
+      },
+      {
+        "id": "228017/5",
+        "metric": "bends",
+        "native": 261,
+        "oracle": 131
+      },
+      {
+        "id": "228017/6",
+        "metric": "edgeCrossings",
+        "native": 2,
+        "oracle": 1
+      },
+      {
+        "id": "228017/6",
+        "metric": "bends",
+        "native": 46,
+        "oracle": 24
+      },
+      {
+        "id": "228017/7",
+        "reason": "oracle layout failed; parity unverified"
+      },
+      {
+        "id": "228017/8",
+        "metric": "edgeCrossings",
+        "native": 84,
+        "oracle": 23
+      },
+      {
+        "id": "228017/8",
+        "metric": "bends",
+        "native": 156,
+        "oracle": 115
+      },
+      {
+        "id": "228017/9",
+        "reason": "oracle layout failed; parity unverified"
+      },
+      {
+        "id": "228017/10",
+        "metric": "edgeCrossings",
+        "native": 408,
+        "oracle": 149
+      },
+      {
+        "id": "228017/10",
+        "metric": "bends",
+        "native": 304,
+        "oracle": 253
+      },
+      {
+        "id": "262147/1",
+        "metric": "edgeCrossings",
+        "native": 6,
+        "oracle": 0
+      },
+      {
+        "id": "262147/1",
+        "metric": "bends",
+        "native": 30,
+        "oracle": 14
+      },
+      {
+        "id": "262147/2",
+        "metric": "edgeCrossings",
+        "native": 6,
+        "oracle": 5
+      },
+      {
+        "id": "262147/2",
+        "metric": "bends",
+        "native": 41,
+        "oracle": 32
+      },
+      {
+        "id": "262147/3",
+        "metric": "edgeCrossings",
+        "native": 21,
+        "oracle": 13
+      },
+      {
+        "id": "262147/3",
+        "metric": "bends",
+        "native": 98,
+        "oracle": 62
+      },
+      {
+        "id": "262147/4",
+        "metric": "edgeCrossings",
+        "native": 19,
+        "oracle": 10
+      },
+      {
+        "id": "262147/4",
+        "metric": "bends",
+        "native": 104,
+        "oracle": 62
+      },
+      {
+        "id": "262147/5",
+        "metric": "edgeCrossings",
+        "native": 102,
+        "oracle": 74
+      },
+      {
+        "id": "262147/5",
+        "metric": "bends",
+        "native": 202,
+        "oracle": 151
+      },
+      {
+        "id": "262147/6",
+        "metric": "edgeCrossings",
+        "native": 10,
+        "oracle": 2
+      },
+      {
+        "id": "262147/6",
+        "metric": "bends",
+        "native": 59,
+        "oracle": 38
+      },
+      {
+        "id": "262147/7",
+        "reason": "oracle layout failed; parity unverified"
+      },
+      {
+        "id": "262147/8",
+        "metric": "edgeCrossings",
+        "native": 96,
+        "oracle": 48
+      },
+      {
+        "id": "262147/8",
+        "metric": "bends",
+        "native": 172,
+        "oracle": 129
+      },
+      {
+        "id": "262147/9",
+        "metric": "edgeCrossings",
+        "native": 151,
+        "oracle": 148
+      },
+      {
+        "id": "262147/10",
+        "metric": "edgeCrossings",
+        "native": 313,
+        "oracle": 175
+      },
+      {
+        "id": "262147/10",
+        "metric": "bends",
+        "native": 315,
+        "oracle": 270
+      },
+      {
+        "id": "1665807580/1",
+        "metric": "bends",
+        "native": 33,
+        "oracle": 15
+      },
+      {
+        "id": "1665807580/2",
+        "metric": "edgeCrossings",
+        "native": 7,
+        "oracle": 3
+      },
+      {
+        "id": "1665807580/2",
+        "metric": "bends",
+        "native": 46,
+        "oracle": 25
+      },
+      {
+        "id": "1665807580/3",
+        "metric": "bends",
+        "native": 77,
+        "oracle": 56
+      },
+      {
+        "id": "1665807580/4",
+        "metric": "bends",
+        "native": 121,
+        "oracle": 75
+      },
+      {
+        "id": "1665807580/5",
+        "metric": "edgeCrossings",
+        "native": 108,
+        "oracle": 57
+      },
+      {
+        "id": "1665807580/5",
+        "metric": "bends",
+        "native": 243,
+        "oracle": 148
+      },
+      {
+        "id": "1665807580/6",
+        "metric": "edgeCrossings",
+        "native": 8,
+        "oracle": 2
+      },
+      {
+        "id": "1665807580/6",
+        "metric": "bends",
+        "native": 54,
+        "oracle": 37
+      },
+      {
+        "id": "1665807580/7",
+        "metric": "bends",
+        "native": 106,
+        "oracle": 95
+      },
+      {
+        "id": "1665807580/8",
+        "metric": "edgeCrossings",
+        "native": 131,
+        "oracle": 39
+      },
+      {
+        "id": "1665807580/8",
+        "metric": "bends",
+        "native": 167,
+        "oracle": 131
+      },
+      {
+        "id": "1665807580/10",
+        "metric": "edgeCrossings",
+        "native": 606,
+        "oracle": 188
+      },
+      {
+        "id": "3645706015/1",
+        "metric": "edgeCrossings",
+        "native": 2,
+        "oracle": 0
+      },
+      {
+        "id": "3645706015/1",
+        "metric": "bends",
+        "native": 27,
+        "oracle": 16
+      },
+      {
+        "id": "3645706015/2",
+        "metric": "edgeCrossings",
+        "native": 9,
+        "oracle": 1
+      },
+      {
+        "id": "3645706015/2",
+        "metric": "bends",
+        "native": 50,
+        "oracle": 28
+      },
+      {
+        "id": "3645706015/3",
+        "metric": "edgeCrossings",
+        "native": 21,
+        "oracle": 8
+      },
+      {
+        "id": "3645706015/3",
+        "metric": "bends",
+        "native": 98,
+        "oracle": 49
+      },
+      {
+        "id": "3645706015/4",
+        "metric": "bends",
+        "native": 118,
+        "oracle": 65
+      },
+      {
+        "id": "3645706015/5",
+        "metric": "edgeCrossings",
+        "native": 115,
+        "oracle": 90
+      },
+      {
+        "id": "3645706015/5",
+        "metric": "bends",
+        "native": 258,
+        "oracle": 141
+      },
+      {
+        "id": "3645706015/6",
+        "metric": "edgeCrossings",
+        "native": 13,
+        "oracle": 0
+      },
+      {
+        "id": "3645706015/6",
+        "metric": "bends",
+        "native": 50,
+        "oracle": 33
+      },
+      {
+        "id": "3645706015/7",
+        "reason": "oracle layout failed; parity unverified"
+      },
+      {
+        "id": "3645706015/8",
+        "metric": "edgeCrossings",
+        "native": 70,
+        "oracle": 25
+      },
+      {
+        "id": "3645706015/8",
+        "metric": "bends",
+        "native": 141,
+        "oracle": 123
+      },
+      {
+        "id": "3645706015/9",
+        "reason": "oracle layout failed; parity unverified"
+      },
+      {
+        "id": "3645706015/10",
+        "metric": "edgeCrossings",
+        "native": 293,
+        "oracle": 134
+      },
+      {
+        "id": "3645706015/10",
+        "metric": "bends",
+        "native": 271,
+        "oracle": 255
+      },
+      {
+        "id": "1837645124/1",
+        "metric": "edgeCrossings",
+        "native": 2,
+        "oracle": 0
+      },
+      {
+        "id": "1837645124/1",
+        "metric": "bends",
+        "native": 22,
+        "oracle": 13
+      },
+      {
+        "id": "1837645124/2",
+        "metric": "edgeCrossings",
+        "native": 1,
+        "oracle": 0
+      },
+      {
+        "id": "1837645124/2",
+        "metric": "bends",
+        "native": 54,
+        "oracle": 31
+      },
+      {
+        "id": "1837645124/3",
+        "metric": "edgeCrossings",
+        "native": 20,
+        "oracle": 15
+      },
+      {
+        "id": "1837645124/3",
+        "metric": "bends",
+        "native": 91,
+        "oracle": 60
+      },
+      {
+        "id": "1837645124/4",
+        "metric": "edgeCrossings",
+        "native": 30,
+        "oracle": 7
+      },
+      {
+        "id": "1837645124/4",
+        "metric": "bends",
+        "native": 127,
+        "oracle": 59
+      },
+      {
+        "id": "1837645124/5",
+        "metric": "edgeCrossings",
+        "native": 151,
+        "oracle": 81
+      },
+      {
+        "id": "1837645124/5",
+        "metric": "bends",
+        "native": 221,
+        "oracle": 135
+      },
+      {
+        "id": "1837645124/6",
+        "metric": "edgeCrossings",
+        "native": 7,
+        "oracle": 1
+      },
+      {
+        "id": "1837645124/6",
+        "metric": "bends",
+        "native": 56,
+        "oracle": 32
+      },
+      {
+        "id": "1837645124/7",
+        "metric": "bends",
+        "native": 102,
+        "oracle": 83
+      },
+      {
+        "id": "1837645124/8",
+        "metric": "edgeCrossings",
+        "native": 74,
+        "oracle": 36
+      },
+      {
+        "id": "1837645124/8",
+        "metric": "bends",
+        "native": 179,
+        "oracle": 119
+      },
+      {
+        "id": "1837645124/9",
+        "reason": "oracle layout failed; parity unverified"
+      },
+      {
+        "id": "1837645124/10",
+        "metric": "edgeCrossings",
+        "native": 460,
+        "oracle": 221
+      },
+      {
+        "id": "1837645124/10",
+        "metric": "bends",
+        "native": 305,
+        "oracle": 281
+      },
+      {
+        "id": "1111884325/2",
+        "metric": "edgeCrossings",
+        "native": 10,
+        "oracle": 3
+      },
+      {
+        "id": "1111884325/2",
+        "metric": "bends",
+        "native": 69,
+        "oracle": 32
+      },
+      {
+        "id": "1111884325/3",
+        "metric": "bends",
+        "native": 76,
+        "oracle": 49
+      },
+      {
+        "id": "1111884325/4",
+        "metric": "bends",
+        "native": 111,
+        "oracle": 63
+      },
+      {
+        "id": "1111884325/5",
+        "metric": "bends",
+        "native": 235,
+        "oracle": 149
+      },
+      {
+        "id": "1111884325/6",
+        "metric": "edgeCrossings",
+        "native": 12,
+        "oracle": 1
+      },
+      {
+        "id": "1111884325/6",
+        "metric": "bends",
+        "native": 62,
+        "oracle": 41
+      },
+      {
+        "id": "1111884325/8",
+        "metric": "edgeCrossings",
+        "native": 42,
+        "oracle": 14
+      },
+      {
+        "id": "1111884325/8",
+        "metric": "bends",
+        "native": 162,
+        "oracle": 91
+      },
+      {
+        "id": "1111884325/9",
+        "reason": "oracle layout failed; parity unverified"
+      },
+      {
+        "id": "1111884325/10",
+        "metric": "edgeCrossings",
+        "native": 311,
+        "oracle": 138
+      },
+      {
+        "id": "1111884325/10",
+        "metric": "bends",
+        "native": 305,
+        "oracle": 269
+      },
+      {
+        "id": "1791673957/1",
+        "metric": "bends",
+        "native": 25,
+        "oracle": 19
+      },
+      {
+        "id": "1791673957/2",
+        "metric": "edgeCrossings",
+        "native": 9,
+        "oracle": 3
+      },
+      {
+        "id": "1791673957/2",
+        "metric": "bends",
+        "native": 59,
+        "oracle": 31
+      },
+      {
+        "id": "1791673957/3",
+        "metric": "edgeCrossings",
+        "native": 28,
+        "oracle": 10
+      },
+      {
+        "id": "1791673957/3",
+        "metric": "bends",
+        "native": 116,
+        "oracle": 55
+      },
+      {
+        "id": "1791673957/4",
+        "metric": "bends",
+        "native": 124,
+        "oracle": 74
+      },
+      {
+        "id": "1791673957/5",
+        "metric": "bends",
+        "native": 254,
+        "oracle": 144
+      },
+      {
+        "id": "1791673957/6",
+        "metric": "edgeCrossings",
+        "native": 4,
+        "oracle": 0
+      },
+      {
+        "id": "1791673957/6",
+        "metric": "bends",
+        "native": 55,
+        "oracle": 31
+      },
+      {
+        "id": "1791673957/7",
+        "metric": "bends",
+        "native": 114,
+        "oracle": 111
+      },
+      {
+        "id": "1791673957/8",
+        "metric": "edgeCrossings",
+        "native": 69,
+        "oracle": 35
+      },
+      {
+        "id": "1791673957/8",
+        "metric": "bends",
+        "native": 192,
+        "oracle": 119
+      },
+      {
+        "id": "1791673957/10",
+        "metric": "edgeCrossings",
+        "native": 419,
+        "oracle": 155
+      },
+      {
+        "id": "1791673957/10",
+        "metric": "bends",
+        "native": 341,
+        "oracle": 294
+      },
+      {
+        "id": "3792909357/1",
+        "metric": "edgeCrossings",
+        "native": 2,
+        "oracle": 0
+      },
+      {
+        "id": "3792909357/1",
+        "metric": "bends",
+        "native": 32,
+        "oracle": 14
+      },
+      {
+        "id": "3792909357/2",
+        "metric": "bends",
+        "native": 51,
+        "oracle": 34
+      },
+      {
+        "id": "3792909357/3",
+        "metric": "edgeCrossings",
+        "native": 20,
+        "oracle": 6
+      },
+      {
+        "id": "3792909357/3",
+        "metric": "bends",
+        "native": 99,
+        "oracle": 49
+      },
+      {
+        "id": "3792909357/4",
+        "metric": "bends",
+        "native": 122,
+        "oracle": 60
+      },
+      {
+        "id": "3792909357/5",
+        "metric": "edgeCrossings",
+        "native": 68,
+        "oracle": 57
+      },
+      {
+        "id": "3792909357/5",
+        "metric": "bends",
+        "native": 230,
+        "oracle": 139
+      },
+      {
+        "id": "3792909357/6",
+        "metric": "edgeCrossings",
+        "native": 9,
+        "oracle": 1
+      },
+      {
+        "id": "3792909357/6",
+        "metric": "bends",
+        "native": 46,
+        "oracle": 29
+      },
+      {
+        "id": "3792909357/7",
+        "reason": "oracle layout failed; parity unverified"
+      },
+      {
+        "id": "3792909357/8",
+        "metric": "edgeCrossings",
+        "native": 72,
+        "oracle": 50
+      },
+      {
+        "id": "3792909357/8",
+        "metric": "bends",
+        "native": 169,
+        "oracle": 128
+      },
+      {
+        "id": "3792909357/9",
+        "reason": "oracle layout failed; parity unverified"
+      },
+      {
+        "id": "3792909357/10",
+        "metric": "edgeCrossings",
+        "native": 655,
+        "oracle": 205
+      },
+      {
+        "id": "3792909357/10",
+        "metric": "bends",
+        "native": 336,
+        "oracle": 318
+      },
+      {
+        "id": "3169259577/1",
+        "metric": "edgeCrossings",
+        "native": 4,
+        "oracle": 1
+      },
+      {
+        "id": "3169259577/1",
+        "metric": "bends",
+        "native": 29,
+        "oracle": 17
+      },
+      {
+        "id": "3169259577/2",
+        "metric": "edgeCrossings",
+        "native": 7,
+        "oracle": 2
+      },
+      {
+        "id": "3169259577/2",
+        "metric": "bends",
+        "native": 64,
+        "oracle": 38
+      },
+      {
+        "id": "3169259577/3",
+        "metric": "edgeCrossings",
+        "native": 20,
+        "oracle": 19
+      },
+      {
+        "id": "3169259577/3",
+        "metric": "bends",
+        "native": 95,
+        "oracle": 59
+      },
+      {
+        "id": "3169259577/4",
+        "metric": "bends",
+        "native": 113,
+        "oracle": 60
+      },
+      {
+        "id": "3169259577/5",
+        "metric": "edgeCrossings",
+        "native": 81,
+        "oracle": 67
+      },
+      {
+        "id": "3169259577/5",
+        "metric": "bends",
+        "native": 232,
+        "oracle": 136
+      },
+      {
+        "id": "3169259577/6",
+        "metric": "edgeCrossings",
+        "native": 7,
+        "oracle": 1
+      },
+      {
+        "id": "3169259577/6",
+        "metric": "bends",
+        "native": 42,
+        "oracle": 30
+      },
+      {
+        "id": "3169259577/7",
+        "metric": "bends",
+        "native": 87,
+        "oracle": 85
+      },
+      {
+        "id": "3169259577/8",
+        "metric": "edgeCrossings",
+        "native": 84,
+        "oracle": 44
+      },
+      {
+        "id": "3169259577/8",
+        "metric": "bends",
+        "native": 162,
+        "oracle": 119
+      },
+      {
+        "id": "3169259577/10",
+        "metric": "edgeCrossings",
+        "native": 220,
+        "oracle": 127
+      },
+      {
+        "id": "3169259577/10",
+        "metric": "bends",
+        "native": 299,
+        "oracle": 268
+      },
+      {
+        "id": "1521506603/1",
+        "metric": "bends",
+        "native": 29,
+        "oracle": 19
+      },
+      {
+        "id": "1521506603/2",
+        "metric": "edgeCrossings",
+        "native": 12,
+        "oracle": 6
+      },
+      {
+        "id": "1521506603/2",
+        "metric": "bends",
+        "native": 59,
+        "oracle": 29
+      },
+      {
+        "id": "1521506603/3",
+        "metric": "edgeCrossings",
+        "native": 10,
+        "oracle": 4
+      },
+      {
+        "id": "1521506603/3",
+        "metric": "bends",
+        "native": 96,
+        "oracle": 59
+      },
+      {
+        "id": "1521506603/4",
+        "metric": "edgeCrossings",
+        "native": 8,
+        "oracle": 6
+      },
+      {
+        "id": "1521506603/4",
+        "metric": "bends",
+        "native": 102,
+        "oracle": 55
+      },
+      {
+        "id": "1521506603/5",
+        "metric": "edgeCrossings",
+        "native": 63,
+        "oracle": 62
+      },
+      {
+        "id": "1521506603/5",
+        "metric": "bends",
+        "native": 226,
+        "oracle": 131
+      },
+      {
+        "id": "1521506603/6",
+        "metric": "edgeCrossings",
+        "native": 20,
+        "oracle": 1
+      },
+      {
+        "id": "1521506603/6",
+        "metric": "bends",
+        "native": 60,
+        "oracle": 38
+      },
+      {
+        "id": "1521506603/7",
+        "reason": "oracle layout failed; parity unverified"
+      },
+      {
+        "id": "1521506603/8",
+        "metric": "edgeCrossings",
+        "native": 97,
+        "oracle": 60
+      },
+      {
+        "id": "1521506603/8",
+        "metric": "bends",
+        "native": 166,
+        "oracle": 135
+      },
+      {
+        "id": "1521506603/10",
+        "metric": "edgeCrossings",
+        "native": 397,
+        "oracle": 142
+      },
+      {
+        "id": "1521506603/10",
+        "metric": "bends",
+        "native": 319,
+        "oracle": 256
+      }
+    ]
+  }
+}

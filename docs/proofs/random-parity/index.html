@@ -1,0 +1,45 @@
+<!doctype html><meta charset="utf-8" /><title>Random routing proof</title
+><style>
+  body {
+    font: 16px system-ui;
+    margin: 24px;
+    background: #f8fafc;
+  }
+  section {
+    margin-bottom: 32px;
+  }
+  .pair {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+  }
+  img {
+    width: 100%;
+    background: white;
+  }
+  h2 {
+    font-size: 18px;
+  }
+</style>
+<h1>Matching native before / after</h1>
+<section>
+  <h2>Fixed-port fan · same input, dimensions, scale, viewport</h2>
+  <div class="pair">
+    <div>Before main 81363b4<img src="fixed-ports-before.svg" /></div>
+    <div>After ceef0b1<img src="fixed-ports-after.svg" /></div>
+  </div>
+</section>
+<section>
+  <h2>Seed 196613, graph 5 · identical input, direction, dimensions, scale, viewport</h2>
+  <div class="pair">
+    <div>Before 015b0b5<img src="196613-5-before.svg" /></div>
+    <div>After ceef0b1<img src="196613-5-after.svg" /></div>
+  </div>
+</section>
+<section>
+  <h2>Seed 130363, graph 8 · identical input, direction, dimensions, scale, viewport</h2>
+  <div class="pair">
+    <div>Before 015b0b5<img src="130363-8-before.svg" /></div>
+    <div>After ceef0b1<img src="130363-8-after.svg" /></div>
+  </div>
+</section>
