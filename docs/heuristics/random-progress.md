@@ -342,3 +342,79 @@ canonical flow coordinates in every direction, same-edge segment helper
 constraints, and the upstream endpoint/inverted-port constraints. Moving
 singleton rectangles along physical x is insufficient. Preserve the failed
 random examples when validating that replacement. Parity remains unproven.
+
+## Grouped compaction phase (local integration)
+
+The native grouped compaction helper now operates in canonical flow coordinates
+for all four directions, groups north/south port leads with their owner nodes,
+merges intersecting collinear segments, and creates same-edge helper constraints.
+Original-edge and inverted-port weights use the active acyclic orientation and
+canonical port faces. Flow spacing uses the separate node/label/edge values
+from ELK's Spacings table, rather than cross-axis spacing. Four direct geometry
+regressions verify that port leads remain attached, node interiors remain clear,
+and no bends or diagonal segments are introduced in RIGHT/LEFT/DOWN/UP.
+The helper is committed independently; its integration with the larger local
+center-label/inverted-port phase remains uncommitted.
+
+Three diagnosed constraint cycles are retained in the
+[first full native probe](grouped-compaction-first-probe.json). A target-position
+nudge moved normal nodes after placement without updating their associated dummy
+geometry; removing it resolves two cycles in the local phase. The third came
+from ordering a route column by a wide node's left border instead of its center.
+Using center ordering resolves it. The original assertions remain intact.
+Correct flow-axis spacing also restores the previously passing reversed-edge
+oracle fixture that initially regressed during this integration.
+
+The [final immutable phase probe](grouped-compaction-final-probe.json) reruns
+all ten saved random flat/hierarchical inputs, explicitly using EDGE_LENGTH in
+both engines. Full getLayeredLayout outputs, section-aware routes, metrics,
+raw real-ELK outputs/errors, settings, and source hashes are preserved. Hashes
+were captured before execution and verified after terminal completion. All ten
+native outputs have zero measured geometry defects and no native errors.
+The two hierarchical ELK errors remain separate, with no resampling.
+This experiment evaluates the uncommitted native phase, not shipped source alone.
+
+| Graph | Before crossings / bends | Grouped native crossings / bends | Real ELK crossings / bends |
+| ----- | ------------------------ | -------------------------------- | -------------------------- |
+| 1     | 4 / 32                   | 0 / 14                           | 0 / 13                     |
+| 2     | 4 / 53                   | 3 / 30                           | 3 / 36                     |
+| 3     | 12 / 100                 | 13 / 92                          | 23 / 50                    |
+| 4     | 17 / 118                 | 10 / 110                         | 8 / 67                     |
+| 5     | 148 / 268                | 115 / 276                        | 120 / 183                  |
+| 6     | 2 / 46                   | 5 / 55                           | 3 / 28                     |
+| 7     | 18 / 89                  | 19 / 102                         | Oracle error               |
+| 8     | 106 / 193                | 109 / 190                        | 83 / 136                   |
+| 9     | 149 / 214                | 156 / 198                        | Oracle error               |
+| 10    | 389 / 287                | 397 / 311                        | 125 / 274                  |
+
+The [matching before/native/real-ELK image](../proofs/random-parity/grouped-compaction.svg)
+uses graph 1 with identical input, direction, node/label dimensions, viewport,
+and scale. The complete image was visually inspected using a reduced intrinsic
+size to avoid QuickLook's cropped thumbnail. Its improved small case does not
+establish general parity: the per-graph crossing/bend gate still fails, and
+several larger native cases regress relative to the prior phase.
+
+A [separate prospective integration on unchanged committed source](grouped-compaction-clean-probe.json)
+also preserves all ten results and passes geometry, but has extensive quality
+regressions. It lacks the local center-label/inverted-port prerequisites.
+Its hashes were captured during execution and verified afterward; the initial
+script's unrelated prototype manifest is explicitly corrected in that report.
+Do not treat this as a before-execution source-hash proof or promote that
+standalone integration as equivalent to the larger phase.
+
+Current focused source tests pass 66/66 across grouped geometry, weighted solver,
+existing post-compaction oracle cases, directional/strategy center labels and
+inverted ports. The current option-fuzz/wrapping/component/routing suites pass 132/132.
+Together with the twelve additional directional profiles, that run reports
+140 passes and four cross-port failures across 144 tests. Source/repository
+typechecks and helper/test formatting/lint pass.
+The additional [twelve directional oracle profiles](grouped-compaction-directions-probe.json)
+retain all strict bounds, node, port, and section assertions: eight pass and four
+north/south-port pairs fail. Their placement already differs before compaction;
+proper north/south port preprocessing is missing. Existing feedback/label and
+legacy textless-label failures remain unresolved. No fully green-suite claim.
+
+The remaining constraint generator still uses pairwise collision tests rather
+than ELK's complete edge-aware three-pass scanline, grouped hitbox trimming, and
+fractional port adjustment. Those are required, alongside north/south port
+processing and route-channel parity. Keep the goal active and the PR draft.
