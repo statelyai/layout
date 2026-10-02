@@ -1,3 +1,4 @@
+import { recordCycleRandom, crossingRandom } from "./cycle-random";
 import type { EntityRect, GraphEdge, GraphNode, GraphPort, Point } from "@statelyai/graph";
 import { LayoutError } from "../errors";
 import { JavaRandom } from "../java-random";
@@ -243,6 +244,7 @@ function breakCyclesWithGreedyHeuristic(
     if (source === undefined || target === undefined) continue;
     if ((marks[source] ?? 0) > (marks[target] ?? 0)) reversedEdgeIds.add(edge.id);
   }
+  recordCycleRandom(input, random);
   return { reversedEdgeIds };
 }
 
@@ -1863,7 +1865,7 @@ function minimizeCrossingsWithLayerSweep(
       return crossings;
     };
 
-    const sharedRandom = new JavaRandom(input.settings.randomSeed ?? 1);
+    const sharedRandom = crossingRandom(input);
     const randomSeed = sharedRandom.nextLong();
     const portDistributorUsesNodeRelativeRanks = sharedRandom.nextBoolean();
     const nodeRelativePortRanks = portDistributorUsesNodeRelativeRanks;

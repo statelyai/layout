@@ -1,3 +1,4 @@
+import { inheritCycleRandom } from "./cycle-random";
 import type { GraphEdge, GraphNode, Point } from "@statelyai/graph";
 import type {
   AcyclicOrientation,
@@ -224,7 +225,7 @@ export function splitLongEdges(
   ];
   const graph = { ...input.graph, nodes: orderedNodes, edges } as LayeredPhaseInput["graph"];
   return {
-    input: {
+    input: inheritCycleRandom(input, {
       ...input,
       graph,
       sizes,
@@ -257,7 +258,7 @@ export function splitLongEdges(
               : {}),
         };
       },
-    },
+    }),
     orientation: { reversedEdgeIds },
     assignment: { ...assignment, layerByNodeId },
     segmentIdsByEdgeId,

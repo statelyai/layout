@@ -110,3 +110,9 @@ explicitly refreshes the upstream catalog and converted ELK JSON inputs.
    belong to native layout instead.
 5. Native-only partial, incremental, and route-only behaviors have independent
    property and benchmark coverage.
+
+Native random phase state now continues from greedy cycle breaking through
+long-edge splitting into crossing minimization, matching ELK's shared graph RNG
+semantics. A cyclic-order oracle regression covers this boundary and verifies
+repeatability when options are reused. It closes that reproduced mismatch; it
+does not establish general cyclic, component, or hierarchical order parity.
