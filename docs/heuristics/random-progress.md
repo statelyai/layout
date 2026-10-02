@@ -163,3 +163,24 @@ parity gate remains failed. The remaining center-label prototype mismatch is
 already visible before routing: at label height 1 the feedback label is at
 y=6 versus ELK's 6.5, and post-compaction chooses a different horizontal position.
 Continue porting the native label and placement phases without altering assertions.
+
+## Minimum edge spacing
+
+Direct instrumentation of real elkjs 0.11.1 confirms that its two center-label
+dummies use edge-edge spacing 2 even when the input requests 1. ELK's
+GraphConfigurator clamps this graph option to a minimum of 2 before its phases.
+Native layered preprocessing now applies the same clamp without mutating caller
+options. A five-value long-edge oracle regression covers 0, 1, 1.9, 2 and 4;
+the three sub-minimum cases fail before the correction and pass afterward.
+A clean source snapshot containing only this correction passes all 55 spacing,
+individual-spacing and direction/feedback tests. Current uncommitted phase work
+still reports 54 passes and the original exact 10 versus 10.5 feedback failure.
+Source/repository typechecks and changed-file lint pass.
+
+The [isolated label prototype sweep](center-label-minimum-spacing-probe.json)
+now matches real-ELK bounds at all five retained heights: 50 × 9.5, 50 × 10.5,
+50 × 12, 50 × 16 and 50 × 24. This is not production label parity: label x
+positions, route joins, label switching/removal and exact phase timing still
+differ. The source hashes for this prototype were captured after its probe;
+it predates the compound-boundary roundoff correction. Preserve that distinction
+from the completed pre-clamp 160-input native replay.
