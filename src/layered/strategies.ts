@@ -1710,8 +1710,55 @@ function minimizeCrossingsWithLayerSweep(
       outputPortOrder.get(sourceId)?.push(edge.id);
       inputPortOrder.get(targetId)?.push(edge.id);
     }
+    const nodeById = new Map(input.graph.nodes.map((node) => [node.id, node]));
+    const edgeById = new Map(input.graph.edges.map((edge) => [edge.id, edge]));
+    const fixedOrderNodes = new Set(
+      input.graph.nodes
+        .filter((node) => {
+          const constraint = input.nodeSettings?.(node)?.portConstraints;
+          return (
+            !!node.ports?.length && (constraint === "FIXED_POS" || constraint === "FIXED_RATIO")
+          );
+        })
+        .map((node) => node.id),
+    );
+    const fixedPortRank = (nodeId: string, edgeId: string, incoming: boolean): number => {
+      const node = nodeById.get(nodeId)!;
+      const edge = edgeById.get(edgeId)!;
+      const reversed = orientation.reversedEdgeIds.has(edge.id);
+      const portName = incoming !== reversed ? edge.targetPort : edge.sourcePort;
+      const port = node.ports?.find((candidate) => candidate.name === portName);
+      const horizontal = input.direction === "right" || input.direction === "left";
+      const reverse = input.direction === "left" || input.direction === "up";
+      const size = input.sizes.get(nodeId)!;
+      const width = horizontal ? size.width : size.height;
+      const height = horizontal ? size.height : size.width;
+      const x = (port?.x ?? size.width / 2) + (port?.width ?? 0) / 2;
+      const y = (port?.y ?? size.height / 2) + (port?.height ?? 0) / 2;
+      const flow = reverse ? width - (horizontal ? x : y) : horizontal ? x : y;
+      const cross = horizontal ? y : x;
+      const side = port && input.portSettings?.(port, node)?.["port.side"];
+      const flowSide = horizontal ? (reverse ? "WEST" : "EAST") : reverse ? "NORTH" : "SOUTH";
+      const backSide = horizontal ? (reverse ? "EAST" : "WEST") : reverse ? "SOUTH" : "NORTH";
+      const upperSide = horizontal ? "NORTH" : "WEST";
+      // Clockwise boundary order in the canonical rightward coordinate system.
+      if (side === upperSide) return flow;
+      if (side === flowSide || (!side && !incoming)) return width + cross;
+      if (side === backSide || (!side && incoming)) return 2 * width + 2 * height - cross;
+      return 2 * width + height - flow;
+    };
+    // Port distribution may reorder flexible ports, never fixed physical positions.
+    for (const nodeId of fixedOrderNodes) {
+      outputPortOrder
+        .get(nodeId)
+        ?.sort((a, b) => fixedPortRank(nodeId, a, false) - fixedPortRank(nodeId, b, false));
+      inputPortOrder
+        .get(nodeId)
+        ?.sort((a, b) => fixedPortRank(nodeId, a, true) - fixedPortRank(nodeId, b, true));
+    }
     if (exactPortSweep) {
-      for (const edgeIds of inputPortOrder.values()) {
+      for (const [nodeId, edgeIds] of inputPortOrder) {
+        if (fixedOrderNodes.has(nodeId)) continue;
         if (edgeIds.length >= 4) {
           edgeIds.splice(0, edgeIds.length - 1, ...edgeIds.slice(0, -1).reverse());
         }
@@ -1762,24 +1809,39 @@ function minimizeCrossingsWithLayerSweep(
         for (const nodeId of candidateLayers[index] ?? []) {
           const edgeIds = outputPortOrder.get(nodeId) ?? [];
           for (const [portIndex, edgeId] of edgeIds.entries()) {
-            sourceRanks.set(edgeId, consumed + portIndex + 1);
+            sourceRanks.set(
+              edgeId,
+              consumed +
+                (fixedOrderNodes.has(nodeId)
+                  ? fixedPortRank(nodeId, edgeId, false) /
+                    (2 * (input.sizes.get(nodeId)!.width + input.sizes.get(nodeId)!.height) || 1)
+                  : portIndex + 1),
+            );
           }
-          consumed += edgeIds.length;
+          consumed += fixedOrderNodes.has(nodeId) ? 1 : edgeIds.length;
         }
         consumed = 0;
         for (const nodeId of candidateLayers[index + 1] ?? []) {
           const edgeIds = inputPortOrder.get(nodeId) ?? [];
           for (const [portIndex, edgeId] of edgeIds.entries()) {
-            targetRanks.set(edgeId, consumed + edgeIds.length - portIndex);
+            targetRanks.set(
+              edgeId,
+              consumed +
+                (fixedOrderNodes.has(nodeId)
+                  ? 1 -
+                    fixedPortRank(nodeId, edgeId, true) /
+                      (2 * (input.sizes.get(nodeId)!.width + input.sizes.get(nodeId)!.height) || 1)
+                  : edgeIds.length - portIndex),
+            );
           }
-          consumed += edgeIds.length;
+          consumed += fixedOrderNodes.has(nodeId) ? 1 : edgeIds.length;
         }
         const orderedTargets = between
           .map((edge) => ({
             source: sourceRanks.get(edge.id) ?? 0,
             target: targetRanks.get(edge.id) ?? 0,
           }))
-          .sort((left, right) => left.source - right.source)
+          .sort((left, right) => left.source - right.source || left.target - right.target)
           .map(({ target }) => target);
         const sortedTargets = [...orderedTargets].sort((left, right) => left - right);
         const targetIndex = new Map(sortedTargets.map((rank, rankIndex) => [rank, rankIndex + 1]));
@@ -1929,6 +1991,7 @@ function minimizeCrossingsWithLayerSweep(
         reverse: boolean,
       ) => {
         for (const nodeId of nodeIds) {
+          if (fixedOrderNodes.has(nodeId)) continue;
           orders.get(nodeId)?.sort((leftId, rightId) => {
             const difference = (oppositeRanks.get(leftId) ?? 0) - (oppositeRanks.get(rightId) ?? 0);
             return reverse ? -difference : difference;

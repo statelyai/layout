@@ -45,11 +45,64 @@ export function repairFlatRouting<N, E, G, P>(
       graph.nodes.some((n) => overlaps(e, portClearance(n))) ||
       labels.slice(i + 1).some((other) => overlaps(e, other)),
   );
-  if (
-    !labelCollision &&
-    !graph.edges.some((edge) => graph.nodes.some((node) => routeCrosses(edge.points, node)))
-  )
-    return graph;
+  const routingDefect = graph.edges.some((edge) => {
+    if (
+      graph.nodes.some((node) => routeCrosses(edge.points, node)) ||
+      labels.some((label) => label.id !== edge.id && routeCrosses(edge.points, label))
+    )
+      return true;
+    const points = edge.points ?? [];
+    const loopNode =
+      edge.sourceId === edge.targetId ? graph.nodes.find((n) => n.id === edge.sourceId) : undefined;
+    const terminals = [
+      ...(loopNode
+        ? [
+            {
+              x: loopNode.x - 12,
+              y: loopNode.y - 12,
+              width: loopNode.width + 24,
+              height: loopNode.height + 24,
+            },
+          ]
+        : []),
+      ...(edge.width > 0 && edge.height > 0 ? [edge] : []),
+    ];
+    for (let i = 1; i < points.length; i++) {
+      const a = points[i - 1]!,
+        b = points[i]!;
+      if (Math.abs(a.x - b.x) > 1e-8 && Math.abs(a.y - b.y) > 1e-8) return true;
+      for (let j = i + 2; j < points.length; j++) {
+        const c = points[j - 1]!,
+          d = points[j]!;
+        const horizontal =
+          Math.abs(a.y - b.y) < 1e-8 && Math.abs(c.y - d.y) < 1e-8 && Math.abs(a.y - c.y) < 1e-8;
+        const vertical =
+          Math.abs(a.x - b.x) < 1e-8 && Math.abs(c.x - d.x) < 1e-8 && Math.abs(a.x - c.x) < 1e-8;
+        if (!horizontal && !vertical) continue;
+        const axis = horizontal ? "x" : "y",
+          fixed = horizontal ? "y" : "x";
+        const lo = Math.max(Math.min(a[axis], b[axis]), Math.min(c[axis], d[axis]));
+        const hi = Math.min(Math.max(a[axis], b[axis]), Math.max(c[axis], d[axis]));
+        if (hi - lo < 1e-8) continue;
+        let intervals = [[lo, hi]];
+        for (const rect of terminals) {
+          const span = horizontal ? rect.height : rect.width;
+          if (a[fixed] < rect[fixed] || a[fixed] > rect[fixed] + span) continue;
+          const lower = rect[axis],
+            upper = lower + (horizontal ? rect.width : rect.height);
+          intervals = intervals
+            .flatMap(([start, end]) => [
+              [start!, Math.min(end!, lower)],
+              [Math.max(start!, upper), end!],
+            ])
+            .filter(([start, end]) => end! - start! > 1e-8);
+        }
+        if (intervals.length) return true;
+      }
+    }
+    return false;
+  });
+  if (!labelCollision && !routingDefect) return graph;
   const edges = graph.edges.map((edge) => ({ ...edge }));
   // The original track may put an exterior label partly inside a node. Move
   // only colliding labels before routing their actual boundary connections.

@@ -103,11 +103,26 @@ function pathLength(path: RoutePath): number {
   return pathReservations(path).reduce((sum, segment) => sum + distance(segment.a, segment.b), 0);
 }
 function pathCost(path: RoutePath, context: SearchContext): number {
-  return pathReservations(path).reduce(
+  const segments = pathReservations(path);
+  const lengthAndConflicts = segments.reduce(
     (sum, segment) =>
       sum + distance(segment.a, segment.b) + (context.edgeCost?.(segment.a, segment.b) ?? 0),
     0,
   );
+  // Use the same turn cost as A* when choosing a preferred path or shifting
+  // tracks. Otherwise a tiny length saving can discard a route with fewer bends.
+  if (path.segments.some((segment) => segment.kind !== "line")) return lengthAndConflicts;
+  let turns = 0;
+  for (let i = 1; i < segments.length; i++) {
+    const a = segments[i - 1]!,
+      b = segments[i]!;
+    const ax = a.b.x - a.a.x,
+      ay = a.b.y - a.a.y;
+    const bx = b.b.x - b.a.x,
+      by = b.b.y - b.a.y;
+    turns += ax * bx + ay * by < -1e-8 ? 4 : Math.abs(ax * by - ay * bx) > 1e-8 ? 1 : 0;
+  }
+  return lengthAndConflicts + context.bendPenalty * turns;
 }
 function safe(path: RoutePath, context: SearchContext): boolean {
   let start = path.start;
@@ -474,8 +489,18 @@ export function routeEdge(
       )
     : context;
   const drawn: Reservation[] = [];
+  // Sharing terminal attachment regions is clipped below. A later leg must
+  // never retrace a collinear segment of this same edge outside those regions.
   const selfCost = (a: RoutePoint, b: RoutePoint) =>
-    drawn.reduce((cost, segment) => cost + conflictCost(a, b, segment, config), 0);
+    drawn.reduce((cost, segment) => {
+      const overlap = conflictCost(a, b, segment, {
+        ...config,
+        edgeSpacing: 0,
+        crossingPenalty: 0,
+        overlapPenalty: 1,
+      });
+      return cost + (overlap > 1e-8 ? Infinity : conflictCost(a, b, segment, config));
+    }, 0);
   for (const ctx of new Set([context, searchContext])) {
     const cost = ctx.edgeCost,
       guides = ctx.guides;
@@ -747,10 +772,16 @@ export function routeEdge(
       };
       hard.guides = undefined;
       hard.edgeCost = selfCost;
-      const lead = (t: Terminal) => ({
-        x: t.point.x + vector(t.side).x,
-        y: t.point.y + vector(t.side).y,
-      });
+      const lead = (t: Terminal) => {
+        const v = vector(t.side);
+        // A positive subpixel gap is still a feasible corridor. A fixed 1px
+        // retry lead can enter an adjacent label before search even begins.
+        for (let length = 1; length >= 1e-6; length /= 2) {
+          const point = { x: t.point.x + v.x * length, y: t.point.y + v.y * length };
+          if (clear(t.point, point, hard)) return point;
+        }
+        return t.point;
+      };
       const start = lead(a),
         end = lead(b),
         anchors = [start, ...via, end];

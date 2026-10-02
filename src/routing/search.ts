@@ -84,6 +84,17 @@ export function findPath(
   terminals: { incoming?: RoutePoint; outgoing?: RoutePoint } = {},
 ): RoutePoint[] | undefined {
   const maxGridNodes = context.maxGridNodes ?? context.maxSearchNodes;
+  // Match the admissible lower bound to the route geometry. Euclidean distance
+  // badly underestimates long orthogonal paths and exhausts the search budget.
+  const remainingDistance = (point: RoutePoint) => {
+    const dx = Math.abs(point.x - end.x),
+      dy = Math.abs(point.y - end.y);
+    return style === "orthogonal"
+      ? dx + dy
+      : style === "octilinear"
+        ? Math.max(dx, dy) + (Math.SQRT2 - 1) * Math.min(dx, dy)
+        : distance(point, end);
+  };
   const turnCost = (a: RoutePoint | undefined, b: RoutePoint | undefined) => {
     if (!a || !b || !Math.hypot(a.x, a.y) || !Math.hypot(b.x, b.y)) return 0;
     const dot = a.x * b.x + a.y * b.y,
@@ -247,7 +258,7 @@ export function findPath(
     const first = `${from}:-1`;
     costs.set(first, 0);
     vertices.set(first, from);
-    queue.push({ index: from, previous: -1, key: first, cost: 0 }, distance(start, end));
+    queue.push({ index: from, previous: -1, key: first, cost: 0 }, remainingDistance(start));
     while (queue.items.length && context.visited < context.maxSearchNodes) {
       const current = queue.pop();
       if (costs.get(current.key) !== current.cost) continue;
@@ -274,13 +285,9 @@ export function findPath(
           outgoing &&
           Math.abs(incoming.x * outgoing.y - incoming.y * outgoing.x) < 1e-8 &&
           incoming.x * outgoing.x + incoming.y * outgoing.y < -1e-8;
-        // A terminal lead must leave/enter its boundary in the chosen direction.
-        // Paying a bend penalty to immediately retrace that lead is not a turn.
-        if (
-          (current.previous < 0 && reverses(terminals.incoming, step)) ||
-          (next === to && reverses(step, terminals.outgoing))
-        )
-          continue;
+        // Immediate reversal retraces the preceding segment. It is never a
+        // valid bend, including inside the grid or at a terminal lead.
+        if (reverses(before, step) || (next === to && reverses(step, terminals.outgoing))) continue;
         const bend =
           turnCost(before, step) + (next === to ? turnCost(step, terminals.outgoing) : 0);
         const pair = Math.min(current.index, next) * points.length + Math.max(current.index, next);
@@ -295,7 +302,10 @@ export function findPath(
         costs.set(key, cost);
         parents.set(key, current.key);
         vertices.set(key, next);
-        queue.push({ index: next, previous: current.index, key, cost }, cost + distance(b, end));
+        queue.push(
+          { index: next, previous: current.index, key, cost },
+          cost + remainingDistance(b),
+        );
       }
     }
   }

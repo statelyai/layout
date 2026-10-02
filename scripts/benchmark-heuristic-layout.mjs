@@ -1,20 +1,38 @@
 import { execFileSync } from "node:child_process";
-import { createHash } from "node:crypto";
+import { createHash, randomInt } from "node:crypto";
 import { readFile, writeFile, mkdir } from "node:fs/promises";
 import { createRequire } from "node:module";
 import { resolve } from "node:path";
 import { measureQuality } from "./heuristic-quality.mjs";
 
 const output = resolve(process.argv[2] ?? "docs/heuristics/generated/baseline");
-const seeds = process.argv.slice(3).length
-  ? process.argv.slice(3).map(Number)
-  : [20261001, 20261102, 20261203];
+const args = process.argv.slice(3);
+const checkParity = args.includes("--check-parity");
+const randomAt = args.indexOf("--random-seeds");
+const positional = args.filter(
+  (arg, i) => arg !== "--check-parity" && i !== randomAt && i !== randomAt + 1,
+);
+let seeds;
+if (randomAt >= 0) {
+  const count = Number(args[randomAt + 1]);
+  if (!Number.isSafeInteger(count) || count < 1 || count > 1000 || positional.length)
+    throw new Error("Use --random-seeds COUNT (1–1000) without explicit seeds");
+  const drawn = new Set();
+  while (drawn.size < count) drawn.add(randomInt(0, 2 ** 32));
+  seeds = [...drawn];
+} else {
+  seeds = args.filter((arg) => arg !== "--check-parity").length
+    ? args.filter((arg) => arg !== "--check-parity").map(Number)
+    : [20261001, 20261102, 20261203];
+}
 if (
   new Set(seeds).size !== seeds.length ||
   seeds.some((s) => !Number.isSafeInteger(s) || s < 0 || s > 0xffffffff)
 )
   throw new Error("Use distinct unsigned 32-bit seeds");
 await mkdir(output, { recursive: true });
+// Persist fresh draws before execution so interrupted runs can be replayed.
+await writeFile(resolve(output, "seeds.json"), JSON.stringify(seeds, null, 2) + "\n");
 console.log("Building current Stately source before comparison");
 execFileSync("pnpm", ["build"], { maxBuffer: 10 * 1024 * 1024 });
 const rows = [];
@@ -66,6 +84,44 @@ for (const row of rows)
         b = row.elk.metrics[metric];
       comparison[metric][Math.abs(a - b) < 1e-6 ? "tied" : a < b ? "statelyBetter" : "elkBetter"]++;
     }
+const geometryMetrics = [
+  "missingNodes",
+  "missingRoutes",
+  "nonFinite",
+  "diagonals",
+  "nodeHits",
+  "nodeOverlaps",
+  "labelNodeOverlaps",
+  "labelOverlaps",
+  "edgeLabelHits",
+  "selfRetraceLength",
+];
+const parityFailures = [];
+for (const row of rows) {
+  const id = `${row.seed}/${row.graph}`;
+  if (!row.stately.metrics) parityFailures.push({ id, reason: "native layout failed" });
+  else
+    for (const metric of geometryMetrics)
+      if (row.stately.metrics[metric] > 1e-6)
+        parityFailures.push({ id, metric, native: row.stately.metrics[metric], limit: 0 });
+  if (!row.elk.metrics)
+    parityFailures.push({ id, reason: "oracle layout failed; parity unverified" });
+  if (row.stately.metrics && row.elk.metrics)
+    for (const metric of ["edgeCrossings", "bends"])
+      if (row.stately.metrics[metric] > row.elk.metrics[metric] + 1e-6)
+        parityFailures.push({
+          id,
+          metric,
+          native: row.stately.metrics[metric],
+          oracle: row.elk.metrics[metric],
+        });
+}
+const parity = {
+  passed: !parityFailures.length,
+  policy:
+    "Native geometry invariants pass on every graph; crossings and bends no worse than real ELK on each graph; oracle failures remain unverified.",
+  failures: parityFailures,
+};
 const require = createRequire(import.meta.url);
 const report = {
   schemaVersion: 1,
@@ -82,6 +138,7 @@ const report = {
   reviewSeed: 20261001,
   rows,
   comparison,
+  parity,
 };
 await writeFile(resolve(output, "baseline.json"), JSON.stringify(report, null, 2) + "\n");
 const format = (n) => (Number.isInteger(n) ? String(n) : n.toFixed(1));
@@ -97,6 +154,7 @@ for (const r of rows) {
       : "error";
   markdown += `| ${r.seed} / ${r.graph} | ${["nodeHits", "labelNodeOverlaps", "edgeCrossings", "edgeOverlapLength", "bends", "routeLength", "area"].map(pair).join(" | ")} |\n`;
 }
+markdown += `\nParity gate: **${parity.passed ? "PASS" : "FAIL"}**. ${parity.policy} ${parity.failures.length} failed checks. This finite sample does not prove universal graph parity.\n`;
 const failures = rows.filter((r) => r.stately.error || r.elk.error);
 if (failures.length)
   markdown +=
@@ -110,6 +168,16 @@ if (failures.length)
     "\n";
 await writeFile(resolve(output, "baseline.md"), markdown);
 console.log(
-  JSON.stringify({ graphs: rows.length, failures: failures.length, comparison }, null, 2),
+  JSON.stringify(
+    {
+      graphs: rows.length,
+      failures: failures.length,
+      parityPassed: parity.passed,
+      parityFailedChecks: parity.failures.length,
+      comparison,
+    },
+    null,
+    2,
+  ),
 );
-if (failures.length) process.exitCode = 1;
+if (failures.length || (checkParity && !parity.passed)) process.exitCode = 1;

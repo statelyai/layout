@@ -57,6 +57,10 @@ checks when the testing harness is extended.
 ```sh
 pnpm build
 node scripts/benchmark-heuristic-layout.mjs
+# Draw 60 fresh graphs; save seeds before running; fail on parity gaps.
+node scripts/benchmark-heuristic-layout.mjs docs/heuristics/generated/fresh --random-seeds 6 --check-parity
+# Replay those exact seeds (ten complexity profiles per seed).
+node scripts/benchmark-heuristic-layout.mjs docs/heuristics/generated/replay SEED1 SEED2 --check-parity
 ```
 
 The runner builds current Stately source before generating and scoring 30 graphs: review seed `20261001` plus fresh seeds
@@ -97,3 +101,15 @@ engine failures, source revision, working-tree state, elkjs version, and scorer
 and generator hashes. They do not measure runtime or establish aesthetic parity.
 
 The [routing repair report](after-routing-repair.md) and [raw results](after-routing-repair.json) preserve the same 30 inputs and scorer after the correctness fixes. The initial baseline remains unchanged. Matching visual proof is in [native routing repair](../proofs/native-routing/README.md).
+
+<!-- random comparison gate from scripts/benchmark-heuristic-layout.mjs -->
+
+The optional `--check-parity` gate requires all native geometry invariants to
+pass, and native crossings and bends to be no worse than real ELK on each graph.
+It retains oracle failures as unverified cases. It exits nonzero for any gap;
+`baseline.json` records every failed check. `--random-seeds N` draws unsigned
+32-bit seeds and saves `seeds.json` before running. The benchmark still builds
+current source and runs actual elkjs; it never substitutes the native facade.
+Passing this finite gate is necessary evidence, not universal parity or a
+replacement for the authored aesthetic rubric. No tolerance was introduced to
+make existing failures pass.
