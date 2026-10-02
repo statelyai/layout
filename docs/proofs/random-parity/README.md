@@ -42,3 +42,14 @@ minimization. It requires subsequent phases to support in-layer connections.
 The captured native phase input still has only a/b/c; splitLongEdges alone
 does not supply these dummies. This is the next native phase gap, rather than
 an instruction to move c after placement or substitute real ELK.
+
+## Native center-label phase integration (local WIP)
+
+[Matching image proof](center-label-switching.svg) shows preserved native before,
+local native after, and real ELK 0.11.1 for one MEDIAN_LAYER fixture. All three
+use identical inputs, RIGHT direction, node dimensions, viewport and scale.
+The [six-strategy outputs and source hashes](center-label-switching-results.json)
+retain the full comparison. Native after matches bounds, node/label coordinates
+and route points within the existing floating coordinate tolerance on these six
+fixtures. The full integration suite and random parity gate still fail; these
+local source changes are uncommitted and not a release or broad parity claim.

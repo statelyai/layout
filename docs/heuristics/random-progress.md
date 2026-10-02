@@ -218,7 +218,48 @@ Source tracing also confirms that ELK's EDGE_LENGTH horizontal compactor uses
 weighted network simplex over node/route separation constraints; native's current
 degree heuristic is not that algorithm. Faithful compaction, label-dummy
 switching, spline removal and remaining direction transforms still need work.
-The same immutable prototype is now replaying all 160 retained random inputs,
-starting with ten geometry-clean cases. That native-only replay reuses prior
-measurements, stops at the first failure and does not resample. Its remaining
-150-case continuation must reach a terminal result before claiming completion.
+The [completed immutable prototype replay](center-label-native-random-replay.json)
+passed geometry and private-port checks on all 160 retained random inputs.
+Source hashes were rechecked after terminal completion. This native-only replay
+uses the same saved inputs without resampling; it does not rerun the ELK oracle.
+Quality comparisons below include regressions and do not establish parity.
+
+- edgeCrossings: 14359 → 13507; 74 improve, 76 regress.
+- bends: 22875 → 22318; 94 improve, 63 regress.
+- edgeOverlapLength: 36523.21666666667 → 36416.21666666668; 70 improve, 77 regress.
+
+## Native center-label integration checkpoint
+
+The main native pipeline now inserts center-label dummies before layering,
+switches them along their proper long-edge chains after crossing minimization,
+then selects sides before placement. Native switching supports all six placement
+strategies, including reversed HEAD/TAIL alignment and shared layer-width updates.
+The separate wrapped pipeline still needs the same center-label phase coordination.
+
+Strengthened six-strategy oracle fixtures compare both bounds, both node
+coordinates, both label coordinates, and every route point/count. All six fail
+against the preserved pre-integration source and pass with the local integration.
+Four label-junction regressions preserve orthogonal corners in every direction.
+The later POLYLINE correction keeps its established dummy-anchor exclusion;
+orthogonal corners are preserved only for orthogonal joining. The exact phase
+metrics assertion includes the new preprocessing phase; no heuristic assertions
+were removed or relaxed. Twenty-four focused tests pass after strengthening. A later 145-test joining/
+option-fuzz run restores the two POLYLINE routing fixtures and all 100 option
+draws: 144 pass, with the MEDIAN_LAYER fixture timing out at five seconds.
+That unchanged fixture needs an isolated retry; this is not a fully green run.
+
+The [full integration run](center-label-integration-test-results.json) remains
+failed: 1,653 passes and 36 failures, including two five-second timeouts. It
+predates the POLYLINE joining correction and strengthened fixture/timing-contract
+tests. Remaining problems include direction-dependent label placement, label
+collisions, routing channel differences, and EDGE_LENGTH compaction. These source
+changes remain local and uncommitted; the draft PR is not ready for merge.
+
+[Matching before/native/real-ELK image proof](../proofs/random-parity/center-label-switching.svg)
+uses the same RIGHT input, node dimensions, shared viewport and scale. The six
+saved outputs and source hashes are retained beside the image. For these fixtures,
+new bounds, node/label positions and route points match the oracle within the
+existing coordinate tolerance. This narrow proof does not replace the failed
+random parity gate or establish hierarchy/direction parity. The completed
+160-input replay above belongs to the earlier frozen prototype, before switching,
+and must not be attributed to this integration.
