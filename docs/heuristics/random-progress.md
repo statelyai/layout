@@ -302,3 +302,43 @@ cases. The strict gate fails. No graphs were discarded or resampled. These
 fresh results belong to the uncommitted native phase, not the shipped importer
 correction alone. Compaction, crossing minimization, route channels and compound
 coordination still need substantial work.
+
+## Weighted compaction foundation (integration rejected)
+
+`src/layered/weighted-compaction.ts` adapts ELK's weighted constraint model to
+our existing native network simplex implementation. It rounds lower bounds
+upward, disables layer balancing, and connects independent constraint sources
+with zero-weight auxiliary edges. Four tests include an exhaustive optimum
+comparison for 64 reproducible random four-group DAGs, fractional separation,
+disconnected groups, a high-weight edge tradeoff, and explicit cycle rejection.
+The helper is internal and is not yet wired into the production pipeline.
+
+A candidate integration replaced EDGE_LENGTH's degree heuristic with weighted
+node/route separations and weight-100 endpoint constraints. All 28 existing
+post-compaction oracle fixtures passed. The candidate also passed 62 focused
+solver/compaction/label/inverted-port tests with one worker. Those fixtures
+were insufficient: the [retained ten-graph compatibility probe](weighted-compaction-probe.json)
+rejected integration. On saved seed 3468112780, flat graph 1 gained two bends
+(24 to 26), and dense flat graph 5 gained a node hit (20 to 21). Crossings
+improved on graphs 2–5; those improvements do not excuse geometry regressions.
+All five hierarchical adapter outputs have unscorable missing edge sections
+in both the frozen baseline and candidate. The raw outputs and conversion
+errors remain saved. Real ELK also errors on graphs 7 and 9; no cases were
+resampled or omitted. This adapter probe does not replace the complete native
+getLayeredLayout gate reported above.
+
+The candidate source was frozen before execution, and every recorded source
+hash was checked after terminal completion. The report retains all ten inputs,
+raw before/candidate/oracle outputs, metrics, errors, source hashes, snapshot
+locations, and the integration patch. The snapshot includes the larger local
+uncommitted phase; its results are not evidence for shipped source alone.
+The rejected integration was removed from the working pipeline while keeping
+the tested solver foundation. Final focused source tests pass 32/32; source
+and repository typechecks and new-file formatting/lint pass. The restored broader label/feedback run has 65 passes and five failures across
+70 tests; those failures remain unresolved. No green full-suite claim.
+
+Next integration must construct rigid node/port/route groups with offsets,
+canonical flow coordinates in every direction, same-edge segment helper
+constraints, and the upstream endpoint/inverted-port constraints. Moving
+singleton rectangles along physical x is insufficient. Preserve the failed
+random examples when validating that replacement. Parity remains unproven.
