@@ -23,8 +23,84 @@ interface Compactable extends EntityRect {
   ignoreDown?: boolean;
 }
 
-/** Compact orthogonal geometry in canonical flow coordinates, retaining rigid port leads. */
+/** ELK removes LONG_EDGE dummies before the compactor, while LABEL nodes remain. */
 export function applyGroupedEdgeLengthCompaction(
+  input: LayeredPhaseInput,
+  placement: NodePlacement,
+  routes?: EdgeRoutes,
+  orientation?: AcyclicOrientation,
+): NodePlacement {
+  if (!routes) return compactJoinedGeometry(input, placement, routes, orientation);
+  const incoming = new Map<string, (typeof input.graph.edges)[number][]>();
+  const outgoing = new Map<string, (typeof input.graph.edges)[number][]>();
+  for (const edge of input.graph.edges) {
+    incoming.set(edge.targetId, [...(incoming.get(edge.targetId) ?? []), edge]);
+    outgoing.set(edge.sourceId, [...(outgoing.get(edge.sourceId) ?? []), edge]);
+  }
+  const removed = new Set(
+    input.graph.nodes
+      .filter(
+        (node) =>
+          node.id.startsWith("__layout_dummy:") &&
+          !node.id.startsWith("__layout_dummy:label:") &&
+          incoming.get(node.id)?.length === 1 &&
+          outgoing.get(node.id)?.length === 1,
+      )
+      .map((node) => node.id),
+  );
+  if (!removed.size) return compactJoinedGeometry(input, placement, routes, orientation);
+  const joinedEdges: (typeof input.graph.edges)[number][] = [];
+  const joinedPoints = new Map<string, readonly Point[]>();
+  for (const edge of input.graph.edges) {
+    if (removed.has(edge.sourceId)) continue;
+    const chain = [edge];
+    let last = edge;
+    const visited = new Set([edge.id]);
+    while (removed.has(last.targetId)) {
+      const next = outgoing.get(last.targetId)![0]!;
+      if (visited.has(next.id)) throw new Error("Cyclic long-edge dummy chain");
+      visited.add(next.id);
+      chain.push(next);
+      last = next;
+    }
+    joinedEdges.push({ ...edge, targetId: last.targetId, targetPort: last.targetPort });
+    joinedPoints.set(
+      edge.id,
+      chain.flatMap((part) => [...(routes.pointsByEdgeId.get(part.id) ?? [])]),
+    );
+  }
+  const before = new Map(joinedPoints);
+  const joinedRoutes = { ...routes, pointsByEdgeId: joinedPoints };
+  const rects = new Map([...placement.rectByNodeId].filter(([id]) => !removed.has(id)));
+  compactJoinedGeometry(
+    {
+      ...input,
+      graph: {
+        ...input.graph,
+        nodes: input.graph.nodes.filter((n) => !removed.has(n.id)),
+        edges: joinedEdges,
+      },
+    },
+    { ...placement, rectByNodeId: rects },
+    joinedRoutes,
+    orientation,
+  );
+  for (const [id, rect] of rects) (placement.rectByNodeId as Map<string, EntityRect>).set(id, rect);
+  const moved = new Map<Point, Point>();
+  for (const [id, points] of before) {
+    const after = joinedRoutes.pointsByEdgeId.get(id)!;
+    points.forEach((point, index) => moved.set(point, after[index]!));
+  }
+  for (const [id, points] of routes.pointsByEdgeId)
+    (routes.pointsByEdgeId as Map<string, readonly Point[]>).set(
+      id,
+      points.map((point) => moved.get(point) ?? point),
+    );
+  return placement;
+}
+
+/** Compact orthogonal geometry in canonical flow coordinates, retaining rigid port leads. */
+function compactJoinedGeometry(
   input: LayeredPhaseInput,
   placement: NodePlacement,
   routes?: EdgeRoutes,

@@ -9,3 +9,5 @@ Process layer and whole-node feedback constraints before cycle breaking, preserv
 Preserve initial fixed implicit endpoint faces during flat routing repair, including corner attachments.
 
 Preserve fixed implicit endpoint coordinates during repair without exposing synthetic ports, and prevent route search from retracing its own terminal leads.
+
+Insert native same-layer inverted-port dummies before crossing minimization and route their orthogonal segments in the matching side corridor.

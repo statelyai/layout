@@ -789,3 +789,40 @@ and [source/replay archive](./hypersegments/sources-and-replays.tar.gz).
 
 Next: fix compaction ownership/order for inverted-port and label dummies without
 dropping constraints, then align compound boundary preprocessing. PR remains draft.
+
+## Join compaction dummies and retain current port topology
+
+Full phase integration now includes center-label insertion/switching, inverted
+ports, north/south ports, associated crossing constraints and grouped compaction.
+The two saved compaction crashes were caused by compacting LONG_EDGE/inverted
+dummies that ELK joins before its compactor. Native compaction now joins unary
+chains while retaining LABEL nodes and maps moved tracks back to expanded routes.
+No separation or ordering constraints are dropped to break cycles.
+
+Stronger boundary checks exposed a second mismatch: label switching could treat
+NORTH_SOUTH_PORT dummies as LONG_EDGE destinations, while restoration consulted
+the graph from before switching. Labels now stay off those port dummies and
+restoration uses the current expanded graph. The original corrupted boundaries
+and failing tests are preserved. Corrected boundaries come from the same random
+inputs after fixing preprocessing; their finite/cross-axis/orthogonality/point-count
+assertions are unchanged. Both remain cyclic with the old compactor and pass
+with joined compaction. No graph was resampled.
+
+Full local and clean selected-source suites both report **1,882 pass / 110 fail /
+1,992**. Three preceding email-drafter DOWN/RIGHT/UP failures resolve; no new
+failure names. Source/repository TypeScript, selected-file lint and package
+build pass. Full parity still fails; the 110 failures remain required work.
+
+The same ten full random inputs all complete with zero measured native geometry
+defects. Graph 3 (3468128618) and graph 5 (3468144456) no longer crash. Graph 1
+improves 1→0 crossings, graph 4 5→2, and graph 9 149→140. Graph 10 remains
+384 crossings/326 bends versus ELK's 125/274; compound parity remains unresolved.
+The two existing ELK hierarchy errors are retained separately.
+
+[Full replay](./joined-compaction/native-random-probe.json),
+[full-suite delta](./joined-compaction/full-suite-delta.json),
+[same-scale native / real ELK diagrams](./joined-compaction/index.html),
+and [source/validation archive](./joined-compaction/sources-and-replays.tar.gz).
+
+Next: align compound boundary preprocessing and the remaining label/feedback
+geometry against real ELK. Keep PR draft and the goal active.

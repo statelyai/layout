@@ -42,7 +42,12 @@ function anchorCrossSize(input: LayeredPhaseInput, id: string): number {
 
 function crossSize(input: LayeredPhaseInput, id: string): number {
   const value = actualCrossSize(input, id);
-  if (id.startsWith("__layout_breaking:")) return value;
+  if (
+    id.startsWith("__layout_breaking:") ||
+    id.startsWith("__layout_dummy:inverted:") ||
+    id.startsWith("__layout_dummy:north-south:")
+  )
+    return value;
   if (value !== 0 || (!id.startsWith("__layout_dummy:") && !id.startsWith("__layout_breaking:"))) {
     return value;
   }

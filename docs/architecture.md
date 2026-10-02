@@ -60,10 +60,17 @@ revision. Full layout's existing ELK compatibility contract remains unchanged.
 ```text
 constraint edge orientation
   -> cycle breaking
+  -> center-label dummy insertion
   -> layer assignment
+  -> long-edge splitting
+  -> inverted-port and north/south-port preprocessing
   -> crossing minimization
+  -> label dummy switching and side selection
   -> node placement
   -> edge routing
+  -> long-edge joining and north/south-port restoration
+  -> grouped edge-length compaction
+  -> label dummy removal
 ```
 
 Before cycle breaking, native constraint processing orients FIRST/LAST edges and
@@ -107,3 +114,24 @@ Compatibility has three independently measured levels:
 Native layout additionally tracks quality metrics such as crossing count,
 bends, area, constraint violations, and displacement. Those metrics may justify
 native improvements, but they cannot substitute for exact elkjs compatibility.
+
+Native inverted-port preprocessing follows long-edge splitting and precedes
+crossing minimization. Fixed endpoints facing against canonical flow receive
+same-layer long-edge dummies, including reversed edges and both endpoints.
+Their private ports retain canonical input/output sides in every direction.
+Crossing order and placement therefore see the required in-layer connections;
+joining maps all segments back to the authored edge. Orthogonal routing uses
+the same exterior corridor for the in-layer segment, rather than routing it
+around the entire graph as feedback. Custom initial routers receive the expanded
+graph just as they receive ordinary long-edge dummies.
+
+Fixed-side feedback edges also retain proper long-edge splitting. Skipping their
+intermediate layers made Brandes–Koepf alignment invalid once inverted-port
+dummies were added; a retained random counterexample exposed node overlaps.
+
+Grouped EDGE_LENGTH compaction sees normal nodes and LABEL dummies, with unary
+LONG_EDGE and inverted-port chains joined first. Segment movement maps back to
+private expanded routes before public joining. North/south port dummies remain
+port constraints, not eligible label-switch destinations; their restoration uses
+the current graph after label switching. This follows ELK processor order rather
+than treating every internal dummy as an independently compactable node.

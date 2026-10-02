@@ -1,3 +1,6 @@
+import { recordCrossingUnits } from "./crossing-constraints";
+import type { EntityRect } from "@statelyai/graph";
+import { setPlacementOrientation } from "./placement-orientation";
 import { replaceLayoutRouting } from "./replace-routing";
 import { layoutCompounds, type CompoundVisualGraph } from "./compound";
 import { repairFlatRouting } from "./native-routing";
@@ -33,6 +36,8 @@ import {
   breakCyclesWithModelOrderBreadthFirstSearch,
   breakCyclesWithDepthFirstSearch,
   getPolylineMidpoint,
+  getPortPoint,
+  simplifyRoute,
   getOrientedPortDirection,
   minimizeCrossingsWithBarycenter,
   minimizeCrossingsWithMedian,
@@ -50,10 +55,19 @@ import type { LayeredLayoutOptions, LayeredPhaseInput, NodeSize } from "./types"
 import { assignLayersWithNetworkSimplex } from "./network-simplex";
 import { assignLayersWithMinWidth } from "./min-width";
 import { assignLayersWithStretchWidth } from "./stretch-width";
+import {
+  insertCenterLabelDummies,
+  selectCenterLabelSides,
+  centerLabelPosition,
+  removeCenterLabelJunctions,
+  composeCenterLabelExpansion,
+} from "./center-labels";
+import { switchCenterLabelDummies } from "./label-dummy-switcher";
+import { insertNorthSouthPortDummies, restoreNorthSouthPortRoutes } from "./north-south-ports";
+import { insertInvertedPortDummies } from "./inverted-ports";
 import { joinLongEdgeRoutes, splitLongEdges } from "./long-edges";
 import { unzipLayersAlternating } from "./layer-unzipping";
 import { placeNodesWithBrandesKoepf } from "./bk-node-placement";
-import { nodeNodeSpacing } from "./spacing";
 import { breakCyclesWithConstraints } from "./constraint-orientation";
 import { placeNodesWithLinearSegments } from "./linear-segments-node-placement";
 import { placeNodesWithNetworkSimplex } from "./network-simplex-node-placement";
@@ -667,7 +681,9 @@ function runWrappedMultiEdgePipeline<N, E, G, P>(
     { layerByNodeId: rank },
     cuts,
   );
-  const brokenExpansion = splitLongEdges(prepared.input, prepared.orientation, prepared.assignment);
+  const brokenExpansion = insertInvertedPortDummies(
+    splitLongEdges(prepared.input, prepared.orientation, prepared.assignment),
+  );
   const crossingStrategy = options.settings?.["crossingMinimization.strategy"] ?? "LAYER_SWEEP";
   const crossingMinimizer =
     crossingStrategy === "MEDIAN_LAYER_SWEEP"
@@ -697,6 +713,7 @@ function runWrappedMultiEdgePipeline<N, E, G, P>(
     ),
   );
   const folded = foldMultiEdgeBreakingPoints(brokenExpansion, crossedOrder, prepared);
+  setPlacementOrientation(folded.expansion.input, folded.expansion.orientation);
   const placementStrategy = options.settings?.["nodePlacement.strategy"] ?? "BRANDES_KOEPF";
   const placement =
     placementStrategy === "INTERACTIVE"
@@ -1212,7 +1229,6 @@ function runLayeredPipeline<N, E, G, P>(
   options: LayeredLayoutOptions,
   context?: LayoutExecutionContext,
 ): VisualGraph<N, E, G, P> {
-  // ELK GraphConfigurator reserves at least two pixels between edge tracks.
   if ((options.settings?.["spacing.edgeEdge"] ?? 10) < 2) {
     options = { ...options, settings: { ...options.settings, "spacing.edgeEdge": 2 } };
   }
@@ -1371,20 +1387,84 @@ function runLayeredPipeline<N, E, G, P>(
       `Layering strategy ${layeringStrategy} is not implemented yet`,
     );
   })();
+  const labels = measure("center-label-preprocessing", () =>
+    insertCenterLabelDummies(input, orientation),
+  );
+  const phaseInput = labels.input;
+  const phaseOrientation = labels.orientation;
   const assignment = measure("layer-assignment", () =>
     applyHighDegreeNodeTreatment(
-      input,
-      orientation,
+      phaseInput,
+      phaseOrientation,
       applyNodePromotion(
-        input,
-        orientation,
-        applyPartitions(input, applyLayerConstraints(input, layerAssigner(input, orientation))),
+        phaseInput,
+        phaseOrientation,
+        applyPartitions(
+          phaseInput,
+          applyLayerConstraints(phaseInput, layerAssigner(phaseInput, phaseOrientation)),
+        ),
       ),
     ),
   );
   let expanded = measure("long-edge-splitting", () =>
-    splitLongEdges(input, orientation, assignment),
+    composeCenterLabelExpansion(
+      labels,
+      insertInvertedPortDummies(splitLongEdges(phaseInput, phaseOrientation, assignment)),
+    ),
   );
+  const northSouth = insertNorthSouthPortDummies(expanded);
+  expanded = northSouth.expansion;
+  const associates = new Map<string, string[]>(),
+    unitMembers = new Map<string, string[]>();
+  for (const [dummy, origin] of northSouth.originsByDummyId)
+    associates.set(origin.node.id, [...(associates.get(origin.node.id) ?? []), dummy]);
+  for (const id of expanded.assignment.seedOrder ?? expanded.input.graph.nodes.map((n) => n.id)) {
+    const owner = northSouth.layoutUnitByNodeId.get(id);
+    if (owner) unitMembers.set(owner, [...(unitMembers.get(owner) ?? []), id]);
+  }
+  const northEdges = new Set<string>(),
+    southEdges = new Set<string>();
+  const upper = direction === "right" || direction === "left" ? "NORTH" : "WEST";
+  const lower = direction === "right" || direction === "left" ? "SOUTH" : "EAST";
+  for (const edge of expanded.input.graph.edges)
+    for (const [id, name] of [
+      [edge.sourceId, edge.sourcePort],
+      [edge.targetId, edge.targetPort],
+    ]) {
+      const node = expanded.input.graph.nodes.find((n) => n.id === id),
+        port = node?.ports?.find((p) => p.name === name);
+      const side =
+        node && port ? expanded.input.portSettings?.(port, node)?.["port.side"] : undefined;
+      if (side === upper) northEdges.add(id!);
+      if (side === lower) southEdges.add(id!);
+    }
+  recordCrossingUnits(expanded.input, {
+    successors: northSouth.successorsByNodeId,
+    units: northSouth.layoutUnitByNodeId,
+    unitMembers,
+    associates,
+    northEdges,
+    southEdges,
+    normalNodes: new Set(
+      expanded.input.graph.nodes
+        .filter(
+          (n) => !n.id.startsWith("__layout_dummy:") && !n.id.startsWith("__layout_breaking:"),
+        )
+        .map((n) => n.id),
+    ),
+    longEdgeNodes: new Set(
+      expanded.input.graph.nodes
+        .filter(
+          (n) =>
+            (n.id.startsWith("__layout_dummy:") &&
+              !n.id.startsWith("__layout_dummy:label:") &&
+              !n.id.startsWith("__layout_dummy:north-south:")) ||
+            n.id.startsWith("__layout_breaking:"),
+        )
+        .map((n) => n.id),
+    ),
+  });
+
   const crossingStrategy = options.settings?.["crossingMinimization.strategy"] ?? "LAYER_SWEEP";
   const crossingMinimizer = (() => {
     if (options.strategies?.minimizeCrossings) return options.strategies.minimizeCrossings;
@@ -1433,6 +1513,11 @@ function runLayeredPipeline<N, E, G, P>(
     }
   }
   order = applyDirectionCongruency(expanded.input, order);
+  const switchedLabels = switchCenterLabelDummies(expanded, labels, order);
+  expanded = switchedLabels.expansion;
+  order = switchedLabels.order;
+  const labelSelection = selectCenterLabelSides(expanded, labels, order);
+  expanded = labelSelection.expansion;
   const nodePlacementStrategy = options.settings?.["nodePlacement.strategy"] ?? "BRANDES_KOEPF";
   const nodePlacer = (() => {
     if (options.strategies?.placeNodes) return options.strategies.placeNodes;
@@ -1442,7 +1527,10 @@ function runLayeredPipeline<N, E, G, P>(
     if (nodePlacementStrategy === "NETWORK_SIMPLEX") return placeNodesWithNetworkSimplex;
     return placeNodesInLayers;
   })();
-  const placement = measure("node-placement", () => nodePlacer(expanded.input, order));
+  const placement = measure("node-placement", () => {
+    setPlacementOrientation(expanded.input, expanded.orientation);
+    return nodePlacer(expanded.input, order);
+  });
   const mutableRects = placement.rectByNodeId as Map<
     string,
     { x: number; y: number; width: number; height: number }
@@ -1590,57 +1678,6 @@ function runLayeredPipeline<N, E, G, P>(
       );
     }
   }
-  {
-    const horizontal = direction === "right" || direction === "left";
-    const targetsBySource = new Map<string, Set<string>>();
-    for (const edge of graph.edges) {
-      if (edge.sourceId === edge.targetId) continue;
-      const targets = targetsBySource.get(edge.sourceId) ?? new Set<string>();
-      targets.add(edge.targetId);
-      targetsBySource.set(edge.sourceId, targets);
-    }
-    for (const edge of graph.edges) {
-      if (edge.sourcePort === undefined) continue;
-      const source = graph.nodes.find((node) => node.id === edge.sourceId);
-      const targetRect = mutableRects.get(edge.targetId);
-      const sourceRect = mutableRects.get(edge.sourceId);
-      const port = source?.ports?.find((candidate) => candidate.name === edge.sourcePort);
-      if (!source || !sourceRect || !targetRect || !port) continue;
-      const side = input.portSettings?.(port, source)?.["port.side"];
-      // A port side constrains its route, not the positions of an entire fan-out.
-      // Align an isolated target only when the placement's separation survives.
-      if (edge.sourceId === edge.targetId || (targetsBySource.get(edge.sourceId)?.size ?? 0) > 1)
-        continue;
-      const candidate =
-        horizontal && side === "NORTH"
-          ? { ...targetRect, y: sourceRect.y - (port.height ?? 0) - targetRect.height }
-          : horizontal && side === "SOUTH"
-            ? { ...targetRect, y: sourceRect.y + sourceRect.height + (port.height ?? 0) }
-            : !horizontal && side === "WEST"
-              ? { ...targetRect, x: sourceRect.x - (port.width ?? 0) - targetRect.width }
-              : !horizontal && side === "EAST"
-                ? { ...targetRect, x: sourceRect.x + sourceRect.width + (port.width ?? 0) }
-                : undefined;
-      if (
-        !candidate ||
-        [...mutableRects].some(([id, other]) => {
-          if (id === edge.targetId || other.width <= 0 || other.height <= 0) return false;
-          // The connected source may use the deliberate port-side gap. All
-          // other nodes retain placement spacing, including port clearance.
-          const spacing =
-            id === edge.sourceId ? 0 : nodeNodeSpacing(expanded.input, id, edge.targetId);
-          return (
-            candidate.x < other.x + other.width + spacing &&
-            candidate.x + candidate.width + spacing > other.x &&
-            candidate.y < other.y + other.height + spacing &&
-            candidate.y + candidate.height + spacing > other.y
-          );
-        })
-      )
-        continue;
-      mutableRects.set(edge.targetId, candidate);
-    }
-  }
   measure("port-margin-normalization", () =>
     normalizePlacementForPortExtents(expanded.input, placement, order, expanded.orientation),
   );
@@ -1702,12 +1739,59 @@ function runLayeredPipeline<N, E, G, P>(
       : edgeRouting === "SPLINES"
         ? routeEdgesWithSplines
         : routeEdgesOrthogonally);
+  // A custom router owns its output. Compact placement before invoking it,
+  // rather than moving or orthogonalizing its routes afterwards.
+  if (options.strategies?.routeEdges)
+    measure("post-compaction", () => applyPostCompaction(expanded.input, placement));
   let expandedRoutes = measure("edge-routing", () =>
     edgeRouter(expanded.input, expanded.orientation, placement),
   );
-  measure("post-compaction", () =>
-    applyPostCompaction(expanded.input, placement, expandedRoutes, graph.edges),
+  expandedRoutes = restoreNorthSouthPortRoutes(
+    { ...northSouth, expansion: expanded },
+    placement,
+    expandedRoutes,
+    (origin) => {
+      const rect = placement.rectByNodeId.get(origin.node.id)!;
+      return getPortPoint(
+        origin.node,
+        origin.port.name,
+        rect,
+        { x: rect.x, y: rect.y },
+        direction,
+        expanded.input,
+      );
+    },
   );
+  const restoredNodes = expanded.input.graph.nodes.filter(
+    (node) => !northSouth.originsByDummyId.has(node.id),
+  );
+  const restoredEdges = expanded.input.graph.edges.map((edge) => {
+    const source = northSouth.originsByDummyId.get(edge.sourceId),
+      target = northSouth.originsByDummyId.get(edge.targetId);
+    return source || target
+      ? {
+          ...edge,
+          sourceId: source?.node.id ?? edge.sourceId,
+          sourcePort: source?.port.name ?? edge.sourcePort,
+          targetId: target?.node.id ?? edge.targetId,
+          targetPort: target?.port.name ?? edge.targetPort,
+        }
+      : edge;
+  });
+  for (const dummy of northSouth.originsByDummyId.keys())
+    (placement.rectByNodeId as Map<string, EntityRect>).delete(dummy);
+  expanded = {
+    ...expanded,
+    input: {
+      ...expanded.input,
+      graph: { ...expanded.input.graph, nodes: restoredNodes, edges: restoredEdges },
+    },
+  };
+  setPlacementOrientation(expanded.input, expanded.orientation);
+  if (!options.strategies?.routeEdges)
+    measure("post-compaction", () =>
+      applyPostCompaction(expanded.input, placement, expandedRoutes, graph.edges),
+    );
   const antiparallelLabelPositions = new Map<string, Point>();
   const outerAntiparallelLabelIds = new Set<string>();
   const parallelLabelPositions = new Map<string, Point>();
@@ -1988,11 +2072,17 @@ function runLayeredPipeline<N, E, G, P>(
   }
   let routes = measure("long-edge-joining", () =>
     joinLongEdgeRoutes(
-      expandedRoutes,
+      removeCenterLabelJunctions(
+        expandedRoutes,
+        expanded,
+        labels.labelDummyIdByEdgeId,
+        edgeRouting,
+      ),
       expanded.segmentIdsByEdgeId,
       edgeRouting === "SPLINES" || options.settings?.unnecessaryBendpoints === true,
       edgeRouting === "SPLINES",
       Number(options.settings?.["spacing.edgeNodeBetweenLayers"] ?? 10),
+      edgeRouting === "ORTHOGONAL",
     ),
   );
   if (options.settings?.["layering.nodePromotion.strategy"] === "MODEL_ORDER_LEFT_TO_RIGHT") {
@@ -2355,10 +2445,12 @@ function runLayeredPipeline<N, E, G, P>(
         flowDelta !== 0 &&
         firstLeadDelta * flowDelta < 0 &&
         lastLeadDelta * flowDelta < 0);
+    // Retained dummy junctions do not split the physical label track.
+    const feedbackTrackPoints = outsideFeedback ? simplifyRoute(points) : [];
     const horizontalFeedbackCandidate = outsideFeedback
-      ? points
+      ? feedbackTrackPoints
           .flatMap((point, index) => {
-            const next = points[index + 1];
+            const next = feedbackTrackPoints[index + 1];
             return next !== undefined &&
               point.y === next.y &&
               (point.y < minimumFeedbackNodeY || point.y > maximumFeedbackNodeY)
@@ -2368,9 +2460,9 @@ function runLayeredPipeline<N, E, G, P>(
           .sort((left, right) => right.length - left.length)[0]
       : undefined;
     const verticalFeedbackCandidate = outsideFeedback
-      ? points
+      ? feedbackTrackPoints
           .flatMap((point, index) => {
-            const next = points[index + 1];
+            const next = feedbackTrackPoints[index + 1];
             return next !== undefined &&
               point.x === next.x &&
               (point.x < minimumFeedbackNodeX || point.x > maximumFeedbackNodeX)
@@ -2415,8 +2507,8 @@ function runLayeredPipeline<N, E, G, P>(
             ? (horizontalFeedbackTrack.start.x + horizontalFeedbackTrack.end.x - width) / 2
             : inlineLabel && verticalFeedbackTrack
               ? verticalFeedbackTrack.start.x > (minimumFeedbackNodeX + maximumFeedbackNodeX) / 2
-                ? verticalFeedbackTrack.start.x + labelSpacing + 1
-                : verticalFeedbackTrack.start.x - labelSpacing - width - 1
+                ? Math.max(...points.map((point) => point.x)) + labelSpacing + 1
+                : Math.min(...points.map((point) => point.x)) - labelSpacing - width - 1
               : inlineLabel && verticalTrack
                 ? labelBeforeTrack
                   ? verticalTrack.x - edgeNodeSpacing - width
@@ -2530,28 +2622,45 @@ function runLayeredPipeline<N, E, G, P>(
       outerAntiparallelLabelPosition ??
       antiparallelLabelPosition ??
       parallelLabelPositions.get(edge.id);
-    const x = explicitLabelPosition
-      ? explicitLabelPosition.x
-      : flexibleFeedbackLabel
-        ? horizontal
-          ? (beforeFlowRect!.x + beforeFlowRect!.width + afterFlowRect!.x - width) / 2
-          : targetRect.x + (targetRect.width - width) / 2
-        : centerFlowPosition !== undefined && horizontal
-          ? centerFlowPosition
-          : labelPlacement === "CENTER" && horizontal && labelDummyRect
-            ? labelDummyRect.x
-            : routeX;
-    const y = explicitLabelPosition
-      ? explicitLabelPosition.y
-      : flexibleFeedbackLabel
-        ? horizontal
-          ? targetRect.y + (targetRect.height - height) / 2
-          : (beforeFlowRect!.y + beforeFlowRect!.height + afterFlowRect!.y - height) / 2
-        : centerFlowPosition !== undefined && !horizontal
-          ? centerFlowPosition
-          : labelPlacement === "CENTER" && !horizontal && labelDummyRect
-            ? labelDummyRect.y
-            : routeY;
+    const centerLabelDummyId = labels.labelDummyIdByEdgeId.get(edge.id);
+    const centerLabelInfo = centerLabelDummyId
+      ? labels.dummyById.get(centerLabelDummyId)
+      : undefined;
+    const centerLabelRect =
+      labelDummyRect && centerLabelInfo
+        ? centerLabelPosition(
+            labelDummyRect,
+            centerLabelInfo,
+            labelSelection.sides.get(centerLabelDummyId!),
+            direction,
+          )
+        : undefined;
+    const x = centerLabelRect
+      ? centerLabelRect.x
+      : explicitLabelPosition
+        ? explicitLabelPosition.x
+        : flexibleFeedbackLabel
+          ? horizontal
+            ? (beforeFlowRect!.x + beforeFlowRect!.width + afterFlowRect!.x - width) / 2
+            : targetRect.x + (targetRect.width - width) / 2
+          : centerFlowPosition !== undefined && horizontal
+            ? centerFlowPosition
+            : labelPlacement === "CENTER" && horizontal && labelDummyRect
+              ? labelDummyRect.x
+              : routeX;
+    const y = centerLabelRect
+      ? centerLabelRect.y
+      : explicitLabelPosition
+        ? explicitLabelPosition.y
+        : flexibleFeedbackLabel
+          ? horizontal
+            ? targetRect.y + (targetRect.height - height) / 2
+            : (beforeFlowRect!.y + beforeFlowRect!.height + afterFlowRect!.y - height) / 2
+          : centerFlowPosition !== undefined && !horizontal
+            ? centerFlowPosition
+            : labelPlacement === "CENTER" && !horizontal && labelDummyRect
+              ? labelDummyRect.y
+              : routeY;
     return {
       ...edge,
       x,

@@ -10,14 +10,22 @@ export function nodeNodeSpacing(
 ): number {
   const firstBreakingPoint = firstId.startsWith("__layout_breaking:");
   const secondBreakingPoint = secondId.startsWith("__layout_breaking:");
+  const firstLabel = firstId.startsWith("__layout_dummy:label:");
+  const secondLabel = secondId.startsWith("__layout_dummy:label:");
   const firstDummy = firstId.startsWith("__layout_dummy:") || firstBreakingPoint;
   const secondDummy = secondId.startsWith("__layout_dummy:") || secondBreakingPoint;
   const spacingName =
-    firstDummy && secondDummy && firstBreakingPoint === secondBreakingPoint
+    firstLabel && secondLabel
       ? "spacing.edgeEdge"
-      : firstDummy || secondDummy
-        ? "spacing.edgeNode"
-        : "spacing.node";
+      : (firstLabel && !secondDummy) || (secondLabel && !firstDummy)
+        ? "spacing.node"
+        : (firstLabel && secondDummy) || (secondLabel && firstDummy)
+          ? "spacing.edgeNode"
+          : firstDummy && secondDummy && firstBreakingPoint === secondBreakingPoint
+            ? "spacing.edgeEdge"
+            : firstDummy || secondDummy
+              ? "spacing.edgeNode"
+              : "spacing.node";
   let spacing =
     spacingName === "spacing.edgeEdge"
       ? Number(input.settings["spacing.edgeEdge"] ?? 10)

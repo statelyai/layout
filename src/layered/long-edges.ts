@@ -42,50 +42,15 @@ export function splitLongEdges(
   const originalEdgeBySegmentId = new Map<string, GraphEdge>();
   const usedNodeIds = new Set(nodes.map((node) => node.id));
   const originalNodeIds = new Set(usedNodeIds);
-  const nodeById = new Map(input.graph.nodes.map((node) => [node.id, node]));
-  const forwardSourceSide =
-    input.direction === "right"
-      ? "EAST"
-      : input.direction === "left"
-        ? "WEST"
-        : input.direction === "down"
-          ? "SOUTH"
-          : "NORTH";
-  const forwardTargetSide =
-    input.direction === "right"
-      ? "WEST"
-      : input.direction === "left"
-        ? "EAST"
-        : input.direction === "down"
-          ? "NORTH"
-          : "SOUTH";
 
   for (const edge of input.graph.edges) {
     const sourceLayer = layerByNodeId.get(edge.sourceId) ?? 0;
     const targetLayer = layerByNodeId.get(edge.targetId) ?? 0;
     const span = Math.abs(targetLayer - sourceLayer);
-    const source = nodeById.get(edge.sourceId);
-    const target = nodeById.get(edge.targetId);
-    const sourcePort = source?.ports?.find((port) => port.name === edge.sourcePort);
-    const targetPort = target?.ports?.find((port) => port.name === edge.targetPort);
-    const sourceSide =
-      source && sourcePort ? input.portSettings?.(sourcePort, source)?.["port.side"] : undefined;
-    const targetSide =
-      target && targetPort ? input.portSettings?.(targetPort, target)?.["port.side"] : undefined;
-    const hasFixedPortSide = (node: GraphNode | undefined): boolean => {
-      if (!node) return false;
-      const constraints = String(input.nodeSettings?.(node)?.portConstraints ?? "UNDEFINED");
-      return constraints !== "UNDEFINED" && constraints !== "FREE";
-    };
-    const fixedSideFeedback =
-      sourceLayer > targetLayer &&
-      ((hasFixedPortSide(source) && sourceSide === forwardSourceSide) ||
-        (hasFixedPortSide(target) && targetSide === forwardTargetSide));
     if (
       span <= 1 ||
       edge.sourceId === edge.targetId ||
-      (input.settings.feedbackEdges === true && orientation.reversedEdgeIds.has(edge.id)) ||
-      fixedSideFeedback
+      (input.settings.feedbackEdges === true && orientation.reversedEdgeIds.has(edge.id))
     ) {
       edges.push(edge);
       originalEdgeBySegmentId.set(edge.id, edge);
@@ -290,6 +255,7 @@ export function joinLongEdgeRoutes(
   preserveInternalDuplicates = false,
   convertLongSplines = false,
   longSplineEdgeNodeSpacing = 10,
+  preserveOrthogonalCorners = false,
 ): EdgeRoutes {
   const simplify = (points: readonly Point[]): Point[] => {
     const result: Point[] = [];
@@ -382,7 +348,9 @@ export function joinLongEdgeRoutes(
       }
     }
     const points: Point[] = [];
-    if (!preserveInternalDuplicates && segmentIds.length > 1) {
+    // POLYLINE joining excludes dummy anchors. Orthogonal joining keeps
+    // potential corners until collinear simplification to avoid diagonal joins.
+    if (!preserveInternalDuplicates && !preserveOrthogonalCorners && segmentIds.length > 1) {
       const segments = segmentIds.map((segmentId) => routes.pointsByEdgeId.get(segmentId) ?? []);
       const firstPoint = segments[0]?.[0];
       if (firstPoint) points.push(firstPoint);
