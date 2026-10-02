@@ -54,3 +54,25 @@
     Real ELK 0.11.1<img alt="Real ELK: chain order a b c" src="feedback-elk.svg" />
   </div>
 </section>
+
+<section id="fixed-coordinate">
+  <h2>Fixed implicit coordinates · same input, direction, sizes, scale and viewport</h2>
+  <div class="pair">
+    <div>
+      Before bb693a4 · ab: 4 bends<img
+        src="fixed-coordinate-before.svg"
+        alt="Before fixed coordinate repair"
+      />
+    </div>
+    <div>
+      After bc4e7e2 · ab: 0 bends<img
+        src="fixed-coordinate-after.svg"
+        alt="Native fixed coordinates"
+      />
+    </div>
+  </div>
+  <div style="width: calc(50% - 8px)">
+    Real ELK 0.11.1 · ab: 0 bends<img src="fixed-coordinate-elk.svg" alt="Real ELK comparison" />
+  </div>
+  <p>bc remains 4 bends in native vs 2 in ELK. This demonstrates a correction, not parity.</p>
+</section>

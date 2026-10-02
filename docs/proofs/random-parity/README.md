@@ -27,3 +27,18 @@ now both place `a, b, c`. Routing geometry still differs.
 | Before                         | Native after                 | Real ELK                    |
 | ------------------------------ | ---------------------------- | --------------------------- |
 | ![Before](feedback-before.svg) | ![After](feedback-after.svg) | ![Oracle](feedback-elk.svg) |
+
+## Fixed implicit coordinate repair
+
+`fixed-coordinate-{before,after,elk}.svg` share `feedback-input.json`, RIGHT
+direction, 80×60 node sizes and the exact same viewport/scale. Measured source
+and before/after/oracle coordinates are in `fixed-coordinate-results.json`.
+The ab edge improves from 4 to 0 bends, matching real ELK; bc stays at 4 bends
+versus ELK's 2. Native still lacks the matching inverted-port phase behavior.
+
+The [ELK InvertedPortProcessor](https://raw.githubusercontent.com/eclipse-elk/elk/v0.11.0/plugins/org.eclipse.elk.alg.layered/src/org/eclipse/elk/alg/layered/intermediate/InvertedPortProcessor.java)
+adds same-layer long-edge dummies for inverted fixed ports before crossing
+minimization. It requires subsequent phases to support in-layer connections.
+The captured native phase input still has only a/b/c; splitLongEdges alone
+does not supply these dummies. This is the next native phase gap, rather than
+an instruction to move c after placement or substitute real ELK.

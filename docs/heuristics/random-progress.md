@@ -47,3 +47,17 @@ and fixed-face corrections alone do not close the layout/routing gap.
 The full suite at that revision reports 1657 passes and two timeouts: review
 graph 8 and the ChangeAwareArrayList compatibility stress fixture. Both still
 time out on an unchanged isolated retry. These are unverified checks, not passes.
+
+## Fixed-coordinate correction
+
+Clean revision `bc4e7e2694e013b2f17d0d1a08c863e25e8767d9` preserves
+implicit FIXED_POS/FIXED_RATIO coordinates during repair and prevents search
+from consuming its own terminal leads. The 30-case affected flat pilot passes,
+including seed 155921 / graph 5, which previously exposed a 2px self-retrace
+in the coordinate prototype. Source/repository types and 208 focused tests pass.
+
+[Fresh ten-graph evaluation](fixed-coordinate-fresh.md) /
+[raw report](fixed-coordinate-fresh.json): seed 1495461400 was drawn and saved
+before execution. All ten native geometry checks pass, with no engine errors.
+ELK wins crossings on seven and bends on nine. **Parity still fails.** These
+observed cases are retained for future replay; they are no longer holdouts.
