@@ -58,14 +58,19 @@ revision. Full layout's existing ELK compatibility contract remains unchanged.
 <!-- built-in measured phases from src/layered/index.ts -->
 
 ```text
-cycle breaking
+constraint edge orientation
+  -> cycle breaking
   -> layer assignment
   -> crossing minimization
   -> node placement
   -> edge routing
 ```
 
-Each phase is replaceable through a typed strategy. Phase outputs are small,
+Before cycle breaking, native constraint processing orients FIRST/LAST edges and
+whole feedback nodes using fixed-port net flow. Mixed-flow nodes stay forward;
+individual port directions do not independently reverse their edges.
+
+Each main phase is replaceable through a typed strategy. Phase outputs are small,
 read-only artifacts keyed by the IDs already owned by `@statelyai/graph`.
 
 Native flat layered output gets an obstacle-aware routing repair when its tracks

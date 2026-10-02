@@ -116,3 +116,10 @@ long-edge splitting into crossing minimization, matching ELK's shared graph RNG
 semantics. A cyclic-order oracle regression covers this boundary and verifies
 repeatability when options are reused. It closes that reproduced mismatch; it
 does not establish general cyclic, component, or hierarchical order parity.
+
+Native constraint edge orientation now follows ELK's pre-cycle processor:
+FIRST/LAST constraints and whole-node fixed-port feedback flow are resolved
+before cycle breaking. Real elkjs regressions cover mixed shared and separate
+WEST ports, whole feedback nodes, and preservation of implicit fixed endpoint
+sides in all four layout directions. These close specific fidelity gaps;
+random crossing and bend parity remains incomplete.

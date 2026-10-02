@@ -14,3 +14,16 @@ The [fixed-port input](fixed-ports-input.json) uses native layered defaults with
 `portConstraints: FIXED_POS`; ports use `port.side: EAST`. The source IDs
 above allow the same input/options to be replayed before and after. The random
 pair inputs are reproducible from their base seed and corpus profile number.
+
+## Mixed fixed-port feedback flow
+
+Before: `f913778`. After: constraint orientation correction (source revision
+recorded in the follow-up measurement report). Real oracle: elkjs `0.11.1`.
+The [input and options](feedback-input.json) are identical across all three
+panels, with one shared viewport and scale. Native previously reversed an
+individual mixed-flow WEST port and placed the chain `a, c, b`; native and ELK
+now both place `a, b, c`. Routing geometry still differs.
+
+| Before                         | Native after                 | Real ELK                    |
+| ------------------------------ | ---------------------------- | --------------------------- |
+| ![Before](feedback-before.svg) | ![After](feedback-after.svg) | ![Oracle](feedback-elk.svg) |

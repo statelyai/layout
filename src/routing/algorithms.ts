@@ -31,7 +31,7 @@ import {
 } from "./coordination";
 import { crossesRect } from "../authoring/routing";
 import { distance, getPathBounds, pathFromPoints, roundCorners, segmentCrossesRect } from "./path";
-import { inflate, union } from "./spatial";
+import { inflate, intersects, union } from "./spatial";
 import {
   clear,
   findPath,
@@ -488,6 +488,18 @@ export function routeEdge(
         config.radius * 2 + lane * config.edgeSpacing,
       )
     : context;
+  let futureTargetCorridor: RouteBounds | undefined;
+  const protectFutureTarget = (ctx: SearchContext) => {
+    const obstacles = ctx.obstacles;
+    ctx.obstacles = (bounds) => {
+      const result = obstacles(bounds);
+      return futureTargetCorridor && intersects(bounds, futureTargetCorridor)
+        ? [...result, futureTargetCorridor]
+        : result;
+    };
+    return ctx;
+  };
+  for (const ctx of new Set([context, searchContext])) protectFutureTarget(ctx);
   const drawn: Reservation[] = [];
   // Sharing terminal attachment regions is clipped below. A later leg must
   // never retrace a collinear segment of this same edge outside those regions.
@@ -771,6 +783,7 @@ export function routeEdge(
             (searchContext === context ? 0 : context.visited),
         ),
       };
+      protectFutureTarget(hard);
       hard.guides = undefined;
       hard.edgeCost = selfCost;
       const lead = (t: Terminal) => {
@@ -938,6 +951,35 @@ export function routeEdge(
   const via = perEdge.waypoints ?? [];
   if (via.some((p) => !Number.isFinite(p.x) || !Number.isFinite(p.y)))
     throw new RangeError(`Non-finite waypoint on ${edge.id}`);
+  // Plan the label's first leg without consuming the final terminal approach.
+  // Otherwise the first leg can run through the target; its self-reservation
+  // then makes the second leg impossible even in an open corridor.
+  if (lastSource && !loop) {
+    const hard = contextFor(
+      state,
+      excluded,
+      new Set([`n:${edge.sourceId}`, `n:${edge.targetId}`, `e:${edge.id}`]),
+      metrics,
+      batch,
+      -config.clearance,
+    );
+    const v = vector(target.side);
+    for (let length = config.clearance + 1; length >= 1e-6; length /= 2) {
+      const lead = {
+        x: target.point.x + v.x * length,
+        y: target.point.y + v.y * length,
+      };
+      const corridor = inflate(segmentBounds(target.point, lead), Math.min(0.5, length / 4));
+      if (
+        clear(target.point, lead, hard) &&
+        !intersects(segmentBounds(source.point, source.point), corridor) &&
+        !intersects(segmentBounds(firstTarget.point, firstTarget.point), corridor)
+      ) {
+        futureTargetCorridor = corridor;
+        break;
+      }
+    }
+  }
   const plan = grouped ? groupPlan(group!, state, metrics, batch, style) : undefined;
   if (grouped && !plan)
     report("ROUTE_BLOCKED", "Shared trunk unavailable; used individual fallback routing");
@@ -972,6 +1014,7 @@ export function routeEdge(
       path: connection(source, firstTarget, via),
     });
   if (lastSource) {
+    futureTargetCorridor = undefined;
     let segments = sections.flatMap((s) => pathReservations(s.path));
     // The two legs meet at a label and, for a self-loop, at their node. Sharing
     // those attachment regions is legitimate; retracing a distant trunk is not.

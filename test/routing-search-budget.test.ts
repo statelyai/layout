@@ -64,3 +64,39 @@ it("routes through a positive subpixel gap between edge labels", () => {
       ).toBe(false);
     }
 });
+
+it("keeps the final child approach free while routing an ancestor edge through a label", () => {
+  // Minimized from review graph 9, E12: the first label leg previously
+  // consumed the target approach, forcing the second leg through the child.
+  const graph = createGraph({
+    nodes: [
+      { id: "g", x: 0, y: 0, width: 600, height: 300 },
+      { id: "t", parentId: "g", x: 250, y: 50, width: 200, height: 200 },
+    ],
+    edges: [{ id: "e", sourceId: "g", targetId: "t", x: 500, y: 140, width: 30, height: 20 }],
+  });
+  const route = orthogonalRouting
+    .route(graph, {
+      edges: {
+        e: {
+          sourceSide: "left",
+          targetSide: "left",
+          sourceAttachment: {
+            bounds: { x: 20, y: 20, width: 560, height: 260 },
+            facing: "inward",
+          },
+        },
+      },
+    })
+    .routes.get("e")!;
+  expect(route.diagnostics).toEqual([]);
+  const sections = routeToPolylines(route);
+  expect(sections).toHaveLength(2);
+  for (const points of sections)
+    for (let i = 1; i < points.length; i++) {
+      const a = points[i - 1]!,
+        b = points[i]!;
+      expect(a.x === b.x || a.y === b.y).toBe(true);
+      expect(crossesRect(a, b, { x: 250, y: 50, width: 200, height: 200 })).toBe(false);
+    }
+});

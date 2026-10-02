@@ -670,83 +670,6 @@ export function applyLayerConstraints(
   };
 }
 
-/** Orient constrained outer nodes toward the graph interior before layering. */
-export function applyLayerConstraintOrientation(
-  input: LayeredPhaseInput,
-  orientation: AcyclicOrientation,
-): AcyclicOrientation {
-  if (
-    input.nodeSettings === undefined &&
-    !input.graph.nodes.some((node) => (node.ports?.length ?? 0) > 0)
-  ) {
-    return orientation;
-  }
-  const reversedEdgeIds = new Set(orientation.reversedEdgeIds);
-  const nodeById = new Map(input.graph.nodes.map((node) => [node.id, node]));
-  const constraintByNodeId = new Map(
-    input.graph.nodes.map((node) => [
-      node.id,
-      input.nodeSettings?.(node)?.["layering.layerConstraint"],
-    ]),
-  );
-  for (const edge of input.graph.edges) {
-    const reversed = reversedEdgeIds.has(edge.id);
-    const sourceId = reversed ? edge.targetId : edge.sourceId;
-    const targetId = reversed ? edge.sourceId : edge.targetId;
-    const sourceConstraint = constraintByNodeId.get(sourceId);
-    const targetConstraint = constraintByNodeId.get(targetId);
-    const shouldReverse =
-      targetConstraint === "FIRST" ||
-      targetConstraint === "FIRST_SEPARATE" ||
-      sourceConstraint === "LAST" ||
-      sourceConstraint === "LAST_SEPARATE";
-    if (shouldReverse) {
-      if (reversed) reversedEdgeIds.delete(edge.id);
-      else reversedEdgeIds.add(edge.id);
-    }
-  }
-  const oppositeFlowSide =
-    input.direction === "right"
-      ? "WEST"
-      : input.direction === "left"
-        ? "EAST"
-        : input.direction === "down"
-          ? "NORTH"
-          : "SOUTH";
-  const forwardFlowSide =
-    input.direction === "right"
-      ? "EAST"
-      : input.direction === "left"
-        ? "WEST"
-        : input.direction === "down"
-          ? "SOUTH"
-          : "NORTH";
-  for (const edge of input.graph.edges) {
-    const source = nodeById.get(edge.sourceId);
-    const target = nodeById.get(edge.targetId);
-    const sourcePort = source?.ports?.find((port) => port.name === edge.sourcePort);
-    const targetPort = target?.ports?.find((port) => port.name === edge.targetPort);
-    const sourceSide = sourcePort
-      ? input.portSettings?.(sourcePort, source!)?.["port.side"]
-      : undefined;
-    const targetSide = targetPort
-      ? input.portSettings?.(targetPort, target!)?.["port.side"]
-      : undefined;
-    const reverseForPort =
-      sourceSide === oppositeFlowSide ||
-      (sourceSide === "UNDEFINED" &&
-        input.nodeSettings?.(source!)?.portConstraints === "FIXED_SIDE") ||
-      targetSide === forwardFlowSide ||
-      (targetSide === "UNDEFINED" &&
-        input.nodeSettings?.(target!)?.portConstraints === "FIXED_SIDE");
-    if (!reverseForPort) continue;
-    if (reversedEdgeIds.has(edge.id)) reversedEdgeIds.delete(edge.id);
-    else reversedEdgeIds.add(edge.id);
-  }
-  // Port-side preferences can reintroduce cycles after the cycle breaker.
-  return { reversedEdgeIds: addDepthFirstBackEdges(input, reversedEdgeIds, "model") };
-}
-
 /** Keep activated ELK partitions in ascending, contiguous layer blocks. */
 export function applyPartitions(
   input: LayeredPhaseInput,
@@ -3232,11 +3155,25 @@ function implicitEdgeEndpoints(
           ? "after"
           : undefined;
     };
+    const fixedImplicitSide = (nodeId: string, portName: string | undefined, source: boolean) => {
+      const node = nodeById.get(nodeId);
+      const constraints = node && input.nodeSettings?.(node)?.portConstraints;
+      if (
+        portName !== undefined ||
+        !["FIXED_SIDE", "FIXED_ORDER", "FIXED_RATIO", "FIXED_POS"].includes(String(constraints))
+      )
+        return undefined;
+      // ELK assigns implicit port sides before cycle breaking. Fixed sides
+      // survive edge reversal; a feedback edge cannot move its endpoint.
+      return source !== directionReversed ? "after" : "before";
+    };
     const sourceSide =
       endpointSide(edge.sourceId, edge.sourcePort) ??
+      fixedImplicitSide(edge.sourceId, edge.sourcePort, true) ??
       (feedback ? (directionReversed ? "before" : "after") : forward ? "after" : "before");
     const targetSide =
       endpointSide(edge.targetId, edge.targetPort) ??
+      fixedImplicitSide(edge.targetId, edge.targetPort, false) ??
       (feedback ? (directionReversed ? "after" : "before") : forward ? "before" : "after");
     const sourceKey = `${edge.sourceId}:${sourceSide}`;
     const targetKey = `${edge.targetId}:${targetSide}`;

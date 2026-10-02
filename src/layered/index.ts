@@ -14,7 +14,6 @@ import {
   assignLayersInteractively,
   assignLayersWithCoffmanGraham,
   applyLayerConstraints,
-  applyLayerConstraintOrientation,
   applyPartitionOrientation,
   applyPartitions,
   applyLayerConstraintOrder,
@@ -55,6 +54,7 @@ import { joinLongEdgeRoutes, splitLongEdges } from "./long-edges";
 import { unzipLayersAlternating } from "./layer-unzipping";
 import { placeNodesWithBrandesKoepf } from "./bk-node-placement";
 import { nodeNodeSpacing } from "./spacing";
+import { breakCyclesWithConstraints } from "./constraint-orientation";
 import { placeNodesWithLinearSegments } from "./linear-segments-node-placement";
 import { placeNodesWithNetworkSimplex } from "./network-simplex-node-placement";
 import { applyHighDegreeNodeTreatment } from "./high-degree";
@@ -1349,7 +1349,7 @@ function runLayeredPipeline<N, E, G, P>(
     );
   })();
   const orientation = measure("cycle-breaking", () =>
-    applyPartitionOrientation(input, applyLayerConstraintOrientation(input, cycleBreaker(input))),
+    applyPartitionOrientation(input, breakCyclesWithConstraints(input, cycleBreaker)),
   );
   const layeringStrategy = options.settings?.["layering.strategy"] ?? "NETWORK_SIMPLEX";
   const layerAssigner = (() => {
