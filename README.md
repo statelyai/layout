@@ -12,14 +12,16 @@ immutable structured routes and incremental patches alongside the existing
 
 <!-- layered compatibility coverage from test/oracle*.test.ts -->
 
-The native layered implementation covers the complete 152-option elkjs 0.11.1
-layered inventory with one simplified typed name per ELK option. Flat and
-compound graphs, cross-hierarchy edges, ports, labels, self-loops, wrapping,
-four directions, constraints, and replaceable phases are differential-tested
-against elkjs, including a curated complex state-machine corpus in both primary
-layout orientations. Native layered layout also supports partial selection,
-route-only execution, and geometric constraints. Incremental layout remains
-explicitly unsupported.
+The native layered implementation reimplements ELK-derived phases and maps the
+complete 152-option elkjs 0.11.1 layered inventory to simplified typed names.
+Focused differential tests cover flat/compound graphs, cross-hierarchy edges,
+ports, labels, self-loops, wrapping, directions, constraints, and phase overrides.
+That coverage does not establish broad geometry or aesthetic parity: native
+hierarchy placement and routing still diverge materially from real ELK. The
+[side-by-side random corpus](docs/heuristics/README.md) uses the actual elkjs
+runtime and one shared scorer to track that gap. Native layered layout also
+supports partial selection, route-only execution, and geometric constraints.
+Incremental layout remains explicitly unsupported.
 
 ## Install
 

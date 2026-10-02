@@ -34,15 +34,15 @@ require style for every migration entry point.
 
 <!-- registered native algorithms from src/layout.ts -->
 
-| Algorithm             | Native API                     | Current fidelity                                     |
-| --------------------- | ------------------------------ | ---------------------------------------------------- |
-| Box                   | `getBoxLayout`                 | Exact SIMPLE adapter corpus; grouped modes pending   |
-| Layered               | `getLayeredLayout`             | Complete 152-option ELK 0.11.1 layered parity target |
-| Fixed                 | `getFixedLayout`               | Preserves authored geometry and routes               |
-| Random                | `getRandomLayout`              | Exact ELK adapter; corrected native edge endpoints   |
-| Rectangle packing     | `getRectanglePackingLayout`    | Exact default slice; full packing parity pending     |
-| SPOrE compaction      | `getSporeCompactionLayout`     | Initial relative-direction baseline; not ELK parity  |
-| SPOrE overlap removal | `getSporeOverlapRemovalLayout` | Initial separation baseline; not ELK parity          |
+| Algorithm             | Native API                     | Current fidelity                                              |
+| --------------------- | ------------------------------ | ------------------------------------------------------------- |
+| Box                   | `getBoxLayout`                 | Exact SIMPLE adapter corpus; grouped modes pending            |
+| Layered               | `getLayeredLayout`             | Native ELK reimplementation; broad geometry parity incomplete |
+| Fixed                 | `getFixedLayout`               | Preserves authored geometry and routes                        |
+| Random                | `getRandomLayout`              | Exact ELK adapter; corrected native edge endpoints            |
+| Rectangle packing     | `getRectanglePackingLayout`    | Exact default slice; full packing parity pending              |
+| SPOrE compaction      | `getSporeCompactionLayout`     | Initial relative-direction baseline; not ELK parity           |
+| SPOrE overlap removal | `getSporeOverlapRemovalLayout` | Initial separation baseline; not ELK parity                   |
 
 The native layered pipeline handles compound layout and cross-hierarchy
 routing, with complete occupied envelopes reserved before ancestor placement.
@@ -57,6 +57,13 @@ and provider-owned bounds. Rectangle Packing matches the default three-node
 baseline but intentionally remains marked incomplete: an alternate three-node
 shape set already demonstrates that the native shelf strategy is not the Java
 packing strategy.
+
+The native layered code is an existing TypeScript reimplementation, not a complete
+faithful port of every ELK processor. Option coverage and focused oracle tests do
+not establish fidelity on arbitrary graphs. The [random graph comparison](heuristics/README.md)
+runs real elkjs alongside native Stately with matched inputs, shared viewports,
+and a shared geometry scorer. The frozen report retains failures and individual
+metrics; native routing correctness and ELK-level readability are separate goals.
 
 ## Layered option and geometry coverage
 

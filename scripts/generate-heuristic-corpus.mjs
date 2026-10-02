@@ -1,15 +1,18 @@
 import { mkdir, writeFile } from "node:fs/promises";
 import { execFileSync } from "node:child_process";
 import { resolve } from "node:path";
+import { createRequire } from "node:module";
 import { pathToFileURL } from "node:url";
 import { createGraph } from "@statelyai/graph";
 import { getLayeredLayout, getLayoutRoutes, routeToPolylines } from "../dist/index.mjs";
 
 import ELK from "elkjs/lib/elk.bundled.js";
+import { measureQuality } from "./heuristic-quality.mjs";
 import { toElkInput, fromElkOutput } from "./heuristic-elk-comparison.mjs";
 
 // Both engines receive identical graph inputs. Failures remain visible, never resampled.
 const elk = new ELK();
+const elkVersion = createRequire(import.meta.url)("elkjs/package.json").version;
 const output = process.argv[3]
   ? pathToFileURL(`${resolve(process.argv[3])}/`)
   : new URL("../docs/heuristics/generated/", import.meta.url);
@@ -200,10 +203,17 @@ await writeFile(
       baseSeed,
       revision,
       engine: "stately-layered",
+      elkOracle: { package: "elkjs", version: elkVersion, entry: "elkjs/lib/elk.bundled.js" },
       cases: corpus.map(({ stately, elk, ...entry }) => ({
         ...entry,
-        stately: { stats: stately.stats, error: stately.error },
-        elk: { layout: elk.layout, stats: elk.stats, error: elk.error, raw: elk.raw },
+        stately: { stats: stately.stats, metrics: stately.metrics, error: stately.error },
+        elk: {
+          layout: elk.layout,
+          stats: elk.stats,
+          metrics: elk.metrics,
+          error: elk.error,
+          raw: elk.raw,
+        },
       })),
     },
     null,
@@ -300,6 +310,7 @@ function renderScene(layout, routes, input, title, prefix) {
     0,
   );
   return {
+    metrics: measureQuality({ ...layout, routes: [...routes] }, input),
     svg,
     bounds: { x, y, width, height },
     stats: {
@@ -325,18 +336,39 @@ function renderScene(layout, routes, input, title, prefix) {
 }
 const panel = (c, engine) => {
   const scene = c[engine];
-  return `<div id="panel-${c.id}-${engine}" role="tabpanel" aria-labelledby="tab-${c.id}-${engine}" data-engine="${engine}" ${engine === "elk" ? "hidden" : ""}><p class="engine-caption"><strong>${engine === "elk" ? "ELK layered" : "Stately layered"}</strong> · ${scene.stats ? `${scene.stats.blockedRoutes} blocked routes · ${scene.stats.budgetFailures} budget failures · ${scene.stats.diagonalSegments} diagonal segments · ${scene.stats.routeConflicts} route conflicts` : "layout failed"} · <a href="graph-${c.id}-${engine}.svg">Open SVG</a></p><div class="scene">${scene.svg ?? `<pre>${escape(scene.error)}</pre>`}</div></div>`;
+  const diagnostics =
+    engine === "stately" && scene.stats
+      ? `<details><summary>Native routing diagnostics</summary>${scene.stats.blockedRoutes} blocked routes · ${scene.stats.budgetFailures} budget failures · ${scene.stats.routeConflicts} conflict diagnostics</details>`
+      : "";
+  return `<div id="panel-${c.id}-${engine}" role="group" aria-labelledby="caption-${c.id}-${engine}" data-engine="${engine}"><p class="engine-caption" id="caption-${c.id}-${engine}"><strong>${engine === "elk" ? `Real ELK ${elkVersion}` : "Stately native"}</strong> · <a href="graph-${c.id}-${engine}.svg">Open SVG</a></p><div class="scene">${scene.svg ?? `<pre>${escape(scene.error)}</pre>`}</div>${diagnostics}</div>`;
+};
+const comparison = (c) => {
+  const metrics = [
+    ["Node intersections", "nodeHits"],
+    ["Label / node overlaps", "labelNodeOverlaps"],
+    ["Label overlaps", "labelOverlaps"],
+    ["Diagonal segments", "diagonals"],
+    ["Self-retracing length", "selfRetraceLength"],
+    ["Crossings", "edgeCrossings"],
+    ["Shared track length", "edgeOverlapLength"],
+    ["Bends", "bends"],
+  ];
+  const number = (engine, key) =>
+    c[engine].metrics
+      ? new Intl.NumberFormat("en-US", { maximumFractionDigits: 1 }).format(c[engine].metrics[key])
+      : "Layout failed";
+  return `<table class="metrics"><caption>Same geometry scorer; lower values are better. Crossings may be unavoidable.</caption><thead><tr><th scope="col">Metric</th><th scope="col">Stately</th><th scope="col">Real ELK</th></tr></thead><tbody>${metrics.map(([label, key]) => `<tr><th scope="row">${label}</th><td>${number("stately", key)}</td><td>${number("elk", key)}</td></tr>`).join("")}</tbody></table>`;
 };
 const html = `<!doctype html><html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Stately / ELK · heuristic review</title><style>
-body{font:15px system-ui;margin:24px;color:#0f172a;background:#f8fafc}header{max-width:900px}nav{display:flex;gap:6px;flex-wrap:wrap;position:sticky;top:0;background:#f8fafc;padding:12px 0;z-index:1}button,a{padding:8px;font:inherit}button{cursor:pointer;border:1px solid #94a3b8;border-radius:5px;background:white;color:#0f172a}button:focus-visible,a:focus-visible,textarea:focus-visible{outline:3px solid #2563eb;outline-offset:3px}section{scroll-margin-top:76px;background:white;border:1px solid #cbd5e1;border-radius:10px;padding:18px;margin:20px 0}h2{font-size:20px}.scene{overflow:auto;border:1px solid #e2e8f0}.scene svg{display:block;width:100%;min-width:320px}textarea{box-sizing:border-box;width:100%;min-height:100px;font:inherit;margin-top:8px}small{color:#475569}label{display:block;margin-top:16px}[role=tablist]{display:inline-flex;gap:4px;margin-right:12px}[role=tab][aria-selected=true]{background:#0f172a;color:white;border-color:#0f172a}.toolbar{display:flex;gap:6px;align-items:center;flex-wrap:wrap}.engine-caption{font-size:13px;color:#475569}[hidden]{display:none!important}@media(max-width:600px){body{margin:12px}section{padding:12px}nav{gap:2px}h1{font-size:24px}}
-</style><header><h1>Stately / ELK · 10 random graphs</h1><p>Judge nodes, labels, and edge routing. Compare identical inputs, direction, fixed ports, and spacing. Each pair shares one viewport and scale. Neither engine's defects are hidden. Hover elements for IDs.</p><small>Source revision ${revision} · base seed ${baseSeed} · 0–4 ports/node (one/side), degree ≤6 · leaf sizes 80–160 × 48–100</small></header><nav>${corpus.map((c) => `<a href="#graph-${c.id}">${c.id}</a>`).join("")}<button id="export">Download review notes</button></nav>${corpus.map((c) => `<section id="graph-${c.id}"><h2>${c.id}. ${escape(c.title)}</h2><p>${c.input.nodes.length} nodes · ${c.input.edges.length} edges · direction ${c.direction} · seed ${c.seed}</p><div class="toolbar"><div role="tablist" aria-label="Layout engine for graph ${c.id}">${["stately", "elk"].map((engine) => `<button role="tab" id="tab-${c.id}-${engine}" aria-controls="panel-${c.id}-${engine}" aria-selected="${engine === "stately"}" tabindex="${engine === "stately" ? 0 : -1}" data-engine="${engine}" data-id="${c.id}">${engine === "stately" ? "Stately" : "ELK"}</button>`).join("")}</div><button class="zoom" data-id="${c.id}" data-factor="1.5" aria-label="Zoom in graph ${c.id}">Zoom +</button><button class="zoom" data-id="${c.id}" data-factor="0.6666667" aria-label="Zoom out graph ${c.id}">Zoom −</button></div>${panel(c, "stately")}${panel(c, "elk")}<label for="notes-${c.id}">Your heuristics / observations</label><textarea id="notes-${c.id}" data-id="${c.id}" placeholder="What should improve? Which rule, priority, exceptions?"></textarea></section>`).join("")}
+body{font:15px system-ui;margin:24px;color:#0f172a;background:#f8fafc}header{max-width:900px}nav{display:flex;gap:6px;flex-wrap:wrap;position:sticky;top:0;background:#f8fafc;padding:12px 0;z-index:1}button,a{padding:8px;font:inherit}button{cursor:pointer;border:1px solid #94a3b8;border-radius:5px;background:white;color:#0f172a}button:focus-visible,a:focus-visible,textarea:focus-visible{outline:3px solid #2563eb;outline-offset:3px}section{scroll-margin-top:76px;background:white;border:1px solid #cbd5e1;border-radius:10px;padding:18px;margin:20px 0}h2{font-size:20px}.scene{overflow:auto;border:1px solid #e2e8f0}.scene svg{display:block;width:100%;min-width:320px}textarea{box-sizing:border-box;width:100%;min-height:100px;font:inherit;margin-top:8px}small{color:#475569}label{display:block;margin-top:16px}[role=tablist]{display:inline-flex;gap:4px;margin-right:12px}[role=tab][aria-selected=true]{background:#0f172a;color:white;border-color:#0f172a}.toolbar{display:flex;gap:6px;align-items:center;flex-wrap:wrap}.engine-caption{font-size:13px;color:#475569}.engine-panels.compare{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}.engine-panels>div{min-width:0}.metrics{border-collapse:collapse;margin-top:16px;font-size:13px}.metrics caption{text-align:left;color:#475569;margin-bottom:8px}.metrics th,.metrics td{padding:5px 12px;border-bottom:1px solid #e2e8f0;text-align:right}.metrics th:first-child{text-align:left}details{font-size:12px;color:#475569;margin-top:6px}[hidden]{display:none!important}@media(max-width:600px){body{margin:12px}section{padding:12px}nav{gap:2px}h1{font-size:24px}}
+</style><header><h1>Stately / ELK · 10 random graphs</h1><p>Judge nodes, labels, and edge routing. Compare identical inputs, direction, fixed ports, and spacing. Each pair shares one viewport and scale. Neither engine's defects are hidden. Hover elements for IDs.</p><small>Native source ${revision} · real elkjs ${elkVersion} · base seed ${baseSeed} · 0–4 ports/node (one/side), degree ≤6 · leaf sizes 80–160 × 48–100</small></header><nav>${corpus.map((c) => `<a href="#graph-${c.id}">${c.id}</a>`).join("")}<button id="export">Download review notes</button></nav>${corpus.map((c) => `<section id="graph-${c.id}"><h2>${c.id}. ${escape(c.title)}</h2><p>${c.input.nodes.length} nodes · ${c.input.edges.length} edges · direction ${c.direction} · seed ${c.seed}</p><div class="toolbar"><div role="tablist" aria-label="Layout engine for graph ${c.id}">${["compare", "stately", "elk"].map((engine) => `<button role="tab" id="tab-${c.id}-${engine}" aria-controls="engines-${c.id}" aria-selected="${engine === "compare"}" tabindex="${engine === "compare" ? 0 : -1}" data-engine="${engine}" data-id="${c.id}">${engine === "compare" ? "Compare" : engine === "stately" ? "Stately" : "Real ELK"}</button>`).join("")}</div><button class="zoom" data-id="${c.id}" data-factor="1.5" aria-label="Zoom in graph ${c.id}">Zoom +</button><button class="zoom" data-id="${c.id}" data-factor="0.6666667" aria-label="Zoom out graph ${c.id}">Zoom −</button></div><div id="engines-${c.id}" class="engine-panels compare" role="tabpanel" aria-labelledby="tab-${c.id}-compare">${panel(c, "stately")}${panel(c, "elk")}</div>${comparison(c)}<label for="notes-${c.id}">Your heuristics / observations</label><textarea id="notes-${c.id}" data-id="${c.id}" placeholder="What should improve? Which rule, priority, exceptions?"></textarea></section>`).join("")}
 <script>
 const key='stately-heuristic-review-${baseSeed}';let notes={};try{notes=JSON.parse(localStorage.getItem(key)||'{}')}catch{}
 document.querySelectorAll('textarea').forEach(t=>{t.value=notes[t.dataset.id]||'';t.addEventListener('input',()=>{notes[t.dataset.id]=t.value;try{localStorage.setItem(key,JSON.stringify(notes))}catch{}})});
-function selectTab(button){const section=document.querySelector('#graph-'+button.dataset.id);section.querySelectorAll('[role=tab]').forEach(t=>{const active=t===button;t.setAttribute('aria-selected',String(active));t.tabIndex=active?0:-1});section.querySelectorAll('[role=tabpanel]').forEach(p=>p.hidden=p.dataset.engine!==button.dataset.engine)}
-document.querySelectorAll('[role=tab]').forEach(b=>{b.onclick=()=>selectTab(b);b.onkeydown=e=>{if(['ArrowLeft','ArrowRight','Home','End'].includes(e.key)){e.preventDefault();const tabs=[...b.parentElement.querySelectorAll('[role=tab]')];const next=e.key==='Home'?tabs[0]:e.key==='End'?tabs.at(-1):tabs.find(t=>t!==b);selectTab(next);next.focus()}}});
+function selectTab(button){const section=document.querySelector('#graph-'+button.dataset.id);section.querySelectorAll('[role=tab]').forEach(t=>{const active=t===button;t.setAttribute('aria-selected',String(active));t.tabIndex=active?0:-1});const panels=section.querySelector('.engine-panels');panels.classList.toggle('compare',button.dataset.engine==='compare');panels.setAttribute('aria-labelledby',button.id);panels.querySelectorAll('[data-engine]').forEach(p=>p.hidden=button.dataset.engine!=='compare'&&p.dataset.engine!==button.dataset.engine)}
+document.querySelectorAll('[role=tab]').forEach(b=>{b.onclick=()=>selectTab(b);b.onkeydown=e=>{if(['ArrowLeft','ArrowRight','Home','End'].includes(e.key)){e.preventDefault();const tabs=[...b.parentElement.querySelectorAll('[role=tab]')];const next=e.key==='Home'?tabs[0]:e.key==='End'?tabs.at(-1):tabs[(tabs.indexOf(b)+(e.key==='ArrowRight'?1:tabs.length-1))%tabs.length];selectTab(next);next.focus()}}});
 document.querySelectorAll('.zoom').forEach(b=>b.onclick=()=>{const section=document.querySelector('#graph-'+b.dataset.id);const scale=Math.max(0.25,Math.min(8,Number(section.dataset.scale||1)*Number(b.dataset.factor)));section.dataset.scale=scale;section.querySelectorAll('svg').forEach(svg=>svg.style.width=(scale*100)+'%')});
-document.querySelector('#export').onclick=()=>{const blob=new Blob([JSON.stringify({baseSeed:${baseSeed},revision:'${revision}',notes},null,2)],{type:'application/json'});const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download='stately-heuristic-review-${baseSeed}.json';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000)};
+document.querySelector('#export').onclick=()=>{const blob=new Blob([JSON.stringify({baseSeed:${baseSeed},revision:'${revision}',elkVersion:'${elkVersion}',notes},null,2)],{type:'application/json'});const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download='stately-heuristic-review-${baseSeed}.json';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000)};
 </script></html>`;
 await writeFile(new URL("index.html", output), html);
 console.log(

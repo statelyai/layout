@@ -10,9 +10,9 @@ pnpm build
 node scripts/generate-heuristic-corpus.mjs 20261001
 ```
 
-Open `generated/index.html` for numbered graphs, Stately/ELK tabs, zoom controls,
-hover IDs, and editable observations. Tabs support arrow keys, Home, and End.
-Both engines receive the same graph, node/label sizes, direction, fixed port
+Open `generated/index.html` for numbered graphs, a default side-by-side Compare view, Stately/real-ELK tabs, zoom controls,
+hover IDs, and editable observations. Tabs support arrow keys, Home, and End. Both layouts remain visible in Compare; zoom applies equally. Each graph has a shared geometry metric table, including intersections, crossings, shared track length, and bends. Native diagnostics are separate from shared measurements.
+The oracle is the installed `elkjs/lib/elk.bundled.js` runtime, never the Stately compatibility facade. Its version is visible and saved in the corpus and exported notes. Both engines receive the same graph, node/label sizes, direction, fixed port
 positions, and node/layer spacing. Each pair uses one shared viewport/scale.
 ELK hierarchy uses `INCLUDE_CHILDREN`; compound padding reserves the same
 36px header and 24px inset. Engine-specific defaults otherwise remain in effect.
