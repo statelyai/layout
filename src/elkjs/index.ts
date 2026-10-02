@@ -1,3 +1,8 @@
+import {
+  attachExternalPortDummy,
+  createExternalPortDummy,
+  externalPortDummyOf,
+} from "../layered/external-port-dummy";
 import { applyOrthogonalJunctions } from "./orthogonal-junctions";
 import { createGraph, type Graph, type VisualGraph } from "@statelyai/graph";
 import {
@@ -340,11 +345,39 @@ export default class ELK {
           const key = kind;
           let proxy = proxyByKind.get(key);
           if (!proxy) {
-            proxy = {
-              id: `__native_hierarchy_${String(child.id)}_${key.replace(/[^a-zA-Z0-9]/g, "_")}`,
-              width: 0,
-              height: 0,
-            };
+            const direction = getDirection({ ...layoutOptions, ...child.layoutOptions });
+            const origin = createExternalPortDummy({
+              constraints: "FREE",
+              side: "EAST",
+              direction: direction.toUpperCase() as "RIGHT" | "LEFT" | "DOWN" | "UP",
+              netFlow: kind === "output" ? 1 : -1,
+              borderOffset: (getNumberOption(layoutOptions, "spacing.edgeEdge") ?? 10) / 2,
+              size: { width: 0, height: 0 },
+            });
+            const id = `__native_hierarchy_${String(child.id)}_${key.replace(/[^a-zA-Z0-9]/g, "_")}`;
+            proxy = attachExternalPortDummy(
+              {
+                id,
+                width: origin.width,
+                height: origin.height,
+                layoutOptions: {
+                  "elk.portConstraints": origin.constraints,
+                  "elk.layered.layering.layerConstraint":
+                    kind === "output" ? "LAST_SEPARATE" : "FIRST_SEPARATE",
+                },
+                ports: [
+                  {
+                    id: `${id}:boundary`,
+                    x: origin.port.x,
+                    y: origin.port.y,
+                    width: 0,
+                    height: 0,
+                    layoutOptions: { "elk.port.side": origin.port.side },
+                  },
+                ],
+              },
+              origin,
+            );
             proxyByKind.set(key, proxy);
           }
           return proxy;
@@ -362,8 +395,8 @@ export default class ELK {
             return {
               ...edge,
               id: `__native_hierarchy_edge_${String(child.id)}_${String(edge.id)}`,
-              sources: [sourceInside ? sourceId : proxy.id!],
-              targets: [sourceInside ? proxy.id! : targetId],
+              sources: [sourceInside ? sourceId : proxy.ports![0]!.id!],
+              targets: [sourceInside ? proxy.ports![0]!.id! : targetId],
               source: undefined,
               target: undefined,
               sections: undefined,
@@ -379,6 +412,7 @@ export default class ELK {
           ...arguments_,
           layoutOptions: {
             ...arguments_.layoutOptions,
+            direction: getDirection(layoutOptions).toUpperCase(),
             hierarchyHandling: "INCLUDE_CHILDREN",
           },
           logging: false,
@@ -470,6 +504,14 @@ export default class ELK {
           const descendantId = sourceInside ? sourceId : targetId;
           const rect = relativeRect(descendantId);
           if (!rect) continue;
+          const internalRoute = temporaryEdges.find(
+            (candidate) =>
+              String(candidate.id) ===
+              `__native_hierarchy_edge_${String(child.id)}_${String(edge.id)}`,
+          )?.sections;
+          const attachment = sourceInside
+            ? internalRoute?.[0]?.startPoint
+            : internalRoute?.at(-1)?.endPoint;
           const portId = `__native_hierarchy_port_${String(child.id)}_${String(edge.id)}`;
           syntheticPortIds.add(portId);
           const direction = getDirection(layoutOptions);
@@ -481,13 +523,15 @@ export default class ELK {
             width: 0,
             height: 0,
             x:
-              direction === "right" || direction === "left"
+              attachment?.x ??
+              (direction === "right" || direction === "left"
                 ? (rect.x ?? 0) + (useFarSide ? (rect.width ?? 0) : 0)
-                : (rect.x ?? 0) + (rect.width ?? 0) / 2,
+                : (rect.x ?? 0) + (rect.width ?? 0) / 2),
             y:
-              direction === "down" || direction === "up"
+              attachment?.y ??
+              (direction === "down" || direction === "up"
                 ? (rect.y ?? 0) + (useFarSide ? (rect.height ?? 0) : 0)
-                : (rect.y ?? 0) + (rect.height ?? 0) / 2,
+                : (rect.y ?? 0) + (rect.height ?? 0) / 2),
           });
           if (!hierarchyRestorations.some((restoration) => restoration.edge === edge)) {
             hierarchyRestorations.push({ edge, ...original });
@@ -1296,7 +1340,7 @@ function toGraph(root: ElkNode, globalOptions: Readonly<Record<string, unknown>>
     return ports;
   };
 
-  return createGraph({
+  const native = createGraph({
     id: String(root.id),
     nodes: children.map((child) => ({
       id: String(child.id),
@@ -1351,6 +1395,12 @@ function toGraph(root: ElkNode, globalOptions: Readonly<Record<string, unknown>>
         : [];
     }),
   });
+  for (const node of native.nodes) {
+    const child = children.find((candidate) => String(candidate.id) === node.id);
+    const origin = child && externalPortDummyOf(child);
+    if (origin) attachExternalPortDummy(node, origin);
+  }
+  return native;
 }
 
 function parsePoints(value: unknown): ElkPoint[] | undefined {

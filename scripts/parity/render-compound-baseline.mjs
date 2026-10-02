@@ -1,5 +1,5 @@
 import fs from "node:fs";
-const root = "docs/heuristics/compound-baseline";
+const root = process.argv[2] ?? "docs/heuristics/compound-baseline";
 const report = JSON.parse(fs.readFileSync(`${root}/report.json`, "utf8"));
 const escape = (value) =>
   String(value).replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll('"', "&quot;");

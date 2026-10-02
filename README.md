@@ -21,7 +21,9 @@ unmodified elkjs internals on 512 seeded intermediate graphs, including complete
 node order and barycenters. This validates that phase independently of the
 unfinished pipeline integration. Ordered barycenter traversal has 512 seeded
 port-graph comparisons; cross-port layer and associate order has 256 seeded
-mixed-role comparisons.
+mixed-role comparisons. External-port dummy construction matches every real
+ELK factory field on 1,536 seeded boundaries; four direction regressions preserve
+the selected descendant port across a compound boundary.
 That coverage does not establish broad geometry or aesthetic parity: native
 hierarchy placement and routing still diverge materially from real ELK. The
 [side-by-side random corpus](docs/heuristics/README.md) uses the actual elkjs
@@ -369,7 +371,8 @@ Publishing uses npm Trusted Publishing through `.github/workflows/release.yml`.
 The opt-in `layoutStatechart` export from `@statelyai/layout/elkjs` compiles
 initial-state and preferred-path hints into scoped settings, then selects among
 at most three fresh layout attempts. It returns all quality scores, including
-remaining defects. See [statechart policies](docs/statechart-layout.md) for the
+remaining defects. Path scoring honors inherited compound directions and
+explicit scope overrides. See [statechart policies](docs/statechart-layout.md) for the
 API, supported controls, tradeoffs and reproducible visual comparison.
 
 For the strict seeded hierarchy comparison with real ELK, run

@@ -129,3 +129,9 @@ real elkjs and exits nonzero for any geometry, ownership or engine-error
 mismatch. Its [initial baseline and phase diagnosis](./heuristics/compound-baseline/README.md)
 retains all failing inputs and equal-scale comparisons. All 100 currently fail;
 the existing small hierarchy examples do not demonstrate general parity.
+
+The [external-port foundation](./heuristics/external-ports/README.md) validates
+native dummy construction against every real worker factory field on 1,536
+seeded boundaries and preserves selected descendant port identity in all four
+directions. The same complete 100-case hierarchy gate still has zero matches;
+these phase and endpoint regressions do not establish hierarchical parity.

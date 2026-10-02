@@ -135,3 +135,17 @@ private expanded routes before public joining. North/south port dummies remain
 port constraints, not eligible label-switch destinations; their restoration uses
 the current graph after label switching. This follows ELK processor order rather
 than treating every internal dummy as an independently compactable node.
+
+External-port dummy construction now preserves ELK's pre-direction-transform
+size, anchor, border offset, side, layer/edge constraints and order/ratio metadata.
+An internal symbol carries that origin through native graph conversion and
+phase object spreads without adding public JSON fields. The compatibility
+adapter creates an explicit boundary port and separate-layer constraint for its
+implicit compound crossings; it reconnects the actual selected child-route
+endpoint rather than a descendant midpoint. Child scopes inherit layout
+direction, and statechart path scoring follows the same inheritance.
+
+This is partial hierarchy integration. Native hierarchical port positioning,
+parent-port geometry transfer, internal/external route joining and coordinated
+scope phase scheduling remain required. The public compound solver still has a
+separate scope/routing path; it must share the completed hierarchy foundation.

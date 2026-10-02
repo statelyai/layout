@@ -171,6 +171,38 @@ describe("statechart policy layout", () => {
     expect(graph.edges?.[1].layoutOptions).toBeUndefined();
   });
 
+  it("scores inherited direction while retaining backwards-path and explicit-override failures", () => {
+    const graph: ElkNode = {
+      id: "outer",
+      x: 0,
+      y: 0,
+      width: 100,
+      height: 100,
+      layoutOptions: { "elk.direction": "DOWN", "elk.hierarchyHandling": "INCLUDE_CHILDREN" },
+      children: [
+        {
+          id: "nested",
+          x: 0,
+          y: 0,
+          width: 100,
+          height: 100,
+          children: [
+            { id: "a", x: 10, y: 10, width: 10, height: 10 },
+            { id: "b", x: 10, y: 30, width: 10, height: 10 },
+          ],
+        },
+      ],
+    };
+    const paths = { nested: ["a", "b"] };
+    expect(scoreStatechartLayout(graph, paths).pathOrder).toBe(0);
+    const backwards = structuredClone(graph);
+    backwards.children![0]!.children![1]!.y = 0;
+    expect(scoreStatechartLayout(backwards, paths).pathOrder).toBe(1);
+    const overridden = structuredClone(graph);
+    overridden.children![0]!.layoutOptions = { "elk.direction": "RIGHT" };
+    expect(scoreStatechartLayout(overridden, paths).pathOrder).toBe(1);
+  });
+
   it("scores an unspecified compound direction using the adapter default", async () => {
     const graph: ElkNode = {
       id: "outer",

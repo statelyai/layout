@@ -845,3 +845,31 @@ production change or claim of hierarchy parity was retained.
 [Inputs, differences, rejected experiment and phase diagnosis](./compound-baseline/README.md)
 and [100 equal-scale native / real ELK comparisons](./compound-baseline/index.html)
 are retained. The native external-port hierarchy foundation remains required.
+
+## Native external-port identity and inherited direction
+
+Native external-port dummy construction matches the installed real worker on
+1,536 seeded boundaries, including all factory fields. Compound crossings now
+have explicit fixed-position boundary ports and separate-layer constraints,
+with origin metadata preserved through native graph conversion. Restoration
+uses the child router's actual selected endpoint instead of a midpoint. Child
+scopes inherit direction; statechart path scoring honors inheritance and
+explicit overrides.
+
+Four direction regressions derived from saved seed 1 fail on `2ddaa1f` and pass
+now. The unchanged 100-case hierarchy gate drops from 5,612 differing values to
+5,176, with no engine errors and still zero complete matches. The intermediate
+5,169 count precedes separate-layer constraints; source-equivalent constraints
+are retained despite that aggregate increase. No input is resampled.
+
+Local and clean selected-source suites: **1,891 pass / 110 fail / 2,001**,
+identical existing failure names. Six new tests pass. Source/repository
+TypeScript, selected lint/format and build pass. An initial clean worker-oracle
+runtime error is retained; the unchanged oracle test passes alone and in the
+complete final two-worker snapshot run.
+
+[Full source and validation evidence](./external-ports/README.md) and
+[100 equal-scale comparisons](./external-ports/index.html) remain red for full
+parity. Child-to-parent boundary geometry transfer, internal route joining,
+coordinated hierarchy phase scheduling and the public compound solver's shared
+foundation remain required.

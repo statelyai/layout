@@ -367,3 +367,78 @@ export function elkHypersegmentCrossings(data: {
     targetNodes,
   );
 }
+
+/** Direct unmodified worker boundary, before graph direction normalization. */
+export function elkExternalPortDummy(
+  data: import("../../src/layered/external-port-dummy").ExternalPortDummyInput,
+): import("../../src/layered/external-port-dummy").ExternalPortDummy {
+  context.$clinit_LayeredOptions();
+  context.$clinit_InternalProperties_1();
+  context.$clinit_PortSide();
+  context.$clinit_PortConstraints();
+  context.$clinit_Direction();
+  const sides = {
+    WEST: context.WEST_0,
+    EAST: context.EAST_0,
+    NORTH: context.NORTH_1,
+    SOUTH: context.SOUTH_0,
+  };
+  const constraints = {
+    UNDEFINED: context.UNDEFINED_4,
+    FREE: context.FREE,
+    FIXED_SIDE: context.FIXED_SIDE,
+    FIXED_ORDER: context.FIXED_ORDER,
+    FIXED_RATIO: context.FIXED_RATIO,
+    FIXED_POS: context.FIXED_POS,
+  };
+  const directions = {
+    RIGHT: context.RIGHT_6,
+    LEFT: context.LEFT_6,
+    DOWN: context.DOWN_1,
+    UP: context.UP_1,
+  };
+  const holder = new context.MapPropertyHolder();
+  context.$setProperty(holder, context.PORT_BORDER_OFFSET, data.borderOffset);
+  if (data.anchor)
+    context.$setProperty(
+      holder,
+      context.PORT_ANCHOR,
+      new context.KVector_1(data.anchor.x, data.anchor.y),
+    );
+  if (data.index !== undefined)
+    context.$setProperty(holder, context.PORT_INDEX, new context.Integer(data.index));
+  const node = context.createExternalPortDummy(
+    holder,
+    constraints[data.constraints],
+    sides[data.side],
+    data.netFlow,
+    data.ownerSize ? new context.KVector_1(data.ownerSize.width, data.ownerSize.height) : null,
+    data.position ? new context.KVector_1(data.position.x, data.position.y) : null,
+    new context.KVector_1(data.size.width, data.size.height),
+    directions[data.direction],
+    new context.LGraph(),
+  );
+  const property = (name: string) => context.$getProperty(node, context[name]);
+  const port = node.ports.array[0],
+    anchor = property("PORT_ANCHOR");
+  const result: import("../../src/layered/external-port-dummy").ExternalPortDummy = {
+    type: node.type_0.name_0,
+    constraints: property("PORT_CONSTRAINTS_0").name_0,
+    side: property("EXT_PORT_SIDE").name_0,
+    borderOffset: property("PORT_BORDER_OFFSET"),
+    externalSize: { width: property("EXT_PORT_SIZE").x_0, height: property("EXT_PORT_SIZE").y_0 },
+    width: node.size_0.x_0,
+    height: node.size_0.y_0,
+    port: { side: port.side.name_0, x: port.pos.x_0, y: port.pos.y_0 },
+    anchor: { x: anchor.x_0, y: anchor.y_0 },
+  };
+  const layer = property("LAYERING_LAYER_CONSTRAINT_0").name_0;
+  if (layer !== "NONE") result.layerConstraint = layer;
+  const edge = property("EDGE_CONSTRAINT").name_0;
+  if (edge !== "NONE") result.edgeConstraint = edge;
+  const inLayer = property("IN_LAYER_CONSTRAINT").name_0;
+  if (inLayer !== "NONE") result.inLayerConstraint = inLayer;
+  if (["FIXED_ORDER", "FIXED_RATIO", "FIXED_POS"].includes(data.constraints))
+    result.ratioOrPosition = property("PORT_RATIO_OR_POSITION_0");
+  return result;
+}

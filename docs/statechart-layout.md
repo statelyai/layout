@@ -100,8 +100,10 @@ inventory; it is not a guarantee that every option changes every graph.
 | Interactive layer/position IDs and in-layer predecessor/successor hints | Accepted but explicitly discarded by adapter; compiler does not emit them                                                            |
 | Edge-to-edge spacing                                                    | Some routing branches exclude INCLUDE_CHILDREN; increasing it did not alter this compound fixture, so the repair does not rely on it |
 
-An unspecified compound direction defaults to RIGHT in this adapter; provide
-explicit directions in every relevant scope. Mixed compound directions are
+An unspecified compound direction inherits its parent's direction during included
+hierarchy layout; RIGHT is the fallback when no direction is specified. Path
+scoring uses that inherited direction and honors explicit scope overrides.
+Mixed compound directions are
 supported but do not optimize boundary crossings
 jointly with the parent. Do not remove consumer geometry repairs based on this
 wrapper alone. Viz/Flow adoption and physical editor rendering need separate
