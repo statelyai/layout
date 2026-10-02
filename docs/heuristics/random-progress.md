@@ -184,3 +184,41 @@ positions, route joins, label switching/removal and exact phase timing still
 differ. The source hashes for this prototype were captured after its probe;
 it predates the compound-boundary roundoff correction. Preserve that distinction
 from the completed pre-clamp 160-input native replay.
+
+## Native center-label phase order and connected-port alignment
+
+The [53-case frozen phase differential](center-label-native-phase-probe.json)
+uses a source snapshot hashed before execution, with real elkjs 0.11.1 as oracle.
+It inserts raw center-label dummies before layering, selects their sides after
+crossing minimization, and removes synthetic orthogonal label junctions during
+joining. All five retained heights now match bounds, normal-node positions and
+route point geometry. None matches label positions under EDGE_LENGTH compaction.
+All six RIGHT non-inline side-selection modes match label positions when
+compaction is disabled. The full four-direction, inline/non-inline, six-mode
+sweep remains preserved: zero of all 53 cases matches every measured field.
+This remains an isolated prototype, not production or full serialized parity.
+
+ELK aligns nodes within a layer using connected input/output port counts after
+cycle reversal. Native used incident-edge counts and inferred flow from adjacent
+layers, which misclassifies same-layer inverted-port junctions. The native phase
+now retains its orientation privately and counts distinct connected ports. This
+places the five-height prototype's inverted junctions at the same node centers
+as ELK. The [four shared-port fixtures](shared-port-alignment-probe.json) originally
+fail in every direction; RIGHT/DOWN now match flow positions, while LEFT/UP
+retain a 20-pixel whole-graph extent/route-channel difference. Their absolute
+assertions remain intact. The original feedback height assertion remains failed.
+
+Focused current-source verification, excluding ignored scratch source copies:
+26 passes and three failures across 29 tests. Source/repository typechecks and
+changed-file lint pass. The connected-port correction and larger inverted-port
+phase remain uncommitted. Earlier counts that accidentally included scratch
+fixture copies must not be treated as additional source coverage.
+
+Source tracing also confirms that ELK's EDGE_LENGTH horizontal compactor uses
+weighted network simplex over node/route separation constraints; native's current
+degree heuristic is not that algorithm. Faithful compaction, label-dummy
+switching, spline removal and remaining direction transforms still need work.
+The same immutable prototype is now replaying all 160 retained random inputs,
+starting with ten geometry-clean cases. That native-only replay reuses prior
+measurements, stops at the first failure and does not resample. Its remaining
+150-case continuation must reach a terminal result before claiming completion.
