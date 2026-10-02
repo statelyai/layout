@@ -61,3 +61,16 @@ in the coordinate prototype. Source/repository types and 208 focused tests pass.
 before execution. All ten native geometry checks pass, with no engine errors.
 ELK wins crossings on seven and bends on nine. **Parity still fails.** These
 observed cases are retained for future replay; they are no longer holdouts.
+
+The subsequent [native-only 160-input diagnostic replay](fixed-coordinate-native-replay.json)
+passes all native geometry checks and finds no synthetic endpoint-reference leaks.
+It reuses exact saved inputs/options and the prior real ELK oracle measurements.
+It started from the working tree subsequently committed as bc4e7e2; a cosmetic
+unused-binding rename followed module loading. This is not a clean frozen
+full-engine benchmark; the fresh comparison above is independently frozen.
+
+edgeCrossings: total 14359 → 14219; 56 cases improve, 43 regress. Against retained oracle outputs: 25 native wins, 7 ties, 111 ELK wins.
+
+bends: total 22875 → 22810; 48 cases improve, 44 regress. Against retained oracle outputs: 15 native wins, 0 ties, 128 ELK wins.
+
+Seventeen oracle errors remain unverified. **Parity remains incomplete.**
