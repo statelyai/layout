@@ -477,3 +477,77 @@ ELK-valid pipeline input. Investigate the missing north/south preprocessing,
 merged owner grouping, and fractional offsets; do not add arbitrary bends or
 weaken attachment assertions to make it green. Full parity remains unproven;
 goal active, PR draft.
+
+### North/south port phase and rejected full integration (2026-10-02)
+
+Native `north-south-ports.ts` now creates zero-size same-layer port dummies,
+shares a dummy across incoming/outgoing edges of one port, preserves reversed
+edge roles and segment/label identity, and records owner layout units and
+successor constraints. It preserves seeded random state and reserves unique
+private IDs. Side-switch permission suppresses the owner ordering constraint.
+Mixed-role dummy ports are input before output. The reconnect helper restores
+orthogonal/polyline endpoints with the dummy-row bend and keeps the caller's
+routes intact. Dedicated north/south self-loops and splines remain incomplete.
+
+Twenty focused phase tests pass: ten direction/reversal/sharing/route/ID cases
+and ten saved random flat/hierarchical input invariant checks. Combined with
+scanline/grouped/weighted helpers the current focused run passes 35 tests.
+The 20 new phase tests and source typecheck also pass on a clean eb56c69 source
+snapshot with only the new helper added, independently of the larger local WIP.
+These phase invariants do not prove hierarchy layout parity. Current source
+and repository TypeScript checks and focused formatting/lint pass.
+
+A full-source integration experiment adds preprocessing before crossing,
+zero-size north/south placement, and endpoint restoration before compaction.
+The candidate groups each owner's dummies around it after crossing minimization;
+this is explicitly an approximation, not the missing upstream constrained
+barycenter/greedy-switch algorithm. **All 12 strict directional oracle cases
+pass**, including the four previously failing cross-port profiles, with no
+assertion changes. Bounds, every node coordinate, full ports and full edge
+sections are compared. The corrected candidate also passes all 132 broader
+option/wrapping/component/routing fixtures and its source TypeScript check.
+The production pipeline still has no new helper caller; current worktree's
+four cross-port oracle assertions therefore remain red.
+
+The first frozen candidate accidentally inserted the main-path edit into the
+wrapped path, causing eight wrapping failures and source type failures. Its
+124/132 result, complete source, outputs and error log remain retained. The
+corrected immutable candidate restores that path and fixes the missing type
+import. Source hashes were captured before testing and verified after all
+processes completed. These are source snapshots, not Git worktrees.
+
+All ten corrected full native random layouts complete with zero measured
+geometry defects, but quality fails the per-graph gate:
+
+| Graph | Before crossings/bends | Candidate crossings/bends | Real ELK crossings/bends |
+| ----- | ---------------------- | ------------------------- | ------------------------ |
+| 1     | 0/14                   | 1/15                      | 0/13                     |
+| 2     | 10/49                  | 10/58                     | 3/36                     |
+| 3     | 13/91                  | 56/109                    | 23/50                    |
+| 4     | 16/115                 | 15/117                    | 8/67                     |
+| 5     | 127/274                | 158/261                   | 120/183                  |
+| 6     | 5/55                   | 6/51                      | 3/28                     |
+| 7     | 17/102                 | 20/98                     | oracle error             |
+| 8     | 109/191                | 92/216                    | 83/136                   |
+| 9     | 154/198                | 150/211                   | oracle error             |
+| 10    | 339/308                | 365/329                   | 125/274                  |
+
+Before is the scanline experimental snapshot, not clean Git HEAD. The largest
+candidate graph was observed live with sustained CPU activity before finishing;
+no repeated run or artificial timeout was used to replace its result. Both
+oracle hierarchical errors remain separate; no resampling or assertion changes.
+
+Retained evidence:
+
+- [Corrected full native probe](./north-south-compaction-probe.json)
+- [First failed integration](./north-south-compaction-first-probe.json)
+- [All 12 exact directional comparisons](./north-south-directions-probe.json)
+- [Reproducible before/first/corrected source snapshots and replay scripts](./north-south-candidate-sources.tar.gz)
+- [Matching before/native/real-ELK visual](../proofs/random-parity/north-south-ports.svg)
+
+The visual was inspected at identical viewport and scale. RIGHT cross ports
+change from native 114 x 74 to candidate 64 x 94, matching real ELK 64 x 94.
+The narrow success does not justify promoting the full candidate. Port actual
+layout-unit constraints and barycenter associates into crossing minimization
+next, then rerun these inputs and strict oracle fixtures. Full parity unproven;
+goal active, PR draft. No full-suite or remote CI claim.
