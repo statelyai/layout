@@ -266,3 +266,7 @@ Path comparisons retain bend costs instead of selecting solely by length and
 conflicts. Retry leads shrink to fit positive subpixel gaps. Flat native repair
 also detects unrelated label penetrations, diagonal segments, and retraced tracks,
 even when node placement and label rectangles do not overlap.
+
+Port-side alignment preserves node spacing around unrelated nodes. Rectangle-only
+collision checks could leave a port inside a neighbor despite disjoint node bounds;
+seeded random regressions cover these placement failures before routing.

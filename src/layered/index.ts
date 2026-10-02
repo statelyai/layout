@@ -54,6 +54,7 @@ import { assignLayersWithStretchWidth } from "./stretch-width";
 import { joinLongEdgeRoutes, splitLongEdges } from "./long-edges";
 import { unzipLayersAlternating } from "./layer-unzipping";
 import { placeNodesWithBrandesKoepf } from "./bk-node-placement";
+import { nodeNodeSpacing } from "./spacing";
 import { placeNodesWithLinearSegments } from "./linear-segments-node-placement";
 import { placeNodesWithNetworkSimplex } from "./network-simplex-node-placement";
 import { applyHighDegreeNodeTreatment } from "./high-degree";
@@ -1618,16 +1619,19 @@ function runLayeredPipeline<N, E, G, P>(
                 : undefined;
       if (
         !candidate ||
-        [...mutableRects].some(
-          ([id, other]) =>
-            id !== edge.targetId &&
-            other.width > 0 &&
-            other.height > 0 &&
-            candidate.x < other.x + other.width &&
-            candidate.x + candidate.width > other.x &&
-            candidate.y < other.y + other.height &&
-            candidate.y + candidate.height > other.y,
-        )
+        [...mutableRects].some(([id, other]) => {
+          if (id === edge.targetId || other.width <= 0 || other.height <= 0) return false;
+          // The connected source may use the deliberate port-side gap. All
+          // other nodes retain placement spacing, including port clearance.
+          const spacing =
+            id === edge.sourceId ? 0 : nodeNodeSpacing(expanded.input, id, edge.targetId);
+          return (
+            candidate.x < other.x + other.width + spacing &&
+            candidate.x + candidate.width + spacing > other.x &&
+            candidate.y < other.y + other.height + spacing &&
+            candidate.y + candidate.height + spacing > other.y
+          );
+        })
       )
         continue;
       mutableRects.set(edge.targetId, candidate);
