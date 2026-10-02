@@ -117,3 +117,27 @@ the native candidate does not reserve equivalent space. The gap is therefore
 larger than a rounding discrepancy. Native label position also differs. Next:
 trace and port center-label dummy insertion/placement, preserving this sweep
 and the original exact assertion.
+
+## Compound boundary roundoff
+
+The [proper-layer diagnostic replay](inverted-port-proper-first-failure.json)
+stops at case 110, seed 1791673957 / graph 10: one diagonal and one leaf hit.
+This failure survives the subsequent label-track correction. It is retained
+without resampling; 50 planned inputs were not evaluated. No source hashes were
+captured at that replay's start, so its dirty-source provenance is limited.
+
+The ancestor-to-child edge E36 attaches to the parent's content boundary a few
+ulps inside the child's top edge. The router treats legal travel along that
+boundary as penetration and emits a diagonal fallback. Commit `05834b3` applies
+the existing 1e-10 intersection tolerance to parallel rectangle-boundary checks.
+Two minimized source/target tests fail before the correction and pass afterward.
+All 216 routing/compound tests, source/repository types, and changed-file lint
+pass. The [same original counterexample](compound-boundary-roundoff-probe.json)
+now has zero geometry failures, including diagonals and node hits.
+
+A new 160-input diagnostic loads an immutable task-local source snapshot;
+its manifest records every source hash before execution. It includes the
+uncommitted inverted-port phase and committed roundoff correction. It remains
+a native-only diagnostic using retained prior measurements, not a new frozen
+real-ELK comparison. Center-label insertion remains an isolated prototype;
+its label positions and route joins still differ from ELK. **Parity is incomplete.**

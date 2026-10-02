@@ -1,0 +1,54 @@
+{
+  "baseRevision": "05834b3",
+  "workingTreeDirty": true,
+  "provenance": "Single retained seed 1791673957 / graph 10 replay. Source loaded before commit 05834b3; those exact authoring/routing changes are now committed. Other inverted-port phase changes remain uncommitted. Not a full corpus or real-ELK parity evaluation.",
+  "sourceSha256": {
+    "src/authoring/routing.ts": "a8d613ac2908fd5f8d52a3c4362067381a1cf3c9eac82f78cd810817cd1c77ec",
+    "src/layered/index.ts": "1375500a8b62a7a0c4770781f3618f2025c5c940d2c5ad20135fad9de48868ca",
+    "src/layered/strategies.ts": "a2f307ca1132ec1e917d6fa7557b3f6551fba763d2cb91d51d8473379f3fa6e1",
+    "src/layered/long-edges.ts": "4bd9f5b0d5000c545e2a3dafb8015c84a838a8ad3dd0b0dec41e2d68c178b909",
+    "src/layered/inverted-ports.ts": "2a446ffdb786f88975b9a7920ebc7b2f454d9af2e45cc528798697403790455a"
+  },
+  "rows": [
+    {
+      "seed": 1791673957,
+      "graph": 10,
+      "before": {
+        "missingNodes": 0,
+        "missingRoutes": 0,
+        "nonFinite": 0,
+        "diagonals": 0,
+        "nodeHits": 0,
+        "nodeOverlaps": 0,
+        "labelNodeOverlaps": 0,
+        "labelOverlaps": 0,
+        "edgeLabelHits": 0,
+        "selfRetraceLength": 0,
+        "edgeCrossings": 521,
+        "edgeOverlapLength": 2213.5,
+        "bends": 336,
+        "routeLength": 123421,
+        "area": 7864038.333333335
+      },
+      "after": {
+        "missingNodes": 0,
+        "missingRoutes": 0,
+        "nonFinite": 0,
+        "diagonals": 0,
+        "nodeHits": 0,
+        "nodeOverlaps": 0,
+        "labelNodeOverlaps": 0,
+        "labelOverlaps": 0,
+        "edgeLabelHits": 0,
+        "selfRetraceLength": 0,
+        "edgeCrossings": 432,
+        "edgeOverlapLength": 1969.5,
+        "bends": 314,
+        "routeLength": 111670,
+        "area": 5901011.166666666
+      },
+      "geometryFailures": [],
+      "leakedSyntheticPort": false
+    }
+  ]
+}
