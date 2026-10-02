@@ -418,3 +418,62 @@ The remaining constraint generator still uses pairwise collision tests rather
 than ELK's complete edge-aware three-pass scanline, grouped hitbox trimming, and
 fractional port adjustment. Those are required, alongside north/south port
 processing and route-channel parity. Keep the goal active and the PR draft.
+
+### Native three-pass compaction scanline (2026-10-02)
+
+Replaced the internal grouped helper's all-pairs constraints with ELK's
+candidate-neighbor sweep. Separate segment, node, and combined passes use
+edge margins, minimum node margins, and port-lead spacing-ignore flags.
+The sweep rejects overlapping equal-center hitboxes, with diagnostic geometry
+in the error cause. Seven direct sweep tests cover visibility, transitive
+constraints, touching borders, center ordering, rigid groups, invalid overlaps,
+and empty intervals. The initially authored disappearing-middle expectation
+incorrectly demanded a redundant outer constraint; checking the upstream
+candidate algorithm showed it retains the transitive pair instead. Corrected
+that new unit expectation; existing parity assertions remain unchanged.
+
+The committed helper still has no committed production caller. Its full native
+integration uses the larger local uncommitted phase pipeline. This is progress
+on the native foundation, not a claim that the production integration is ready.
+
+A frozen source snapshot captured before execution reran all ten saved random
+flat/hierarchical graphs, explicitly selecting EDGE_LENGTH for both engines.
+Hashes were verified after terminal completion. Before is the previous
+`grouped-final-flow` experimental snapshot, not clean Git HEAD. Every input,
+complete native/oracle output, error, and source hash is retained in
+[scanline-compaction-probe.json](./scanline-compaction-probe.json).
+Native geometry metrics remain zero across all ten; real ELK still rejects
+hierarchical cases 7 and 9. Quality remains mixed:
+
+| Graph | Previous crossings/bends | Scanline crossings/bends | Real ELK crossings/bends |
+| ----- | ------------------------ | ------------------------ | ------------------------ |
+| 1     | 0/14                     | 0/14                     | 0/13                     |
+| 2     | 3/30                     | 10/49                    | 3/36                     |
+| 3     | 13/92                    | 13/91                    | 23/50                    |
+| 4     | 10/110                   | 16/115                   | 8/67                     |
+| 5     | 115/276                  | 127/274                  | 120/183                  |
+| 6     | 5/55                     | 5/55                     | 3/28                     |
+| 7     | 19/102                   | 17/102                   | oracle error             |
+| 8     | 109/190                  | 109/191                  | 83/136                   |
+| 9     | 156/198                  | 154/198                  | oracle error             |
+| 10    | 397/311                  | 339/308                  | 125/274                  |
+
+Largest graph overlap length falls from 1531.5 to 99.5. Per-graph crossing/bend
+regressions still fail the strict parity gate; no resampling or aggregate-only
+success claim. ELK itself has measured node hits in cases 3 and 8.
+
+Current broader validation: 198 pass, two unchanged feedback test assertions
+fail out of 200. The vertical cycle now throws invalid scanline hitboxes, which
+real ELK already rejects on that exact input; native graceful layout remains
+unfinished. Targetless-sink placement still fails. Separate exact grouped
+oracle run: eight pass, four cross-port failures unchanged. Source and repo
+TypeScript checks pass. No full-suite or remote CI claim.
+
+A new synthetic merged cross-port-column regression also fails with invalid
+hitboxes. Its complete strict test source is saved in the probe and retained
+locally as `test/grouped-merged-port-column.test.ts`. Do not infer that feeding
+already-compacted oracle output back into an intermediate phase is an
+ELK-valid pipeline input. Investigate the missing north/south preprocessing,
+merged owner grouping, and fractional offsets; do not add arbitrary bends or
+weaken attachment assertions to make it green. Full parity remains unproven;
+goal active, PR draft.

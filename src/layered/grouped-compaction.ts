@@ -8,6 +8,7 @@
  *******************************************************************************/
 import type { EntityRect, Point } from "@statelyai/graph";
 import type { AcyclicOrientation, EdgeRoutes, LayeredPhaseInput, NodePlacement } from "./types";
+import { scanlineConstraints } from "./compaction-scanline";
 import { nodeNodeSpacing } from "./spacing";
 import { solveWeightedCompaction, type CompactionConstraint } from "./weighted-compaction";
 
@@ -18,6 +19,8 @@ interface Compactable extends EntityRect {
   nodeId?: string;
   edges: Set<string>;
   points: Point[];
+  ignoreUp?: boolean;
+  ignoreDown?: boolean;
 }
 
 /** Compact orthogonal geometry in canonical flow coordinates, retaining rigid port leads. */
@@ -96,6 +99,7 @@ export function applyGroupedEdgeLengthCompaction(
   for (const [edgeId, points] of canonicalRoutes) {
     const edge = edgeById.get(edgeId);
     if (!edge) continue;
+    const edgeSegments: Compactable[] = [];
     for (let index = 0; index + 1 < points.length; index++) {
       const first = points[index]!;
       const second = points[index + 1]!;
@@ -110,7 +114,7 @@ export function applyGroupedEdgeLengthCompaction(
       const id = `track:${edgeId}:${index}`;
       const group = owner?.group ?? id;
       if (!owner) groupOrigin.set(group, first.x);
-      segments.push({
+      const segment: Compactable = {
         id,
         group,
         offset: first.x - groupOrigin.get(group)!,
@@ -120,8 +124,41 @@ export function applyGroupedEdgeLengthCompaction(
         height: Math.abs(second.y - first.y),
         edges: new Set([edgeId]),
         points: [first, second],
-      });
+        ignoreUp: owner
+          ? endpointSide(
+              owner.nodeId!,
+              index === 0 ? edge.sourcePort : edge.targetPort,
+              index === 0 ? first : second,
+            ) === "SOUTH"
+          : false,
+        ignoreDown: owner
+          ? endpointSide(
+              owner.nodeId!,
+              index === 0 ? edge.sourcePort : edge.targetPort,
+              index === 0 ? first : second,
+            ) === "NORTH"
+          : false,
+      };
+      segments.push(segment);
+      if (!owner) edgeSegments.push(segment);
     }
+    const markNearNode = (
+      segment: Compactable | undefined,
+      point: Point | undefined,
+      node: Compactable | undefined,
+    ) => {
+      if (!segment || !point || !node) return;
+      if (point.y < node.y) segment.ignoreDown = true;
+      else if (point.y > node.y + node.height) segment.ignoreUp = true;
+      else {
+        segment.ignoreUp = true;
+        segment.ignoreDown = true;
+      }
+    };
+    const firstSegment = edgeSegments[0];
+    const lastSegment = edgeSegments.at(-1);
+    markNearNode(firstSegment, firstSegment?.points[1], nodes.get(edge.sourceId));
+    markNearNode(lastSegment, lastSegment?.points[0], nodes.get(edge.targetId));
   }
   // ELK joins intersecting collinear segments before calculating constraints.
   segments.sort((a, b) => a.x - b.x || a.y - b.y);
@@ -136,6 +173,8 @@ export function applyGroupedEdgeLengthCompaction(
       survivor.height = Math.max(survivor.height, segment.y + segment.height - survivor.y);
       for (const edgeId of segment.edges) survivor.edges.add(edgeId);
       survivor.points.push(...segment.points);
+      survivor.ignoreUp ||= segment.ignoreUp;
+      survivor.ignoreDown ||= segment.ignoreDown;
       if (!survivor.group.startsWith("node:") && segment.group.startsWith("node:")) {
         survivor.group = segment.group;
         survivor.offset = survivor.x - groupOrigin.get(segment.group)!;
@@ -192,19 +231,64 @@ export function applyGroupedEdgeLengthCompaction(
     }
     return value;
   };
-  for (const left of items) {
-    for (const right of items) {
-      if (left.group === right.group) continue;
-      // ELK's scanline orders intervals by their centers, not their left borders.
-      // A zero-width route column may sit left of a wide node's center while
-      // still having a greater x coordinate than that node's left border.
-      if (right.x + right.width / 2 <= left.x + left.width / 2 + 1e-9) continue;
-      const crossSpacing = spacing(left, right, false);
-      if (
-        right.y + right.height + crossSpacing <= left.y + 1e-9 ||
-        right.y >= left.y + left.height + crossSpacing - 1e-9
-      )
-        continue;
+  const visible = new Map<Compactable, Set<Compactable>>();
+  const sweep = (hitboxes: Compactable[]) => {
+    for (const [left, right] of scanlineConstraints(hitboxes)) {
+      const originalLeft = items.find((item) => item.id === left.id)!;
+      const originalRight = items.find((item) => item.id === right.id)!;
+      let targets = visible.get(originalLeft);
+      if (!targets) visible.set(originalLeft, (targets = new Set()));
+      targets.add(originalRight);
+    }
+  };
+  const edgeMargin = Math.max(0, Number(input.settings["spacing.edgeEdge"] ?? 10) / 2 - 0.5);
+  const enlarge = (item: Compactable, margin: number): Compactable => {
+    const box = { ...item };
+    if (item.nodeId) {
+      box.y -= margin;
+      box.height += 2 * margin;
+    } else if (!item.ignoreUp) {
+      box.y -= margin + 0.01;
+      box.height += margin + 0.01;
+    } else if (!item.ignoreDown) box.height += margin + 0.01;
+    return box;
+  };
+  // ELK uses edge spacing for both the segment-only and node-only sweeps.
+  sweep(merged.map((item) => enlarge(item, edgeMargin)));
+  sweep(
+    [...nodes.values()].map((item) => {
+      const node = input.graph.nodes.find((node) => node.id === item.nodeId);
+      const individual = node ? input.nodeSettings?.(node)?.["spacing.individual"] : undefined;
+      const edgeSpacing =
+        individual && typeof individual === "object"
+          ? Number(
+              (individual as Record<string, number>)["spacing.edgeEdge"] ??
+                input.settings["spacing.edgeEdge"] ??
+                10,
+            )
+          : Number(input.settings["spacing.edgeEdge"] ?? 10);
+      return enlarge(item, Math.max(0, edgeSpacing / 2 - 0.5));
+    }),
+  );
+  const minimumMargin = Math.min(
+    edgeMargin,
+    ...[...nodes.values()].map((item) =>
+      Math.max(0, nodeNodeSpacing(input, item.nodeId!, item.nodeId!) / 2 - 0.5),
+    ),
+  );
+  sweep(
+    items.map((item) => {
+      if (item.nodeId || !item.group.startsWith("node:")) return enlarge(item, minimumMargin);
+      const box = { ...item };
+      if (item.ignoreUp) {
+        box.y += minimumMargin + 0.01;
+        box.height -= minimumMargin + 0.01;
+      } else if (item.ignoreDown) box.height -= minimumMargin + 0.01;
+      return box;
+    }),
+  );
+  for (const [left, targets] of visible) {
+    for (const right of targets) {
       if (sameEdge(left, right)) {
         const helper = `helper:${constraints.length}`;
         groups.push(helper);
