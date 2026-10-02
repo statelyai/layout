@@ -246,7 +246,9 @@ metrics assertion includes the new preprocessing phase; no heuristic assertions
 were removed or relaxed. Twenty-four focused tests pass after strengthening. A later 145-test joining/
 option-fuzz run restores the two POLYLINE routing fixtures and all 100 option
 draws: 144 pass, with the MEDIAN_LAYER fixture timing out at five seconds.
-That unchanged fixture needs an isolated retry; this is not a fully green run.
+All six unchanged label-strategy fixtures pass on isolated retry with one
+worker. The original 145-test run remains recorded with its timeout; the full
+integration suite is still failed.
 
 The [full integration run](center-label-integration-test-results.json) remains
 failed: 1,653 passes and 36 failures, including two five-second timeouts. It
