@@ -319,3 +319,40 @@ export function pointsBounds(points: readonly RoutePoint[]): RouteBounds {
     height: 0,
   });
 }
+
+// Search must not consume the terminal leads that are appended afterwards.
+// A distant excursion can retrace a lead even without an immediate reversal.
+export const findPathBetweenLeads = (
+  start: RoutePoint,
+  end: RoutePoint,
+  style: "orthogonal" | "polyline" | "octilinear",
+  ctx: SearchContext,
+  leads: readonly [RoutePoint, RoutePoint][],
+  directions: { incoming?: RoutePoint; outgoing?: RoutePoint } = {},
+) => {
+  const protectedContext = {
+    ...ctx,
+    edgeCost: (p: RoutePoint, q: RoutePoint) => {
+      for (const [from, to] of leads) {
+        const dx = q.x - p.x,
+          dy = q.y - p.y;
+        const length = Math.hypot(dx, dy);
+        if (length < 1e-8) continue;
+        if (
+          Math.abs(dx * (to.y - from.y) - dy * (to.x - from.x)) > 1e-8 * length ||
+          Math.abs(dx * (from.y - p.y) - dy * (from.x - p.x)) > 1e-8 * length
+        )
+          continue;
+        const lo = ((from.x - p.x) * dx + (from.y - p.y) * dy) / length;
+        const hi = ((to.x - p.x) * dx + (to.y - p.y) * dy) / length;
+        if (Math.min(length, Math.max(lo, hi)) - Math.max(0, Math.min(lo, hi)) > 1e-8)
+          return Infinity;
+      }
+      return ctx.edgeCost?.(p, q) ?? 0;
+    },
+  };
+  const result = findPath(start, end, style, protectedContext, directions);
+  ctx.visited = protectedContext.visited;
+  ctx.budgetExceeded = protectedContext.budgetExceeded;
+  return result;
+};

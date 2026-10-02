@@ -35,6 +35,7 @@ import { inflate, intersects, union } from "./spatial";
 import {
   clear,
   findPath,
+  findPathBetweenLeads,
   pointsBounds,
   segmentBounds,
   simplify,
@@ -697,7 +698,10 @@ export function routeEdge(
       if (style === "parallel" && peers.length > 1) {
         // Find a feasible corridor before choosing lanes; an arbitrary midpoint
         // may be inside an obstacle even when good parallel routes exist.
-        const base = findPath(start, end, "polyline", context);
+        const base = findPathBetweenLeads(start, end, "polyline", context, [
+          [a.point, start],
+          [end, b.point],
+        ]);
         const mid =
           base && base.length > 2
             ? base[Math.floor(base.length / 2)]!
@@ -734,11 +738,31 @@ export function routeEdge(
           outgoing:
             i === anchors.length - 1 ? { x: -vector(b.side).x, y: -vector(b.side).y } : undefined,
         };
-        let found = findPath(anchors[i - 1]!, anchors[i]!, searchStyle, searchContext, directions);
+        let found = findPathBetweenLeads(
+          anchors[i - 1]!,
+          anchors[i]!,
+          searchStyle,
+          searchContext,
+          [
+            [a.point, start],
+            [end, b.point],
+          ],
+          directions,
+        );
         if (!found && searchContext !== context && !searchContext.budgetExceeded) {
           // Extra curve room is optional: tight channels may use safe line segments.
           const narrow = { ...searchContext, obstacles: context.obstacles };
-          found = findPath(anchors[i - 1]!, anchors[i]!, searchStyle, narrow, directions);
+          found = findPathBetweenLeads(
+            anchors[i - 1]!,
+            anchors[i]!,
+            searchStyle,
+            narrow,
+            [
+              [a.point, start],
+              [end, b.point],
+            ],
+            directions,
+          );
           searchContext.visited = narrow.visited;
           searchContext.budgetExceeded = narrow.budgetExceeded;
         }
@@ -802,11 +826,15 @@ export function routeEdge(
       const points = [a.point];
       let ok = clear(a.point, start, hard) && clear(end, b.point, hard);
       for (let i = 1; ok && i < anchors.length; i++) {
-        const found = findPath(
+        const found = findPathBetweenLeads(
           anchors[i - 1]!,
           anchors[i]!,
           style === "octilinear" ? "octilinear" : "orthogonal",
           hard,
+          [
+            [a.point, start],
+            [end, b.point],
+          ],
           {
             incoming: i === 1 ? vector(a.side) : undefined,
             outgoing:
@@ -908,11 +936,15 @@ export function routeEdge(
               (batch.edgeCost?.(a, b) ?? 0) + selfCost(a, b),
             guides: (bounds: RouteBounds) => (batch.guides?.(bounds) ?? []).slice(0, 8),
           };
-          const found = findPath(
+          const found = findPathBetweenLeads(
             start,
             end,
             style === "octilinear" ? "octilinear" : "orthogonal",
             optimized,
+            [
+              [a.point, start],
+              [end, b.point],
+            ],
             {
               incoming: vector(a.side),
               outgoing: { x: -vector(b.side).x, y: -vector(b.side).y },

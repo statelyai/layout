@@ -77,7 +77,11 @@ Native flat layered output gets an obstacle-aware routing repair when its tracks
 cross node interiors or labels collide with nodes, labels, or port exit corridors.
 Valid tracks and custom routers retain their geometry.
 The repair preserves the initial face of fixed implicit endpoints, using the
-initial outward lead to disambiguate corner attachments. It returns cached
+initial outward lead to disambiguate corner attachments. FIXED_POS and FIXED_RATIO
+implicit attachments retain their coordinates via private routing-only ports;
+those ports never appear in public nodes, edges, or cached endpoint references.
+Route search reserves its own terminal leads against collinear retracing,
+including soft search and hard/optimization retries. It returns cached
 structured label sections, just like compound routing.
 The pinned elkjs provider bypasses this native repair to retain its established
 flat geometry contract.

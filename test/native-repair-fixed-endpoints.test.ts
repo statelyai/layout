@@ -1,5 +1,6 @@
 import { expect, it } from "vitest";
 import { createGraph, type VisualGraph } from "@statelyai/graph";
+import { getLayoutRoutes } from "../src";
 import { repairFlatRouting } from "../src/layered/native-routing";
 
 it("preserves a fixed implicit source side when repairing a labeled feedback edge", () => {
@@ -32,8 +33,13 @@ it("preserves a fixed implicit source side when repairing a labeled feedback edg
     direction: "right",
     nodeSettings: () => ({ portConstraints: "FIXED_POS" }),
   });
-  expect(repaired.edges[0]!.points![0]!.x).toBe(380);
-  expect(repaired.edges[0]!.points!.at(-1)!.x).toBe(0);
+  expect(repaired.nodes).toEqual(graph.nodes);
+  for (const route of getLayoutRoutes(repaired).values())
+    for (const section of route.sections)
+      for (const endpoint of [section.from, section.to])
+        if (endpoint.kind === "node") expect(endpoint.port).toBeUndefined();
+  expect(repaired.edges[0]!.points![0]).toEqual({ x: 380, y: 30 });
+  expect(repaired.edges[0]!.points!.at(-1)).toEqual({ x: 0, y: 130 });
 });
 
 it("uses the initial lead to preserve the fixed face at a corner attachment", () => {
@@ -66,6 +72,11 @@ it("uses the initial lead to preserve the fixed face at a corner attachment", ()
     direction: "down",
     nodeSettings: () => ({ portConstraints: "FIXED_POS" }),
   });
-  expect(repaired.edges[0]!.points![0]!.y).toBe(60);
-  expect(repaired.edges[0]!.points!.at(-1)!.y).toBe(100);
+  expect(repaired.nodes).toEqual(graph.nodes);
+  for (const route of getLayoutRoutes(repaired).values())
+    for (const section of route.sections)
+      for (const endpoint of [section.from, section.to])
+        if (endpoint.kind === "node") expect(endpoint.port).toBeUndefined();
+  expect(repaired.edges[0]!.points![0]).toEqual({ x: 380, y: 60 });
+  expect(repaired.edges[0]!.points!.at(-1)).toEqual({ x: 80, y: 100 });
 });

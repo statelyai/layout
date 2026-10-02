@@ -1,4 +1,4 @@
-import type { VisualGraph } from "@statelyai/graph";
+import type { GraphNode, VisualGraph } from "@statelyai/graph";
 import type { LayeredLayoutOptions } from "./types";
 import { routeCrosses } from "../authoring/routing";
 import {
@@ -6,6 +6,7 @@ import {
   routeToPolylines,
   type EdgeRoutingSettings,
   type RouteSide,
+  type RouteEndpoint,
 } from "../routing";
 import { recordRouteGeometry } from "../routing/layout-cache";
 
@@ -188,20 +189,89 @@ export function repairFlatRouting<N, E, G, P>(
       },
     ]),
   );
+  const routingNodes = new Map<string, GraphNode>(graph.nodes.map((node) => [node.id, node]));
+  const syntheticPorts = new Map<string, Set<string>>();
+  const attach = (
+    edgeId: string,
+    nodeId: string,
+    portName: string | undefined,
+    point: { x: number; y: number } | undefined,
+    source: boolean,
+  ) => {
+    const side = source ? attachments[edgeId]?.sourceSide : attachments[edgeId]?.targetSide;
+    if (
+      !side ||
+      !point ||
+      !["FIXED_POS", "FIXED_RATIO"].includes(
+        String(options.nodeSettings?.(nodes.get(nodeId)!)?.portConstraints),
+      )
+    )
+      return portName;
+    const node = routingNodes.get(nodeId)!;
+    let name = `__layout_implicit:${edgeId}:${source ? "source" : "target"}`;
+    while (node.ports?.some((p) => p.name === name)) name += ":";
+    const names = syntheticPorts.get(nodeId) ?? new Set<string>();
+    names.add(name);
+    syntheticPorts.set(nodeId, names);
+    routingNodes.set(nodeId, {
+      ...node,
+      ports: [
+        ...(node.ports ?? []),
+        {
+          name,
+          data: undefined,
+          direction: "inout",
+          x: point.x - node.x!,
+          y: point.y - node.y!,
+          width: 0,
+          height: 0,
+        },
+      ],
+    });
+    return name;
+  };
+  const routingEdges = edges.map((edge) => ({
+    ...edge,
+    sourcePort: attach(edge.id, edge.sourceId, edge.sourcePort, edge.points?.[0], true),
+    targetPort: attach(edge.id, edge.targetId, edge.targetPort, edge.points?.at(-1), false),
+  }));
   const snapshot = orthogonalRouting.route(
-    { ...graph, edges },
+    { ...graph, nodes: [...routingNodes.values()], edges: routingEdges },
     { coordinateSpace: "world", maxSearchNodes: 40000, edges: attachments },
+  );
+  const authoredEndpoint = (endpoint: RouteEndpoint): RouteEndpoint => {
+    if (
+      endpoint.kind !== "node" ||
+      endpoint.port === undefined ||
+      !syntheticPorts.get(endpoint.nodeId)?.has(endpoint.port)
+    )
+      return endpoint;
+    const { port: _privatePort, ...authored } = endpoint;
+    return authored;
+  };
+  const routes = new Map(
+    [...snapshot.routes].map(([id, route]) => [
+      id,
+      {
+        ...route,
+        sections: route.sections.map((section) => ({
+          ...section,
+          from: authoredEndpoint(section.from),
+          to: authoredEndpoint(section.to),
+        })),
+      },
+    ]),
   );
   const result = {
     ...graph,
     edges: edges.map((edge) => ({
       ...edge,
-      points: routeToPolylines(snapshot.routes.get(edge.id)!).flatMap((points) =>
+      points: routeToPolylines(routes.get(edge.id)!).flatMap((points) =>
         points.map((p) => ({ ...p })),
       ),
     })),
-    compoundRoutes: snapshot.routes,
+    compoundRoutes: routes,
   };
-  recordRouteGeometry(result, snapshot.routes);
+  recordRouteGeometry(result, routes);
   return result;
 }

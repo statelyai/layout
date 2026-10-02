@@ -34,3 +34,16 @@ Corrections include physical fixed-port ordering; a continuous Java-style random
 The existing native implementation still differs from ELK across cyclic ordering, port processing, compound/cross-boundary phase coordination, and route channel allocation. The strict gate requires native geometry invariants plus crossings and bends no worse than ELK per comparable graph. An oracle failure remains unverified. Shared track length, detours, area and the human-authored aesthetic rubric remain additional quality measures; passing this finite gate would not establish universal parity.
 
 [Matching before/after proof](../proofs/random-parity/README.md) preserves graph inputs, dimensions, direction, scale and viewport. The review gallery defaults to native / real ELK comparison.
+
+## Fixed-face replay
+
+[160-graph replay](fixed-face-replay.md) / [raw report](fixed-face-replay.json)
+measure clean native revision `bb693a4bf6c8733fab5a8c7d59648c41dd61ec9a`
+against elkjs 0.11.1 on the same 16 seeds. All 160 native geometry checks pass;
+143 oracle comparisons remain, with 17 ELK errors retained. ELK wins crossings
+on 114 cases and bends on 129. **Parity still fails.** Constraint orientation
+and fixed-face corrections alone do not close the layout/routing gap.
+
+The full suite at that revision reports 1657 passes and two timeouts: review
+graph 8 and the ChangeAwareArrayList compatibility stress fixture. Both still
+time out on an unchanged isolated retry. These are unverified checks, not passes.
