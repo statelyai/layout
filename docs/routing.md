@@ -26,6 +26,15 @@ for (const route of snapshot.routes.values()) {
 }
 ```
 
+Layered layout accepts `routing: { strategy, settings }` for a synchronous replacement
+router. Initial layout completes first. The replacement receives finalized world-space
+geometry with `coordinateSpace: "world"`; initial points, routing styles, and derived
+route caches are absent. All edge routes are replaced, and placement/label geometry
+is preserved. A missing or extra edge route is rejected. This differs from the
+`strategies.routeEdges` phase override, which participates in initial layout.
+
+Post-layout replacement currently requires unconstrained full layout through `getLayout`. For scoped or constrained geometry, run standalone routing after applying the layout result.
+
 All built-in strategies are synchronous. `RoutingStrategy` also accepts promise
 results, allowing worker-backed/custom implementations without changing the
 value-based contract. Retain the snapshot in editor-local derived state. No

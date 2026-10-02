@@ -164,6 +164,14 @@ geometry before using them. Ancestor/descendant labels are always reserved
 beside the child boundary; this is structural rather than a label option. See [native compound geometry](../README.md#native-compound-geometry)
 and the [matched visual proof](images/native-compound/README.md).
 
+`LayeredLayoutOptions.routing` accepts `{ strategy, settings }` for a synchronous
+post-layout replacement. Initial routes are discarded before the strategy receives
+finalized world-space geometry. The result preserves all node/port/label/compound
+placement and caches the replacement's structured routes. `getLayout` currently
+supports this option for unconstrained full layout only. Async or scoped replacements
+can use standalone routing after layout. `strategies.routeEdges` remains an initial
+phase override.
+
 ## elkjs entry point
 
 `@statelyai/layout/elkjs` has a default `ELK` class export and these type

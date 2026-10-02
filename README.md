@@ -92,6 +92,32 @@ These options belong to the native contract; they do not change the pinned
 ELK compatibility contract. The existing simplified advanced options still
 map to ELK option IDs, but identical geometry is not guaranteed between contracts.
 
+## Replace initial routes
+
+<!-- layered post-layout routing option from src/layered/types.ts and src/layered/replace-routing.ts -->
+
+Initial layered layout computes placement, labels, ports, and routes. An optional
+replacement router then discards those routes and computes new ones on the finalized
+geometry:
+
+```ts
+import { getLayeredLayout } from "@statelyai/layout";
+import { bezierRouting } from "@statelyai/layout/routing";
+
+const result = getLayeredLayout(graph, {
+  routing: { strategy: bezierRouting, settings: { clearance: 8 } },
+});
+```
+
+The replacement receives world-space nodes and labels, without initial paths or
+route caches. It must synchronously return one route per edge. Node, port, label,
+and compound geometry remain unchanged; render `getLayoutRoutes(result)` to retain
+curves and disconnected sections. Async routers can be run separately after layout.
+`strategies.routeEdges` remains an initial layout phase override; `routing` runs after
+initial layout. Neither this separation nor API compatibility establishes ELK quality parity.
+
+Post-layout replacement currently requires unconstrained full layout through `getLayout`. For scoped or constrained geometry, run standalone routing after applying the layout result.
+
 ## Standalone incremental routing
 
 <!-- routing API and strategy catalog from src/routing/index.ts -->

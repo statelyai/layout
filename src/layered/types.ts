@@ -1,3 +1,4 @@
+import type { NativeRoutingStrategy, RoutingSettings } from "../routing/types";
 import type { EntityRect, Graph, GraphEdge, GraphNode, GraphPort, Point } from "@statelyai/graph";
 import type { LayoutConstraints } from "@statelyai/graph/layout";
 import type { LayoutDirection } from "../types";
@@ -112,6 +113,8 @@ export interface CompoundEdgeAttachment {
 }
 
 export interface LayeredLayoutOptions {
+  /** Replace initial routes after initial placement and routing, without moving geometry. */
+  routing?: { strategy: Pick<NativeRoutingStrategy, "route">; settings?: RoutingSettings };
   direction?: LayoutDirection;
   compound?: (node: GraphNode) => CompoundLayoutOptions | undefined;
   edgeAttachment?: (edge: GraphEdge) => CompoundEdgeAttachment | undefined;

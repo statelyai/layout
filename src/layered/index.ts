@@ -1,3 +1,4 @@
+import { replaceLayoutRouting } from "./replace-routing";
 import { layoutCompounds, type CompoundVisualGraph } from "./compound";
 import { repairFlatRouting } from "./native-routing";
 import type { Graph, GraphEdge, GraphNode, Point, VisualGraph, VisualNode } from "@statelyai/graph";
@@ -2597,11 +2598,14 @@ export function getLayeredLayout<N, E, G, P>(
     runLayeredPipeline(graph, options),
     options,
   ) as CompoundVisualGraph<N, E, G, P>;
-  return {
-    ...result,
-    compoundGeometry: result.compoundGeometry ?? new Map(),
-    compoundRoutes: result.compoundRoutes ?? new Map(),
-  };
+  return replaceLayoutRouting(
+    {
+      ...result,
+      compoundGeometry: result.compoundGeometry ?? new Map(),
+      compoundRoutes: result.compoundRoutes ?? new Map(),
+    },
+    options,
+  );
 }
 
 export const layeredAlgorithm: LayoutAlgorithm<LayeredLayoutOptions> = {
@@ -2616,6 +2620,10 @@ export const layeredAlgorithm: LayoutAlgorithm<LayeredLayoutOptions> = {
     ports: true,
   },
   layout(graph, options, context) {
+    if (options?.routing && (context.scope.mode !== "full" || context.constraints?.length))
+      throw new UnsupportedLayoutError(
+        "Post-layout route replacement requires unconstrained full layout; run routing separately for constrained or scoped layouts",
+      );
     if (context.scope.mode === "partial" || context.scope.mode === "route-only") {
       return context.measurePhase("partial-layout", () =>
         runPartialLayout(graph, options ?? {}, context, getLayeredLayout),
@@ -2629,7 +2637,17 @@ export const layeredAlgorithm: LayoutAlgorithm<LayeredLayoutOptions> = {
       runLayeredPipeline(graph, options ?? {}, context),
       options ?? {},
     );
-    if (!context.constraints?.length) return result;
+    if (!context.constraints?.length) {
+      if (!options?.routing) return result;
+      return replaceLayoutRouting(
+        {
+          ...result,
+          compoundGeometry: (result as CompoundVisualGraph).compoundGeometry ?? new Map(),
+          compoundRoutes: (result as CompoundVisualGraph).compoundRoutes ?? new Map(),
+        },
+        options ?? {},
+      );
+    }
     return context.measurePhase("constraints", () =>
       runPartialLayout(
         result,

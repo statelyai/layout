@@ -75,6 +75,14 @@ The repair returns cached structured label sections, just like compound routing.
 The pinned elkjs provider bypasses this native repair to retain its established
 flat geometry contract.
 
+Layered layout completes its initial placement and routing before applying an
+optional `routing: { strategy, settings }` replacement. The replacement receives
+world-space geometry with initial paths and route caches removed. It owns every
+new edge route while node, port, label, and compound geometry stay fixed. The
+existing `strategies.routeEdges` hook remains part of initial layout. Replacement
+through `getLayout` currently requires unconstrained full layout; standalone
+routing handles other execution scopes and async strategies.
+
 ## Compatibility target
 
 Compatibility has three independently measured levels:
