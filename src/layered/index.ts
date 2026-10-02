@@ -1212,6 +1212,10 @@ function runLayeredPipeline<N, E, G, P>(
   options: LayeredLayoutOptions,
   context?: LayoutExecutionContext,
 ): VisualGraph<N, E, G, P> {
+  // ELK GraphConfigurator reserves at least two pixels between edge tracks.
+  if ((options.settings?.["spacing.edgeEdge"] ?? 10) < 2) {
+    options = { ...options, settings: { ...options.settings, "spacing.edgeEdge": 2 } };
+  }
   if (options.settings?.noLayout) {
     return {
       ...graph,
