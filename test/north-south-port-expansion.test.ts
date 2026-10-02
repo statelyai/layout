@@ -190,3 +190,47 @@ it("shares a mixed-role port, reserves unique IDs, and honors switch-side permis
     original.input.graph.nodes.find((n) => n.id === collision),
   );
 });
+
+it("preserves route identity when there are no cross-port endpoints", () => {
+  const graph = createGraph({
+    nodes: [{ id: "a" }, { id: "b" }],
+    edges: [{ id: "ab", sourceId: "a", targetId: "b" }],
+  });
+  const input: LayeredPhaseInput = {
+    graph,
+    sizes: new Map(),
+    direction: "right",
+    settings: {},
+    constrainedLayerByNodeId: new Map(),
+    spacing: { node: 20, layer: 20 },
+    padding: { top: 12, right: 12, left: 12, bottom: 12 },
+  };
+  const phase = insertNorthSouthPortDummies(
+    splitLongEdges(
+      input,
+      { reversedEdgeIds: new Set() },
+      {
+        layerByNodeId: new Map([
+          ["a", 0],
+          ["b", 1],
+        ]),
+      },
+    ),
+  );
+  const routes = {
+    pointsByEdgeId: new Map([
+      [
+        "ab",
+        [
+          { x: 1, y: 2 },
+          { x: 3, y: 4 },
+        ],
+      ],
+    ]),
+  };
+  expect(
+    restoreNorthSouthPortRoutes(phase, { rectByNodeId: new Map() }, routes, () => {
+      throw new Error("unexpected anchor call");
+    }),
+  ).toBe(routes);
+});

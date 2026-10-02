@@ -551,3 +551,68 @@ The narrow success does not justify promoting the full candidate. Port actual
 layout-unit constraints and barycenter associates into crossing minimization
 next, then rerun these inputs and strict oracle fixtures. Full parity unproven;
 goal active, PR draft. No full-suite or remote CI claim.
+
+### Native constrained crossing minimization (2026-10-02)
+
+Port Forster constraint-group merging, stable layout-unit membership, normal-node
+constraints, recursive barycenter associates and greedy-switch restrictions.
+The initial resolver threw on 134 of 512 seeded intermediate graphs: rebuilding
+constraint counts lost the mutable group references retained by ELK. The corrected
+resolver matches the unmodified installed elkjs worker on all 512 cases, comparing
+complete node order and every resulting barycenter exactly. This is an internal
+phase comparison, not complete graph parity. The development-only VM oracle
+records its worker hash; production imports no elkjs.
+
+Clean HEAD plus only the new phase/helper/tests passes 31 focused tests and source
+TypeScript. The larger local pipeline now passes all 12 exact directional grouped
+profiles, resolving four cross-port failures, with unchanged assertions. The
+source/repository integration remains uncommitted.
+
+The full integration comparison before the custom-route fix: 1,667 passes /
+116 failures before; 1,668 passes / 115 failures after. Five failures resolved;
+three Email Drafter cases and custom-route preservation regressed. Post-compaction
+was orthogonalizing custom routes, and the old assertion compared against a
+mutated caller map. The local fix compacts placement before the custom callback
+and strengthens the assertion to preserve the original map and every route point.
+After that fix: **1,670 passes / 114 failures / 1,784 tests**. Three new Email
+Drafter regressions and 111 shared failures remain. Real ELK also violates that
+fixture's endpoint-flow label interval heuristic, and rejects LEFT with invalid
+scanline hitboxes. Full inputs/outputs/errors remain saved; no label clamping or
+assertion weakening. Source TypeScript passes for the fixed local integration.
+
+The corrected immutable ten-graph native experiment has no measured geometry
+defects, but the quality gate still fails:
+
+| Graph | Before crossings/bends | Corrected crossings/bends | Real ELK crossings/bends |
+| ----- | ---------------------- | ------------------------- | ------------------------ |
+| 1     | 1/15                   | 1/15                      | 0/13                     |
+| 2     | 10/58                  | 8/57                      | 3/36                     |
+| 3     | 56/109                 | 15/88                     | 23/50                    |
+| 4     | 15/117                 | 9/108                     | 8/67                     |
+| 5     | 158/261                | 108/271                   | 120/183                  |
+| 6     | 6/51                   | 6/51                      | 3/28                     |
+| 7     | 20/98                  | 15/97                     | oracle error             |
+| 8     | 92/216                 | 94/218                    | 83/136                   |
+| 9     | 150/211                | 135/199                   | oracle error             |
+| 10    | 365/329                | 376/321                   | 125/274                  |
+
+Before is the prior cross-port candidate, not clean Git HEAD. Six graphs improve
+crossings; graphs 8 and 10 regress. Two hierarchical oracle errors remain separate;
+no resampling. Full random parity and a green suite remain unproven; PR stays draft.
+Next: preserve port/edge visitation order in associated barycenters and compare
+label/cross-port intermediate placement against ELK before promoting integration.
+
+Evidence under [crossing-constraints](./crossing-constraints/):
+
+- [512 intermediate inputs, first errors and corrected exact outputs](./crossing-constraints/forster-direct-probe.json)
+- [Complete corrected random inputs/outputs/errors](./crossing-constraints/crossing-units-corrected-native-probe.json)
+- [12 exact directional profiles](./crossing-constraints/crossing-units-corrected-directional-probe.json)
+- [Final full-suite failure delta](./crossing-constraints/final-full-suite-delta.json)
+- [Email Drafter native/before/ELK diagnostic](./crossing-constraints/email-crossing-unit-probe.json)
+- [Source snapshots and replay scripts](./crossing-constraints/sources-and-replays.tar.gz)
+
+Frozen experimental manifests were captured before their runs and rechecked.
+The custom-route-fixed integration archive captures the final source afterward;
+it is not a pre-execution attestation. Archive contains source/test trees only,
+with no absolute dependency/resource symlinks. Clean phase checks are separate
+from the rejected larger pipeline. No remote CI or released parity claim.

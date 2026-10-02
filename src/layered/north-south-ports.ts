@@ -48,6 +48,18 @@ export function insertNorthSouthPortDummies(expansion: LongEdgeExpansion): North
   const byPort = new Map<GraphPort, string>();
   const successors = new Map<string, string[]>();
   const units = new Map<string, string>();
+  // Upstream gives every fixed-side normal node its own layout unit, even
+  // when it has no connected cross-axis ports.
+  for (const node of input.graph.nodes) {
+    const constraints = input.nodeSettings?.(node)?.portConstraints;
+    if (
+      !node.id.startsWith("__layout_dummy:") &&
+      constraints &&
+      constraints !== "UNDEFINED" &&
+      constraints !== "FREE"
+    )
+      units.set(node.id, node.id);
+  }
   const attach = (
     owner: GraphNode,
     port: GraphPort,
@@ -168,15 +180,17 @@ export function restoreNorthSouthPortRoutes(
   routes: import("./types").EdgeRoutes,
   anchor: (origin: CrossPortOrigin) => import("@statelyai/graph").Point,
 ): import("./types").EdgeRoutes {
+  if (phase.originsByDummyId.size === 0) return routes;
   const vertical =
     phase.expansion.input.direction === "down" || phase.expansion.input.direction === "up";
   const pointsByEdgeId = new Map(routes.pointsByEdgeId);
   for (const edge of phase.expansion.input.graph.edges) {
     const original = pointsByEdgeId.get(edge.id);
     if (!original?.length) continue;
-    let points = [...original];
     const source = phase.originsByDummyId.get(edge.sourceId);
     const target = phase.originsByDummyId.get(edge.targetId);
+    if (!source && !target) continue;
+    let points = [...original];
     if (source) {
       const endpoint = anchor(source);
       const rect = placement.rectByNodeId.get(edge.sourceId);

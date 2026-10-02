@@ -16,6 +16,10 @@ The native layered implementation reimplements ELK-derived phases and maps the
 complete 152-option elkjs 0.11.1 layered inventory to simplified typed names.
 Focused differential tests cover flat/compound graphs, cross-hierarchy edges,
 ports, labels, self-loops, wrapping, directions, constraints, and phase overrides.
+A development-only oracle compares native constraint-group resolution against
+unmodified elkjs internals on 512 seeded intermediate graphs, including complete
+node order and barycenters. This validates that phase independently of the
+unfinished pipeline integration.
 That coverage does not establish broad geometry or aesthetic parity: native
 hierarchy placement and routing still diverge materially from real ELK. The
 [side-by-side random corpus](docs/heuristics/README.md) uses the actual elkjs
