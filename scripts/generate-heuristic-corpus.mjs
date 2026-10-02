@@ -1,5 +1,7 @@
 import { mkdir, writeFile } from "node:fs/promises";
 import { execFileSync } from "node:child_process";
+import { resolve } from "node:path";
+import { pathToFileURL } from "node:url";
 import { createGraph } from "@statelyai/graph";
 import { getLayeredLayout, getLayoutRoutes, routeToPolylines } from "../dist/index.mjs";
 
@@ -8,7 +10,9 @@ import { toElkInput, fromElkOutput } from "./heuristic-elk-comparison.mjs";
 
 // Both engines receive identical graph inputs. Failures remain visible, never resampled.
 const elk = new ELK();
-const output = new URL("../docs/heuristics/generated/", import.meta.url);
+const output = process.argv[3]
+  ? pathToFileURL(`${resolve(process.argv[3])}/`)
+  : new URL("../docs/heuristics/generated/", import.meta.url);
 await mkdir(output, { recursive: true });
 const baseSeed = Number(process.argv[2] ?? 20261001);
 if (!Number.isSafeInteger(baseSeed) || baseSeed < 0 || baseSeed > 0xffffffff)

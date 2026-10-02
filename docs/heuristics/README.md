@@ -51,3 +51,47 @@ counterexamples, and evaluate improvements on fresh held-out seeds as well as
 this review corpus. Ten examples bootstrap the rubric; they cannot establish
 general layout quality. Other native algorithms need capability-specific
 checks when the testing harness is extended.
+
+## ELK baseline
+
+```sh
+pnpm build
+node scripts/benchmark-heuristic-layout.mjs
+```
+
+The runner builds current Stately source before generating and scoring 30 graphs: review seed `20261001` plus fresh seeds
+`20261102` and `20261203`, each with the same ten complexity profiles. Optional
+arguments are output directory followed by base seeds. For example:
+
+```sh
+node scripts/benchmark-heuristic-layout.mjs .scratch/baseline 20261001 20261102 20261203
+```
+
+The generator also accepts an optional output directory after its seed.
+The benchmark writes `baseline.json`, `baseline.md`, and one comparison gallery
+per seed under `generated/baseline/`. Layout failures remain recorded and cause
+exit status 1. Frozen initial measurements are in [baseline.md](baseline.md)
+and [baseline.json](baseline.json); these are evidence, not passing targets.
+Fresh samples become observed evaluation cases after running; future acceptance
+requires additional unseen seeds and human review.
+
+Both engines use `scripts/heuristic-quality.mjs`. It projects nested coordinates
+into world space and reports missing nodes/routes, non-finite geometry,
+diagonals, unique edge/leaf penetrations, unrelated node overlaps, label
+collisions, edge/label penetrations, collinear self-retracing, proper crossings,
+shared track length, bends, visible route length, and total geometry area.
+Crossings are unique interior intersections per edge pair; endpoint touches
+and T-junctions are not counted. Shared lengths are unioned per edge pair;
+intentional sharing within 12px of a common endpoint node is excluded.
+Self-loop retracing excludes that same terminal region. Each engine's own label
+rectangle is clipped out of its route, so ELK's continuous paths and Stately's
+label gaps are scored consistently. Container containment is allowed; label
+collisions are checked against leaves. Crossings and shared tracks assume
+orthogonal paths; diagonals are a separate validity failure. Bend counts use
+explicit direction changes within sections. Lengths and areas use layout units.
+
+Engine diagnostics do not affect scores. Summary comparisons include only cases
+where both engines return a layout; failures remain listed separately. Reports
+retain individual metrics,
+engine failures, source revision, working-tree state, elkjs version, and scorer
+and generator hashes. They do not measure runtime or establish aesthetic parity.
