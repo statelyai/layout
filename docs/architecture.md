@@ -183,3 +183,5 @@ scope phase scheduling remain required. The public compound solver still has a
 separate scope/routing path; it must share the completed hierarchy foundation.
 
 Movable self-loop exterior labels contribute directional envelopes before BK placement. Stacked routes include preceding label extents, and physical loop sides determine label alignment after direction transforms. Self-loop bounds omit the generic center-label pixel. Inline labels, additional loop orderings and mixed fixed-port labels remain broader parity work.
+
+Compaction combines complete self-loop label envelopes with port margins before constructing visibility hitboxes. Reconstructing bounds from route bends alone loses exterior label clearance. Expanded seed 44 DOWN/UP retains an earlier BK cross-axis mismatch; its corrected hitbox exposes stronger compaction differences, preserved in the loop-label-compaction evidence.

@@ -8,6 +8,7 @@
  *******************************************************************************/
 import type { EntityRect, Point } from "@statelyai/graph";
 import type { AcyclicOrientation, EdgeRoutes, LayeredPhaseInput, NodePlacement } from "./types";
+import { loopEnvelopes } from "./loop-envelopes";
 import { compactionBounds, recordCompactionBounds } from "./compaction-bounds";
 import { InfeasibleCompactionError } from "./compaction-errors";
 import { scanlineConstraints } from "./compaction-scanline";
@@ -173,15 +174,19 @@ function compactJoinedGeometryUnchecked(
   const items: Compactable[] = [];
   const nodes = new Map<string, Compactable>();
   const groupOrigin = new Map<string, number>();
+  // Compaction must retain label clearance reserved before placement;
+  // route bends alone measure only the loop line's smaller envelope.
+  const loopMargins = loopEnvelopes(input);
   for (const [id, rect] of placement.rectByNodeId) {
     const content = rectToCanonical(rect);
     contentRects.set(id, content);
     const portMargins = portCrossMargins(input, id);
+    const loopMargin = loopMargins.get(id);
     const margins = {
-      before: portMargins?.before ?? 0,
-      after: portMargins?.after ?? 0,
-      flowBefore: portMargins?.flowBefore ?? 0,
-      flowAfter: portMargins?.flowAfter ?? 0,
+      before: Math.max(portMargins?.before ?? 0, loopMargin?.before ?? 0),
+      after: Math.max(portMargins?.after ?? 0, loopMargin?.after ?? 0),
+      flowBefore: Math.max(portMargins?.flowBefore ?? 0, loopMargin?.flowBefore ?? 0),
+      flowAfter: Math.max(portMargins?.flowAfter ?? 0, loopMargin?.flowAfter ?? 0),
     };
     // Self-loop routes belong to their owner's hitbox in ELK's compaction graph.
     // Reserve their measured envelope before clipping rigid port leads.

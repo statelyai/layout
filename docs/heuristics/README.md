@@ -140,3 +140,5 @@ The [loop track clearance proof](loop-track-clearance/README.md) reserves fixed-
 The [native junction proof](native-junctions/README.md) moves branch generation into physical routing and retains junctions through joining and compaction. Seeds 22 and 33 RIGHT become complete matches; combined coverage improves to 268/400, with no complete matches lost.
 
 The [movable loop label proof](movable-loop-labels/README.md) reserves exterior labels before placement and preserves directional alignment and stacked routing clearance. Combined strict matches improve to **270/400**, zero native errors and no complete matches lost. All 38 new regressions fail before and pass now; no existing suite failures change. Broad parity remains incomplete.
+
+The [loop label compaction proof](loop-label-compaction/README.md) retains label envelopes in visibility hitboxes. Combined strict matches improve to **272/400**, with no lost complete matches or changed existing suite failures. Expanded seed 44 DOWN/UP worsens and remains preserved for the next BK diagnosis. Broad parity remains incomplete.

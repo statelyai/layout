@@ -397,4 +397,4 @@ fails. See the [directional compaction proof](./docs/heuristics/directional-comp
 
 <!-- implementation from src/layered/loop-envelopes.ts, src/layered/strategies.ts, src/layered/index.ts and src/elkjs/index.ts -->
 
-Movable self-loop labels reserve clearance before placement and retain directional alignment and stacked routing clearance. See the [native loop label comparison](docs/heuristics/movable-loop-labels/README.md).
+Movable self-loop labels reserve clearance before placement and retain directional alignment and stacked routing clearance. Compaction retains their complete label envelopes. See the [native loop label comparison](docs/heuristics/movable-loop-labels/README.md).
