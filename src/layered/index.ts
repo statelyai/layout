@@ -1960,6 +1960,7 @@ export function* createLayeredScopePipeline<N, E, G, P>(
   let expandedRoutes = measure("edge-routing", () =>
     edgeRouter(expanded.input, expanded.orientation, placement),
   );
+  const restoredJunctionCounts = new Map<string, number>();
   expandedRoutes = restoreNorthSouthPortRoutes(
     { ...northSouth, expansion: expanded },
     placement,
@@ -1975,6 +1976,7 @@ export function* createLayeredScopePipeline<N, E, G, P>(
         expanded.input,
       );
     },
+    restoredJunctionCounts,
   );
   const restoredNodes = expanded.input.graph.nodes.filter(
     (node) => !northSouth.originsByDummyId.has(node.id),
@@ -2297,6 +2299,7 @@ export function* createLayeredScopePipeline<N, E, G, P>(
       edgeRouting === "SPLINES",
       Number(options.settings?.["spacing.edgeNodeBetweenLayers"] ?? 10),
       edgeRouting === "ORTHOGONAL",
+      restoredJunctionCounts,
     ),
   );
   if (options.settings?.["layering.nodePromotion.strategy"] === "MODEL_ORDER_LEFT_TO_RIGHT") {

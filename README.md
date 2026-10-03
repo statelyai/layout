@@ -25,7 +25,8 @@ mixed-role comparisons. External-port dummy construction matches every real
 ELK factory field on 1,536 seeded boundaries; four direction regressions preserve
 the selected descendant port across a compound boundary.
 Initial model ordering and port-helper alignment have seven retained random
-full-geometry regressions across independent seed ranges.
+full-geometry regressions across independent seed ranges. Mixed-port junction
+restoration has nineteen more, covering direct and joined routes in all directions.
 That coverage does not establish broad geometry or aesthetic parity: native
 hierarchy placement and routing still diverge materially from real ELK. The
 [side-by-side random corpus](docs/heuristics/README.md) uses the actual elkjs

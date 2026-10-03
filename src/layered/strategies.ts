@@ -4354,7 +4354,19 @@ function routeEdges(style: "ORTHOGONAL" | "POLYLINE" | "SPLINES"): EdgeRouter {
             const outgoing = candidates.filter(
               (candidate) => portByCandidate.get(candidate)!.source === port,
             );
-            outgoing.sort((a, b) => physicalOrder.get(a.edge.id)! - physicalOrder.get(b.edge.id)!);
+            // Merging adjacent helpers concatenates their physical incident
+            // edges in retained layer order; root edge order loses that state.
+            outgoing.sort((a, b) => {
+              const source = orientation.reversedEdgeIds.has(a.edge.id)
+                ? a.edge.targetId
+                : a.edge.sourceId;
+              const selected = getPlacementOrder(input)?.outputPortOrderByNodeId?.get(source);
+              const aa = selected?.indexOf(a.edge.id) ?? -1;
+              const bb = selected?.indexOf(b.edge.id) ?? -1;
+              return aa >= 0 && bb >= 0
+                ? aa - bb
+                : physicalOrder.get(a.edge.id)! - physicalOrder.get(b.edge.id)!;
+            });
             for (const candidate of outgoing) {
               const segment = result.segments[grouped.segmentByPort.get(port)!]!;
               const reversed = orientation.reversedEdgeIds.has(candidate.edge.id);

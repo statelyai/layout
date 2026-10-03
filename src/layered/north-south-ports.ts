@@ -4,7 +4,7 @@
  * Source commit: 54123e884b1ae743b453260f713b20c9bf5787f2
  * SPDX-License-Identifier: EPL-2.0
  *******************************************************************************/
-import type { GraphNode, GraphPort } from "@statelyai/graph";
+import type { GraphNode, GraphPort, Point } from "@statelyai/graph";
 import type { LongEdgeExpansion } from "./long-edges";
 import { inheritCycleRandom } from "./cycle-random";
 
@@ -225,11 +225,21 @@ export function restoreNorthSouthPortRoutes(
   placement: import("./types").NodePlacement,
   routes: import("./types").EdgeRoutes,
   anchor: (origin: CrossPortOrigin) => import("@statelyai/graph").Point,
+  restoredJunctionCounts?: Map<string, number>,
 ): import("./types").EdgeRoutes {
   if (phase.originsByDummyId.size === 0) return routes;
   const vertical =
     phase.expansion.input.direction === "down" || phase.expansion.input.direction === "up";
   const pointsByEdgeId = new Map(routes.pointsByEdgeId);
+  const junctionPointsByEdgeId = new Map(routes.junctionPointsByEdgeId);
+  const addJunction = (edge: string, origin: CrossPortOrigin, bend: Point) => {
+    // ELK marks every restored branch when both dummy faces refer to one port.
+    // Spline restoration records its cross coordinate instead of junctions.
+    if (origin.input && origin.output && phase.expansion.input.settings.edgeRouting !== "SPLINES") {
+      junctionPointsByEdgeId.set(edge, [...(junctionPointsByEdgeId.get(edge) ?? []), bend]);
+      restoredJunctionCounts?.set(edge, (restoredJunctionCounts.get(edge) ?? 0) + 1);
+    }
+  };
   for (const edge of phase.expansion.input.graph.edges) {
     const original = pointsByEdgeId.get(edge.id);
     if (!original?.length) continue;
@@ -243,6 +253,7 @@ export function restoreNorthSouthPortRoutes(
       if (!rect) throw new Error(`Missing cross-port dummy placement: ${edge.sourceId}`);
       const bend = vertical ? { x: rect.x, y: endpoint.y } : { x: endpoint.x, y: rect.y };
       points = [endpoint, bend, ...points.slice(1)];
+      addJunction(edge.id, source, bend);
     }
     if (target) {
       const endpoint = anchor(target);
@@ -250,8 +261,9 @@ export function restoreNorthSouthPortRoutes(
       if (!rect) throw new Error(`Missing cross-port dummy placement: ${edge.targetId}`);
       const bend = vertical ? { x: rect.x, y: endpoint.y } : { x: endpoint.x, y: rect.y };
       points = [...points.slice(0, -1), bend, endpoint];
+      addJunction(edge.id, target, bend);
     }
     pointsByEdgeId.set(edge.id, points);
   }
-  return { ...routes, pointsByEdgeId };
+  return { ...routes, pointsByEdgeId, junctionPointsByEdgeId };
 }

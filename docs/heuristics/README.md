@@ -152,3 +152,5 @@ The [mixed loop bounds proof](mixed-loop-bounds/README.md) restores ordinary lon
 The [port-aware track proof](port-aware-tracks/README.md) fixes seed 22 RIGHT routing and junctions. Default flat matches improve to **43/100**; directional exact matches remain **412/600**. Two incomplete compaction cases worsen and remain preserved.
 
 The [initial model and port-helper alignment proof](prepared-model-order/README.md) sorts before north/south helper insertion, preserves physical order and excludes port helpers from BK inner segments. Across 1,100 retained inputs, strict matches rise **566 → 573**, no complete matches are lost and 16 worsened rows remain recorded. Seed 2 RIGHT now matches nodes and routes; eight junction differences remain. Broad parity remains incomplete.
+
+The [physical junction ownership proof](mixed-port-junction-order/README.md) preserves merged incident-edge order and mixed-port restoration after joining. Strict matches rise **573 → 601** across the same 1,100 inputs, with no matches lost. Nineteen new complete-geometry regressions cover all four directions; 58 worsened incomplete rows remain recorded. Broad parity remains incomplete.

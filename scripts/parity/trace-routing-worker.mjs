@@ -262,6 +262,51 @@ context.$prepareGraphForLayout = (configurator, graph) => {
     };
   }
 };
+const junctionEvents = [];
+const addJunction = context.$addJunctionPointIfNecessary;
+context.$addJunctionPointIfNecessary = (strategy, edge, segment, point, vertical) => {
+  const before = context.$getProperty(edge, context.JUNCTION_POINTS)?.size_0 ?? 0;
+  const result = addJunction(strategy, edge, segment, point, vertical);
+  const after = context.$getProperty(edge, context.JUNCTION_POINTS)?.size_0 ?? 0;
+  junctionEvents.push({
+    edge: originId(edge),
+    source: originId(edge.source.owner),
+    target: originId(edge.target.owner),
+    x: point.x_0,
+    y: point.y_0,
+    vertical,
+    start: segment.startPosition,
+    end: segment.endPosition,
+    incoming: coordinates(segment.incomingConnectionCoordinates),
+    outgoing: coordinates(segment.outgoingConnectionCoordinates),
+    accepted: after > before,
+  });
+  return result;
+};
+const restoredJunctionEvents = [];
+for (const [name, role] of [
+  ["$processInputPort", "incoming"],
+  ["$processOutputPort", "outgoing"],
+]) {
+  const restore = context[name];
+  context[name] = (port, addJunctionPoints) => {
+    const edges = [...port[role + "Edges"].array];
+    const before = edges.map(
+      (edge) => context.$getProperty(edge, context.JUNCTION_POINTS)?.size_0 ?? 0,
+    );
+    const result = restore(port, addJunctionPoints);
+    restoredJunctionEvents.push({
+      role,
+      addJunctionPoints,
+      edges: edges.map((edge, index) => ({
+        edge: originId(edge),
+        before: before[index],
+        after: context.$getProperty(edge, context.JUNCTION_POINTS)?.size_0 ?? 0,
+      })),
+    });
+    return result;
+  };
+}
 const routingCalls = [];
 let routingCall;
 const coordinates = (list) => {
@@ -344,6 +389,8 @@ fs.writeFileSync(
       stages,
       bkConflicts,
       bkCandidates,
+      junctionEvents,
+      restoredJunctionEvents,
       routingCalls,
     },
     null,
