@@ -24,3 +24,5 @@ node scripts/parity/trace-routing-worker.mjs docs/heuristics/inverted-port-model
 Next: align helper comparator decisions, original physical port preparation and initial sorting before north/south helper insertion. The broader hierarchy, option, geometry and aesthetic parity requirements remain open; all earlier regressions remain preserved.
 
 Validation: **71/71 focused tests**. Full suite: **2,848 passed / 101 unchanged failures / 2,949 total**; failed test names match the previous suite exactly. Source/repository types, selected lint/format and build pass (existing mixed-export warnings). [Focused results](./focused-tests.json), [suite](./full-suite.json), [failure-name comparison](./suite-delta.json).
+
+[Feedback helper self-port investigation](../model-port-self-comparison/README.md) identifies three initial comparator decisions lost by the equal-key shortcut; isolated integration trials remain rejected.

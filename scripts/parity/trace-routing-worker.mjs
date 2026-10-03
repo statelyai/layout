@@ -87,6 +87,21 @@ context.$compare_11 = (comparator, a, b) => {
     });
   return result;
 };
+const modelPortSelfEvents = [];
+const initialPortCompare = context.$compare_13;
+context.$compare_13 = (comparator, a, b) => {
+  const result = initialPortCompare(comparator, a, b);
+  if (observingModelOrder && a === b)
+    modelPortSelfEvents.push({
+      owner: originId(a.owner),
+      layer: a.owner.layer.id_0,
+      side: a.side?.name_0,
+      result,
+      incomingEdges: a.incomingEdges.array.map(originId),
+      outgoingEdges: a.outgoingEdges.array.map(originId),
+    });
+  return result;
+};
 const initializeSweep = context.$initialize_5;
 context.$initialize_5 = (processor, root) => {
   const result = initializeSweep(processor, root);
@@ -280,6 +295,7 @@ fs.writeFileSync(
       rngEvents,
       greedyEvents,
       modelOrderEvents,
+      modelPortSelfEvents,
       sweepScopes,
       sweepEvents,
       stages,
