@@ -34,3 +34,5 @@ pnpm exec vitest run --exclude '.scratch/**' --maxWorkers=4
 ```
 
 Parity commands continue to fail until their full gates pass. Next: compare native candidate port initialization/traversal on the remaining flat failures, then resolve downstream placement/routing differences and expand unseen coverage.
+
+A subsequent [BK block eligibility correction](../bk-block-eligibility/README.md) resolves another placement divergence. The metrics above describe the cached-port checkpoint.

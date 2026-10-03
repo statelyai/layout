@@ -32,6 +32,7 @@ interface Alignment {
   hdir: HDirection;
   vdir: VDirection;
   root: Map<string, string>;
+  onlyDummies: Map<string, boolean>;
   align: Map<string, string>;
   innerShift: Map<string, number>;
   blockSize: Map<string, number>;
@@ -347,6 +348,7 @@ function makeAlignment(hdir: HDirection, vdir: VDirection): Alignment {
     hdir,
     vdir,
     root: new Map(),
+    onlyDummies: new Map(),
     align: new Map(),
     innerShift: new Map(),
     blockSize: new Map(),
@@ -402,6 +404,7 @@ function alignBlocks(
   for (const layer of order.layers) {
     for (const id of layer) {
       bal.root.set(id, id);
+      bal.onlyDummies.set(id, true);
       bal.align.set(id, id);
       bal.innerShift.set(id, 0);
     }
@@ -428,6 +431,13 @@ function alignBlocks(
           bal.align.set(neighbor.id, id);
           bal.root.set(id, bal.root.get(neighbor.id) ?? neighbor.id);
           bal.align.set(id, bal.root.get(id) ?? id);
+          const root = bal.root.get(id)!;
+          const longEdge =
+            getCrossingUnits(input)?.longEdgeNodes?.has(id) ??
+            (id.startsWith("__layout_dummy:") &&
+              !id.startsWith("__layout_dummy:label:") &&
+              !id.startsWith("__layout_dummy:north-south:"));
+          bal.onlyDummies.set(root, bal.onlyDummies.get(root)! && longEdge);
           r = index;
         }
       }
@@ -656,7 +666,6 @@ function createStraighteningThreshold(
     const root = bal.root.get(id) ?? id;
     blocks.set(root, [...(blocks.get(root) ?? []), id]);
   }
-  const longEdges = getCrossingUnits(input)?.longEdgeNodes;
   type Pending = { free: string; isRoot: boolean; edge?: GraphEdge; hasEdges?: boolean };
   const queue: Pending[] = [],
     stack: Pending[] = [];
@@ -677,11 +686,9 @@ function createStraighteningThreshold(
         return (incoming !== reversed ? edge.targetId : edge.sourceId) === pending.free;
       })
       .sort((a, b) => (ports ? ports.indexOf(a.id) - ports.indexOf(b.id) : 0));
-    const onlyDummies = (blocks.get(rootOf(pending.free)) ?? []).every(
-      (id) =>
-        longEdges?.has(id) ??
-        (id.startsWith("__layout_dummy:") && !id.startsWith("__layout_dummy:label:")),
-    );
+    // ELK initializes this flag true and changes it only on alignment.
+    // A singleton normal node therefore remains eligible for same-layer edges.
+    const onlyDummies = bal.onlyDummies.get(rootOf(pending.free)) ?? true;
     pending.hasEdges = false;
     pending.edge = undefined;
     for (const edge of edges) {

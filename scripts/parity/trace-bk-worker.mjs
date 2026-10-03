@@ -108,6 +108,9 @@ context.$checkOrderConstraint = (graph, bal, monitor) => {
     nodes: graph.layers.array.flatMap((l) =>
       l.nodes.array.map((n) => ({
         id: originId(n),
+        type: n.type_0.name_0,
+        onlyDummies: context.$booleanValue(bal.od[bal.root[n.id_0].id_0]),
+        root: { id: originId(bal.root[n.id_0]), type: bal.root[n.id_0].type_0.name_0 },
         y: context.$doubleValue(bal.y_0[n.id_0]) + context.$doubleValue(bal.innerShift[n.id_0]),
         margin: n.margin,
         ports: n.ports.array.map((p) => ({
