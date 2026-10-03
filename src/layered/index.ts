@@ -1,3 +1,4 @@
+import { mergeHyperedgeDummies } from "./hyperedge-dummy-merger";
 import { recordCrossingUnits } from "./crossing-constraints";
 import { externalPortDummyOf } from "./external-port-dummy";
 import type { EntityRect } from "@statelyai/graph";
@@ -1673,6 +1674,7 @@ export function* createLayeredScopePipeline<N, E, G, P>(
   order = switchedLabels.order;
   const labelSelection = selectCenterLabelSides(expanded, labels, order);
   expanded = labelSelection.expansion;
+  order = mergeHyperedgeDummies(expanded, order);
   setPlacementOrder(expanded.input, order);
   const nodePlacementStrategy = options.settings?.["nodePlacement.strategy"] ?? "BRANDES_KOEPF";
   const nodePlacer = (() => {

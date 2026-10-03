@@ -115,12 +115,31 @@ export function applyOrthogonalJunctions(
           track(bends[i]!).incoming.push(cross(bends[i]!));
         }
     }
-    const routed = members.find((r) => r.points.length > 2);
-    if (routed)
-      for (const r of members.filter((r) => r.points.length === 2)) {
-        track(routed.points[1]!).incoming.push(cross(r.points[0]!));
-        track(routed.points.at(-2)!).outgoing.push(cross(r.points.at(-1)!));
+    for (const r of members.filter((r) => r.points.length === 2)) {
+      const start = Math.min(flow(r.points[0]!), flow(r.points[1]!));
+      const end = Math.max(flow(r.points[0]!), flow(r.points[1]!));
+      for (const [position, t] of tracks) {
+        if (position < start || position > end) continue;
+        t.incoming.push(cross(r.points[0]!));
+        t.outgoing.push(cross(r.points[1]!));
       }
+    }
+    // Long-edge joining removes collinear dummy anchors. A straight backbone
+    // still intersects every intermediate routing track it physically spans.
+    for (const r of members) {
+      for (let index = 1; index < r.points.length; index++) {
+        const a = r.points[index - 1]!,
+          b = r.points[index]!;
+        if (Math.abs(cross(a) - cross(b)) >= 1e-3) continue;
+        const start = Math.min(flow(a), flow(b)),
+          end = Math.max(flow(a), flow(b));
+        for (const [position, t] of tracks) {
+          if (position <= start || position >= end) continue;
+          t.incoming.push(cross(a));
+          t.outgoing.push(cross(b));
+        }
+      }
+    }
     for (const t of tracks.values()) {
       t.start = Math.min(t.start, ...t.incoming, ...t.outgoing);
       t.end = Math.max(t.end, ...t.incoming, ...t.outgoing);

@@ -1,3 +1,4 @@
+import { isMergedHyperedgeDummy } from "./hyperedge-dummy-merger";
 import { routingCoordinates } from "./routing-coordinates";
 import {
   hasMovableLoopPorts,
@@ -4109,6 +4110,8 @@ function routeEdges(style: "ORTHOGONAL" | "POLYLINE" | "SPLINES"): EdgeRouter {
           const nodeId = graphSource ? edge.sourceId : edge.targetId;
           const name = graphSource ? edge.sourcePort : edge.targetPort;
           const node = nodeById.get(nodeId)!;
+          if (isMergedHyperedgeDummy(input, nodeId))
+            return JSON.stringify(["hyperedge", nodeId, side]);
           if (name !== undefined) return JSON.stringify(["port", nodeId, name]);
           if (input.settings.mergeEdges === true || input.nodeSettings?.(node)?.hypernode === true)
             return JSON.stringify(["implicit", nodeId, side]);
