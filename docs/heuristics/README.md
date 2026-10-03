@@ -146,3 +146,5 @@ The [loop label compaction proof](loop-label-compaction/README.md) retains label
 The [smart vertical label proof](smart-vertical-labels/README.md) fixes a second transposition of smart label anchors. Combined strict matches improve to **274/400**. Seed 44 cross-axis geometry now matches; 20 flow-axis differences remain in each vertical direction. Expanded seed 34 UP gains five differences; all failures remain recorded.
 
 The [cycle-aware compaction proof](cycle-connection-locking/README.md) corrects connection locks to use physical cycle-broken adjacency. Combined strict matches improve to **278/400**, with no lost complete matches or increased differences. Seed 44 now matches all directions. Its scoped vertical tests now assert complete geometry.
+
+The [mixed loop bounds proof](mixed-loop-bounds/README.md) restores ordinary long-edge cross-axis bounds even when an unrelated self-loop is present. Default flat exact matches improve to **42/100**; all 600 directional results remain byte-identical to their retained evidence.

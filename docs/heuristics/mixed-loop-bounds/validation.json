@@ -1,0 +1,52 @@
+{
+  "directionalReruns": [
+    {
+      "seedRange": {
+        "firstSeed": 1,
+        "lastSeed": 25
+      },
+      "summary": {
+        "cases": 200,
+        "matched": 141,
+        "nativeErrors": 0,
+        "elkErrors": 6,
+        "differingValues": 9971
+      },
+      "retainedEvidence": "docs/heuristics/cycle-connection-locking/report.json",
+      "sha256": "950582ffaf553ac2b982f43792a48348b2dba6f92909eaf6a61f4e8b4bdcc021",
+      "byteIdenticalToPriorGate": true
+    },
+    {
+      "seedRange": {
+        "firstSeed": 26,
+        "lastSeed": 50
+      },
+      "summary": {
+        "cases": 200,
+        "matched": 137,
+        "nativeErrors": 0,
+        "elkErrors": 3,
+        "differingValues": 11228
+      },
+      "retainedEvidence": "docs/heuristics/cycle-connection-locking/expanded/report.json",
+      "sha256": "70794929e20d8eb3c9cddeb76dc4f26f17d28a2314b5ced554685e32249fa0ae",
+      "byteIdenticalToPriorGate": true
+    },
+    {
+      "seedRange": {
+        "firstSeed": 51,
+        "lastSeed": 75
+      },
+      "summary": {
+        "cases": 200,
+        "matched": 134,
+        "nativeErrors": 0,
+        "elkErrors": 4,
+        "differingValues": 10269
+      },
+      "retainedEvidence": "docs/heuristics/cycle-connection-locking/fresh/report.json",
+      "sha256": "e56cb7ca084fbf419572ce9204910ecc06a56e9cfb3a314a9376401f9dc20bd7",
+      "byteIdenticalToPriorGate": true
+    }
+  ]
+}

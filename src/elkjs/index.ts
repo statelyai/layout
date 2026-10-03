@@ -1910,22 +1910,28 @@ function normalizeElkGraphBounds(
     getBooleanOption(layoutOptions, "layered.feedbackEdges") !== true &&
     String(getOption(layoutOptions, "layered.layering.nodePromotion.strategy") ?? "NONE") !==
       "MODEL_ORDER_LEFT_TO_RIGHT" &&
-    !(root.edges ?? []).some((edge) => {
-      const source = childByEndpointId.get(String(edge.sources?.[0] ?? edge.source));
-      return (
-        source !== undefined &&
-        source === childByEndpointId.get(String(edge.targets?.[0] ?? edge.target))
-      );
-    }) &&
     !(root.children ?? []).some((child) => (child.children?.length ?? 0) > 0);
+  // Loop envelopes own their bounds. Ordinary long-edge dummies still have
+  // a one-pixel cross-axis extent when another edge in the graph is a loop.
+  // Apply that allowance to route points, before unioning labels and margins.
+  const isSelfLoop = (edge: ElkEdge) => {
+    const source = childByEndpointId.get(String(edge.sources?.[0] ?? edge.source));
+    return (
+      source !== undefined &&
+      source === childByEndpointId.get(String(edge.targets?.[0] ?? edge.target))
+    );
+  };
+  const hasSelfLoops = (root.edges ?? []).some(isSelfLoop);
   const edgeBoundsExtraX =
     addBoundaryPixel &&
+    !(hasSelfLoops && (direction === "right" || direction === "left")) &&
     layoutEdgePoints.length > 0 &&
     Math.max(...layoutEdgePoints.map((point) => point.x)) >= maximumNodeX - 1e-9
       ? 1
       : 0;
   const edgeBoundsExtraY =
     addBoundaryPixel &&
+    !(hasSelfLoops && (direction === "down" || direction === "up")) &&
     layoutEdgePoints.length > 0 &&
     Math.max(...layoutEdgePoints.map((point) => point.y)) >= maximumNodeY - 1e-9
       ? 1
@@ -1979,14 +1985,15 @@ function normalizeElkGraphBounds(
         getBooleanOption(edge.layoutOptions ?? {}, "noLayout") === true
           ? []
           : (edge.sections ?? []).flatMap((section) => [
-              section.startPoint.x,
-              ...(section.bendPoints ?? []).map((point) => point.x),
-              section.endPoint.x,
+              section.startPoint.x + (isSelfLoop(edge) ? 0 : edgeBoundsExtraX),
+              ...(section.bendPoints ?? []).map(
+                (point) => point.x + (isSelfLoop(edge) ? 0 : edgeBoundsExtraX),
+              ),
+              section.endPoint.x + (isSelfLoop(edge) ? 0 : edgeBoundsExtraX),
             ]),
       ),
     ) +
     padding.right +
-    edgeBoundsExtraX +
     postCompactionBoundsExtraX +
     (getBooleanOption(layoutOptions, "layered.feedbackEdges") === true &&
     (getDirection(layoutOptions) === "down" || getDirection(layoutOptions) === "up")
@@ -2024,14 +2031,15 @@ function normalizeElkGraphBounds(
         getBooleanOption(edge.layoutOptions ?? {}, "noLayout") === true
           ? []
           : (edge.sections ?? []).flatMap((section) => [
-              section.startPoint.y,
-              ...(section.bendPoints ?? []).map((point) => point.y),
-              section.endPoint.y,
+              section.startPoint.y + (isSelfLoop(edge) ? 0 : edgeBoundsExtraY),
+              ...(section.bendPoints ?? []).map(
+                (point) => point.y + (isSelfLoop(edge) ? 0 : edgeBoundsExtraY),
+              ),
+              section.endPoint.y + (isSelfLoop(edge) ? 0 : edgeBoundsExtraY),
             ]),
       ),
     ) +
     padding.bottom +
-    edgeBoundsExtraY +
     singleMultiEdgeCutBoundsExtraY +
     postCompactionBoundsExtraY +
     (getBooleanOption(layoutOptions, "layered.feedbackEdges") === true &&
