@@ -1,0 +1,2032 @@
+{
+  "oracle": "elkjs@0.11.1",
+  "comparison": "Object.is for every numeric state entry and exact physical port order",
+  "reports": [
+    {
+      "input": ".scratch/port-distribution-flat.json",
+      "sha256": "1ec8d19b467b2ad11f9ed43519e7feb17b4bad193470be65c1e8ad97650f9174",
+      "summary": {
+        "cases": 100,
+        "calls": 12925,
+        "matched": 12925,
+        "mismatched": 0,
+        "oracleErrors": 0
+      },
+      "outcomes": [
+        {
+          "family": "flat",
+          "seed": 1,
+          "direction": "RIGHT",
+          "success": true
+        },
+        {
+          "family": "flat",
+          "seed": 2,
+          "direction": "RIGHT",
+          "success": true
+        },
+        {
+          "family": "flat",
+          "seed": 3,
+          "direction": "RIGHT",
+          "success": true
+        },
+        {
+          "family": "flat",
+          "seed": 4,
+          "direction": "RIGHT",
+          "success": true
+        },
+        {
+          "family": "flat",
+          "seed": 5,
+          "direction": "RIGHT",
+          "success": true
+        },
+        {
+          "family": "flat",
+          "seed": 6,
+          "direction": "RIGHT",
+          "success": true
+        },
+        {
+          "family": "flat",
+          "seed": 7,
+          "direction": "RIGHT",
+          "success": true
+        },
+        {
+          "family": "flat",
+          "seed": 8,
+          "direction": "RIGHT",
+          "success": true
+        },
+        {
+          "family": "flat",
+          "seed": 9,
+          "direction": "RIGHT",
+          "success": true
+        },
+        {
+          "family": "flat",
+          "seed": 10,
+          "direction": "RIGHT",
+          "success": true
+        },
+        {
+          "family": "flat",
+          "seed": 11,
+          "direction": "RIGHT",
+          "success": true
+        },
+        {
+          "family": "flat",
+          "seed": 12,
+          "direction": "RIGHT",
+          "success": true
+        },
+        {
+          "family": "flat",
+          "seed": 13,
+          "direction": "RIGHT",
+          "success": true
+        },
+        {
+          "family": "flat",
+          "seed": 14,
+          "direction": "RIGHT",
+          "success": true
+        },
+        {
+          "family": "flat",
+          "seed": 15,
+          "direction": "RIGHT",
+          "success": true
+        },
+        {
+          "family": "flat",
+          "seed": 16,
+          "direction": "RIGHT",
+          "success": true
+        },
+        {
+          "family": "flat",
+          "seed": 17,
+          "direction": "RIGHT",
+          "success": true
+        },
+        {
+          "family": "flat",
+          "seed": 18,
+          "direction": "RIGHT",
+          "success": true
+        },
+        {
+          "family": "flat",
+          "seed": 19,
+          "direction": "RIGHT",
+          "success": true
+        },
+        {
+          "family": "flat",
+          "seed": 20,
+          "direction": "RIGHT",
+          "success": true
+        },
+        {
+          "family": "flat",
+          "seed": 21,
+          "direction": "RIGHT",
+          "success": true
+        },
+        {
+          "family": "flat",
+          "seed": 22,
+          "direction": "RIGHT",
+          "success": true
+        },
+        {
+          "family": "flat",
+          "seed": 23,
+          "direction": "RIGHT",
+          "success": true
+        },
+        {
+          "family": "flat",
+          "seed": 24,
+          "direction": "RIGHT",
+          "success": true
+        },
+        {
+          "family": "flat",
+          "seed": 25,
+          "direction": "RIGHT",
+          "success": true
+        },
+        {
+          "family": "flat",
+          "seed": 1,
+          "direction": "LEFT",
+          "success": true
+        },
+        {
+          "family": "flat",
+          "seed": 2,
+          "direction": "LEFT",
+          "success": true
+        },
+        {
+          "family": "flat",
+          "seed": 3,
+          "direction": "LEFT",
+          "success": true
+        },
+        {
+          "family": "flat",
+          "seed": 4,
+          "direction": "LEFT",
+          "success": true
+        },
+        {
+          "family": "flat",
+          "seed": 5,
+          "direction": "LEFT",
+          "success": true
+        },
+        {
+          "family": "flat",
+          "seed": 6,
+          "direction": "LEFT",
+          "success": true
+        },
+        {
+          "family": "flat",
+          "seed": 7,
+          "direction": "LEFT",
+          "success": true
+        },
+        {
+          "family": "flat",
+          "seed": 8,
+          "direction": "LEFT",
+          "success": true
+        },
+        {
+          "family": "flat",
+          "seed": 9,
+          "direction": "LEFT",
+          "success": true
+        },
+        {
+          "family": "flat",
+          "seed": 10,
+          "direction": "LEFT",
+          "success": true
+        },
+        {
+          "family": "flat",
+          "seed": 11,
+          "direction": "LEFT",
+          "success": true
+        },
+        {
+          "family": "flat",
+          "seed": 12,
+          "direction": "LEFT",
+          "success": true
+        },
+        {
+          "family": "flat",
+          "seed": 13,
+          "direction": "LEFT",
+          "success": true
+        },
+        {
+          "family": "flat",
+          "seed": 14,
+          "direction": "LEFT",
+          "success": true
+        },
+        {
+          "family": "flat",
+          "seed": 15,
+          "direction": "LEFT",
+          "success": true
+        },
+        {
+          "family": "flat",
+          "seed": 16,
+          "direction": "LEFT",
+          "success": true
+        },
+        {
+          "family": "flat",
+          "seed": 17,
+          "direction": "LEFT",
+          "success": true
+        },
+        {
+          "family": "flat",
+          "seed": 18,
+          "direction": "LEFT",
+          "success": true
+        },
+        {
+          "family": "flat",
+          "seed": 19,
+          "direction": "LEFT",
+          "success": true
+        },
+        {
+          "family": "flat",
+          "seed": 20,
+          "direction": "LEFT",
+          "success": true
+        },
+        {
+          "family": "flat",
+          "seed": 21,
+          "direction": "LEFT",
+          "success": true
+        },
+        {
+          "family": "flat",
+          "seed": 22,
+          "direction": "LEFT",
+          "success": true
+        },
+        {
+          "family": "flat",
+          "seed": 23,
+          "direction": "LEFT",
+          "success": true
+        },
+        {
+          "family": "flat",
+          "seed": 24,
+          "direction": "LEFT",
+          "success": true
+        },
+        {
+          "family": "flat",
+          "seed": 25,
+          "direction": "LEFT",
+          "success": true
+        },
+        {
+          "family": "flat",
+          "seed": 1,
+          "direction": "DOWN",
+          "success": true
+        },
+        {
+          "family": "flat",
+          "seed": 2,
+          "direction": "DOWN",
+          "success": true
+        },
+        {
+          "family": "flat",
+          "seed": 3,
+          "direction": "DOWN",
+          "success": true
+        },
+        {
+          "family": "flat",
+          "seed": 4,
+          "direction": "DOWN",
+          "success": true
+        },
+        {
+          "family": "flat",
+          "seed": 5,
+          "direction": "DOWN",
+          "success": true
+        },
+        {
+          "family": "flat",
+          "seed": 6,
+          "direction": "DOWN",
+          "success": true
+        },
+        {
+          "family": "flat",
+          "seed": 7,
+          "direction": "DOWN",
+          "success": true
+        },
+        {
+          "family": "flat",
+          "seed": 8,
+          "direction": "DOWN",
+          "success": true
+        },
+        {
+          "family": "flat",
+          "seed": 9,
+          "direction": "DOWN",
+          "success": true
+        },
+        {
+          "family": "flat",
+          "seed": 10,
+          "direction": "DOWN",
+          "success": true
+        },
+        {
+          "family": "flat",
+          "seed": 11,
+          "direction": "DOWN",
+          "success": true
+        },
+        {
+          "family": "flat",
+          "seed": 12,
+          "direction": "DOWN",
+          "success": true
+        },
+        {
+          "family": "flat",
+          "seed": 13,
+          "direction": "DOWN",
+          "success": true
+        },
+        {
+          "family": "flat",
+          "seed": 14,
+          "direction": "DOWN",
+          "success": true
+        },
+        {
+          "family": "flat",
+          "seed": 15,
+          "direction": "DOWN",
+          "success": true
+        },
+        {
+          "family": "flat",
+          "seed": 16,
+          "direction": "DOWN",
+          "success": true
+        },
+        {
+          "family": "flat",
+          "seed": 17,
+          "direction": "DOWN",
+          "success": true
+        },
+        {
+          "family": "flat",
+          "seed": 18,
+          "direction": "DOWN",
+          "success": true
+        },
+        {
+          "family": "flat",
+          "seed": 19,
+          "direction": "DOWN",
+          "success": true
+        },
+        {
+          "family": "flat",
+          "seed": 20,
+          "direction": "DOWN",
+          "success": true
+        },
+        {
+          "family": "flat",
+          "seed": 21,
+          "direction": "DOWN",
+          "success": true
+        },
+        {
+          "family": "flat",
+          "seed": 22,
+          "direction": "DOWN",
+          "success": true
+        },
+        {
+          "family": "flat",
+          "seed": 23,
+          "direction": "DOWN",
+          "success": true
+        },
+        {
+          "family": "flat",
+          "seed": 24,
+          "direction": "DOWN",
+          "success": true
+        },
+        {
+          "family": "flat",
+          "seed": 25,
+          "direction": "DOWN",
+          "success": true
+        },
+        {
+          "family": "flat",
+          "seed": 1,
+          "direction": "UP",
+          "success": true
+        },
+        {
+          "family": "flat",
+          "seed": 2,
+          "direction": "UP",
+          "success": true
+        },
+        {
+          "family": "flat",
+          "seed": 3,
+          "direction": "UP",
+          "success": true
+        },
+        {
+          "family": "flat",
+          "seed": 4,
+          "direction": "UP",
+          "success": true
+        },
+        {
+          "family": "flat",
+          "seed": 5,
+          "direction": "UP",
+          "success": true
+        },
+        {
+          "family": "flat",
+          "seed": 6,
+          "direction": "UP",
+          "success": true
+        },
+        {
+          "family": "flat",
+          "seed": 7,
+          "direction": "UP",
+          "success": true
+        },
+        {
+          "family": "flat",
+          "seed": 8,
+          "direction": "UP",
+          "success": true
+        },
+        {
+          "family": "flat",
+          "seed": 9,
+          "direction": "UP",
+          "success": true
+        },
+        {
+          "family": "flat",
+          "seed": 10,
+          "direction": "UP",
+          "success": true
+        },
+        {
+          "family": "flat",
+          "seed": 11,
+          "direction": "UP",
+          "success": true
+        },
+        {
+          "family": "flat",
+          "seed": 12,
+          "direction": "UP",
+          "success": true
+        },
+        {
+          "family": "flat",
+          "seed": 13,
+          "direction": "UP",
+          "success": true
+        },
+        {
+          "family": "flat",
+          "seed": 14,
+          "direction": "UP",
+          "success": true
+        },
+        {
+          "family": "flat",
+          "seed": 15,
+          "direction": "UP",
+          "success": true
+        },
+        {
+          "family": "flat",
+          "seed": 16,
+          "direction": "UP",
+          "success": true
+        },
+        {
+          "family": "flat",
+          "seed": 17,
+          "direction": "UP",
+          "success": true
+        },
+        {
+          "family": "flat",
+          "seed": 18,
+          "direction": "UP",
+          "success": true
+        },
+        {
+          "family": "flat",
+          "seed": 19,
+          "direction": "UP",
+          "success": true
+        },
+        {
+          "family": "flat",
+          "seed": 20,
+          "direction": "UP",
+          "success": true
+        },
+        {
+          "family": "flat",
+          "seed": 21,
+          "direction": "UP",
+          "success": true
+        },
+        {
+          "family": "flat",
+          "seed": 22,
+          "direction": "UP",
+          "success": true
+        },
+        {
+          "family": "flat",
+          "seed": 23,
+          "direction": "UP",
+          "success": true
+        },
+        {
+          "family": "flat",
+          "seed": 24,
+          "direction": "UP",
+          "success": true
+        },
+        {
+          "family": "flat",
+          "seed": 25,
+          "direction": "UP",
+          "success": true
+        }
+      ]
+    },
+    {
+      "input": ".scratch/port-distribution-directional.json",
+      "sha256": "3b7da73dc0a47bd28305c1c800d048e2db04bcd068140db52bb251622604a8b7",
+      "summary": {
+        "cases": 200,
+        "calls": 14745,
+        "matched": 14745,
+        "mismatched": 0,
+        "oracleErrors": 6
+      },
+      "outcomes": [
+        {
+          "family": "flat",
+          "seed": 1,
+          "direction": "RIGHT",
+          "strategy": "LEFT",
+          "success": true
+        },
+        {
+          "family": "flat",
+          "seed": 2,
+          "direction": "RIGHT",
+          "strategy": "RIGHT",
+          "success": true
+        },
+        {
+          "family": "flat",
+          "seed": 3,
+          "direction": "RIGHT",
+          "strategy": "LEFT_RIGHT_CONSTRAINT_LOCKING",
+          "success": true
+        },
+        {
+          "family": "flat",
+          "seed": 4,
+          "direction": "RIGHT",
+          "strategy": "LEFT_RIGHT_CONNECTION_LOCKING",
+          "success": true
+        },
+        {
+          "family": "flat",
+          "seed": 5,
+          "direction": "RIGHT",
+          "strategy": "LEFT",
+          "success": true
+        },
+        {
+          "family": "flat",
+          "seed": 6,
+          "direction": "RIGHT",
+          "strategy": "RIGHT",
+          "success": true
+        },
+        {
+          "family": "flat",
+          "seed": 7,
+          "direction": "RIGHT",
+          "strategy": "LEFT_RIGHT_CONSTRAINT_LOCKING",
+          "success": true
+        },
+        {
+          "family": "flat",
+          "seed": 8,
+          "direction": "RIGHT",
+          "strategy": "LEFT_RIGHT_CONNECTION_LOCKING",
+          "success": true
+        },
+        {
+          "family": "flat",
+          "seed": 9,
+          "direction": "RIGHT",
+          "strategy": "LEFT",
+          "success": true
+        },
+        {
+          "family": "flat",
+          "seed": 10,
+          "direction": "RIGHT",
+          "strategy": "RIGHT",
+          "success": true
+        },
+        {
+          "family": "flat",
+          "seed": 11,
+          "direction": "RIGHT",
+          "strategy": "LEFT_RIGHT_CONSTRAINT_LOCKING",
+          "success": true
+        },
+        {
+          "family": "flat",
+          "seed": 12,
+          "direction": "RIGHT",
+          "strategy": "LEFT_RIGHT_CONNECTION_LOCKING",
+          "success": true
+        },
+        {
+          "family": "flat",
+          "seed": 13,
+          "direction": "RIGHT",
+          "strategy": "LEFT",
+          "success": true
+        },
+        {
+          "family": "flat",
+          "seed": 14,
+          "direction": "RIGHT",
+          "strategy": "RIGHT",
+          "success": true
+        },
+        {
+          "family": "flat",
+          "seed": 15,
+          "direction": "RIGHT",
+          "strategy": "LEFT_RIGHT_CONSTRAINT_LOCKING",
+          "success": true
+        },
+        {
+          "family": "flat",
+          "seed": 16,
+          "direction": "RIGHT",
+          "strategy": "LEFT_RIGHT_CONNECTION_LOCKING",
+          "success": true
+        },
+        {
+          "family": "flat",
+          "seed": 17,
+          "direction": "RIGHT",
+          "strategy": "LEFT",
+          "success": true
+        },
+        {
+          "family": "flat",
+          "seed": 18,
+          "direction": "RIGHT",
+          "strategy": "RIGHT",
+          "success": true
+        },
+        {
+          "family": "flat",
+          "seed": 19,
+          "direction": "RIGHT",
+          "strategy": "LEFT_RIGHT_CONSTRAINT_LOCKING",
+          "success": true
+        },
+        {
+          "family": "flat",
+          "seed": 20,
+          "direction": "RIGHT",
+          "strategy": "LEFT_RIGHT_CONNECTION_LOCKING",
+          "success": true
+        },
+        {
+          "family": "flat",
+          "seed": 21,
+          "direction": "RIGHT",
+          "strategy": "LEFT",
+          "success": true
+        },
+        {
+          "family": "flat",
+          "seed": 22,
+          "direction": "RIGHT",
+          "strategy": "RIGHT",
+          "success": true
+        },
+        {
+          "family": "flat",
+          "seed": 23,
+          "direction": "RIGHT",
+          "strategy": "LEFT_RIGHT_CONSTRAINT_LOCKING",
+          "success": true
+        },
+        {
+          "family": "flat",
+          "seed": 24,
+          "direction": "RIGHT",
+          "strategy": "LEFT_RIGHT_CONNECTION_LOCKING",
+          "success": true
+        },
+        {
+          "family": "flat",
+          "seed": 25,
+          "direction": "RIGHT",
+          "strategy": "LEFT",
+          "success": true
+        },
+        {
+          "family": "flat",
+          "seed": 1,
+          "direction": "LEFT",
+          "strategy": "LEFT",
+          "success": true
+        },
+        {
+          "family": "flat",
+          "seed": 2,
+          "direction": "LEFT",
+          "strategy": "RIGHT",
+          "success": true
+        },
+        {
+          "family": "flat",
+          "seed": 3,
+          "direction": "LEFT",
+          "strategy": "LEFT_RIGHT_CONSTRAINT_LOCKING",
+          "success": true
+        },
+        {
+          "family": "flat",
+          "seed": 4,
+          "direction": "LEFT",
+          "strategy": "LEFT_RIGHT_CONNECTION_LOCKING",
+          "success": true
+        },
+        {
+          "family": "flat",
+          "seed": 5,
+          "direction": "LEFT",
+          "strategy": "LEFT",
+          "success": true
+        },
+        {
+          "family": "flat",
+          "seed": 6,
+          "direction": "LEFT",
+          "strategy": "RIGHT",
+          "success": true
+        },
+        {
+          "family": "flat",
+          "seed": 7,
+          "direction": "LEFT",
+          "strategy": "LEFT_RIGHT_CONSTRAINT_LOCKING",
+          "success": true
+        },
+        {
+          "family": "flat",
+          "seed": 8,
+          "direction": "LEFT",
+          "strategy": "LEFT_RIGHT_CONNECTION_LOCKING",
+          "success": true
+        },
+        {
+          "family": "flat",
+          "seed": 9,
+          "direction": "LEFT",
+          "strategy": "LEFT",
+          "success": true
+        },
+        {
+          "family": "flat",
+          "seed": 10,
+          "direction": "LEFT",
+          "strategy": "RIGHT",
+          "success": true
+        },
+        {
+          "family": "flat",
+          "seed": 11,
+          "direction": "LEFT",
+          "strategy": "LEFT_RIGHT_CONSTRAINT_LOCKING",
+          "success": true
+        },
+        {
+          "family": "flat",
+          "seed": 12,
+          "direction": "LEFT",
+          "strategy": "LEFT_RIGHT_CONNECTION_LOCKING",
+          "success": true
+        },
+        {
+          "family": "flat",
+          "seed": 13,
+          "direction": "LEFT",
+          "strategy": "LEFT",
+          "success": true
+        },
+        {
+          "family": "flat",
+          "seed": 14,
+          "direction": "LEFT",
+          "strategy": "RIGHT",
+          "success": true
+        },
+        {
+          "family": "flat",
+          "seed": 15,
+          "direction": "LEFT",
+          "strategy": "LEFT_RIGHT_CONSTRAINT_LOCKING",
+          "success": true
+        },
+        {
+          "family": "flat",
+          "seed": 16,
+          "direction": "LEFT",
+          "strategy": "LEFT_RIGHT_CONNECTION_LOCKING",
+          "success": true
+        },
+        {
+          "family": "flat",
+          "seed": 17,
+          "direction": "LEFT",
+          "strategy": "LEFT",
+          "success": true
+        },
+        {
+          "family": "flat",
+          "seed": 18,
+          "direction": "LEFT",
+          "strategy": "RIGHT",
+          "success": true
+        },
+        {
+          "family": "flat",
+          "seed": 19,
+          "direction": "LEFT",
+          "strategy": "LEFT_RIGHT_CONSTRAINT_LOCKING",
+          "success": true
+        },
+        {
+          "family": "flat",
+          "seed": 20,
+          "direction": "LEFT",
+          "strategy": "LEFT_RIGHT_CONNECTION_LOCKING",
+          "success": true
+        },
+        {
+          "family": "flat",
+          "seed": 21,
+          "direction": "LEFT",
+          "strategy": "LEFT",
+          "success": true
+        },
+        {
+          "family": "flat",
+          "seed": 22,
+          "direction": "LEFT",
+          "strategy": "RIGHT",
+          "success": true
+        },
+        {
+          "family": "flat",
+          "seed": 23,
+          "direction": "LEFT",
+          "strategy": "LEFT_RIGHT_CONSTRAINT_LOCKING",
+          "success": true
+        },
+        {
+          "family": "flat",
+          "seed": 24,
+          "direction": "LEFT",
+          "strategy": "LEFT_RIGHT_CONNECTION_LOCKING",
+          "success": true
+        },
+        {
+          "family": "flat",
+          "seed": 25,
+          "direction": "LEFT",
+          "strategy": "LEFT",
+          "success": true
+        },
+        {
+          "family": "flat",
+          "seed": 1,
+          "direction": "DOWN",
+          "strategy": "LEFT",
+          "success": true
+        },
+        {
+          "family": "flat",
+          "seed": 2,
+          "direction": "DOWN",
+          "strategy": "RIGHT",
+          "success": true
+        },
+        {
+          "family": "flat",
+          "seed": 3,
+          "direction": "DOWN",
+          "strategy": "LEFT_RIGHT_CONSTRAINT_LOCKING",
+          "error": "Error: java.lang.IllegalStateException: Invalid hitboxes for scanline constraint calculation."
+        },
+        {
+          "family": "flat",
+          "seed": 4,
+          "direction": "DOWN",
+          "strategy": "LEFT_RIGHT_CONNECTION_LOCKING",
+          "success": true
+        },
+        {
+          "family": "flat",
+          "seed": 5,
+          "direction": "DOWN",
+          "strategy": "LEFT",
+          "success": true
+        },
+        {
+          "family": "flat",
+          "seed": 6,
+          "direction": "DOWN",
+          "strategy": "RIGHT",
+          "success": true
+        },
+        {
+          "family": "flat",
+          "seed": 7,
+          "direction": "DOWN",
+          "strategy": "LEFT_RIGHT_CONSTRAINT_LOCKING",
+          "success": true
+        },
+        {
+          "family": "flat",
+          "seed": 8,
+          "direction": "DOWN",
+          "strategy": "LEFT_RIGHT_CONNECTION_LOCKING",
+          "success": true
+        },
+        {
+          "family": "flat",
+          "seed": 9,
+          "direction": "DOWN",
+          "strategy": "LEFT",
+          "success": true
+        },
+        {
+          "family": "flat",
+          "seed": 10,
+          "direction": "DOWN",
+          "strategy": "RIGHT",
+          "success": true
+        },
+        {
+          "family": "flat",
+          "seed": 11,
+          "direction": "DOWN",
+          "strategy": "LEFT_RIGHT_CONSTRAINT_LOCKING",
+          "success": true
+        },
+        {
+          "family": "flat",
+          "seed": 12,
+          "direction": "DOWN",
+          "strategy": "LEFT_RIGHT_CONNECTION_LOCKING",
+          "success": true
+        },
+        {
+          "family": "flat",
+          "seed": 13,
+          "direction": "DOWN",
+          "strategy": "LEFT",
+          "success": true
+        },
+        {
+          "family": "flat",
+          "seed": 14,
+          "direction": "DOWN",
+          "strategy": "RIGHT",
+          "success": true
+        },
+        {
+          "family": "flat",
+          "seed": 15,
+          "direction": "DOWN",
+          "strategy": "LEFT_RIGHT_CONSTRAINT_LOCKING",
+          "success": true
+        },
+        {
+          "family": "flat",
+          "seed": 16,
+          "direction": "DOWN",
+          "strategy": "LEFT_RIGHT_CONNECTION_LOCKING",
+          "success": true
+        },
+        {
+          "family": "flat",
+          "seed": 17,
+          "direction": "DOWN",
+          "strategy": "LEFT",
+          "success": true
+        },
+        {
+          "family": "flat",
+          "seed": 18,
+          "direction": "DOWN",
+          "strategy": "RIGHT",
+          "error": "Error: java.lang.IllegalStateException: Invalid hitboxes for scanline constraint calculation."
+        },
+        {
+          "family": "flat",
+          "seed": 19,
+          "direction": "DOWN",
+          "strategy": "LEFT_RIGHT_CONSTRAINT_LOCKING",
+          "success": true
+        },
+        {
+          "family": "flat",
+          "seed": 20,
+          "direction": "DOWN",
+          "strategy": "LEFT_RIGHT_CONNECTION_LOCKING",
+          "success": true
+        },
+        {
+          "family": "flat",
+          "seed": 21,
+          "direction": "DOWN",
+          "strategy": "LEFT",
+          "success": true
+        },
+        {
+          "family": "flat",
+          "seed": 22,
+          "direction": "DOWN",
+          "strategy": "RIGHT",
+          "success": true
+        },
+        {
+          "family": "flat",
+          "seed": 23,
+          "direction": "DOWN",
+          "strategy": "LEFT_RIGHT_CONSTRAINT_LOCKING",
+          "error": "Error: java.lang.IllegalStateException: Invalid hitboxes for scanline constraint calculation."
+        },
+        {
+          "family": "flat",
+          "seed": 24,
+          "direction": "DOWN",
+          "strategy": "LEFT_RIGHT_CONNECTION_LOCKING",
+          "success": true
+        },
+        {
+          "family": "flat",
+          "seed": 25,
+          "direction": "DOWN",
+          "strategy": "LEFT",
+          "success": true
+        },
+        {
+          "family": "flat",
+          "seed": 1,
+          "direction": "UP",
+          "strategy": "LEFT",
+          "success": true
+        },
+        {
+          "family": "flat",
+          "seed": 2,
+          "direction": "UP",
+          "strategy": "RIGHT",
+          "success": true
+        },
+        {
+          "family": "flat",
+          "seed": 3,
+          "direction": "UP",
+          "strategy": "LEFT_RIGHT_CONSTRAINT_LOCKING",
+          "error": "Error: java.lang.IllegalStateException: Invalid hitboxes for scanline constraint calculation."
+        },
+        {
+          "family": "flat",
+          "seed": 4,
+          "direction": "UP",
+          "strategy": "LEFT_RIGHT_CONNECTION_LOCKING",
+          "success": true
+        },
+        {
+          "family": "flat",
+          "seed": 5,
+          "direction": "UP",
+          "strategy": "LEFT",
+          "success": true
+        },
+        {
+          "family": "flat",
+          "seed": 6,
+          "direction": "UP",
+          "strategy": "RIGHT",
+          "success": true
+        },
+        {
+          "family": "flat",
+          "seed": 7,
+          "direction": "UP",
+          "strategy": "LEFT_RIGHT_CONSTRAINT_LOCKING",
+          "success": true
+        },
+        {
+          "family": "flat",
+          "seed": 8,
+          "direction": "UP",
+          "strategy": "LEFT_RIGHT_CONNECTION_LOCKING",
+          "success": true
+        },
+        {
+          "family": "flat",
+          "seed": 9,
+          "direction": "UP",
+          "strategy": "LEFT",
+          "success": true
+        },
+        {
+          "family": "flat",
+          "seed": 10,
+          "direction": "UP",
+          "strategy": "RIGHT",
+          "success": true
+        },
+        {
+          "family": "flat",
+          "seed": 11,
+          "direction": "UP",
+          "strategy": "LEFT_RIGHT_CONSTRAINT_LOCKING",
+          "success": true
+        },
+        {
+          "family": "flat",
+          "seed": 12,
+          "direction": "UP",
+          "strategy": "LEFT_RIGHT_CONNECTION_LOCKING",
+          "success": true
+        },
+        {
+          "family": "flat",
+          "seed": 13,
+          "direction": "UP",
+          "strategy": "LEFT",
+          "success": true
+        },
+        {
+          "family": "flat",
+          "seed": 14,
+          "direction": "UP",
+          "strategy": "RIGHT",
+          "success": true
+        },
+        {
+          "family": "flat",
+          "seed": 15,
+          "direction": "UP",
+          "strategy": "LEFT_RIGHT_CONSTRAINT_LOCKING",
+          "success": true
+        },
+        {
+          "family": "flat",
+          "seed": 16,
+          "direction": "UP",
+          "strategy": "LEFT_RIGHT_CONNECTION_LOCKING",
+          "success": true
+        },
+        {
+          "family": "flat",
+          "seed": 17,
+          "direction": "UP",
+          "strategy": "LEFT",
+          "success": true
+        },
+        {
+          "family": "flat",
+          "seed": 18,
+          "direction": "UP",
+          "strategy": "RIGHT",
+          "error": "Error: java.lang.IllegalStateException: Invalid hitboxes for scanline constraint calculation."
+        },
+        {
+          "family": "flat",
+          "seed": 19,
+          "direction": "UP",
+          "strategy": "LEFT_RIGHT_CONSTRAINT_LOCKING",
+          "success": true
+        },
+        {
+          "family": "flat",
+          "seed": 20,
+          "direction": "UP",
+          "strategy": "LEFT_RIGHT_CONNECTION_LOCKING",
+          "success": true
+        },
+        {
+          "family": "flat",
+          "seed": 21,
+          "direction": "UP",
+          "strategy": "LEFT",
+          "success": true
+        },
+        {
+          "family": "flat",
+          "seed": 22,
+          "direction": "UP",
+          "strategy": "RIGHT",
+          "success": true
+        },
+        {
+          "family": "flat",
+          "seed": 23,
+          "direction": "UP",
+          "strategy": "LEFT_RIGHT_CONSTRAINT_LOCKING",
+          "error": "Error: java.lang.IllegalStateException: Invalid hitboxes for scanline constraint calculation."
+        },
+        {
+          "family": "flat",
+          "seed": 24,
+          "direction": "UP",
+          "strategy": "LEFT_RIGHT_CONNECTION_LOCKING",
+          "success": true
+        },
+        {
+          "family": "flat",
+          "seed": 25,
+          "direction": "UP",
+          "strategy": "LEFT",
+          "success": true
+        },
+        {
+          "family": "hierarchy",
+          "seed": 1,
+          "direction": "RIGHT",
+          "strategy": "LEFT",
+          "success": true
+        },
+        {
+          "family": "hierarchy",
+          "seed": 2,
+          "direction": "RIGHT",
+          "strategy": "RIGHT",
+          "success": true
+        },
+        {
+          "family": "hierarchy",
+          "seed": 3,
+          "direction": "RIGHT",
+          "strategy": "LEFT_RIGHT_CONSTRAINT_LOCKING",
+          "success": true
+        },
+        {
+          "family": "hierarchy",
+          "seed": 4,
+          "direction": "RIGHT",
+          "strategy": "LEFT_RIGHT_CONNECTION_LOCKING",
+          "success": true
+        },
+        {
+          "family": "hierarchy",
+          "seed": 5,
+          "direction": "RIGHT",
+          "strategy": "LEFT",
+          "success": true
+        },
+        {
+          "family": "hierarchy",
+          "seed": 6,
+          "direction": "RIGHT",
+          "strategy": "RIGHT",
+          "success": true
+        },
+        {
+          "family": "hierarchy",
+          "seed": 7,
+          "direction": "RIGHT",
+          "strategy": "LEFT_RIGHT_CONSTRAINT_LOCKING",
+          "success": true
+        },
+        {
+          "family": "hierarchy",
+          "seed": 8,
+          "direction": "RIGHT",
+          "strategy": "LEFT_RIGHT_CONNECTION_LOCKING",
+          "success": true
+        },
+        {
+          "family": "hierarchy",
+          "seed": 9,
+          "direction": "RIGHT",
+          "strategy": "LEFT",
+          "success": true
+        },
+        {
+          "family": "hierarchy",
+          "seed": 10,
+          "direction": "RIGHT",
+          "strategy": "RIGHT",
+          "success": true
+        },
+        {
+          "family": "hierarchy",
+          "seed": 11,
+          "direction": "RIGHT",
+          "strategy": "LEFT_RIGHT_CONSTRAINT_LOCKING",
+          "success": true
+        },
+        {
+          "family": "hierarchy",
+          "seed": 12,
+          "direction": "RIGHT",
+          "strategy": "LEFT_RIGHT_CONNECTION_LOCKING",
+          "success": true
+        },
+        {
+          "family": "hierarchy",
+          "seed": 13,
+          "direction": "RIGHT",
+          "strategy": "LEFT",
+          "success": true
+        },
+        {
+          "family": "hierarchy",
+          "seed": 14,
+          "direction": "RIGHT",
+          "strategy": "RIGHT",
+          "success": true
+        },
+        {
+          "family": "hierarchy",
+          "seed": 15,
+          "direction": "RIGHT",
+          "strategy": "LEFT_RIGHT_CONSTRAINT_LOCKING",
+          "success": true
+        },
+        {
+          "family": "hierarchy",
+          "seed": 16,
+          "direction": "RIGHT",
+          "strategy": "LEFT_RIGHT_CONNECTION_LOCKING",
+          "success": true
+        },
+        {
+          "family": "hierarchy",
+          "seed": 17,
+          "direction": "RIGHT",
+          "strategy": "LEFT",
+          "success": true
+        },
+        {
+          "family": "hierarchy",
+          "seed": 18,
+          "direction": "RIGHT",
+          "strategy": "RIGHT",
+          "success": true
+        },
+        {
+          "family": "hierarchy",
+          "seed": 19,
+          "direction": "RIGHT",
+          "strategy": "LEFT_RIGHT_CONSTRAINT_LOCKING",
+          "success": true
+        },
+        {
+          "family": "hierarchy",
+          "seed": 20,
+          "direction": "RIGHT",
+          "strategy": "LEFT_RIGHT_CONNECTION_LOCKING",
+          "success": true
+        },
+        {
+          "family": "hierarchy",
+          "seed": 21,
+          "direction": "RIGHT",
+          "strategy": "LEFT",
+          "success": true
+        },
+        {
+          "family": "hierarchy",
+          "seed": 22,
+          "direction": "RIGHT",
+          "strategy": "RIGHT",
+          "success": true
+        },
+        {
+          "family": "hierarchy",
+          "seed": 23,
+          "direction": "RIGHT",
+          "strategy": "LEFT_RIGHT_CONSTRAINT_LOCKING",
+          "success": true
+        },
+        {
+          "family": "hierarchy",
+          "seed": 24,
+          "direction": "RIGHT",
+          "strategy": "LEFT_RIGHT_CONNECTION_LOCKING",
+          "success": true
+        },
+        {
+          "family": "hierarchy",
+          "seed": 25,
+          "direction": "RIGHT",
+          "strategy": "LEFT",
+          "success": true
+        },
+        {
+          "family": "hierarchy",
+          "seed": 1,
+          "direction": "LEFT",
+          "strategy": "LEFT",
+          "success": true
+        },
+        {
+          "family": "hierarchy",
+          "seed": 2,
+          "direction": "LEFT",
+          "strategy": "RIGHT",
+          "success": true
+        },
+        {
+          "family": "hierarchy",
+          "seed": 3,
+          "direction": "LEFT",
+          "strategy": "LEFT_RIGHT_CONSTRAINT_LOCKING",
+          "success": true
+        },
+        {
+          "family": "hierarchy",
+          "seed": 4,
+          "direction": "LEFT",
+          "strategy": "LEFT_RIGHT_CONNECTION_LOCKING",
+          "success": true
+        },
+        {
+          "family": "hierarchy",
+          "seed": 5,
+          "direction": "LEFT",
+          "strategy": "LEFT",
+          "success": true
+        },
+        {
+          "family": "hierarchy",
+          "seed": 6,
+          "direction": "LEFT",
+          "strategy": "RIGHT",
+          "success": true
+        },
+        {
+          "family": "hierarchy",
+          "seed": 7,
+          "direction": "LEFT",
+          "strategy": "LEFT_RIGHT_CONSTRAINT_LOCKING",
+          "success": true
+        },
+        {
+          "family": "hierarchy",
+          "seed": 8,
+          "direction": "LEFT",
+          "strategy": "LEFT_RIGHT_CONNECTION_LOCKING",
+          "success": true
+        },
+        {
+          "family": "hierarchy",
+          "seed": 9,
+          "direction": "LEFT",
+          "strategy": "LEFT",
+          "success": true
+        },
+        {
+          "family": "hierarchy",
+          "seed": 10,
+          "direction": "LEFT",
+          "strategy": "RIGHT",
+          "success": true
+        },
+        {
+          "family": "hierarchy",
+          "seed": 11,
+          "direction": "LEFT",
+          "strategy": "LEFT_RIGHT_CONSTRAINT_LOCKING",
+          "success": true
+        },
+        {
+          "family": "hierarchy",
+          "seed": 12,
+          "direction": "LEFT",
+          "strategy": "LEFT_RIGHT_CONNECTION_LOCKING",
+          "success": true
+        },
+        {
+          "family": "hierarchy",
+          "seed": 13,
+          "direction": "LEFT",
+          "strategy": "LEFT",
+          "success": true
+        },
+        {
+          "family": "hierarchy",
+          "seed": 14,
+          "direction": "LEFT",
+          "strategy": "RIGHT",
+          "success": true
+        },
+        {
+          "family": "hierarchy",
+          "seed": 15,
+          "direction": "LEFT",
+          "strategy": "LEFT_RIGHT_CONSTRAINT_LOCKING",
+          "success": true
+        },
+        {
+          "family": "hierarchy",
+          "seed": 16,
+          "direction": "LEFT",
+          "strategy": "LEFT_RIGHT_CONNECTION_LOCKING",
+          "success": true
+        },
+        {
+          "family": "hierarchy",
+          "seed": 17,
+          "direction": "LEFT",
+          "strategy": "LEFT",
+          "success": true
+        },
+        {
+          "family": "hierarchy",
+          "seed": 18,
+          "direction": "LEFT",
+          "strategy": "RIGHT",
+          "success": true
+        },
+        {
+          "family": "hierarchy",
+          "seed": 19,
+          "direction": "LEFT",
+          "strategy": "LEFT_RIGHT_CONSTRAINT_LOCKING",
+          "success": true
+        },
+        {
+          "family": "hierarchy",
+          "seed": 20,
+          "direction": "LEFT",
+          "strategy": "LEFT_RIGHT_CONNECTION_LOCKING",
+          "success": true
+        },
+        {
+          "family": "hierarchy",
+          "seed": 21,
+          "direction": "LEFT",
+          "strategy": "LEFT",
+          "success": true
+        },
+        {
+          "family": "hierarchy",
+          "seed": 22,
+          "direction": "LEFT",
+          "strategy": "RIGHT",
+          "success": true
+        },
+        {
+          "family": "hierarchy",
+          "seed": 23,
+          "direction": "LEFT",
+          "strategy": "LEFT_RIGHT_CONSTRAINT_LOCKING",
+          "success": true
+        },
+        {
+          "family": "hierarchy",
+          "seed": 24,
+          "direction": "LEFT",
+          "strategy": "LEFT_RIGHT_CONNECTION_LOCKING",
+          "success": true
+        },
+        {
+          "family": "hierarchy",
+          "seed": 25,
+          "direction": "LEFT",
+          "strategy": "LEFT",
+          "success": true
+        },
+        {
+          "family": "hierarchy",
+          "seed": 1,
+          "direction": "DOWN",
+          "strategy": "LEFT",
+          "success": true
+        },
+        {
+          "family": "hierarchy",
+          "seed": 2,
+          "direction": "DOWN",
+          "strategy": "RIGHT",
+          "success": true
+        },
+        {
+          "family": "hierarchy",
+          "seed": 3,
+          "direction": "DOWN",
+          "strategy": "LEFT_RIGHT_CONSTRAINT_LOCKING",
+          "success": true
+        },
+        {
+          "family": "hierarchy",
+          "seed": 4,
+          "direction": "DOWN",
+          "strategy": "LEFT_RIGHT_CONNECTION_LOCKING",
+          "success": true
+        },
+        {
+          "family": "hierarchy",
+          "seed": 5,
+          "direction": "DOWN",
+          "strategy": "LEFT",
+          "success": true
+        },
+        {
+          "family": "hierarchy",
+          "seed": 6,
+          "direction": "DOWN",
+          "strategy": "RIGHT",
+          "success": true
+        },
+        {
+          "family": "hierarchy",
+          "seed": 7,
+          "direction": "DOWN",
+          "strategy": "LEFT_RIGHT_CONSTRAINT_LOCKING",
+          "success": true
+        },
+        {
+          "family": "hierarchy",
+          "seed": 8,
+          "direction": "DOWN",
+          "strategy": "LEFT_RIGHT_CONNECTION_LOCKING",
+          "success": true
+        },
+        {
+          "family": "hierarchy",
+          "seed": 9,
+          "direction": "DOWN",
+          "strategy": "LEFT",
+          "success": true
+        },
+        {
+          "family": "hierarchy",
+          "seed": 10,
+          "direction": "DOWN",
+          "strategy": "RIGHT",
+          "success": true
+        },
+        {
+          "family": "hierarchy",
+          "seed": 11,
+          "direction": "DOWN",
+          "strategy": "LEFT_RIGHT_CONSTRAINT_LOCKING",
+          "success": true
+        },
+        {
+          "family": "hierarchy",
+          "seed": 12,
+          "direction": "DOWN",
+          "strategy": "LEFT_RIGHT_CONNECTION_LOCKING",
+          "success": true
+        },
+        {
+          "family": "hierarchy",
+          "seed": 13,
+          "direction": "DOWN",
+          "strategy": "LEFT",
+          "success": true
+        },
+        {
+          "family": "hierarchy",
+          "seed": 14,
+          "direction": "DOWN",
+          "strategy": "RIGHT",
+          "success": true
+        },
+        {
+          "family": "hierarchy",
+          "seed": 15,
+          "direction": "DOWN",
+          "strategy": "LEFT_RIGHT_CONSTRAINT_LOCKING",
+          "success": true
+        },
+        {
+          "family": "hierarchy",
+          "seed": 16,
+          "direction": "DOWN",
+          "strategy": "LEFT_RIGHT_CONNECTION_LOCKING",
+          "success": true
+        },
+        {
+          "family": "hierarchy",
+          "seed": 17,
+          "direction": "DOWN",
+          "strategy": "LEFT",
+          "success": true
+        },
+        {
+          "family": "hierarchy",
+          "seed": 18,
+          "direction": "DOWN",
+          "strategy": "RIGHT",
+          "success": true
+        },
+        {
+          "family": "hierarchy",
+          "seed": 19,
+          "direction": "DOWN",
+          "strategy": "LEFT_RIGHT_CONSTRAINT_LOCKING",
+          "success": true
+        },
+        {
+          "family": "hierarchy",
+          "seed": 20,
+          "direction": "DOWN",
+          "strategy": "LEFT_RIGHT_CONNECTION_LOCKING",
+          "success": true
+        },
+        {
+          "family": "hierarchy",
+          "seed": 21,
+          "direction": "DOWN",
+          "strategy": "LEFT",
+          "success": true
+        },
+        {
+          "family": "hierarchy",
+          "seed": 22,
+          "direction": "DOWN",
+          "strategy": "RIGHT",
+          "success": true
+        },
+        {
+          "family": "hierarchy",
+          "seed": 23,
+          "direction": "DOWN",
+          "strategy": "LEFT_RIGHT_CONSTRAINT_LOCKING",
+          "success": true
+        },
+        {
+          "family": "hierarchy",
+          "seed": 24,
+          "direction": "DOWN",
+          "strategy": "LEFT_RIGHT_CONNECTION_LOCKING",
+          "success": true
+        },
+        {
+          "family": "hierarchy",
+          "seed": 25,
+          "direction": "DOWN",
+          "strategy": "LEFT",
+          "success": true
+        },
+        {
+          "family": "hierarchy",
+          "seed": 1,
+          "direction": "UP",
+          "strategy": "LEFT",
+          "success": true
+        },
+        {
+          "family": "hierarchy",
+          "seed": 2,
+          "direction": "UP",
+          "strategy": "RIGHT",
+          "success": true
+        },
+        {
+          "family": "hierarchy",
+          "seed": 3,
+          "direction": "UP",
+          "strategy": "LEFT_RIGHT_CONSTRAINT_LOCKING",
+          "success": true
+        },
+        {
+          "family": "hierarchy",
+          "seed": 4,
+          "direction": "UP",
+          "strategy": "LEFT_RIGHT_CONNECTION_LOCKING",
+          "success": true
+        },
+        {
+          "family": "hierarchy",
+          "seed": 5,
+          "direction": "UP",
+          "strategy": "LEFT",
+          "success": true
+        },
+        {
+          "family": "hierarchy",
+          "seed": 6,
+          "direction": "UP",
+          "strategy": "RIGHT",
+          "success": true
+        },
+        {
+          "family": "hierarchy",
+          "seed": 7,
+          "direction": "UP",
+          "strategy": "LEFT_RIGHT_CONSTRAINT_LOCKING",
+          "success": true
+        },
+        {
+          "family": "hierarchy",
+          "seed": 8,
+          "direction": "UP",
+          "strategy": "LEFT_RIGHT_CONNECTION_LOCKING",
+          "success": true
+        },
+        {
+          "family": "hierarchy",
+          "seed": 9,
+          "direction": "UP",
+          "strategy": "LEFT",
+          "success": true
+        },
+        {
+          "family": "hierarchy",
+          "seed": 10,
+          "direction": "UP",
+          "strategy": "RIGHT",
+          "success": true
+        },
+        {
+          "family": "hierarchy",
+          "seed": 11,
+          "direction": "UP",
+          "strategy": "LEFT_RIGHT_CONSTRAINT_LOCKING",
+          "success": true
+        },
+        {
+          "family": "hierarchy",
+          "seed": 12,
+          "direction": "UP",
+          "strategy": "LEFT_RIGHT_CONNECTION_LOCKING",
+          "success": true
+        },
+        {
+          "family": "hierarchy",
+          "seed": 13,
+          "direction": "UP",
+          "strategy": "LEFT",
+          "success": true
+        },
+        {
+          "family": "hierarchy",
+          "seed": 14,
+          "direction": "UP",
+          "strategy": "RIGHT",
+          "success": true
+        },
+        {
+          "family": "hierarchy",
+          "seed": 15,
+          "direction": "UP",
+          "strategy": "LEFT_RIGHT_CONSTRAINT_LOCKING",
+          "success": true
+        },
+        {
+          "family": "hierarchy",
+          "seed": 16,
+          "direction": "UP",
+          "strategy": "LEFT_RIGHT_CONNECTION_LOCKING",
+          "success": true
+        },
+        {
+          "family": "hierarchy",
+          "seed": 17,
+          "direction": "UP",
+          "strategy": "LEFT",
+          "success": true
+        },
+        {
+          "family": "hierarchy",
+          "seed": 18,
+          "direction": "UP",
+          "strategy": "RIGHT",
+          "success": true
+        },
+        {
+          "family": "hierarchy",
+          "seed": 19,
+          "direction": "UP",
+          "strategy": "LEFT_RIGHT_CONSTRAINT_LOCKING",
+          "success": true
+        },
+        {
+          "family": "hierarchy",
+          "seed": 20,
+          "direction": "UP",
+          "strategy": "LEFT_RIGHT_CONNECTION_LOCKING",
+          "success": true
+        },
+        {
+          "family": "hierarchy",
+          "seed": 21,
+          "direction": "UP",
+          "strategy": "LEFT",
+          "success": true
+        },
+        {
+          "family": "hierarchy",
+          "seed": 22,
+          "direction": "UP",
+          "strategy": "RIGHT",
+          "success": true
+        },
+        {
+          "family": "hierarchy",
+          "seed": 23,
+          "direction": "UP",
+          "strategy": "LEFT_RIGHT_CONSTRAINT_LOCKING",
+          "success": true
+        },
+        {
+          "family": "hierarchy",
+          "seed": 24,
+          "direction": "UP",
+          "strategy": "LEFT_RIGHT_CONNECTION_LOCKING",
+          "success": true
+        },
+        {
+          "family": "hierarchy",
+          "seed": 25,
+          "direction": "UP",
+          "strategy": "LEFT",
+          "success": true
+        }
+      ]
+    }
+  ]
+}
