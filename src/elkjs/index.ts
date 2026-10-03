@@ -1763,7 +1763,13 @@ function applyLayout(
     }
   }
   if (!resultPolicy?.skipBoundsNormalization) {
-    normalizeElkGraphBounds(root, padding, layoutOptions, resultPolicy?.normalizationBounds);
+    normalizeElkGraphBounds(
+      root,
+      padding,
+      layoutOptions,
+      resultPolicy?.normalizationBounds,
+      resultPolicy?.placementCrossBounds,
+    );
   }
   if (
     !resultPolicy?.preserveEdgeSections &&
@@ -1798,6 +1804,7 @@ function normalizeElkGraphBounds(
   padding: { top: number; right: number; bottom: number; left: number },
   layoutOptions: Readonly<Record<string, unknown>> = {},
   compactionBounds?: Elkjs0111ResultPolicy["normalizationBounds"],
+  placementCrossBounds?: Elkjs0111ResultPolicy["placementCrossBounds"],
 ): void {
   const authoredWidth = root.width;
   const authoredHeight = root.height;
@@ -1911,6 +1918,8 @@ function normalizeElkGraphBounds(
     String(getOption(layoutOptions, "layered.layering.nodePromotion.strategy") ?? "NONE") !==
       "MODEL_ORDER_LEFT_TO_RIGHT" &&
     !(root.children ?? []).some((child) => (child.children?.length ?? 0) > 0);
+  // Prefer the retained placement extent on the cross axis. Other placers
+  // retain the legacy route-bound allowance until they expose phase bounds.
   // Loop envelopes own their bounds. Ordinary long-edge dummies still have
   // a one-pixel cross-axis extent when another edge in the graph is a loop.
   // Apply that allowance to route points, before unioning labels and margins.
@@ -1924,6 +1933,7 @@ function normalizeElkGraphBounds(
   const hasSelfLoops = (root.edges ?? []).some(isSelfLoop);
   const edgeBoundsExtraX =
     addBoundaryPixel &&
+    placementCrossBounds?.axis !== "x" &&
     !(hasSelfLoops && (direction === "right" || direction === "left")) &&
     layoutEdgePoints.length > 0 &&
     Math.max(...layoutEdgePoints.map((point) => point.x)) >= maximumNodeX - 1e-9
@@ -1931,6 +1941,7 @@ function normalizeElkGraphBounds(
       : 0;
   const edgeBoundsExtraY =
     addBoundaryPixel &&
+    placementCrossBounds?.axis !== "y" &&
     !(hasSelfLoops && (direction === "down" || direction === "up")) &&
     layoutEdgePoints.length > 0 &&
     Math.max(...layoutEdgePoints.map((point) => point.y)) >= maximumNodeY - 1e-9
@@ -1966,6 +1977,9 @@ function normalizeElkGraphBounds(
   const calculatedWidth =
     Math.max(
       compactionBounds ? compactionBounds.right + shiftX : 0,
+      addBoundaryPixel && placementCrossBounds?.axis === "x"
+        ? placementCrossBounds.maximum + shiftX
+        : 0,
       ...layoutChildren.flatMap((node) => [
         (node.x ?? 0) + (node.width ?? 0),
         ...(node.labels ?? []).map((label) => (node.x ?? 0) + (label.x ?? 0) + (label.width ?? 0)),
@@ -2002,6 +2016,9 @@ function normalizeElkGraphBounds(
   const calculatedHeight =
     Math.max(
       compactionBounds ? compactionBounds.bottom + shiftY : 0,
+      addBoundaryPixel && placementCrossBounds?.axis === "y"
+        ? placementCrossBounds.maximum + shiftY
+        : 0,
       ...layoutChildren.flatMap((node) => [
         (node.y ?? 0) + (node.height ?? 0),
         ...(node.labels ?? []).map((label) => (node.y ?? 0) + (label.y ?? 0) + (label.height ?? 0)),

@@ -12,6 +12,7 @@ import type { LayerOrder, LayeredPhaseInput, NodePlacement } from "./types";
 import { nodeNodeSpacing } from "./spacing";
 import { prepareLoopEnvelopes, preparedLoopEnvelopes, recordLoopEnvelopes } from "./loop-envelopes";
 
+import { recordPlacementCrossBounds } from "./compaction-bounds";
 import { recordRoutingCoordinates } from "./routing-coordinates";
 
 const beforeMargin = (input: LayeredPhaseInput, id: string) =>
@@ -884,6 +885,23 @@ export function placeNodesWithBrandesKoepf(
           ? { ...rect, y: positions.get(id) ?? 0 }
           : { ...rect, x: positions.get(id) ?? 0 },
       ]),
+    ),
+  });
+  // ELK's layer-size phase measures the final node of each ordered layer,
+  // including its dummy thickness and trailing margin. Retain this extent
+  // before routing restoration removes zero-size port and long-edge helpers.
+  const horizontal = input.direction === "left" || input.direction === "right";
+  recordPlacementCrossBounds(placement, {
+    axis: horizontal ? "y" : "x",
+    maximum: Math.max(
+      0,
+      ...order.layers.flatMap((layer) => {
+        const id = layer.at(-1);
+        const rect = id === undefined ? undefined : rectByNodeId.get(id);
+        return rect && id !== undefined
+          ? [(horizontal ? rect.y : rect.x) + crossSize(input, id) + afterMargin(input, id)]
+          : [];
+      }),
     ),
   });
   recordLoopEnvelopes(placement, new Set(envelopes.keys()));

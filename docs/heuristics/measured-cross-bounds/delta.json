@@ -1,0 +1,510 @@
+[
+  {
+    "name": "report.json",
+    "summary": {
+      "cases": 200,
+      "matched": 59,
+      "differingValues": 4374,
+      "nativeErrors": 0,
+      "elkErrors": 100
+    },
+    "changed": 13,
+    "delta": [
+      {
+        "index": 7,
+        "seed": 8,
+        "direction": "RIGHT",
+        "before": 177,
+        "after": 177,
+        "lost": false,
+        "gained": false
+      },
+      {
+        "index": 11,
+        "seed": 12,
+        "direction": "RIGHT",
+        "before": 95,
+        "after": 95,
+        "lost": false,
+        "gained": false
+      },
+      {
+        "index": 22,
+        "seed": 23,
+        "direction": "RIGHT",
+        "before": 47,
+        "after": 47,
+        "lost": false,
+        "gained": false
+      },
+      {
+        "index": 26,
+        "seed": 2,
+        "direction": "LEFT",
+        "before": 16,
+        "after": 16,
+        "lost": false,
+        "gained": false
+      },
+      {
+        "index": 27,
+        "seed": 3,
+        "direction": "LEFT",
+        "before": 77,
+        "after": 77,
+        "lost": false,
+        "gained": false
+      },
+      {
+        "index": 32,
+        "seed": 8,
+        "direction": "LEFT",
+        "before": 192,
+        "after": 192,
+        "lost": false,
+        "gained": false
+      },
+      {
+        "index": 51,
+        "seed": 2,
+        "direction": "DOWN",
+        "before": 7,
+        "after": 6,
+        "lost": false,
+        "gained": false
+      },
+      {
+        "index": 56,
+        "seed": 7,
+        "direction": "DOWN",
+        "before": 171,
+        "after": 171,
+        "lost": false,
+        "gained": false
+      },
+      {
+        "index": 62,
+        "seed": 13,
+        "direction": "DOWN",
+        "before": 306,
+        "after": 306,
+        "lost": false,
+        "gained": false
+      },
+      {
+        "index": 71,
+        "seed": 22,
+        "direction": "DOWN",
+        "before": 1,
+        "after": 0,
+        "lost": false,
+        "gained": true
+      },
+      {
+        "index": 81,
+        "seed": 7,
+        "direction": "UP",
+        "before": 175,
+        "after": 175,
+        "lost": false,
+        "gained": false
+      },
+      {
+        "index": 87,
+        "seed": 13,
+        "direction": "UP",
+        "before": 353,
+        "after": 353,
+        "lost": false,
+        "gained": false
+      },
+      {
+        "index": 91,
+        "seed": 17,
+        "direction": "UP",
+        "before": 39,
+        "after": 39,
+        "lost": false,
+        "gained": false
+      }
+    ]
+  },
+  {
+    "name": "fresh-report.json",
+    "summary": {
+      "cases": 200,
+      "matched": 56,
+      "differingValues": 5075,
+      "nativeErrors": 0,
+      "elkErrors": 100
+    },
+    "changed": 19,
+    "delta": [
+      {
+        "index": 1,
+        "seed": 27,
+        "direction": "RIGHT",
+        "before": 365,
+        "after": 365,
+        "lost": false,
+        "gained": false
+      },
+      {
+        "index": 2,
+        "seed": 28,
+        "direction": "RIGHT",
+        "before": 206,
+        "after": 206,
+        "lost": false,
+        "gained": false
+      },
+      {
+        "index": 6,
+        "seed": 32,
+        "direction": "RIGHT",
+        "before": 222,
+        "after": 222,
+        "lost": false,
+        "gained": false
+      },
+      {
+        "index": 10,
+        "seed": 36,
+        "direction": "RIGHT",
+        "before": 1,
+        "after": 0,
+        "lost": false,
+        "gained": true
+      },
+      {
+        "index": 26,
+        "seed": 27,
+        "direction": "LEFT",
+        "before": 229,
+        "after": 229,
+        "lost": false,
+        "gained": false
+      },
+      {
+        "index": 27,
+        "seed": 28,
+        "direction": "LEFT",
+        "before": 148,
+        "after": 148,
+        "lost": false,
+        "gained": false
+      },
+      {
+        "index": 35,
+        "seed": 36,
+        "direction": "LEFT",
+        "before": 1,
+        "after": 0,
+        "lost": false,
+        "gained": true
+      },
+      {
+        "index": 37,
+        "seed": 38,
+        "direction": "LEFT",
+        "before": 28,
+        "after": 28,
+        "lost": false,
+        "gained": false
+      },
+      {
+        "index": 41,
+        "seed": 42,
+        "direction": "LEFT",
+        "before": 182,
+        "after": 182,
+        "lost": false,
+        "gained": false
+      },
+      {
+        "index": 42,
+        "seed": 43,
+        "direction": "LEFT",
+        "before": 73,
+        "after": 73,
+        "lost": false,
+        "gained": false
+      },
+      {
+        "index": 46,
+        "seed": 47,
+        "direction": "LEFT",
+        "before": 51,
+        "after": 51,
+        "lost": false,
+        "gained": false
+      },
+      {
+        "index": 51,
+        "seed": 27,
+        "direction": "DOWN",
+        "before": 275,
+        "after": 275,
+        "lost": false,
+        "gained": false
+      },
+      {
+        "index": 57,
+        "seed": 33,
+        "direction": "DOWN",
+        "before": 3,
+        "after": 3,
+        "lost": false,
+        "gained": false
+      },
+      {
+        "index": 61,
+        "seed": 37,
+        "direction": "DOWN",
+        "before": 405,
+        "after": 405,
+        "lost": false,
+        "gained": false
+      },
+      {
+        "index": 62,
+        "seed": 38,
+        "direction": "DOWN",
+        "before": 1,
+        "after": 0,
+        "lost": false,
+        "gained": true
+      },
+      {
+        "index": 76,
+        "seed": 27,
+        "direction": "UP",
+        "before": 236,
+        "after": 236,
+        "lost": false,
+        "gained": false
+      },
+      {
+        "index": 86,
+        "seed": 37,
+        "direction": "UP",
+        "before": 199,
+        "after": 199,
+        "lost": false,
+        "gained": false
+      },
+      {
+        "index": 87,
+        "seed": 38,
+        "direction": "UP",
+        "before": 12,
+        "after": 11,
+        "lost": false,
+        "gained": false
+      },
+      {
+        "index": 92,
+        "seed": 43,
+        "direction": "UP",
+        "before": 62,
+        "after": 62,
+        "lost": false,
+        "gained": false
+      }
+    ]
+  },
+  {
+    "name": "flat-report.json",
+    "summary": {
+      "cases": 100,
+      "matched": 54,
+      "differingValues": 7169,
+      "nativeErrors": 0,
+      "elkErrors": 0
+    },
+    "changed": 14,
+    "delta": [
+      {
+        "index": 7,
+        "seed": 8,
+        "direction": "RIGHT",
+        "before": 185,
+        "after": 185,
+        "lost": false,
+        "gained": false
+      },
+      {
+        "index": 11,
+        "seed": 12,
+        "direction": "RIGHT",
+        "before": 86,
+        "after": 86,
+        "lost": false,
+        "gained": false
+      },
+      {
+        "index": 17,
+        "seed": 18,
+        "direction": "RIGHT",
+        "before": 47,
+        "after": 47,
+        "lost": false,
+        "gained": false
+      },
+      {
+        "index": 26,
+        "seed": 2,
+        "direction": "LEFT",
+        "before": 225,
+        "after": 225,
+        "lost": false,
+        "gained": false
+      },
+      {
+        "index": 31,
+        "seed": 7,
+        "direction": "LEFT",
+        "before": 128,
+        "after": 128,
+        "lost": false,
+        "gained": false
+      },
+      {
+        "index": 32,
+        "seed": 8,
+        "direction": "LEFT",
+        "before": 216,
+        "after": 216,
+        "lost": false,
+        "gained": false
+      },
+      {
+        "index": 42,
+        "seed": 18,
+        "direction": "LEFT",
+        "before": 36,
+        "after": 36,
+        "lost": false,
+        "gained": false
+      },
+      {
+        "index": 51,
+        "seed": 2,
+        "direction": "DOWN",
+        "before": 182,
+        "after": 182,
+        "lost": false,
+        "gained": false
+      },
+      {
+        "index": 62,
+        "seed": 13,
+        "direction": "DOWN",
+        "before": 287,
+        "after": 287,
+        "lost": false,
+        "gained": false
+      },
+      {
+        "index": 66,
+        "seed": 17,
+        "direction": "DOWN",
+        "before": 42,
+        "after": 42,
+        "lost": false,
+        "gained": false
+      },
+      {
+        "index": 71,
+        "seed": 22,
+        "direction": "DOWN",
+        "before": 1,
+        "after": 0,
+        "lost": false,
+        "gained": true
+      },
+      {
+        "index": 76,
+        "seed": 2,
+        "direction": "UP",
+        "before": 304,
+        "after": 304,
+        "lost": false,
+        "gained": false
+      },
+      {
+        "index": 87,
+        "seed": 13,
+        "direction": "UP",
+        "before": 398,
+        "after": 398,
+        "lost": false,
+        "gained": false
+      },
+      {
+        "index": 91,
+        "seed": 17,
+        "direction": "UP",
+        "before": 13,
+        "after": 13,
+        "lost": false,
+        "gained": false
+      }
+    ]
+  },
+  {
+    "name": "directional-report.json",
+    "summary": {
+      "cases": 200,
+      "matched": 146,
+      "differingValues": 8513,
+      "nativeErrors": 0,
+      "elkErrors": 6
+    },
+    "changed": 0,
+    "delta": []
+  },
+  {
+    "name": "expanded-report.json",
+    "summary": {
+      "cases": 200,
+      "matched": 150,
+      "differingValues": 9087,
+      "nativeErrors": 0,
+      "elkErrors": 3
+    },
+    "changed": 0,
+    "delta": []
+  },
+  {
+    "name": "directional-fresh-report.json",
+    "summary": {
+      "cases": 200,
+      "matched": 143,
+      "differingValues": 6765,
+      "nativeErrors": 0,
+      "elkErrors": 4
+    },
+    "changed": 2,
+    "delta": [
+      {
+        "index": 111,
+        "seed": 62,
+        "direction": "RIGHT",
+        "before": 1,
+        "after": 0,
+        "lost": false,
+        "gained": true
+      },
+      {
+        "index": 136,
+        "seed": 62,
+        "direction": "LEFT",
+        "before": 1,
+        "after": 0,
+        "lost": false,
+        "gained": true
+      }
+    ]
+  }
+]

@@ -1,7 +1,7 @@
 import { crossingGraph } from "./crossing-graph";
 import { sortInitialModelOrder, markInitialModelOrderPrepared } from "./initial-model-order";
 import { hasMovableLoopPorts } from "./loop-envelopes";
-import { compactionBounds } from "./compaction-bounds";
+import { compactionBounds, placementCrossBounds } from "./compaction-bounds";
 import { setElkjs0111ResultPolicy } from "../internal/elkjs-compatibility";
 import { networkSimplexComponents } from "./network-simplex";
 import { mergeHyperedgeDummies } from "./hyperedge-dummy-merger";
@@ -2915,6 +2915,7 @@ export function* createLayeredScopePipeline<N, E, G, P>(
     { ...graph, direction, nodes, edges },
     {
       normalizationBounds: compactionBounds(placement),
+      placementCrossBounds: placementCrossBounds(placement),
       junctionPointsByEdgeId: routes.junctionPointsByEdgeId,
     },
   );
