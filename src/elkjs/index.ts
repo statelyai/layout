@@ -1,3 +1,5 @@
+import { hierarchicalPortSides } from "../layered/hierarchical-port-phases";
+import { isPerpendicularPortRestored } from "../layered/hierarchical-port-restoration";
 import { useBottomUpHierarchySweep } from "../layered/hierarchy-sweepiness";
 import {
   createLayeredScopePipeline,
@@ -583,6 +585,9 @@ export default class ELK {
         }
         const temporaryChild: ElkNode = {
           ...child,
+          layoutOptions: proxyByKind.size
+            ? { ...child.layoutOptions, "elk.portConstraints": "FIXED_SIDE" }
+            : child.layoutOptions,
           children: [...(child.children ?? []), ...proxyByKind.values()],
           edges: temporaryEdges,
         };
@@ -702,20 +707,27 @@ export default class ELK {
           const childDirection = getDirection({ ...layoutOptions, ...child.layoutOptions });
           const horizontalChild = childDirection === "right" || childDirection === "left";
           // External dummy positions retain any routing corridor at the boundary.
-          child.width = horizontalChild
-            ? Math.max(
-                0,
-                ...(temporaryChild.children ?? []).map((node) => (node.x ?? 0) + (node.width ?? 0)),
-              ) + childPadding.right
-            : temporaryChild.width;
-          child.height = horizontalChild
+          const restoredPerpendicular = [...proxyByKind.values()].some(isPerpendicularPortRestored);
+          child.width = restoredPerpendicular
+            ? temporaryChild.width
+            : horizontalChild
+              ? Math.max(
+                  0,
+                  ...(temporaryChild.children ?? []).map(
+                    (node) => (node.x ?? 0) + (node.width ?? 0),
+                  ),
+                ) + childPadding.right
+              : temporaryChild.width;
+          child.height = restoredPerpendicular
             ? temporaryChild.height
-            : Math.max(
-                0,
-                ...(temporaryChild.children ?? []).map(
-                  (node) => (node.y ?? 0) + (node.height ?? 0),
-                ),
-              ) + childPadding.bottom;
+            : horizontalChild
+              ? temporaryChild.height
+              : Math.max(
+                  0,
+                  ...(temporaryChild.children ?? []).map(
+                    (node) => (node.y ?? 0) + (node.height ?? 0),
+                  ),
+                ) + childPadding.bottom;
 
           const relativeRect = (id: string): ElkShape | undefined => {
             const owner = descendantOwnerByEndpointId.get(id);
@@ -1289,8 +1301,16 @@ function coordinatePreparedScopes(
       const ports = nativeParent.ports ?? [];
       const childPhase = child.phase!;
       const childSession = scopes.get(child)!.session;
-      const inputPorts = ports.filter((port) => port.direction === "in").length;
-      const outputPorts = ports.filter((port) => port.direction === "out").length;
+      const flowSides = hierarchicalPortSides(parent.phase!.input);
+      const inputPorts = ports.filter(
+        (port) =>
+          parent.phase!.input.portSettings?.(port, nativeParent)?.["port.side"] ===
+          flowSides.before,
+      ).length;
+      const outputPorts = ports.filter(
+        (port) =>
+          parent.phase!.input.portSettings?.(port, nativeParent)?.["port.side"] === flowSides.after,
+      ).length;
       const childScope: HierarchyCrossingScope = {
         ...scopes.get(child)!,
         useBottomUp: useBottomUpHierarchySweep(

@@ -1,3 +1,9 @@
+import { inheritCycleRandom } from "./cycle-random";
+import {
+  prepareHierarchicalPortConstraints,
+  sizeHierarchicalPortDummies,
+} from "./hierarchical-port-phases";
+import { restoreHierarchicalPorts } from "./hierarchical-port-restoration";
 import { crossingGraph } from "./crossing-graph";
 import { sortInitialModelOrder, markInitialModelOrderPrepared } from "./initial-model-order";
 import { hasMovableLoopPorts } from "./loop-envelopes";
@@ -1554,6 +1560,13 @@ export function* createLayeredScopePipeline<N, E, G, P>(
     };
   }
 
+  const hierarchicalPorts = prepareHierarchicalPortConstraints(
+    phaseInput,
+    phaseOrientation,
+    assignment,
+  );
+  phaseInput = hierarchicalPorts.input;
+  assignment = hierarchicalPorts.assignment;
   let expanded = measure("long-edge-splitting", () =>
     composeCenterLabelExpansion(
       labels,
@@ -1568,7 +1581,8 @@ export function* createLayeredScopePipeline<N, E, G, P>(
     !options.strategies?.minimizeCrossings;
   let preparedPorts: ReadonlyMap<string, readonly string[]> | undefined;
   if (prepareModelOrder) {
-    const count = Math.max(...expanded.assignment.layerByNodeId.values()) + 1;
+    const count =
+      expanded.assignment.layerCount ?? Math.max(...expanded.assignment.layerByNodeId.values()) + 1;
     const layers: string[][] = Array.from({ length: count }, () => []);
     const seeded = expanded.assignment.seedOrder ?? [];
     const initialIds = [
@@ -1731,6 +1745,10 @@ export function* createLayeredScopePipeline<N, E, G, P>(
   expanded = labelSelection.expansion;
   if (crossingUnits) recordCrossingUnits(expanded.input, crossingUnits);
   order = mergeHyperedgeDummies(expanded, order);
+  expanded = {
+    ...expanded,
+    input: sizeHierarchicalPortDummies(expanded.input, order, hierarchicalPorts),
+  };
   setPlacementOrder(expanded.input, order);
   const nodePlacementStrategy = options.settings?.["nodePlacement.strategy"] ?? "BRANDES_KOEPF";
   const nodePlacer = (() => {
@@ -1998,11 +2016,20 @@ export function* createLayeredScopePipeline<N, E, G, P>(
     (placement.rectByNodeId as Map<string, EntityRect>).delete(dummy);
   expanded = {
     ...expanded,
-    input: {
+    input: inheritCycleRandom(expanded.input, {
       ...expanded.input,
       graph: { ...expanded.input.graph, nodes: restoredNodes, edges: restoredEdges },
-    },
+    }),
   };
+  const hierarchicalRestoration = restoreHierarchicalPorts(
+    expanded.input,
+    order,
+    hierarchicalPorts,
+    placement,
+    expandedRoutes,
+  );
+  expanded = { ...expanded, input: hierarchicalRestoration.input };
+  expandedRoutes = hierarchicalRestoration.routes;
   setPlacementOrientation(expanded.input, expanded.orientation);
   if (!options.strategies?.routeEdges)
     measure("post-compaction", () =>
@@ -2914,6 +2941,8 @@ export function* createLayeredScopePipeline<N, E, G, P>(
   return setElkjs0111ResultPolicy(
     { ...graph, direction, nodes, edges },
     {
+      providerBounds: hierarchicalRestoration.bounds,
+      skipBoundsNormalization: !!hierarchicalRestoration.bounds,
       normalizationBounds: compactionBounds(placement),
       placementCrossBounds: placementCrossBounds(placement),
       junctionPointsByEdgeId: routes.junctionPointsByEdgeId,

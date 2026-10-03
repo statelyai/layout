@@ -41,6 +41,7 @@ export interface AcyclicOrientation {
 }
 
 export interface LayerAssignment {
+  layerCount?: number;
   layerByNodeId: ReadonlyMap<string, number>;
   /** Layer-internal seed order produced by layerers whose insertion order is observable. */
   seedOrder?: readonly string[];

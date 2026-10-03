@@ -2461,7 +2461,11 @@ export function minimizeCrossingsWithMedian(sweeps = 7): CrossingMinimizer {
 }
 
 function layersFromAssignment(input: LayeredPhaseInput, assignment: LayerAssignment): string[][] {
-  const maximumLayer = Math.max(0, ...assignment.layerByNodeId.values());
+  const maximumLayer = Math.max(
+    0,
+    (assignment.layerCount ?? 1) - 1,
+    ...assignment.layerByNodeId.values(),
+  );
   const layers = Array.from({ length: maximumLayer + 1 }, () => [] as string[]);
   for (const node of input.graph.nodes) {
     layers[assignment.layerByNodeId.get(node.id) ?? 0]?.push(node.id);
@@ -2483,7 +2487,11 @@ export const minimizeCrossingsWithModelOrder: CrossingMinimizer = (
   _orientation,
   assignment,
 ) => {
-  const maximumLayer = Math.max(0, ...assignment.layerByNodeId.values());
+  const maximumLayer = Math.max(
+    0,
+    (assignment.layerCount ?? 1) - 1,
+    ...assignment.layerByNodeId.values(),
+  );
   const layers = Array.from({ length: maximumLayer + 1 }, () => [] as string[]);
   const layeringStrategy = input.settings["layering.strategy"] ?? "NETWORK_SIMPLEX";
   const nodeOrder = assignment.seedOrder

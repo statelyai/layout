@@ -194,7 +194,7 @@ export function splitLongEdges(
   // ELK creates long-edge dummies while walking layers. Thus dummies for an
   // edge whose source is in the next layer can precede later parts of an edge
   // that started in an earlier layer. Preserve that order for crossing ties.
-  const maximumLayer = Math.max(0, ...layerByNodeId.values());
+  const maximumLayer = Math.max(0, (assignment.layerCount ?? 1) - 1, ...layerByNodeId.values());
   const nodesByLayer = Array.from({ length: maximumLayer + 1 }, () => [] as string[]);
   for (const node of input.graph.nodes) {
     nodesByLayer[layerByNodeId.get(node.id) ?? 0]?.push(node.id);
