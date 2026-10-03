@@ -168,3 +168,40 @@ it.each([false, true])("retains coupled scope orders with bottomUp=%s", (bottomU
     expect(events).not.toContain("child:publish");
   }
 });
+
+it("restores constrained nodes before appending long-edge sweep dummies", () => {
+  const graph = createGraph({
+    id: "constraint-before-split",
+    nodes: ["a", "b", "c", "last", "boundary"].map((id) => ({
+      id,
+      width: 30,
+      height: 20,
+    })),
+    edges: [
+      { id: "ab", sourceId: "a", targetId: "b" },
+      { id: "bc", sourceId: "b", targetId: "c" },
+      { id: "across", sourceId: "a", targetId: "boundary" },
+    ],
+  });
+  const pipeline = createLayeredScopePipeline(graph, {
+    settings: { separateConnectedComponents: false },
+    nodeSettings: (node) =>
+      node.id === "last"
+        ? { "layering.layerConstraint": "LAST" }
+        : node.id === "boundary"
+          ? { "layering.layerConstraint": "LAST_SEPARATE" }
+          : undefined,
+  });
+  const prepared = pipeline.next();
+  if (prepared.done) throw new Error("Expected prepared scope");
+  const sweep = createLayerSweepSession(
+    prepared.value.input,
+    prepared.value.orientation,
+    prepared.value.assignment,
+  );
+  const layer = sweep.snapshot().layers.find((layer) => layer.includes("last"))!;
+  expect(layer).toContain("c");
+  const dummy = layer.find((id) => id.startsWith("__layout_dummy:across:"));
+  expect(dummy).toBeDefined();
+  expect(layer.indexOf("last")).toBeLessThan(layer.indexOf(dummy!));
+});

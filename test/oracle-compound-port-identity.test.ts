@@ -41,3 +41,18 @@ for (const direction of ["RIGHT", "LEFT", "DOWN", "UP"]) {
     if (direction === "UP") expect(a.y).toBe(0);
   });
 }
+
+for (const direction of ["RIGHT", "LEFT", "DOWN", "UP"]) {
+  it(`matches seed 3 child geometry after ancestor-first port import (${direction})`, async () => {
+    const input = compoundFixture(3, direction);
+    const actual = await new NativeELK().layout(structuredClone(input));
+    const expected = (await new OracleELK().layout(structuredClone(input) as never)) as ElkNode;
+    const local = (graph: ElkNode) => {
+      const child = graph.children!.find((node) => node.id === "g1")!;
+      // This regression covers the child phase; the complete parent mismatch
+      // stays in the random gate with all root coordinates and route sections.
+      return compoundGeometry({ ...child, x: 0, y: 0 });
+    };
+    expect(geometryDifferences(local(actual), local(expected))).toEqual([]);
+  });
+}

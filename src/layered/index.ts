@@ -1500,7 +1500,7 @@ export function* createLayeredScopePipeline<N, E, G, P>(
             ),
           },
         };
-  const assignment = measure("layer-assignment", () =>
+  let assignment = measure("layer-assignment", () =>
     applyHighDegreeNodeTreatment(
       phaseInput,
       phaseOrientation,
@@ -1514,6 +1514,32 @@ export function* createLayeredScopePipeline<N, E, G, P>(
       ),
     ),
   );
+  // ELK restores FIRST/LAST nodes before LongEdgeSplitter appends dummies.
+  // Changing that order changes the initial sweep and selected port order.
+  if (
+    phaseInput.graph.nodes.some((node) => {
+      const constraint = phaseInput.nodeSettings?.(node)?.["layering.layerConstraint"];
+      return constraint === "FIRST" || constraint === "LAST";
+    })
+  ) {
+    const layers = Array.from(
+      { length: Math.max(0, ...assignment.layerByNodeId.values()) + 1 },
+      () => [] as string[],
+    );
+    const seed = assignment.seedOrder ?? phaseInput.graph.nodes.map((node) => node.id);
+    const seeded = new Set(seed);
+    for (const id of [
+      ...seed,
+      ...phaseInput.graph.nodes.flatMap((node) => (seeded.has(node.id) ? [] : [node.id])),
+    ]) {
+      layers[assignment.layerByNodeId.get(id) ?? 0]!.push(id);
+    }
+    assignment = {
+      ...assignment,
+      seedOrder: applyLayerConstraintOrder(phaseInput, { layers }).layers.flat(),
+    };
+  }
+
   let expanded = measure("long-edge-splitting", () =>
     composeCenterLabelExpansion(
       labels,
@@ -1572,35 +1598,6 @@ export function* createLayeredScopePipeline<N, E, G, P>(
         .map((n) => n.id),
     ),
   });
-
-  // ELK's LayerConstraintPostprocessor precedes crossing minimization. Moving
-  // FIRST/LAST nodes again after the sweep destroys the selected crossing order.
-  if (
-    expanded.input.graph.nodes.some((node) => {
-      const constraint = expanded.input.nodeSettings?.(node)?.["layering.layerConstraint"];
-      return constraint === "FIRST" || constraint === "LAST";
-    })
-  ) {
-    const layers = Array.from(
-      { length: Math.max(0, ...expanded.assignment.layerByNodeId.values()) + 1 },
-      () => [] as string[],
-    );
-    const seed = expanded.assignment.seedOrder ?? expanded.input.graph.nodes.map((node) => node.id);
-    const seeded = new Set(seed);
-    for (const id of [
-      ...seed,
-      ...expanded.input.graph.nodes.flatMap((node) => (seeded.has(node.id) ? [] : [node.id])),
-    ]) {
-      layers[expanded.assignment.layerByNodeId.get(id) ?? 0]!.push(id);
-    }
-    expanded = {
-      ...expanded,
-      assignment: {
-        ...expanded.assignment,
-        seedOrder: applyLayerConstraintOrder(expanded.input, { layers }).layers.flat(),
-      },
-    };
-  }
 
   const crossingStrategy = options.settings?.["crossingMinimization.strategy"] ?? "LAYER_SWEEP";
   const crossingMinimizer = (() => {

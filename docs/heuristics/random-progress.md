@@ -972,3 +972,16 @@ selected format/lint and build pass. Hierarchy replay remains **24/100**, with
 all complete native outputs unchanged. RIGHT/DOWN seed 1 have matched
 before/after/real-ELK browser proof. This verified WIP is published on draft
 PR #32; broader parity and the active goal remain incomplete.
+
+## Hierarchy import and boundary order
+
+[Source and proof](./hierarchy-import-order/README.md) align constrained-node
+restoration before long-edge splitting, ancestor-first implicit port creation,
+and clockwise input-boundary port publication with real ELK. Seed 3's child
+matches in all four directions; five new regressions pass. Parent placement and
+joined routes remain different and preserved in the complete random gate.
+
+Hierarchy: **24/100 matches**, zero errors or lost matches, differing values
+**2,596 to 2,324** with unchanged inputs/tolerance. Full local suite **2,069 pass /
+108 fail / 2,177**, no new failure names. Types, selected format/lint and build
+pass. Matched-scale seed 3 browser proof saved. Broad parity remains incomplete.

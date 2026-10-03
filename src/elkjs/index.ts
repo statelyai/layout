@@ -437,12 +437,9 @@ export default class ELK {
           }
           return proxy;
         };
+        // ELK imports ancestor edges before descendant-local edges. Preserve
+        // that implicit port creation order through child phase preparation.
         const temporaryEdges: ElkEdge[] = [
-          ...(child.edges ?? []),
-          ...internalEdges.filter(
-            (edge) =>
-              !(child.edges ?? []).some((candidate) => String(candidate.id) === String(edge.id)),
-          ),
           ...crossingEdges.map((edge) => {
             const { sourceId, targetId } = originalHierarchyEndpoints.get(edge)!;
             const sourceInside = descendantOwnerByEndpointId.has(sourceId);
@@ -457,6 +454,11 @@ export default class ELK {
               sections: undefined,
             };
           }),
+          ...(child.edges ?? []),
+          ...internalEdges.filter(
+            (edge) =>
+              !(child.edges ?? []).some((candidate) => String(candidate.id) === String(edge.id)),
+          ),
         ];
         const temporaryChild: ElkNode = {
           ...child,
@@ -1086,6 +1088,8 @@ function coordinatePreparedScopes(
             const dummy = portName?.endsWith(":parent") ? portName.slice(0, -7) : undefined;
             return dummy && layer.includes(dummy) ? [dummy] : [];
           });
+          // Input ports run clockwise bottom-to-top; layers run top-to-bottom.
+          if (forward) ordered.reverse();
           const unique = [...new Set(ordered)];
           if (unique.length !== layer.length)
             throw new Error(`Incomplete hierarchical port order for ${id}`);
@@ -1118,6 +1122,8 @@ function coordinatePreparedScopes(
               (rank.get((forward ? edgeB.sourcePort : edgeB.targetPort) ?? "") ?? 0)
             );
           });
+          // WEST/input ports have the reverse canonical order of boundary dummies.
+          if (!forward) sorted.reverse();
           const updated = new Map(orders);
           updated.set(id, sorted);
           parentScope.session.restore({
