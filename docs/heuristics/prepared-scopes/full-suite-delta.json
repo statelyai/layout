@@ -1,0 +1,18 @@
+{
+  "numPassedTests": 1931,
+  "numFailedTests": 108,
+  "numTotalTests": 2039,
+  "introduced": [],
+  "fixed": [
+    "ELK compound layered parity matches cross-hierarchy placement and routing",
+    "ELK compound layered parity matches hierarchical greedy switch OFF",
+    "ELK compound layered parity matches hierarchical greedy switch ONE_SIDED",
+    "ELK compound layered parity matches hierarchical greedy switch TWO_SIDED",
+    "ELK compound layered parity matches hierarchical sweepiness 0",
+    "ELK compound layered parity matches hierarchical sweepiness 0.5",
+    "ELK compound layered parity matches hierarchical sweepiness 1",
+    "ELK compound layered parity matches hierarchy crossings through an explicit descendant port",
+    "ELK compound layered parity matches hierarchy-edge merging false",
+    "ELK compound layered parity matches hierarchy-edge merging true"
+  ]
+}

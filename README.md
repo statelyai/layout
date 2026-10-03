@@ -380,3 +380,7 @@ For the strict seeded hierarchy comparison with real ELK, run
 [compound baseline](./docs/heuristics/compound-baseline/README.md) for preserved
 failures and side-by-side diagrams. This gate currently fails; native parity
 remains work in progress.
+
+For bounded random fixed-port self-loops, run `pnpm test:parity:self-loops`.
+This smaller gate compares complete node/port geometry, routes and junctions
+with real ELK; passing it does not establish broad hierarchy parity.

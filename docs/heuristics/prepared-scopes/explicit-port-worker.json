@@ -1,0 +1,4283 @@
+{
+  "oracle": "elkjs@0.11.1",
+  "input": {
+    "id": "root",
+    "layoutOptions": {
+      "elk.algorithm": "layered",
+      "elk.hierarchyHandling": "INCLUDE_CHILDREN"
+    },
+    "children": [
+      {
+        "id": "parent",
+        "children": [
+          {
+            "id": "a",
+            "width": 20,
+            "height": 20,
+            "layoutOptions": {
+              "elk.portConstraints": "FIXED_SIDE"
+            },
+            "ports": [
+              {
+                "id": "ap",
+                "width": 0,
+                "height": 0,
+                "layoutOptions": {
+                  "elk.port.side": "EAST"
+                }
+              }
+            ]
+          },
+          {
+            "id": "c",
+            "width": 20,
+            "height": 20
+          }
+        ]
+      },
+      {
+        "id": "x",
+        "width": 20,
+        "height": 20
+      },
+      {
+        "id": "y",
+        "width": 20,
+        "height": 20
+      }
+    ],
+    "edges": [
+      {
+        "id": "ax",
+        "sources": [
+          "ap"
+        ],
+        "targets": [
+          "x"
+        ]
+      },
+      {
+        "id": "ay",
+        "sources": [
+          "ap"
+        ],
+        "targets": [
+          "y"
+        ]
+      },
+      {
+        "id": "ca",
+        "sources": [
+          "c"
+        ],
+        "targets": [
+          "a"
+        ]
+      }
+    ]
+  },
+  "output": {
+    "id": "root",
+    "layoutOptions": {
+      "elk.algorithm": "layered",
+      "elk.hierarchyHandling": "INCLUDE_CHILDREN"
+    },
+    "children": [
+      {
+        "id": "parent",
+        "children": [
+          {
+            "id": "a",
+            "width": 20,
+            "height": 20,
+            "layoutOptions": {
+              "elk.portConstraints": "FIXED_SIDE"
+            },
+            "ports": [
+              {
+                "id": "ap",
+                "width": 0,
+                "height": 0,
+                "layoutOptions": {
+                  "elk.port.side": "EAST"
+                },
+                "x": 20,
+                "y": 10
+              }
+            ],
+            "$H": 279,
+            "x": 52,
+            "y": 12
+          },
+          {
+            "id": "c",
+            "width": 20,
+            "height": 20,
+            "$H": 283,
+            "x": 12,
+            "y": 12
+          }
+        ],
+        "$H": 277,
+        "x": 12,
+        "y": 12,
+        "width": 84,
+        "height": 44
+      },
+      {
+        "id": "x",
+        "width": 20,
+        "height": 20,
+        "$H": 285,
+        "x": 121,
+        "y": 24
+      },
+      {
+        "id": "y",
+        "width": 20,
+        "height": 20,
+        "$H": 287,
+        "x": 121,
+        "y": 64
+      }
+    ],
+    "edges": [
+      {
+        "id": "ax",
+        "sources": [
+          "ap"
+        ],
+        "targets": [
+          "x"
+        ],
+        "sections": [
+          {
+            "id": "ax_s0",
+            "startPoint": {
+              "x": 84,
+              "y": 34
+            },
+            "endPoint": {
+              "x": 121,
+              "y": 34
+            },
+            "incomingShape": "ap",
+            "outgoingShape": "x"
+          }
+        ],
+        "container": "root"
+      },
+      {
+        "id": "ay",
+        "sources": [
+          "ap"
+        ],
+        "targets": [
+          "y"
+        ],
+        "sections": [
+          {
+            "id": "ay_s0",
+            "startPoint": {
+              "x": 84,
+              "y": 34
+            },
+            "endPoint": {
+              "x": 121,
+              "y": 74
+            },
+            "bendPoints": [
+              {
+                "x": 111,
+                "y": 34
+              },
+              {
+                "x": 111,
+                "y": 74
+              }
+            ],
+            "incomingShape": "ap",
+            "outgoingShape": "y"
+          }
+        ],
+        "junctionPoints": [
+          {
+            "x": 111,
+            "y": 34
+          }
+        ],
+        "container": "root"
+      },
+      {
+        "id": "ca",
+        "sources": [
+          "c"
+        ],
+        "targets": [
+          "a"
+        ],
+        "sections": [
+          {
+            "id": "ca_s0",
+            "startPoint": {
+              "x": 32,
+              "y": 22
+            },
+            "endPoint": {
+              "x": 52,
+              "y": 22
+            },
+            "incomingShape": "c",
+            "outgoingShape": "a"
+          }
+        ],
+        "container": "parent"
+      }
+    ],
+    "$H": 13,
+    "x": 0,
+    "y": 0,
+    "width": 153,
+    "height": 96
+  },
+  "pipelineCalls": {
+    "$doCompoundLayout": 1
+  },
+  "sweepScopes": [
+    {
+      "scope": 1,
+      "useBottomUp": true,
+      "sharedRandom": true,
+      "nodeRelative": false,
+      "hasParent": false,
+      "parent": null,
+      "order": [
+        [
+          {
+            "origin": "parent",
+            "type": "NORMAL"
+          }
+        ],
+        [
+          {
+            "origin": "x",
+            "type": "NORMAL"
+          },
+          {
+            "origin": "y",
+            "type": "NORMAL"
+          }
+        ]
+      ]
+    },
+    {
+      "scope": 0,
+      "useBottomUp": true,
+      "sharedRandom": false,
+      "nodeRelative": true,
+      "hasParent": true,
+      "parent": "parent",
+      "order": [
+        [
+          {
+            "origin": "c",
+            "type": "NORMAL"
+          }
+        ],
+        [
+          {
+            "origin": "a",
+            "type": "NORMAL"
+          }
+        ],
+        [
+          {
+            "origin": null,
+            "type": "EXTERNAL_PORT"
+          }
+        ]
+      ]
+    }
+  ],
+  "sweepEvents": [
+    {
+      "kind": "enter",
+      "scope": 0,
+      "forward": false,
+      "firstSweep": true,
+      "order": [
+        [
+          {
+            "origin": "c",
+            "type": "NORMAL"
+          }
+        ],
+        [
+          {
+            "origin": "a",
+            "type": "NORMAL"
+          }
+        ],
+        [
+          {
+            "origin": null,
+            "type": "EXTERNAL_PORT"
+          }
+        ]
+      ]
+    },
+    {
+      "kind": "exit",
+      "scope": 0,
+      "forward": false,
+      "firstSweep": true,
+      "order": [
+        [
+          {
+            "origin": "c",
+            "type": "NORMAL"
+          }
+        ],
+        [
+          {
+            "origin": "a",
+            "type": "NORMAL"
+          }
+        ],
+        [
+          {
+            "origin": null,
+            "type": "EXTERNAL_PORT"
+          }
+        ]
+      ],
+      "improved": false
+    },
+    {
+      "kind": "enter",
+      "scope": 1,
+      "forward": false,
+      "firstSweep": true,
+      "order": [
+        [
+          {
+            "origin": "parent",
+            "type": "NORMAL"
+          }
+        ],
+        [
+          {
+            "origin": "x",
+            "type": "NORMAL"
+          },
+          {
+            "origin": "y",
+            "type": "NORMAL"
+          }
+        ]
+      ]
+    },
+    {
+      "kind": "exit",
+      "scope": 1,
+      "forward": false,
+      "firstSweep": true,
+      "order": [
+        [
+          {
+            "origin": "parent",
+            "type": "NORMAL"
+          }
+        ],
+        [
+          {
+            "origin": "x",
+            "type": "NORMAL"
+          },
+          {
+            "origin": "y",
+            "type": "NORMAL"
+          }
+        ]
+      ],
+      "improved": false
+    }
+  ],
+  "stages": [
+    {
+      "phase": "prepared",
+      "scope": 0,
+      "width": 0,
+      "height": 0,
+      "nodes": [
+        {
+          "origin": "a",
+          "type": "NORMAL",
+          "x": 0,
+          "y": 0,
+          "width": 20,
+          "height": 20,
+          "ports": [
+            {
+              "x": 0,
+              "y": 0,
+              "side": "EAST",
+              "outgoing": 1,
+              "outgoingEdges": [
+                "ax"
+              ],
+              "incomingEdges": [],
+              "incoming": 0
+            },
+            {
+              "x": 0,
+              "y": 0,
+              "side": "WEST",
+              "outgoing": 0,
+              "outgoingEdges": [],
+              "incomingEdges": [
+                "ca"
+              ],
+              "incoming": 1
+            }
+          ]
+        },
+        {
+          "origin": "c",
+          "type": "NORMAL",
+          "x": 0,
+          "y": 0,
+          "width": 20,
+          "height": 20,
+          "ports": [
+            {
+              "x": 0,
+              "y": 0,
+              "side": "EAST",
+              "outgoing": 1,
+              "outgoingEdges": [
+                "ca"
+              ],
+              "incomingEdges": [],
+              "incoming": 0
+            }
+          ]
+        },
+        {
+          "origin": null,
+          "type": "EXTERNAL_PORT",
+          "x": 0,
+          "y": 0,
+          "width": 0,
+          "height": 0,
+          "ports": [
+            {
+              "x": 0,
+              "y": 0,
+              "side": "WEST",
+              "outgoing": 0,
+              "outgoingEdges": [],
+              "incomingEdges": [
+                "ax"
+              ],
+              "incoming": 1
+            }
+          ]
+        }
+      ],
+      "layers": []
+    },
+    {
+      "phase": "prepared",
+      "scope": 1,
+      "width": 0,
+      "height": 0,
+      "nodes": [
+        {
+          "origin": "parent",
+          "type": "NORMAL",
+          "x": 0,
+          "y": 0,
+          "width": 0,
+          "height": 0,
+          "ports": [
+            {
+              "x": 0,
+              "y": 0,
+              "side": "EAST",
+              "outgoing": 2,
+              "outgoingEdges": [
+                "ax",
+                "ay"
+              ],
+              "incomingEdges": [],
+              "incoming": 0
+            }
+          ]
+        },
+        {
+          "origin": "x",
+          "type": "NORMAL",
+          "x": 0,
+          "y": 0,
+          "width": 20,
+          "height": 20,
+          "ports": [
+            {
+              "x": 0,
+              "y": 0,
+              "side": "WEST",
+              "outgoing": 0,
+              "outgoingEdges": [],
+              "incomingEdges": [
+                "ax"
+              ],
+              "incoming": 1
+            }
+          ]
+        },
+        {
+          "origin": "y",
+          "type": "NORMAL",
+          "x": 0,
+          "y": 0,
+          "width": 20,
+          "height": 20,
+          "ports": [
+            {
+              "x": 0,
+              "y": 0,
+              "side": "WEST",
+              "outgoing": 0,
+              "outgoingEdges": [],
+              "incomingEdges": [
+                "ay"
+              ],
+              "incoming": 1
+            }
+          ]
+        }
+      ],
+      "layers": []
+    },
+    {
+      "phase": "org.eclipse.elk.alg.layered.intermediate.EdgeAndLayerConstraintEdgeReverser",
+      "scope": 0,
+      "width": 0,
+      "height": 0,
+      "nodes": [
+        {
+          "origin": "a",
+          "type": "NORMAL",
+          "x": 0,
+          "y": 0,
+          "width": 20,
+          "height": 20,
+          "ports": [
+            {
+              "x": 0,
+              "y": 0,
+              "side": "EAST",
+              "outgoing": 1,
+              "outgoingEdges": [
+                "ax"
+              ],
+              "incomingEdges": [],
+              "incoming": 0
+            },
+            {
+              "x": 0,
+              "y": 0,
+              "side": "WEST",
+              "outgoing": 0,
+              "outgoingEdges": [],
+              "incomingEdges": [
+                "ca"
+              ],
+              "incoming": 1
+            }
+          ]
+        },
+        {
+          "origin": "c",
+          "type": "NORMAL",
+          "x": 0,
+          "y": 0,
+          "width": 20,
+          "height": 20,
+          "ports": [
+            {
+              "x": 0,
+              "y": 0,
+              "side": "EAST",
+              "outgoing": 1,
+              "outgoingEdges": [
+                "ca"
+              ],
+              "incomingEdges": [],
+              "incoming": 0
+            }
+          ]
+        },
+        {
+          "origin": null,
+          "type": "EXTERNAL_PORT",
+          "x": 0,
+          "y": 0,
+          "width": 0,
+          "height": 0,
+          "ports": [
+            {
+              "x": 0,
+              "y": 0,
+              "side": "WEST",
+              "outgoing": 0,
+              "outgoingEdges": [],
+              "incomingEdges": [
+                "ax"
+              ],
+              "incoming": 1
+            }
+          ]
+        }
+      ],
+      "layers": []
+    },
+    {
+      "phase": "org.eclipse.elk.alg.layered.p1cycles.GreedyCycleBreaker",
+      "scope": 0,
+      "width": 0,
+      "height": 0,
+      "nodes": [
+        {
+          "origin": "a",
+          "type": "NORMAL",
+          "x": 0,
+          "y": 0,
+          "width": 20,
+          "height": 20,
+          "ports": [
+            {
+              "x": 0,
+              "y": 0,
+              "side": "EAST",
+              "outgoing": 1,
+              "outgoingEdges": [
+                "ax"
+              ],
+              "incomingEdges": [],
+              "incoming": 0
+            },
+            {
+              "x": 0,
+              "y": 0,
+              "side": "WEST",
+              "outgoing": 0,
+              "outgoingEdges": [],
+              "incomingEdges": [
+                "ca"
+              ],
+              "incoming": 1
+            }
+          ]
+        },
+        {
+          "origin": "c",
+          "type": "NORMAL",
+          "x": 0,
+          "y": 0,
+          "width": 20,
+          "height": 20,
+          "ports": [
+            {
+              "x": 0,
+              "y": 0,
+              "side": "EAST",
+              "outgoing": 1,
+              "outgoingEdges": [
+                "ca"
+              ],
+              "incomingEdges": [],
+              "incoming": 0
+            }
+          ]
+        },
+        {
+          "origin": null,
+          "type": "EXTERNAL_PORT",
+          "x": 0,
+          "y": 0,
+          "width": 0,
+          "height": 0,
+          "ports": [
+            {
+              "x": 0,
+              "y": 0,
+              "side": "WEST",
+              "outgoing": 0,
+              "outgoingEdges": [],
+              "incomingEdges": [
+                "ax"
+              ],
+              "incoming": 1
+            }
+          ]
+        }
+      ],
+      "layers": []
+    },
+    {
+      "phase": "org.eclipse.elk.alg.layered.intermediate.LayerConstraintPreprocessor",
+      "scope": 0,
+      "width": 0,
+      "height": 0,
+      "nodes": [
+        {
+          "origin": "a",
+          "type": "NORMAL",
+          "x": 0,
+          "y": 0,
+          "width": 20,
+          "height": 20,
+          "ports": [
+            {
+              "x": 0,
+              "y": 0,
+              "side": "EAST",
+              "outgoing": 0,
+              "outgoingEdges": [],
+              "incomingEdges": [],
+              "incoming": 0
+            },
+            {
+              "x": 0,
+              "y": 0,
+              "side": "WEST",
+              "outgoing": 0,
+              "outgoingEdges": [],
+              "incomingEdges": [
+                "ca"
+              ],
+              "incoming": 1
+            }
+          ]
+        },
+        {
+          "origin": "c",
+          "type": "NORMAL",
+          "x": 0,
+          "y": 0,
+          "width": 20,
+          "height": 20,
+          "ports": [
+            {
+              "x": 0,
+              "y": 0,
+              "side": "EAST",
+              "outgoing": 1,
+              "outgoingEdges": [
+                "ca"
+              ],
+              "incomingEdges": [],
+              "incoming": 0
+            }
+          ]
+        }
+      ],
+      "layers": []
+    },
+    {
+      "phase": "org.eclipse.elk.alg.layered.p2layers.NetworkSimplexLayerer",
+      "scope": 0,
+      "width": 0,
+      "height": 0,
+      "nodes": [
+        {
+          "origin": "c",
+          "type": "NORMAL",
+          "x": 0,
+          "y": 0,
+          "width": 20,
+          "height": 20,
+          "ports": [
+            {
+              "x": 0,
+              "y": 0,
+              "side": "EAST",
+              "outgoing": 1,
+              "outgoingEdges": [
+                "ca"
+              ],
+              "incomingEdges": [],
+              "incoming": 0
+            }
+          ]
+        },
+        {
+          "origin": "a",
+          "type": "NORMAL",
+          "x": 0,
+          "y": 0,
+          "width": 20,
+          "height": 20,
+          "ports": [
+            {
+              "x": 0,
+              "y": 0,
+              "side": "EAST",
+              "outgoing": 0,
+              "outgoingEdges": [],
+              "incomingEdges": [],
+              "incoming": 0
+            },
+            {
+              "x": 0,
+              "y": 0,
+              "side": "WEST",
+              "outgoing": 0,
+              "outgoingEdges": [],
+              "incomingEdges": [
+                "ca"
+              ],
+              "incoming": 1
+            }
+          ]
+        }
+      ],
+      "layers": [
+        [
+          "c"
+        ],
+        [
+          "a"
+        ]
+      ]
+    },
+    {
+      "phase": "org.eclipse.elk.alg.layered.intermediate.LayerConstraintPostprocessor",
+      "scope": 0,
+      "width": 0,
+      "height": 0,
+      "nodes": [
+        {
+          "origin": "c",
+          "type": "NORMAL",
+          "x": 0,
+          "y": 0,
+          "width": 20,
+          "height": 20,
+          "ports": [
+            {
+              "x": 0,
+              "y": 0,
+              "side": "EAST",
+              "outgoing": 1,
+              "outgoingEdges": [
+                "ca"
+              ],
+              "incomingEdges": [],
+              "incoming": 0
+            }
+          ]
+        },
+        {
+          "origin": "a",
+          "type": "NORMAL",
+          "x": 0,
+          "y": 0,
+          "width": 20,
+          "height": 20,
+          "ports": [
+            {
+              "x": 0,
+              "y": 0,
+              "side": "EAST",
+              "outgoing": 1,
+              "outgoingEdges": [
+                "ax"
+              ],
+              "incomingEdges": [],
+              "incoming": 0
+            },
+            {
+              "x": 0,
+              "y": 0,
+              "side": "WEST",
+              "outgoing": 0,
+              "outgoingEdges": [],
+              "incomingEdges": [
+                "ca"
+              ],
+              "incoming": 1
+            }
+          ]
+        },
+        {
+          "origin": null,
+          "type": "EXTERNAL_PORT",
+          "x": 0,
+          "y": 0,
+          "width": 0,
+          "height": 0,
+          "ports": [
+            {
+              "x": 0,
+              "y": 0,
+              "side": "WEST",
+              "outgoing": 0,
+              "outgoingEdges": [],
+              "incomingEdges": [
+                "ax"
+              ],
+              "incoming": 1
+            }
+          ]
+        }
+      ],
+      "layers": [
+        [
+          "c"
+        ],
+        [
+          "a"
+        ],
+        [
+          null
+        ]
+      ]
+    },
+    {
+      "phase": "org.eclipse.elk.alg.layered.intermediate.HierarchicalPortConstraintProcessor",
+      "scope": 0,
+      "width": 0,
+      "height": 0,
+      "nodes": [
+        {
+          "origin": "c",
+          "type": "NORMAL",
+          "x": 0,
+          "y": 0,
+          "width": 20,
+          "height": 20,
+          "ports": [
+            {
+              "x": 0,
+              "y": 0,
+              "side": "EAST",
+              "outgoing": 1,
+              "outgoingEdges": [
+                "ca"
+              ],
+              "incomingEdges": [],
+              "incoming": 0
+            }
+          ]
+        },
+        {
+          "origin": "a",
+          "type": "NORMAL",
+          "x": 0,
+          "y": 0,
+          "width": 20,
+          "height": 20,
+          "ports": [
+            {
+              "x": 0,
+              "y": 0,
+              "side": "EAST",
+              "outgoing": 1,
+              "outgoingEdges": [
+                "ax"
+              ],
+              "incomingEdges": [],
+              "incoming": 0
+            },
+            {
+              "x": 0,
+              "y": 0,
+              "side": "WEST",
+              "outgoing": 0,
+              "outgoingEdges": [],
+              "incomingEdges": [
+                "ca"
+              ],
+              "incoming": 1
+            }
+          ]
+        },
+        {
+          "origin": null,
+          "type": "EXTERNAL_PORT",
+          "x": 0,
+          "y": 0,
+          "width": 0,
+          "height": 0,
+          "ports": [
+            {
+              "x": 0,
+              "y": 0,
+              "side": "WEST",
+              "outgoing": 0,
+              "outgoingEdges": [],
+              "incomingEdges": [
+                "ax"
+              ],
+              "incoming": 1
+            }
+          ]
+        }
+      ],
+      "layers": [
+        [
+          "c"
+        ],
+        [
+          "a"
+        ],
+        [
+          null
+        ]
+      ]
+    },
+    {
+      "phase": "org.eclipse.elk.alg.layered.intermediate.LongEdgeSplitter",
+      "scope": 0,
+      "width": 0,
+      "height": 0,
+      "nodes": [
+        {
+          "origin": "c",
+          "type": "NORMAL",
+          "x": 0,
+          "y": 0,
+          "width": 20,
+          "height": 20,
+          "ports": [
+            {
+              "x": 0,
+              "y": 0,
+              "side": "EAST",
+              "outgoing": 1,
+              "outgoingEdges": [
+                "ca"
+              ],
+              "incomingEdges": [],
+              "incoming": 0
+            }
+          ]
+        },
+        {
+          "origin": "a",
+          "type": "NORMAL",
+          "x": 0,
+          "y": 0,
+          "width": 20,
+          "height": 20,
+          "ports": [
+            {
+              "x": 0,
+              "y": 0,
+              "side": "EAST",
+              "outgoing": 1,
+              "outgoingEdges": [
+                "ax"
+              ],
+              "incomingEdges": [],
+              "incoming": 0
+            },
+            {
+              "x": 0,
+              "y": 0,
+              "side": "WEST",
+              "outgoing": 0,
+              "outgoingEdges": [],
+              "incomingEdges": [
+                "ca"
+              ],
+              "incoming": 1
+            }
+          ]
+        },
+        {
+          "origin": null,
+          "type": "EXTERNAL_PORT",
+          "x": 0,
+          "y": 0,
+          "width": 0,
+          "height": 0,
+          "ports": [
+            {
+              "x": 0,
+              "y": 0,
+              "side": "WEST",
+              "outgoing": 0,
+              "outgoingEdges": [],
+              "incomingEdges": [
+                "ax"
+              ],
+              "incoming": 1
+            }
+          ]
+        }
+      ],
+      "layers": [
+        [
+          "c"
+        ],
+        [
+          "a"
+        ],
+        [
+          null
+        ]
+      ]
+    },
+    {
+      "phase": "org.eclipse.elk.alg.layered.intermediate.PortSideProcessor",
+      "scope": 0,
+      "width": 0,
+      "height": 0,
+      "nodes": [
+        {
+          "origin": "c",
+          "type": "NORMAL",
+          "x": 0,
+          "y": 0,
+          "width": 20,
+          "height": 20,
+          "ports": [
+            {
+              "x": 0,
+              "y": 0,
+              "side": "EAST",
+              "outgoing": 1,
+              "outgoingEdges": [
+                "ca"
+              ],
+              "incomingEdges": [],
+              "incoming": 0
+            }
+          ]
+        },
+        {
+          "origin": "a",
+          "type": "NORMAL",
+          "x": 0,
+          "y": 0,
+          "width": 20,
+          "height": 20,
+          "ports": [
+            {
+              "x": 0,
+              "y": 0,
+              "side": "EAST",
+              "outgoing": 1,
+              "outgoingEdges": [
+                "ax"
+              ],
+              "incomingEdges": [],
+              "incoming": 0
+            },
+            {
+              "x": 0,
+              "y": 0,
+              "side": "WEST",
+              "outgoing": 0,
+              "outgoingEdges": [],
+              "incomingEdges": [
+                "ca"
+              ],
+              "incoming": 1
+            }
+          ]
+        },
+        {
+          "origin": null,
+          "type": "EXTERNAL_PORT",
+          "x": 0,
+          "y": 0,
+          "width": 0,
+          "height": 0,
+          "ports": [
+            {
+              "x": 0,
+              "y": 0,
+              "side": "WEST",
+              "outgoing": 0,
+              "outgoingEdges": [],
+              "incomingEdges": [
+                "ax"
+              ],
+              "incoming": 1
+            }
+          ]
+        }
+      ],
+      "layers": [
+        [
+          "c"
+        ],
+        [
+          "a"
+        ],
+        [
+          null
+        ]
+      ]
+    },
+    {
+      "phase": "org.eclipse.elk.alg.layered.intermediate.InvertedPortProcessor",
+      "scope": 0,
+      "width": 0,
+      "height": 0,
+      "nodes": [
+        {
+          "origin": "c",
+          "type": "NORMAL",
+          "x": 0,
+          "y": 0,
+          "width": 20,
+          "height": 20,
+          "ports": [
+            {
+              "x": 0,
+              "y": 0,
+              "side": "EAST",
+              "outgoing": 1,
+              "outgoingEdges": [
+                "ca"
+              ],
+              "incomingEdges": [],
+              "incoming": 0
+            }
+          ]
+        },
+        {
+          "origin": "a",
+          "type": "NORMAL",
+          "x": 0,
+          "y": 0,
+          "width": 20,
+          "height": 20,
+          "ports": [
+            {
+              "x": 0,
+              "y": 0,
+              "side": "EAST",
+              "outgoing": 1,
+              "outgoingEdges": [
+                "ax"
+              ],
+              "incomingEdges": [],
+              "incoming": 0
+            },
+            {
+              "x": 0,
+              "y": 0,
+              "side": "WEST",
+              "outgoing": 0,
+              "outgoingEdges": [],
+              "incomingEdges": [
+                "ca"
+              ],
+              "incoming": 1
+            }
+          ]
+        },
+        {
+          "origin": null,
+          "type": "EXTERNAL_PORT",
+          "x": 0,
+          "y": 0,
+          "width": 0,
+          "height": 0,
+          "ports": [
+            {
+              "x": 0,
+              "y": 0,
+              "side": "WEST",
+              "outgoing": 0,
+              "outgoingEdges": [],
+              "incomingEdges": [
+                "ax"
+              ],
+              "incoming": 1
+            }
+          ]
+        }
+      ],
+      "layers": [
+        [
+          "c"
+        ],
+        [
+          "a"
+        ],
+        [
+          null
+        ]
+      ]
+    },
+    {
+      "phase": "org.eclipse.elk.alg.layered.intermediate.PortListSorter",
+      "scope": 0,
+      "width": 0,
+      "height": 0,
+      "nodes": [
+        {
+          "origin": "c",
+          "type": "NORMAL",
+          "x": 0,
+          "y": 0,
+          "width": 20,
+          "height": 20,
+          "ports": [
+            {
+              "x": 0,
+              "y": 0,
+              "side": "EAST",
+              "outgoing": 1,
+              "outgoingEdges": [
+                "ca"
+              ],
+              "incomingEdges": [],
+              "incoming": 0
+            }
+          ]
+        },
+        {
+          "origin": "a",
+          "type": "NORMAL",
+          "x": 0,
+          "y": 0,
+          "width": 20,
+          "height": 20,
+          "ports": [
+            {
+              "x": 0,
+              "y": 0,
+              "side": "EAST",
+              "outgoing": 1,
+              "outgoingEdges": [
+                "ax"
+              ],
+              "incomingEdges": [],
+              "incoming": 0
+            },
+            {
+              "x": 0,
+              "y": 0,
+              "side": "WEST",
+              "outgoing": 0,
+              "outgoingEdges": [],
+              "incomingEdges": [
+                "ca"
+              ],
+              "incoming": 1
+            }
+          ]
+        },
+        {
+          "origin": null,
+          "type": "EXTERNAL_PORT",
+          "x": 0,
+          "y": 0,
+          "width": 0,
+          "height": 0,
+          "ports": [
+            {
+              "x": 0,
+              "y": 0,
+              "side": "WEST",
+              "outgoing": 0,
+              "outgoingEdges": [],
+              "incomingEdges": [
+                "ax"
+              ],
+              "incoming": 1
+            }
+          ]
+        }
+      ],
+      "layers": [
+        [
+          "c"
+        ],
+        [
+          "a"
+        ],
+        [
+          null
+        ]
+      ]
+    },
+    {
+      "phase": "org.eclipse.elk.alg.layered.intermediate.EdgeAndLayerConstraintEdgeReverser",
+      "scope": 1,
+      "width": 0,
+      "height": 0,
+      "nodes": [
+        {
+          "origin": "parent",
+          "type": "NORMAL",
+          "x": 0,
+          "y": 0,
+          "width": 0,
+          "height": 0,
+          "ports": [
+            {
+              "x": 0,
+              "y": 0,
+              "side": "EAST",
+              "outgoing": 2,
+              "outgoingEdges": [
+                "ax",
+                "ay"
+              ],
+              "incomingEdges": [],
+              "incoming": 0
+            }
+          ]
+        },
+        {
+          "origin": "x",
+          "type": "NORMAL",
+          "x": 0,
+          "y": 0,
+          "width": 20,
+          "height": 20,
+          "ports": [
+            {
+              "x": 0,
+              "y": 0,
+              "side": "WEST",
+              "outgoing": 0,
+              "outgoingEdges": [],
+              "incomingEdges": [
+                "ax"
+              ],
+              "incoming": 1
+            }
+          ]
+        },
+        {
+          "origin": "y",
+          "type": "NORMAL",
+          "x": 0,
+          "y": 0,
+          "width": 20,
+          "height": 20,
+          "ports": [
+            {
+              "x": 0,
+              "y": 0,
+              "side": "WEST",
+              "outgoing": 0,
+              "outgoingEdges": [],
+              "incomingEdges": [
+                "ay"
+              ],
+              "incoming": 1
+            }
+          ]
+        }
+      ],
+      "layers": []
+    },
+    {
+      "phase": "org.eclipse.elk.alg.layered.p1cycles.GreedyCycleBreaker",
+      "scope": 1,
+      "width": 0,
+      "height": 0,
+      "nodes": [
+        {
+          "origin": "parent",
+          "type": "NORMAL",
+          "x": 0,
+          "y": 0,
+          "width": 0,
+          "height": 0,
+          "ports": [
+            {
+              "x": 0,
+              "y": 0,
+              "side": "EAST",
+              "outgoing": 2,
+              "outgoingEdges": [
+                "ax",
+                "ay"
+              ],
+              "incomingEdges": [],
+              "incoming": 0
+            }
+          ]
+        },
+        {
+          "origin": "x",
+          "type": "NORMAL",
+          "x": 0,
+          "y": 0,
+          "width": 20,
+          "height": 20,
+          "ports": [
+            {
+              "x": 0,
+              "y": 0,
+              "side": "WEST",
+              "outgoing": 0,
+              "outgoingEdges": [],
+              "incomingEdges": [
+                "ax"
+              ],
+              "incoming": 1
+            }
+          ]
+        },
+        {
+          "origin": "y",
+          "type": "NORMAL",
+          "x": 0,
+          "y": 0,
+          "width": 20,
+          "height": 20,
+          "ports": [
+            {
+              "x": 0,
+              "y": 0,
+              "side": "WEST",
+              "outgoing": 0,
+              "outgoingEdges": [],
+              "incomingEdges": [
+                "ay"
+              ],
+              "incoming": 1
+            }
+          ]
+        }
+      ],
+      "layers": []
+    },
+    {
+      "phase": "org.eclipse.elk.alg.layered.intermediate.LayerConstraintPreprocessor",
+      "scope": 1,
+      "width": 0,
+      "height": 0,
+      "nodes": [
+        {
+          "origin": "parent",
+          "type": "NORMAL",
+          "x": 0,
+          "y": 0,
+          "width": 0,
+          "height": 0,
+          "ports": [
+            {
+              "x": 0,
+              "y": 0,
+              "side": "EAST",
+              "outgoing": 2,
+              "outgoingEdges": [
+                "ax",
+                "ay"
+              ],
+              "incomingEdges": [],
+              "incoming": 0
+            }
+          ]
+        },
+        {
+          "origin": "x",
+          "type": "NORMAL",
+          "x": 0,
+          "y": 0,
+          "width": 20,
+          "height": 20,
+          "ports": [
+            {
+              "x": 0,
+              "y": 0,
+              "side": "WEST",
+              "outgoing": 0,
+              "outgoingEdges": [],
+              "incomingEdges": [
+                "ax"
+              ],
+              "incoming": 1
+            }
+          ]
+        },
+        {
+          "origin": "y",
+          "type": "NORMAL",
+          "x": 0,
+          "y": 0,
+          "width": 20,
+          "height": 20,
+          "ports": [
+            {
+              "x": 0,
+              "y": 0,
+              "side": "WEST",
+              "outgoing": 0,
+              "outgoingEdges": [],
+              "incomingEdges": [
+                "ay"
+              ],
+              "incoming": 1
+            }
+          ]
+        }
+      ],
+      "layers": []
+    },
+    {
+      "phase": "org.eclipse.elk.alg.layered.p2layers.NetworkSimplexLayerer",
+      "scope": 1,
+      "width": 0,
+      "height": 0,
+      "nodes": [
+        {
+          "origin": "parent",
+          "type": "NORMAL",
+          "x": 0,
+          "y": 0,
+          "width": 0,
+          "height": 0,
+          "ports": [
+            {
+              "x": 0,
+              "y": 0,
+              "side": "EAST",
+              "outgoing": 2,
+              "outgoingEdges": [
+                "ax",
+                "ay"
+              ],
+              "incomingEdges": [],
+              "incoming": 0
+            }
+          ]
+        },
+        {
+          "origin": "x",
+          "type": "NORMAL",
+          "x": 0,
+          "y": 0,
+          "width": 20,
+          "height": 20,
+          "ports": [
+            {
+              "x": 0,
+              "y": 0,
+              "side": "WEST",
+              "outgoing": 0,
+              "outgoingEdges": [],
+              "incomingEdges": [
+                "ax"
+              ],
+              "incoming": 1
+            }
+          ]
+        },
+        {
+          "origin": "y",
+          "type": "NORMAL",
+          "x": 0,
+          "y": 0,
+          "width": 20,
+          "height": 20,
+          "ports": [
+            {
+              "x": 0,
+              "y": 0,
+              "side": "WEST",
+              "outgoing": 0,
+              "outgoingEdges": [],
+              "incomingEdges": [
+                "ay"
+              ],
+              "incoming": 1
+            }
+          ]
+        }
+      ],
+      "layers": [
+        [
+          "parent"
+        ],
+        [
+          "x",
+          "y"
+        ]
+      ]
+    },
+    {
+      "phase": "org.eclipse.elk.alg.layered.intermediate.LayerConstraintPostprocessor",
+      "scope": 1,
+      "width": 0,
+      "height": 0,
+      "nodes": [
+        {
+          "origin": "parent",
+          "type": "NORMAL",
+          "x": 0,
+          "y": 0,
+          "width": 0,
+          "height": 0,
+          "ports": [
+            {
+              "x": 0,
+              "y": 0,
+              "side": "EAST",
+              "outgoing": 2,
+              "outgoingEdges": [
+                "ax",
+                "ay"
+              ],
+              "incomingEdges": [],
+              "incoming": 0
+            }
+          ]
+        },
+        {
+          "origin": "x",
+          "type": "NORMAL",
+          "x": 0,
+          "y": 0,
+          "width": 20,
+          "height": 20,
+          "ports": [
+            {
+              "x": 0,
+              "y": 0,
+              "side": "WEST",
+              "outgoing": 0,
+              "outgoingEdges": [],
+              "incomingEdges": [
+                "ax"
+              ],
+              "incoming": 1
+            }
+          ]
+        },
+        {
+          "origin": "y",
+          "type": "NORMAL",
+          "x": 0,
+          "y": 0,
+          "width": 20,
+          "height": 20,
+          "ports": [
+            {
+              "x": 0,
+              "y": 0,
+              "side": "WEST",
+              "outgoing": 0,
+              "outgoingEdges": [],
+              "incomingEdges": [
+                "ay"
+              ],
+              "incoming": 1
+            }
+          ]
+        }
+      ],
+      "layers": [
+        [
+          "parent"
+        ],
+        [
+          "x",
+          "y"
+        ]
+      ]
+    },
+    {
+      "phase": "org.eclipse.elk.alg.layered.intermediate.LongEdgeSplitter",
+      "scope": 1,
+      "width": 0,
+      "height": 0,
+      "nodes": [
+        {
+          "origin": "parent",
+          "type": "NORMAL",
+          "x": 0,
+          "y": 0,
+          "width": 0,
+          "height": 0,
+          "ports": [
+            {
+              "x": 0,
+              "y": 0,
+              "side": "EAST",
+              "outgoing": 2,
+              "outgoingEdges": [
+                "ax",
+                "ay"
+              ],
+              "incomingEdges": [],
+              "incoming": 0
+            }
+          ]
+        },
+        {
+          "origin": "x",
+          "type": "NORMAL",
+          "x": 0,
+          "y": 0,
+          "width": 20,
+          "height": 20,
+          "ports": [
+            {
+              "x": 0,
+              "y": 0,
+              "side": "WEST",
+              "outgoing": 0,
+              "outgoingEdges": [],
+              "incomingEdges": [
+                "ax"
+              ],
+              "incoming": 1
+            }
+          ]
+        },
+        {
+          "origin": "y",
+          "type": "NORMAL",
+          "x": 0,
+          "y": 0,
+          "width": 20,
+          "height": 20,
+          "ports": [
+            {
+              "x": 0,
+              "y": 0,
+              "side": "WEST",
+              "outgoing": 0,
+              "outgoingEdges": [],
+              "incomingEdges": [
+                "ay"
+              ],
+              "incoming": 1
+            }
+          ]
+        }
+      ],
+      "layers": [
+        [
+          "parent"
+        ],
+        [
+          "x",
+          "y"
+        ]
+      ]
+    },
+    {
+      "phase": "org.eclipse.elk.alg.layered.intermediate.PortSideProcessor",
+      "scope": 1,
+      "width": 0,
+      "height": 0,
+      "nodes": [
+        {
+          "origin": "parent",
+          "type": "NORMAL",
+          "x": 0,
+          "y": 0,
+          "width": 0,
+          "height": 0,
+          "ports": [
+            {
+              "x": 0,
+              "y": 0,
+              "side": "EAST",
+              "outgoing": 2,
+              "outgoingEdges": [
+                "ax",
+                "ay"
+              ],
+              "incomingEdges": [],
+              "incoming": 0
+            }
+          ]
+        },
+        {
+          "origin": "x",
+          "type": "NORMAL",
+          "x": 0,
+          "y": 0,
+          "width": 20,
+          "height": 20,
+          "ports": [
+            {
+              "x": 0,
+              "y": 0,
+              "side": "WEST",
+              "outgoing": 0,
+              "outgoingEdges": [],
+              "incomingEdges": [
+                "ax"
+              ],
+              "incoming": 1
+            }
+          ]
+        },
+        {
+          "origin": "y",
+          "type": "NORMAL",
+          "x": 0,
+          "y": 0,
+          "width": 20,
+          "height": 20,
+          "ports": [
+            {
+              "x": 0,
+              "y": 0,
+              "side": "WEST",
+              "outgoing": 0,
+              "outgoingEdges": [],
+              "incomingEdges": [
+                "ay"
+              ],
+              "incoming": 1
+            }
+          ]
+        }
+      ],
+      "layers": [
+        [
+          "parent"
+        ],
+        [
+          "x",
+          "y"
+        ]
+      ]
+    },
+    {
+      "phase": "org.eclipse.elk.alg.layered.intermediate.InvertedPortProcessor",
+      "scope": 1,
+      "width": 0,
+      "height": 0,
+      "nodes": [
+        {
+          "origin": "parent",
+          "type": "NORMAL",
+          "x": 0,
+          "y": 0,
+          "width": 0,
+          "height": 0,
+          "ports": [
+            {
+              "x": 0,
+              "y": 0,
+              "side": "EAST",
+              "outgoing": 2,
+              "outgoingEdges": [
+                "ax",
+                "ay"
+              ],
+              "incomingEdges": [],
+              "incoming": 0
+            }
+          ]
+        },
+        {
+          "origin": "x",
+          "type": "NORMAL",
+          "x": 0,
+          "y": 0,
+          "width": 20,
+          "height": 20,
+          "ports": [
+            {
+              "x": 0,
+              "y": 0,
+              "side": "WEST",
+              "outgoing": 0,
+              "outgoingEdges": [],
+              "incomingEdges": [
+                "ax"
+              ],
+              "incoming": 1
+            }
+          ]
+        },
+        {
+          "origin": "y",
+          "type": "NORMAL",
+          "x": 0,
+          "y": 0,
+          "width": 20,
+          "height": 20,
+          "ports": [
+            {
+              "x": 0,
+              "y": 0,
+              "side": "WEST",
+              "outgoing": 0,
+              "outgoingEdges": [],
+              "incomingEdges": [
+                "ay"
+              ],
+              "incoming": 1
+            }
+          ]
+        }
+      ],
+      "layers": [
+        [
+          "parent"
+        ],
+        [
+          "x",
+          "y"
+        ]
+      ]
+    },
+    {
+      "phase": "org.eclipse.elk.alg.layered.intermediate.PortListSorter",
+      "scope": 1,
+      "width": 0,
+      "height": 0,
+      "nodes": [
+        {
+          "origin": "parent",
+          "type": "NORMAL",
+          "x": 0,
+          "y": 0,
+          "width": 0,
+          "height": 0,
+          "ports": [
+            {
+              "x": 0,
+              "y": 0,
+              "side": "EAST",
+              "outgoing": 2,
+              "outgoingEdges": [
+                "ax",
+                "ay"
+              ],
+              "incomingEdges": [],
+              "incoming": 0
+            }
+          ]
+        },
+        {
+          "origin": "x",
+          "type": "NORMAL",
+          "x": 0,
+          "y": 0,
+          "width": 20,
+          "height": 20,
+          "ports": [
+            {
+              "x": 0,
+              "y": 0,
+              "side": "WEST",
+              "outgoing": 0,
+              "outgoingEdges": [],
+              "incomingEdges": [
+                "ax"
+              ],
+              "incoming": 1
+            }
+          ]
+        },
+        {
+          "origin": "y",
+          "type": "NORMAL",
+          "x": 0,
+          "y": 0,
+          "width": 20,
+          "height": 20,
+          "ports": [
+            {
+              "x": 0,
+              "y": 0,
+              "side": "WEST",
+              "outgoing": 0,
+              "outgoingEdges": [],
+              "incomingEdges": [
+                "ay"
+              ],
+              "incoming": 1
+            }
+          ]
+        }
+      ],
+      "layers": [
+        [
+          "parent"
+        ],
+        [
+          "x",
+          "y"
+        ]
+      ]
+    },
+    {
+      "phase": "org.eclipse.elk.alg.layered.p3order.LayerSweepCrossingMinimizer",
+      "scope": 1,
+      "width": 0,
+      "height": 0,
+      "nodes": [
+        {
+          "origin": "parent",
+          "type": "NORMAL",
+          "x": 0,
+          "y": 0,
+          "width": 0,
+          "height": 0,
+          "ports": [
+            {
+              "x": 0,
+              "y": 0,
+              "side": "EAST",
+              "outgoing": 2,
+              "outgoingEdges": [
+                "ax",
+                "ay"
+              ],
+              "incomingEdges": [],
+              "incoming": 0
+            }
+          ]
+        },
+        {
+          "origin": "x",
+          "type": "NORMAL",
+          "x": 0,
+          "y": 0,
+          "width": 20,
+          "height": 20,
+          "ports": [
+            {
+              "x": 0,
+              "y": 0,
+              "side": "WEST",
+              "outgoing": 0,
+              "outgoingEdges": [],
+              "incomingEdges": [
+                "ax"
+              ],
+              "incoming": 1
+            }
+          ]
+        },
+        {
+          "origin": "y",
+          "type": "NORMAL",
+          "x": 0,
+          "y": 0,
+          "width": 20,
+          "height": 20,
+          "ports": [
+            {
+              "x": 0,
+              "y": 0,
+              "side": "WEST",
+              "outgoing": 0,
+              "outgoingEdges": [],
+              "incomingEdges": [
+                "ay"
+              ],
+              "incoming": 1
+            }
+          ]
+        }
+      ],
+      "layers": [
+        [
+          "parent"
+        ],
+        [
+          "x",
+          "y"
+        ]
+      ]
+    },
+    {
+      "phase": "org.eclipse.elk.alg.layered.intermediate.InLayerConstraintProcessor",
+      "scope": 0,
+      "width": 0,
+      "height": 0,
+      "nodes": [
+        {
+          "origin": "c",
+          "type": "NORMAL",
+          "x": 0,
+          "y": 0,
+          "width": 20,
+          "height": 20,
+          "ports": [
+            {
+              "x": 0,
+              "y": 0,
+              "side": "EAST",
+              "outgoing": 1,
+              "outgoingEdges": [
+                "ca"
+              ],
+              "incomingEdges": [],
+              "incoming": 0
+            }
+          ]
+        },
+        {
+          "origin": "a",
+          "type": "NORMAL",
+          "x": 0,
+          "y": 0,
+          "width": 20,
+          "height": 20,
+          "ports": [
+            {
+              "x": 0,
+              "y": 0,
+              "side": "EAST",
+              "outgoing": 1,
+              "outgoingEdges": [
+                "ax"
+              ],
+              "incomingEdges": [],
+              "incoming": 0
+            },
+            {
+              "x": 0,
+              "y": 0,
+              "side": "WEST",
+              "outgoing": 0,
+              "outgoingEdges": [],
+              "incomingEdges": [
+                "ca"
+              ],
+              "incoming": 1
+            }
+          ]
+        },
+        {
+          "origin": null,
+          "type": "EXTERNAL_PORT",
+          "x": 0,
+          "y": 0,
+          "width": 0,
+          "height": 0,
+          "ports": [
+            {
+              "x": 0,
+              "y": 0,
+              "side": "WEST",
+              "outgoing": 0,
+              "outgoingEdges": [],
+              "incomingEdges": [
+                "ax"
+              ],
+              "incoming": 1
+            }
+          ]
+        }
+      ],
+      "layers": [
+        [
+          "c"
+        ],
+        [
+          "a"
+        ],
+        [
+          null
+        ]
+      ]
+    },
+    {
+      "phase": "org.eclipse.elk.alg.layered.intermediate.LabelAndNodeSizeProcessor",
+      "scope": 0,
+      "width": 0,
+      "height": 0,
+      "nodes": [
+        {
+          "origin": "c",
+          "type": "NORMAL",
+          "x": 0,
+          "y": 0,
+          "width": 20,
+          "height": 20,
+          "ports": [
+            {
+              "x": 20,
+              "y": 10,
+              "side": "EAST",
+              "outgoing": 1,
+              "outgoingEdges": [
+                "ca"
+              ],
+              "incomingEdges": [],
+              "incoming": 0
+            }
+          ]
+        },
+        {
+          "origin": "a",
+          "type": "NORMAL",
+          "x": 0,
+          "y": 0,
+          "width": 20,
+          "height": 20,
+          "ports": [
+            {
+              "x": 20,
+              "y": 10,
+              "side": "EAST",
+              "outgoing": 1,
+              "outgoingEdges": [
+                "ax"
+              ],
+              "incomingEdges": [],
+              "incoming": 0
+            },
+            {
+              "x": 0,
+              "y": 10,
+              "side": "WEST",
+              "outgoing": 0,
+              "outgoingEdges": [],
+              "incomingEdges": [
+                "ca"
+              ],
+              "incoming": 1
+            }
+          ]
+        },
+        {
+          "origin": null,
+          "type": "EXTERNAL_PORT",
+          "x": 0,
+          "y": 0,
+          "width": 0,
+          "height": 0,
+          "ports": [
+            {
+              "x": 0,
+              "y": 0,
+              "side": "WEST",
+              "outgoing": 0,
+              "outgoingEdges": [],
+              "incomingEdges": [
+                "ax"
+              ],
+              "incoming": 1
+            }
+          ]
+        }
+      ],
+      "layers": [
+        [
+          "c"
+        ],
+        [
+          "a"
+        ],
+        [
+          null
+        ]
+      ]
+    },
+    {
+      "phase": "org.eclipse.elk.alg.layered.intermediate.InnermostNodeMarginCalculator",
+      "scope": 0,
+      "width": 0,
+      "height": 0,
+      "nodes": [
+        {
+          "origin": "c",
+          "type": "NORMAL",
+          "x": 0,
+          "y": 0,
+          "width": 20,
+          "height": 20,
+          "ports": [
+            {
+              "x": 20,
+              "y": 10,
+              "side": "EAST",
+              "outgoing": 1,
+              "outgoingEdges": [
+                "ca"
+              ],
+              "incomingEdges": [],
+              "incoming": 0
+            }
+          ]
+        },
+        {
+          "origin": "a",
+          "type": "NORMAL",
+          "x": 0,
+          "y": 0,
+          "width": 20,
+          "height": 20,
+          "ports": [
+            {
+              "x": 20,
+              "y": 10,
+              "side": "EAST",
+              "outgoing": 1,
+              "outgoingEdges": [
+                "ax"
+              ],
+              "incomingEdges": [],
+              "incoming": 0
+            },
+            {
+              "x": 0,
+              "y": 10,
+              "side": "WEST",
+              "outgoing": 0,
+              "outgoingEdges": [],
+              "incomingEdges": [
+                "ca"
+              ],
+              "incoming": 1
+            }
+          ]
+        },
+        {
+          "origin": null,
+          "type": "EXTERNAL_PORT",
+          "x": 0,
+          "y": 0,
+          "width": 0,
+          "height": 0,
+          "ports": [
+            {
+              "x": 0,
+              "y": 0,
+              "side": "WEST",
+              "outgoing": 0,
+              "outgoingEdges": [],
+              "incomingEdges": [
+                "ax"
+              ],
+              "incoming": 1
+            }
+          ]
+        }
+      ],
+      "layers": [
+        [
+          "c"
+        ],
+        [
+          "a"
+        ],
+        [
+          null
+        ]
+      ]
+    },
+    {
+      "phase": "org.eclipse.elk.alg.layered.intermediate.HierarchicalPortDummySizeProcessor",
+      "scope": 0,
+      "width": 0,
+      "height": 0,
+      "nodes": [
+        {
+          "origin": "c",
+          "type": "NORMAL",
+          "x": 0,
+          "y": 0,
+          "width": 20,
+          "height": 20,
+          "ports": [
+            {
+              "x": 20,
+              "y": 10,
+              "side": "EAST",
+              "outgoing": 1,
+              "outgoingEdges": [
+                "ca"
+              ],
+              "incomingEdges": [],
+              "incoming": 0
+            }
+          ]
+        },
+        {
+          "origin": "a",
+          "type": "NORMAL",
+          "x": 0,
+          "y": 0,
+          "width": 20,
+          "height": 20,
+          "ports": [
+            {
+              "x": 20,
+              "y": 10,
+              "side": "EAST",
+              "outgoing": 1,
+              "outgoingEdges": [
+                "ax"
+              ],
+              "incomingEdges": [],
+              "incoming": 0
+            },
+            {
+              "x": 0,
+              "y": 10,
+              "side": "WEST",
+              "outgoing": 0,
+              "outgoingEdges": [],
+              "incomingEdges": [
+                "ca"
+              ],
+              "incoming": 1
+            }
+          ]
+        },
+        {
+          "origin": null,
+          "type": "EXTERNAL_PORT",
+          "x": 0,
+          "y": 0,
+          "width": 0,
+          "height": 0,
+          "ports": [
+            {
+              "x": 0,
+              "y": 0,
+              "side": "WEST",
+              "outgoing": 0,
+              "outgoingEdges": [],
+              "incomingEdges": [
+                "ax"
+              ],
+              "incoming": 1
+            }
+          ]
+        }
+      ],
+      "layers": [
+        [
+          "c"
+        ],
+        [
+          "a"
+        ],
+        [
+          null
+        ]
+      ]
+    },
+    {
+      "phase": "org.eclipse.elk.alg.layered.p4nodes.bk.BKNodePlacer",
+      "scope": 0,
+      "width": 0,
+      "height": 0,
+      "nodes": [
+        {
+          "origin": "c",
+          "type": "NORMAL",
+          "x": 0,
+          "y": 0,
+          "width": 20,
+          "height": 20,
+          "ports": [
+            {
+              "x": 20,
+              "y": 10,
+              "side": "EAST",
+              "outgoing": 1,
+              "outgoingEdges": [
+                "ca"
+              ],
+              "incomingEdges": [],
+              "incoming": 0
+            }
+          ]
+        },
+        {
+          "origin": "a",
+          "type": "NORMAL",
+          "x": 0,
+          "y": 0,
+          "width": 20,
+          "height": 20,
+          "ports": [
+            {
+              "x": 20,
+              "y": 10,
+              "side": "EAST",
+              "outgoing": 1,
+              "outgoingEdges": [
+                "ax"
+              ],
+              "incomingEdges": [],
+              "incoming": 0
+            },
+            {
+              "x": 0,
+              "y": 10,
+              "side": "WEST",
+              "outgoing": 0,
+              "outgoingEdges": [],
+              "incomingEdges": [
+                "ca"
+              ],
+              "incoming": 1
+            }
+          ]
+        },
+        {
+          "origin": null,
+          "type": "EXTERNAL_PORT",
+          "x": 0,
+          "y": 10,
+          "width": 0,
+          "height": 0,
+          "ports": [
+            {
+              "x": 0,
+              "y": 0,
+              "side": "WEST",
+              "outgoing": 0,
+              "outgoingEdges": [],
+              "incomingEdges": [
+                "ax"
+              ],
+              "incoming": 1
+            }
+          ]
+        }
+      ],
+      "layers": [
+        [
+          "c"
+        ],
+        [
+          "a"
+        ],
+        [
+          null
+        ]
+      ]
+    },
+    {
+      "phase": "org.eclipse.elk.alg.layered.intermediate.LayerSizeAndGraphHeightCalculator",
+      "scope": 0,
+      "width": 0,
+      "height": 20,
+      "nodes": [
+        {
+          "origin": "c",
+          "type": "NORMAL",
+          "x": 0,
+          "y": 0,
+          "width": 20,
+          "height": 20,
+          "ports": [
+            {
+              "x": 20,
+              "y": 10,
+              "side": "EAST",
+              "outgoing": 1,
+              "outgoingEdges": [
+                "ca"
+              ],
+              "incomingEdges": [],
+              "incoming": 0
+            }
+          ]
+        },
+        {
+          "origin": "a",
+          "type": "NORMAL",
+          "x": 0,
+          "y": 0,
+          "width": 20,
+          "height": 20,
+          "ports": [
+            {
+              "x": 20,
+              "y": 10,
+              "side": "EAST",
+              "outgoing": 1,
+              "outgoingEdges": [
+                "ax"
+              ],
+              "incomingEdges": [],
+              "incoming": 0
+            },
+            {
+              "x": 0,
+              "y": 10,
+              "side": "WEST",
+              "outgoing": 0,
+              "outgoingEdges": [],
+              "incomingEdges": [
+                "ca"
+              ],
+              "incoming": 1
+            }
+          ]
+        },
+        {
+          "origin": null,
+          "type": "EXTERNAL_PORT",
+          "x": 0,
+          "y": 10,
+          "width": 0,
+          "height": 0,
+          "ports": [
+            {
+              "x": 0,
+              "y": 0,
+              "side": "WEST",
+              "outgoing": 0,
+              "outgoingEdges": [],
+              "incomingEdges": [
+                "ax"
+              ],
+              "incoming": 1
+            }
+          ]
+        }
+      ],
+      "layers": [
+        [
+          "c"
+        ],
+        [
+          "a"
+        ],
+        [
+          null
+        ]
+      ]
+    },
+    {
+      "phase": "org.eclipse.elk.alg.layered.intermediate.HierarchicalPortPositionProcessor",
+      "scope": 0,
+      "width": 0,
+      "height": 20,
+      "nodes": [
+        {
+          "origin": "c",
+          "type": "NORMAL",
+          "x": 0,
+          "y": 0,
+          "width": 20,
+          "height": 20,
+          "ports": [
+            {
+              "x": 20,
+              "y": 10,
+              "side": "EAST",
+              "outgoing": 1,
+              "outgoingEdges": [
+                "ca"
+              ],
+              "incomingEdges": [],
+              "incoming": 0
+            }
+          ]
+        },
+        {
+          "origin": "a",
+          "type": "NORMAL",
+          "x": 0,
+          "y": 0,
+          "width": 20,
+          "height": 20,
+          "ports": [
+            {
+              "x": 20,
+              "y": 10,
+              "side": "EAST",
+              "outgoing": 1,
+              "outgoingEdges": [
+                "ax"
+              ],
+              "incomingEdges": [],
+              "incoming": 0
+            },
+            {
+              "x": 0,
+              "y": 10,
+              "side": "WEST",
+              "outgoing": 0,
+              "outgoingEdges": [],
+              "incomingEdges": [
+                "ca"
+              ],
+              "incoming": 1
+            }
+          ]
+        },
+        {
+          "origin": null,
+          "type": "EXTERNAL_PORT",
+          "x": 0,
+          "y": 10,
+          "width": 0,
+          "height": 0,
+          "ports": [
+            {
+              "x": 0,
+              "y": 0,
+              "side": "WEST",
+              "outgoing": 0,
+              "outgoingEdges": [],
+              "incomingEdges": [
+                "ax"
+              ],
+              "incoming": 1
+            }
+          ]
+        }
+      ],
+      "layers": [
+        [
+          "c"
+        ],
+        [
+          "a"
+        ],
+        [
+          null
+        ]
+      ]
+    },
+    {
+      "phase": "org.eclipse.elk.alg.layered.p5edges.OrthogonalEdgeRouter",
+      "scope": 0,
+      "width": 60,
+      "height": 20,
+      "nodes": [
+        {
+          "origin": "c",
+          "type": "NORMAL",
+          "x": 0,
+          "y": 0,
+          "width": 20,
+          "height": 20,
+          "ports": [
+            {
+              "x": 20,
+              "y": 10,
+              "side": "EAST",
+              "outgoing": 1,
+              "outgoingEdges": [
+                "ca"
+              ],
+              "incomingEdges": [],
+              "incoming": 0
+            }
+          ]
+        },
+        {
+          "origin": "a",
+          "type": "NORMAL",
+          "x": 40,
+          "y": 0,
+          "width": 20,
+          "height": 20,
+          "ports": [
+            {
+              "x": 20,
+              "y": 10,
+              "side": "EAST",
+              "outgoing": 1,
+              "outgoingEdges": [
+                "ax"
+              ],
+              "incomingEdges": [],
+              "incoming": 0
+            },
+            {
+              "x": 0,
+              "y": 10,
+              "side": "WEST",
+              "outgoing": 0,
+              "outgoingEdges": [],
+              "incomingEdges": [
+                "ca"
+              ],
+              "incoming": 1
+            }
+          ]
+        },
+        {
+          "origin": null,
+          "type": "EXTERNAL_PORT",
+          "x": 60,
+          "y": 10,
+          "width": 0,
+          "height": 0,
+          "ports": [
+            {
+              "x": 0,
+              "y": 0,
+              "side": "WEST",
+              "outgoing": 0,
+              "outgoingEdges": [],
+              "incomingEdges": [
+                "ax"
+              ],
+              "incoming": 1
+            }
+          ]
+        }
+      ],
+      "layers": [
+        [
+          "c"
+        ],
+        [
+          "a"
+        ],
+        [
+          null
+        ]
+      ]
+    },
+    {
+      "phase": "org.eclipse.elk.alg.layered.intermediate.HierarchicalPortOrthogonalEdgeRouter",
+      "scope": 0,
+      "width": 60,
+      "height": 20,
+      "nodes": [
+        {
+          "origin": "c",
+          "type": "NORMAL",
+          "x": 0,
+          "y": 0,
+          "width": 20,
+          "height": 20,
+          "ports": [
+            {
+              "x": 20,
+              "y": 10,
+              "side": "EAST",
+              "outgoing": 1,
+              "outgoingEdges": [
+                "ca"
+              ],
+              "incomingEdges": [],
+              "incoming": 0
+            }
+          ]
+        },
+        {
+          "origin": "a",
+          "type": "NORMAL",
+          "x": 40,
+          "y": 0,
+          "width": 20,
+          "height": 20,
+          "ports": [
+            {
+              "x": 20,
+              "y": 10,
+              "side": "EAST",
+              "outgoing": 1,
+              "outgoingEdges": [
+                "ax"
+              ],
+              "incomingEdges": [],
+              "incoming": 0
+            },
+            {
+              "x": 0,
+              "y": 10,
+              "side": "WEST",
+              "outgoing": 0,
+              "outgoingEdges": [],
+              "incomingEdges": [
+                "ca"
+              ],
+              "incoming": 1
+            }
+          ]
+        },
+        {
+          "origin": null,
+          "type": "EXTERNAL_PORT",
+          "x": 72,
+          "y": 10,
+          "width": 0,
+          "height": 0,
+          "ports": [
+            {
+              "x": 0,
+              "y": 0,
+              "side": "WEST",
+              "outgoing": 0,
+              "outgoingEdges": [],
+              "incomingEdges": [
+                "ax"
+              ],
+              "incoming": 1
+            }
+          ]
+        }
+      ],
+      "layers": [
+        [
+          "c"
+        ],
+        [
+          "a"
+        ],
+        [
+          null
+        ]
+      ]
+    },
+    {
+      "phase": "org.eclipse.elk.alg.layered.intermediate.LongEdgeJoiner",
+      "scope": 0,
+      "width": 60,
+      "height": 20,
+      "nodes": [
+        {
+          "origin": "c",
+          "type": "NORMAL",
+          "x": 0,
+          "y": 0,
+          "width": 20,
+          "height": 20,
+          "ports": [
+            {
+              "x": 20,
+              "y": 10,
+              "side": "EAST",
+              "outgoing": 1,
+              "outgoingEdges": [
+                "ca"
+              ],
+              "incomingEdges": [],
+              "incoming": 0
+            }
+          ]
+        },
+        {
+          "origin": "a",
+          "type": "NORMAL",
+          "x": 40,
+          "y": 0,
+          "width": 20,
+          "height": 20,
+          "ports": [
+            {
+              "x": 20,
+              "y": 10,
+              "side": "EAST",
+              "outgoing": 1,
+              "outgoingEdges": [
+                "ax"
+              ],
+              "incomingEdges": [],
+              "incoming": 0
+            },
+            {
+              "x": 0,
+              "y": 10,
+              "side": "WEST",
+              "outgoing": 0,
+              "outgoingEdges": [],
+              "incomingEdges": [
+                "ca"
+              ],
+              "incoming": 1
+            }
+          ]
+        },
+        {
+          "origin": null,
+          "type": "EXTERNAL_PORT",
+          "x": 72,
+          "y": 10,
+          "width": 0,
+          "height": 0,
+          "ports": [
+            {
+              "x": 0,
+              "y": 0,
+              "side": "WEST",
+              "outgoing": 0,
+              "outgoingEdges": [],
+              "incomingEdges": [
+                "ax"
+              ],
+              "incoming": 1
+            }
+          ]
+        }
+      ],
+      "layers": [
+        [
+          "c"
+        ],
+        [
+          "a"
+        ],
+        [
+          null
+        ]
+      ]
+    },
+    {
+      "phase": "org.eclipse.elk.alg.layered.intermediate.EndLabelSorter",
+      "scope": 0,
+      "width": 60,
+      "height": 20,
+      "nodes": [
+        {
+          "origin": "c",
+          "type": "NORMAL",
+          "x": 0,
+          "y": 0,
+          "width": 20,
+          "height": 20,
+          "ports": [
+            {
+              "x": 20,
+              "y": 10,
+              "side": "EAST",
+              "outgoing": 1,
+              "outgoingEdges": [
+                "ca"
+              ],
+              "incomingEdges": [],
+              "incoming": 0
+            }
+          ]
+        },
+        {
+          "origin": "a",
+          "type": "NORMAL",
+          "x": 40,
+          "y": 0,
+          "width": 20,
+          "height": 20,
+          "ports": [
+            {
+              "x": 20,
+              "y": 10,
+              "side": "EAST",
+              "outgoing": 1,
+              "outgoingEdges": [
+                "ax"
+              ],
+              "incomingEdges": [],
+              "incoming": 0
+            },
+            {
+              "x": 0,
+              "y": 10,
+              "side": "WEST",
+              "outgoing": 0,
+              "outgoingEdges": [],
+              "incomingEdges": [
+                "ca"
+              ],
+              "incoming": 1
+            }
+          ]
+        },
+        {
+          "origin": null,
+          "type": "EXTERNAL_PORT",
+          "x": 72,
+          "y": 10,
+          "width": 0,
+          "height": 0,
+          "ports": [
+            {
+              "x": 0,
+              "y": 0,
+              "side": "WEST",
+              "outgoing": 0,
+              "outgoingEdges": [],
+              "incomingEdges": [
+                "ax"
+              ],
+              "incoming": 1
+            }
+          ]
+        }
+      ],
+      "layers": [
+        [
+          "c"
+        ],
+        [
+          "a"
+        ],
+        [
+          null
+        ]
+      ]
+    },
+    {
+      "phase": "org.eclipse.elk.alg.layered.intermediate.ReversedEdgeRestorer",
+      "scope": 0,
+      "width": 60,
+      "height": 20,
+      "nodes": [
+        {
+          "origin": "c",
+          "type": "NORMAL",
+          "x": 0,
+          "y": 0,
+          "width": 20,
+          "height": 20,
+          "ports": [
+            {
+              "x": 20,
+              "y": 10,
+              "side": "EAST",
+              "outgoing": 1,
+              "outgoingEdges": [
+                "ca"
+              ],
+              "incomingEdges": [],
+              "incoming": 0
+            }
+          ]
+        },
+        {
+          "origin": "a",
+          "type": "NORMAL",
+          "x": 40,
+          "y": 0,
+          "width": 20,
+          "height": 20,
+          "ports": [
+            {
+              "x": 20,
+              "y": 10,
+              "side": "EAST",
+              "outgoing": 1,
+              "outgoingEdges": [
+                "ax"
+              ],
+              "incomingEdges": [],
+              "incoming": 0
+            },
+            {
+              "x": 0,
+              "y": 10,
+              "side": "WEST",
+              "outgoing": 0,
+              "outgoingEdges": [],
+              "incomingEdges": [
+                "ca"
+              ],
+              "incoming": 1
+            }
+          ]
+        },
+        {
+          "origin": null,
+          "type": "EXTERNAL_PORT",
+          "x": 72,
+          "y": 10,
+          "width": 0,
+          "height": 0,
+          "ports": [
+            {
+              "x": 0,
+              "y": 0,
+              "side": "WEST",
+              "outgoing": 0,
+              "outgoingEdges": [],
+              "incomingEdges": [
+                "ax"
+              ],
+              "incoming": 1
+            }
+          ]
+        }
+      ],
+      "layers": [
+        [
+          "c"
+        ],
+        [
+          "a"
+        ],
+        [
+          null
+        ]
+      ]
+    },
+    {
+      "phase": "org.eclipse.elk.alg.layered.intermediate.HierarchicalNodeResizingProcessor",
+      "scope": 0,
+      "width": 60,
+      "height": 20,
+      "nodes": [
+        {
+          "origin": "c",
+          "type": "NORMAL",
+          "x": 0,
+          "y": 0,
+          "width": 20,
+          "height": 20,
+          "ports": [
+            {
+              "x": 20,
+              "y": 10,
+              "side": "EAST",
+              "outgoing": 1,
+              "outgoingEdges": [
+                "ca"
+              ],
+              "incomingEdges": [],
+              "incoming": 0
+            }
+          ]
+        },
+        {
+          "origin": "a",
+          "type": "NORMAL",
+          "x": 40,
+          "y": 0,
+          "width": 20,
+          "height": 20,
+          "ports": [
+            {
+              "x": 20,
+              "y": 10,
+              "side": "EAST",
+              "outgoing": 1,
+              "outgoingEdges": [
+                "ax"
+              ],
+              "incomingEdges": [],
+              "incoming": 0
+            },
+            {
+              "x": 0,
+              "y": 10,
+              "side": "WEST",
+              "outgoing": 0,
+              "outgoingEdges": [],
+              "incomingEdges": [
+                "ca"
+              ],
+              "incoming": 1
+            }
+          ]
+        },
+        {
+          "origin": null,
+          "type": "EXTERNAL_PORT",
+          "x": 77,
+          "y": 10,
+          "width": 0,
+          "height": 0,
+          "ports": [
+            {
+              "x": 0,
+              "y": 0,
+              "side": "WEST",
+              "outgoing": 0,
+              "outgoingEdges": [],
+              "incomingEdges": [
+                "ax"
+              ],
+              "incoming": 1
+            }
+          ]
+        }
+      ],
+      "layers": []
+    },
+    {
+      "phase": "org.eclipse.elk.alg.layered.intermediate.InLayerConstraintProcessor",
+      "scope": 1,
+      "width": 0,
+      "height": 0,
+      "nodes": [
+        {
+          "origin": "parent",
+          "type": "NORMAL",
+          "x": 0,
+          "y": 0,
+          "width": 84,
+          "height": 44,
+          "ports": [
+            {
+              "x": 89,
+              "y": 22,
+              "side": "EAST",
+              "outgoing": 2,
+              "outgoingEdges": [
+                "ax",
+                "ay"
+              ],
+              "incomingEdges": [],
+              "incoming": 0
+            }
+          ]
+        },
+        {
+          "origin": "x",
+          "type": "NORMAL",
+          "x": 0,
+          "y": 0,
+          "width": 20,
+          "height": 20,
+          "ports": [
+            {
+              "x": 0,
+              "y": 0,
+              "side": "WEST",
+              "outgoing": 0,
+              "outgoingEdges": [],
+              "incomingEdges": [
+                "ax"
+              ],
+              "incoming": 1
+            }
+          ]
+        },
+        {
+          "origin": "y",
+          "type": "NORMAL",
+          "x": 0,
+          "y": 0,
+          "width": 20,
+          "height": 20,
+          "ports": [
+            {
+              "x": 0,
+              "y": 0,
+              "side": "WEST",
+              "outgoing": 0,
+              "outgoingEdges": [],
+              "incomingEdges": [
+                "ay"
+              ],
+              "incoming": 1
+            }
+          ]
+        }
+      ],
+      "layers": [
+        [
+          "parent"
+        ],
+        [
+          "x",
+          "y"
+        ]
+      ]
+    },
+    {
+      "phase": "org.eclipse.elk.alg.layered.intermediate.LabelAndNodeSizeProcessor",
+      "scope": 1,
+      "width": 0,
+      "height": 0,
+      "nodes": [
+        {
+          "origin": "parent",
+          "type": "NORMAL",
+          "x": 0,
+          "y": 0,
+          "width": 84,
+          "height": 44,
+          "ports": [
+            {
+              "x": 89,
+              "y": 22,
+              "side": "EAST",
+              "outgoing": 2,
+              "outgoingEdges": [
+                "ax",
+                "ay"
+              ],
+              "incomingEdges": [],
+              "incoming": 0
+            }
+          ]
+        },
+        {
+          "origin": "x",
+          "type": "NORMAL",
+          "x": 0,
+          "y": 0,
+          "width": 20,
+          "height": 20,
+          "ports": [
+            {
+              "x": 0,
+              "y": 10,
+              "side": "WEST",
+              "outgoing": 0,
+              "outgoingEdges": [],
+              "incomingEdges": [
+                "ax"
+              ],
+              "incoming": 1
+            }
+          ]
+        },
+        {
+          "origin": "y",
+          "type": "NORMAL",
+          "x": 0,
+          "y": 0,
+          "width": 20,
+          "height": 20,
+          "ports": [
+            {
+              "x": 0,
+              "y": 10,
+              "side": "WEST",
+              "outgoing": 0,
+              "outgoingEdges": [],
+              "incomingEdges": [
+                "ay"
+              ],
+              "incoming": 1
+            }
+          ]
+        }
+      ],
+      "layers": [
+        [
+          "parent"
+        ],
+        [
+          "x",
+          "y"
+        ]
+      ]
+    },
+    {
+      "phase": "org.eclipse.elk.alg.layered.intermediate.InnermostNodeMarginCalculator",
+      "scope": 1,
+      "width": 0,
+      "height": 0,
+      "nodes": [
+        {
+          "origin": "parent",
+          "type": "NORMAL",
+          "x": 0,
+          "y": 0,
+          "width": 84,
+          "height": 44,
+          "ports": [
+            {
+              "x": 89,
+              "y": 22,
+              "side": "EAST",
+              "outgoing": 2,
+              "outgoingEdges": [
+                "ax",
+                "ay"
+              ],
+              "incomingEdges": [],
+              "incoming": 0
+            }
+          ]
+        },
+        {
+          "origin": "x",
+          "type": "NORMAL",
+          "x": 0,
+          "y": 0,
+          "width": 20,
+          "height": 20,
+          "ports": [
+            {
+              "x": 0,
+              "y": 10,
+              "side": "WEST",
+              "outgoing": 0,
+              "outgoingEdges": [],
+              "incomingEdges": [
+                "ax"
+              ],
+              "incoming": 1
+            }
+          ]
+        },
+        {
+          "origin": "y",
+          "type": "NORMAL",
+          "x": 0,
+          "y": 0,
+          "width": 20,
+          "height": 20,
+          "ports": [
+            {
+              "x": 0,
+              "y": 10,
+              "side": "WEST",
+              "outgoing": 0,
+              "outgoingEdges": [],
+              "incomingEdges": [
+                "ay"
+              ],
+              "incoming": 1
+            }
+          ]
+        }
+      ],
+      "layers": [
+        [
+          "parent"
+        ],
+        [
+          "x",
+          "y"
+        ]
+      ]
+    },
+    {
+      "phase": "org.eclipse.elk.alg.layered.intermediate.HyperedgeDummyMerger",
+      "scope": 1,
+      "width": 0,
+      "height": 0,
+      "nodes": [
+        {
+          "origin": "parent",
+          "type": "NORMAL",
+          "x": 0,
+          "y": 0,
+          "width": 84,
+          "height": 44,
+          "ports": [
+            {
+              "x": 89,
+              "y": 22,
+              "side": "EAST",
+              "outgoing": 2,
+              "outgoingEdges": [
+                "ax",
+                "ay"
+              ],
+              "incomingEdges": [],
+              "incoming": 0
+            }
+          ]
+        },
+        {
+          "origin": "x",
+          "type": "NORMAL",
+          "x": 0,
+          "y": 0,
+          "width": 20,
+          "height": 20,
+          "ports": [
+            {
+              "x": 0,
+              "y": 10,
+              "side": "WEST",
+              "outgoing": 0,
+              "outgoingEdges": [],
+              "incomingEdges": [
+                "ax"
+              ],
+              "incoming": 1
+            }
+          ]
+        },
+        {
+          "origin": "y",
+          "type": "NORMAL",
+          "x": 0,
+          "y": 0,
+          "width": 20,
+          "height": 20,
+          "ports": [
+            {
+              "x": 0,
+              "y": 10,
+              "side": "WEST",
+              "outgoing": 0,
+              "outgoingEdges": [],
+              "incomingEdges": [
+                "ay"
+              ],
+              "incoming": 1
+            }
+          ]
+        }
+      ],
+      "layers": [
+        [
+          "parent"
+        ],
+        [
+          "x",
+          "y"
+        ]
+      ]
+    },
+    {
+      "phase": "org.eclipse.elk.alg.layered.p4nodes.bk.BKNodePlacer",
+      "scope": 1,
+      "width": 0,
+      "height": 0,
+      "nodes": [
+        {
+          "origin": "parent",
+          "type": "NORMAL",
+          "x": 0,
+          "y": 0,
+          "width": 84,
+          "height": 44,
+          "ports": [
+            {
+              "x": 89,
+              "y": 22,
+              "side": "EAST",
+              "outgoing": 2,
+              "outgoingEdges": [
+                "ax",
+                "ay"
+              ],
+              "incomingEdges": [],
+              "incoming": 0
+            }
+          ]
+        },
+        {
+          "origin": "x",
+          "type": "NORMAL",
+          "x": 0,
+          "y": 12,
+          "width": 20,
+          "height": 20,
+          "ports": [
+            {
+              "x": 0,
+              "y": 10,
+              "side": "WEST",
+              "outgoing": 0,
+              "outgoingEdges": [],
+              "incomingEdges": [
+                "ax"
+              ],
+              "incoming": 1
+            }
+          ]
+        },
+        {
+          "origin": "y",
+          "type": "NORMAL",
+          "x": 0,
+          "y": 52,
+          "width": 20,
+          "height": 20,
+          "ports": [
+            {
+              "x": 0,
+              "y": 10,
+              "side": "WEST",
+              "outgoing": 0,
+              "outgoingEdges": [],
+              "incomingEdges": [
+                "ay"
+              ],
+              "incoming": 1
+            }
+          ]
+        }
+      ],
+      "layers": [
+        [
+          "parent"
+        ],
+        [
+          "x",
+          "y"
+        ]
+      ]
+    },
+    {
+      "phase": "org.eclipse.elk.alg.layered.intermediate.LayerSizeAndGraphHeightCalculator",
+      "scope": 1,
+      "width": 0,
+      "height": 72,
+      "nodes": [
+        {
+          "origin": "parent",
+          "type": "NORMAL",
+          "x": 0,
+          "y": 0,
+          "width": 84,
+          "height": 44,
+          "ports": [
+            {
+              "x": 89,
+              "y": 22,
+              "side": "EAST",
+              "outgoing": 2,
+              "outgoingEdges": [
+                "ax",
+                "ay"
+              ],
+              "incomingEdges": [],
+              "incoming": 0
+            }
+          ]
+        },
+        {
+          "origin": "x",
+          "type": "NORMAL",
+          "x": 0,
+          "y": 12,
+          "width": 20,
+          "height": 20,
+          "ports": [
+            {
+              "x": 0,
+              "y": 10,
+              "side": "WEST",
+              "outgoing": 0,
+              "outgoingEdges": [],
+              "incomingEdges": [
+                "ax"
+              ],
+              "incoming": 1
+            }
+          ]
+        },
+        {
+          "origin": "y",
+          "type": "NORMAL",
+          "x": 0,
+          "y": 52,
+          "width": 20,
+          "height": 20,
+          "ports": [
+            {
+              "x": 0,
+              "y": 10,
+              "side": "WEST",
+              "outgoing": 0,
+              "outgoingEdges": [],
+              "incomingEdges": [
+                "ay"
+              ],
+              "incoming": 1
+            }
+          ]
+        }
+      ],
+      "layers": [
+        [
+          "parent"
+        ],
+        [
+          "x",
+          "y"
+        ]
+      ]
+    },
+    {
+      "phase": "org.eclipse.elk.alg.layered.p5edges.OrthogonalEdgeRouter",
+      "scope": 1,
+      "width": 129,
+      "height": 72,
+      "nodes": [
+        {
+          "origin": "parent",
+          "type": "NORMAL",
+          "x": 0,
+          "y": 0,
+          "width": 84,
+          "height": 44,
+          "ports": [
+            {
+              "x": 89,
+              "y": 22,
+              "side": "EAST",
+              "outgoing": 2,
+              "outgoingEdges": [
+                "ax",
+                "ay"
+              ],
+              "incomingEdges": [],
+              "incoming": 0
+            }
+          ]
+        },
+        {
+          "origin": "x",
+          "type": "NORMAL",
+          "x": 109,
+          "y": 12,
+          "width": 20,
+          "height": 20,
+          "ports": [
+            {
+              "x": 0,
+              "y": 10,
+              "side": "WEST",
+              "outgoing": 0,
+              "outgoingEdges": [],
+              "incomingEdges": [
+                "ax"
+              ],
+              "incoming": 1
+            }
+          ]
+        },
+        {
+          "origin": "y",
+          "type": "NORMAL",
+          "x": 109,
+          "y": 52,
+          "width": 20,
+          "height": 20,
+          "ports": [
+            {
+              "x": 0,
+              "y": 10,
+              "side": "WEST",
+              "outgoing": 0,
+              "outgoingEdges": [],
+              "incomingEdges": [
+                "ay"
+              ],
+              "incoming": 1
+            }
+          ]
+        }
+      ],
+      "layers": [
+        [
+          "parent"
+        ],
+        [
+          "x",
+          "y"
+        ]
+      ]
+    },
+    {
+      "phase": "org.eclipse.elk.alg.layered.intermediate.LongEdgeJoiner",
+      "scope": 1,
+      "width": 129,
+      "height": 72,
+      "nodes": [
+        {
+          "origin": "parent",
+          "type": "NORMAL",
+          "x": 0,
+          "y": 0,
+          "width": 84,
+          "height": 44,
+          "ports": [
+            {
+              "x": 89,
+              "y": 22,
+              "side": "EAST",
+              "outgoing": 2,
+              "outgoingEdges": [
+                "ax",
+                "ay"
+              ],
+              "incomingEdges": [],
+              "incoming": 0
+            }
+          ]
+        },
+        {
+          "origin": "x",
+          "type": "NORMAL",
+          "x": 109,
+          "y": 12,
+          "width": 20,
+          "height": 20,
+          "ports": [
+            {
+              "x": 0,
+              "y": 10,
+              "side": "WEST",
+              "outgoing": 0,
+              "outgoingEdges": [],
+              "incomingEdges": [
+                "ax"
+              ],
+              "incoming": 1
+            }
+          ]
+        },
+        {
+          "origin": "y",
+          "type": "NORMAL",
+          "x": 109,
+          "y": 52,
+          "width": 20,
+          "height": 20,
+          "ports": [
+            {
+              "x": 0,
+              "y": 10,
+              "side": "WEST",
+              "outgoing": 0,
+              "outgoingEdges": [],
+              "incomingEdges": [
+                "ay"
+              ],
+              "incoming": 1
+            }
+          ]
+        }
+      ],
+      "layers": [
+        [
+          "parent"
+        ],
+        [
+          "x",
+          "y"
+        ]
+      ]
+    },
+    {
+      "phase": "org.eclipse.elk.alg.layered.intermediate.EndLabelSorter",
+      "scope": 1,
+      "width": 129,
+      "height": 72,
+      "nodes": [
+        {
+          "origin": "parent",
+          "type": "NORMAL",
+          "x": 0,
+          "y": 0,
+          "width": 84,
+          "height": 44,
+          "ports": [
+            {
+              "x": 89,
+              "y": 22,
+              "side": "EAST",
+              "outgoing": 2,
+              "outgoingEdges": [
+                "ax",
+                "ay"
+              ],
+              "incomingEdges": [],
+              "incoming": 0
+            }
+          ]
+        },
+        {
+          "origin": "x",
+          "type": "NORMAL",
+          "x": 109,
+          "y": 12,
+          "width": 20,
+          "height": 20,
+          "ports": [
+            {
+              "x": 0,
+              "y": 10,
+              "side": "WEST",
+              "outgoing": 0,
+              "outgoingEdges": [],
+              "incomingEdges": [
+                "ax"
+              ],
+              "incoming": 1
+            }
+          ]
+        },
+        {
+          "origin": "y",
+          "type": "NORMAL",
+          "x": 109,
+          "y": 52,
+          "width": 20,
+          "height": 20,
+          "ports": [
+            {
+              "x": 0,
+              "y": 10,
+              "side": "WEST",
+              "outgoing": 0,
+              "outgoingEdges": [],
+              "incomingEdges": [
+                "ay"
+              ],
+              "incoming": 1
+            }
+          ]
+        }
+      ],
+      "layers": [
+        [
+          "parent"
+        ],
+        [
+          "x",
+          "y"
+        ]
+      ]
+    },
+    {
+      "phase": "org.eclipse.elk.alg.layered.intermediate.ReversedEdgeRestorer",
+      "scope": 1,
+      "width": 129,
+      "height": 72,
+      "nodes": [
+        {
+          "origin": "parent",
+          "type": "NORMAL",
+          "x": 0,
+          "y": 0,
+          "width": 84,
+          "height": 44,
+          "ports": [
+            {
+              "x": 89,
+              "y": 22,
+              "side": "EAST",
+              "outgoing": 2,
+              "outgoingEdges": [
+                "ax",
+                "ay"
+              ],
+              "incomingEdges": [],
+              "incoming": 0
+            }
+          ]
+        },
+        {
+          "origin": "x",
+          "type": "NORMAL",
+          "x": 109,
+          "y": 12,
+          "width": 20,
+          "height": 20,
+          "ports": [
+            {
+              "x": 0,
+              "y": 10,
+              "side": "WEST",
+              "outgoing": 0,
+              "outgoingEdges": [],
+              "incomingEdges": [
+                "ax"
+              ],
+              "incoming": 1
+            }
+          ]
+        },
+        {
+          "origin": "y",
+          "type": "NORMAL",
+          "x": 109,
+          "y": 52,
+          "width": 20,
+          "height": 20,
+          "ports": [
+            {
+              "x": 0,
+              "y": 10,
+              "side": "WEST",
+              "outgoing": 0,
+              "outgoingEdges": [],
+              "incomingEdges": [
+                "ay"
+              ],
+              "incoming": 1
+            }
+          ]
+        }
+      ],
+      "layers": [
+        [
+          "parent"
+        ],
+        [
+          "x",
+          "y"
+        ]
+      ]
+    },
+    {
+      "phase": "org.eclipse.elk.alg.layered.intermediate.HierarchicalNodeResizingProcessor",
+      "scope": 1,
+      "width": 129,
+      "height": 72,
+      "nodes": [
+        {
+          "origin": "parent",
+          "type": "NORMAL",
+          "x": 0,
+          "y": 0,
+          "width": 84,
+          "height": 44,
+          "ports": [
+            {
+              "x": 89,
+              "y": 22,
+              "side": "EAST",
+              "outgoing": 2,
+              "outgoingEdges": [
+                "ax",
+                "ay"
+              ],
+              "incomingEdges": [],
+              "incoming": 0
+            }
+          ]
+        },
+        {
+          "origin": "x",
+          "type": "NORMAL",
+          "x": 109,
+          "y": 12,
+          "width": 20,
+          "height": 20,
+          "ports": [
+            {
+              "x": 0,
+              "y": 10,
+              "side": "WEST",
+              "outgoing": 0,
+              "outgoingEdges": [],
+              "incomingEdges": [
+                "ax"
+              ],
+              "incoming": 1
+            }
+          ]
+        },
+        {
+          "origin": "y",
+          "type": "NORMAL",
+          "x": 109,
+          "y": 52,
+          "width": 20,
+          "height": 20,
+          "ports": [
+            {
+              "x": 0,
+              "y": 10,
+              "side": "WEST",
+              "outgoing": 0,
+              "outgoingEdges": [],
+              "incomingEdges": [
+                "ay"
+              ],
+              "incoming": 1
+            }
+          ]
+        }
+      ],
+      "layers": []
+    }
+  ]
+}

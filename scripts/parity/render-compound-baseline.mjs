@@ -1,8 +1,17 @@
 import fs from "node:fs";
 const root = process.argv[2] ?? "docs/heuristics/compound-baseline";
 const report = JSON.parse(fs.readFileSync(`${root}/report.json`, "utf8"));
+const before = process.argv[3] ? JSON.parse(fs.readFileSync(process.argv[3], "utf8")) : undefined;
+if (
+  before &&
+  JSON.stringify(before.rows.map((row) => row.input)) !==
+    JSON.stringify(report.rows.map((row) => row.input))
+) {
+  throw new Error("Before/after inputs differ");
+}
 const escape = (value) =>
   String(value).replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll('"', "&quot;");
+const title = escape(process.argv[4] ?? "Compound parity baseline");
 const colors = ["#2563eb", "#9333ea", "#059669", "#d97706", "#db2777"];
 function scene(graph) {
   const nodes = [],
@@ -56,14 +65,15 @@ const entries = report.rows
   .map((row, index) => {
     const a = scene(row.native.graph),
       b = scene(row.elk.graph),
-      points = [...a.bounds, ...b.bounds];
+      previous = before ? scene(before.rows[index].native.graph) : undefined,
+      points = [...a.bounds, ...b.bounds, ...(previous?.bounds ?? [])];
     const left = Math.min(0, ...points.map((p) => p.x)) - 20,
       top = Math.min(0, ...points.map((p) => p.y)) - 20;
     const width = Math.max(...points.map((p) => p.x)) - left + 20,
       height = Math.max(...points.map((p) => p.y)) - top + 20;
     const svg = (s) =>
       `<svg viewBox="${left} ${top} ${width} ${height}" width="${width}" height="${height}" role="img">${s.markup}</svg>`;
-    return `<section id="case-${index}" hidden><p>Seed ${row.seed} · ${row.direction} · ${row.differences.length} differing values</p><div class="pair"><article><h2>Native Stately</h2>${svg(a)}</article><article><h2>Real ELK 0.11.1</h2>${svg(b)}</article></div></section>`;
+    return `<section id="case-${index}" hidden><p>Seed ${row.seed} · ${row.direction} · ${row.differences.length} differing values</p><div class="pair">${previous ? `<article><h2>Native before</h2>${svg(previous)}</article>` : ""}<article><h2>${previous ? "Native after" : "Native Stately"}</h2>${svg(a)}</article><article><h2>Real ELK 0.11.1</h2>${svg(b)}</article></div></section>`;
   })
   .join("\n");
 const options = report.rows
@@ -71,5 +81,5 @@ const options = report.rows
   .join("");
 fs.writeFileSync(
   `${root}/index.html`,
-  `<!doctype html><meta charset="utf-8"><title>Compound parity baseline</title><style>body{font:14px system-ui;margin:24px;color:#172033}header{position:sticky;top:0;background:white;padding:12px 0}.pair{display:flex;gap:24px;align-items:flex-start}article{border:1px solid #ddd;padding:12px;overflow:auto;flex:1}h2{font-size:14px}svg{display:block;max-width:none}select{font:inherit}</style><header><h1>Compound parity baseline</h1><p>${report.summary.matched}/${report.summary.cases} full matches. Equal viewports and scale per pair; original routes preserved.</p><label>Graph <select id="cases">${options}</select></label> · <a href="report.json">Complete inputs, outputs and differences</a> · <a href="worker-phases.json">Real ELK phases</a></header>${entries}<script>const select=document.querySelector('#cases');function show(){const i=Math.max(0,Math.min(99,Number(location.hash.slice(1))||0));select.value=i;document.querySelectorAll('section').forEach((s,n)=>s.hidden=n!==i)}select.onchange=()=>location.hash=select.value;onhashchange=show;show()</script>`,
+  `<!doctype html><meta charset="utf-8"><title>${title}</title><style>body{font:14px system-ui;margin:24px;color:#172033}header{position:sticky;top:0;background:white;padding:12px 0}.pair{display:flex;gap:24px;align-items:flex-start}article{border:1px solid #ddd;padding:12px;overflow:auto;flex:1;min-width:0}h2{font-size:14px}svg{display:block;width:100%;height:auto}select{font:inherit}</style><header><h1>${title}</h1><p>${report.summary.matched}/${report.summary.cases} full matches. Equal viewports and scale across every view; original routes preserved.</p><label>Graph <select id="cases">${options}</select></label> · <a href="report.json">Complete inputs, outputs and differences</a> · <a href="worker-phases.json">Real ELK phases</a></header>${entries}<script>const select=document.querySelector('#cases');function show(){const i=Math.max(0,Math.min(99,Number(location.hash.slice(1))||0));select.value=i;document.querySelectorAll('section').forEach((s,n)=>s.hidden=n!==i)}select.onchange=()=>location.hash=select.value;onhashchange=show;show()</script>`,
 );

@@ -23,8 +23,16 @@ export function applyOrthogonalJunctions(
   const explicit = new Map(
     (root.children ?? []).flatMap((n) => (n.ports ?? []).map((p) => [String(p.id), n] as const)),
   );
+  const owner = new Map((root.children ?? []).map((node) => [String(node.id), node]));
+  for (const [id, node] of explicit) owner.set(id, node);
   const records = edges.flatMap((edge, index) => {
     if (preservedEdges.has(String(edge.id))) return [];
+    const sourceOwner = owner.get(String(edge.sources?.[0] ?? edge.source));
+    if (
+      sourceOwner !== undefined &&
+      sourceOwner === owner.get(String(edge.targets?.[0] ?? edge.target))
+    )
+      return [];
     const section = edge.sections?.[0];
     if (!section || edge.sections?.length !== 1) return [];
     let points = [section.startPoint, ...(section.bendPoints ?? []), section.endPoint];

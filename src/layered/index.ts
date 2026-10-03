@@ -1,6 +1,7 @@
 import { recordCrossingUnits } from "./crossing-constraints";
+import { externalPortDummyOf } from "./external-port-dummy";
 import type { EntityRect } from "@statelyai/graph";
-import { setPlacementOrientation } from "./placement-orientation";
+import { setPlacementOrientation, setPlacementOrder } from "./placement-orientation";
 import { replaceLayoutRouting } from "./replace-routing";
 import { layoutCompounds, type CompoundVisualGraph } from "./compound";
 import { repairFlatRouting } from "./native-routing";
@@ -51,7 +52,14 @@ import {
   routeEdgesWithPolylines,
   routeEdgesWithSplines,
 } from "./strategies";
-import type { LayeredLayoutOptions, LayeredPhaseInput, NodeSize } from "./types";
+import type {
+  AcyclicOrientation,
+  LayerAssignment,
+  LayerOrder,
+  LayeredLayoutOptions,
+  LayeredPhaseInput,
+  NodeSize,
+} from "./types";
 import { assignLayersWithNetworkSimplex } from "./network-simplex";
 import { assignLayersWithMinWidth } from "./min-width";
 import { assignLayersWithStretchWidth } from "./stretch-width";
@@ -1229,6 +1237,36 @@ function runLayeredPipeline<N, E, G, P>(
   options: LayeredLayoutOptions,
   context?: LayoutExecutionContext,
 ): VisualGraph<N, E, G, P> {
+  const pipeline = createLayeredScopePipeline(graph, options, context);
+  const prepared = pipeline.next();
+  if (prepared.done) return prepared.value;
+  const completed = pipeline.next(prepared.value.minimize());
+  if (!completed.done) throw new Error("Layered scope yielded more than one crossing phase");
+  return completed.value;
+}
+
+/** @internal A prepared native scope, before crossing, placement or routing. */
+export interface LayeredCrossingPhase {
+  input: LayeredPhaseInput;
+  orientation: AcyclicOrientation;
+  assignment: LayerAssignment;
+  /** Refresh compound body dimensions after child placement, before this scope resumes. */
+  updateNodeSize(id: string, size: NodeSize): void;
+  finishOrder(order: LayerOrder): LayerOrder;
+  /** Run this scope's standalone minimizer, including authored ordering policies. */
+  minimize(): LayerOrder;
+}
+
+/**
+ * @internal Suspend a native scope at crossing minimization. A hierarchy
+ * coordinator can prepare every scope, share sweep state, then resume each
+ * scope with its final order. The ordinary entry point drains this same pipeline.
+ */
+export function* createLayeredScopePipeline<N, E, G, P>(
+  graph: Graph<N, E, G, P> | VisualGraph<N, E, G, P>,
+  options: LayeredLayoutOptions,
+  context?: LayoutExecutionContext,
+): Generator<LayeredCrossingPhase, VisualGraph<N, E, G, P>, LayerOrder> {
   if ((options.settings?.["spacing.edgeEdge"] ?? 10) < 2) {
     options = { ...options, settings: { ...options.settings, "spacing.edgeEdge": 2 } };
   }
@@ -1390,8 +1428,78 @@ function runLayeredPipeline<N, E, G, P>(
   const labels = measure("center-label-preprocessing", () =>
     insertCenterLabelDummies(input, orientation),
   );
-  const phaseInput = labels.input;
+  let phaseInput = labels.input;
   const phaseOrientation = labels.orientation;
+  // ELK's layer-constraint preprocessor detaches separate external boundaries.
+  // Their incident edges must not stretch unrelated internal components.
+  const separateBoundaryIds = new Set(
+    phaseInput.graph.nodes
+      .filter((node) => {
+        if (!externalPortDummyOf(node)) return false;
+        const constraint = phaseInput.nodeSettings?.(node)?.["layering.layerConstraint"];
+        return constraint === "FIRST_SEPARATE" || constraint === "LAST_SEPARATE";
+      })
+      .map((node) => node.id),
+  );
+  const boundaryConnections = new Map<string, Set<string>>();
+  for (const edge of phaseInput.graph.edges) {
+    const hiddenId = separateBoundaryIds.has(edge.sourceId)
+      ? edge.sourceId
+      : separateBoundaryIds.has(edge.targetId)
+        ? edge.targetId
+        : undefined;
+    if (hiddenId === undefined) continue;
+    const oppositeId = edge.sourceId === hiddenId ? edge.targetId : edge.sourceId;
+    if (separateBoundaryIds.has(oppositeId)) continue;
+    const hiddenNode = phaseInput.graph.nodes.find((node) => node.id === hiddenId)!;
+    const connections = boundaryConnections.get(oppositeId) ?? new Set<string>();
+    connections.add(String(phaseInput.nodeSettings?.(hiddenNode)?.["layering.layerConstraint"]));
+    boundaryConnections.set(oppositeId, connections);
+  }
+  const inferredConstraints = new Map<string, "FIRST" | "LAST">();
+  for (const [id, connections] of boundaryConnections) {
+    const node = phaseInput.graph.nodes.find((node) => node.id === id)!;
+    if (
+      phaseInput.nodeSettings?.(node)?.["layering.layerConstraint"] !== undefined ||
+      connections.size !== 1
+    )
+      continue;
+    if (
+      phaseInput.graph.edges.some(
+        (edge) =>
+          (edge.sourceId === id && !separateBoundaryIds.has(edge.targetId)) ||
+          (edge.targetId === id && !separateBoundaryIds.has(edge.sourceId)),
+      )
+    )
+      continue;
+    inferredConstraints.set(id, connections.has("FIRST_SEPARATE") ? "FIRST" : "LAST");
+  }
+  if (inferredConstraints.size > 0) {
+    const authoredSettings = phaseInput.nodeSettings;
+    phaseInput = {
+      ...phaseInput,
+      nodeSettings: (node) => {
+        const inferred = inferredConstraints.get(node.id);
+        return inferred
+          ? { ...authoredSettings?.(node), "layering.layerConstraint": inferred }
+          : authoredSettings?.(node);
+      },
+    };
+  }
+  const layeringInput =
+    separateBoundaryIds.size === 0
+      ? phaseInput
+      : {
+          ...phaseInput,
+          graph: {
+            ...phaseInput.graph,
+            nodes: phaseInput.graph.nodes.filter((node) => !separateBoundaryIds.has(node.id)),
+            edges: phaseInput.graph.edges.filter(
+              (edge) =>
+                !separateBoundaryIds.has(edge.sourceId) && !separateBoundaryIds.has(edge.targetId),
+            ),
+          },
+        };
   const assignment = measure("layer-assignment", () =>
     applyHighDegreeNodeTreatment(
       phaseInput,
@@ -1401,7 +1509,7 @@ function runLayeredPipeline<N, E, G, P>(
         phaseOrientation,
         applyPartitions(
           phaseInput,
-          applyLayerConstraints(phaseInput, layerAssigner(phaseInput, phaseOrientation)),
+          applyLayerConstraints(phaseInput, layerAssigner(layeringInput, phaseOrientation)),
         ),
       ),
     ),
@@ -1465,6 +1573,35 @@ function runLayeredPipeline<N, E, G, P>(
     ),
   });
 
+  // ELK's LayerConstraintPostprocessor precedes crossing minimization. Moving
+  // FIRST/LAST nodes again after the sweep destroys the selected crossing order.
+  if (
+    expanded.input.graph.nodes.some((node) => {
+      const constraint = expanded.input.nodeSettings?.(node)?.["layering.layerConstraint"];
+      return constraint === "FIRST" || constraint === "LAST";
+    })
+  ) {
+    const layers = Array.from(
+      { length: Math.max(0, ...expanded.assignment.layerByNodeId.values()) + 1 },
+      () => [] as string[],
+    );
+    const seed = expanded.assignment.seedOrder ?? expanded.input.graph.nodes.map((node) => node.id);
+    const seeded = new Set(seed);
+    for (const id of [
+      ...seed,
+      ...expanded.input.graph.nodes.flatMap((node) => (seeded.has(node.id) ? [] : [node.id])),
+    ]) {
+      layers[expanded.assignment.layerByNodeId.get(id) ?? 0]!.push(id);
+    }
+    expanded = {
+      ...expanded,
+      assignment: {
+        ...expanded.assignment,
+        seedOrder: applyLayerConstraintOrder(expanded.input, { layers }).layers.flat(),
+      },
+    };
+  }
+
   const crossingStrategy = options.settings?.["crossingMinimization.strategy"] ?? "LAYER_SWEEP";
   const crossingMinimizer = (() => {
     if (options.strategies?.minimizeCrossings) return options.strategies.minimizeCrossings;
@@ -1480,23 +1617,44 @@ function runLayeredPipeline<N, E, G, P>(
       `Crossing-minimization strategy ${crossingStrategy} is not implemented`,
     );
   })();
-  let order = measure("crossing-minimization", () =>
-    applyLayerConstraintOrder(
+  const finishCrossingOrder = (order: LayerOrder) =>
+    applyGreedySwitch(
       expanded.input,
-      applyGreedySwitch(
+      expanded.orientation,
+      applySemiInteractiveOrder(
         expanded.input,
-        expanded.orientation,
-        applySemiInteractiveOrder(
-          expanded.input,
-          applyForcedModelOrder(
-            expanded.input,
-            expanded.orientation,
-            crossingMinimizer(expanded.input, expanded.orientation, expanded.assignment),
-          ),
-        ),
+        applyForcedModelOrder(expanded.input, expanded.orientation, order),
       ),
-    ),
-  );
+    );
+  const minimizeScope = () =>
+    measure("crossing-minimization", () =>
+      finishCrossingOrder(
+        crossingMinimizer(expanded.input, expanded.orientation, expanded.assignment),
+      ),
+    );
+  let order = yield {
+    input: expanded.input,
+    orientation: expanded.orientation,
+    assignment: expanded.assignment,
+    updateNodeSize: (id, size) => {
+      for (const holder of [input, labels.input, phaseInput, expanded.input]) {
+        (holder.sizes as Map<string, NodeSize>).set(id, { ...size });
+      }
+    },
+    minimize: minimizeScope,
+    finishOrder: finishCrossingOrder,
+  };
+  // Preserve the existing merged-edge dummy policy without moving FIRST/LAST
+  // nodes after crossing minimization.
+  if (expanded.input.settings.mergeEdges === true) {
+    order = {
+      ...order,
+      layers: order.layers.map((layer) => [
+        ...layer.filter((id) => id.startsWith("__layout_dummy:")),
+        ...layer.filter((id) => !id.startsWith("__layout_dummy:")),
+      ]),
+    };
+  }
   const unzippingFanIn =
     graph.edges.length === graph.nodes.length - 1 &&
     graph.nodes.some(
@@ -1518,6 +1676,7 @@ function runLayeredPipeline<N, E, G, P>(
   order = switchedLabels.order;
   const labelSelection = selectCenterLabelSides(expanded, labels, order);
   expanded = labelSelection.expansion;
+  setPlacementOrder(expanded.input, order);
   const nodePlacementStrategy = options.settings?.["nodePlacement.strategy"] ?? "BRANDES_KOEPF";
   const nodePlacer = (() => {
     if (options.strategies?.placeNodes) return options.strategies.placeNodes;
@@ -2196,39 +2355,6 @@ function runLayeredPipeline<N, E, G, P>(
     };
   }
 
-  for (const edge of graph.edges) {
-    if (edge.sourcePort === undefined || edge.targetPort !== undefined) continue;
-    const source = expanded.input.graph.nodes.find((node) => node.id === edge.sourceId);
-    const port = source?.ports?.find((candidate) => candidate.name === edge.sourcePort);
-    const targetRect = mutableRects.get(edge.targetId);
-    if (!source || !port || !targetRect) continue;
-    const settings = expanded.input.portSettings?.(port, source);
-    const forwardSide =
-      direction === "right"
-        ? "EAST"
-        : direction === "left"
-          ? "WEST"
-          : direction === "down"
-            ? "SOUTH"
-            : "NORTH";
-    if (settings?.["port.anchor"] === undefined || settings["port.side"] !== forwardSide) continue;
-    const horizontal = direction === "right" || direction === "left";
-    const protrusion = horizontal ? (port.width ?? 0) : (port.height ?? 0);
-    const delta = (direction === "right" || direction === "down" ? 1 : -1) * protrusion;
-    mutableRects.set(
-      edge.targetId,
-      horizontal
-        ? { ...targetRect, x: targetRect.x + delta }
-        : { ...targetRect, y: targetRect.y + delta },
-    );
-    const points = [...(routes.pointsByEdgeId.get(edge.id) ?? [])];
-    const end = points.at(-1);
-    if (end)
-      points[points.length - 1] = horizontal
-        ? { ...end, x: end.x + delta }
-        : { ...end, y: end.y + delta };
-    (routes.pointsByEdgeId as Map<string, readonly Point[]>).set(edge.id, points);
-  }
   for (const pair of labeledEdgesByPair.values()) {
     if (pair.length < 2) continue;
     const sourceRect = mutableRects.get(pair[0]!.sourceId);

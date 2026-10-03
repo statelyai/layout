@@ -1,0 +1,32 @@
+{
+  "before": {
+    "numPassedTests": 1891,
+    "numFailedTests": 110,
+    "numTotalTests": 2001
+  },
+  "after": {
+    "numPassedTests": 1892,
+    "numFailedTests": 118,
+    "numTotalTests": 2010
+  },
+  "introduced": [
+    "ELK compound layered parity matches cross-hierarchy placement and routing",
+    "ELK compound layered parity matches hierarchical greedy switch OFF",
+    "ELK compound layered parity matches hierarchical greedy switch ONE_SIDED",
+    "ELK compound layered parity matches hierarchical greedy switch TWO_SIDED",
+    "ELK compound layered parity matches hierarchical sweepiness 0",
+    "ELK compound layered parity matches hierarchical sweepiness 0.5",
+    "ELK compound layered parity matches hierarchical sweepiness 1",
+    "ELK compound layered parity matches hierarchy crossings through an explicit descendant port",
+    "ELK compound layered parity matches hierarchy-edge merging false",
+    "ELK compound layered parity matches hierarchy-edge merging true",
+    "keeps inline compound-to-descendant labels clear with edge options",
+    "keeps inline compound-to-descendant labels clear with label options"
+  ],
+  "fixed": [
+    "inline label constraints (DOWN) reserves one compact, centered label corridor with 48px flow ports",
+    "inline label constraints (LEFT) reserves one compact, centered label corridor with 48px flow ports",
+    "inline label constraints (RIGHT) reserves one compact, centered label corridor with 48px flow ports",
+    "inline label constraints (UP) reserves one compact, centered label corridor with 48px flow ports"
+  ]
+}

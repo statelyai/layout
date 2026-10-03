@@ -1,0 +1,14 @@
+{
+  "base": "21a622d65d2ea1ab3d65a35b410cbea8f8975348",
+  "baselineReport": ".scratch/external-port-clean-final-suite.json",
+  "introduced": [
+    "keeps inline compound-to-descendant labels clear with edge options",
+    "keeps inline compound-to-descendant labels clear with label options"
+  ],
+  "fixed": [
+    "inline label constraints (DOWN) reserves one compact, centered label corridor with 48px flow ports",
+    "inline label constraints (LEFT) reserves one compact, centered label corridor with 48px flow ports",
+    "inline label constraints (RIGHT) reserves one compact, centered label corridor with 48px flow ports",
+    "inline label constraints (UP) reserves one compact, centered label corridor with 48px flow ports"
+  ]
+}

@@ -64,6 +64,7 @@ constraint edge orientation
   -> layer assignment
   -> long-edge splitting
   -> inverted-port and north/south-port preprocessing
+  -> FIRST/LAST layer-order preprocessing
   -> crossing minimization
   -> label dummy switching and side selection
   -> node placement
@@ -76,6 +77,31 @@ constraint edge orientation
 Before cycle breaking, native constraint processing orients FIRST/LAST edges and
 whole feedback nodes using fixed-port net flow. Mixed-flow nodes stay forward;
 individual port directions do not independently reverse their edges.
+
+FIRST/LAST ordering is applied to the crossing phase's initial layer order;
+it is not reapplied after the sweep. Reapplying it discards the minimizer's result.
+The internal `createLayeredScopePipeline` generator can suspend an ordinary scope
+before crossing minimization and resume with an externally coordinated order.
+The internal sweep session exposes first-layer randomization, individual sweeps,
+node/port snapshots, restoration and a shared random stream. Standalone crossing
+minimization now uses the shared hierarchy counter coordinator with one scope.
+For a prepared scope tree the coordinator enters coupled children between parent
+layers, sums their crossings, and retains their candidate orders together.
+Bottom-up scopes run in reverse breadth-first order before their parents. The
+caller supplies sweepiness classification and boundary-port synchronization.
+The compatibility adapter prepares the entire boundary scope tree before
+placement, coordinates parent and child port orders, then finishes children
+before refreshing parent dimensions and physical ports. Child heuristics retain
+their local random stream; the root counter uses the root stream. Coordinated
+orders retain authored model-order and greedy-switch policies. Exact sweepiness
+classification for non-flow-side and feedback ports, deeper hierarchies, labels
+and junctions remain parity work.
+
+Fixed-port self-loops retain the explicit anchor and the implicit endpoint's
+flow-side anchor. The perimeter route is computed in canonical coordinates and
+mapped to the selected direction. Loop reservations follow the actual port face;
+port-to-node self-loops are excluded from inter-node junction and extra-pixel
+bounds reconstruction by resolving endpoint ownership.
 
 Each main phase is replaceable through a typed strategy. Phase outputs are small,
 read-only artifacts keyed by the IDs already owned by `@statelyai/graph`.

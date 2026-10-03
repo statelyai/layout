@@ -148,6 +148,12 @@ The error code is `UNSUPPORTED_LAYOUT`.
 
 <!-- public exports from src/layered/index.ts -->
 
+`createLayeredScopePipeline` and `LayeredCrossingPhase` are internal coordination
+exports. The generator yields the prepared input, orientation, assignment and
+standalone minimizer before placement/routing; resume with a `LayerOrder` to
+complete the scope. Some compound, component and no-layout paths finish without
+yielding. This seam does not yet coordinate the adapter's hierarchy sweeps.
+
 `@statelyai/layout/layered` exports the layered layout function, algorithm,
 strategy functions, and layered types listed above. It does not export the
 general registry or the other built-in algorithms.

@@ -1,3 +1,6 @@
+import { routeFixedSelfLoop, fixedSelfLoopSide } from "./fixed-self-loop";
+import { networkSimplexComponents } from "./network-simplex";
+import { minimizeHierarchyCrossings } from "./hierarchy-crossing";
 import { routeOrthogonalSegments } from "./orthogonal-segments";
 import {
   createOrthogonalHypersegments,
@@ -12,7 +15,7 @@ import {
   type CrossingUnits,
 } from "./crossing-constraints";
 import { applyGroupedEdgeLengthCompaction } from "./grouped-compaction";
-import { getPlacementOrientation } from "./placement-orientation";
+import { getPlacementOrientation, getPlacementOrder } from "./placement-orientation";
 import { recordCycleRandom, crossingRandom, phaseRandomByInput } from "./cycle-random";
 import type { EntityRect, GraphEdge, GraphNode, GraphPort, Point } from "@statelyai/graph";
 import { LayoutError } from "../errors";
@@ -1649,561 +1652,563 @@ function sortLayerByAdjacentPosition(
     layer.splice(0, layer.length, ...resolveCrossingConstraints(layer, adjacentPosition, units));
 }
 
+type LayerSweepVisitor = (
+  layerIndex: number,
+  nodeIds: readonly string[],
+  forward: boolean,
+  firstSweep: boolean,
+) => void;
+
+/** @internal */
+export interface LayerSweepSession {
+  readonly random: JavaRandom;
+  readonly attempts: number;
+  readonly restoreRejectedSweep: boolean;
+  useRandom(random: JavaRandom): void;
+  lockPortOrder(nodeId: string): void;
+  minimize(): LayerOrder;
+  shuffleFirstLayer(forward: boolean): void;
+  sweep(forward: boolean, firstSweep: boolean, visitLayer?: LayerSweepVisitor): void;
+  countCrossings(): number;
+  snapshot(): LayerOrder;
+  restore(order: LayerOrder): void;
+  finish(order: LayerOrder): LayerOrder;
+}
+
+function clonePortOrders(orders?: ReadonlyMap<string, readonly string[]>): Map<string, string[]> {
+  return new Map([...(orders ?? [])].map(([id, edges]) => [id, [...edges]]));
+}
+
 function minimizeCrossingsWithLayerSweep(
   statistic: "mean" | "median",
   sweeps = 7,
 ): CrossingMinimizer {
-  return (input, orientation, assignment) => {
-    const exactPortSweep =
-      (input.settings.hierarchyHandling !== "INCLUDE_CHILDREN" ||
-        input.graph.nodes.some((node) => node.id.startsWith("__native_hierarchy_"))) &&
-      (input.settings["wrapping.strategy"] ?? "OFF") === "OFF" &&
-      (input.settings["layerUnzipping.strategy"] ?? "NONE") === "NONE";
-    let maximumLayer = 0;
-    for (const layer of assignment.layerByNodeId.values()) {
-      maximumLayer = Math.max(maximumLayer, layer);
-    }
-    const layerCount = maximumLayer + 1;
-    const layers = Array.from({ length: layerCount }, () => [] as string[]);
-    const initialNodes = assignment.seedOrder
-      ? completeSeedOrder(input, assignment)
-      : (input.settings["layering.strategy"] ?? "NETWORK_SIMPLEX") === "NETWORK_SIMPLEX"
-        ? networkSimplexComponentOrder(input)
-        : input.graph.nodes.map((node) => node.id);
-    for (const nodeId of initialNodes) {
-      layers[assignment.layerByNodeId.get(nodeId) ?? 0]?.push(nodeId);
-    }
-    const units = getCrossingUnits(input);
-    const sameLayerNeighbors = (forward: boolean) => {
-      const neighbors = new Map<string, string[]>();
-      for (const edge of input.graph.edges) {
-        const [source, target] = getOrientedEndpoints(edge, orientation);
-        if (
-          source !== target &&
-          assignment.layerByNodeId.get(source) === assignment.layerByNodeId.get(target)
-        ) {
-          const free = forward ? target : source,
-            fixed = forward ? source : target;
-          neighbors.set(free, [...(neighbors.get(free) ?? []), fixed]);
-        }
-      }
-      return neighbors;
-    };
-    const inputPortOrder = new Map(input.graph.nodes.map((node) => [node.id, [] as string[]]));
-    const outputPortOrder = new Map(input.graph.nodes.map((node) => [node.id, [] as string[]]));
+  return (input, orientation, assignment) =>
+    createLayerSweepSession(input, orientation, assignment, statistic, sweeps).minimize();
+}
+
+/** Internal mutable sweep state shared by standalone and hierarchy coordination. */
+export function createLayerSweepSession(
+  input: LayeredPhaseInput,
+  orientation: AcyclicOrientation,
+  assignment: LayerAssignment,
+  statistic: "mean" | "median" = "mean",
+  sweeps = 7,
+  initialization: { resetSeed?: boolean } = {},
+): LayerSweepSession {
+  const exactPortSweep =
+    (input.settings["wrapping.strategy"] ?? "OFF") === "OFF" &&
+    (input.settings["layerUnzipping.strategy"] ?? "NONE") === "NONE";
+  let maximumLayer = 0;
+  for (const layer of assignment.layerByNodeId.values()) {
+    maximumLayer = Math.max(maximumLayer, layer);
+  }
+  const layerCount = maximumLayer + 1;
+  const layers = Array.from({ length: layerCount }, () => [] as string[]);
+  const initialNodes = assignment.seedOrder
+    ? completeSeedOrder(input, assignment)
+    : (input.settings["layering.strategy"] ?? "NETWORK_SIMPLEX") === "NETWORK_SIMPLEX"
+      ? networkSimplexComponentOrder(input)
+      : input.graph.nodes.map((node) => node.id);
+  for (const nodeId of initialNodes) {
+    layers[assignment.layerByNodeId.get(nodeId) ?? 0]?.push(nodeId);
+  }
+  const units = getCrossingUnits(input);
+  const sameLayerNeighbors = (forward: boolean) => {
+    const neighbors = new Map<string, string[]>();
     for (const edge of input.graph.edges) {
-      const [sourceId, targetId] = getOrientedEndpoints(edge, orientation);
-      outputPortOrder.get(sourceId)?.push(edge.id);
-      inputPortOrder.get(targetId)?.push(edge.id);
-    }
-    const nodeById = new Map(input.graph.nodes.map((node) => [node.id, node]));
-    const edgeById = new Map(input.graph.edges.map((edge) => [edge.id, edge]));
-    const edgeModelOrder = new Map(input.graph.edges.map((edge, index) => [edge.id, index]));
-    const fixedOrderNodes = new Set(
-      input.graph.nodes
-        .filter((node) => {
-          const constraint = input.nodeSettings?.(node)?.portConstraints;
-          return (
-            !!node.ports?.length && (constraint === "FIXED_POS" || constraint === "FIXED_RATIO")
-          );
-        })
-        .map((node) => node.id),
-    );
-    const fixedPortRank = (nodeId: string, edgeId: string, incoming: boolean): number => {
-      const node = nodeById.get(nodeId)!;
-      const edge = edgeById.get(edgeId)!;
-      const reversed = orientation.reversedEdgeIds.has(edge.id);
-      const portName = incoming !== reversed ? edge.targetPort : edge.sourcePort;
-      const port = node.ports?.find((candidate) => candidate.name === portName);
-      const horizontal = input.direction === "right" || input.direction === "left";
-      const reverse = input.direction === "left" || input.direction === "up";
-      const size = input.sizes.get(nodeId)!;
-      const width = horizontal ? size.width : size.height;
-      const height = horizontal ? size.height : size.width;
-      const x = (port?.x ?? size.width / 2) + (port?.width ?? 0) / 2;
-      const y = (port?.y ?? size.height / 2) + (port?.height ?? 0) / 2;
-      const flow = reverse ? width - (horizontal ? x : y) : horizontal ? x : y;
-      const cross = horizontal ? y : x;
-      const side = port && input.portSettings?.(port, node)?.["port.side"];
-      const flowSide = horizontal ? (reverse ? "WEST" : "EAST") : reverse ? "NORTH" : "SOUTH";
-      const backSide = horizontal ? (reverse ? "EAST" : "WEST") : reverse ? "SOUTH" : "NORTH";
-      const upperSide = horizontal ? "NORTH" : "WEST";
-      // Clockwise boundary order in the canonical rightward coordinate system.
-      if (side === upperSide) return flow;
-      if (side === flowSide || (!side && !incoming)) return width + cross;
-      if (side === backSide || (!side && incoming)) return 2 * width + 2 * height - cross;
-      return 2 * width + height - flow;
-    };
-    // Port distribution may reorder flexible ports, never fixed physical positions.
-    for (const nodeId of fixedOrderNodes) {
-      outputPortOrder
-        .get(nodeId)
-        ?.sort((a, b) => fixedPortRank(nodeId, a, false) - fixedPortRank(nodeId, b, false));
-      inputPortOrder
-        .get(nodeId)
-        ?.sort((a, b) => fixedPortRank(nodeId, a, true) - fixedPortRank(nodeId, b, true));
-    }
-    if (exactPortSweep) {
-      for (const [nodeId, edgeIds] of inputPortOrder) {
-        if (fixedOrderNodes.has(nodeId)) continue;
-        if (edgeIds.length >= 4) {
-          edgeIds.splice(0, edgeIds.length - 1, ...edgeIds.slice(0, -1).reverse());
-        }
+      const [source, target] = getOrientedEndpoints(edge, orientation);
+      if (
+        source !== target &&
+        assignment.layerByNodeId.get(source) === assignment.layerByNodeId.get(target)
+      ) {
+        const free = forward ? target : source,
+          fixed = forward ? source : target;
+        neighbors.set(free, [...(neighbors.get(free) ?? []), fixed]);
       }
     }
-    const countCrossings = (candidateLayers: readonly (readonly string[])[]): number => {
-      if (!exactPortSweep) {
-        const positions = new Map<string, number>();
-        for (const layer of candidateLayers) {
-          for (const [index, id] of layer.entries()) positions.set(id, index);
-        }
-        let crossings = 0;
-        for (let left = 0; left < input.graph.edges.length; left++) {
-          const [leftSource, leftTarget] = getOrientedEndpoints(
-            input.graph.edges[left]!,
-            orientation,
-          );
-          for (let right = left + 1; right < input.graph.edges.length; right++) {
-            const [rightSource, rightTarget] = getOrientedEndpoints(
-              input.graph.edges[right]!,
-              orientation,
-            );
-            if (leftSource === rightSource || leftTarget === rightTarget) continue;
-            const sourceDifference =
-              (positions.get(leftSource) ?? 0) - (positions.get(rightSource) ?? 0);
-            const targetDifference =
-              (positions.get(leftTarget) ?? 0) - (positions.get(rightTarget) ?? 0);
-            if (sourceDifference * targetDifference < 0) crossings++;
-          }
-        }
-        return crossings;
+    return neighbors;
+  };
+  const inputPortOrder = new Map(input.graph.nodes.map((node) => [node.id, [] as string[]]));
+  const outputPortOrder = new Map(input.graph.nodes.map((node) => [node.id, [] as string[]]));
+  for (const edge of input.graph.edges) {
+    const [sourceId, targetId] = getOrientedEndpoints(edge, orientation);
+    outputPortOrder.get(sourceId)?.push(edge.id);
+    inputPortOrder.get(targetId)?.push(edge.id);
+  }
+  const nodeById = new Map(input.graph.nodes.map((node) => [node.id, node]));
+  const edgeById = new Map(input.graph.edges.map((edge) => [edge.id, edge]));
+  const edgeModelOrder = new Map(input.graph.edges.map((edge, index) => [edge.id, index]));
+  const lockedPortOrders = new Set<string>();
+  const fixedOrderNodes = new Set(
+    input.graph.nodes
+      .filter((node) => {
+        const constraint = input.nodeSettings?.(node)?.portConstraints;
+        return !!node.ports?.length && (constraint === "FIXED_POS" || constraint === "FIXED_RATIO");
+      })
+      .map((node) => node.id),
+  );
+  const fixedPortRank = (nodeId: string, edgeId: string, incoming: boolean): number => {
+    const node = nodeById.get(nodeId)!;
+    const edge = edgeById.get(edgeId)!;
+    const reversed = orientation.reversedEdgeIds.has(edge.id);
+    const portName = incoming !== reversed ? edge.targetPort : edge.sourcePort;
+    const port = node.ports?.find((candidate) => candidate.name === portName);
+    const horizontal = input.direction === "right" || input.direction === "left";
+    const reverse = input.direction === "left" || input.direction === "up";
+    const size = input.sizes.get(nodeId)!;
+    const width = horizontal ? size.width : size.height;
+    const height = horizontal ? size.height : size.width;
+    const x = (port?.x ?? size.width / 2) + (port?.width ?? 0) / 2;
+    const y = (port?.y ?? size.height / 2) + (port?.height ?? 0) / 2;
+    const flow = reverse ? width - (horizontal ? x : y) : horizontal ? x : y;
+    const cross = horizontal ? y : x;
+    const side = port && input.portSettings?.(port, node)?.["port.side"];
+    const flowSide = horizontal ? (reverse ? "WEST" : "EAST") : reverse ? "NORTH" : "SOUTH";
+    const backSide = horizontal ? (reverse ? "EAST" : "WEST") : reverse ? "SOUTH" : "NORTH";
+    const upperSide = horizontal ? "NORTH" : "WEST";
+    // Clockwise boundary order in the canonical rightward coordinate system.
+    if (side === upperSide) return flow;
+    if (side === flowSide || (!side && !incoming)) return width + cross;
+    if (side === backSide || (!side && incoming)) return 2 * width + 2 * height - cross;
+    return 2 * width + height - flow;
+  };
+  // Port distribution may reorder flexible ports, never fixed physical positions.
+  for (const nodeId of fixedOrderNodes) {
+    outputPortOrder
+      .get(nodeId)
+      ?.sort((a, b) => fixedPortRank(nodeId, a, false) - fixedPortRank(nodeId, b, false));
+    inputPortOrder
+      .get(nodeId)
+      ?.sort((a, b) => fixedPortRank(nodeId, a, true) - fixedPortRank(nodeId, b, true));
+  }
+  if (exactPortSweep) {
+    for (const [nodeId, edgeIds] of inputPortOrder) {
+      if (fixedOrderNodes.has(nodeId)) continue;
+      if (edgeIds.length >= 4) {
+        edgeIds.splice(0, edgeIds.length - 1, ...edgeIds.slice(0, -1).reverse());
       }
-      const layerIndex = new Map<string, number>();
-      for (const [index, layer] of candidateLayers.entries()) {
-        for (const id of layer) {
-          layerIndex.set(id, index);
-        }
+    }
+  }
+  const countCrossings = (candidateLayers: readonly (readonly string[])[]): number => {
+    if (!exactPortSweep) {
+      const positions = new Map<string, number>();
+      for (const layer of candidateLayers) {
+        for (const [index, id] of layer.entries()) positions.set(id, index);
       }
       let crossings = 0;
-      for (let index = 0; index < candidateLayers.length - 1; index++) {
-        const between = input.graph.edges.filter((edge) => {
-          const [sourceId, targetId] = getOrientedEndpoints(edge, orientation);
-          return layerIndex.get(sourceId) === index && layerIndex.get(targetId) === index + 1;
-        });
-        const sourceRanks = new Map<string, number>();
-        const targetRanks = new Map<string, number>();
-        let consumed = 0;
-        for (const nodeId of candidateLayers[index] ?? []) {
-          const edgeIds = outputPortOrder.get(nodeId) ?? [];
-          for (const [portIndex, edgeId] of edgeIds.entries()) {
-            sourceRanks.set(
-              edgeId,
-              consumed +
-                (fixedOrderNodes.has(nodeId)
-                  ? fixedPortRank(nodeId, edgeId, false) /
-                    (2 * (input.sizes.get(nodeId)!.width + input.sizes.get(nodeId)!.height) || 1)
-                  : portIndex + 1),
-            );
-          }
-          consumed += fixedOrderNodes.has(nodeId) ? 1 : edgeIds.length;
-        }
-        consumed = 0;
-        for (const nodeId of candidateLayers[index + 1] ?? []) {
-          const edgeIds = inputPortOrder.get(nodeId) ?? [];
-          for (const [portIndex, edgeId] of edgeIds.entries()) {
-            targetRanks.set(
-              edgeId,
-              consumed +
-                (fixedOrderNodes.has(nodeId)
-                  ? 1 -
-                    fixedPortRank(nodeId, edgeId, true) /
-                      (2 * (input.sizes.get(nodeId)!.width + input.sizes.get(nodeId)!.height) || 1)
-                  : edgeIds.length - portIndex),
-            );
-          }
-          consumed += fixedOrderNodes.has(nodeId) ? 1 : edgeIds.length;
-        }
-        const countedPorts = new Map<string, OrthogonalPort>();
-        const key = (edge: GraphEdge, source: boolean) => {
-          const [sourceId, targetId] = getOrientedEndpoints(edge, orientation);
-          const nodeId = source ? sourceId : targetId;
-          const reversed = orientation.reversedEdgeIds.has(edge.id);
-          const name = source !== reversed ? edge.sourcePort : edge.targetPort;
-          const node = input.graph.nodes.find((n) => n.id === nodeId)!;
-          if (name !== undefined) return JSON.stringify([nodeId, "port", name]);
-          if (input.settings.mergeEdges === true || input.nodeSettings?.(node)?.hypernode === true)
-            return JSON.stringify([nodeId, "implicit", source]);
-          return JSON.stringify([edge.id, "edge", source]);
-        };
-        const connections = between.map((edge) => {
-          const source = key(edge, true),
-            target = key(edge, false);
-          if (!countedPorts.has(source))
-            countedPorts.set(source, {
-              id: source,
-              side: "source",
-              position: sourceRanks.get(edge.id) ?? 0,
-            });
-          if (!countedPorts.has(target))
-            countedPorts.set(target, {
-              id: target,
-              side: "target",
-              position: targetRanks.get(edge.id) ?? 0,
-            });
-          return { source, target };
-        });
-        if (countedPorts.size < between.length * 2) {
-          const ports: OrthogonalPort[] = [];
-          for (const side of ["source", "target"] as const) {
-            const ordered = [...countedPorts.values()]
-              .filter((p) => p.side === side)
-              .sort((a, b) => a.position - b.position);
-            ports.push(...ordered.map((p, position) => ({ ...p, position })));
-          }
-          crossings += countOrthogonalHypersegmentCrossings(ports, connections);
-          continue;
-        }
-        const orderedTargets = between
-          .map((edge) => ({
-            source: sourceRanks.get(edge.id) ?? 0,
-            target: targetRanks.get(edge.id) ?? 0,
-          }))
-          .sort((left, right) => left.source - right.source || left.target - right.target)
-          .map(({ target }) => target);
-        const sortedTargets = [...orderedTargets].sort((left, right) => left - right);
-        const targetIndex = new Map(sortedTargets.map((rank, rankIndex) => [rank, rankIndex + 1]));
-        const fenwick = Array.from({ length: sortedTargets.length + 1 }, () => 0);
-        let seen = 0;
-        for (const target of orderedTargets) {
-          const rank = targetIndex.get(target) ?? 1;
-          let preceding = 0;
-          for (let cursor = rank; cursor > 0; cursor -= cursor & -cursor) {
-            preceding += fenwick[cursor] ?? 0;
-          }
-          crossings += seen - preceding;
-          for (let cursor = rank; cursor < fenwick.length; cursor += cursor & -cursor) {
-            fenwick[cursor] = (fenwick[cursor] ?? 0) + 1;
-          }
-          seen++;
+      for (let left = 0; left < input.graph.edges.length; left++) {
+        const [leftSource, leftTarget] = getOrientedEndpoints(
+          input.graph.edges[left]!,
+          orientation,
+        );
+        for (let right = left + 1; right < input.graph.edges.length; right++) {
+          const [rightSource, rightTarget] = getOrientedEndpoints(
+            input.graph.edges[right]!,
+            orientation,
+          );
+          if (leftSource === rightSource || leftTarget === rightTarget) continue;
+          const sourceDifference =
+            (positions.get(leftSource) ?? 0) - (positions.get(rightSource) ?? 0);
+          const targetDifference =
+            (positions.get(leftTarget) ?? 0) - (positions.get(rightTarget) ?? 0);
+          if (sourceDifference * targetDifference < 0) crossings++;
         }
       }
       return crossings;
-    };
-
-    const sharedRandom = crossingRandom(input);
-    const randomSeed = sharedRandom.nextLong();
-    const portDistributorUsesNodeRelativeRanks = sharedRandom.nextBoolean();
-    const nodeRelativePortRanks = portDistributorUsesNodeRelativeRanks;
-    // ELK treats the median heuristic as deterministic, so it keeps using the
-    // graph's shared RNG after port-distributor selection. Barycenter resets to
-    // the saved seed while comparing randomized layouts.
-    const random = statistic === "median" ? sharedRandom : new JavaRandom(randomSeed);
-    const thoroughness = Math.max(1, input.settings.thoroughness ?? sweeps ?? 7);
-    let bestLayers = layers.map((layer) => [...layer]);
-    let bestInputPortOrder = new Map<string, string[]>();
-    let bestOutputPortOrder = new Map<string, string[]>();
-    let bestCrossings = Number.POSITIVE_INFINITY;
-    let working = layers.map((layer) => [...layer]);
-    const sourceUnknownPlacement =
-      (input.settings["considerModelOrder.strategy"] ?? "NONE") === "NONE";
-    const usePortRanks = true;
-    const medianWeights = new Map<string, number>();
-
-    const adjacentRanks = (
-      fixedLayer: readonly string[],
-      freeLayer: readonly string[],
-      forward: boolean,
-    ): { ranks: Map<string, number[]>; visits: Map<string, (number | string)[]> } => {
-      const edgeRanks = new Map<string, number>();
-      const visits = new Map(freeLayer.map((id) => [id, [] as (number | string)[]]));
-      const freeIds = new Set(freeLayer);
-      const ranks = new Map(freeLayer.map((id) => [id, [] as number[]]));
-      if (!usePortRanks) {
-        const fixedPosition = new Map(fixedLayer.map((id, index) => [id, index]));
-        for (const edge of input.graph.edges) {
-          const [sourceId, targetId] = getOrientedEndpoints(edge, orientation);
-          if (forward && fixedPosition.has(sourceId) && freeIds.has(targetId)) {
-            ranks.get(targetId)?.push(fixedPosition.get(sourceId)!);
-          } else if (!forward && fixedPosition.has(targetId) && freeIds.has(sourceId)) {
-            ranks.get(sourceId)?.push(fixedPosition.get(targetId)!);
-          }
-        }
-        return { ranks, visits };
+    }
+    const layerIndex = new Map<string, number>();
+    for (const [index, layer] of candidateLayers.entries()) {
+      for (const id of layer) {
+        layerIndex.set(id, index);
       }
-      let rankSum = 0;
-      for (const fixedId of fixedLayer) {
-        const groups = new Map<string, { edges: GraphEdge[]; portOrder: number }>();
-        for (const [modelOrder, edge] of input.graph.edges.entries()) {
-          const [sourceId, targetId] = getOrientedEndpoints(edge, orientation);
-          if (
-            (forward && sourceId !== fixedId) ||
-            (!forward && targetId !== fixedId) ||
-            !freeIds.has(forward ? targetId : sourceId)
-          ) {
-            continue;
-          }
-          const reversed = orientation.reversedEdgeIds.has(edge.id);
-          const port = forward
-            ? reversed
-              ? edge.targetPort
-              : edge.sourcePort
-            : reversed
-              ? edge.sourcePort
-              : edge.targetPort;
-          const key = port ?? `__implicit:${edge.id}`;
-          const group = groups.get(key) ?? { edges: [], portOrder: modelOrder };
-          group.edges.push(edge);
-          groups.set(key, group);
+    }
+    let crossings = 0;
+    for (let index = 0; index < candidateLayers.length - 1; index++) {
+      const between = input.graph.edges.filter((edge) => {
+        const [sourceId, targetId] = getOrientedEndpoints(edge, orientation);
+        return layerIndex.get(sourceId) === index && layerIndex.get(targetId) === index + 1;
+      });
+      const sourceRanks = new Map<string, number>();
+      const targetRanks = new Map<string, number>();
+      let consumed = 0;
+      for (const nodeId of candidateLayers[index] ?? []) {
+        const edgeIds = outputPortOrder.get(nodeId) ?? [];
+        for (const [portIndex, edgeId] of edgeIds.entries()) {
+          sourceRanks.set(
+            edgeId,
+            consumed +
+              (fixedOrderNodes.has(nodeId)
+                ? fixedPortRank(nodeId, edgeId, false) /
+                  (2 * (input.sizes.get(nodeId)!.width + input.sizes.get(nodeId)!.height) || 1)
+                : portIndex + 1),
+          );
         }
-        const currentPortOrder = forward
-          ? outputPortOrder.get(fixedId)
-          : inputPortOrder.get(fixedId);
-        const orderedGroups = [...groups.values()].sort((left, right) =>
-          exactPortSweep
-            ? (currentPortOrder?.indexOf(left.edges[0]?.id ?? "") ?? -1) -
-                (currentPortOrder?.indexOf(right.edges[0]?.id ?? "") ?? -1) ||
-              left.portOrder - right.portOrder
-            : left.portOrder - right.portOrder,
-        );
-        const count = orderedGroups.length;
-        for (const [index, group] of orderedGroups.entries()) {
-          const rank = nodeRelativePortRanks
-            ? forward
-              ? rankSum + (index + 1) / (count + 1)
-              : rankSum + 1 - (index + 1) / (count + 1)
-            : forward
-              ? rankSum + index + 1
-              : rankSum + count - index;
-          for (const edge of group.edges) {
-            const [sourceId, targetId] = getOrientedEndpoints(edge, orientation);
-            ranks.get(forward ? targetId : sourceId)?.push(rank);
-            edgeRanks.set(edge.id, rank);
-          }
-        }
-        rankSum += nodeRelativePortRanks ? 1 : count;
+        consumed += fixedOrderNodes.has(nodeId) ? 1 : edgeIds.length;
       }
-      // Visit each free node's ports in their current canonical order, while
-      // preserving incident-edge order within a shared port. Fixed-layer ranks
-      // and same-layer recursion must not be separated into independent sums.
-      for (const id of freeLayer) {
-        const order = (forward ? inputPortOrder : outputPortOrder).get(id) ?? [];
-        const groups = new Map<string, string[]>();
-        for (const edgeId of order) {
-          const edge = edgeById.get(edgeId)!;
-          const reversed = orientation.reversedEdgeIds.has(edge.id);
-          const name = forward !== reversed ? edge.targetPort : edge.sourcePort;
-          const key = name ?? `__implicit:${edgeId}`;
-          groups.set(key, [...(groups.get(key) ?? []), edgeId]);
+      consumed = 0;
+      for (const nodeId of candidateLayers[index + 1] ?? []) {
+        const edgeIds = inputPortOrder.get(nodeId) ?? [];
+        for (const [portIndex, edgeId] of edgeIds.entries()) {
+          targetRanks.set(
+            edgeId,
+            consumed +
+              (fixedOrderNodes.has(nodeId)
+                ? 1 -
+                  fixedPortRank(nodeId, edgeId, true) /
+                    (2 * (input.sizes.get(nodeId)!.width + input.sizes.get(nodeId)!.height) || 1)
+                : edgeIds.length - portIndex),
+          );
         }
-        for (const group of groups.values()) {
-          // Port sorting reorders ports, not the edges on one port.
-          group.sort((a, b) => edgeModelOrder.get(a)! - edgeModelOrder.get(b)!);
-          for (const edgeId of group) {
-            const edge = edgeById.get(edgeId)!;
-            const [source, target] = getOrientedEndpoints(edge, orientation);
-            const neighbor = forward ? source : target;
-            const rank = edgeRanks.get(edgeId);
-            if (assignment.layerByNodeId.get(neighbor) === assignment.layerByNodeId.get(id))
-              visits.get(id)!.push(neighbor);
-            else if (rank !== undefined) visits.get(id)!.push(rank);
-          }
+        consumed += fixedOrderNodes.has(nodeId) ? 1 : edgeIds.length;
+      }
+      const countedPorts = new Map<string, OrthogonalPort>();
+      const key = (edge: GraphEdge, source: boolean) => {
+        const [sourceId, targetId] = getOrientedEndpoints(edge, orientation);
+        const nodeId = source ? sourceId : targetId;
+        const reversed = orientation.reversedEdgeIds.has(edge.id);
+        const name = source !== reversed ? edge.sourcePort : edge.targetPort;
+        const node = input.graph.nodes.find((n) => n.id === nodeId)!;
+        if (name !== undefined) return JSON.stringify([nodeId, "port", name]);
+        if (input.settings.mergeEdges === true || input.nodeSettings?.(node)?.hypernode === true)
+          return JSON.stringify([nodeId, "implicit", source]);
+        return JSON.stringify([edge.id, "edge", source]);
+      };
+      const connections = between.map((edge) => {
+        const source = key(edge, true),
+          target = key(edge, false);
+        if (!countedPorts.has(source))
+          countedPorts.set(source, {
+            id: source,
+            side: "source",
+            position: sourceRanks.get(edge.id) ?? 0,
+          });
+        if (!countedPorts.has(target))
+          countedPorts.set(target, {
+            id: target,
+            side: "target",
+            position: targetRanks.get(edge.id) ?? 0,
+          });
+        return { source, target };
+      });
+      if (countedPorts.size < between.length * 2) {
+        const ports: OrthogonalPort[] = [];
+        for (const side of ["source", "target"] as const) {
+          const ordered = [...countedPorts.values()]
+            .filter((p) => p.side === side)
+            .sort((a, b) => a.position - b.position);
+          ports.push(...ordered.map((p, position) => ({ ...p, position })));
+        }
+        crossings += countOrthogonalHypersegmentCrossings(ports, connections);
+        continue;
+      }
+      const orderedTargets = between
+        .map((edge) => ({
+          source: sourceRanks.get(edge.id) ?? 0,
+          target: targetRanks.get(edge.id) ?? 0,
+        }))
+        .sort((left, right) => left.source - right.source || left.target - right.target)
+        .map(({ target }) => target);
+      const sortedTargets = [...orderedTargets].sort((left, right) => left - right);
+      const targetIndex = new Map(sortedTargets.map((rank, rankIndex) => [rank, rankIndex + 1]));
+      const fenwick = Array.from({ length: sortedTargets.length + 1 }, () => 0);
+      let seen = 0;
+      for (const target of orderedTargets) {
+        const rank = targetIndex.get(target) ?? 1;
+        let preceding = 0;
+        for (let cursor = rank; cursor > 0; cursor -= cursor & -cursor) {
+          preceding += fenwick[cursor] ?? 0;
+        }
+        crossings += seen - preceding;
+        for (let cursor = rank; cursor < fenwick.length; cursor += cursor & -cursor) {
+          fenwick[cursor] = (fenwick[cursor] ?? 0) + 1;
+        }
+        seen++;
+      }
+    }
+    return crossings;
+  };
+
+  const sharedRandom = crossingRandom(input);
+  const randomSeed = initialization.resetSeed === false ? undefined : sharedRandom.nextLong();
+  const portDistributorUsesNodeRelativeRanks = sharedRandom.nextBoolean();
+  const nodeRelativePortRanks = portDistributorUsesNodeRelativeRanks;
+  // ELK treats the median heuristic as deterministic, so it keeps using the
+  // graph's shared RNG after port-distributor selection. Barycenter resets to
+  // the saved seed while comparing randomized layouts.
+  let random =
+    statistic === "median" || randomSeed === undefined ? sharedRandom : new JavaRandom(randomSeed);
+  const thoroughness = Math.max(1, input.settings.thoroughness ?? sweeps ?? 7);
+  let working = layers.map((layer) => [...layer]);
+  const sourceUnknownPlacement =
+    (input.settings["considerModelOrder.strategy"] ?? "NONE") === "NONE";
+  const usePortRanks = true;
+  const medianWeights = new Map<string, number>();
+
+  const adjacentRanks = (
+    fixedLayer: readonly string[],
+    freeLayer: readonly string[],
+    forward: boolean,
+  ): { ranks: Map<string, number[]>; visits: Map<string, (number | string)[]> } => {
+    const edgeRanks = new Map<string, number>();
+    const visits = new Map(freeLayer.map((id) => [id, [] as (number | string)[]]));
+    const freeIds = new Set(freeLayer);
+    const ranks = new Map(freeLayer.map((id) => [id, [] as number[]]));
+    if (!usePortRanks) {
+      const fixedPosition = new Map(fixedLayer.map((id, index) => [id, index]));
+      for (const edge of input.graph.edges) {
+        const [sourceId, targetId] = getOrientedEndpoints(edge, orientation);
+        if (forward && fixedPosition.has(sourceId) && freeIds.has(targetId)) {
+          ranks.get(targetId)?.push(fixedPosition.get(sourceId)!);
+        } else if (!forward && fixedPosition.has(targetId) && freeIds.has(sourceId)) {
+          ranks.get(sourceId)?.push(fixedPosition.get(targetId)!);
         }
       }
       return { ranks, visits };
-    };
-
-    const distributePorts = (
-      fixedLayer: readonly string[],
-      freeLayer: readonly string[],
-      forward: boolean,
-    ) => {
-      const calculateRanks = (
-        layer: readonly string[],
-        orders: ReadonlyMap<string, readonly string[]>,
-        inputPorts: boolean,
-      ) => {
-        const ranks = new Map<string, number>();
-        let consumed = 0;
-        for (const nodeId of layer) {
-          const edgeIds = orders.get(nodeId) ?? [];
-          for (const [index, edgeId] of edgeIds.entries()) {
-            ranks.set(
-              edgeId,
-              nodeRelativePortRanks
-                ? consumed +
-                    (inputPorts
-                      ? 1 - (index + 1) / (edgeIds.length + 1)
-                      : (index + 1) / (edgeIds.length + 1))
-                : consumed + (inputPorts ? edgeIds.length - index : index + 1),
-            );
-          }
-          consumed += nodeRelativePortRanks ? 1 : edgeIds.length;
+    }
+    let rankSum = 0;
+    for (const fixedId of fixedLayer) {
+      const groups = new Map<string, { edges: GraphEdge[]; portOrder: number }>();
+      for (const [modelOrder, edge] of input.graph.edges.entries()) {
+        const [sourceId, targetId] = getOrientedEndpoints(edge, orientation);
+        if (
+          (forward && sourceId !== fixedId) ||
+          (!forward && targetId !== fixedId) ||
+          !freeIds.has(forward ? targetId : sourceId)
+        ) {
+          continue;
         }
-        return ranks;
-      };
-      const reorder = (
-        nodeIds: readonly string[],
-        orders: Map<string, string[]>,
-        oppositeRanks: ReadonlyMap<string, number>,
-        reverse: boolean,
-      ) => {
-        for (const nodeId of nodeIds) {
-          if (fixedOrderNodes.has(nodeId)) continue;
-          orders.get(nodeId)?.sort((leftId, rightId) => {
-            const difference = (oppositeRanks.get(leftId) ?? 0) - (oppositeRanks.get(rightId) ?? 0);
-            return reverse ? -difference : difference;
-          });
-        }
-      };
-      if (forward) {
-        const fixedRanks = calculateRanks(fixedLayer, outputPortOrder, false);
-        reorder(freeLayer, inputPortOrder, fixedRanks, true);
-        const freeRanks = calculateRanks(freeLayer, inputPortOrder, true);
-        reorder(fixedLayer, outputPortOrder, freeRanks, false);
-      } else {
-        const fixedRanks = calculateRanks(fixedLayer, inputPortOrder, true);
-        reorder(freeLayer, outputPortOrder, fixedRanks, false);
-        const freeRanks = calculateRanks(freeLayer, outputPortOrder, false);
-        reorder(fixedLayer, inputPortOrder, freeRanks, true);
+        const reversed = orientation.reversedEdgeIds.has(edge.id);
+        const port = forward
+          ? reversed
+            ? edge.targetPort
+            : edge.sourcePort
+          : reversed
+            ? edge.sourcePort
+            : edge.targetPort;
+        const key = port ?? `__implicit:${edge.id}`;
+        const group = groups.get(key) ?? { edges: [], portOrder: modelOrder };
+        group.edges.push(edge);
+        groups.set(key, group);
       }
-    };
-
-    const attempts = statistic === "median" ? 1 : thoroughness;
-    for (let attempt = 0; attempt < attempts; attempt++) {
-      let forward = random.nextBoolean();
-      const firstLayerIndex = forward ? 0 : Math.max(0, working.length - 1);
-      const firstLayerWeights = new Map(
-        (working[firstLayerIndex] ?? []).map((id) => [id, random.nextDouble()]),
+      const currentPortOrder = forward ? outputPortOrder.get(fixedId) : inputPortOrder.get(fixedId);
+      const orderedGroups = [...groups.values()].sort((left, right) =>
+        exactPortSweep
+          ? (currentPortOrder?.indexOf(left.edges[0]?.id ?? "") ?? -1) -
+              (currentPortOrder?.indexOf(right.edges[0]?.id ?? "") ?? -1) ||
+            left.portOrder - right.portOrder
+          : left.portOrder - right.portOrder,
       );
-      working[firstLayerIndex]?.sort(
-        (left, right) => (firstLayerWeights.get(left) ?? 0) - (firstLayerWeights.get(right) ?? 0),
-      );
-      if (units && working[firstLayerIndex])
-        working[firstLayerIndex] = resolveCrossingConstraints(
-          working[firstLayerIndex]!,
-          firstLayerWeights,
-          units,
-        );
-      if (statistic === "median") {
-        working[firstLayerIndex]?.forEach((id, index) => medianWeights.set(id, index + 1));
-      }
-
-      const sweep = (isForward: boolean, firstSweep: boolean) => {
-        const sortWithMedianWeights = (current: string[], reference: readonly string[]) => {
-          const referenceIds = new Set(reference);
-          const originalIndex = new Map(current.map((id, index) => [id, index]));
-          for (const id of current) {
-            const connectedWeights = input.graph.edges
-              .flatMap((edge) => {
-                if (edge.sourceId === id && referenceIds.has(edge.targetId)) {
-                  return [medianWeights.get(edge.targetId) ?? 0];
-                }
-                if (edge.targetId === id && referenceIds.has(edge.sourceId)) {
-                  return [medianWeights.get(edge.sourceId) ?? 0];
-                }
-                return [];
-              })
-              .sort((left, right) => left - right);
-            medianWeights.set(
-              id,
-              connectedWeights.length > 0
-                ? connectedWeights[Math.floor(connectedWeights.length / 2)]!
-                : Number.MAX_VALUE / 2,
-            );
-          }
-          current.sort(
-            (left, right) =>
-              (medianWeights.get(left) ?? 0) - (medianWeights.get(right) ?? 0) ||
-              (originalIndex.get(left) ?? 0) - (originalIndex.get(right) ?? 0),
-          );
-        };
-        if (isForward) {
-          for (let layer = 1; layer < working.length; layer++) {
-            const current = working[layer];
-            const previous = working[layer - 1];
-            if (current && previous) {
-              if (statistic === "median") sortWithMedianWeights(current, previous);
-              else {
-                const adjacent = adjacentRanks(previous, current, true);
-                sortLayerByAdjacentPosition(
-                  current,
-                  adjacent.ranks,
-                  statistic,
-                  random,
-                  !firstSweep,
-                  sourceUnknownPlacement,
-                  true,
-                  units,
-                  sameLayerNeighbors(isForward),
-                  adjacent.visits,
-                );
-              }
-              if (exactPortSweep) distributePorts(previous, current, true);
-            }
-          }
-        } else {
-          for (let layer = working.length - 2; layer >= 0; layer--) {
-            const current = working[layer];
-            const next = working[layer + 1];
-            if (current && next) {
-              if (statistic === "median") sortWithMedianWeights(current, next);
-              else {
-                const adjacent = adjacentRanks(next, current, false);
-                sortLayerByAdjacentPosition(
-                  current,
-                  adjacent.ranks,
-                  statistic,
-                  random,
-                  !firstSweep,
-                  sourceUnknownPlacement,
-                  true,
-                  units,
-                  sameLayerNeighbors(isForward),
-                  adjacent.visits,
-                );
-              }
-              if (exactPortSweep) distributePorts(next, current, false);
-            }
-          }
+      const count = orderedGroups.length;
+      for (const [index, group] of orderedGroups.entries()) {
+        const rank = nodeRelativePortRanks
+          ? forward
+            ? rankSum + (index + 1) / (count + 1)
+            : rankSum + 1 - (index + 1) / (count + 1)
+          : forward
+            ? rankSum + index + 1
+            : rankSum + count - index;
+        for (const edge of group.edges) {
+          const [sourceId, targetId] = getOrientedEndpoints(edge, orientation);
+          ranks.get(forward ? targetId : sourceId)?.push(rank);
+          edgeRanks.set(edge.id, rank);
         }
-      };
-
-      sweep(forward, true);
-      let crossings = countCrossings(working);
-      let attemptBestLayers = working.map((layer) => [...layer]);
-      let attemptBestInputPortOrder = new Map(
-        [...inputPortOrder].map(([id, edgeIds]) => [id, [...edgeIds]]),
-      );
-      let attemptBestOutputPortOrder = new Map(
-        [...outputPortOrder].map(([id, edgeIds]) => [id, [...edgeIds]]),
-      );
-      while (crossings > 0) {
-        forward = !forward;
-        const before = exactPortSweep ? undefined : working.map((layer) => [...layer]);
-        sweep(forward, false);
-        const nextCrossings = countCrossings(working);
-        if (nextCrossings >= crossings) {
-          if (before) working = before;
-          break;
-        }
-        crossings = nextCrossings;
-        attemptBestLayers = working.map((layer) => [...layer]);
-        attemptBestInputPortOrder = new Map(
-          [...inputPortOrder].map(([id, edgeIds]) => [id, [...edgeIds]]),
-        );
-        attemptBestOutputPortOrder = new Map(
-          [...outputPortOrder].map(([id, edgeIds]) => [id, [...edgeIds]]),
-        );
       }
-      if (crossings < bestCrossings) {
-        bestCrossings = crossings;
-        bestLayers = attemptBestLayers;
-        bestInputPortOrder = attemptBestInputPortOrder;
-        bestOutputPortOrder = attemptBestOutputPortOrder;
-        if (crossings === 0) break;
+      rankSum += nodeRelativePortRanks ? 1 : count;
+    }
+    // Visit each free node's ports in their current canonical order, while
+    // preserving incident-edge order within a shared port. Fixed-layer ranks
+    // and same-layer recursion must not be separated into independent sums.
+    for (const id of freeLayer) {
+      const order = (forward ? inputPortOrder : outputPortOrder).get(id) ?? [];
+      const groups = new Map<string, string[]>();
+      for (const edgeId of order) {
+        const edge = edgeById.get(edgeId)!;
+        const reversed = orientation.reversedEdgeIds.has(edge.id);
+        const name = forward !== reversed ? edge.targetPort : edge.sourcePort;
+        const key = name ?? `__implicit:${edgeId}`;
+        groups.set(key, [...(groups.get(key) ?? []), edgeId]);
+      }
+      for (const group of groups.values()) {
+        // Port sorting reorders ports, not the edges on one port.
+        group.sort((a, b) => edgeModelOrder.get(a)! - edgeModelOrder.get(b)!);
+        for (const edgeId of group) {
+          const edge = edgeById.get(edgeId)!;
+          const [source, target] = getOrientedEndpoints(edge, orientation);
+          const neighbor = forward ? source : target;
+          const rank = edgeRanks.get(edgeId);
+          if (assignment.layerByNodeId.get(neighbor) === assignment.layerByNodeId.get(id))
+            visits.get(id)!.push(neighbor);
+          else if (rank !== undefined) visits.get(id)!.push(rank);
+        }
       }
     }
+    return { ranks, visits };
+  };
 
+  const distributePorts = (
+    fixedLayer: readonly string[],
+    freeLayer: readonly string[],
+    forward: boolean,
+  ) => {
+    const calculateRanks = (
+      layer: readonly string[],
+      orders: ReadonlyMap<string, readonly string[]>,
+      inputPorts: boolean,
+    ) => {
+      const ranks = new Map<string, number>();
+      let consumed = 0;
+      for (const nodeId of layer) {
+        const edgeIds = orders.get(nodeId) ?? [];
+        for (const [index, edgeId] of edgeIds.entries()) {
+          ranks.set(
+            edgeId,
+            nodeRelativePortRanks
+              ? consumed +
+                  (inputPorts
+                    ? 1 - (index + 1) / (edgeIds.length + 1)
+                    : (index + 1) / (edgeIds.length + 1))
+              : consumed + (inputPorts ? edgeIds.length - index : index + 1),
+          );
+        }
+        consumed += nodeRelativePortRanks ? 1 : edgeIds.length;
+      }
+      return ranks;
+    };
+    const reorder = (
+      nodeIds: readonly string[],
+      orders: Map<string, string[]>,
+      oppositeRanks: ReadonlyMap<string, number>,
+      reverse: boolean,
+    ) => {
+      for (const nodeId of nodeIds) {
+        if (fixedOrderNodes.has(nodeId) || lockedPortOrders.has(nodeId)) continue;
+        orders.get(nodeId)?.sort((leftId, rightId) => {
+          const difference = (oppositeRanks.get(leftId) ?? 0) - (oppositeRanks.get(rightId) ?? 0);
+          return reverse ? -difference : difference;
+        });
+      }
+    };
+    if (forward) {
+      const fixedRanks = calculateRanks(fixedLayer, outputPortOrder, false);
+      reorder(freeLayer, inputPortOrder, fixedRanks, true);
+      const freeRanks = calculateRanks(freeLayer, inputPortOrder, true);
+      reorder(fixedLayer, outputPortOrder, freeRanks, false);
+    } else {
+      const fixedRanks = calculateRanks(fixedLayer, inputPortOrder, true);
+      reorder(freeLayer, outputPortOrder, fixedRanks, false);
+      const freeRanks = calculateRanks(freeLayer, outputPortOrder, false);
+      reorder(fixedLayer, inputPortOrder, freeRanks, true);
+    }
+  };
+
+  const shuffleFirstLayer = (forward: boolean) => {
+    const firstLayerIndex = forward ? 0 : Math.max(0, working.length - 1);
+    const firstLayerWeights = new Map(
+      (working[firstLayerIndex] ?? []).map((id) => [id, random.nextDouble()]),
+    );
+    working[firstLayerIndex]?.sort(
+      (left, right) => (firstLayerWeights.get(left) ?? 0) - (firstLayerWeights.get(right) ?? 0),
+    );
+    if (units && working[firstLayerIndex])
+      working[firstLayerIndex] = resolveCrossingConstraints(
+        working[firstLayerIndex]!,
+        firstLayerWeights,
+        units,
+      );
+    if (statistic === "median") {
+      working[firstLayerIndex]?.forEach((id, index) => medianWeights.set(id, index + 1));
+    }
+  };
+  const sweep = (isForward: boolean, firstSweep: boolean, visitLayer?: LayerSweepVisitor) => {
+    const firstLayer = isForward ? 0 : Math.max(0, working.length - 1);
+    visitLayer?.(firstLayer, [...(working[firstLayer] ?? [])], isForward, firstSweep);
+    const sortWithMedianWeights = (current: string[], reference: readonly string[]) => {
+      const referenceIds = new Set(reference);
+      const originalIndex = new Map(current.map((id, index) => [id, index]));
+      for (const id of current) {
+        const connectedWeights = input.graph.edges
+          .flatMap((edge) => {
+            if (edge.sourceId === id && referenceIds.has(edge.targetId)) {
+              return [medianWeights.get(edge.targetId) ?? 0];
+            }
+            if (edge.targetId === id && referenceIds.has(edge.sourceId)) {
+              return [medianWeights.get(edge.sourceId) ?? 0];
+            }
+            return [];
+          })
+          .sort((left, right) => left - right);
+        medianWeights.set(
+          id,
+          connectedWeights.length > 0
+            ? connectedWeights[Math.floor(connectedWeights.length / 2)]!
+            : Number.MAX_VALUE / 2,
+        );
+      }
+      current.sort(
+        (left, right) =>
+          (medianWeights.get(left) ?? 0) - (medianWeights.get(right) ?? 0) ||
+          (originalIndex.get(left) ?? 0) - (originalIndex.get(right) ?? 0),
+      );
+    };
+    if (isForward) {
+      for (let layer = 1; layer < working.length; layer++) {
+        const current = working[layer];
+        const previous = working[layer - 1];
+        if (current && previous) {
+          if (statistic === "median") sortWithMedianWeights(current, previous);
+          else {
+            const adjacent = adjacentRanks(previous, current, true);
+            sortLayerByAdjacentPosition(
+              current,
+              adjacent.ranks,
+              statistic,
+              random,
+              !firstSweep,
+              sourceUnknownPlacement,
+              true,
+              units,
+              sameLayerNeighbors(isForward),
+              adjacent.visits,
+            );
+          }
+          if (exactPortSweep) distributePorts(previous, current, true);
+          visitLayer?.(layer, [...current], isForward, firstSweep);
+        }
+      }
+    } else {
+      for (let layer = working.length - 2; layer >= 0; layer--) {
+        const current = working[layer];
+        const next = working[layer + 1];
+        if (current && next) {
+          if (statistic === "median") sortWithMedianWeights(current, next);
+          else {
+            const adjacent = adjacentRanks(next, current, false);
+            sortLayerByAdjacentPosition(
+              current,
+              adjacent.ranks,
+              statistic,
+              random,
+              !firstSweep,
+              sourceUnknownPlacement,
+              true,
+              units,
+              sameLayerNeighbors(isForward),
+              adjacent.visits,
+            );
+          }
+          if (exactPortSweep) distributePorts(next, current, false);
+          visitLayer?.(layer, [...current], isForward, firstSweep);
+        }
+      }
+    }
+  };
+
+  const attempts = statistic === "median" ? 1 : thoroughness;
+  const finish = (order: LayerOrder): LayerOrder => {
+    const bestLayers = order.layers.map((layer) => [...layer]);
+    const bestInputPortOrder = clonePortOrders(order.inputPortOrderByNodeId);
+    const bestOutputPortOrder = clonePortOrders(order.outputPortOrderByNodeId);
     if (statistic === "median" && input.direction === "left") {
       const edgeOrder = new Map(input.graph.edges.map((edge, index) => [edge.id, index]));
       for (const layer of bestLayers) {
@@ -2259,35 +2264,48 @@ function minimizeCrossingsWithLayerSweep(
         }
       : { layers: bestLayers };
   };
+  const restore = (order: LayerOrder) => {
+    working = order.layers.map((layer) => [...layer]);
+    inputPortOrder.clear();
+    outputPortOrder.clear();
+    for (const [id, edges] of clonePortOrders(order.inputPortOrderByNodeId))
+      inputPortOrder.set(id, edges);
+    for (const [id, edges] of clonePortOrders(order.outputPortOrderByNodeId))
+      outputPortOrder.set(id, edges);
+  };
+  const session: LayerSweepSession = {
+    get random() {
+      return random;
+    },
+    attempts,
+    restoreRejectedSweep: !exactPortSweep,
+    lockPortOrder: (id) => {
+      lockedPortOrders.add(id);
+    },
+    useRandom: (source) => {
+      random = source;
+    },
+    minimize: () => {
+      const root = { session, childrenByNodeId: new Map(), useBottomUp: true };
+      return minimizeHierarchyCrossings(root).get(root)!;
+    },
+    shuffleFirstLayer,
+    sweep,
+    countCrossings: () => countCrossings(working),
+    snapshot: () => ({
+      layers: working.map((layer) => [...layer]),
+      inputPortOrderByNodeId: clonePortOrders(inputPortOrder),
+      outputPortOrderByNodeId: clonePortOrders(outputPortOrder),
+    }),
+    restore,
+    finish,
+  };
+  return session;
 }
 
 /** NetworkSimplexLayerer processes the largest undirected component first. */
 function networkSimplexComponentOrder(input: LayeredPhaseInput): string[] {
-  const neighbors = new Map(input.graph.nodes.map((node) => [node.id, [] as string[]]));
-  for (const edge of input.graph.edges) {
-    if (edge.sourceId === edge.targetId) continue;
-    neighbors.get(edge.sourceId)?.push(edge.targetId);
-    neighbors.get(edge.targetId)?.push(edge.sourceId);
-  }
-  const visited = new Set<string>();
-  const components: string[][] = [];
-  for (const node of input.graph.nodes) {
-    if (visited.has(node.id)) continue;
-    const component: string[] = [];
-    const visit = (id: string): void => {
-      if (visited.has(id)) return;
-      visited.add(id);
-      component.push(id);
-      for (const neighbor of neighbors.get(id) ?? []) visit(neighbor);
-    };
-    visit(node.id);
-    if (components.length === 0 || components[0]!.length < component.length) {
-      components.unshift(component);
-    } else {
-      components.push(component);
-    }
-  }
-  return components.flat();
+  return networkSimplexComponents(input).flat();
 }
 
 /** Keep model order within each component while placing connected work before isolated nodes. */
@@ -2939,6 +2957,7 @@ function nodeFlowOffset(
   layerFlowSize: number,
   nodeFlowSize: number,
   layerByNodeId: ReadonlyMap<string, number>,
+  margins?: { leading: number; trailing: number; maxLeading: number; maxTrailing: number },
 ): number {
   const node = input.graph.nodes.find((candidate) => candidate.id === id);
   const alignment = node
@@ -2973,19 +2992,55 @@ function nodeFlowOffset(
     ratio =
       incoming.size + outgoing.size === 0 ? 0.5 : outgoing.size / (incoming.size + outgoing.size);
   }
-  return (layerFlowSize - nodeFlowSize) * ratio;
+  let position = (layerFlowSize - nodeFlowSize) * ratio;
+  if (margins) {
+    if (ratio > 0.5) position -= margins.maxTrailing * 2 * (ratio - 0.5);
+    else if (ratio < 0.5) position += margins.maxLeading * 2 * (0.5 - ratio);
+    position = Math.max(position, margins.leading);
+    position = Math.min(position, layerFlowSize - margins.trailing - nodeFlowSize);
+  }
+  return position;
 }
 
 export const placeNodesInLayers: NodePlacer = (input, order) => {
   const horizontal = input.direction === "left" || input.direction === "right";
+  const reverse = input.direction === "left" || input.direction === "up";
+  const orientation = getPlacementOrientation(input);
+  const flowMargins = new Map(
+    input.graph.nodes.map((node) => {
+      const size = input.sizes.get(node.id) ?? { width: 0, height: 0 };
+      const ports = placePorts(
+        node.ports,
+        { x: 0, y: 0, ...size },
+        input.direction,
+        (port) => input.portSettings?.(port, node),
+        { ...input.settings, ...input.nodeSettings?.(node) },
+        orientation
+          ? (port) => getOrientedPortDirection(input, orientation, node, port)
+          : undefined,
+      );
+      let low = 0,
+        high = 0;
+      for (const port of ports ?? []) {
+        const start = horizontal ? (port.x ?? 0) : (port.y ?? 0);
+        const end = start + (horizontal ? (port.width ?? 0) : (port.height ?? 0));
+        low = Math.max(low, -start);
+        high = Math.max(high, end - (horizontal ? size.width : size.height));
+      }
+      return [node.id, { leading: reverse ? high : low, trailing: reverse ? low : high }] as const;
+    }),
+  );
   const layerByNodeId = new Map(
     order.layers.flatMap((layer, layerIndex) => layer.map((id) => [id, layerIndex] as const)),
   );
   const layerFlowSizes = order.layers.map((layer) => {
     const size = Math.max(
       0,
-      ...layer.map((id) =>
-        horizontal ? (input.sizes.get(id)?.width ?? 0) : (input.sizes.get(id)?.height ?? 0),
+      ...layer.map(
+        (id) =>
+          (horizontal ? (input.sizes.get(id)?.width ?? 0) : (input.sizes.get(id)?.height ?? 0)) +
+          (flowMargins.get(id)?.leading ?? 0) +
+          (flowMargins.get(id)?.trailing ?? 0),
       ),
     );
     return size === 0 &&
@@ -3020,6 +3075,12 @@ export const placeNodesInLayers: NodePlacer = (input, order) => {
           layerFlowSizes[layerIndex] ?? 0,
           horizontal ? size.width : size.height,
           layerByNodeId,
+          {
+            leading: flowMargins.get(id)?.leading ?? 0,
+            trailing: flowMargins.get(id)?.trailing ?? 0,
+            maxLeading: Math.max(0, ...layer.map((id) => flowMargins.get(id)?.leading ?? 0)),
+            maxTrailing: Math.max(0, ...layer.map((id) => flowMargins.get(id)?.trailing ?? 0)),
+          },
         );
       const rect = horizontal
         ? { x: centeredFlow, y: cross, ...size }
@@ -3328,9 +3389,23 @@ function implicitEdgeEndpoints(
       unzipping ||
       interactiveTargetOrder ||
       verticalNoneTargetOrder ||
-      (input.settings.hierarchyHandling !== "INCLUDE_CHILDREN" &&
-        (crossingStrategy === "LAYER_SWEEP" || crossingStrategy === "MEDIAN_LAYER_SWEEP"));
+      crossingStrategy === "LAYER_SWEEP" ||
+      crossingStrategy === "MEDIAN_LAYER_SWEEP";
+    const sweptOrder = getPlacementOrder(input);
     entries.sort((left, right) => {
+      const leftIncoming =
+        (left.endpoint === "target") !== (orientation?.reversedEdgeIds.has(left.edge.id) ?? false);
+      const rightIncoming =
+        (right.endpoint === "target") !==
+        (orientation?.reversedEdgeIds.has(right.edge.id) ?? false);
+      if (leftIncoming === rightIncoming) {
+        const selected = (
+          leftIncoming ? sweptOrder?.inputPortOrderByNodeId : sweptOrder?.outputPortOrderByNodeId
+        )?.get(nodeId);
+        const a = selected?.indexOf(left.edge.id) ?? -1,
+          b = selected?.indexOf(right.edge.id) ?? -1;
+        if (a >= 0 && b >= 0 && a !== b) return (leftIncoming ? -1 : 1) * (a - b);
+      }
       if (interactiveLeftSourceOrder) {
         const leftExtreme = interactiveLeftSourceOrder[0] === left.edge.id;
         const rightExtreme = interactiveLeftSourceOrder[0] === right.edge.id;
@@ -3469,6 +3544,23 @@ function implicitEdgeEndpoints(
         point = horizontal
           ? { ...point, y: Math.round(point.y) }
           : { ...point, x: Math.round(point.x) };
+      }
+      const portName = endpoint === "source" ? edge.sourcePort : edge.targetPort;
+      const explicitPort = node?.ports?.find((port) => port.name === portName);
+      // Movable port ordering comes from the layer sweep above. Fixed coordinates
+      // and authored anchors must replace the synthesized node-origin fallback.
+      const authoredAnchor =
+        node && explicitPort
+          ? input.portSettings?.(explicitPort, node)?.["port.anchor"]
+          : undefined;
+      if (
+        portName !== undefined &&
+        node &&
+        (constraints === "FIXED_POS" ||
+          constraints === "FIXED_RATIO" ||
+          authoredAnchor !== undefined)
+      ) {
+        point = getPortPoint(node, portName, rect, point, input.direction, input);
       }
       const pair = result.get(edge.id) ?? { source: point, target: point };
       pair[endpoint] = point;
@@ -3611,8 +3703,22 @@ function routeEdges(style: "ORTHOGONAL" | "POLYLINE" | "SPLINES"): EdgeRouter {
           y: rect.y + spacing + splineOffset,
         });
       } else {
-        const sideLoopCount =
-          distribution === "NORTH_SOUTH" ? Math.ceil(loops.length / 2) : loops.length;
+        const northLoops = loops.filter((edge, index) => {
+          if (
+            style === "ORTHOGONAL" &&
+            node &&
+            (edge.sourcePort === undefined || edge.targetPort === undefined) &&
+            String(nodeSettings?.portConstraints ?? "FREE") !== "FREE" &&
+            String(nodeSettings?.portConstraints ?? "UNDEFINED") !== "UNDEFINED"
+          ) {
+            const port = node.ports?.find(
+              (candidate) => candidate.name === (edge.sourcePort ?? edge.targetPort),
+            );
+            if (port) return input.portSettings?.(port, node)?.["port.side"] === "NORTH";
+          }
+          return distribution !== "NORTH_SOUTH" || index % 2 === 0;
+        });
+        const sideLoopCount = northLoops.length;
         const reserve =
           (ordering === "SEQUENCED" ? Math.min(1, sideLoopCount) : sideLoopCount) * spacing +
           splineOffset;
@@ -3737,6 +3843,34 @@ function routeEdges(style: "ORTHOGONAL" | "POLYLINE" | "SPLINES"): EdgeRouter {
       }
       flowLayerByNodeId.set(interval.id, flowLayers.length - 1);
     }
+    const bodyFlowLayers = flowLayers.map((bounds) => ({ ...bounds }));
+    const labelFlowLayers = new Set(
+      [...flowLayerByNodeId]
+        .filter(([id]) => id.startsWith("__layout_dummy:label:"))
+        .map(([, layer]) => layer),
+    );
+
+    // Routing advances past the occupied layer, including protruding ports.
+    // Assign layers from bodies first so port envelopes cannot merge ranks.
+    for (const [id, rect] of placement.rectByNodeId) {
+      const node = nodeById.get(id);
+      const bounds = flowLayers[flowLayerByNodeId.get(id) ?? -1];
+      if (!node || !bounds) continue;
+      const ports = placePorts(
+        node.ports,
+        rect,
+        input.direction,
+        (port) => input.portSettings?.(port, node),
+        { ...input.settings, ...input.nodeSettings?.(node) },
+        (port) => getOrientedPortDirection(input, orientation, node, port),
+      );
+      for (const port of ports ?? []) {
+        const start = horizontal ? rect.x + (port.x ?? 0) : rect.y + (port.y ?? 0);
+        const end = start + (horizontal ? (port.width ?? 0) : (port.height ?? 0));
+        bounds.start = Math.min(bounds.start, start);
+        bounds.end = Math.max(bounds.end, end);
+      }
+    }
 
     const increasing = input.direction === "right" || input.direction === "down";
     const flowPortProtrusion = (edge: GraphEdge, endpoint: "source" | "target"): number => {
@@ -3804,7 +3938,9 @@ function routeEdges(style: "ORTHOGONAL" | "POLYLINE" | "SPLINES"): EdgeRouter {
       const requiredGap =
         labelFlowSize +
         Math.max(input.spacing.layer, flowPortProtrusion(edge, "source") + edgeNodeSpacing) +
-        Math.max(input.spacing.layer, flowPortProtrusion(edge, "target") + edgeNodeSpacing);
+        Math.max(input.spacing.layer, flowPortProtrusion(edge, "target") + edgeNodeSpacing) -
+        flowPortProtrusion(edge, "source") -
+        flowPortProtrusion(edge, "target");
       const gap = Math.min(sourceLayer, targetLayer);
       const availableGap = flowLayers[gap + 1]!.start - flowLayers[gap]!.end;
       const forward = increasing ? targetLayer > sourceLayer : targetLayer < sourceLayer;
@@ -3843,7 +3979,6 @@ function routeEdges(style: "ORTHOGONAL" | "POLYLINE" | "SPLINES"): EdgeRouter {
     if (
       style === "ORTHOGONAL" &&
       (input.settings["wrapping.strategy"] ?? "OFF") === "OFF" &&
-      input.settings.hierarchyHandling !== "INCLUDE_CHILDREN" &&
       (input.settings["layerUnzipping.strategy"] ?? "NONE") === "NONE"
     ) {
       const edgeNodeSpacing = Number(input.settings["spacing.edgeNodeBetweenLayers"] ?? 10);
@@ -4020,9 +4155,24 @@ function routeEdges(style: "ORTHOGONAL" | "POLYLINE" | "SPLINES"): EdgeRouter {
         const preservedGap =
           (existingGapByLayer[layerNo] ?? input.spacing.layer) -
           (routesNearTarget ? edgeEdgeSpacing : 0);
+        const labelAdjacent = labelFlowLayers.has(layerNo) || labelFlowLayers.has(layerNo + 1);
+        const portMargin =
+          flowLayers[layerNo]!.end -
+          flowLayers[layerNo]!.start -
+          (bodyFlowLayers[layerNo]!.end - bodyFlowLayers[layerNo]!.start) +
+          (flowLayers[layerNo + 1]
+            ? flowLayers[layerNo + 1]!.end -
+              flowLayers[layerNo + 1]!.start -
+              (bodyFlowLayers[layerNo + 1]!.end - bodyFlowLayers[layerNo + 1]!.start)
+            : 0);
+        const minimumGap = labelAdjacent
+          ? Math.max(edgeNodeSpacing, input.spacing.layer - portMargin)
+          : input.spacing.layer;
         const gapSpacing =
           slots === 0
-            ? (existingGapByLayer[layerNo] ?? input.spacing.layer)
+            ? labelAdjacent
+              ? minimumGap
+              : (existingGapByLayer[layerNo] ?? input.spacing.layer)
             : Math.max(
                 preservesNodeFlexibilityGap ||
                   (labelExtraByGap[layerNo] ?? 0) > 0 ||
@@ -4036,8 +4186,9 @@ function routeEdges(style: "ORTHOGONAL" | "POLYLINE" | "SPLINES"): EdgeRouter {
                       ),
                   )
                   ? preservedGap
-                  : input.spacing.layer,
-                2 * edgeNodeSpacing + Math.max(0, slots - 1) * edgeEdgeSpacing,
+                  : minimumGap,
+                (labelAdjacent ? edgeNodeSpacing : 2 * edgeNodeSpacing) +
+                  Math.max(0, slots - 1) * edgeEdgeSpacing,
               );
         nextStart = bounds.end + gapSpacing;
       }
@@ -4534,6 +4685,56 @@ function routeEdges(style: "ORTHOGONAL" | "POLYLINE" | "SPLINES"): EdgeRouter {
         const constraints = String(input.nodeSettings?.(node)?.portConstraints ?? "UNDEFINED");
         return constraints !== "UNDEFINED" && constraints !== "FREE";
       };
+      if (
+        style === "ORTHOGONAL" &&
+        source.id === target.id &&
+        hasFixedPortSide(source) &&
+        (feedbackSourcePortSide !== undefined || feedbackTargetPortSide !== undefined) &&
+        (edge.sourcePort === undefined || edge.targetPort === undefined)
+      ) {
+        const endpoints = implicitEndpoints.get(edge.id)!;
+        const start = getPortPoint(
+          source,
+          edge.sourcePort,
+          sourceRect,
+          endpoints.source,
+          input.direction,
+          input,
+        );
+        const end = getPortPoint(
+          target,
+          edge.targetPort,
+          targetRect,
+          endpoints.target,
+          input.direction,
+          input,
+        );
+        const outputSide = ({ right: "EAST", left: "WEST", down: "SOUTH", up: "NORTH" } as const)[
+          input.direction
+        ];
+        const inputSide = ({ right: "WEST", left: "EAST", down: "NORTH", up: "SOUTH" } as const)[
+          input.direction
+        ];
+        const loops = selfLoopsByNodeId.get(source.id) ?? [edge];
+        const distance =
+          Number(input.settings["spacing.nodeSelfLoop"] ?? 10) * (loops.indexOf(edge) + 1);
+        pointsByEdgeId.set(
+          edge.id,
+          simplifyRoute(
+            routeFixedSelfLoop(
+              sourceRect,
+              start,
+              end,
+              fixedSelfLoopSide(feedbackSourcePortSide) ?? outputSide,
+              fixedSelfLoopSide(feedbackTargetPortSide) ?? inputSide,
+              distance,
+              input.direction,
+            ),
+          ),
+        );
+        outsideFeedbackEdgeIds.add(edge.id);
+        continue;
+      }
       const fixedSideFeedback =
         style === "ORTHOGONAL" &&
         !sameSideSelfLoop &&
@@ -5298,24 +5499,25 @@ export function placePorts<P>(
         return { ...port, ...size, x: port.x, y: port.y };
       }
       const side = sideByPort.get(port)!;
+      const borderOffset = Number(portSettings?.(port)?.["port.borderOffset"] ?? 0);
       return {
         ...port,
         ...size,
         x:
           side === "EAST"
-            ? rect.width
+            ? rect.width + borderOffset
             : side === "WEST"
               ? constraints === "FIXED_POS" && direction === "left" && size.width === 0
-                ? 0
-                : -size.width
+                ? 0 - borderOffset
+                : -size.width - borderOffset
               : port.x,
         y:
           side === "SOUTH"
-            ? rect.height
+            ? rect.height + borderOffset
             : side === "NORTH"
               ? constraints === "FIXED_POS" && direction === "up" && size.height === 0
-                ? 0
-                : -size.height
+                ? 0 - borderOffset
+                : -size.height - borderOffset
               : port.y,
       };
     }
@@ -5532,8 +5734,8 @@ export function normalizePlacementForPortExtents(
     }
     const nextLayer = physicalLayers[layerIndex + 1];
     if (!nextLayer) continue;
-    let trailingExtent = 0;
-    let leadingExtent = 0;
+    let trailingBoundary = Number.NEGATIVE_INFINITY;
+    let leadingBoundary = Number.POSITIVE_INFINITY;
     for (const [ids, trailing] of [
       [layer, true],
       [nextLayer, false],
@@ -5542,6 +5744,10 @@ export function normalizePlacementForPortExtents(
         const node = input.graph.nodes.find((candidate) => candidate.id === id);
         const rect = placement.rectByNodeId.get(id);
         if (!node || !rect) continue;
+        const bodyStart = horizontal ? rect.x : rect.y;
+        const bodySize = horizontal ? rect.width : rect.height;
+        if (trailing) trailingBoundary = Math.max(trailingBoundary, bodyStart + bodySize);
+        else leadingBoundary = Math.min(leadingBoundary, bodyStart);
         const ports = placePorts(
           node.ports,
           rect,
@@ -5558,12 +5764,16 @@ export function normalizePlacementForPortExtents(
             : trailing
               ? Math.max(0, (port.y ?? 0) + (port.height ?? 0) - rect.height)
               : Math.max(0, -(port.y ?? 0));
-          if (trailing) trailingExtent = Math.max(trailingExtent, extent);
-          else leadingExtent = Math.max(leadingExtent, extent);
+          if (trailing)
+            trailingBoundary = Math.max(trailingBoundary, bodyStart + bodySize + extent);
+          else leadingBoundary = Math.min(leadingBoundary, bodyStart - extent);
         }
       }
     }
-    accumulatedShift += trailingExtent + leadingExtent;
+    accumulatedShift += Math.max(
+      0,
+      input.spacing.layer - (leadingBoundary + accumulatedShift - trailingBoundary),
+    );
   }
 
   let minimumX = Number.POSITIVE_INFINITY;

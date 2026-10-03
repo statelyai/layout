@@ -2,9 +2,22 @@ import OracleELK from "elkjs/lib/elk.bundled.js";
 import { expect, it } from "vitest";
 import NativeELK from "../src/elkjs";
 import type { ElkNode } from "../src/elkjs/types";
-import { compoundFixture } from "../scripts/parity/compound-corpus";
+import {
+  compoundFixture,
+  compoundGeometry,
+  geometryDifferences,
+} from "../scripts/parity/compound-corpus";
 
 for (const direction of ["RIGHT", "LEFT", "DOWN", "UP"]) {
+  it.each([1, 2, 18])(
+    `matches complete seed %i geometry and route containers through a ${direction} boundary`,
+    async (seed) => {
+      const input = compoundFixture(seed, direction);
+      const actual = await new NativeELK().layout(structuredClone(input));
+      const expected = (await new OracleELK().layout(structuredClone(input) as never)) as ElkNode;
+      expect(geometryDifferences(compoundGeometry(actual), compoundGeometry(expected))).toEqual([]);
+    },
+  );
   it(`preserves the selected descendant port through a ${direction} compound boundary`, async () => {
     const input = compoundFixture(1, direction);
     const actual = await new NativeELK().layout(structuredClone(input));

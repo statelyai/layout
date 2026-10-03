@@ -873,3 +873,102 @@ complete final two-worker snapshot run.
 parity. Child-to-parent boundary geometry transfer, internal route joining,
 coordinated hierarchy phase scheduling and the public compound solver's shared
 foundation remain required.
+
+## Compound boundary transfer experiment (uncommitted)
+
+The unchanged strict hierarchy gate now has **8/100 complete matches**, zero
+engine errors and 4,683 differing values. Native boundary transfer matches the
+real worker on 1,024 seeded cases. Full seed 1 geometry matches in all four
+directions. Layer margins and child/parent route joining replace coordinate
+repair shims; four existing wide-port label corridor failures resolve.
+
+The frozen suite reports **1,887 pass / 119 fail / 2,006**: 13 introduced
+failure names and 4 fixed relative to the committed baseline. This remains
+uncommitted work pending coupled hierarchy sweeps, route metadata restoration
+and post-compaction fixed-port attachment. Types, selected lint/format and build
+pass; no clean snapshot or fresh browser proof is claimed.
+
+[Complete retained experiment and failure delta](./boundary-transfer/README.md).
+
+## Separate boundary preprocessing and fixed-coordinate routing (uncommitted)
+
+Real ELK traces show separate boundary nodes removed before layer assignment,
+FIRST/LAST inferred for otherwise isolated incident nodes, and merging confined
+to each descendant port. Those native phases now preserve boundary identity and
+use actual fixed-port coordinates for track allocation. Movable ports retain
+layer-sweep order. The unchanged 100 inputs now yield **12 complete matches**,
+zero errors and **3,665 differing values**. Seed 2 fully matches in all directions.
+
+Frozen suite: **1,892 pass / 118 fail / 2,010**. Compared with committed 21a622d:
+12 introduced hierarchy/compound-label failures and four fixed label corridor
+failures. Previous uncommitted fixed-port attachment failure resolves. Source/
+repository TypeScript, selected lint and build pass. Main remains current. Work
+remains uncommitted; coupled crossing schedules and route metadata restoration
+are next. No clean snapshot or current browser proof is claimed.
+
+[Full replay, real worker traces and exact failure delta](./boundary-layering/README.md).
+
+## Crossing phase ordering and resumable scopes
+
+The [scope crossing-order proof](./scope-crossing-order/README.md) retains the
+unchanged 100 hierarchy inputs: 16 complete matches, zero engine errors, 3,354
+differing values. FIRST/LAST ordering now precedes crossing minimization; it no
+longer overrides the chosen order afterward. Seed 18 passes complete geometry
+and route-container regressions in four directions. The internal generator can
+suspend ordinary scopes before crossing minimization and resume with a supplied
+order; the compatibility adapter has not yet adopted coordinated parent/child
+sweeps. The real-worker observation was checked against uninstrumented ELK.
+
+Final suite: 1,902 pass / 118 fail / 2,020, with no new failure names relative
+to the preceding uncommitted snapshot. Earlier hierarchy and label regressions
+remain. Types, selected format/lint and build pass. RIGHT/DOWN seed 18 have
+matching before/after/ELK browser image proof. Source remains uncommitted; broad
+parity is incomplete and the goal stays active.
+
+## Reusable sweep coordinator
+
+[Source, replay and validation](./sweep-coordinator/README.md) preserve the
+internal sweep sessions and shared counter coordinator. Standalone minimization
+uses that coordinator. Prepared scope trees can enter coupled children between
+parent layers and retain their node/port candidates together; seven focused
+tests pass. The adapter has not yet connected its hierarchy scopes or boundary
+ports to this coordinator, and shared distributor initialization remains open.
+
+Full suite: 1,909 pass / 118 fail / 2,027; no new failure names. The complete
+100-case native/oracle outputs are exactly unchanged: 16 matches, zero errors,
+3,354 differing values. Earlier introduced hierarchy and label failures remain.
+Types, selected lint/format and build pass. Source remains uncommitted and goal
+active; no new visual or end-to-end hierarchy improvement is claimed.
+
+## Prepared compatibility hierarchy scopes
+
+[Current source and evidence](./prepared-scopes/README.md) supersede the preceding
+coordinator snapshot. The adapter now prepares all scopes before placement,
+coordinates boundary port orders, and resumes parents with finished child sizes.
+Root and child random streams match observed worker ownership. Port-aware
+NetworkSimplex traversal, parallel BK alignment and shared-port anchors fix ten
+hierarchy failures. Selected port orders survive implicit routing.
+
+Full local suite: 1,931 pass / 108 fail / 2,039; no new failures this turn.
+Two earlier inline compound-label regressions remain versus committed 21a622d.
+55 focused tests, types, selected lint/format and build pass. Random hierarchy
+matches improve 16 to 24 of 100; no lost matches or engine errors, unchanged
+inputs/tolerance, differing values 3,354 to 2,596. Fresh RIGHT/DOWN seed 16
+before/after/ELK browser proof is saved. Source remains uncommitted/unpushed;
+parity incomplete and goal active.
+
+## Fixed-port self-loop anchors
+
+[Current source and proof](./fixed-self-loops/README.md) correct mixed
+explicit/implicit self-loop anchors, occupied-side reservations and endpoint
+ownership for bounds/junctions. A new 100-case bounded random self-loop gate
+improves **0 to 100 exact matches** with unchanged inputs and tolerance. 132
+all-direction oracle comparisons and an actual descendant-anchor/orthogonality
+regression pass. Existing ancestor label/two-bend assertions remain red and
+unchanged; the original complex fixture's real ELK error remains preserved.
+
+Full local suite: **2,064 pass / 108 fail / 2,172**; no new failures. Types,
+selected format/lint and build pass. Hierarchy replay remains **24/100**, with
+all complete native outputs unchanged. RIGHT/DOWN seed 1 have matched
+before/after/real-ELK browser proof. This verified WIP is published on draft
+PR #32; broader parity and the active goal remain incomplete.

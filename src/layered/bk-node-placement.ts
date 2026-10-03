@@ -163,7 +163,24 @@ function buildNeighbors(input: LayeredPhaseInput, order: LayerOrder) {
       | { x?: number; y?: number }
       | undefined;
     const constraints = input.nodeSettings?.(node)?.portConstraints;
-    if (anchor === undefined && constraints !== "FIXED_RATIO" && constraints !== "FIXED_POS") {
+    const sideEntries = right.get(id)?.some((entry) => entry.edgeId === edgeId)
+      ? right.get(id)!
+      : (left.get(id) ?? []);
+    const singlePhysicalPort =
+      node.ports?.filter((candidate) => candidate.direction === port.direction).length === 1 &&
+      sideEntries.every((entry) => {
+        const connected = edgeById.get(entry.edgeId)!;
+        return (
+          (connected.sourceId === id ? connected.sourcePort : connected.targetPort) === portName
+        );
+      });
+    // A fan-out on one physical port has one anchor, irrespective of edge count.
+    if (
+      anchor === undefined &&
+      constraints !== "FIXED_RATIO" &&
+      constraints !== "FIXED_POS" &&
+      !singlePhysicalPort
+    ) {
       return undefined;
     }
     if (input.direction === "left" || input.direction === "right") {
@@ -206,7 +223,7 @@ function buildNeighbors(input: LayeredPhaseInput, order: LayerOrder) {
     count: number,
     side: "north" | "south" | "west" | "east",
   ): number =>
-    input.settings.hierarchyHandling === "INCLUDE_CHILDREN" || !customPortAnchors
+    !customPortAnchors
       ? (anchorCrossSize(input, id) * (index + 1)) / (count + 1)
       : (explicitPortAnchor(id, edgeId) ?? portAnchor(id, index, count, side));
   for (const [id, entries] of right) {
@@ -237,6 +254,15 @@ function buildNeighbors(input: LayeredPhaseInput, order: LayerOrder) {
                   (edgeModelOrder.get(leftEntry.edgeId) ?? 0) -
                   (edgeModelOrder.get(rightEntry.edgeId) ?? 0),
               );
+    // ELK finds the first connecting edge by walking the source's port list.
+    // Parallel edges must follow the selected port order, not root edge order.
+    const firstByNeighbor = new Set<string>();
+    for (const entry of portOrder) {
+      if (firstByNeighbor.has(entry.id)) continue;
+      firstByNeighbor.add(entry.id);
+      edgeIdByNodePair.set(`${id}\0${entry.id}`, entry.edgeId);
+      edgeIdByNodePair.set(`${entry.id}\0${id}`, entry.edgeId);
+    }
     portOrder.forEach((entry, index) => {
       anchor.set(
         `${entry.edgeId}:${id}`,

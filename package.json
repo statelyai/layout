@@ -96,7 +96,8 @@
     "storybook": "storybook dev -p 6018 --host 127.0.0.1 --no-open",
     "storybook:build": "storybook build -o dist-storybook",
     "storybook:typecheck": "tsc --project stories/tsconfig.json",
-    "test:parity:compound": "tsx scripts/check-compound-parity.ts"
+    "test:parity:compound": "tsx scripts/check-compound-parity.ts",
+    "test:parity:self-loops": "tsx scripts/check-mixed-self-loop-parity.ts"
   },
   "dependencies": {
     "@lume/kiwi": "^0.4.4",

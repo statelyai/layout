@@ -1,0 +1,35 @@
+{
+  "status": "uncommitted; parity incomplete",
+  "base": "21a622d65d2ea1ab3d65a35b410cbea8f8975348",
+  "source": {
+    "scripts/parity/render-compound-baseline.mjs": "2b0207f5844dad00935128f287aea91d4ef31d80aa6b49b2425d9957ce3a471e",
+    "scripts/parity/trace-compound-worker.mjs": "9b0a23ac079efca52bbf509106fe32ad0fc42340068e2793075b9cafcff80676",
+    "src/elkjs/index.ts": "b4b8299aa179741b3ce29def61230d5f7b3a660038709f069dc7ad6520f6a031",
+    "src/elkjs/types.ts": "f09f59e24633334379a6b3cc46b8f90e3574b81f77232f8d745e1e3be15d46b6",
+    "src/layered/bk-node-placement.ts": "c734051c71efb682ad74094629f3265d44bde76b6e10c0b5d13113fc85a1cdf5",
+    "src/layered/compound-boundaries.ts": "460d7a5911c1034b9c1740fd650f3f76718853da622a280c61e7d427441a694c",
+    "src/layered/hierarchy-crossing.ts": "8e7b5db4bccc13e773347b326b632f1c0c17f025fb36fbeb478118f22ab35f12",
+    "src/layered/index.ts": "c26d36e39cc512819c0fb313e0e9700f280c81a9dba3c0a71e4cb00d1c3aea05",
+    "src/layered/strategies.ts": "291b9a5b741d6c1437bec26ef5dfd9de857fcbdecc28e012f2aa51e6010c2165",
+    "test/helpers/elk-constraint-oracle.ts": "114b9591119332e34b0883eea79891b4a6e13bb47a639d37c088af5769103fcd",
+    "test/layered-scope-pipeline.test.ts": "6b028351be0e1c2415a1f127beb35015924fca7880e1f7233b06cda82156ad56",
+    "test/layered-sweep-session.test.ts": "a87273f34a8a737f5cbb72df1333c686c5c00186ed84ad98e26d30c360b6ea56",
+    "test/oracle-compound-boundary-transfer.test.ts": "cc499509f8908277cdb277f6fb079ecce1c83be903b90461b987b61a9a565a19",
+    "test/oracle-compound-port-identity.test.ts": "4860d3a65c21ee9445f6da8547b2fc0b75d7957cf0963a1dfd33437ccd8a717f"
+  },
+  "compound": {
+    "cases": 100,
+    "matched": 16,
+    "nativeErrors": 0,
+    "elkErrors": 0,
+    "differingValues": 3354
+  },
+  "outputsUnchangedFrom": "../scope-crossing-order/report.json",
+  "suite": {
+    "numPassedTests": 1909,
+    "numFailedTests": 118,
+    "numTotalTests": 2027,
+    "introduced": [],
+    "fixed": []
+  }
+}

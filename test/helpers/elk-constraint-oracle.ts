@@ -17,6 +17,43 @@ const context = vm.createContext({
 });
 context.global = context;
 vm.runInContext(source, context, { timeout: 20000 });
+/** Observe the real worker's parent-port transfer, including its dummy mutation. */
+export function elkTransferExternalPort(
+  data: import("../../src/layered/compound-boundaries").ExternalPortTransfer,
+): { port: { x: number; y: number }; dummy: { x: number; y: number } } {
+  context.$clinit_LayeredOptions();
+  context.$clinit_InternalProperties_1();
+  context.$clinit_PortSide();
+  const graph = new context.LGraph();
+  graph.size_0.x_0 = data.contentSize.width;
+  graph.size_0.y_0 = data.contentSize.height;
+  graph.offset.x_0 = data.offset.x;
+  graph.offset.y_0 = data.offset.y;
+  graph.padding.left = data.padding.left;
+  graph.padding.right = data.padding.right;
+  graph.padding.top_0 = data.padding.top;
+  graph.padding.bottom = data.padding.bottom;
+  const node = new context.LNode(graph);
+  node.pos.x_0 = data.dummy.x;
+  node.pos.y_0 = data.dummy.y;
+  node.size_0.x_0 = data.dummy.width;
+  node.size_0.y_0 = data.dummy.height;
+  const sides = {
+    WEST: context.WEST_0,
+    EAST: context.EAST_0,
+    NORTH: context.NORTH_1,
+    SOUTH: context.SOUTH_0,
+  };
+  context.$setProperty_0(node, context.EXT_PORT_SIDE, sides[data.side]);
+  context.$setProperty_0(node, context.PORT_BORDER_OFFSET, data.borderOffset);
+  const port = context.getExternalPortPosition(
+    graph,
+    node,
+    data.portSize.width,
+    data.portSize.height,
+  );
+  return { port: { x: port.x_0, y: port.y_0 }, dummy: { x: node.pos.x_0, y: node.pos.y_0 } };
+}
 export interface ConstraintOracleInput {
   seed: string[];
   order: string[];
