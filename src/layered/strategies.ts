@@ -1,3 +1,4 @@
+import { routingCoordinates } from "./routing-coordinates";
 import {
   hasMovableLoopPorts,
   hasPlacementLoopEnvelope,
@@ -4071,6 +4072,8 @@ function routeEdges(style: "ORTHOGONAL" | "POLYLINE" | "SPLINES"): EdgeRouter {
         });
       }
 
+      const routingPlacement = routingCoordinates(placement);
+      const rawEndpoints = implicitEdgeEndpoints(input, routingPlacement, orientation);
       const slotsByGap = candidatesByGap.map((candidates) => {
         if (candidates.length === 0) return 0;
         // ELK creates hyperedge segments by walking layer nodes and their ports,
@@ -4092,12 +4095,6 @@ function routeEdges(style: "ORTHOGONAL" | "POLYLINE" | "SPLINES"): EdgeRouter {
           }
           return minimum;
         };
-        const criticalThreshold =
-          0.2 *
-          Math.min(
-            minimumDifference(candidates.map(({ sourceCross }) => sourceCross)),
-            minimumDifference(candidates.map(({ targetCross }) => targetCross)),
-          );
         const ports: OrthogonalPort[] = [];
         const byPort = new Map<string, OrthogonalPort>();
         const portByCandidate = new Map<
@@ -4123,7 +4120,20 @@ function routeEdges(style: "ORTHOGONAL" | "POLYLINE" | "SPLINES"): EdgeRouter {
             if (!byPort.has(key)) {
               const position =
                 (side === "source") === increasing ? candidate.sourceCross : candidate.targetCross;
-              const port = { id: key, side, position };
+              const endpoints = rawEndpoints.get(candidate.edge.id);
+              const sourceBefore =
+                flowLayerByNodeId.get(candidate.edge.sourceId)! <
+                flowLayerByNodeId.get(candidate.edge.targetId)!;
+              const rawPoint =
+                endpoints &&
+                ((side === "source") === (sourceBefore === increasing)
+                  ? endpoints.source
+                  : endpoints.target);
+              const port = {
+                id: key,
+                side,
+                position: rawPoint ? (horizontal ? rawPoint.y : rawPoint.x) : position,
+              };
               byPort.set(key, port);
               ports.push(port);
             }
@@ -4137,6 +4147,12 @@ function routeEdges(style: "ORTHOGONAL" | "POLYLINE" | "SPLINES"): EdgeRouter {
           ports,
           candidates.map((candidate) => portByCandidate.get(candidate)!),
         );
+        const criticalThreshold =
+          0.2 *
+          Math.min(
+            minimumDifference(grouped.segments.flatMap((segment) => segment.incoming)),
+            minimumDifference(grouped.segments.flatMap((segment) => segment.outgoing)),
+          );
         const random =
           phaseRandomByInput.get(input) ?? new JavaRandom(input.settings.randomSeed ?? 1);
         const result = routeOrthogonalSegments(
@@ -4159,7 +4175,11 @@ function routeEdges(style: "ORTHOGONAL" | "POLYLINE" | "SPLINES"): EdgeRouter {
             const partner = result.segments[segment.partner]!;
             candidate.secondSlot = increasing ? partner.slot : maximumSlot - segment.slot;
             if (!increasing) candidate.slot = maximumSlot - partner.slot;
-            candidate.crossover = segment.outgoing[0];
+            const sourcePort = portByCandidate.get(candidate)!.source;
+            const offset =
+              (increasing ? candidate.sourceCross : candidate.targetCross) -
+              byPort.get(sourcePort)!.position;
+            candidate.crossover = segment.outgoing[0]! + offset;
           }
         }
         return maximumSlot + 1;

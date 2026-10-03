@@ -11,6 +11,8 @@ import type { LayerOrder, LayeredPhaseInput, NodePlacement } from "./types";
 import { nodeNodeSpacing } from "./spacing";
 import { prepareLoopEnvelopes, preparedLoopEnvelopes, recordLoopEnvelopes } from "./loop-envelopes";
 
+import { recordRoutingCoordinates } from "./routing-coordinates";
+
 const beforeMargin = (input: LayeredPhaseInput, id: string) =>
   preparedLoopEnvelopes(input)?.get(id)?.before ?? 0;
 const afterMargin = (input: LayeredPhaseInput, id: string) =>
@@ -837,6 +839,16 @@ export function placeNodesWithBrandesKoepf(
     );
   }
   const placement = { rectByNodeId };
+  recordRoutingCoordinates(placement, {
+    rectByNodeId: new Map(
+      [...rectByNodeId].map(([id, rect]) => [
+        id,
+        input.direction === "left" || input.direction === "right"
+          ? { ...rect, y: positions.get(id) ?? 0 }
+          : { ...rect, x: positions.get(id) ?? 0 },
+      ]),
+    ),
+  });
   recordLoopEnvelopes(placement, new Set(envelopes.keys()));
   return placement;
 }
