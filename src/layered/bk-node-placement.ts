@@ -4,7 +4,8 @@
  * SPDX-License-Identifier: EPL-2.0
  *******************************************************************************/
 
-import type { EntityRect } from "@statelyai/graph";
+import { getCrossingUnits } from "./crossing-constraints";
+import type { EntityRect, GraphEdge } from "@statelyai/graph";
 import { placeNodesInLayers, placePorts } from "./strategies";
 import type { LayerOrder, LayeredPhaseInput, NodePlacement } from "./types";
 import { nodeNodeSpacing } from "./spacing";
@@ -454,10 +455,12 @@ function compact(
     classIndegree.set(target, (classIndegree.get(target) ?? 0) + 1);
   };
 
+  const threshold = createStraighteningThreshold(input, order, bal, neighbors);
   const placeBlock = (root: string): void => {
     if (bal.y.has(root)) return;
     bal.y.set(root, 0);
     let assigned = false;
+    let bound = bal.vdir === "UP" ? Number.POSITIVE_INFINITY : Number.NEGATIVE_INFINITY;
     let current = root;
     do {
       const layerNo = neighbors.layerIndex.get(current) ?? 0;
@@ -467,6 +470,7 @@ function compact(
       if (neighbor !== undefined) {
         const neighborRoot = bal.root.get(neighbor) ?? neighbor;
         placeBlock(neighborRoot);
+        bound = threshold.calculate(bound, root, current);
         if (bal.sink.get(root) === root)
           bal.sink.set(root, bal.sink.get(neighborRoot) ?? neighborRoot);
         const rootSink = bal.sink.get(root) ?? root;
@@ -489,9 +493,11 @@ function compact(
             root,
             assigned
               ? bal.vdir === "UP"
-                ? Math.min(bal.y.get(root) ?? 0, candidate)
-                : Math.max(bal.y.get(root) ?? 0, candidate)
-              : candidate,
+                ? Math.min(bal.y.get(root) ?? 0, candidate, bound)
+                : Math.max(bal.y.get(root) ?? 0, candidate, bound)
+              : bal.vdir === "UP"
+                ? Math.min(candidate, bound)
+                : Math.max(candidate, bound),
           );
           assigned = true;
         } else {
@@ -514,9 +520,12 @@ function compact(
                 classSpacing;
           addClassEdge(rootSink, neighborSink, separation);
         }
+      } else {
+        bound = threshold.calculate(bound, root, current);
       }
       current = bal.align.get(current) ?? root;
     } while (current !== root);
+    threshold.finish(root);
   };
 
   const layers = bal.hdir === "LEFT" ? [...order.layers].reverse() : order.layers;
@@ -557,6 +566,7 @@ function compact(
       bal.y.set(id, value + (bal.innerShift.get(id) ?? 0));
     }
   }
+  threshold.postProcess();
 }
 
 function extent(input: LayeredPhaseInput, bal: Alignment): [number, number] {
@@ -586,79 +596,132 @@ function preservesLayerOrder(
   return true;
 }
 
-function improveEdgeStraightness(
+/** ELK's compaction thresholds and deferred straightening share block state. */
+function createStraighteningThreshold(
   input: LayeredPhaseInput,
   order: LayerOrder,
   bal: Alignment,
   neighbors: ReturnType<typeof buildNeighbors>,
-): void {
-  if (
-    (input.settings["nodePlacement.bk.edgeStraightening"] ?? "IMPROVE_STRAIGHTNESS") !==
-    "IMPROVE_STRAIGHTNESS"
-  ) {
-    return;
-  }
-  const lockedRoots = new Set<string>();
-  const nodesByRoot = new Map<string, string[]>();
+) {
+  const enabled =
+    (input.settings["nodePlacement.bk.edgeStraightening"] ?? "IMPROVE_STRAIGHTNESS") ===
+    "IMPROVE_STRAIGHTNESS";
+  const invalid = bal.vdir === "UP" ? Number.POSITIVE_INFINITY : Number.NEGATIVE_INFINITY;
+  const finished = new Set<string>();
+  const used = new Set<string>();
+  const blocks = new Map<string, string[]>();
   for (const id of neighbors.layerIndex.keys()) {
     const root = bal.root.get(id) ?? id;
-    const nodes = nodesByRoot.get(root) ?? [];
-    nodes.push(id);
-    nodesByRoot.set(root, nodes);
+    blocks.set(root, [...(blocks.get(root) ?? []), id]);
   }
-  const canShift = (root: string, delta: number): boolean =>
-    (nodesByRoot.get(root) ?? []).every((id) => {
-      const candidate = (bal.y.get(id) ?? 0) + delta;
-      const end = candidate + crossSize(input, id);
-      const layer = order.layers[neighbors.layerIndex.get(id) ?? 0] ?? [];
-      return layer.every((otherId) => {
-        if ((bal.root.get(otherId) ?? otherId) === root) return true;
-        const other = bal.y.get(otherId) ?? 0;
-        const spacing = nodeNodeSpacing(input, id, otherId);
-        return end + spacing <= other || other + crossSize(input, otherId) + spacing <= candidate;
-      });
-    });
-  const layers = bal.hdir === "LEFT" ? [...order.layers].reverse() : order.layers;
-  for (const layer of layers) {
-    const nodes = bal.vdir === "UP" ? [...layer].reverse() : layer;
-    for (const [traversalIndex, id] of nodes.entries()) {
-      if (traversalIndex === 0) continue;
-      const root = bal.root.get(id) ?? id;
-      if (lockedRoots.has(root) || root !== id) continue;
-      // ELK selects straightening edges through the swept physical port list.
-      // Model edge order can select a different parallel boundary connection.
-      const portOrder = (
-        bal.hdir === "RIGHT" ? order.inputPortOrderByNodeId : order.outputPortOrderByNodeId
-      )?.get(id);
-      const candidateEdges = input.graph.edges
-        .filter((edge) => (bal.hdir === "RIGHT" ? edge.targetId === id : edge.sourceId === id))
-        .sort((a, b) => (portOrder ? portOrder.indexOf(a.id) - portOrder.indexOf(b.id) : 0));
-      const edge = candidateEdges.find((candidate) => {
-        const otherId = candidate.sourceId === id ? candidate.targetId : candidate.sourceId;
-        return !lockedRoots.has(bal.root.get(otherId) ?? otherId);
-      });
-      if (!edge) continue;
-      const otherId = edge.sourceId === id ? edge.targetId : edge.sourceId;
-      const currentAnchor = neighbors.anchor.get(`${edge.id}:${id}`) ?? crossSize(input, id) / 2;
-      const otherAnchor =
-        neighbors.anchor.get(`${edge.id}:${otherId}`) ?? crossSize(input, otherId) / 2;
-      const desired = (bal.y.get(otherId) ?? 0) + otherAnchor - currentAnchor;
-      const delta = desired - (bal.y.get(id) ?? 0);
+  const longEdges = getCrossingUnits(input)?.longEdgeNodes;
+  type Pending = { free: string; isRoot: boolean; edge?: GraphEdge; hasEdges?: boolean };
+  const queue: Pending[] = [],
+    stack: Pending[] = [];
+  const rootOf = (id: string) => bal.root.get(id) ?? id;
+  const pick = (pending: Pending): Pending => {
+    const incoming = pending.isRoot ? bal.hdir === "RIGHT" : bal.hdir === "LEFT";
+    const ports = (incoming ? order.inputPortOrderByNodeId : order.outputPortOrderByNodeId)?.get(
+      pending.free,
+    );
+    const edges = input.graph.edges
+      .filter((edge) =>
+        incoming ? edge.targetId === pending.free : edge.sourceId === pending.free,
+      )
+      .sort((a, b) => (ports ? ports.indexOf(a.id) - ports.indexOf(b.id) : 0));
+    const onlyDummies = (blocks.get(rootOf(pending.free)) ?? []).every(
+      (id) =>
+        longEdges?.has(id) ??
+        (id.startsWith("__layout_dummy:") && !id.startsWith("__layout_dummy:label:")),
+    );
+    pending.hasEdges = false;
+    pending.edge = undefined;
+    for (const edge of edges) {
       if (
-        ((bal.vdir === "DOWN" && delta > 0) || (bal.vdir === "UP" && delta < 0)) &&
-        canShift(root, delta)
-      ) {
-        for (const blockNode of nodesByRoot.get(root) ?? []) {
-          bal.y.set(blockNode, (bal.y.get(blockNode) ?? 0) + delta);
-        }
-        lockedRoots.add(root);
-        lockedRoots.add(bal.root.get(otherId) ?? otherId);
+        !onlyDummies &&
+        edge.sourceId !== edge.targetId &&
+        neighbors.layerIndex.get(edge.sourceId) === neighbors.layerIndex.get(edge.targetId)
+      )
+        continue;
+      if (used.has(rootOf(pending.free))) continue;
+      pending.hasEdges = true;
+      const other = edge.sourceId === pending.free ? edge.targetId : edge.sourceId;
+      if (finished.has(rootOf(other))) {
+        pending.edge = edge;
+        return pending;
       }
     }
-  }
+    return pending;
+  };
+  const anchor = (edge: GraphEdge, id: string) =>
+    neighbors.anchor.get(`${edge.id}:${id}`) ?? crossSize(input, id) / 2;
+  const bound = (free: string, isRoot: boolean): number => {
+    const pending = pick({ free, isRoot });
+    if (!pending.edge) {
+      if (pending.hasEdges) queue.push(pending);
+      return invalid;
+    }
+    const edge = pending.edge;
+    const other = edge.sourceId === free ? edge.targetId : edge.sourceId;
+    const threshold =
+      (bal.y.get(rootOf(other)) ?? 0) +
+      (bal.innerShift.get(other) ?? 0) +
+      anchor(edge, other) -
+      (bal.innerShift.get(free) ?? 0) -
+      anchor(edge, free);
+    used.add(rootOf(edge.sourceId));
+    used.add(rootOf(edge.targetId));
+    return threshold;
+  };
+  const calculate = (old: number, root: string, current: string): number => {
+    if (!enabled) return invalid;
+    const isRoot = root === current,
+      isLast = bal.align.get(current) === root;
+    if (!isRoot && !isLast) return old;
+    let value = old;
+    if (isRoot) value = bound(root, true);
+    if (!Number.isFinite(value) && isLast) value = bound(current, false);
+    return value;
+  };
+  const process = (pending: Pending): boolean => {
+    const edge = pending.edge!;
+    const free = pending.free;
+    const other = edge.sourceId === free ? edge.targetId : edge.sourceId;
+    const delta =
+      (bal.y.get(other) ?? 0) + anchor(edge, other) - (bal.y.get(free) ?? 0) - anchor(edge, free);
+    if (!Number.isFinite(delta) || delta === 0) return false;
+    let available = Math.abs(delta);
+    for (const id of blocks.get(rootOf(free)) ?? []) {
+      const layer = order.layers[neighbors.layerIndex.get(id) ?? 0] ?? [];
+      const index = neighbors.nodeIndex.get(id) ?? 0;
+      const adjacent = layer[index + (delta < 0 ? -1 : 1)];
+      if (adjacent === undefined) continue;
+      const gap =
+        delta < 0
+          ? (bal.y.get(id) ?? 0) - (bal.y.get(adjacent) ?? 0) - crossSize(input, adjacent)
+          : (bal.y.get(adjacent) ?? 0) - (bal.y.get(id) ?? 0) - crossSize(input, id);
+      available = Math.min(available, gap - nodeNodeSpacing(input, id, adjacent));
+    }
+    for (const id of blocks.get(rootOf(free)) ?? [])
+      bal.y.set(id, (bal.y.get(id) ?? 0) + (delta < 0 ? -available : available));
+    return available > 0;
+  };
+  return {
+    calculate,
+    finish: (root: string) => finished.add(root),
+    postProcess: () => {
+      if (!enabled) return;
+      for (const pending of queue) {
+        pick(pending);
+        if (!pending.edge) continue;
+        if (!process(pending)) stack.push(pending);
+      }
+      while (stack.length) process(stack.pop()!);
+    },
+  };
 }
 
-/** ELK-compatible Brandes-Koepf placement for implicit center ports. */
+/** ELK-compatible Brandes-Koepf placement with port-aware compaction. */
 export function placeNodesWithBrandesKoepf(
   input: LayeredPhaseInput,
   order: LayerOrder,
@@ -686,7 +749,6 @@ export function placeNodesWithBrandesKoepf(
     const layout = makeAlignment(hdir, vdir);
     alignBlocks(input, order, layout, neighbors, markedEdges);
     compact(input, order, layout, neighbors);
-    improveEdgeStraightness(input, order, layout, neighbors);
     return layout;
   });
   const smallestFeasibleLayout = (): Alignment => {

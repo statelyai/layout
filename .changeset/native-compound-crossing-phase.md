@@ -12,3 +12,7 @@ implicit port creation, and publish clockwise input boundary port order. Native
 hierarchical layout and routing parity remains incomplete. Select BK straightening
 edges through physical port order and apply ELK spacing to tagged external
 boundary dummies.
+
+Apply BK straightening thresholds during compaction, with completed-block state
+and deferred retries within available space. Preserve random flat failures in a
+new reproducible corpus covering ports, cycles, self-loops and labels.

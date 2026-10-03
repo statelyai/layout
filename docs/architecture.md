@@ -97,6 +97,12 @@ orders retain authored model-order and greedy-switch policies. Exact sweepiness
 classification for non-flow-side and feedback ports, deeper hierarchies, labels
 and junctions remain parity work.
 
+Brandes-Koepf compaction applies straightening thresholds while placing blocks,
+tracks completed blocks and used connections, and queues unresolved boundary
+edges. After class shifts it retries those edges within available space in either
+direction. Threshold and retry candidates follow physical port order. Tagged
+external dummies use port/edge/label spacing rather than normal-node spacing.
+
 Fixed-port self-loops retain the explicit anchor and the implicit endpoint's
 flow-side anchor. The perimeter route is computed in canonical coordinates and
 mapped to the selected direction. Loop reservations follow the actual port face;

@@ -384,3 +384,8 @@ remains work in progress.
 For bounded random fixed-port self-loops, run `pnpm test:parity:self-loops`.
 This smaller gate compares complete node/port geometry, routes and junctions
 with real ELK; passing it does not establish broad hierarchy parity.
+
+For bounded random flat graphs with cycles, self-loops, fixed-side/fixed-position
+ports and labels, run `pnpm test:parity:flat`. This strict geometry gate preserves
+all mismatches and engine errors; it currently fails. See the
+[flat random proof](./docs/heuristics/bk-compaction-thresholds/README.md).

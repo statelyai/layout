@@ -997,3 +997,18 @@ matches, **2,324 to 1,607 differing values**. Inputs/tolerance remain unchanged.
 31 new regressions pass. Full local suite **2,100 pass / 108 fail / 2,208**, no
 new failure names. Types, selected format/lint and build pass. RIGHT/DOWN seed 3
 have equal-scale before/after/ELK browser proof. Broader parity remains incomplete.
+
+## BK compaction thresholds and flat corpus
+
+[Source and proof](./bk-compaction-thresholds/README.md) replace independent
+straightening shifts with ELK's compaction thresholds, block state and deferred
+retries. Hierarchy improves **50 to 60/100**, zero errors/lost matches, **1,607 to
+1,503 differing values**. Ten new full-geometry regressions fail before and pass
+after. RIGHT/DOWN seed 4 match in browser comparisons.
+
+New bounded flat corpus covers ports, cycles, self-loops and labels: **10 to
+12/100 matches**, no errors/lost matches, **15,081 to 14,813 differences**, same
+inputs/tolerance. All failures remain preserved. Final local suite **2,111 pass /
+108 fail / 2,219**, no new failures; two initial timeouts clear unchanged in
+isolation and in the final complete run. Types, selected format/lint and build
+pass. Broad parity remains incomplete and the goal active.
