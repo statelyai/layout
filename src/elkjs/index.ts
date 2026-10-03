@@ -513,7 +513,12 @@ export default class ELK {
         child.layoutOptions = {
           ...child.layoutOptions,
           "elk.portConstraints":
-            getOption(authoredOptionsByCompound.get(child) ?? {}, "portConstraints") ?? "FREE",
+            // ELK fixes physical boundary sides after introducing hierarchy dummies.
+            // Authored constraints are restored when finishing the public graph.
+            crossingEdges.length > 0
+              ? "FIXED_SIDE"
+              : (getOption(authoredOptionsByCompound.get(child) ?? {}, "portConstraints") ??
+                "FREE"),
         };
         finishChildren.push(async () => {
           await preparedChild.finish(activeOrders);
@@ -1545,7 +1550,16 @@ function toGraph(root: ElkNode, globalOptions: Readonly<Record<string, unknown>>
     if (String(getOption(child.layoutOptions ?? {}, "portConstraints")) !== "FIXED_SIDE") {
       return ports;
     }
-    const side = (port: ElkPort) => String(getOption(port.layoutOptions ?? {}, "port.side"));
+    const canonicalSides: Record<string, string> =
+      getDirection(globalOptions) === "left"
+        ? { NORTH: "NORTH", EAST: "WEST", SOUTH: "SOUTH", WEST: "EAST" }
+        : getDirection(globalOptions) === "down"
+          ? { NORTH: "WEST", EAST: "SOUTH", SOUTH: "EAST", WEST: "NORTH" }
+          : getDirection(globalOptions) === "up"
+            ? { NORTH: "EAST", EAST: "SOUTH", SOUTH: "WEST", WEST: "NORTH" }
+            : { NORTH: "NORTH", EAST: "EAST", SOUTH: "SOUTH", WEST: "WEST" };
+    const side = (port: ElkPort) =>
+      canonicalSides[String(getOption(port.layoutOptions ?? {}, "port.side"))] ?? "UNDEFINED";
     const sideOrder = ["NORTH", "EAST", "SOUTH", "WEST"];
     ports.sort((left, right) => {
       const leftSide = side(left);

@@ -1,0 +1,37 @@
+{
+  "before": {
+    "numPassedTests": 2897,
+    "numFailedTests": 101,
+    "numTotalTests": 2998
+  },
+  "after": {
+    "numPassedTests": 2938,
+    "numFailedTests": 123,
+    "numTotalTests": 3061
+  },
+  "fixed": [],
+  "newFailures": [
+    "fixes hierarchy boundary sides: feedback, DOWN, FIXED_ORDER",
+    "fixes hierarchy boundary sides: feedback, DOWN, FIXED_POS",
+    "fixes hierarchy boundary sides: feedback, LEFT, FIXED_ORDER",
+    "fixes hierarchy boundary sides: feedback, LEFT, FIXED_POS",
+    "fixes hierarchy boundary sides: feedback, UP, FIXED_ORDER",
+    "fixes hierarchy boundary sides: feedback, UP, FIXED_POS",
+    "fixes hierarchy boundary sides: parallel, DOWN, FIXED_ORDER",
+    "fixes hierarchy boundary sides: parallel, DOWN, FIXED_POS",
+    "fixes hierarchy boundary sides: parallel, LEFT, FIXED_ORDER",
+    "fixes hierarchy boundary sides: parallel, LEFT, FIXED_POS",
+    "fixes hierarchy boundary sides: parallel, UP, FIXED_ORDER",
+    "fixes hierarchy boundary sides: parallel, UP, FIXED_POS",
+    "fixes hierarchy boundary sides: ports, DOWN, FIXED_ORDER",
+    "fixes hierarchy boundary sides: ports, DOWN, FIXED_POS",
+    "fixes hierarchy boundary sides: ports, DOWN, FREE",
+    "fixes hierarchy boundary sides: ports, DOWN, default",
+    "fixes hierarchy boundary sides: ports, LEFT, FIXED_ORDER",
+    "fixes hierarchy boundary sides: ports, LEFT, FIXED_POS",
+    "fixes hierarchy boundary sides: ports, UP, FIXED_ORDER",
+    "fixes hierarchy boundary sides: ports, UP, FIXED_POS",
+    "fixes hierarchy boundary sides: ports, UP, FREE",
+    "fixes hierarchy boundary sides: ports, UP, default"
+  ]
+}

@@ -1,0 +1,1158 @@
+[
+  {
+    "name": "directional-report.json",
+    "seed": 12,
+    "direction": "LEFT",
+    "input": {
+      "id": "root",
+      "layoutOptions": {
+        "elk.algorithm": "layered",
+        "elk.direction": "LEFT",
+        "elk.hierarchyHandling": "INCLUDE_CHILDREN",
+        "elk.layered.compaction.postCompaction.strategy": "LEFT_RIGHT_CONNECTION_LOCKING"
+      },
+      "children": [
+        {
+          "id": "g0",
+          "children": [
+            {
+              "id": "n0",
+              "width": 40,
+              "height": 30
+            },
+            {
+              "id": "n1",
+              "width": 50,
+              "height": 20
+            }
+          ],
+          "edges": []
+        },
+        {
+          "id": "g1",
+          "children": [
+            {
+              "id": "n2",
+              "width": 50,
+              "height": 20
+            },
+            {
+              "id": "n3",
+              "width": 50,
+              "height": 20
+            },
+            {
+              "id": "n4",
+              "width": 50,
+              "height": 30
+            }
+          ],
+          "edges": []
+        },
+        {
+          "id": "outside",
+          "width": 30,
+          "height": 20
+        }
+      ],
+      "edges": [
+        {
+          "id": "e0",
+          "sources": ["n0"],
+          "targets": ["outside"]
+        },
+        {
+          "id": "e1",
+          "sources": ["n1"],
+          "targets": ["n4"]
+        },
+        {
+          "id": "e2",
+          "sources": ["n0"],
+          "targets": ["outside"]
+        }
+      ]
+    }
+  },
+  {
+    "name": "directional-report.json",
+    "seed": 15,
+    "direction": "LEFT",
+    "input": {
+      "id": "root",
+      "layoutOptions": {
+        "elk.algorithm": "layered",
+        "elk.direction": "LEFT",
+        "elk.hierarchyHandling": "INCLUDE_CHILDREN",
+        "elk.layered.compaction.postCompaction.strategy": "LEFT_RIGHT_CONSTRAINT_LOCKING"
+      },
+      "children": [
+        {
+          "id": "g0",
+          "children": [
+            {
+              "id": "n0",
+              "width": 40,
+              "height": 40
+            },
+            {
+              "id": "n1",
+              "width": 30,
+              "height": 30
+            },
+            {
+              "id": "n2",
+              "width": 50,
+              "height": 20
+            }
+          ],
+          "edges": []
+        },
+        {
+          "id": "g1",
+          "children": [
+            {
+              "id": "n3",
+              "width": 50,
+              "height": 20
+            },
+            {
+              "id": "n4",
+              "width": 40,
+              "height": 20
+            }
+          ],
+          "edges": []
+        },
+        {
+          "id": "outside",
+          "width": 30,
+          "height": 20
+        }
+      ],
+      "edges": [
+        {
+          "id": "e0",
+          "sources": ["n0"],
+          "targets": ["n4"]
+        },
+        {
+          "id": "e1",
+          "sources": ["n0"],
+          "targets": ["outside"]
+        }
+      ]
+    }
+  },
+  {
+    "name": "directional-report.json",
+    "seed": 17,
+    "direction": "LEFT",
+    "input": {
+      "id": "root",
+      "layoutOptions": {
+        "elk.algorithm": "layered",
+        "elk.direction": "LEFT",
+        "elk.hierarchyHandling": "INCLUDE_CHILDREN",
+        "elk.layered.compaction.postCompaction.strategy": "LEFT"
+      },
+      "children": [
+        {
+          "id": "g0",
+          "children": [
+            {
+              "id": "n0",
+              "width": 30,
+              "height": 40
+            },
+            {
+              "id": "n1",
+              "width": 40,
+              "height": 20
+            }
+          ],
+          "edges": []
+        },
+        {
+          "id": "g1",
+          "children": [
+            {
+              "id": "n2",
+              "width": 30,
+              "height": 20
+            },
+            {
+              "id": "n3",
+              "width": 40,
+              "height": 30
+            }
+          ],
+          "edges": []
+        },
+        {
+          "id": "outside",
+          "width": 30,
+          "height": 20
+        }
+      ],
+      "edges": [
+        {
+          "id": "e0",
+          "sources": ["n1"],
+          "targets": ["n2"]
+        },
+        {
+          "id": "e1",
+          "sources": ["n1"],
+          "targets": ["n3"]
+        },
+        {
+          "id": "e2",
+          "sources": ["n0"],
+          "targets": ["outside"]
+        }
+      ]
+    }
+  },
+  {
+    "name": "directional-report.json",
+    "seed": 18,
+    "direction": "LEFT",
+    "input": {
+      "id": "root",
+      "layoutOptions": {
+        "elk.algorithm": "layered",
+        "elk.direction": "LEFT",
+        "elk.hierarchyHandling": "INCLUDE_CHILDREN",
+        "elk.layered.compaction.postCompaction.strategy": "RIGHT"
+      },
+      "children": [
+        {
+          "id": "g0",
+          "children": [
+            {
+              "id": "n0",
+              "width": 40,
+              "height": 20
+            },
+            {
+              "id": "n1",
+              "width": 40,
+              "height": 30
+            }
+          ],
+          "edges": []
+        },
+        {
+          "id": "g1",
+          "children": [
+            {
+              "id": "n2",
+              "width": 50,
+              "height": 20
+            },
+            {
+              "id": "n3",
+              "width": 30,
+              "height": 20
+            },
+            {
+              "id": "n4",
+              "width": 30,
+              "height": 40
+            }
+          ],
+          "edges": []
+        },
+        {
+          "id": "outside",
+          "width": 30,
+          "height": 20
+        }
+      ],
+      "edges": [
+        {
+          "id": "e0",
+          "sources": ["n1"],
+          "targets": ["n3"]
+        },
+        {
+          "id": "e1",
+          "sources": ["n0"],
+          "targets": ["outside"]
+        }
+      ]
+    }
+  },
+  {
+    "name": "expanded-report.json",
+    "seed": 27,
+    "direction": "LEFT",
+    "input": {
+      "id": "root",
+      "layoutOptions": {
+        "elk.algorithm": "layered",
+        "elk.direction": "LEFT",
+        "elk.hierarchyHandling": "INCLUDE_CHILDREN",
+        "elk.layered.compaction.postCompaction.strategy": "LEFT_RIGHT_CONSTRAINT_LOCKING"
+      },
+      "children": [
+        {
+          "id": "g0",
+          "children": [
+            {
+              "id": "n0",
+              "width": 30,
+              "height": 20
+            },
+            {
+              "id": "n1",
+              "width": 40,
+              "height": 30
+            }
+          ],
+          "edges": []
+        },
+        {
+          "id": "g1",
+          "children": [
+            {
+              "id": "n2",
+              "width": 30,
+              "height": 40
+            },
+            {
+              "id": "n3",
+              "width": 30,
+              "height": 30
+            }
+          ],
+          "edges": []
+        },
+        {
+          "id": "outside",
+          "width": 30,
+          "height": 20
+        }
+      ],
+      "edges": [
+        {
+          "id": "e0",
+          "sources": ["n0"],
+          "targets": ["n3"]
+        },
+        {
+          "id": "e1",
+          "sources": ["n1"],
+          "targets": ["outside"]
+        },
+        {
+          "id": "e2",
+          "sources": ["n0"],
+          "targets": ["outside"]
+        }
+      ]
+    }
+  },
+  {
+    "name": "expanded-report.json",
+    "seed": 36,
+    "direction": "LEFT",
+    "input": {
+      "id": "root",
+      "layoutOptions": {
+        "elk.algorithm": "layered",
+        "elk.direction": "LEFT",
+        "elk.hierarchyHandling": "INCLUDE_CHILDREN",
+        "elk.layered.compaction.postCompaction.strategy": "LEFT_RIGHT_CONNECTION_LOCKING"
+      },
+      "children": [
+        {
+          "id": "g0",
+          "children": [
+            {
+              "id": "n0",
+              "width": 50,
+              "height": 20
+            },
+            {
+              "id": "n1",
+              "width": 40,
+              "height": 20
+            },
+            {
+              "id": "n2",
+              "width": 40,
+              "height": 40
+            },
+            {
+              "id": "n3",
+              "width": 30,
+              "height": 20
+            }
+          ],
+          "edges": [
+            {
+              "id": "e0",
+              "sources": ["n0"],
+              "targets": ["n3"]
+            }
+          ]
+        },
+        {
+          "id": "g1",
+          "children": [
+            {
+              "id": "n4",
+              "width": 50,
+              "height": 40
+            },
+            {
+              "id": "n5",
+              "width": 50,
+              "height": 40
+            }
+          ],
+          "edges": []
+        },
+        {
+          "id": "outside",
+          "width": 30,
+          "height": 20
+        }
+      ],
+      "edges": [
+        {
+          "id": "e1",
+          "sources": ["n1"],
+          "targets": ["n4"]
+        },
+        {
+          "id": "e2",
+          "sources": ["n3"],
+          "targets": ["n5"]
+        },
+        {
+          "id": "e3",
+          "sources": ["n0"],
+          "targets": ["outside"]
+        }
+      ]
+    }
+  },
+  {
+    "name": "expanded-report.json",
+    "seed": 39,
+    "direction": "LEFT",
+    "input": {
+      "id": "root",
+      "layoutOptions": {
+        "elk.algorithm": "layered",
+        "elk.direction": "LEFT",
+        "elk.hierarchyHandling": "INCLUDE_CHILDREN",
+        "elk.layered.compaction.postCompaction.strategy": "LEFT_RIGHT_CONSTRAINT_LOCKING"
+      },
+      "children": [
+        {
+          "id": "g0",
+          "children": [
+            {
+              "id": "n0",
+              "width": 50,
+              "height": 30
+            },
+            {
+              "id": "n1",
+              "width": 50,
+              "height": 30
+            }
+          ],
+          "edges": []
+        },
+        {
+          "id": "g1",
+          "children": [
+            {
+              "id": "n2",
+              "width": 30,
+              "height": 40
+            },
+            {
+              "id": "n3",
+              "width": 40,
+              "height": 30
+            }
+          ],
+          "edges": []
+        },
+        {
+          "id": "outside",
+          "width": 30,
+          "height": 20
+        }
+      ],
+      "edges": [
+        {
+          "id": "e0",
+          "sources": ["n1"],
+          "targets": ["n3"]
+        },
+        {
+          "id": "e1",
+          "sources": ["n0"],
+          "targets": ["outside"]
+        }
+      ]
+    }
+  },
+  {
+    "name": "expanded-report.json",
+    "seed": 43,
+    "direction": "LEFT",
+    "input": {
+      "id": "root",
+      "layoutOptions": {
+        "elk.algorithm": "layered",
+        "elk.direction": "LEFT",
+        "elk.hierarchyHandling": "INCLUDE_CHILDREN",
+        "elk.layered.compaction.postCompaction.strategy": "LEFT_RIGHT_CONSTRAINT_LOCKING"
+      },
+      "children": [
+        {
+          "id": "g0",
+          "children": [
+            {
+              "id": "n0",
+              "width": 50,
+              "height": 20
+            },
+            {
+              "id": "n1",
+              "width": 30,
+              "height": 20
+            }
+          ],
+          "edges": []
+        },
+        {
+          "id": "g1",
+          "children": [
+            {
+              "id": "n2",
+              "width": 30,
+              "height": 30
+            },
+            {
+              "id": "n3",
+              "width": 40,
+              "height": 20
+            }
+          ],
+          "edges": []
+        },
+        {
+          "id": "outside",
+          "width": 30,
+          "height": 20
+        }
+      ],
+      "edges": [
+        {
+          "id": "e0",
+          "sources": ["n0"],
+          "targets": ["n3"]
+        },
+        {
+          "id": "e1",
+          "sources": ["n0"],
+          "targets": ["outside"]
+        }
+      ]
+    }
+  },
+  {
+    "name": "directional-fresh-report.json",
+    "seed": 58,
+    "direction": "LEFT",
+    "input": {
+      "id": "root",
+      "layoutOptions": {
+        "elk.algorithm": "layered",
+        "elk.direction": "LEFT",
+        "elk.hierarchyHandling": "INCLUDE_CHILDREN",
+        "elk.layered.compaction.postCompaction.strategy": "RIGHT"
+      },
+      "children": [
+        {
+          "id": "g0",
+          "children": [
+            {
+              "id": "n0",
+              "width": 40,
+              "height": 40
+            },
+            {
+              "id": "n1",
+              "width": 50,
+              "height": 30
+            },
+            {
+              "id": "n2",
+              "width": 40,
+              "height": 30
+            }
+          ],
+          "edges": []
+        },
+        {
+          "id": "g1",
+          "children": [
+            {
+              "id": "n3",
+              "width": 30,
+              "height": 20
+            },
+            {
+              "id": "n4",
+              "width": 30,
+              "height": 30
+            }
+          ],
+          "edges": [
+            {
+              "id": "e1",
+              "sources": ["n3"],
+              "targets": ["n4"]
+            }
+          ]
+        },
+        {
+          "id": "outside",
+          "width": 30,
+          "height": 20
+        }
+      ],
+      "edges": [
+        {
+          "id": "e0",
+          "sources": ["n2"],
+          "targets": ["n3"]
+        },
+        {
+          "id": "e2",
+          "sources": ["n0"],
+          "targets": ["outside"]
+        }
+      ]
+    }
+  },
+  {
+    "name": "directional-fresh-report.json",
+    "seed": 59,
+    "direction": "LEFT",
+    "input": {
+      "id": "root",
+      "layoutOptions": {
+        "elk.algorithm": "layered",
+        "elk.direction": "LEFT",
+        "elk.hierarchyHandling": "INCLUDE_CHILDREN",
+        "elk.layered.compaction.postCompaction.strategy": "LEFT_RIGHT_CONSTRAINT_LOCKING"
+      },
+      "children": [
+        {
+          "id": "g0",
+          "children": [
+            {
+              "id": "n0",
+              "width": 50,
+              "height": 20
+            },
+            {
+              "id": "n1",
+              "width": 30,
+              "height": 40
+            }
+          ],
+          "edges": []
+        },
+        {
+          "id": "g1",
+          "children": [
+            {
+              "id": "n2",
+              "width": 30,
+              "height": 30
+            },
+            {
+              "id": "n3",
+              "width": 50,
+              "height": 40
+            },
+            {
+              "id": "n4",
+              "width": 30,
+              "height": 20
+            }
+          ],
+          "edges": []
+        },
+        {
+          "id": "outside",
+          "width": 30,
+          "height": 20
+        }
+      ],
+      "edges": [
+        {
+          "id": "e0",
+          "sources": ["n0"],
+          "targets": ["n2"]
+        },
+        {
+          "id": "e1",
+          "sources": ["n0"],
+          "targets": ["outside"]
+        }
+      ]
+    }
+  },
+  {
+    "name": "directional-fresh-report.json",
+    "seed": 64,
+    "direction": "LEFT",
+    "input": {
+      "id": "root",
+      "layoutOptions": {
+        "elk.algorithm": "layered",
+        "elk.direction": "LEFT",
+        "elk.hierarchyHandling": "INCLUDE_CHILDREN",
+        "elk.layered.compaction.postCompaction.strategy": "LEFT_RIGHT_CONNECTION_LOCKING"
+      },
+      "children": [
+        {
+          "id": "g0",
+          "children": [
+            {
+              "id": "n0",
+              "width": 30,
+              "height": 30
+            },
+            {
+              "id": "n1",
+              "width": 40,
+              "height": 40
+            }
+          ],
+          "edges": []
+        },
+        {
+          "id": "g1",
+          "children": [
+            {
+              "id": "n2",
+              "width": 40,
+              "height": 20
+            },
+            {
+              "id": "n3",
+              "width": 50,
+              "height": 20
+            },
+            {
+              "id": "n4",
+              "width": 50,
+              "height": 30
+            },
+            {
+              "id": "n5",
+              "width": 30,
+              "height": 40
+            }
+          ],
+          "edges": []
+        },
+        {
+          "id": "outside",
+          "width": 30,
+          "height": 20
+        }
+      ],
+      "edges": [
+        {
+          "id": "e0",
+          "sources": ["n0"],
+          "targets": ["n3"]
+        },
+        {
+          "id": "e1",
+          "sources": ["n0"],
+          "targets": ["n5"]
+        },
+        {
+          "id": "e2",
+          "sources": ["n0"],
+          "targets": ["outside"]
+        }
+      ]
+    }
+  },
+  {
+    "name": "directional-fresh-report.json",
+    "seed": 66,
+    "direction": "LEFT",
+    "input": {
+      "id": "root",
+      "layoutOptions": {
+        "elk.algorithm": "layered",
+        "elk.direction": "LEFT",
+        "elk.hierarchyHandling": "INCLUDE_CHILDREN",
+        "elk.layered.compaction.postCompaction.strategy": "RIGHT"
+      },
+      "children": [
+        {
+          "id": "g0",
+          "children": [
+            {
+              "id": "n0",
+              "width": 50,
+              "height": 20
+            },
+            {
+              "id": "n1",
+              "width": 50,
+              "height": 40
+            },
+            {
+              "id": "n2",
+              "width": 30,
+              "height": 30
+            }
+          ],
+          "edges": [
+            {
+              "id": "e2",
+              "sources": ["n1"],
+              "targets": ["n2"]
+            }
+          ]
+        },
+        {
+          "id": "g1",
+          "children": [
+            {
+              "id": "n3",
+              "width": 40,
+              "height": 30
+            },
+            {
+              "id": "n4",
+              "width": 40,
+              "height": 20
+            },
+            {
+              "id": "n5",
+              "width": 40,
+              "height": 40
+            }
+          ],
+          "edges": []
+        },
+        {
+          "id": "outside",
+          "width": 30,
+          "height": 20
+        }
+      ],
+      "edges": [
+        {
+          "id": "e0",
+          "sources": ["n0"],
+          "targets": ["n3"]
+        },
+        {
+          "id": "e1",
+          "sources": ["n0"],
+          "targets": ["n4"]
+        },
+        {
+          "id": "e3",
+          "sources": ["n1"],
+          "targets": ["n5"]
+        },
+        {
+          "id": "e4",
+          "sources": ["n1"],
+          "targets": ["outside"]
+        },
+        {
+          "id": "e5",
+          "sources": ["n0"],
+          "targets": ["outside"]
+        }
+      ]
+    }
+  },
+  {
+    "name": "directional-fresh-report.json",
+    "seed": 72,
+    "direction": "LEFT",
+    "input": {
+      "id": "root",
+      "layoutOptions": {
+        "elk.algorithm": "layered",
+        "elk.direction": "LEFT",
+        "elk.hierarchyHandling": "INCLUDE_CHILDREN",
+        "elk.layered.compaction.postCompaction.strategy": "LEFT_RIGHT_CONNECTION_LOCKING"
+      },
+      "children": [
+        {
+          "id": "g0",
+          "children": [
+            {
+              "id": "n0",
+              "width": 50,
+              "height": 40
+            },
+            {
+              "id": "n1",
+              "width": 40,
+              "height": 20
+            },
+            {
+              "id": "n2",
+              "width": 40,
+              "height": 30
+            }
+          ],
+          "edges": []
+        },
+        {
+          "id": "g1",
+          "children": [
+            {
+              "id": "n3",
+              "width": 50,
+              "height": 40
+            },
+            {
+              "id": "n4",
+              "width": 30,
+              "height": 20
+            },
+            {
+              "id": "n5",
+              "width": 40,
+              "height": 30
+            }
+          ],
+          "edges": [
+            {
+              "id": "e5",
+              "sources": ["n3"],
+              "targets": ["n4"]
+            }
+          ]
+        },
+        {
+          "id": "outside",
+          "width": 30,
+          "height": 20
+        }
+      ],
+      "edges": [
+        {
+          "id": "e0",
+          "sources": ["n0"],
+          "targets": ["n4"]
+        },
+        {
+          "id": "e1",
+          "sources": ["n0"],
+          "targets": ["outside"]
+        },
+        {
+          "id": "e2",
+          "sources": ["n1"],
+          "targets": ["n3"]
+        },
+        {
+          "id": "e3",
+          "sources": ["n2"],
+          "targets": ["n5"]
+        },
+        {
+          "id": "e4",
+          "sources": ["n2"],
+          "targets": ["outside"]
+        },
+        {
+          "id": "e6",
+          "sources": ["n0"],
+          "targets": ["outside"]
+        }
+      ]
+    }
+  },
+  {
+    "name": "directional-fresh-report.json",
+    "seed": 74,
+    "direction": "LEFT",
+    "input": {
+      "id": "root",
+      "layoutOptions": {
+        "elk.algorithm": "layered",
+        "elk.direction": "LEFT",
+        "elk.hierarchyHandling": "INCLUDE_CHILDREN",
+        "elk.layered.compaction.postCompaction.strategy": "RIGHT"
+      },
+      "children": [
+        {
+          "id": "g0",
+          "children": [
+            {
+              "id": "n0",
+              "width": 40,
+              "height": 40
+            },
+            {
+              "id": "n1",
+              "width": 50,
+              "height": 20
+            },
+            {
+              "id": "n2",
+              "width": 30,
+              "height": 30
+            }
+          ],
+          "edges": []
+        },
+        {
+          "id": "g1",
+          "children": [
+            {
+              "id": "n3",
+              "width": 40,
+              "height": 20
+            },
+            {
+              "id": "n4",
+              "width": 30,
+              "height": 40
+            }
+          ],
+          "edges": [
+            {
+              "id": "e2",
+              "sources": ["n3"],
+              "targets": ["n4"]
+            }
+          ]
+        },
+        {
+          "id": "outside",
+          "width": 30,
+          "height": 20
+        }
+      ],
+      "edges": [
+        {
+          "id": "e0",
+          "sources": ["n2"],
+          "targets": ["n3"]
+        },
+        {
+          "id": "e1",
+          "sources": ["n2"],
+          "targets": ["n4"]
+        },
+        {
+          "id": "e3",
+          "sources": ["n0"],
+          "targets": ["outside"]
+        }
+      ]
+    }
+  },
+  {
+    "name": "directional-fresh-report.json",
+    "seed": 75,
+    "direction": "LEFT",
+    "input": {
+      "id": "root",
+      "layoutOptions": {
+        "elk.algorithm": "layered",
+        "elk.direction": "LEFT",
+        "elk.hierarchyHandling": "INCLUDE_CHILDREN",
+        "elk.layered.compaction.postCompaction.strategy": "LEFT_RIGHT_CONSTRAINT_LOCKING"
+      },
+      "children": [
+        {
+          "id": "g0",
+          "children": [
+            {
+              "id": "n0",
+              "width": 40,
+              "height": 20
+            },
+            {
+              "id": "n1",
+              "width": 50,
+              "height": 30
+            }
+          ],
+          "edges": []
+        },
+        {
+          "id": "g1",
+          "children": [
+            {
+              "id": "n2",
+              "width": 30,
+              "height": 20
+            },
+            {
+              "id": "n3",
+              "width": 30,
+              "height": 40
+            },
+            {
+              "id": "n4",
+              "width": 50,
+              "height": 40
+            }
+          ],
+          "edges": [
+            {
+              "id": "e1",
+              "sources": ["n2"],
+              "targets": ["n3"]
+            },
+            {
+              "id": "e2",
+              "sources": ["n2"],
+              "targets": ["n4"]
+            }
+          ]
+        },
+        {
+          "id": "outside",
+          "width": 30,
+          "height": 20
+        }
+      ],
+      "edges": [
+        {
+          "id": "e0",
+          "sources": ["n0"],
+          "targets": ["n2"]
+        },
+        {
+          "id": "e3",
+          "sources": ["n0"],
+          "targets": ["outside"]
+        }
+      ]
+    }
+  }
+]
