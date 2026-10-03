@@ -170,7 +170,10 @@ export function selectCenterLabelSides(
 ): { expansion: LongEdgeExpansion; sides: ReadonlyMap<string, LabelSide> } {
   const input = expansion.input;
   const mode = String(input.settings["edgeLabels.sideSelection"] ?? "SMART_DOWN");
-  const defaultSide: LabelSide = mode.endsWith("_UP") ? "ABOVE" : "BELOW";
+  const horizontal = input.direction === "right" || input.direction === "left";
+  // ELK transposes the default side before vertical layout. Smart run choices
+  // already refer to the canonical cross axis and must not be transposed again.
+  const defaultSide: LabelSide = mode.endsWith("_UP") === horizontal ? "ABOVE" : "BELOW";
   const sides = new Map<string, LabelSide>();
   const set = (id: string, side: LabelSide) => {
     const info = labels.dummyById.get(id);
@@ -247,7 +250,6 @@ export function selectCenterLabelSides(
     }
     if (run.length) applyRun(run, top, true);
   }
-  const horizontal = input.direction === "right" || input.direction === "left";
   const sizes = new Map(input.sizes);
   const nodes = input.graph.nodes.map((node) => {
     const info = labels.dummyById.get(node.id),
@@ -257,12 +259,10 @@ export function selectCenterLabelSides(
     const cross =
       (horizontal ? original.height : original.width) -
       (side === "INLINE" ? info.spacing + info.thickness : 0);
-    const physicalSide =
-      !horizontal && side !== "INLINE" ? (side === "ABOVE" ? "BELOW" : "ABOVE") : side;
     const anchor =
-      physicalSide === "INLINE"
+      side === "INLINE"
         ? Math.ceil(cross) / 2
-        : physicalSide === "ABOVE"
+        : side === "ABOVE"
           ? cross - Math.ceil(info.thickness / 2)
           : Math.floor(info.thickness / 2);
     const rect = horizontal ? { ...original, height: cross } : { ...original, width: cross };
@@ -282,7 +282,15 @@ export function selectCenterLabelSides(
       ...expansion,
       input: inheritCycleRandom(input, { ...input, graph: { ...input.graph, nodes }, sizes }),
     },
-    sides,
+    // Label restoration consumes sides in the original layout direction.
+    sides: horizontal
+      ? sides
+      : new Map(
+          [...sides].map(([id, side]) => [
+            id,
+            side === "INLINE" ? side : side === "ABOVE" ? "BELOW" : "ABOVE",
+          ]),
+        ),
   };
 }
 
