@@ -1,3 +1,5 @@
+import { compactionBounds } from "./compaction-bounds";
+import { setElkjs0111ResultPolicy } from "../internal/elkjs-compatibility";
 import { networkSimplexComponents } from "./network-simplex";
 import { mergeHyperedgeDummies } from "./hyperedge-dummy-merger";
 import { recordCrossingUnits } from "./crossing-constraints";
@@ -2826,12 +2828,10 @@ export function* createLayeredScopePipeline<N, E, G, P>(
     });
   }
 
-  return {
-    ...graph,
-    direction,
-    nodes,
-    edges,
-  };
+  return setElkjs0111ResultPolicy(
+    { ...graph, direction, nodes, edges },
+    { normalizationBounds: compactionBounds(placement) },
+  );
 }
 
 /**

@@ -8,6 +8,7 @@
  *******************************************************************************/
 import type { EntityRect, Point } from "@statelyai/graph";
 import type { AcyclicOrientation, EdgeRoutes, LayeredPhaseInput, NodePlacement } from "./types";
+import { compactionBounds, recordCompactionBounds } from "./compaction-bounds";
 import { scanlineConstraints } from "./compaction-scanline";
 import { preparePortMargins, portCrossMargins } from "./node-margins";
 import { nodeNodeSpacing } from "./spacing";
@@ -95,6 +96,7 @@ export function applyGroupedEdgeLengthCompaction(
   const before = new Map(joinedPoints);
   const joinedRoutes = { ...routes, pointsByEdgeId: joinedPoints };
   const rects = new Map([...placement.rectByNodeId].filter(([id]) => !removed.has(id)));
+  const joinedPlacement = { ...placement, rectByNodeId: rects };
   compactJoinedGeometry(
     {
       ...input,
@@ -104,10 +106,12 @@ export function applyGroupedEdgeLengthCompaction(
         edges: joinedEdges,
       },
     },
-    { ...placement, rectByNodeId: rects },
+    joinedPlacement,
     joinedRoutes,
     orientation,
   );
+  const bounds = compactionBounds(joinedPlacement);
+  if (bounds) recordCompactionBounds(placement, bounds);
   for (const [id, rect] of rects) (placement.rectByNodeId as Map<string, EntityRect>).set(id, rect);
   const moved = new Map<Point, Point>();
   for (const [id, points] of before) {
@@ -349,51 +353,64 @@ function compactJoinedGeometry(
     }
   };
   const edgeMargin = Math.max(0, Number(input.settings["spacing.edgeEdge"] ?? 10) / 2 - 0.5);
-  const enlarge = (item: Compactable, margin: number): Compactable => {
-    const box = { ...item };
-    if (item.nodeId) {
-      box.y -= margin;
-      box.height += 2 * margin;
-    } else if (!item.ignoreUp) {
-      box.y -= margin + 0.01;
-      box.height += margin + 0.01;
-    } else if (!item.ignoreDown) box.height += margin + 0.01;
-    return box;
+  const hitboxes = new Map(items.map((item) => [item.id, { ...item }]));
+  const alter = (box: Compactable, margin: number, factor: number): void => {
+    const delta = margin * factor;
+    if (box.nodeId) {
+      box.y -= delta;
+      box.height += 2 * delta;
+    } else if (!box.ignoreUp) {
+      box.y -= delta + 0.01;
+      box.height += delta + 0.01;
+    } else if (!box.ignoreDown) box.height += delta + 0.01;
   };
-  // ELK uses edge spacing for both the segment-only and node-only sweeps.
-  sweep(merged.map((item) => enlarge(item, edgeMargin)));
-  sweep(
-    [...nodes.values()].map((item) => {
-      const node = input.graph.nodes.find((node) => node.id === item.nodeId);
-      const individual = node ? input.nodeSettings?.(node)?.["spacing.individual"] : undefined;
-      const edgeSpacing =
-        individual && typeof individual === "object"
-          ? Number(
-              (individual as Record<string, number>)["spacing.edgeEdge"] ??
-                input.settings["spacing.edgeEdge"] ??
-                10,
-            )
-          : Number(input.settings["spacing.edgeEdge"] ?? 10);
-      return enlarge(item, Math.max(0, edgeSpacing / 2 - 0.5));
-    }),
-  );
+  // ELK's restore pass negates spacing but retains its 0.01 scanline tolerance.
+  // Keep hitboxes separate from authored geometry, including that residual extent.
+  const separateSweep = (selected: Compactable[], margin: (item: Compactable) => number) => {
+    for (const item of selected) alter(hitboxes.get(item.id)!, margin(item), 1);
+    sweep(selected.map((item) => hitboxes.get(item.id)!));
+    for (const item of selected) alter(hitboxes.get(item.id)!, margin(item), -1);
+  };
+  separateSweep(merged, () => edgeMargin);
+  separateSweep([...nodes.values()], (item) => {
+    const node = input.graph.nodes.find((node) => node.id === item.nodeId);
+    const individual = node ? input.nodeSettings?.(node)?.["spacing.individual"] : undefined;
+    const edgeSpacing =
+      individual && typeof individual === "object"
+        ? Number(
+            (individual as Record<string, number>)["spacing.edgeEdge"] ??
+              input.settings["spacing.edgeEdge"] ??
+              10,
+          )
+        : Number(input.settings["spacing.edgeEdge"] ?? 10);
+    return Math.max(0, edgeSpacing / 2 - 0.5);
+  });
   const minimumMargin = Math.min(
     merged.length ? edgeMargin : Infinity,
     ...[...nodes.values()].map((item) =>
       Math.max(0, nodeNodeSpacing(input, item.nodeId!, item.nodeId!) / 2 - 0.5),
     ),
   );
-  sweep(
-    items.map((item) => {
-      if (item.nodeId || !item.group.startsWith("node:")) return enlarge(item, minimumMargin);
-      const box = { ...item };
-      if (item.ignoreUp) {
-        box.y += minimumMargin + 0.01;
-        box.height -= minimumMargin + 0.01;
-      } else if (item.ignoreDown) box.height -= minimumMargin + 0.01;
-      return box;
-    }),
-  );
+  const alterGroups = (factor: number) => {
+    for (const group of groups) {
+      const members = items.filter((item) => item.group === group);
+      const master = members.find((item) => item.nodeId) ?? members[0];
+      if (!master) continue;
+      alter(hitboxes.get(master.id)!, minimumMargin, factor);
+      for (const member of members) {
+        if (member === master) continue;
+        const box = hitboxes.get(member.id)!;
+        const delta = minimumMargin * factor + 0.01;
+        if (member.ignoreUp) {
+          box.y += delta;
+          box.height -= delta;
+        } else if (member.ignoreDown) box.height -= delta;
+      }
+    }
+  };
+  alterGroups(1);
+  sweep([...hitboxes.values()]);
+  alterGroups(-1);
   for (const [left, targets] of visible) {
     for (const right of targets) {
       if (
@@ -522,6 +539,20 @@ function compactJoinedGeometry(
       points.map(pointFromCanonical),
     );
   }
+  const boundPoints = items.flatMap((item) => {
+    const box = hitboxes.get(item.id)!;
+    return [
+      pointFromCanonical({ x: item.x, y: box.y }),
+      pointFromCanonical({ x: item.x + item.width, y: box.y + box.height }),
+    ];
+  });
+  if (boundPoints.length)
+    recordCompactionBounds(placement, {
+      left: Math.min(...boundPoints.map((p) => p.x)),
+      top: Math.min(...boundPoints.map((p) => p.y)),
+      right: Math.max(...boundPoints.map((p) => p.x)),
+      bottom: Math.max(...boundPoints.map((p) => p.y)),
+    });
   return placement;
 }
 

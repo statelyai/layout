@@ -1,6 +1,7 @@
 import type { VisualGraph } from "@statelyai/graph";
 
 export interface Elkjs0111ResultPolicy {
+  normalizationBounds?: { left: number; top: number; right: number; bottom: number };
   providerBounds?: { width: number; height: number };
   preserveEdgeSections?: boolean;
   skipBoundsNormalization?: boolean;

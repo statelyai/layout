@@ -1757,7 +1757,7 @@ function applyLayout(
     }
   }
   if (!resultPolicy?.skipBoundsNormalization) {
-    normalizeElkGraphBounds(root, padding, layoutOptions);
+    normalizeElkGraphBounds(root, padding, layoutOptions, resultPolicy?.normalizationBounds);
   }
   if (
     !resultPolicy?.preserveEdgeSections &&
@@ -1787,6 +1787,7 @@ function normalizeElkGraphBounds(
   root: ElkNode,
   padding: { top: number; right: number; bottom: number; left: number },
   layoutOptions: Readonly<Record<string, unknown>> = {},
+  compactionBounds?: Elkjs0111ResultPolicy["normalizationBounds"],
 ): void {
   const authoredWidth = root.width;
   const authoredHeight = root.height;
@@ -1794,8 +1795,8 @@ function normalizeElkGraphBounds(
   const layoutChildren = (root.children ?? []).filter(
     (node) => getBooleanOption(node.layoutOptions ?? {}, "noLayout") !== true,
   );
-  let minimumX = Number.POSITIVE_INFINITY;
-  let minimumY = Number.POSITIVE_INFINITY;
+  let minimumX = compactionBounds?.left ?? Number.POSITIVE_INFINITY;
+  let minimumY = compactionBounds?.top ?? Number.POSITIVE_INFINITY;
   for (const node of layoutChildren) {
     minimumX = Math.min(
       minimumX,
@@ -1923,6 +1924,7 @@ function normalizeElkGraphBounds(
       ? 1
       : 0;
   const postCompactionBoundsExtraX =
+    !compactionBounds &&
     !addBoundaryPixel &&
     !hasWrappedEdge &&
     String(getOption(layoutOptions, "layered.compaction.postCompaction.strategy") ?? "NONE") !==
@@ -1932,6 +1934,7 @@ function normalizeElkGraphBounds(
       ? 0.04
       : 0;
   const postCompactionBoundsExtraY =
+    !compactionBounds &&
     !addBoundaryPixel &&
     !hasWrappedEdge &&
     String(getOption(layoutOptions, "layered.compaction.postCompaction.strategy") ?? "NONE") !==
@@ -1942,7 +1945,7 @@ function normalizeElkGraphBounds(
       : 0;
   const calculatedWidth =
     Math.max(
-      0,
+      compactionBounds ? compactionBounds.right + shiftX : 0,
       ...layoutChildren.flatMap((node) => [
         (node.x ?? 0) + (node.width ?? 0),
         ...(node.labels ?? []).map((label) => (node.x ?? 0) + (label.x ?? 0) + (label.width ?? 0)),
@@ -1977,7 +1980,7 @@ function normalizeElkGraphBounds(
       : 0);
   const calculatedHeight =
     Math.max(
-      0,
+      compactionBounds ? compactionBounds.bottom + shiftY : 0,
       ...layoutChildren.flatMap((node) => [
         (node.y ?? 0) + (node.height ?? 0),
         ...(node.labels ?? []).map((label) => (node.y ?? 0) + (label.y ?? 0) + (label.height ?? 0)),
