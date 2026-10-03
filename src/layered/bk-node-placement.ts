@@ -648,10 +648,14 @@ function createStraighteningThreshold(
     const ports = (incoming ? order.inputPortOrderByNodeId : order.outputPortOrderByNodeId)?.get(
       pending.free,
     );
+    // Feedback segments retain model direction; BK traverses their layer direction.
     const edges = input.graph.edges
-      .filter((edge) =>
-        incoming ? edge.targetId === pending.free : edge.sourceId === pending.free,
-      )
+      .filter((edge) => {
+        const reversed =
+          (neighbors.layerIndex.get(edge.sourceId) ?? 0) >
+          (neighbors.layerIndex.get(edge.targetId) ?? 0);
+        return (incoming !== reversed ? edge.targetId : edge.sourceId) === pending.free;
+      })
       .sort((a, b) => (ports ? ports.indexOf(a.id) - ports.indexOf(b.id) : 0));
     const onlyDummies = (blocks.get(rootOf(pending.free)) ?? []).every(
       (id) =>

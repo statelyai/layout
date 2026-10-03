@@ -1,0 +1,85 @@
+{
+  "baseline": "a3758d0",
+  "oracle": "elkjs@0.11.1",
+  "tolerance": 5e-13,
+  "flat": {
+    "cases": 100,
+    "matched": 32,
+    "nativeErrors": 0,
+    "elkErrors": 0,
+    "differingValues": 11231
+  },
+  "hierarchy": {
+    "cases": 100,
+    "matched": 72,
+    "nativeErrors": 0,
+    "elkErrors": 0,
+    "differingValues": 832
+  },
+  "newComplete": [
+    {
+      "seed": 6,
+      "direction": "RIGHT"
+    },
+    {
+      "seed": 6,
+      "direction": "LEFT"
+    },
+    {
+      "seed": 1,
+      "direction": "DOWN"
+    },
+    {
+      "seed": 6,
+      "direction": "DOWN"
+    },
+    {
+      "seed": 21,
+      "direction": "DOWN"
+    },
+    {
+      "seed": 1,
+      "direction": "UP"
+    },
+    {
+      "seed": 6,
+      "direction": "UP"
+    },
+    {
+      "seed": 21,
+      "direction": "UP"
+    }
+  ],
+  "lostComplete": [],
+  "regressions": {
+    "red": {
+      "passed": 0,
+      "failed": 8
+    },
+    "green": {
+      "passed": 8,
+      "failed": 0
+    }
+  },
+  "fullSuite": {
+    "passed": 2181,
+    "failed": 108,
+    "total": 2289,
+    "newFailureNames": []
+  },
+  "checks": [
+    "source types",
+    "repository types",
+    "selected format",
+    "selected lint",
+    "package build",
+    "browser seed 1 DOWN"
+  ],
+  "fixedLoops": {
+    "cases": 100,
+    "matched": 100,
+    "nativeErrors": 0,
+    "elkErrors": 0,
+    "differingValues": 0
+  }
+}
