@@ -313,10 +313,22 @@ function compactJoinedGeometryUnchecked(
         segment.ignoreDown = true;
       }
     };
-    const firstSegment = edgeSegments[0];
-    const lastSegment = edgeSegments.at(-1);
-    markNearNode(firstSegment, firstSegment?.points[1], nodes.get(edge.sourceId));
-    markNearNode(lastSegment, lastSegment?.points[0], nodes.get(edge.targetId));
+    // ELK marks clearance in the physical (cycle-broken) edge direction.
+    // Authored reverse edges must not suppress the shared track's spacing.
+    const reversed = orientation?.reversedEdgeIds.has(edgeId) ?? false;
+    const firstSegment = reversed ? edgeSegments.at(-1) : edgeSegments[0];
+    const lastSegment = reversed ? edgeSegments[0] : edgeSegments.at(-1);
+    markNearNode(
+      firstSegment,
+      firstSegment?.points[reversed ? 0 : 1],
+      nodes.get(reversed ? edge.targetId : edge.sourceId),
+    );
+    // Include horizontal bends following the last vertical segment.
+    markNearNode(
+      lastSegment,
+      reversed ? points[2] : points.at(-3),
+      nodes.get(reversed ? edge.sourceId : edge.targetId),
+    );
   }
   // ELK joins intersecting collinear segments before calculating constraints.
   segments.sort((a, b) => a.x - b.x || a.y - b.y);

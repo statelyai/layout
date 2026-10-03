@@ -31,3 +31,26 @@ for (const strategy of [
       expect(row(actual), id).toEqual(row(expected));
     }
   });
+
+for (const strategy of [
+  "LEFT",
+  "RIGHT",
+  "LEFT_RIGHT_CONSTRAINT_LOCKING",
+  "LEFT_RIGHT_CONNECTION_LOCKING",
+])
+  it(`keeps unrelated tracks clear of the fixed loop flow envelope (${strategy})`, async () => {
+    const input = flatFixture(22, "RIGHT");
+    input.layoutOptions = {
+      ...input.layoutOptions,
+      "elk.layered.compaction.postCompaction.strategy": strategy,
+    };
+    const actual = await new Native().layout(structuredClone(input));
+    const expected = await new Oracle().layout(structuredClone(input) as never);
+    const geometry = (graph: typeof actual) => ({
+      width: graph.width,
+      height: graph.height,
+      nodes: graph.children!.map(({ id, x, y, width, height }) => ({ id, x, y, width, height })),
+      routes: graph.edges!.map(({ id, sections }) => ({ id, sections })),
+    });
+    expect(geometry(actual)).toEqual(geometry(expected));
+  });

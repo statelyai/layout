@@ -3966,6 +3966,22 @@ function routeEdges(style: "ORTHOGONAL" | "POLYLINE" | "SPLINES"): EdgeRouter {
       const node = nodeById.get(id);
       const bounds = flowLayers[flowLayerByNodeId.get(id) ?? -1];
       if (!node || !bounds) continue;
+      const envelope = hasPlacementLoopEnvelope(placement, id)
+        ? preparedLoopEnvelopes(input)?.get(id)
+        : undefined;
+      if (envelope) {
+        const negative = input.direction === "left" || input.direction === "up";
+        const start = horizontal ? rect.x : rect.y;
+        const size = horizontal ? rect.width : rect.height;
+        bounds.start = Math.min(
+          bounds.start,
+          start - (negative ? envelope.flowAfter : envelope.flowBefore),
+        );
+        bounds.end = Math.max(
+          bounds.end,
+          start + size + (negative ? envelope.flowBefore : envelope.flowAfter),
+        );
+      }
       const ports = placePorts(
         node.ports,
         rect,

@@ -134,3 +134,5 @@ The [loop-envelope compaction proof](compaction-loop-envelopes/README.md) improv
 The [label routing clearance proof](label-routing-clearance/README.md) improves directional full matches from 132 to 134/200 and original flat matches from 32 to 34/100. Seeds 26–50 add 200 preserved random comparisons; combined exact matches are 266/400, with zero native errors. Broad parity remains incomplete.
 
 The [shared cross-port adjacency proof](shared-cross-port-adjacency/README.md) corrects BK straightening on detached port rows through physical edge append order. Combined exact matches remain 266/400; differing values improve by ten, with no matches lost. Broad parity remains incomplete.
+
+The [loop track clearance proof](loop-track-clearance/README.md) reserves fixed-loop flow envelopes during routing and preserves endpoint clearance through reversed edges and trailing bends. Combined matches remain 266/400; differing values improve by 579. Seed 22 now matches all node positions and route sections; junction metadata remains different.
