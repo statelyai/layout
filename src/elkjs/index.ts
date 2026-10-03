@@ -521,40 +521,6 @@ export default class ELK {
             getOption({ ...layoutOptions, ...child.layoutOptions }, "padding"),
             12,
           );
-          if (
-            [...proxyByKind.values()].some((proxy) => {
-              const side = externalPortDummyOf(proxy)?.side;
-              return side === "WEST" || side === "NORTH";
-            })
-          ) {
-            const direction = getDirection({ ...layoutOptions, ...child.layoutOptions });
-            const horizontal = direction === "right" || direction === "left";
-            {
-              const minimumFlow = Math.min(
-                ...(child.children ?? []).map((node) =>
-                  horizontal ? (node.x ?? 0) : (node.y ?? 0),
-                ),
-              );
-              const desiredFlow = horizontal ? childPadding.left : childPadding.top;
-              const delta = desiredFlow - minimumFlow;
-              for (const node of child.children ?? []) {
-                if (horizontal) node.x = (node.x ?? 0) + delta;
-                else node.y = (node.y ?? 0) + delta;
-              }
-              for (const edge of temporaryEdges) {
-                for (const section of edge.sections ?? []) {
-                  for (const point of [
-                    section.startPoint,
-                    ...(section.bendPoints ?? []),
-                    section.endPoint,
-                  ]) {
-                    if (horizontal) point.x += delta;
-                    else point.y += delta;
-                  }
-                }
-              }
-            }
-          }
           for (const internalEdge of internalEdges) {
             const temporary = temporaryEdges.find(
               (candidate) => String(candidate.id) === String(internalEdge.id),
@@ -566,17 +532,20 @@ export default class ELK {
           }
           const childDirection = getDirection({ ...layoutOptions, ...child.layoutOptions });
           const horizontalChild = childDirection === "right" || childDirection === "left";
+          // External dummy positions retain any routing corridor at the boundary.
           child.width = horizontalChild
             ? Math.max(
                 0,
-                ...(child.children ?? []).map((node) => (node.x ?? 0) + (node.width ?? 0)),
+                ...(temporaryChild.children ?? []).map((node) => (node.x ?? 0) + (node.width ?? 0)),
               ) + childPadding.right
             : temporaryChild.width;
           child.height = horizontalChild
             ? temporaryChild.height
             : Math.max(
                 0,
-                ...(child.children ?? []).map((node) => (node.y ?? 0) + (node.height ?? 0)),
+                ...(temporaryChild.children ?? []).map(
+                  (node) => (node.y ?? 0) + (node.height ?? 0),
+                ),
               ) + childPadding.bottom;
 
           const relativeRect = (id: string): ElkShape | undefined => {

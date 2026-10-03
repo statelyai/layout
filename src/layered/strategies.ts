@@ -1,4 +1,5 @@
 import { isMergedHyperedgeDummy } from "./hyperedge-dummy-merger";
+import { externalPortDummyOf } from "./external-port-dummy";
 import { routingCoordinates } from "./routing-coordinates";
 import {
   hasMovableLoopPorts,
@@ -3337,7 +3338,16 @@ function implicitEdgeEndpoints(
     const targetFlow = horizontal ? targetRect.x : targetRect.y;
     const modelOrderPromotion =
       input.settings["layering.nodePromotion.strategy"] === "MODEL_ORDER_LEFT_TO_RIGHT";
-    const forward = modelOrderPromotion || sourceFlow <= targetFlow;
+    const sourceBoundary = externalPortDummyOf(nodeById.get(edge.sourceId) ?? {});
+    const targetBoundary = externalPortDummyOf(nodeById.get(edge.targetId) ?? {});
+    // A zero-gap boundary can coincide with the node's flow origin.
+    const forward =
+      modelOrderPromotion ||
+      (sourceFlow === targetFlow && (sourceBoundary || targetBoundary)
+        ? sourceBoundary
+          ? sourceBoundary.port.side === "EAST" || sourceBoundary.port.side === "SOUTH"
+          : targetBoundary!.port.side === "WEST" || targetBoundary!.port.side === "NORTH"
+        : sourceFlow <= targetFlow);
     const feedback =
       input.settings.feedbackEdges === true && orientation?.reversedEdgeIds.has(edge.id) === true;
     const directionReversed = input.direction === "left" || input.direction === "up";
@@ -3602,6 +3612,14 @@ function implicitEdgeEndpoints(
       }
       const portName = endpoint === "source" ? edge.sourcePort : edge.targetPort;
       const explicitPort = node?.ports?.find((port) => port.name === portName);
+      const physicalSide =
+        node && explicitPort ? input.portSettings?.(explicitPort, node)?.["port.side"] : undefined;
+      const singleFixedSidePort =
+        constraints === "FIXED_SIDE" &&
+        physicalSide !== undefined &&
+        node?.ports?.filter(
+          (port) => input.portSettings?.(port, node)?.["port.side"] === physicalSide,
+        ).length === 1;
       // Movable port ordering comes from the layer sweep above. Fixed coordinates
       // and authored anchors must replace the synthesized node-origin fallback.
       const authoredAnchor =
@@ -3613,6 +3631,7 @@ function implicitEdgeEndpoints(
         node &&
         (constraints === "FIXED_POS" ||
           constraints === "FIXED_RATIO" ||
+          singleFixedSidePort ||
           authoredAnchor !== undefined)
       ) {
         point = getPortPoint(node, portName, rect, point, input.direction, input);
@@ -4209,6 +4228,22 @@ function routeEdges(style: "ORTHOGONAL" | "POLYLINE" | "SPLINES"): EdgeRouter {
                 "NONE",
           ));
       let nextStart = flowLayers[0]?.start ?? 0;
+      // ELK omits ordinary node spacing beside an external-port-only layer.
+      const externalFlowLayers = new Set(
+        flowLayers.flatMap((_, layer) => {
+          const ids = [...flowLayerByNodeId].filter(([, index]) => index === layer);
+          return ids.length &&
+            ids.every(([id]) => {
+              const node = nodeById.get(id);
+              const side = node && externalPortDummyOf(node)?.side;
+              return horizontal
+                ? side === "WEST" || side === "EAST"
+                : side === "NORTH" || side === "SOUTH";
+            })
+            ? [layer]
+            : [];
+        }),
+      );
       for (const [layerNo, bounds] of flowLayers.entries()) {
         const shift = nextStart - bounds.start;
         for (const [id, rect] of placement.rectByNodeId) {
@@ -4245,14 +4280,20 @@ function routeEdges(style: "ORTHOGONAL" | "POLYLINE" | "SPLINES"): EdgeRouter {
               flowLayers[layerNo + 1]!.start -
               (bodyFlowLayers[layerNo + 1]!.end - bodyFlowLayers[layerNo + 1]!.start)
             : 0);
-        const minimumGap = labelAdjacent
-          ? Math.max(edgeNodeSpacing, input.spacing.layer - portMargin)
-          : input.spacing.layer;
+        const externalBoundary =
+          externalFlowLayers.has(layerNo) || externalFlowLayers.has(layerNo + 1);
+        const minimumGap = externalBoundary
+          ? 0
+          : labelAdjacent
+            ? Math.max(edgeNodeSpacing, input.spacing.layer - portMargin)
+            : input.spacing.layer;
         const gapSpacing =
           slots === 0
-            ? labelAdjacent
-              ? minimumGap
-              : (existingGapByLayer[layerNo] ?? input.spacing.layer)
+            ? externalBoundary
+              ? 0
+              : labelAdjacent
+                ? minimumGap
+                : (existingGapByLayer[layerNo] ?? input.spacing.layer)
             : Math.max(
                 preservesNodeFlexibilityGap ||
                   (labelExtraByGap[layerNo] ?? 0) > 0 ||
@@ -4743,18 +4784,24 @@ function routeEdges(style: "ORTHOGONAL" | "POLYLINE" | "SPLINES"): EdgeRouter {
         );
         continue;
       }
+      const sourceFlow = horizontal ? sourceRect.x : sourceRect.y;
+      const targetFlow = horizontal ? targetRect.x : targetRect.y;
+      const sourceBeforeTarget =
+        sourceFlow < targetFlow ||
+        (sourceFlow === targetFlow &&
+          (flowLayerByNodeId.get(source.id) ?? 0) < (flowLayerByNodeId.get(target.id) ?? 0));
       const sourceAwaySide = horizontal
-        ? sourceRect.x < targetRect.x
+        ? sourceBeforeTarget
           ? "WEST"
           : "EAST"
-        : sourceRect.y < targetRect.y
+        : sourceBeforeTarget
           ? "NORTH"
           : "SOUTH";
       const targetAwaySide = horizontal
-        ? sourceRect.x < targetRect.x
+        ? sourceBeforeTarget
           ? "EAST"
           : "WEST"
-        : sourceRect.y < targetRect.y
+        : sourceBeforeTarget
           ? "SOUTH"
           : "NORTH";
       const sameSideSelfLoop =
