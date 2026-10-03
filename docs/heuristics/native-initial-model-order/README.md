@@ -24,3 +24,5 @@ pnpm exec tsx scripts/parity/trace-native-rng.ts docs/heuristics/native-initial-
 ```
 
 Next: trace the first divergent helper-node/port order in retained model-order failures and finish the comparator branches; address weighted objectives, shared/free and non-flow ports across wider settings. Continue incomplete flat/hierarchical placement/routing, existing failures, the ten worsened option cases and unseen random coverage. Keep real ELK reference exceptions visible while adding hierarchy families the oracle can lay out.
+
+The subsequent [interpolation repair](../model-order-interpolation/README.md) fixes unknown barycenters in the preserved initial attempt and expands the strict baseline to 50/200. This folder retains the preceding 42/200 evidence.

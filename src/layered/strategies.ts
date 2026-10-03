@@ -1775,6 +1775,8 @@ export interface LayerSweepSession {
   readonly attempts: number;
   readonly restoreRejectedSweep: boolean;
   readonly usesInitialModelOrder?: boolean;
+  /** Clear the scope flag after its first counter-based sweep. */
+  finishInitialOrderAttempt?(): void;
   useRandom(random: JavaRandom): void;
   lockPortOrder(nodeId: string): void;
   markHierarchicalNode(nodeId: string): void;
@@ -1970,6 +1972,10 @@ export function createLayerSweepSession(
   let working = layers.map((layer) => [...layer]);
   const usesInitialModelOrder =
     statistic === "mean" && (input.settings["considerModelOrder.strategy"] ?? "NONE") !== "NONE";
+  // Preserved model order makes unknown barycenters interpolate rather than
+  // consume random floats during the first attempt. Child scopes keep their
+  // own flag until their counter-based attempt finishes.
+  let initialOrderAttempt = usesInitialModelOrder;
   const sourceUnknownPlacement = true;
   const forcedCompare =
     usesInitialModelOrder && input.settings["crossingMinimization.forceNodeModelOrder"] === true
@@ -2245,7 +2251,9 @@ export function createLayerSweepSession(
               adjacent.ranks,
               statistic,
               random,
-              !firstSweep,
+              !firstSweep ||
+                initialOrderAttempt ||
+                canonicalNodes.get(current[0] ?? "")?.type === "EXTERNAL_PORT",
               sourceUnknownPlacement,
               true,
               units,
@@ -2271,7 +2279,9 @@ export function createLayerSweepSession(
               adjacent.ranks,
               statistic,
               random,
-              !firstSweep,
+              !firstSweep ||
+                initialOrderAttempt ||
+                canonicalNodes.get(current[0] ?? "")?.type === "EXTERNAL_PORT",
               sourceUnknownPlacement,
               true,
               units,
@@ -2364,6 +2374,9 @@ export function createLayerSweepSession(
     },
     attempts,
     usesInitialModelOrder,
+    finishInitialOrderAttempt: () => {
+      initialOrderAttempt = false;
+    },
     restoreRejectedSweep: !exactPortSweep,
     lockPortOrder: (id) => {
       lockedPortOrders.add(id);

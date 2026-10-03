@@ -77,6 +77,7 @@ export function minimizeHierarchyCrossings(
         forward = true;
       } else scope.session.shuffleFirstLayer(forward);
       sweep(scope, forward, true);
+      scope.session.finishInitialOrderAttempt?.();
       let crossings = count(),
         selected = snapshot();
       while (crossings > 0) {

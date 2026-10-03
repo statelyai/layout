@@ -16,7 +16,7 @@ context.global = context;
 vm.runInContext(source, context);
 const rngEvents = [];
 let rngDepth = 0;
-for (const name of ["$nextLong", "$nextDouble", "$nextFloat", "$nextInternal"]) {
+for (const name of ["$nextLong", "$nextDouble", "$nextFloat", "$nextInternal", "$nextInt"]) {
   const original = context[name];
   context[name] = (...args) => {
     const top = rngDepth++ === 0;
@@ -26,6 +26,7 @@ for (const name of ["$nextLong", "$nextDouble", "$nextFloat", "$nextInternal"]) 
       rngEvents.push({
         name,
         bits: name === "$nextInternal" ? args[1] : undefined,
+        bound: name === "$nextInt" ? args[1] : undefined,
         result: String(result),
       });
     return result;
@@ -54,6 +55,10 @@ const sweepOrder = (order) =>
     layer.map((node) => ({
       origin: originId(node),
       type: node.type_0?.name_0,
+      helperEdge: originId(
+        node.ports.array.flatMap((port) => port.incomingEdges.array)[0] ??
+          node.ports.array.flatMap((port) => port.outgoingEdges.array)[0],
+      ),
     })),
   );
 const initializeSweep = context.$initialize_5;

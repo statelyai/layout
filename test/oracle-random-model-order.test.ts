@@ -8,7 +8,7 @@ import { flatFixture } from "../scripts/parity/flat-corpus";
 // Retain seeds spanning forced/unforced ordering, cycles, parallel edges and labels.
 // The larger randomized gate preserves failures outside these repaired cases.
 describe("random model-order complete geometry parity", () => {
-  for (const seed of [4, 5, 11, 25]) {
+  for (const seed of [4, 5, 6, 11, 16, 25]) {
     for (const direction of ["RIGHT", "LEFT", "DOWN", "UP"]) {
       it(`matches seed ${seed}, ${direction}`, async () => {
         const input = flatFixture(seed, direction);
