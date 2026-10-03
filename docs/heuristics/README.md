@@ -138,3 +138,5 @@ The [shared cross-port adjacency proof](shared-cross-port-adjacency/README.md) c
 The [loop track clearance proof](loop-track-clearance/README.md) reserves fixed-loop flow envelopes during routing and preserves endpoint clearance through reversed edges and trailing bends. Combined matches remain 266/400; differing values improve by 579. Seed 22 now matches all node positions and route sections; junction metadata remains different.
 
 The [native junction proof](native-junctions/README.md) moves branch generation into physical routing and retains junctions through joining and compaction. Seeds 22 and 33 RIGHT become complete matches; combined coverage improves to 268/400, with no complete matches lost.
+
+The [movable loop label proof](movable-loop-labels/README.md) reserves exterior labels before placement and preserves directional alignment and stacked routing clearance. Combined strict matches improve to **270/400**, zero native errors and no complete matches lost. All 38 new regressions fail before and pass now; no existing suite failures change. Broad parity remains incomplete.

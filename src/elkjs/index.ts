@@ -2013,7 +2013,9 @@ function normalizeElkGraphBounds(
               (label.y ?? 0) +
               (label.height ?? 0) +
               (String(getOption(label.layoutOptions ?? {}, "edgeLabels.placement") ?? "CENTER") ===
-              "CENTER"
+                "CENTER" &&
+              childByEndpointId.get(String(edge.sources?.[0] ?? edge.source)) !==
+                childByEndpointId.get(String(edge.targets?.[0] ?? edge.target))
                 ? 1
                 : 0),
           ),

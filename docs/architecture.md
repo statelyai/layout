@@ -181,3 +181,5 @@ This is partial hierarchy integration. Native hierarchical port positioning,
 parent-port geometry transfer, internal/external route joining and coordinated
 scope phase scheduling remain required. The public compound solver still has a
 separate scope/routing path; it must share the completed hierarchy foundation.
+
+Movable self-loop exterior labels contribute directional envelopes before BK placement. Stacked routes include preceding label extents, and physical loop sides determine label alignment after direction transforms. Self-loop bounds omit the generic center-label pixel. Inline labels, additional loop orderings and mixed fixed-port labels remain broader parity work.

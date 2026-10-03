@@ -3766,14 +3766,16 @@ function routeEdges(style: "ORTHOGONAL" | "POLYLINE" | "SPLINES"): EdgeRouter {
       edge: GraphEdge,
       side: string,
       ordering: string,
+      canonical = false,
     ): number => {
-      const axis = side === "NORTH" || side === "SOUTH" ? "height" : "width";
+      const crossSide = side === "NORTH" || side === "SOUTH";
+      const axis = crossSide === (!canonical || horizontal) ? "height" : "width";
       const ordered = ordering === "REVERSE_STACKED" ? [...loops].reverse() : loops;
       const index = ordered.indexOf(edge);
       const spacing = Number(input.settings["spacing.nodeSelfLoop"] ?? 10);
       const labelSpacing = Number(input.settings["spacing.edgeLabel"] ?? 2);
       const size = (candidate: GraphEdge) =>
-        input.edgeSettings?.(candidate)?.["edgeLabels.inline"] === true
+        canonical || input.edgeSettings?.(candidate)?.["edgeLabels.inline"] === true
           ? (candidate[axis] ?? 0)
           : 0;
       return (
@@ -3785,7 +3787,9 @@ function routeEdges(style: "ORTHOGONAL" | "POLYLINE" | "SPLINES"): EdgeRouter {
               extent + (size(candidate) > 0 ? size(candidate) + labelSpacing : 0),
             0,
           ) +
-        (size(edge) > 0 ? size(edge) / 2 + labelSpacing : 0)
+        (size(edge) > 0 && input.edgeSettings?.(edge)?.["edgeLabels.inline"] === true
+          ? size(edge) / 2 + labelSpacing
+          : 0)
       );
     };
     const hasFixedLoopPorts = (node: GraphNode): boolean => {
@@ -5288,7 +5292,7 @@ function routeEdges(style: "ORTHOGONAL" | "POLYLINE" | "SPLINES"): EdgeRouter {
             const sideLoops = loops.filter(
               (candidate, i) => loopSide(distribution, i, candidate) === side,
             );
-            const distance = loopDistance(sideLoops, edge, side, ordering);
+            const distance = loopDistance(sideLoops, edge, side, ordering, movable);
             const y =
               side === "NORTH" ? loopRect.y - distance : loopRect.y + loopRect.height + distance;
             const start = {
@@ -5313,12 +5317,13 @@ function routeEdges(style: "ORTHOGONAL" | "POLYLINE" | "SPLINES"): EdgeRouter {
             const startRatio = side === "EAST" ? firstRatio : secondRatio;
             const endRatio = side === "EAST" ? secondRatio : firstRatio;
             const distance =
-              input.edgeSettings?.(edge)?.["edgeLabels.inline"] === true
+              movable || input.edgeSettings?.(edge)?.["edgeLabels.inline"] === true
                 ? loopDistance(
                     loops.filter((candidate, i) => loopSide(distribution, i, candidate) === side),
                     edge,
                     side,
                     ordering,
+                    movable,
                   )
                 : spacing * (indexOnSide + 1);
             const x =

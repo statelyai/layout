@@ -126,8 +126,23 @@ export function loopEnvelopes(input: LayeredPhaseInput): ReadonlyMap<string, Loo
           : (["before"] as const);
     for (const side of sides) {
       const selected = loops.filter((_, index) => sides[index % sides.length] === side);
+      const horizontal = input.direction === "right" || input.direction === "left";
+      const crossSize =
+        side === "before" || side === "after"
+          ? horizontal
+            ? "height"
+            : "width"
+          : horizontal
+            ? "width"
+            : "height";
+      const labelSpacing = Number(input.settings["spacing.edgeLabel"] ?? 2);
       envelope[side] =
-        spacing * (ordering === "SEQUENCED" ? Math.min(1, selected.length) : selected.length);
+        spacing * (ordering === "SEQUENCED" ? Math.min(1, selected.length) : selected.length) +
+        selected.reduce(
+          (sum, edge) =>
+            sum + ((edge[crossSize] ?? 0) > 0 ? (edge[crossSize] ?? 0) + labelSpacing : 0),
+          0,
+        );
     }
     envelopes.set(node.id, envelope);
   }

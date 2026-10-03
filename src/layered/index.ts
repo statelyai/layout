@@ -1,3 +1,4 @@
+import { hasMovableLoopPorts } from "./loop-envelopes";
 import { compactionBounds } from "./compaction-bounds";
 import { setElkjs0111ResultPolicy } from "../internal/elkjs-compatibility";
 import { networkSimplexComponents } from "./network-simplex";
@@ -2755,7 +2756,40 @@ export function* createLayeredScopePipeline<N, E, G, P>(
             y: (points[1]!.y + points[2]!.y - height) / 2,
           }
         : undefined;
+    const movableExteriorLoopLabelPosition = (() => {
+      if (
+        edgeRouting !== "ORTHOGONAL" ||
+        labelPlacement !== "CENTER" ||
+        inlineLabel ||
+        !hasMovableLoopPorts(input, edge) ||
+        !sourceRect ||
+        points.length !== 4
+      )
+        return undefined;
+      const first = points[1]!,
+        last = points[2]!;
+      // Cross-axis loop labels are centered on the node. Flow-side loop
+      // labels align with the first physical port, as ELK's label placer does.
+      if (first.y === last.y) {
+        const low = first.y < sourceRect.y;
+        return {
+          x: horizontal ? sourceRect.x + (sourceRect.width - width) / 2 : Math.min(first.x, last.x),
+          y: low ? first.y - labelSpacing - height : first.y + labelSpacing,
+        };
+      }
+      if (first.x === last.x) {
+        const low = first.x < sourceRect.x;
+        return {
+          x: low ? first.x - labelSpacing - width : first.x + labelSpacing,
+          y: horizontal
+            ? Math.min(first.y, last.y)
+            : sourceRect.y + (sourceRect.height - height) / 2,
+        };
+      }
+      return undefined;
+    })();
     const explicitLabelPosition =
+      movableExteriorLoopLabelPosition ??
       selfLoopLabelPosition ??
       outerAntiparallelLabelPosition ??
       antiparallelLabelPosition ??

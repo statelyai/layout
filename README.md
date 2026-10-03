@@ -394,3 +394,7 @@ For directional compaction on the same bounded random flat/hierarchical families
 run `pnpm exec tsx scripts/check-directional-compaction-parity.ts`. This additional
 200-case gate preserves all failures, including real ELK errors; it currently
 fails. See the [directional compaction proof](./docs/heuristics/directional-compaction/README.md).
+
+<!-- implementation from src/layered/loop-envelopes.ts, src/layered/strategies.ts, src/layered/index.ts and src/elkjs/index.ts -->
+
+Movable self-loop labels reserve clearance before placement and retain directional alignment and stacked routing clearance. See the [native loop label comparison](docs/heuristics/movable-loop-labels/README.md).

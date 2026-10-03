@@ -71,6 +71,18 @@ function scene(graph, error) {
       }));
     }),
   );
+  const labels = owners.flatMap(({ node, x, y }) =>
+    (node.edges ?? []).flatMap((edge) => {
+      const origin = origins.get(edge.container) ?? { x, y };
+      return (edge.labels ?? [])
+        .filter((label) => label.x !== undefined && label.y !== undefined)
+        .map((label) => ({
+          ...label,
+          x: label.x + origin.x,
+          y: label.y + origin.y,
+        }));
+    }),
+  );
   const bounds = [
     ...nodes.flatMap((n) => [
       { x: n.x, y: n.y },
@@ -78,6 +90,10 @@ function scene(graph, error) {
     ]),
     ...paths.flatMap((p) => p.points),
     ...junctions,
+    ...labels.flatMap((label) => [
+      { x: label.x, y: label.y },
+      { x: label.x + (label.width ?? 0), y: label.y + (label.height ?? 0) },
+    ]),
   ];
   const markup =
     nodes
@@ -96,6 +112,12 @@ function scene(graph, error) {
       .map(
         (p) =>
           `<circle cx="${p.x}" cy="${p.y}" r="3" fill="${p.color}" stroke="white" stroke-width="0.8"><title>Junction owned by ${escape(p.id)}</title></circle>`,
+      )
+      .join("") +
+    labels
+      .map(
+        (label) =>
+          `<rect x="${label.x}" y="${label.y}" width="${label.width ?? 0}" height="${label.height ?? 0}" fill="white" stroke="#cbd5e1" rx="2"/><text x="${label.x + 2}" y="${label.y + Math.min(11, label.height ?? 11)}" font-size="10">${escape(label.text ?? "")}</text>`,
       )
       .join("");
   return { bounds, markup };
