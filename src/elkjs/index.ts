@@ -1712,6 +1712,12 @@ function applyLayout(
       }
       continue;
     }
+    const nativeJunctions = resultPolicy?.junctionPointsByEdgeId?.get(String(edge.id));
+    if (nativeJunctions) {
+      if (nativeJunctions.length)
+        edge.junctionPoints = nativeJunctions.map((point) => ({ ...point }));
+      else delete edge.junctionPoints;
+    }
     const section = toSection(edge, laidOutEdge.points ?? []);
     edge.sections = section ? [section] : [];
     if (section) edge.container = root.id;
@@ -1776,7 +1782,11 @@ function applyLayout(
       ),
       new Set(
         (root.edges ?? [])
-          .filter((e) => getBooleanOption(e.layoutOptions ?? {}, "noLayout") === true)
+          .filter(
+            (e) =>
+              getBooleanOption(e.layoutOptions ?? {}, "noLayout") === true ||
+              resultPolicy?.junctionPointsByEdgeId?.has(String(e.id)) === true,
+          )
           .map((e) => String(e.id)),
       ),
     );
@@ -1844,6 +1854,10 @@ function normalizeElkGraphBounds(
           point.x += shiftX;
           point.y += shiftY;
         }
+      }
+      for (const point of edge.junctionPoints ?? []) {
+        point.x += shiftX;
+        point.y += shiftY;
       }
       for (const label of (edge.labels ?? []).filter(isLayoutEdgeLabel)) {
         label.x = (label.x ?? 0) + shiftX;

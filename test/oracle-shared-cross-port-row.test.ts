@@ -1,6 +1,7 @@
 import Oracle from "elkjs/lib/elk.bundled.js";
 import { expect, it } from "vitest";
 import Native from "../src/elkjs";
+import { compoundGeometry } from "../scripts/parity/compound-corpus";
 import { flatFixture } from "../scripts/parity/flat-corpus";
 
 for (const strategy of [
@@ -53,4 +54,16 @@ for (const strategy of [
       routes: graph.edges!.map(({ id, sections }) => ({ id, sections })),
     });
     expect(geometry(actual)).toEqual(geometry(expected));
+    expect(compoundGeometry(actual)).toEqual(compoundGeometry(expected));
   });
+
+it("matches complete geometry for random seed 33 RIGHT with native junctions", async () => {
+  const input = flatFixture(33, "RIGHT");
+  input.layoutOptions = {
+    ...input.layoutOptions,
+    "elk.layered.compaction.postCompaction.strategy": "LEFT",
+  };
+  const actual = await new Native().layout(structuredClone(input));
+  const expected = await new Oracle().layout(structuredClone(input) as never);
+  expect(compoundGeometry(actual)).toEqual(compoundGeometry(expected));
+});

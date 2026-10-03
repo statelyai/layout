@@ -10,6 +10,7 @@ import {
 import { routeFixedSelfLoop, fixedSelfLoopSide } from "./fixed-self-loop";
 import { networkSimplexComponents } from "./network-simplex";
 import { minimizeHierarchyCrossings } from "./hierarchy-crossing";
+import { orthogonalJunctionPoints, type OrthogonalJunctionGroup } from "./orthogonal-junctions";
 import { routeOrthogonalSegments } from "./orthogonal-segments";
 import {
   createOrthogonalHypersegments,
@@ -3647,6 +3648,7 @@ function implicitEdgeEndpoints(
         node &&
         (constraints === "FIXED_POS" ||
           constraints === "FIXED_RATIO" ||
+          constraints === "FIXED_ORDER" ||
           singleFixedSidePort ||
           authoredAnchor !== undefined)
       ) {
@@ -3675,6 +3677,16 @@ function routeEdges(style: "ORTHOGONAL" | "POLYLINE" | "SPLINES"): EdgeRouter {
       );
     };
     const pointsByEdgeId = new Map<string, readonly Point[]>();
+    const junctionGroups: OrthogonalJunctionGroup[] = [];
+    const physicalOrder = new Map(
+      [
+        ...input.graph.edges
+          .filter((edge) => !orientation.reversedEdgeIds.has(edge.id))
+          .map((edge) => edge.id),
+        ...orientation.reversedEdgeIds,
+      ].map((id, index) => [id, index]),
+    );
+
     const splineNubControlsByEdgeId = new Map<string, readonly Point[]>();
     const outsideFeedbackEdgeIds = new Set<string>();
     const horizontal = input.direction === "left" || input.direction === "right";
@@ -4237,6 +4249,29 @@ function routeEdges(style: "ORTHOGONAL" | "POLYLINE" | "SPLINES"): EdgeRouter {
           criticalThreshold,
           random,
         );
+        const junctionGroup: (typeof junctionGroups)[number] = [];
+        for (const group of grouped.segments) {
+          for (const port of group.ports) {
+            const outgoing = candidates.filter(
+              (candidate) => portByCandidate.get(candidate)!.source === port,
+            );
+            outgoing.sort((a, b) => physicalOrder.get(a.edge.id)! - physicalOrder.get(b.edge.id)!);
+            for (const candidate of outgoing) {
+              const segment = result.segments[grouped.segmentByPort.get(port)!]!;
+              const reversed = orientation.reversedEdgeIds.has(candidate.edge.id);
+              junctionGroup.push({
+                edgeId: candidate.edge.id,
+                reversed,
+                segment,
+                sourceValue: byPort.get(portByCandidate.get(candidate)!.source)!.position,
+                targetValue: byPort.get(portByCandidate.get(candidate)!.target)!.position,
+                partner:
+                  segment.partner === undefined ? undefined : result.segments[segment.partner],
+              });
+            }
+          }
+        }
+        junctionGroups.push(junctionGroup);
         let maximumSlot = -1;
         for (const segment of result.segments) {
           if (Math.abs(segment.start - segment.end) >= 1e-3)
@@ -5605,7 +5640,26 @@ function routeEdges(style: "ORTHOGONAL" | "POLYLINE" | "SPLINES"): EdgeRouter {
       );
     }
 
-    return { pointsByEdgeId, splineNubControlsByEdgeId, outsideFeedbackEdgeIds };
+    const junctionPointsByEdgeId =
+      style === "ORTHOGONAL"
+        ? orthogonalJunctionPoints(
+            input,
+            orientation,
+            implicitEdgeEndpoints(input, routingCoordinates(placement), orientation),
+            flowLayerByNodeId,
+            junctionGroups,
+            pointsByEdgeId,
+            orthogonalTrackByEdgeId,
+            orthogonalDetourByEdgeId,
+            (node, port) => getOrientedPortDirection(input, orientation, node, port),
+          )
+        : undefined;
+    return {
+      pointsByEdgeId,
+      splineNubControlsByEdgeId,
+      outsideFeedbackEdgeIds,
+      ...(style === "ORTHOGONAL" ? { junctionPointsByEdgeId } : {}),
+    };
   };
 }
 

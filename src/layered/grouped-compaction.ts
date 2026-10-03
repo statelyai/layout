@@ -111,6 +111,7 @@ export function applyGroupedEdgeLengthCompaction(
     joinedRoutes,
     orientation,
   );
+  routes.junctionPointsByEdgeId = joinedRoutes.junctionPointsByEdgeId;
   const bounds = compactionBounds(joinedPlacement);
   if (bounds) recordCompactionBounds(placement, bounds);
   for (const [id, rect] of rects) (placement.rectByNodeId as Map<string, EntityRect>).set(id, rect);
@@ -217,6 +218,11 @@ function compactJoinedGeometryUnchecked(
   const canonicalRoutes = new Map(
     [...(routes?.pointsByEdgeId ?? [])].map(([id, points]) => [id, points.map(pointToCanonical)]),
   );
+  const canonicalJunctions =
+    routes?.junctionPointsByEdgeId &&
+    new Map(
+      [...routes.junctionPointsByEdgeId].map(([id, points]) => [id, points.map(pointToCanonical)]),
+    );
   const edgeById = new Map(input.graph.edges.map((edge) => [edge.id, edge]));
   const endpointSide = (
     nodeId: string,
@@ -351,6 +357,16 @@ function compactJoinedGeometryUnchecked(
       }
     } else merged.push(segment);
   }
+  for (const points of canonicalJunctions?.values() ?? [])
+    for (const point of points) {
+      const track = merged.find(
+        (item) =>
+          Math.abs(item.x - point.x) < 1e-9 &&
+          point.y >= item.y - 1e-9 &&
+          point.y <= item.y + item.height + 1e-9,
+      );
+      if (track) track.points.push(point);
+    }
   items.push(...merged);
   const groups = [...new Set(items.map((item) => item.group))];
   const constraints: CompactionConstraint[] = [];
@@ -637,6 +653,10 @@ function compactJoinedGeometryUnchecked(
       points.map(pointFromCanonical),
     );
   }
+  if (canonicalJunctions)
+    routes!.junctionPointsByEdgeId = new Map(
+      [...canonicalJunctions].map(([id, points]) => [id, points.map(pointFromCanonical)]),
+    );
   const boundPoints = items.flatMap((item) => {
     const box = hitboxes.get(item.id)!;
     return [

@@ -58,6 +58,8 @@ export interface NodePlacement {
 
 export interface EdgeRoutes {
   pointsByEdgeId: ReadonlyMap<string, readonly Point[]>;
+  /** Branch points generated on physical orthogonal hypersegments before restoration. */
+  junctionPointsByEdgeId?: ReadonlyMap<string, readonly Point[]>;
   /** ELK spline segment NUB controls retained until long-edge joining. */
   splineNubControlsByEdgeId?: ReadonlyMap<string, readonly Point[]>;
   /** Reversed fixed-side routes that must stay outside the node envelope during compaction. */

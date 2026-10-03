@@ -60,12 +60,24 @@ function scene(graph, error) {
       }));
     }),
   );
+  const junctions = owners.flatMap(({ node, x, y }) =>
+    (node.edges ?? []).flatMap((edge, index) => {
+      const origin = origins.get(edge.container) ?? { x, y };
+      return (edge.junctionPoints ?? []).map((point) => ({
+        id: edge.id,
+        color: colors[index % colors.length],
+        x: point.x + origin.x,
+        y: point.y + origin.y,
+      }));
+    }),
+  );
   const bounds = [
     ...nodes.flatMap((n) => [
       { x: n.x, y: n.y },
       { x: n.x + n.width, y: n.y + n.height },
     ]),
     ...paths.flatMap((p) => p.points),
+    ...junctions,
   ];
   const markup =
     nodes
@@ -78,6 +90,12 @@ function scene(graph, error) {
       .map(
         (p) =>
           `<polyline points="${p.points.map((p) => `${p.x},${p.y}`).join(" ")}" fill="none" stroke="${p.color}" stroke-width="1.5"><title>${escape(p.id)}</title></polyline>`,
+      )
+      .join("") +
+    junctions
+      .map(
+        (p) =>
+          `<circle cx="${p.x}" cy="${p.y}" r="3" fill="${p.color}" stroke="white" stroke-width="0.8"><title>Junction owned by ${escape(p.id)}</title></circle>`,
       )
       .join("");
   return { bounds, markup };

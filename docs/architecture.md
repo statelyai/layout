@@ -95,7 +95,7 @@ before refreshing parent dimensions and physical ports. Child heuristics retain
 their local random stream; the root counter uses the root stream. Coordinated
 orders retain authored model-order and greedy-switch policies. Exact sweepiness
 classification for non-flow-side and feedback ports, deeper hierarchies, labels
-and junctions remain parity work.
+remain parity work. Native orthogonal junctions are emitted on physical routing segments, including same-layer inverted-port links, and retain ownership through joining, compaction and adapter serialization. Broad junction parity remains incomplete.
 
 Brandes-Koepf compaction applies straightening thresholds while placing blocks,
 tracks completed blocks and used connections, and queues unresolved boundary

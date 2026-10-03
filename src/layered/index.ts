@@ -2806,6 +2806,7 @@ export function* createLayeredScopePipeline<N, E, G, P>(
       width,
       height,
       points,
+
       routing:
         edgeRouting === "POLYLINE"
           ? ("polyline" as const)
@@ -2833,7 +2834,10 @@ export function* createLayeredScopePipeline<N, E, G, P>(
 
   return setElkjs0111ResultPolicy(
     { ...graph, direction, nodes, edges },
-    { normalizationBounds: compactionBounds(placement) },
+    {
+      normalizationBounds: compactionBounds(placement),
+      junctionPointsByEdgeId: routes.junctionPointsByEdgeId,
+    },
   );
 }
 

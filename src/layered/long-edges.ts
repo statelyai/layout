@@ -451,5 +451,17 @@ export function joinLongEdgeRoutes(
         : simplify(points),
     );
   }
-  return { pointsByEdgeId, outsideFeedbackEdgeIds };
+  const junctionPointsByEdgeId =
+    routes.junctionPointsByEdgeId &&
+    new Map(
+      [...segmentIdsByEdgeId].map(([edgeId, ids]) => [
+        edgeId,
+        ids.flatMap((id) => routes.junctionPointsByEdgeId?.get(id) ?? []),
+      ]),
+    );
+  return {
+    pointsByEdgeId,
+    outsideFeedbackEdgeIds,
+    ...(junctionPointsByEdgeId ? { junctionPointsByEdgeId } : {}),
+  };
 }
