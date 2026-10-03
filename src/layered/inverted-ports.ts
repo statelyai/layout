@@ -138,6 +138,15 @@ export function insertInvertedPortDummies(expansion: LongEdgeExpansion): LongEdg
       ...input,
       graph: { ...input.graph, nodes, edges },
       sizes,
+      modelOrderByEdgeId: new Map(
+        edges.map((edge) => {
+          const original = originals.get(edge.id) ?? edge;
+          return [
+            edge.id,
+            input.modelOrderByEdgeId?.get(original.id) ?? input.graph.edges.indexOf(original),
+          ];
+        }),
+      ),
       nodeSettings: (n) =>
         dummyIds.has(n.id) ? { portConstraints: "FIXED_POS" } : input.nodeSettings?.(n),
       portSettings: (p, n) =>

@@ -63,6 +63,30 @@ const sweepOrder = (order) =>
       ),
     })),
   );
+const modelOrderEvents = [];
+let observingModelOrder = false;
+const initialModelProcess = context.$process_51;
+context.$process_51 = (...args) => {
+  observingModelOrder = true;
+  try {
+    return initialModelProcess(...args);
+  } finally {
+    observingModelOrder = false;
+  }
+};
+const initialModelCompare = context.$compare_11;
+context.$compare_11 = (comparator, a, b) => {
+  const result = initialModelCompare(comparator, a, b);
+  if (observingModelOrder)
+    modelOrderEvents.push({
+      layer: a.layer.id_0,
+      beforePorts: comparator.beforePorts,
+      a: sweepOrder([[a]])[0][0],
+      b: sweepOrder([[b]])[0][0],
+      result,
+    });
+  return result;
+};
 const initializeSweep = context.$initialize_5;
 context.$initialize_5 = (processor, root) => {
   const result = initializeSweep(processor, root);
@@ -255,6 +279,7 @@ fs.writeFileSync(
       pipelineCalls,
       rngEvents,
       greedyEvents,
+      modelOrderEvents,
       sweepScopes,
       sweepEvents,
       stages,

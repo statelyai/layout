@@ -31,6 +31,7 @@ for (const span of [1, 3]) {
       padding: { top: 12, left: 12, right: 12, bottom: 12 },
       constrainedLayerByNodeId: new Map(),
       settings: {},
+      modelOrderByEdgeId: new Map([["ab", 42]]),
       nodeSettings: () => ({ portConstraints: "FIXED_POS" }),
       portSettings: (p) => ({ "port.side": p.name === "east" ? "EAST" : "WEST" }),
     };
@@ -48,6 +49,9 @@ for (const span of [1, 3]) {
     );
     const segments = expanded.segmentIdsByEdgeId.get("ab")!;
     expect(segments).toHaveLength(span + 2);
+    expect(segments.map((id) => expanded.input.modelOrderByEdgeId?.get(id))).toEqual(
+      Array(span + 2).fill(42),
+    );
     const edges = segments.map((id) => expanded.input.graph.edges.find((e) => e.id === id)!);
     expect(edges[0]!.sourceId).toBe("a");
     expect(edges[0]!.sourcePort).toBe("east");

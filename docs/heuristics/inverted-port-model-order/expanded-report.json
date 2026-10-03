@@ -1,0 +1,11 @@
+{
+  "baseline": "../model-order-port-ranks/expanded-report.json",
+  "summary": {
+    "cases": 200,
+    "matched": 140,
+    "differingValues": 9413,
+    "nativeErrors": 0,
+    "elkErrors": 3
+  },
+  "updates": []
+}

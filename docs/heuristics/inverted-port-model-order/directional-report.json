@@ -1,0 +1,11 @@
+{
+  "baseline": "../model-order-port-ranks/directional-report.json",
+  "summary": {
+    "cases": 200,
+    "matched": 145,
+    "differingValues": 8870,
+    "nativeErrors": 0,
+    "elkErrors": 6
+  },
+  "updates": []
+}

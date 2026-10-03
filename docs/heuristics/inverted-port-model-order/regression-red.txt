@@ -1,0 +1,68 @@
+
+ RUN  v4.1.10 /Users/davidkpiano/.codex/worktrees/layout/heuristic-graph-corpus
+
+ ❯ test/inverted-port-expansion.test.ts (4 tests | 2 failed) 11ms
+   × composes inverted fixed-side feedback endpoints across 1 layer(s) 7ms
+   × composes inverted fixed-side feedback endpoints across 3 layer(s) 1ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  test/inverted-port-expansion.test.ts > composes inverted fixed-side feedback endpoints across 1 layer(s)
+AssertionError: expected [ undefined, undefined, undefined ] to deeply equal [ 42, 42, 42 ]
+
+- Expected
++ Received
+
+  [
+-   42,
+-   42,
+-   42,
++   undefined,
++   undefined,
++   undefined,
+  ]
+
+ ❯ test/inverted-port-expansion.test.ts:52:76
+     50|     const segments = expanded.segmentIdsByEdgeId.get("ab")!;
+     51|     expect(segments).toHaveLength(span + 2);
+     52|     expect(segments.map(id => expanded.input.modelOrderByEdgeId?.get(i…
+       |                                                                            ^
+     53|     const edges = segments.map((id) => expanded.input.graph.edges.find…
+     54|     expect(edges[0]!.sourceId).toBe("a");
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  test/inverted-port-expansion.test.ts > composes inverted fixed-side feedback endpoints across 3 layer(s)
+AssertionError: expected [ undefined, undefined, 42, …(2) ] to deeply equal [ 42, 42, 42, 42, 42 ]
+
+- Expected
++ Received
+
+  [
+-   42,
+-   42,
+-   42,
+-   42,
++   undefined,
++   undefined,
+    42,
++   undefined,
++   undefined,
+  ]
+
+ ❯ test/inverted-port-expansion.test.ts:52:76
+     50|     const segments = expanded.segmentIdsByEdgeId.get("ab")!;
+     51|     expect(segments).toHaveLength(span + 2);
+     52|     expect(segments.map(id => expanded.input.modelOrderByEdgeId?.get(i…
+       |                                                                            ^
+     53|     const edges = segments.map((id) => expanded.input.graph.edges.find…
+     54|     expect(edges[0]!.sourceId).toBe("a");
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 2 passed (4)
+   Start at  12:00:34
+   Duration  310ms (transform 76ms, setup 0ms, import 104ms, tests 11ms, environment 0ms)
+
