@@ -1,0 +1,25 @@
+evalmachine.<anonymous>:43993
+    n1ModelOrder = calculateModelOrderOrGroupModelOrder(n1, n2, this$static.graph_0, castTo($getProperty(this$static.graph_0, MAX_MODEL_ORDER_NODES), 15).value_0);
+                                                                                                                                                         ^
+
+TypeError: Cannot read properties of undefined (reading 'value_0')
+    at $compare_11 (evalmachine.<anonymous>:43993:154)
+    at insertionSort_0 (evalmachine.<anonymous>:39843:21)
+    at $process_51 (evalmachine.<anonymous>:39798:5)
+    at SortByInputModelProcessor.process_48 [as process] (evalmachine.<anonymous>:39879:3)
+    at processor.process (file:///Users/davidkpiano/.codex/worktrees/layout/heuristic-graph-corpus/scripts/parity/trace-routing-worker.mjs:134:15)
+    at $hierarchicalLayout (evalmachine.<anonymous>:26102:21)
+    at $doCompoundLayout (evalmachine.<anonymous>:26034:3)
+    at context.<computed> (file:///Users/davidkpiano/.codex/worktrees/layout/heuristic-graph-corpus/scripts/parity/trace-routing-worker.mjs:22:12)
+    at LayeredLayoutProvider.layout_1 [as layout] (evalmachine.<anonymous>:26364:160)
+    at $executeAlgorithm (evalmachine.<anonymous>:66262:20)
+    at $layoutRecursively (evalmachine.<anonymous>:66456:83)
+    at $layout_3 (evalmachine.<anonymous>:66297:3)
+    at layout_10 (evalmachine.<anonymous>:79573:3)
+    at Dispatcher.dispatch (evalmachine.<anonymous>:79502:11)
+    at Dispatcher.saveDispatch (evalmachine.<anonymous>:79510:15)
+    at Timeout._onTimeout (evalmachine.<anonymous>:79527:26)
+    at listOnTimeout (node:internal/timers:605:17)
+    at process.processTimers (node:internal/timers:541:7)
+
+Node.js v25.9.0

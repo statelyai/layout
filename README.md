@@ -395,6 +395,11 @@ run `pnpm exec tsx scripts/check-directional-compaction-parity.ts`. This additio
 200-case gate preserves all failures, including real ELK errors; it currently
 fails. See the [directional compaction proof](./docs/heuristics/directional-compaction/README.md).
 
+For model-order settings on bounded random flat/hierarchical graphs, run
+`pnpm test:parity:model-order`. This strict 200-case gate alternates forced node
+ordering, preserves complete failures and reference exceptions, and currently
+fails. See the [model-order random proof](docs/heuristics/random-model-order/README.md).
+
 <!-- implementation from src/layered/loop-envelopes.ts, src/layered/strategies.ts, src/layered/index.ts and src/elkjs/index.ts -->
 
 Movable self-loop labels reserve clearance before placement and retain directional alignment and stacked routing clearance. Compaction retains their complete label envelopes. See the [native loop label comparison](docs/heuristics/movable-loop-labels/README.md).
