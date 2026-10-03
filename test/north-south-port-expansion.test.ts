@@ -111,6 +111,36 @@ for (const direction of ["right", "left", "down", "up"] as const) {
       for (let i = 1; i < points.length; i++)
         expect(points[i]!.x === points[i - 1]!.x || points[i]!.y === points[i - 1]!.y).toBe(true);
       expect(routes.pointsByEdgeId.get("ab")).toBe(route);
+      // The router can collapse distinct coincident endpoints to one point.
+      // Restoration must keep the opposite endpoint while reconnecting either face.
+      const shared = { x: 12, y: 12 };
+      const coincidentPlacement = { rectByNodeId: new Map(placement.rectByNodeId) };
+      coincidentPlacement.rectByNodeId.set(b, { x: 12, y: 12, width: 0, height: 0 });
+      const collapsed = {
+        pointsByEdgeId: new Map([
+          ["ab", [shared]],
+          ["ac", [shared]],
+        ]),
+      };
+      const restoredCollapsed = restoreNorthSouthPortRoutes(
+        result,
+        coincidentPlacement,
+        collapsed,
+        (o) => (o.node.id === "a" ? sourceAnchor : targetAnchor),
+      );
+      expect(restoredCollapsed.pointsByEdgeId.get("ab")).toEqual([
+        sourceAnchor,
+        vertical ? { x: 12, y: sourceAnchor.y } : { x: sourceAnchor.x, y: 12 },
+        vertical ? { x: 12, y: targetAnchor.y } : { x: targetAnchor.x, y: 12 },
+        targetAnchor,
+      ]);
+      expect(restoredCollapsed.pointsByEdgeId.get("ac")).toEqual([
+        sourceAnchor,
+        vertical ? { x: 12, y: sourceAnchor.y } : { x: sourceAnchor.x, y: 12 },
+        shared,
+      ]);
+      expect(collapsed.pointsByEdgeId.get("ab")).toEqual([shared]);
+      expect(collapsed.pointsByEdgeId.get("ac")).toEqual([shared]);
       expect(graph).toEqual(before);
     });
   }

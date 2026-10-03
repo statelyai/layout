@@ -1,0 +1,21 @@
+{
+  "before": {
+    "numPassedTests": 2938,
+    "numFailedTests": 123,
+    "numTotalTests": 3061
+  },
+  "after": {
+    "numPassedTests": 2941,
+    "numFailedTests": 120,
+    "numTotalTests": 3061
+  },
+  "fixed": [
+    "fixes hierarchy boundary sides: ports, DOWN, FREE",
+    "fixes hierarchy boundary sides: ports, DOWN, default",
+    "fixes hierarchy boundary sides: ports, UP, FREE",
+    "fixes hierarchy boundary sides: ports, UP, default"
+  ],
+  "newFailures": [
+    "retains finite geometry for random compaction seed 24 in LEFT"
+  ]
+}

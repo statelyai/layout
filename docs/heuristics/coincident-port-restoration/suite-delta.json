@@ -1,0 +1,38 @@
+{
+  "before": {
+    "numPassedTests": 2938,
+    "numFailedTests": 123,
+    "numTotalTests": 3061
+  },
+  "after": {
+    "numPassedTests": 2942,
+    "numFailedTests": 119,
+    "numTotalTests": 3061
+  },
+  "fixed": [
+    "fixes hierarchy boundary sides: ports, DOWN, FREE",
+    "fixes hierarchy boundary sides: ports, DOWN, default",
+    "fixes hierarchy boundary sides: ports, UP, FREE",
+    "fixes hierarchy boundary sides: ports, UP, default"
+  ],
+  "newFailures": [],
+  "fileQualifiedFixed": [
+    {
+      "file": "test/oracle-hierarchy-fixed-sides.test.ts",
+      "test": "fixes hierarchy boundary sides: ports, DOWN, FREE"
+    },
+    {
+      "file": "test/oracle-hierarchy-fixed-sides.test.ts",
+      "test": "fixes hierarchy boundary sides: ports, DOWN, default"
+    },
+    {
+      "file": "test/oracle-hierarchy-fixed-sides.test.ts",
+      "test": "fixes hierarchy boundary sides: ports, UP, FREE"
+    },
+    {
+      "file": "test/oracle-hierarchy-fixed-sides.test.ts",
+      "test": "fixes hierarchy boundary sides: ports, UP, default"
+    }
+  ],
+  "fileQualifiedNewFailures": []
+}

@@ -70,6 +70,33 @@ context.$sweepReducingCrossings = (processor, graph, forward, firstSweep) => {
   sweepEvents.push({ ...describe("exit"), improved: Boolean(result) });
   return result;
 };
+const observeRoutes = process.argv.includes("--routes");
+const snapshotRoutes = (graph) => {
+  const nodes = [
+    ...graph.layerlessNodes.array,
+    ...graph.layers.array.flatMap((layer) => layer.nodes.array),
+  ];
+  const edges = new Set(
+    nodes.flatMap((node) => node.ports.array.flatMap((port) => port.outgoingEdges.array)),
+  );
+  return [...edges].map((edge) => {
+    const source = context.$getAbsoluteAnchor(edge.source);
+    const target = context.$getAbsoluteAnchor(edge.target);
+    const bends = [];
+    const iterator = edge.bendPoints.iterator_0();
+    while (iterator.hasNext_0()) {
+      const point = iterator.next_1();
+      bends.push({ x: point.x_0, y: point.y_0 });
+    }
+    return {
+      source: originId(edge.source.owner),
+      target: originId(edge.target.owner),
+      sourceAnchor: { x: source.x_0, y: source.y_0 },
+      targetAnchor: { x: target.x_0, y: target.y_0 },
+      bends,
+    };
+  });
+};
 const snapshot = (graph) => ({
   scope: scopes.get(graph),
   width: graph.size_0.x_0,
@@ -95,6 +122,7 @@ const snapshot = (graph) => ({
       incoming: port.incomingEdges.array.length,
     })),
   })),
+  ...(observeRoutes ? { edges: snapshotRoutes(graph) } : {}),
   layers: graph.layers.array.map((layer) => layer.nodes.array.map((node) => originId(node))),
 });
 const prepare = context.$prepareGraphForLayout;

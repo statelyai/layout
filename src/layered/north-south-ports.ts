@@ -246,7 +246,9 @@ export function restoreNorthSouthPortRoutes(
     const source = phase.originsByDummyId.get(edge.sourceId);
     const target = phase.originsByDummyId.get(edge.targetId);
     if (!source && !target) continue;
-    let points = [...original];
+    // Routing can collapse coincident physical endpoints to one coordinate.
+    // Reconnecting one face must not consume the opposite endpoint's identity.
+    let points = original.length === 1 ? [{ ...original[0]! }, { ...original[0]! }] : [...original];
     if (source) {
       const endpoint = anchor(source);
       const rect = placement.rectByNodeId.get(edge.sourceId);
