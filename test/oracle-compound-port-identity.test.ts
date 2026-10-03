@@ -9,7 +9,17 @@ import {
 } from "../scripts/parity/compound-corpus";
 
 for (const direction of ["RIGHT", "LEFT", "DOWN", "UP"]) {
-  it.each([1, 2, 18])(
+  it.each([
+    1,
+    2,
+    3,
+    10,
+    12,
+    15,
+    18,
+    19,
+    ...(direction === "RIGHT" || direction === "LEFT" ? [14] : [17, 22]),
+  ])(
     `matches complete seed %i geometry and route containers through a ${direction} boundary`,
     async (seed) => {
       const input = compoundFixture(seed, direction);

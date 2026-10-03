@@ -985,3 +985,15 @@ Hierarchy: **24/100 matches**, zero errors or lost matches, differing values
 **2,596 to 2,324** with unchanged inputs/tolerance. Full local suite **2,069 pass /
 108 fail / 2,177**, no new failure names. Types, selected format/lint and build
 pass. Matched-scale seed 3 browser proof saved. Broad parity remains incomplete.
+
+## BK straightening and external-port spacing
+
+[Source and proof](./bk-boundary-spacing/README.md) correct physical port order
+for straightening and type-specific external boundary spacing. Root placement
+and joined routes now match seed 3 across all four directions. The preserved
+hierarchy gate improves **24 to 50/100 complete matches**, no errors or lost
+matches, **2,324 to 1,607 differing values**. Inputs/tolerance remain unchanged.
+
+31 new regressions pass. Full local suite **2,100 pass / 108 fail / 2,208**, no
+new failure names. Types, selected format/lint and build pass. RIGHT/DOWN seed 3
+have equal-scale before/after/ELK browser proof. Broader parity remains incomplete.

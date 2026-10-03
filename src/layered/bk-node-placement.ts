@@ -625,9 +625,14 @@ function improveEdgeStraightness(
       if (traversalIndex === 0) continue;
       const root = bal.root.get(id) ?? id;
       if (lockedRoots.has(root) || root !== id) continue;
-      const candidateEdges = input.graph.edges.filter((edge) =>
-        bal.hdir === "RIGHT" ? edge.targetId === id : edge.sourceId === id,
-      );
+      // ELK selects straightening edges through the swept physical port list.
+      // Model edge order can select a different parallel boundary connection.
+      const portOrder = (
+        bal.hdir === "RIGHT" ? order.inputPortOrderByNodeId : order.outputPortOrderByNodeId
+      )?.get(id);
+      const candidateEdges = input.graph.edges
+        .filter((edge) => (bal.hdir === "RIGHT" ? edge.targetId === id : edge.sourceId === id))
+        .sort((a, b) => (portOrder ? portOrder.indexOf(a.id) - portOrder.indexOf(b.id) : 0));
       const edge = candidateEdges.find((candidate) => {
         const otherId = candidate.sourceId === id ? candidate.targetId : candidate.sourceId;
         return !lockedRoots.has(bal.root.get(otherId) ?? otherId);
