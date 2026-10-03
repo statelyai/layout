@@ -1,3 +1,4 @@
+import { preparePortMargins, portCrossMargins } from "./node-margins";
 /*******************************************************************************
  * Derived from Eclipse Layout Kernel's Brandes-Koepf node placer.
  * Copyright (c) 2015 Kiel University and others.
@@ -14,9 +15,15 @@ import { prepareLoopEnvelopes, preparedLoopEnvelopes, recordLoopEnvelopes } from
 import { recordRoutingCoordinates } from "./routing-coordinates";
 
 const beforeMargin = (input: LayeredPhaseInput, id: string) =>
-  preparedLoopEnvelopes(input)?.get(id)?.before ?? 0;
+  Math.max(
+    preparedLoopEnvelopes(input)?.get(id)?.before ?? 0,
+    portCrossMargins(input, id)?.before ?? 0,
+  );
 const afterMargin = (input: LayeredPhaseInput, id: string) =>
-  preparedLoopEnvelopes(input)?.get(id)?.after ?? 0;
+  Math.max(
+    preparedLoopEnvelopes(input)?.get(id)?.after ?? 0,
+    portCrossMargins(input, id)?.after ?? 0,
+  );
 
 type HDirection = "LEFT" | "RIGHT";
 type VDirection = "UP" | "DOWN";
@@ -758,6 +765,7 @@ export function placeNodesWithBrandesKoepf(
   input: LayeredPhaseInput,
   order: LayerOrder,
 ): NodePlacement {
+  preparePortMargins(input);
   const envelopes = prepareLoopEnvelopes(input);
   const base = placeNodesInLayers(input, order);
   const neighbors = buildNeighbors(input, order);

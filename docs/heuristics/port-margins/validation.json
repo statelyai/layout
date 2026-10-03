@@ -1,0 +1,53 @@
+{
+  "baseline": "b723c67",
+  "oracle": "elkjs@0.11.1",
+  "tolerance": 5e-13,
+  "flat": {
+    "cases": 100,
+    "matched": 32,
+    "nativeErrors": 0,
+    "elkErrors": 0,
+    "differingValues": 10896
+  },
+  "hierarchy": {
+    "cases": 100,
+    "matched": 72,
+    "nativeErrors": 0,
+    "elkErrors": 0,
+    "differingValues": 832
+  },
+  "fixedLoops": {
+    "cases": 100,
+    "matched": 100,
+    "nativeErrors": 0,
+    "elkErrors": 0,
+    "differingValues": 0
+  },
+  "focused": {
+    "red": {
+      "passed": 12,
+      "failed": 12
+    },
+    "green": {
+      "passed": 24,
+      "failed": 0
+    }
+  },
+  "fullSuite": {
+    "passed": 2231,
+    "failed": 106,
+    "total": 2337,
+    "introducedFailures": [],
+    "resolved": [
+      [
+        "oracle-option-target-matrix.test.ts",
+        "matches port.side=\"NORTH\" on PORTS"
+      ],
+      [
+        "oracle-option-target-matrix.test.ts",
+        "matches port.side=\"SOUTH\" on PORTS"
+      ]
+    ]
+  },
+  "lostComplete": []
+}
