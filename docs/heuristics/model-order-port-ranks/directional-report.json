@@ -1,0 +1,11 @@
+{
+  "baseline": "../inverted-loop-clearance/directional-report.json",
+  "summary": {
+    "cases": 200,
+    "matched": 145,
+    "nativeErrors": 0,
+    "elkErrors": 6,
+    "differingValues": 8870
+  },
+  "updates": []
+}

@@ -46,3 +46,25 @@ export function invertedBoundaryFixture(direction: string, count: number, spacin
     })),
   };
 }
+
+/** Two backward ports alternate targets; forced barycenter order still permits greedy switches. */
+export function orderedInvertedBoundaryFixture(direction: string, count: number): ElkNode {
+  const graph = invertedBoundaryFixture(direction, count);
+  delete graph.layoutOptions!["elk.spacing.edgeNodeBetweenLayers"];
+  delete graph.layoutOptions!["elk.spacing.edgeEdgeBetweenLayers"];
+  graph.layoutOptions!["elk.layered.crossingMinimization.forceNodeModelOrder"] = true;
+  graph.layoutOptions!["elk.layered.considerModelOrder.strategy"] = "NODES_AND_EDGES";
+  const source = graph.children![0]!;
+  const original = source.ports![0]!;
+  const side = original.layoutOptions!["elk.port.side"];
+  source.ports = [12, 44].map((cross, index) => ({
+    ...original,
+    id: `a:p${index}`,
+    x: side === "WEST" || side === "EAST" ? original.x : cross,
+    y: side === "NORTH" || side === "SOUTH" ? original.y : cross,
+  }));
+  graph.edges!.forEach((edge, index) => {
+    edge.sources = [`a:p${index % 2}`];
+  });
+  return graph;
+}

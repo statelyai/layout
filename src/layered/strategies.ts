@@ -48,6 +48,8 @@ import type { ElkLayeredOptionValueByName } from "./elk-options";
 import { conservativeSpline } from "./spline-bezier";
 import { getFlexiblePortPosition } from "./flexible-ports";
 
+const nodeRelativePortRanksByInput = new WeakMap<LayeredPhaseInput, boolean>();
+
 function getOrientedEndpoints(
   edge: GraphEdge,
   orientation: AcyclicOrientation,
@@ -881,8 +883,7 @@ export function applyGreedySwitch(
   const modelOrderStrategy = input.settings["considerModelOrder.strategy"] ?? "NONE";
   if (
     (modelOrderStrategy === "NODES_AND_EDGES" || modelOrderStrategy === "PREFER_NODES") &&
-    (input.settings["crossingMinimization.forceNodeModelOrder"] === true ||
-      Number(input.settings["considerModelOrder.crossingCounterNodeInfluence"] ?? 0) >= 1)
+    Number(input.settings["considerModelOrder.crossingCounterNodeInfluence"] ?? 0) >= 1
   ) {
     return order;
   }
@@ -1202,10 +1203,48 @@ export function applyForcedModelOrder(
       }
     }
   }
-  // Ports are kept in their configured model/edge order by the importer and
-  // port placer, so increasing their objective weight requires no reordering.
-  Number(input.settings["considerModelOrder.crossingCounterPortInfluence"] ?? 0);
-  return { layers };
+  // Node reordering invalidates flexible physical-port ranks. Reconcile them
+  // using the same distributor and rank convention as the preceding sweep;
+  // retain fixed boundary orders for the canonical greedy crossing counter.
+  const incoming = clonePortOrders(order.inputPortOrderByNodeId);
+  const outgoing = clonePortOrders(order.outputPortOrderByNodeId);
+  const graph = crossingGraph(input, orientation, layers, incoming, outgoing);
+  const distributor = new CanonicalPortDistributor(graph);
+  const fixedOrder = new Set(
+    input.graph.nodes
+      .filter((node) => {
+        const constraint = input.nodeSettings?.(node)?.portConstraints;
+        return (
+          constraint === "FIXED_ORDER" || constraint === "FIXED_POS" || constraint === "FIXED_RATIO"
+        );
+      })
+      .map((node) => node.id),
+  );
+  for (let layer = layers.length - 1; layer >= 0; layer--) {
+    distributor.distribute(graph, layer, false, {
+      nodeRelative: nodeRelativePortRanksByInput.get(input) ?? true,
+      fixedOrder,
+      hierarchical: new Set(),
+    });
+  }
+  const edges = input.graph.edges.filter((edge) => edge.sourceId !== edge.targetId);
+  const endpoints = new Map(edges.map((edge, index) => [edge.id, graph.edges[index]!]));
+  for (const node of graph.layers.flat()) {
+    const ordinal = new Map(node.ports.map((port, index) => [port.id, index]));
+    for (const [orders, source] of [
+      [outgoing, true],
+      [incoming, false],
+    ] as const) {
+      orders
+        .get(node.id)
+        ?.sort(
+          (left, right) =>
+            ordinal.get(endpoints.get(left)![source ? "source" : "target"])! -
+            ordinal.get(endpoints.get(right)![source ? "source" : "target"])!,
+        );
+    }
+  }
+  return { ...order, layers, inputPortOrderByNodeId: incoming, outputPortOrderByNodeId: outgoing };
 }
 
 /** ELK LONGEST_PATH: align sinks on the final layer. */
@@ -1881,6 +1920,7 @@ export function createLayerSweepSession(
   const randomSeed = initialization.resetSeed === false ? undefined : sharedRandom.nextLong();
   const portDistributorUsesNodeRelativeRanks = sharedRandom.nextBoolean();
   const nodeRelativePortRanks = portDistributorUsesNodeRelativeRanks;
+  nodeRelativePortRanksByInput.set(input, nodeRelativePortRanks);
   // ELK treats the median heuristic as deterministic, so it keeps using the
   // graph's shared RNG after port-distributor selection. Barycenter resets to
   // the saved seed while comparing randomized layouts.
