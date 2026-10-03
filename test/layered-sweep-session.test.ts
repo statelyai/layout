@@ -65,6 +65,10 @@ it("restores crossing and port state across competing sweep candidates", () => {
   expect(finished).toEqual(selected);
   expect(finished.layers).not.toBe(selected.layers);
   expect(finished.outputPortOrderByNodeId).not.toBe(selected.outputPortOrderByNodeId);
+  expect(finished.physicalPortOrderByNodeId).not.toBe(selected.physicalPortOrderByNodeId);
+  expect(finished.physicalPortOrderByNodeId?.get("a")).not.toBe(
+    selected.physicalPortOrderByNodeId?.get("a"),
+  );
 });
 
 it.each([true, false])("enters a child sweep between parent layers (forward=%s)", (forward) => {

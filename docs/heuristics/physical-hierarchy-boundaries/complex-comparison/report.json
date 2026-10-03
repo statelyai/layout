@@ -1,0 +1,11 @@
+{
+  "baseline": "../complex-report.json",
+  "summary": {
+    "cases": 100,
+    "matched": 8,
+    "differingValues": 61202,
+    "nativeErrors": 0,
+    "elkErrors": 0
+  },
+  "updates": []
+}

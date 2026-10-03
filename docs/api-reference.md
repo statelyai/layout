@@ -69,28 +69,28 @@ Import these exports from `@statelyai/layout`.
 
 ### Layered types
 
-| Type                     | Description                                                                |
-| ------------------------ | -------------------------------------------------------------------------- |
-| `AcyclicOrientation`     | Reversed edge IDs selected during cycle breaking.                          |
-| `CrossingMinimizer`      | Crossing minimization function.                                            |
-| `CycleBreaker`           | Cycle-breaking function.                                                   |
-| `EdgeRouter`             | Edge-routing function.                                                     |
-| `EdgeRoutes`             | Route points keyed by edge ID.                                             |
-| `LayerAssigner`          | Layer-assignment function.                                                 |
-| `LayerAssignment`        | Layer numbers keyed by node ID.                                            |
-| `LayeredLayoutOptions`   | Options for layered layout.                                                |
-| `LayeredPhaseInput`      | Common input supplied to layered phases.                                   |
-| `LayeredSpacing`         | Node and layer spacing.                                                    |
-| `LayeredStrategies`      | Optional phase replacements.                                               |
-| `CompoundLayoutOptions`  | Per-compound header, content padding, direction, and minimum content size. |
-| `CompoundLayoutGeometry` | Parent-relative outer bounds and local header/content rectangles.          |
-| `CompoundEdgeAttachment` | Content or outer endpoint boundary intent.                                 |
-| `CompoundVisualGraph`    | Native output with compound geometry and world-space route sections.       |
-| `LayoutPadding`          | Top, right, bottom, and left padding.                                      |
-| `LayerOrder`             | Ordered node IDs grouped by layer.                                         |
-| `NodePlacement`          | Node rectangles keyed by node ID.                                          |
-| `NodePlacer`             | Node-placement function.                                                   |
-| `NodeSize`               | Node width and height.                                                     |
+| Type                     | Description                                                                              |
+| ------------------------ | ---------------------------------------------------------------------------------------- |
+| `AcyclicOrientation`     | Reversed edge IDs selected during cycle breaking.                                        |
+| `CrossingMinimizer`      | Crossing minimization function.                                                          |
+| `CycleBreaker`           | Cycle-breaking function.                                                                 |
+| `EdgeRouter`             | Edge-routing function.                                                                   |
+| `EdgeRoutes`             | Route points keyed by edge ID.                                                           |
+| `LayerAssigner`          | Layer-assignment function.                                                               |
+| `LayerAssignment`        | Layer numbers keyed by node ID.                                                          |
+| `LayeredLayoutOptions`   | Options for layered layout.                                                              |
+| `LayeredPhaseInput`      | Common input supplied to layered phases.                                                 |
+| `LayeredSpacing`         | Node and layer spacing.                                                                  |
+| `LayeredStrategies`      | Optional phase replacements.                                                             |
+| `CompoundLayoutOptions`  | Per-compound header, content padding, direction, and minimum content size.               |
+| `CompoundLayoutGeometry` | Parent-relative outer bounds and local header/content rectangles.                        |
+| `CompoundEdgeAttachment` | Content or outer endpoint boundary intent.                                               |
+| `CompoundVisualGraph`    | Native output with compound geometry and world-space route sections.                     |
+| `LayoutPadding`          | Top, right, bottom, and left padding.                                                    |
+| `LayerOrder`             | Ordered node IDs grouped by layer; optional physical port state retained between sweeps. |
+| `NodePlacement`          | Node rectangles keyed by node ID.                                                        |
+| `NodePlacer`             | Node-placement function.                                                                 |
+| `NodeSize`               | Node width and height.                                                                   |
 
 ### Layered option types
 

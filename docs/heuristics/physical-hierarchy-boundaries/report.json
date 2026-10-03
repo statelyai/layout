@@ -1,0 +1,11 @@
+{
+  "baseline": "../measured-cross-bounds/report.json",
+  "summary": {
+    "cases": 200,
+    "matched": 59,
+    "differingValues": 4374,
+    "nativeErrors": 0,
+    "elkErrors": 100
+  },
+  "updates": []
+}

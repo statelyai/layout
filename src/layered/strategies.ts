@@ -2355,6 +2355,7 @@ export function createLayerSweepSession(
     phaseRandomByInput.set(input, random);
     return exactPortSweep
       ? {
+          physicalPortOrderByNodeId: clonePortOrders(order.physicalPortOrderByNodeId),
           layers: bestLayers,
           inputPortOrderByNodeId: bestInputPortOrder,
           outputPortOrderByNodeId: bestOutputPortOrder,
@@ -2371,6 +2372,10 @@ export function createLayerSweepSession(
       outputPortOrder.set(id, edges);
     canonicalGraph = crossingGraph(input, orientation, working, inputPortOrder, outputPortOrder);
     canonicalNodes = new Map(canonicalGraph.layers.flat().map((node) => [node.id, node]));
+    for (const [id, ports] of order.physicalPortOrderByNodeId ?? []) {
+      const node = canonicalNodes.get(id);
+      if (node) node.ports.sort((a, b) => ports.indexOf(a.id) - ports.indexOf(b.id));
+    }
   };
   const session: LayerSweepSession = {
     get random() {
@@ -2399,6 +2404,9 @@ export function createLayerSweepSession(
     sweep,
     countCrossings: () => countCrossings(working),
     snapshot: () => ({
+      physicalPortOrderByNodeId: new Map(
+        [...canonicalNodes].map(([id, node]) => [id, node.ports.map((port) => port.id)]),
+      ),
       layers: working.map((layer) => [...layer]),
       inputPortOrderByNodeId: clonePortOrders(inputPortOrder),
       outputPortOrderByNodeId: clonePortOrders(outputPortOrder),

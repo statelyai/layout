@@ -47,6 +47,8 @@ export interface LayerAssignment {
 }
 
 export interface LayerOrder {
+  /** Canonical clockwise physical port identities, independent of edge reversal. */
+  physicalPortOrderByNodeId?: ReadonlyMap<string, readonly string[]>;
   layers: readonly (readonly string[])[];
   /** Internal ELK sweep state retained for exact port-aware placement. */
   inputPortOrderByNodeId?: ReadonlyMap<string, readonly string[]>;

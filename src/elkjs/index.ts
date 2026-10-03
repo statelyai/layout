@@ -1044,18 +1044,15 @@ function coordinatePreparedScopes(
           )
             return false;
           const parentOrder = parentScope.session.snapshot();
-          const edges =
-            (forward
-              ? parentOrder.inputPortOrderByNodeId
-              : parentOrder.outputPortOrderByNodeId
-            )?.get(id) ?? [];
-          const ordered = edges.flatMap((edgeId) => {
-            const edge = parent.phase!.input.graph.edges.find((edge) => edge.id === edgeId);
-            const portName = forward ? edge?.targetPort : edge?.sourcePort;
-            const dummy = portName?.endsWith(":parent") ? portName.slice(0, -7) : undefined;
+          // Parent port positions are physical; feedback reversal changes
+          // edge direction without changing the boundary port's identity.
+          const physical = parentOrder.physicalPortOrderByNodeId?.get(id) ?? [];
+          const ordered = physical.flatMap((portId) => {
+            const [nodeId, portName] = JSON.parse(portId) as [string, string];
+            const dummy =
+              nodeId === id && portName.endsWith(":parent") ? portName.slice(0, -7) : undefined;
             return dummy && layer.includes(dummy) ? [dummy] : [];
           });
-          // Input ports run clockwise bottom-to-top; layers run top-to-bottom.
           if (forward) ordered.reverse();
           const unique = [...new Set(ordered)];
           if (unique.length !== layer.length)
@@ -1077,27 +1074,46 @@ function coordinatePreparedScopes(
             return;
           const rank = new Map(layer.map((dummy, index) => [`${dummy}:parent`, index]));
           const parentOrder = parentScope.session.snapshot();
-          const orders = forward
-            ? parentOrder.outputPortOrderByNodeId
-            : parentOrder.inputPortOrderByNodeId;
-          const current = orders?.get(id) ?? [];
-          const sorted = [...current].sort((a, b) => {
-            const edgeA = parent.phase!.input.graph.edges.find((edge) => edge.id === a)!;
-            const edgeB = parent.phase!.input.graph.edges.find((edge) => edge.id === b)!;
-            return (
-              (rank.get((forward ? edgeA.sourcePort : edgeA.targetPort) ?? "") ?? 0) -
-              (rank.get((forward ? edgeB.sourcePort : edgeB.targetPort) ?? "") ?? 0)
-            );
+          const physical = parentOrder.physicalPortOrderByNodeId?.get(id) ?? [];
+          const boundarySlots = physical.flatMap((portId, index) => {
+            const [nodeId, portName] = JSON.parse(portId) as [string, string];
+            return nodeId === id && rank.has(portName) ? [index] : [];
           });
-          // WEST/input ports have the reverse canonical order of boundary dummies.
-          if (!forward) sorted.reverse();
-          const updated = new Map(orders);
-          updated.set(id, sorted);
+          const boundaryPorts = boundarySlots
+            .map((index) => physical[index]!)
+            .sort((a, b) => {
+              const portA = (JSON.parse(a) as [string, string])[1];
+              const portB = (JSON.parse(b) as [string, string])[1];
+              const result = rank.get(portA)! - rank.get(portB)!;
+              return forward ? result : -result;
+            });
+          const updatedPhysical = [...physical];
+          boundarySlots.forEach((slot, index) => {
+            updatedPhysical[slot] = boundaryPorts[index]!;
+          });
+          const physicalOrders = new Map(parentOrder.physicalPortOrderByNodeId);
+          physicalOrders.set(id, updatedPhysical);
+          const edgePortRank = (edgeId: string): number => {
+            const edge = parent.phase!.input.graph.edges.find(
+              (candidate) => candidate.id === edgeId,
+            )!;
+            const portName = edge.sourceId === id ? edge.sourcePort : edge.targetPort;
+            return updatedPhysical.indexOf(JSON.stringify([id, portName]));
+          };
+          const incoming = new Map(parentOrder.inputPortOrderByNodeId);
+          const outgoing = new Map(parentOrder.outputPortOrderByNodeId);
+          for (const orders of [incoming, outgoing]) {
+            const current = orders.get(id) ?? [];
+            orders.set(
+              id,
+              [...current].sort((a, b) => edgePortRank(a) - edgePortRank(b)),
+            );
+          }
           parentScope.session.restore({
             ...parentOrder,
-            ...(forward
-              ? { outputPortOrderByNodeId: updated }
-              : { inputPortOrderByNodeId: updated }),
+            physicalPortOrderByNodeId: physicalOrders,
+            inputPortOrderByNodeId: incoming,
+            outputPortOrderByNodeId: outgoing,
           });
         },
       };
