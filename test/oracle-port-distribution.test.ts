@@ -15,6 +15,12 @@ for (const [index, sample] of fixtures.samples.entries()) {
     const state = decode(sample.state);
     const before = JSON.stringify(sample.state);
     const distributor = new CanonicalPortDistributor(graph, state);
+    const fixed = graph.layers[sample.index + (sample.forward ? -1 : 1)];
+    if (fixed) {
+      distributor.calculatePortRanks(graph, fixed, !sample.forward, sample.options.nodeRelative);
+      // The oracle has already ranked this fixed layer before node sorting.
+      expect(distributor.state).toEqual(state);
+    }
     distributor.distribute(graph, sample.index, sample.forward, {
       nodeRelative: sample.options.nodeRelative,
       fixedOrder: new Set(sample.options.fixedOrder),

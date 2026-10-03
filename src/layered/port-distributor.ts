@@ -20,6 +20,12 @@ export interface PortDistributionOptions {
 /** Stateful clockwise port distribution across successive layer sweeps. */
 export class CanonicalPortDistributor {
   readonly state: PortDistributionState;
+  private topologyGraph?: CrossingGraph;
+  private owner = new Map<string, CrossingNode>();
+  private layerByPort = new Map<string, number>();
+  private nodes = new Map<string, CrossingNode>();
+  private incoming = new Map<string, string[]>();
+  private outgoing = new Map<string, string[]>();
   constructor(graph: CrossingGraph, state?: PortDistributionState) {
     this.state = state ? structuredClone(state) : { ranks: {}, barycenters: {}, positions: {} };
     for (const layer of graph.layers)
@@ -32,55 +38,76 @@ export class CanonicalPortDistributor {
       }
   }
 
+  private prepareTopology(graph: CrossingGraph): void {
+    // Sweeps reorder nodes within their layers; connectivity stays constant.
+    // A restored graph object invalidates the topology once, not per layer.
+    if (this.topologyGraph !== graph) {
+      this.topologyGraph = graph;
+      this.owner.clear();
+      this.layerByPort.clear();
+      this.nodes.clear();
+      this.incoming.clear();
+      this.outgoing.clear();
+      for (const [layer, members] of graph.layers.entries())
+        for (const node of members) {
+          this.nodes.set(node.id, node);
+          for (const port of node.ports) {
+            this.owner.set(port.id, node);
+            this.layerByPort.set(port.id, layer);
+            this.incoming.set(port.id, []);
+            this.outgoing.set(port.id, []);
+          }
+        }
+      for (const edge of graph.edges) {
+        this.incoming.get(edge.target)!.push(edge.source);
+        this.outgoing.get(edge.source)!.push(edge.target);
+      }
+    }
+  }
+
+  calculatePortRanks(
+    graph: CrossingGraph,
+    layer: readonly CrossingNode[],
+    input: boolean,
+    nodeRelative: boolean,
+  ): void {
+    this.prepareTopology(graph);
+    let consumed = 0;
+    for (const node of layer) {
+      const ports = node.ports.filter(
+        (port) => (input ? this.incoming : this.outgoing).get(port.id)!.length > 0,
+      );
+      const increment = nodeRelative ? 1 / (ports.length + 1) : 1;
+      if (input) {
+        let north = consumed + ports.filter((port) => port.side === "NORTH").length * increment;
+        let rest = nodeRelative ? consumed + 1 - increment : consumed + ports.length;
+        for (const port of ports) {
+          this.state.ranks[port.id] = port.side === "NORTH" ? north : rest;
+          if (port.side === "NORTH") north -= increment;
+          else rest -= increment;
+        }
+      } else {
+        let position = consumed + increment;
+        for (const port of ports) {
+          this.state.ranks[port.id] = position;
+          position += increment;
+        }
+      }
+      consumed += nodeRelative ? 1 : ports.length;
+    }
+  }
+
   distribute(
     graph: CrossingGraph,
     index: number,
     forward: boolean,
     options: PortDistributionOptions,
   ): void {
-    const owner = new Map<string, CrossingNode>(),
-      layerByPort = new Map<string, number>();
-    const nodes = new Map(graph.layers.flat().map((node) => [node.id, node]));
-    const incoming = new Map<string, string[]>(),
-      outgoing = new Map<string, string[]>();
-    for (const [layer, members] of graph.layers.entries())
-      for (const node of members)
-        for (const port of node.ports) {
-          owner.set(port.id, node);
-          layerByPort.set(port.id, layer);
-          incoming.set(port.id, []);
-          outgoing.set(port.id, []);
-        }
-    for (const edge of graph.edges) {
-      incoming.get(edge.target)!.push(edge.source);
-      outgoing.get(edge.source)!.push(edge.target);
-    }
+    this.prepareTopology(graph);
+    const { owner, layerByPort, nodes, incoming, outgoing } = this;
     const degree = (port: string) => incoming.get(port)!.length + outgoing.get(port)!.length;
-    const ranks = (layer: CrossingNode[], input: boolean) => {
-      let consumed = 0;
-      for (const node of layer) {
-        const ports = node.ports.filter(
-          (port) => (input ? incoming : outgoing).get(port.id)!.length > 0,
-        );
-        const increment = options.nodeRelative ? 1 / (ports.length + 1) : 1;
-        if (input) {
-          let north = consumed + ports.filter((port) => port.side === "NORTH").length * increment;
-          let rest = options.nodeRelative ? consumed + 1 - increment : consumed + ports.length;
-          for (const port of ports) {
-            this.state.ranks[port.id] = port.side === "NORTH" ? north : rest;
-            if (port.side === "NORTH") north -= increment;
-            else rest -= increment;
-          }
-        } else {
-          let position = consumed + increment;
-          for (const port of ports) {
-            this.state.ranks[port.id] = position;
-            position += increment;
-          }
-        }
-        consumed += options.nodeRelative ? 1 : ports.length;
-      }
-    };
+    const ranks = (layer: CrossingNode[], input: boolean) =>
+      this.calculatePortRanks(graph, layer, input, options.nodeRelative);
     const distributeNode = (node: CrossingNode, side: "EAST" | "WEST") => {
       if (options.fixedOrder.has(node.id)) return;
       const layerIndex = node.ports.length ? layerByPort.get(node.ports[0]!.id)! : index;

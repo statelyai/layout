@@ -60,6 +60,16 @@ let calls = 0,
   matchedCalls = 0,
   currentCase: any;
 const retained = new Set<string>();
+let persistentMatched = 0,
+  persistentInputMatched = 0;
+const sessions = new WeakMap<
+  object,
+  { graph: CrossingGraph; distributor: CanonicalPortDistributor; nodes: Map<string, CrossingNode> }
+>();
+const stateEquals = (actual: PortDistributionState, expected: PortDistributionState) =>
+  (Object.keys(expected) as (keyof PortDistributionState)[]).every((key) =>
+    Object.keys(expected[key]).every((id) => Object.is(actual[key][id], expected[key][id])),
+  );
 const stateOf = (processor: any, order: any[][]): PortDistributionState => {
   const state: PortDistributionState = { ranks: {}, barycenters: {}, positions: {} };
   for (const layer of order)
@@ -71,6 +81,28 @@ const stateOf = (processor: any, order: any[][]): PortDistributionState => {
       }
     }
   return state;
+};
+let insideDistribution = false;
+const originalRanks = context.$calculatePortRanks;
+context.$calculatePortRanks = (processor: any, layer: any[], type: any) => {
+  const session = sessions.get(processor);
+  if (session && !insideDistribution && layer.length) {
+    const index = layer[0].layer.id_0;
+    const cachedLayer = layer.map((node) => {
+      const cached = session.nodes.get(id(node))!;
+      const ports = new Map(cached.ports.map((port) => [port.id, port]));
+      cached.ports = node.ports.array.map((port: any) => ports.get(id(port))!);
+      return cached;
+    });
+    session.graph.layers[index] = cachedLayer;
+    session.distributor.calculatePortRanks(
+      session.graph,
+      cachedLayer,
+      type.name_0 === "INPUT",
+      processor instanceof context.NodeRelativePortDistributor,
+    );
+  }
+  return originalRanks(processor, layer, type);
 };
 const original = context.$distributePortsWhileSweeping;
 context.$distributePortsWhileSweeping = (
@@ -101,7 +133,35 @@ context.$distributePortsWhileSweeping = (
     fixedOrder: new Set(options.fixedOrder),
     hierarchical: new Set(options.hierarchical),
   });
+  let session = sessions.get(processor);
+  if (!session) {
+    const cachedGraph = structuredClone(graph);
+    session = {
+      graph: cachedGraph,
+      distributor: new CanonicalPortDistributor(cachedGraph, state),
+      nodes: new Map(cachedGraph.layers.flat().map((node) => [node.id, node])),
+    };
+    sessions.set(processor, session);
+  }
+  // Node/port order is an external sweep input; ranks and barycenters persist.
+  const persistentInputMatches = stateEquals(session.distributor.state, state);
+  if (persistentInputMatches) persistentInputMatched++;
+  session.graph.layers = graph.layers.map((layer) =>
+    layer.map((node) => {
+      const cached = session!.nodes.get(node.id)!;
+      const ports = new Map(cached.ports.map((port) => [port.id, port]));
+      cached.ports = node.ports.map((port) => ports.get(port.id)!);
+      return cached;
+    }),
+  );
+  session.distributor.distribute(session.graph, index, forward, {
+    ...options,
+    fixedOrder: new Set(options.fixedOrder),
+    hierarchical: new Set(options.hierarchical),
+  });
+  insideDistribution = true;
   const result = original(processor, order, index, forward);
+  insideDistribution = false;
   const expected = snapshot(order),
     expectedState = stateOf(processor, order);
   const ports = (value: CrossingGraph) =>
@@ -112,10 +172,15 @@ context.$distributePortsWhileSweeping = (
     Object.keys(state[key]).every((id) => Object.is(native.state[key][id], expectedState[key][id])),
   );
   const matched = JSON.stringify(actualPorts) === JSON.stringify(expectedPorts) && stateMatches;
+  const persistentMatches =
+    persistentInputMatches &&
+    stateEquals(session.distributor.state, expectedState) &&
+    JSON.stringify(ports(session.graph)) === JSON.stringify(expectedPorts);
+  if (persistentMatches) persistentMatched++;
   calls++;
   if (matched) matchedCalls++;
   const key = JSON.stringify([currentCase, index, forward, options.nodeRelative]);
-  if (!matched || !retained.has(key))
+  if (!matched || !persistentMatches || !retained.has(key))
     samples.push({
       case: currentCase,
       graph,
@@ -128,6 +193,8 @@ context.$distributePortsWhileSweeping = (
       expectedState,
       actualState: native.state,
       matched,
+      persistentMatches,
+      persistentInputMatches,
     });
   retained.add(key);
   return result;
@@ -171,6 +238,9 @@ const summary = {
   cases: outcomes.length,
   calls,
   matched: matchedCalls,
+  persistentMatched,
+  persistentInputMatched,
+  persistentMismatched: calls - persistentMatched,
   mismatched: calls - matchedCalls,
   oracleErrors: outcomes.filter((row) => row.error).length,
 };
@@ -185,4 +255,5 @@ fs.writeFileSync(
   ) + "\n",
 );
 console.log(JSON.stringify({ ...summary, destination }));
-process.exitCode = summary.mismatched || summary.oracleErrors ? 1 : 0;
+process.exitCode =
+  summary.mismatched || summary.persistentMismatched || summary.oracleErrors ? 1 : 0;

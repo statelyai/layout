@@ -22,3 +22,5 @@ pnpm exec vitest run --exclude '.scratch/**' --maxWorkers=4
 ```
 
 The second tracer exits unsuccessfully for its six preserved ELK exceptions even when every observed distribution matches. Production uses native TypeScript; elkjs remains a development oracle.
+
+The subsequent [cached sweep integration](../cached-port-sweeps/README.md) now uses this phase in production and shares canonical ranks with node sorting. The results above describe the earlier foundation checkpoint.
