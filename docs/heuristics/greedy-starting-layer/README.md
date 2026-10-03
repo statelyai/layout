@@ -22,3 +22,5 @@ pnpm exec tsx scripts/parity/trace-native-rng.ts docs/heuristics/greedy-starting
 ```
 
 Next: trace remaining fixed/non-flow-port failures, unify port preparation across pipelines, and finish helper/comparator and weighted-setting branches. Continue valid reference hierarchy families, existing suite failures and unseen random coverage. Previously worsened rows remain preserved; this fix does not resolve broad parity.
+
+[Fixed-port seed 2 investigation](../fixed-port-helper-investigation/README.md) localizes remaining route differences to helper ordering before routing; two insufficient trials were reverted.

@@ -398,7 +398,8 @@ fails. See the [directional compaction proof](./docs/heuristics/directional-comp
 For model-order settings on bounded random flat/hierarchical graphs, run
 `pnpm test:parity:model-order`. This strict 200-case gate alternates forced node
 ordering, preserves complete failures and reference exceptions, and currently
-fails. See the [greedy traversal proof](docs/heuristics/greedy-starting-layer/README.md).
+fails. See the [greedy traversal proof](docs/heuristics/greedy-starting-layer/README.md). Remaining fixed-port route differences are traced in the
+[helper ordering investigation](docs/heuristics/fixed-port-helper-investigation/README.md).
 
 <!-- implementation from src/layered/loop-envelopes.ts, src/layered/strategies.ts, src/layered/index.ts and src/elkjs/index.ts -->
 
