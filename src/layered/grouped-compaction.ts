@@ -43,8 +43,12 @@ export function applyGroupedEdgeLengthCompaction(
         (node) =>
           node.id.startsWith("__layout_dummy:") &&
           !node.id.startsWith("__layout_dummy:label:") &&
-          incoming.get(node.id)?.length === 1 &&
-          outgoing.get(node.id)?.length === 1,
+          ((incoming.get(node.id)?.length === 1 && outgoing.get(node.id)?.length === 1) ||
+            (!node.id.startsWith("__layout_dummy:north-south:") &&
+              (input.sizes.get(node.id)?.width ?? 0) === 0 &&
+              (input.sizes.get(node.id)?.height ?? 0) === 0 &&
+              (incoming.get(node.id)?.length ?? 0) > 0 &&
+              (outgoing.get(node.id)?.length ?? 0) > 0)),
       )
       .map((node) => node.id),
   );
@@ -57,7 +61,25 @@ export function applyGroupedEdgeLengthCompaction(
     let last = edge;
     const visited = new Set([edge.id]);
     while (removed.has(last.targetId)) {
-      const next = outgoing.get(last.targetId)![0]!;
+      const candidates = outgoing.get(last.targetId)!;
+      // Merged hyperedge dummies have several outgoing chains. Continue the
+      // original edge's chain, rather than choosing another branch's edge.
+      const family = last.id.replace(/(?:::(?:segment|inverted):\d+)+$/, "");
+      const next =
+        candidates.length === 1
+          ? candidates[0]!
+          : candidates.find(
+              (candidate) =>
+                candidate.id.replace(/(?:::(?:segment|inverted):\d+)+$/, "") === family,
+            );
+      if (!next)
+        throw new Error("Missing continuation through a merged long-edge dummy", {
+          cause: {
+            last: last.id,
+            node: last.targetId,
+            candidates: candidates.map((edge) => edge.id),
+          },
+        });
       if (visited.has(next.id)) throw new Error("Cyclic long-edge dummy chain");
       visited.add(next.id);
       chain.push(next);
@@ -181,12 +203,22 @@ function compactJoinedGeometry(
       const second = points[index + 1]!;
       if (Math.abs(first.x - second.x) > 1e-9 || Math.abs(first.y - second.y) < 1e-9) continue;
       const owner =
-        index === 0 && crossSide(endpointSide(edge.sourceId, edge.sourcePort, first))
+        index === 0
           ? nodes.get(edge.sourceId)
-          : index === points.length - 2 &&
-              crossSide(endpointSide(edge.targetId, edge.targetPort, second))
+          : index === points.length - 2
             ? nodes.get(edge.targetId)
             : undefined;
+      // Port leads constrain only the span outside their owner's hitbox.
+      // ELK constructs that span from the first bend to the node border.
+      const leadBefore = owner && (index === 0 ? second.y < first.y : first.y < second.y);
+      const segmentStart =
+        owner && !leadBefore
+          ? Math.max(Math.min(first.y, second.y), owner.y + owner.height)
+          : Math.min(first.y, second.y);
+      const segmentEnd =
+        owner && leadBefore
+          ? Math.min(Math.max(first.y, second.y), owner.y)
+          : Math.max(first.y, second.y);
       const id = `track:${edgeId}:${index}`;
       const group = owner?.group ?? id;
       if (!owner) groupOrigin.set(group, first.x);
@@ -195,25 +227,13 @@ function compactJoinedGeometry(
         group,
         offset: first.x - groupOrigin.get(group)!,
         x: first.x,
-        y: Math.min(first.y, second.y),
+        y: segmentStart,
         width: 0,
-        height: Math.abs(second.y - first.y),
+        height: Math.max(0, segmentEnd - segmentStart),
         edges: new Set([edgeId]),
         points: [first, second],
-        ignoreUp: owner
-          ? endpointSide(
-              owner.nodeId!,
-              index === 0 ? edge.sourcePort : edge.targetPort,
-              index === 0 ? first : second,
-            ) === "SOUTH"
-          : false,
-        ignoreDown: owner
-          ? endpointSide(
-              owner.nodeId!,
-              index === 0 ? edge.sourcePort : edge.targetPort,
-              index === 0 ? first : second,
-            ) === "NORTH"
-          : false,
+        ignoreUp: owner ? (index === 0 ? second.y > first.y : first.y > second.y) : false,
+        ignoreDown: owner ? (index === 0 ? second.y < first.y : first.y < second.y) : false,
       };
       segments.push(segment);
       if (!owner) edgeSegments.push(segment);
@@ -347,7 +367,7 @@ function compactJoinedGeometry(
     }),
   );
   const minimumMargin = Math.min(
-    edgeMargin,
+    merged.length ? edgeMargin : Infinity,
     ...[...nodes.values()].map((item) =>
       Math.max(0, nodeNodeSpacing(input, item.nodeId!, item.nodeId!) / 2 - 0.5),
     ),
@@ -365,7 +385,10 @@ function compactJoinedGeometry(
   );
   for (const [left, targets] of visible) {
     for (const right of targets) {
-      if (sameEdge(left, right)) {
+      if (
+        sameEdge(left, right) &&
+        input.settings["compaction.postCompaction.strategy"] === "EDGE_LENGTH"
+      ) {
         const helper = `helper:${constraints.length}`;
         groups.push(helper);
         const delta = Math.ceil(right.offset - left.offset);
@@ -382,7 +405,9 @@ function compactJoinedGeometry(
         });
     }
   }
-  for (const edge of input.graph.edges) {
+  for (const edge of input.settings["compaction.postCompaction.strategy"] === "EDGE_LENGTH"
+    ? input.graph.edges
+    : []) {
     if (edge.sourceId === edge.targetId) continue;
     const source = nodes.get(edge.sourceId),
       target = nodes.get(edge.targetId);
@@ -417,7 +442,10 @@ function compactJoinedGeometry(
   }
   let solved: Map<string, number>;
   try {
-    solved = solveWeightedCompaction(groups, constraints);
+    solved =
+      input.settings["compaction.postCompaction.strategy"] === "EDGE_LENGTH"
+        ? solveWeightedCompaction(groups, constraints)
+        : directionalCompaction(input, groups, constraints, items, groupOrigin);
   } catch (error) {
     if (error instanceof Error)
       error.cause = {
@@ -480,4 +508,83 @@ function compactJoinedGeometry(
     );
   }
   return placement;
+}
+
+/** ELK LongestPathCompaction, using the same rigid groups as edge-length compaction. */
+function directionalCompaction(
+  input: LayeredPhaseInput,
+  groups: readonly string[],
+  constraints: readonly CompactionConstraint[],
+  items: readonly Compactable[],
+  origins: ReadonlyMap<string, number>,
+): Map<string, number> {
+  const strategy = input.settings["compaction.postCompaction.strategy"];
+  const pass = (
+    reverse: boolean,
+    previous: ReadonlyMap<string, number>,
+    lock: string | undefined,
+  ) => {
+    const sign = reverse ? -1 : 1;
+    const offsets = new Map(
+      items.map((item) => [item.id, reverse ? -item.offset - item.width : item.offset]),
+    );
+    const minimum = Math.min(
+      ...items.map((item) => sign * previous.get(item.group)! + offsets.get(item.id)!),
+    );
+    const reference = new Map(
+      groups.map((group) => [
+        group,
+        Math.min(
+          ...items.filter((item) => item.group === group).map((item) => offsets.get(item.id)!),
+        ),
+      ]),
+    );
+    const position = new Map(groups.map((group) => [group, minimum - reference.get(group)!]));
+    const links = new Map(
+      groups.map((group) => [group, [] as { target: string; delta: number }[]]),
+    );
+    const incoming = new Map(groups.map((group) => [group, 0]));
+    for (const edge of constraints) {
+      const source = reverse ? edge.target : edge.source;
+      const target = reverse ? edge.source : edge.target;
+      if (source === target) continue;
+      links.get(source)!.push({ target, delta: edge.delta });
+      incoming.set(target, incoming.get(target)! + 1);
+    }
+    const locked = new Set<string>();
+    if (lock === "LEFT_RIGHT_CONSTRAINT_LOCKING")
+      for (const group of groups) if (incoming.get(group) === 0) locked.add(group);
+    if (lock === "LEFT_RIGHT_CONNECTION_LOCKING") {
+      for (const item of items)
+        if (item.nodeId) {
+          const before = input.graph.edges.filter((edge) => edge.targetId === item.nodeId).length;
+          const after = input.graph.edges.filter((edge) => edge.sourceId === item.nodeId).length;
+          if (before > after) locked.add(item.group);
+        }
+    }
+    const queue = groups.filter((group) => incoming.get(group) === 0);
+    let processed = 0;
+    while (queue.length) {
+      const group = queue.shift()!;
+      processed++;
+      if (locked.has(group))
+        position.set(group, Math.max(position.get(group)!, sign * previous.get(group)!));
+      for (const edge of links.get(group)!) {
+        position.set(
+          edge.target,
+          Math.max(position.get(edge.target)!, position.get(group)! + edge.delta),
+        );
+        incoming.set(edge.target, incoming.get(edge.target)! - 1);
+        if (incoming.get(edge.target) === 0) queue.push(edge.target);
+      }
+    }
+    if (processed !== groups.length) throw new Error("Cyclic directional compaction groups");
+    return new Map([...position].map(([group, value]) => [group, sign * value]));
+  };
+  if (strategy === "RIGHT") return pass(true, origins, undefined);
+  const left = pass(false, origins, undefined);
+  return strategy === "LEFT_RIGHT_CONSTRAINT_LOCKING" ||
+    strategy === "LEFT_RIGHT_CONNECTION_LOCKING"
+    ? pass(true, left, String(strategy))
+    : left;
 }

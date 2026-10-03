@@ -389,3 +389,8 @@ For bounded random flat graphs with cycles, self-loops, fixed-side/fixed-positio
 ports and labels, run `pnpm test:parity:flat`. This strict geometry gate preserves
 all mismatches and engine errors; it currently fails. See the
 [flat random proof](./docs/heuristics/bk-compaction-thresholds/README.md).
+
+For directional compaction on the same bounded random flat/hierarchical families,
+run `pnpm exec tsx scripts/check-directional-compaction-parity.ts`. This additional
+200-case gate preserves all failures, including real ELK errors; it currently
+fails. See the [directional compaction proof](./docs/heuristics/directional-compaction/README.md).

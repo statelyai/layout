@@ -2604,7 +2604,13 @@ export function applyPostCompaction(
   const constraintStrategy = input.settings["compaction.postCompaction.constraints"] ?? "SCANLINE";
   void constraintStrategy;
   if (strategy === "NONE") return placement;
-  if (strategy === "EDGE_LENGTH")
+  if (
+    strategy === "EDGE_LENGTH" ||
+    ((input.settings.edgeRouting ?? "ORTHOGONAL") === "ORTHOGONAL" &&
+      ["LEFT", "RIGHT", "LEFT_RIGHT_CONSTRAINT_LOCKING", "LEFT_RIGHT_CONNECTION_LOCKING"].includes(
+        String(strategy),
+      ))
+  )
     return applyGroupedEdgeLengthCompaction(
       input,
       placement,
