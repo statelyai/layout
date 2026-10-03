@@ -1,0 +1,19 @@
+{
+  "excluded": "$H is the GWT runtime object identity counter; no layout or public fields excluded",
+  "results": [
+    {
+      "trace": "minimal-comparison/worker-phases.json",
+      "report": "minimal-comparison/report.json",
+      "index": 0,
+      "inputIdentical": true,
+      "outputIdenticalExcludingRuntimeHash": true
+    },
+    {
+      "trace": "ancestor-port-worker.json",
+      "report": "fresh-after.json",
+      "index": 6,
+      "inputIdentical": true,
+      "outputIdenticalExcludingRuntimeHash": true
+    }
+  ]
+}

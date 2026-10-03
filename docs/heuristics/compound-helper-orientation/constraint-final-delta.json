@@ -1,0 +1,7 @@
+{
+  "passed": 105,
+  "failed": 14,
+  "total": 119,
+  "introducedFailures": [],
+  "reason": "Final producer review removed invented ownerSize. Factory reads ownerSize only for FIXED_RATIO; retained/fresh graphs contain no authored compound FIXED_RATIO. Final focused run includes every suite with FIXED_RATIO and the strict hierarchy matrix."
+}

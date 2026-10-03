@@ -1,0 +1,151 @@
+{
+  "id": "g0",
+  "forward": true,
+  "layer": [
+    "__native_hierarchy_g0_1",
+    "__native_hierarchy_g0_2"
+  ],
+  "physical": [
+    "[\"g0\",\"__native_hierarchy_g0_3:parent\"]",
+    "[\"g0\",\"__native_hierarchy_g0_0:parent\"]",
+    "[\"g0\",\"g0:p0\"]",
+    "[\"g0\",\"__native_hierarchy_g0_1:parent\"]"
+  ],
+  "ordered": [
+    "__native_hierarchy_g0_1"
+  ],
+  "unique": [
+    "__native_hierarchy_g0_1"
+  ],
+  "parentEdges": [
+    {
+      "type": "edge",
+      "id": "e1",
+      "sourceId": "g0",
+      "targetId": "g1",
+      "label": null,
+      "data": null,
+      "sourcePort": "__native_hierarchy_g0_3:parent",
+      "targetPort": "__native_hierarchy_g1_0:parent",
+      "width": 0,
+      "height": 0
+    },
+    {
+      "type": "edge",
+      "id": "e5",
+      "sourceId": "g0",
+      "targetId": "g1",
+      "label": null,
+      "data": null,
+      "sourcePort": "__native_hierarchy_g0_0:parent",
+      "targetPort": "__native_hierarchy_g1_1:parent",
+      "width": 0,
+      "height": 0
+    },
+    {
+      "type": "edge",
+      "id": "e8::segment:0",
+      "sourceId": "g0",
+      "targetId": "__layout_dummy:e8:1",
+      "label": null,
+      "data": null,
+      "sourcePort": "__native_hierarchy_g0_3:parent",
+      "width": 0,
+      "height": 0
+    },
+    {
+      "type": "edge",
+      "id": "e9::segment:0",
+      "sourceId": "g0",
+      "targetId": "__layout_dummy:e9:1",
+      "label": null,
+      "data": null,
+      "sourcePort": "__native_hierarchy_g0_3:parent",
+      "width": 0,
+      "height": 0
+    },
+    {
+      "type": "edge",
+      "id": "e10::segment:1::inverted:1",
+      "sourceId": "__layout_dummy:inverted:e10::segment:1:target",
+      "targetId": "g0",
+      "label": null,
+      "data": null,
+      "sourcePort": "input",
+      "targetPort": "__native_hierarchy_g0_1:parent",
+      "width": 0,
+      "height": 0
+    },
+    {
+      "type": "edge",
+      "id": "e11::segment:0::inverted:0",
+      "sourceId": "g0",
+      "targetId": "__layout_dummy:inverted:e11::segment:0:source",
+      "label": null,
+      "data": null,
+      "sourcePort": "g0:p0",
+      "targetPort": "input",
+      "width": 0,
+      "height": 0
+    },
+    {
+      "type": "edge",
+      "id": "e12",
+      "sourceId": "g0",
+      "targetId": "g0",
+      "label": null,
+      "data": null,
+      "sourcePort": "g0:p1",
+      "targetPort": "__native_hierarchy_g0_2:parent",
+      "width": 0,
+      "height": 0
+    }
+  ],
+  "seed": 7,
+  "direction": "RIGHT",
+  "error": "Error: Incomplete hierarchical port order for g0",
+  "realElkEdge": {
+    "id": "e12",
+    "sources": [
+      "g0:p1"
+    ],
+    "targets": [
+      "n0:p1"
+    ],
+    "sections": [
+      {
+        "id": "e12_s0",
+        "startPoint": {
+          "x": 12,
+          "y": -4
+        },
+        "endPoint": {
+          "x": 106,
+          "y": 148
+        },
+        "bendPoints": [
+          {
+            "x": 12,
+            "y": 12
+          },
+          {
+            "x": 32,
+            "y": 12
+          },
+          {
+            "x": 32,
+            "y": 158
+          },
+          {
+            "x": 106,
+            "y": 158
+          }
+        ],
+        "incomingShape": "g0:p1",
+        "outgoingShape": "n0:p1"
+      }
+    ],
+    "container": "g0"
+  },
+  "explanation": "Native converts the ancestor-port edge e12 into a parent-scope g0-to-g0 self-loop from authored g0:p1 to synthesized helper 2. Parent physical port order excludes that helper. Real ELK retains edge container g0 and routes from the authored port inside that scope. Implement authored port reuse and correct edge scope; retain the incomplete-order assertion."
+}

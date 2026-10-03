@@ -1,0 +1,14 @@
+[
+  {
+    "name": "complex-report.json",
+    "summary": {
+      "cases": 100,
+      "matched": 20,
+      "differingValues": 57938,
+      "nativeErrors": 0,
+      "elkErrors": 0
+    },
+    "changed": 0,
+    "delta": []
+  }
+]

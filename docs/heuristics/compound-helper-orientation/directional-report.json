@@ -1,0 +1,11 @@
+{
+  "baseline": "../coincident-port-restoration/directional-report.json",
+  "summary": {
+    "cases": 200,
+    "matched": 146,
+    "differingValues": 8513,
+    "nativeErrors": 0,
+    "elkErrors": 6
+  },
+  "updates": []
+}

@@ -1,0 +1,53 @@
+{
+  "before": {
+    "passed": 2942,
+    "failed": 119,
+    "total": 3061
+  },
+  "after": {
+    "passed": 2949,
+    "failed": 113,
+    "total": 3062
+  },
+  "fixed": [
+    {
+      "file": "test/oracle-hierarchy-fixed-sides.test.ts",
+      "fullName": "fixes hierarchy boundary sides: ports, LEFT, FIXED_ORDER",
+      "status": "passed"
+    },
+    {
+      "file": "test/oracle-hierarchy-fixed-sides.test.ts",
+      "fullName": "fixes hierarchy boundary sides: ports, LEFT, FIXED_POS",
+      "status": "passed"
+    },
+    {
+      "file": "test/oracle-hierarchy-fixed-sides.test.ts",
+      "fullName": "fixes hierarchy boundary sides: feedback, LEFT, FIXED_ORDER",
+      "status": "passed"
+    },
+    {
+      "file": "test/oracle-hierarchy-fixed-sides.test.ts",
+      "fullName": "fixes hierarchy boundary sides: feedback, LEFT, FIXED_POS",
+      "status": "passed"
+    },
+    {
+      "file": "test/oracle-hierarchy-fixed-sides.test.ts",
+      "fullName": "fixes hierarchy boundary sides: parallel, LEFT, FIXED_ORDER",
+      "status": "passed"
+    },
+    {
+      "file": "test/oracle-hierarchy-fixed-sides.test.ts",
+      "fullName": "fixes hierarchy boundary sides: parallel, LEFT, FIXED_POS",
+      "status": "passed"
+    }
+  ],
+  "introduced": [],
+  "newTests": [
+    {
+      "file": "test/compound-options-corpus.test.ts",
+      "fullName": "retains the compound-options-v1 inputs, including failing seeds",
+      "status": "passed"
+    }
+  ],
+  "removedTests": []
+}

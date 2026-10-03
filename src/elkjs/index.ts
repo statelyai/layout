@@ -15,6 +15,7 @@ import {
   attachExternalPortDummy,
   createExternalPortDummy,
   externalPortDummyOf,
+  type ExternalPortConstraints,
 } from "../layered/external-port-dummy";
 import { applyOrthogonalJunctions } from "./orthogonal-junctions";
 import { createGraph, type Graph, type VisualGraph } from "@statelyai/graph";
@@ -402,8 +403,10 @@ export default class ELK {
           if (!proxy) {
             const direction = getDirection({ ...layoutOptions, ...child.layoutOptions });
             const origin = createExternalPortDummy({
-              constraints: "FREE",
-              side: "EAST",
+              constraints: (getOption(child.layoutOptions ?? {}, "portConstraints") ??
+                "FREE") as ExternalPortConstraints,
+              side: kind === "output" ? "EAST" : "WEST",
+              position: { x: 0, y: 0 },
               direction: direction.toUpperCase() as "RIGHT" | "LEFT" | "DOWN" | "UP",
               netFlow: kind === "output" ? 1 : -1,
               borderOffset: (getNumberOption(layoutOptions, "spacing.edgeEdge") ?? 10) / 2,
@@ -418,7 +421,17 @@ export default class ELK {
                 layoutOptions: {
                   "elk.portConstraints": origin.constraints,
                   "elk.layered.layering.layerConstraint":
-                    kind === "output" ? "LAST_SEPARATE" : "FIRST_SEPARATE",
+                    origin.side ===
+                    ({ right: "EAST", left: "WEST", down: "SOUTH", up: "NORTH" } as const)[
+                      direction
+                    ]
+                      ? "LAST_SEPARATE"
+                      : origin.side ===
+                          ({ right: "WEST", left: "EAST", down: "NORTH", up: "SOUTH" } as const)[
+                            direction
+                          ]
+                        ? "FIRST_SEPARATE"
+                        : undefined,
                 },
                 ports: [
                   {
