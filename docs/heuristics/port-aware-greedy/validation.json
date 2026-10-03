@@ -1,0 +1,14 @@
+{
+  "beforeCommit": "299f0bce9f6e6c467c2ade7a372032041a69964b",
+  "newFailures": [],
+  "resolvedFailures": [],
+  "passed": 2113,
+  "failed": 108,
+  "total": 2221,
+  "sourceTypecheck": "passed",
+  "repositoryTypecheck": "passed",
+  "changedFileLint": "passed",
+  "changedFileFormat": "passed",
+  "build": "passed",
+  "browserInspection": "RIGHT seed 1, equal scale before/native after/real ELK; differences remain"
+}

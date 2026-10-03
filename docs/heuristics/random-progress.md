@@ -1012,3 +1012,12 @@ inputs/tolerance. All failures remain preserved. Final local suite **2,111 pass 
 108 fail / 2,219**, no new failures; two initial timeouts clear unchanged in
 isolation and in the final complete run. Types, selected format/lint and build
 pass. Broad parity remains incomplete and the goal active.
+
+## Port-aware greedy switching
+
+[Source and proof](./port-aware-greedy/README.md): remove self-loop connectivity
+from crossing ranks and count selected neighboring ports during greedy swaps.
+Flat gate remains 12/100, differences 14,813 to 14,741, no lost matches/errors.
+Hierarchy 60/100 and fixed self-loops 100/100 unchanged. Two red/green regressions;
+full suite 2,113 pass / 108 fail, no new failures. Parity incomplete; next trace
+placement/routing after crossing order and remaining in-layer/hierarchy counters.

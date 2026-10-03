@@ -6,7 +6,7 @@ import {
 } from "../src/layered/hierarchy-crossing";
 import { JavaRandom } from "../src/java-random";
 import { createLayeredScopePipeline } from "../src/layered";
-import { createLayerSweepSession } from "../src/layered/strategies";
+import { applyGreedySwitch, createLayerSweepSession } from "../src/layered/strategies";
 import type { LayeredPhaseInput } from "../src/layered/types";
 
 const graph = (id: string) =>
@@ -204,4 +204,45 @@ it("restores constrained nodes before appending long-edge sweep dummies", () => 
   const dummy = layer.find((id) => id.startsWith("__layout_dummy:across:"));
   expect(dummy).toBeDefined();
   expect(layer.indexOf("last")).toBeLessThan(layer.indexOf(dummy!));
+});
+
+it("does not let self-loop connectivity consume crossing sweep port ranks", () => {
+  const base = input("loop-ranks");
+  const withLoop = {
+    ...base,
+    graph: createGraph({
+      id: "loop-ranks",
+      nodes: base.graph.nodes,
+      edges: [...base.graph.edges, { id: "loop", sourceId: "a", targetId: "a" }],
+    }),
+  };
+  const orientation = { reversedEdgeIds: new Set<string>() };
+  const expected = createLayerSweepSession(base, orientation, assignment()).minimize();
+  const actual = createLayerSweepSession(withLoop, orientation, assignment()).minimize();
+  expect(actual).toEqual(expected);
+});
+
+it("greedy switching counts distinct ports on the same neighboring node", () => {
+  const phase = input("port-greedy");
+  phase.graph = createGraph({
+    id: "port-greedy",
+    nodes: [{ id: "a" }, { id: "b" }, { id: "c", ports: [{ name: "top" }, { name: "bottom" }] }],
+    edges: [
+      { id: "ac", sourceId: "a", targetId: "c", targetPort: "top" },
+      { id: "bc", sourceId: "b", targetId: "c", targetPort: "bottom" },
+    ],
+  });
+  const result = applyGreedySwitch(
+    phase,
+    { reversedEdgeIds: new Set() },
+    {
+      layers: [["b", "a"], ["c"]],
+      inputPortOrderByNodeId: new Map([["c", ["bc", "ac"]]]),
+      outputPortOrderByNodeId: new Map([
+        ["a", ["ac"]],
+        ["b", ["bc"]],
+      ]),
+    },
+  );
+  expect(result.layers).toEqual([["a", "b"], ["c"]]);
 });

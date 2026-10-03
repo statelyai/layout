@@ -882,32 +882,61 @@ export function applyGreedySwitch(
   for (const [layerIndex, layer] of layers.entries()) {
     for (const id of layer) layerByNodeId.set(id, layerIndex);
   }
-  const between = Array.from({ length: Math.max(0, layers.length - 1) }, () => [] as string[][]);
-  for (const edge of input.graph.edges) {
-    const [sourceId, targetId] = getOrientedEndpoints(edge, orientation);
-    const sourceLayer = layerByNodeId.get(sourceId);
-    const targetLayer = layerByNodeId.get(targetId);
-    if (sourceLayer === undefined || targetLayer !== sourceLayer + 1) continue;
-    between[sourceLayer]?.push([sourceId, targetId]);
-  }
+  const edgeById = new Map(input.graph.edges.map((edge) => [edge.id, edge]));
+  const portPositions = (layer: readonly string[], incoming: boolean) => {
+    const positions = new Map<string, number>();
+    let consumed = 0;
+    for (const nodeId of layer) {
+      const selected = (
+        incoming ? order.inputPortOrderByNodeId : order.outputPortOrderByNodeId
+      )?.get(nodeId);
+      const edgeIds =
+        selected ??
+        input.graph.edges
+          .filter((edge) => {
+            const [source, target] = getOrientedEndpoints(edge, orientation);
+            return source !== target && (incoming ? target : source) === nodeId;
+          })
+          .map((edge) => edge.id);
+      // WEST ports occur clockwise bottom-to-top; greedy crossing counters
+      // enumerate both neighboring faces in physical top-to-bottom order.
+      const physical = incoming ? [...edgeIds].reverse() : edgeIds;
+      const shared = new Map<string, number>();
+      for (const edgeId of physical) {
+        const edge = edgeById.get(edgeId)!;
+        const reversed = orientation.reversedEdgeIds.has(edgeId);
+        const port = incoming !== reversed ? edge.targetPort : edge.sourcePort;
+        if (port !== undefined && shared.has(port)) {
+          positions.set(edgeId, shared.get(port)!);
+        } else {
+          positions.set(edgeId, consumed);
+          if (port !== undefined) shared.set(port, consumed);
+          consumed++;
+        }
+      }
+      // Preserve the old node-level fallback for custom minimizers that do
+      // not provide selected port orders.
+      if (!selected) {
+        for (const edgeId of edgeIds) positions.set(edgeId, consumed);
+        consumed++;
+      }
+    }
+    return positions;
+  };
   const countBoundary = (boundary: number): number => {
-    const edges = between[boundary] ?? [];
-    const sourcePositions = new Map(
-      (layers[boundary] ?? []).map((id, index) => [id, index] as const),
-    );
-    const targetPositions = new Map(
-      (layers[boundary + 1] ?? []).map((id, index) => [id, index] as const),
-    );
+    const sourcePositions = portPositions(layers[boundary] ?? [], false);
+    const targetPositions = portPositions(layers[boundary + 1] ?? [], true);
+    const edges = input.graph.edges.filter((edge) => {
+      const [source, target] = getOrientedEndpoints(edge, orientation);
+      return layerByNodeId.get(source) === boundary && layerByNodeId.get(target) === boundary + 1;
+    });
     let crossings = 0;
     for (let left = 0; left < edges.length; left++) {
-      const leftEdge = edges[left]!;
       for (let right = left + 1; right < edges.length; right++) {
-        const rightEdge = edges[right]!;
-        if (leftEdge[0] === rightEdge[0] || leftEdge[1] === rightEdge[1]) continue;
         const sourceDifference =
-          (sourcePositions.get(leftEdge[0]!) ?? 0) - (sourcePositions.get(rightEdge[0]!) ?? 0);
+          sourcePositions.get(edges[left]!.id)! - sourcePositions.get(edges[right]!.id)!;
         const targetDifference =
-          (targetPositions.get(leftEdge[1]!) ?? 0) - (targetPositions.get(rightEdge[1]!) ?? 0);
+          targetPositions.get(edges[left]!.id)! - targetPositions.get(edges[right]!.id)!;
         if (sourceDifference * targetDifference < 0) crossings++;
       }
     }
@@ -1733,6 +1762,9 @@ export function createLayerSweepSession(
   const outputPortOrder = new Map(input.graph.nodes.map((node) => [node.id, [] as string[]]));
   for (const edge of input.graph.edges) {
     const [sourceId, targetId] = getOrientedEndpoints(edge, orientation);
+    // ELK detaches self-loop edges before crossing minimization, then restores
+    // them afterward. Their connectivity must not consume sweep port ranks.
+    if (sourceId === targetId) continue;
     outputPortOrder.get(sourceId)?.push(edge.id);
     inputPortOrder.get(targetId)?.push(edge.id);
   }
