@@ -1585,6 +1585,7 @@ export function* createLayeredScopePipeline<N, E, G, P>(
       if (side === lower) southEdges.add(id!);
     }
   recordCrossingUnits(expanded.input, {
+    northSouthOrigins: northSouth.originsByDummyId,
     incomingEdgeOrderByDummyId: northSouth.incomingEdgeOrderByDummyId,
     successors: northSouth.successorsByNodeId,
     units: northSouth.layoutUnitByNodeId,

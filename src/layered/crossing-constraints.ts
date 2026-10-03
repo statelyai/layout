@@ -7,6 +7,7 @@
 import type { JavaRandom } from "../java-random";
 import type { LayeredPhaseInput } from "./types";
 export interface CrossingUnits {
+  northSouthOrigins?: ReadonlyMap<string, import("./north-south-ports").CrossPortOrigin>;
   successors: ReadonlyMap<string, readonly string[]>;
   units: ReadonlyMap<string, string>;
   unitMembers?: ReadonlyMap<string, readonly string[]>;

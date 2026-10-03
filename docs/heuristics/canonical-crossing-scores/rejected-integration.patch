@@ -1,0 +1,42 @@
+--- a/src/layered/strategies.ts
++++ b/src/layered/strategies.ts
+@@ -890,17 +890,6 @@
+   for (const [layerIndex, layer] of layers.entries()) {
+     for (const id of layer) layerByNodeId.set(id, layerIndex);
+   }
+-  const greedyGraph =
+-    order.inputPortOrderByNodeId && order.outputPortOrderByNodeId
+-      ? crossingGraph(
+-          input,
+-          orientation,
+-          layers,
+-          order.inputPortOrderByNodeId,
+-          order.outputPortOrderByNodeId,
+-        )
+-      : undefined;
+-  const greedyNodes = new Map(greedyGraph?.layers.flat().map((node) => [node.id, node]));
+   const edgeById = new Map(input.graph.edges.map((edge) => [edge.id, edge]));
+   const portPositions = (layer: readonly string[], incoming: boolean) => {
+     const positions = new Map<string, number>();
+@@ -962,11 +951,16 @@
+     return crossings;
+   };
+   const countForLayer = (layerIndex: number, oneSidedBoundary?: number) => {
+-    // Greedy swapping counts edge pairs, rather than the sweep's hyperedge estimate.
+-    if (oneSidedBoundary === undefined && greedyGraph) {
+-      greedyGraph.layers = layers.map((layer) => layer.map((id) => greedyNodes.get(id)!));
+-      return countAllCrossings(greedyGraph, "edges").total;
+-    }
++    if (oneSidedBoundary === undefined)
++      return countAllCrossings(
++        crossingGraph(
++          input,
++          orientation,
++          layers,
++          order.inputPortOrderByNodeId,
++          order.outputPortOrderByNodeId,
++        ),
++      ).total;
+     if (oneSidedBoundary !== undefined) return countBoundary(oneSidedBoundary);
+     return (
+       (layerIndex > 0 ? countBoundary(layerIndex - 1) : 0) +

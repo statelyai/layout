@@ -1,0 +1,1368 @@
+[
+  {
+    "report": "flat-report.json",
+    "before": {
+      "cases": 100,
+      "matched": 43,
+      "nativeErrors": 0,
+      "elkErrors": 0,
+      "differingValues": 8957
+    },
+    "after": {
+      "cases": 100,
+      "matched": 47,
+      "nativeErrors": 0,
+      "elkErrors": 0,
+      "differingValues": 8082
+    },
+    "changed": [
+      {
+        "family": "flat",
+        "seed": 3,
+        "direction": "RIGHT",
+        "strategy": null,
+        "before": 66,
+        "after": 4,
+        "lostMatch": false,
+        "gainedMatch": false
+      },
+      {
+        "family": "flat",
+        "seed": 7,
+        "direction": "RIGHT",
+        "strategy": null,
+        "before": 190,
+        "after": 190,
+        "lostMatch": false,
+        "gainedMatch": false
+      },
+      {
+        "family": "flat",
+        "seed": 8,
+        "direction": "RIGHT",
+        "strategy": null,
+        "before": 216,
+        "after": 195,
+        "lostMatch": false,
+        "gainedMatch": false
+      },
+      {
+        "family": "flat",
+        "seed": 12,
+        "direction": "RIGHT",
+        "strategy": null,
+        "before": 152,
+        "after": 93,
+        "lostMatch": false,
+        "gainedMatch": false
+      },
+      {
+        "family": "flat",
+        "seed": 13,
+        "direction": "RIGHT",
+        "strategy": null,
+        "before": 391,
+        "after": 363,
+        "lostMatch": false,
+        "gainedMatch": false
+      },
+      {
+        "family": "flat",
+        "seed": 17,
+        "direction": "RIGHT",
+        "strategy": null,
+        "before": 119,
+        "after": 101,
+        "lostMatch": false,
+        "gainedMatch": false
+      },
+      {
+        "family": "flat",
+        "seed": 18,
+        "direction": "RIGHT",
+        "strategy": null,
+        "before": 109,
+        "after": 85,
+        "lostMatch": false,
+        "gainedMatch": false
+      },
+      {
+        "family": "flat",
+        "seed": 23,
+        "direction": "RIGHT",
+        "strategy": null,
+        "before": 53,
+        "after": 53,
+        "lostMatch": false,
+        "gainedMatch": false
+      },
+      {
+        "family": "flat",
+        "seed": 2,
+        "direction": "LEFT",
+        "strategy": null,
+        "before": 322,
+        "after": 247,
+        "lostMatch": false,
+        "gainedMatch": false
+      },
+      {
+        "family": "flat",
+        "seed": 3,
+        "direction": "LEFT",
+        "strategy": null,
+        "before": 68,
+        "after": 0,
+        "lostMatch": false,
+        "gainedMatch": true
+      },
+      {
+        "family": "flat",
+        "seed": 7,
+        "direction": "LEFT",
+        "strategy": null,
+        "before": 194,
+        "after": 214,
+        "lostMatch": false,
+        "gainedMatch": false
+      },
+      {
+        "family": "flat",
+        "seed": 8,
+        "direction": "LEFT",
+        "strategy": null,
+        "before": 225,
+        "after": 241,
+        "lostMatch": false,
+        "gainedMatch": false
+      },
+      {
+        "family": "flat",
+        "seed": 12,
+        "direction": "LEFT",
+        "strategy": null,
+        "before": 113,
+        "after": 121,
+        "lostMatch": false,
+        "gainedMatch": false
+      },
+      {
+        "family": "flat",
+        "seed": 13,
+        "direction": "LEFT",
+        "strategy": null,
+        "before": 342,
+        "after": 248,
+        "lostMatch": false,
+        "gainedMatch": false
+      },
+      {
+        "family": "flat",
+        "seed": 17,
+        "direction": "LEFT",
+        "strategy": null,
+        "before": 128,
+        "after": 130,
+        "lostMatch": false,
+        "gainedMatch": false
+      },
+      {
+        "family": "flat",
+        "seed": 22,
+        "direction": "LEFT",
+        "strategy": null,
+        "before": 107,
+        "after": 40,
+        "lostMatch": false,
+        "gainedMatch": false
+      },
+      {
+        "family": "flat",
+        "seed": 23,
+        "direction": "LEFT",
+        "strategy": null,
+        "before": 57,
+        "after": 0,
+        "lostMatch": false,
+        "gainedMatch": true
+      },
+      {
+        "family": "flat",
+        "seed": 2,
+        "direction": "DOWN",
+        "strategy": null,
+        "before": 200,
+        "after": 200,
+        "lostMatch": false,
+        "gainedMatch": false
+      },
+      {
+        "family": "flat",
+        "seed": 3,
+        "direction": "DOWN",
+        "strategy": null,
+        "before": 74,
+        "after": 2,
+        "lostMatch": false,
+        "gainedMatch": false
+      },
+      {
+        "family": "flat",
+        "seed": 7,
+        "direction": "DOWN",
+        "strategy": null,
+        "before": 233,
+        "after": 236,
+        "lostMatch": false,
+        "gainedMatch": false
+      },
+      {
+        "family": "flat",
+        "seed": 8,
+        "direction": "DOWN",
+        "strategy": null,
+        "before": 183,
+        "after": 179,
+        "lostMatch": false,
+        "gainedMatch": false
+      },
+      {
+        "family": "flat",
+        "seed": 13,
+        "direction": "DOWN",
+        "strategy": null,
+        "before": 381,
+        "after": 459,
+        "lostMatch": false,
+        "gainedMatch": false
+      },
+      {
+        "family": "flat",
+        "seed": 17,
+        "direction": "DOWN",
+        "strategy": null,
+        "before": 140,
+        "after": 72,
+        "lostMatch": false,
+        "gainedMatch": false
+      },
+      {
+        "family": "flat",
+        "seed": 18,
+        "direction": "DOWN",
+        "strategy": null,
+        "before": 107,
+        "after": 58,
+        "lostMatch": false,
+        "gainedMatch": false
+      },
+      {
+        "family": "flat",
+        "seed": 22,
+        "direction": "DOWN",
+        "strategy": null,
+        "before": 54,
+        "after": 6,
+        "lostMatch": false,
+        "gainedMatch": false
+      },
+      {
+        "family": "flat",
+        "seed": 23,
+        "direction": "DOWN",
+        "strategy": null,
+        "before": 59,
+        "after": 2,
+        "lostMatch": false,
+        "gainedMatch": false
+      },
+      {
+        "family": "flat",
+        "seed": 2,
+        "direction": "UP",
+        "strategy": null,
+        "before": 289,
+        "after": 305,
+        "lostMatch": false,
+        "gainedMatch": false
+      },
+      {
+        "family": "flat",
+        "seed": 3,
+        "direction": "UP",
+        "strategy": null,
+        "before": 68,
+        "after": 0,
+        "lostMatch": false,
+        "gainedMatch": true
+      },
+      {
+        "family": "flat",
+        "seed": 7,
+        "direction": "UP",
+        "strategy": null,
+        "before": 149,
+        "after": 188,
+        "lostMatch": false,
+        "gainedMatch": false
+      },
+      {
+        "family": "flat",
+        "seed": 8,
+        "direction": "UP",
+        "strategy": null,
+        "before": 183,
+        "after": 179,
+        "lostMatch": false,
+        "gainedMatch": false
+      },
+      {
+        "family": "flat",
+        "seed": 13,
+        "direction": "UP",
+        "strategy": null,
+        "before": 428,
+        "after": 408,
+        "lostMatch": false,
+        "gainedMatch": false
+      },
+      {
+        "family": "flat",
+        "seed": 18,
+        "direction": "UP",
+        "strategy": null,
+        "before": 32,
+        "after": 8,
+        "lostMatch": false,
+        "gainedMatch": false
+      },
+      {
+        "family": "flat",
+        "seed": 22,
+        "direction": "UP",
+        "strategy": null,
+        "before": 89,
+        "after": 73,
+        "lostMatch": false,
+        "gainedMatch": false
+      },
+      {
+        "family": "flat",
+        "seed": 23,
+        "direction": "UP",
+        "strategy": null,
+        "before": 54,
+        "after": 0,
+        "lostMatch": false,
+        "gainedMatch": true
+      }
+    ]
+  },
+  {
+    "report": "report.json",
+    "before": {
+      "cases": 200,
+      "matched": 141,
+      "nativeErrors": 0,
+      "elkErrors": 6,
+      "differingValues": 9938
+    },
+    "after": {
+      "cases": 200,
+      "matched": 143,
+      "nativeErrors": 0,
+      "elkErrors": 6,
+      "differingValues": 9183
+    },
+    "changed": [
+      {
+        "family": "flat",
+        "seed": 3,
+        "direction": "RIGHT",
+        "strategy": "LEFT_RIGHT_CONSTRAINT_LOCKING",
+        "before": 134,
+        "after": 27,
+        "lostMatch": false,
+        "gainedMatch": false
+      },
+      {
+        "family": "flat",
+        "seed": 7,
+        "direction": "RIGHT",
+        "strategy": "LEFT_RIGHT_CONSTRAINT_LOCKING",
+        "before": 190,
+        "after": 190,
+        "lostMatch": false,
+        "gainedMatch": false
+      },
+      {
+        "family": "flat",
+        "seed": 8,
+        "direction": "RIGHT",
+        "strategy": "LEFT_RIGHT_CONNECTION_LOCKING",
+        "before": 276,
+        "after": 257,
+        "lostMatch": false,
+        "gainedMatch": false
+      },
+      {
+        "family": "flat",
+        "seed": 12,
+        "direction": "RIGHT",
+        "strategy": "LEFT_RIGHT_CONNECTION_LOCKING",
+        "before": 150,
+        "after": 92,
+        "lostMatch": false,
+        "gainedMatch": false
+      },
+      {
+        "family": "flat",
+        "seed": 13,
+        "direction": "RIGHT",
+        "strategy": "LEFT",
+        "before": 416,
+        "after": 381,
+        "lostMatch": false,
+        "gainedMatch": false
+      },
+      {
+        "family": "flat",
+        "seed": 17,
+        "direction": "RIGHT",
+        "strategy": "LEFT",
+        "before": 133,
+        "after": 62,
+        "lostMatch": false,
+        "gainedMatch": false
+      },
+      {
+        "family": "flat",
+        "seed": 18,
+        "direction": "RIGHT",
+        "strategy": "RIGHT",
+        "before": 116,
+        "after": 89,
+        "lostMatch": false,
+        "gainedMatch": false
+      },
+      {
+        "family": "flat",
+        "seed": 23,
+        "direction": "RIGHT",
+        "strategy": "LEFT_RIGHT_CONSTRAINT_LOCKING",
+        "before": 95,
+        "after": 106,
+        "lostMatch": false,
+        "gainedMatch": false
+      },
+      {
+        "family": "flat",
+        "seed": 2,
+        "direction": "LEFT",
+        "strategy": "RIGHT",
+        "before": 322,
+        "after": 314,
+        "lostMatch": false,
+        "gainedMatch": false
+      },
+      {
+        "family": "flat",
+        "seed": 3,
+        "direction": "LEFT",
+        "strategy": "LEFT_RIGHT_CONSTRAINT_LOCKING",
+        "before": 132,
+        "after": 0,
+        "lostMatch": false,
+        "gainedMatch": true
+      },
+      {
+        "family": "flat",
+        "seed": 7,
+        "direction": "LEFT",
+        "strategy": "LEFT_RIGHT_CONSTRAINT_LOCKING",
+        "before": 175,
+        "after": 231,
+        "lostMatch": false,
+        "gainedMatch": false
+      },
+      {
+        "family": "flat",
+        "seed": 8,
+        "direction": "LEFT",
+        "strategy": "LEFT_RIGHT_CONNECTION_LOCKING",
+        "before": 225,
+        "after": 296,
+        "lostMatch": false,
+        "gainedMatch": false
+      },
+      {
+        "family": "flat",
+        "seed": 12,
+        "direction": "LEFT",
+        "strategy": "LEFT_RIGHT_CONNECTION_LOCKING",
+        "before": 82,
+        "after": 79,
+        "lostMatch": false,
+        "gainedMatch": false
+      },
+      {
+        "family": "flat",
+        "seed": 13,
+        "direction": "LEFT",
+        "strategy": "LEFT",
+        "before": 280,
+        "after": 198,
+        "lostMatch": false,
+        "gainedMatch": false
+      },
+      {
+        "family": "flat",
+        "seed": 17,
+        "direction": "LEFT",
+        "strategy": "LEFT",
+        "before": 173,
+        "after": 170,
+        "lostMatch": false,
+        "gainedMatch": false
+      },
+      {
+        "family": "flat",
+        "seed": 22,
+        "direction": "LEFT",
+        "strategy": "RIGHT",
+        "before": 107,
+        "after": 40,
+        "lostMatch": false,
+        "gainedMatch": false
+      },
+      {
+        "family": "flat",
+        "seed": 23,
+        "direction": "LEFT",
+        "strategy": "LEFT_RIGHT_CONSTRAINT_LOCKING",
+        "before": 109,
+        "after": 0,
+        "lostMatch": false,
+        "gainedMatch": true
+      },
+      {
+        "family": "flat",
+        "seed": 2,
+        "direction": "DOWN",
+        "strategy": "RIGHT",
+        "before": 232,
+        "after": 232,
+        "lostMatch": false,
+        "gainedMatch": false
+      },
+      {
+        "family": "flat",
+        "seed": 7,
+        "direction": "DOWN",
+        "strategy": "LEFT_RIGHT_CONSTRAINT_LOCKING",
+        "before": 216,
+        "after": 236,
+        "lostMatch": false,
+        "gainedMatch": false
+      },
+      {
+        "family": "flat",
+        "seed": 8,
+        "direction": "DOWN",
+        "strategy": "LEFT_RIGHT_CONNECTION_LOCKING",
+        "before": 204,
+        "after": 201,
+        "lostMatch": false,
+        "gainedMatch": false
+      },
+      {
+        "family": "flat",
+        "seed": 13,
+        "direction": "DOWN",
+        "strategy": "LEFT",
+        "before": 448,
+        "after": 439,
+        "lostMatch": false,
+        "gainedMatch": false
+      },
+      {
+        "family": "flat",
+        "seed": 17,
+        "direction": "DOWN",
+        "strategy": "LEFT",
+        "before": 159,
+        "after": 57,
+        "lostMatch": false,
+        "gainedMatch": false
+      },
+      {
+        "family": "flat",
+        "seed": 22,
+        "direction": "DOWN",
+        "strategy": "RIGHT",
+        "before": 75,
+        "after": 5,
+        "lostMatch": false,
+        "gainedMatch": false
+      },
+      {
+        "family": "flat",
+        "seed": 2,
+        "direction": "UP",
+        "strategy": "RIGHT",
+        "before": 289,
+        "after": 305,
+        "lostMatch": false,
+        "gainedMatch": false
+      },
+      {
+        "family": "flat",
+        "seed": 7,
+        "direction": "UP",
+        "strategy": "LEFT_RIGHT_CONSTRAINT_LOCKING",
+        "before": 200,
+        "after": 203,
+        "lostMatch": false,
+        "gainedMatch": false
+      },
+      {
+        "family": "flat",
+        "seed": 8,
+        "direction": "UP",
+        "strategy": "LEFT_RIGHT_CONNECTION_LOCKING",
+        "before": 267,
+        "after": 269,
+        "lostMatch": false,
+        "gainedMatch": false
+      },
+      {
+        "family": "flat",
+        "seed": 13,
+        "direction": "UP",
+        "strategy": "LEFT",
+        "before": 455,
+        "after": 439,
+        "lostMatch": false,
+        "gainedMatch": false
+      },
+      {
+        "family": "flat",
+        "seed": 22,
+        "direction": "UP",
+        "strategy": "RIGHT",
+        "before": 96,
+        "after": 83,
+        "lostMatch": false,
+        "gainedMatch": false
+      }
+    ]
+  },
+  {
+    "report": "expanded/report.json",
+    "before": {
+      "cases": 200,
+      "matched": 137,
+      "nativeErrors": 0,
+      "elkErrors": 3,
+      "differingValues": 11223
+    },
+    "after": {
+      "cases": 200,
+      "matched": 137,
+      "nativeErrors": 0,
+      "elkErrors": 3,
+      "differingValues": 10325
+    },
+    "changed": [
+      {
+        "family": "flat",
+        "seed": 27,
+        "direction": "RIGHT",
+        "strategy": "LEFT_RIGHT_CONSTRAINT_LOCKING",
+        "before": 440,
+        "after": 469,
+        "lostMatch": false,
+        "gainedMatch": false
+      },
+      {
+        "family": "flat",
+        "seed": 28,
+        "direction": "RIGHT",
+        "strategy": "LEFT_RIGHT_CONNECTION_LOCKING",
+        "before": 207,
+        "after": 174,
+        "lostMatch": false,
+        "gainedMatch": false
+      },
+      {
+        "family": "flat",
+        "seed": 32,
+        "direction": "RIGHT",
+        "strategy": "LEFT_RIGHT_CONNECTION_LOCKING",
+        "before": 318,
+        "after": 304,
+        "lostMatch": false,
+        "gainedMatch": false
+      },
+      {
+        "family": "flat",
+        "seed": 37,
+        "direction": "RIGHT",
+        "strategy": "LEFT",
+        "before": 385,
+        "after": 402,
+        "lostMatch": false,
+        "gainedMatch": false
+      },
+      {
+        "family": "flat",
+        "seed": 38,
+        "direction": "RIGHT",
+        "strategy": "RIGHT",
+        "before": 87,
+        "after": 60,
+        "lostMatch": false,
+        "gainedMatch": false
+      },
+      {
+        "family": "flat",
+        "seed": 42,
+        "direction": "RIGHT",
+        "strategy": "RIGHT",
+        "before": 290,
+        "after": 285,
+        "lostMatch": false,
+        "gainedMatch": false
+      },
+      {
+        "family": "flat",
+        "seed": 43,
+        "direction": "RIGHT",
+        "strategy": "LEFT_RIGHT_CONSTRAINT_LOCKING",
+        "before": 74,
+        "after": 50,
+        "lostMatch": false,
+        "gainedMatch": false
+      },
+      {
+        "family": "flat",
+        "seed": 47,
+        "direction": "RIGHT",
+        "strategy": "LEFT_RIGHT_CONSTRAINT_LOCKING",
+        "before": 117,
+        "after": 70,
+        "lostMatch": false,
+        "gainedMatch": false
+      },
+      {
+        "family": "flat",
+        "seed": 48,
+        "direction": "RIGHT",
+        "strategy": "LEFT_RIGHT_CONNECTION_LOCKING",
+        "before": 82,
+        "after": 55,
+        "lostMatch": false,
+        "gainedMatch": false
+      },
+      {
+        "family": "flat",
+        "seed": 27,
+        "direction": "LEFT",
+        "strategy": "LEFT_RIGHT_CONSTRAINT_LOCKING",
+        "before": 390,
+        "after": 406,
+        "lostMatch": false,
+        "gainedMatch": false
+      },
+      {
+        "family": "flat",
+        "seed": 28,
+        "direction": "LEFT",
+        "strategy": "LEFT_RIGHT_CONNECTION_LOCKING",
+        "before": 257,
+        "after": 212,
+        "lostMatch": false,
+        "gainedMatch": false
+      },
+      {
+        "family": "flat",
+        "seed": 32,
+        "direction": "LEFT",
+        "strategy": "LEFT_RIGHT_CONNECTION_LOCKING",
+        "before": 268,
+        "after": 273,
+        "lostMatch": false,
+        "gainedMatch": false
+      },
+      {
+        "family": "flat",
+        "seed": 33,
+        "direction": "LEFT",
+        "strategy": "LEFT",
+        "before": 124,
+        "after": 71,
+        "lostMatch": false,
+        "gainedMatch": false
+      },
+      {
+        "family": "flat",
+        "seed": 37,
+        "direction": "LEFT",
+        "strategy": "LEFT",
+        "before": 478,
+        "after": 459,
+        "lostMatch": false,
+        "gainedMatch": false
+      },
+      {
+        "family": "flat",
+        "seed": 38,
+        "direction": "LEFT",
+        "strategy": "RIGHT",
+        "before": 59,
+        "after": 16,
+        "lostMatch": false,
+        "gainedMatch": false
+      },
+      {
+        "family": "flat",
+        "seed": 42,
+        "direction": "LEFT",
+        "strategy": "RIGHT",
+        "before": 259,
+        "after": 263,
+        "lostMatch": false,
+        "gainedMatch": false
+      },
+      {
+        "family": "flat",
+        "seed": 43,
+        "direction": "LEFT",
+        "strategy": "LEFT_RIGHT_CONSTRAINT_LOCKING",
+        "before": 114,
+        "after": 58,
+        "lostMatch": false,
+        "gainedMatch": false
+      },
+      {
+        "family": "flat",
+        "seed": 47,
+        "direction": "LEFT",
+        "strategy": "LEFT_RIGHT_CONSTRAINT_LOCKING",
+        "before": 168,
+        "after": 23,
+        "lostMatch": false,
+        "gainedMatch": false
+      },
+      {
+        "family": "flat",
+        "seed": 48,
+        "direction": "LEFT",
+        "strategy": "LEFT_RIGHT_CONNECTION_LOCKING",
+        "before": 105,
+        "after": 35,
+        "lostMatch": false,
+        "gainedMatch": false
+      },
+      {
+        "family": "flat",
+        "seed": 32,
+        "direction": "DOWN",
+        "strategy": "LEFT_RIGHT_CONNECTION_LOCKING",
+        "before": 197,
+        "after": 35,
+        "lostMatch": false,
+        "gainedMatch": false
+      },
+      {
+        "family": "flat",
+        "seed": 37,
+        "direction": "DOWN",
+        "strategy": "LEFT",
+        "before": 242,
+        "after": 404,
+        "lostMatch": false,
+        "gainedMatch": false
+      },
+      {
+        "family": "flat",
+        "seed": 38,
+        "direction": "DOWN",
+        "strategy": "RIGHT",
+        "before": 77,
+        "after": 60,
+        "lostMatch": false,
+        "gainedMatch": false
+      },
+      {
+        "family": "flat",
+        "seed": 42,
+        "direction": "DOWN",
+        "strategy": "RIGHT",
+        "before": 277,
+        "after": 282,
+        "lostMatch": false,
+        "gainedMatch": false
+      },
+      {
+        "family": "flat",
+        "seed": 43,
+        "direction": "DOWN",
+        "strategy": "LEFT_RIGHT_CONSTRAINT_LOCKING",
+        "before": 136,
+        "after": 130,
+        "lostMatch": false,
+        "gainedMatch": false
+      },
+      {
+        "family": "flat",
+        "seed": 47,
+        "direction": "DOWN",
+        "strategy": "LEFT_RIGHT_CONSTRAINT_LOCKING",
+        "before": 132,
+        "after": 4,
+        "lostMatch": false,
+        "gainedMatch": false
+      },
+      {
+        "family": "flat",
+        "seed": 27,
+        "direction": "UP",
+        "strategy": "LEFT_RIGHT_CONSTRAINT_LOCKING",
+        "before": 445,
+        "after": 443,
+        "lostMatch": false,
+        "gainedMatch": false
+      },
+      {
+        "family": "flat",
+        "seed": 32,
+        "direction": "UP",
+        "strategy": "LEFT_RIGHT_CONNECTION_LOCKING",
+        "before": 197,
+        "after": 35,
+        "lostMatch": false,
+        "gainedMatch": false
+      },
+      {
+        "family": "flat",
+        "seed": 33,
+        "direction": "UP",
+        "strategy": "LEFT",
+        "before": 106,
+        "after": 119,
+        "lostMatch": false,
+        "gainedMatch": false
+      },
+      {
+        "family": "flat",
+        "seed": 37,
+        "direction": "UP",
+        "strategy": "LEFT",
+        "before": 438,
+        "after": 430,
+        "lostMatch": false,
+        "gainedMatch": false
+      },
+      {
+        "family": "flat",
+        "seed": 38,
+        "direction": "UP",
+        "strategy": "RIGHT",
+        "before": 97,
+        "after": 74,
+        "lostMatch": false,
+        "gainedMatch": false
+      },
+      {
+        "family": "flat",
+        "seed": 42,
+        "direction": "UP",
+        "strategy": "RIGHT",
+        "before": 296,
+        "after": 281,
+        "lostMatch": false,
+        "gainedMatch": false
+      },
+      {
+        "family": "flat",
+        "seed": 43,
+        "direction": "UP",
+        "strategy": "LEFT_RIGHT_CONSTRAINT_LOCKING",
+        "before": 48,
+        "after": 120,
+        "lostMatch": false,
+        "gainedMatch": false
+      },
+      {
+        "family": "flat",
+        "seed": 47,
+        "direction": "UP",
+        "strategy": "LEFT_RIGHT_CONSTRAINT_LOCKING",
+        "before": 180,
+        "after": 90,
+        "lostMatch": false,
+        "gainedMatch": false
+      }
+    ]
+  },
+  {
+    "report": "fresh/report.json",
+    "before": {
+      "cases": 200,
+      "matched": 134,
+      "nativeErrors": 0,
+      "elkErrors": 4,
+      "differingValues": 10265
+    },
+    "after": {
+      "cases": 200,
+      "matched": 134,
+      "nativeErrors": 0,
+      "elkErrors": 4,
+      "differingValues": 9188
+    },
+    "changed": [
+      {
+        "family": "flat",
+        "seed": 52,
+        "direction": "RIGHT",
+        "strategy": "LEFT_RIGHT_CONNECTION_LOCKING",
+        "before": 302,
+        "after": 305,
+        "lostMatch": false,
+        "gainedMatch": false
+      },
+      {
+        "family": "flat",
+        "seed": 53,
+        "direction": "RIGHT",
+        "strategy": "LEFT",
+        "before": 160,
+        "after": 4,
+        "lostMatch": false,
+        "gainedMatch": false
+      },
+      {
+        "family": "flat",
+        "seed": 58,
+        "direction": "RIGHT",
+        "strategy": "RIGHT",
+        "before": 275,
+        "after": 298,
+        "lostMatch": false,
+        "gainedMatch": false
+      },
+      {
+        "family": "flat",
+        "seed": 62,
+        "direction": "RIGHT",
+        "strategy": "RIGHT",
+        "before": 149,
+        "after": 155,
+        "lostMatch": false,
+        "gainedMatch": false
+      },
+      {
+        "family": "flat",
+        "seed": 63,
+        "direction": "RIGHT",
+        "strategy": "LEFT_RIGHT_CONSTRAINT_LOCKING",
+        "before": 185,
+        "after": 224,
+        "lostMatch": false,
+        "gainedMatch": false
+      },
+      {
+        "family": "flat",
+        "seed": 67,
+        "direction": "RIGHT",
+        "strategy": "LEFT_RIGHT_CONSTRAINT_LOCKING",
+        "before": 246,
+        "after": 220,
+        "lostMatch": false,
+        "gainedMatch": false
+      },
+      {
+        "family": "flat",
+        "seed": 68,
+        "direction": "RIGHT",
+        "strategy": "LEFT_RIGHT_CONNECTION_LOCKING",
+        "before": 274,
+        "after": 241,
+        "lostMatch": false,
+        "gainedMatch": false
+      },
+      {
+        "family": "flat",
+        "seed": 72,
+        "direction": "RIGHT",
+        "strategy": "LEFT_RIGHT_CONNECTION_LOCKING",
+        "before": 148,
+        "after": 158,
+        "lostMatch": false,
+        "gainedMatch": false
+      },
+      {
+        "family": "flat",
+        "seed": 73,
+        "direction": "RIGHT",
+        "strategy": "LEFT",
+        "before": 313,
+        "after": 297,
+        "lostMatch": false,
+        "gainedMatch": false
+      },
+      {
+        "family": "flat",
+        "seed": 52,
+        "direction": "LEFT",
+        "strategy": "LEFT_RIGHT_CONNECTION_LOCKING",
+        "before": 304,
+        "after": 255,
+        "lostMatch": false,
+        "gainedMatch": false
+      },
+      {
+        "family": "flat",
+        "seed": 53,
+        "direction": "LEFT",
+        "strategy": "LEFT",
+        "before": 207,
+        "after": 234,
+        "lostMatch": false,
+        "gainedMatch": false
+      },
+      {
+        "family": "flat",
+        "seed": 57,
+        "direction": "LEFT",
+        "strategy": "LEFT",
+        "before": 136,
+        "after": 2,
+        "lostMatch": false,
+        "gainedMatch": false
+      },
+      {
+        "family": "flat",
+        "seed": 58,
+        "direction": "LEFT",
+        "strategy": "RIGHT",
+        "before": 322,
+        "after": 299,
+        "lostMatch": false,
+        "gainedMatch": false
+      },
+      {
+        "family": "flat",
+        "seed": 62,
+        "direction": "LEFT",
+        "strategy": "RIGHT",
+        "before": 93,
+        "after": 144,
+        "lostMatch": false,
+        "gainedMatch": false
+      },
+      {
+        "family": "flat",
+        "seed": 63,
+        "direction": "LEFT",
+        "strategy": "LEFT_RIGHT_CONSTRAINT_LOCKING",
+        "before": 186,
+        "after": 176,
+        "lostMatch": false,
+        "gainedMatch": false
+      },
+      {
+        "family": "flat",
+        "seed": 67,
+        "direction": "LEFT",
+        "strategy": "LEFT_RIGHT_CONSTRAINT_LOCKING",
+        "before": 159,
+        "after": 169,
+        "lostMatch": false,
+        "gainedMatch": false
+      },
+      {
+        "family": "flat",
+        "seed": 68,
+        "direction": "LEFT",
+        "strategy": "LEFT_RIGHT_CONNECTION_LOCKING",
+        "before": 249,
+        "after": 285,
+        "lostMatch": false,
+        "gainedMatch": false
+      },
+      {
+        "family": "flat",
+        "seed": 72,
+        "direction": "LEFT",
+        "strategy": "LEFT_RIGHT_CONNECTION_LOCKING",
+        "before": 114,
+        "after": 106,
+        "lostMatch": false,
+        "gainedMatch": false
+      },
+      {
+        "family": "flat",
+        "seed": 73,
+        "direction": "LEFT",
+        "strategy": "LEFT",
+        "before": 263,
+        "after": 308,
+        "lostMatch": false,
+        "gainedMatch": false
+      },
+      {
+        "family": "flat",
+        "seed": 52,
+        "direction": "DOWN",
+        "strategy": "LEFT_RIGHT_CONNECTION_LOCKING",
+        "before": 171,
+        "after": 30,
+        "lostMatch": false,
+        "gainedMatch": false
+      },
+      {
+        "family": "flat",
+        "seed": 53,
+        "direction": "DOWN",
+        "strategy": "LEFT",
+        "before": 174,
+        "after": 116,
+        "lostMatch": false,
+        "gainedMatch": false
+      },
+      {
+        "family": "flat",
+        "seed": 57,
+        "direction": "DOWN",
+        "strategy": "LEFT",
+        "before": 102,
+        "after": 2,
+        "lostMatch": false,
+        "gainedMatch": false
+      },
+      {
+        "family": "flat",
+        "seed": 58,
+        "direction": "DOWN",
+        "strategy": "RIGHT",
+        "before": 325,
+        "after": 324,
+        "lostMatch": false,
+        "gainedMatch": false
+      },
+      {
+        "family": "flat",
+        "seed": 62,
+        "direction": "DOWN",
+        "strategy": "RIGHT",
+        "before": 124,
+        "after": 47,
+        "lostMatch": false,
+        "gainedMatch": false
+      },
+      {
+        "family": "flat",
+        "seed": 63,
+        "direction": "DOWN",
+        "strategy": "LEFT_RIGHT_CONSTRAINT_LOCKING",
+        "before": 208,
+        "after": 210,
+        "lostMatch": false,
+        "gainedMatch": false
+      },
+      {
+        "family": "flat",
+        "seed": 68,
+        "direction": "DOWN",
+        "strategy": "LEFT_RIGHT_CONNECTION_LOCKING",
+        "before": 179,
+        "after": 22,
+        "lostMatch": false,
+        "gainedMatch": false
+      },
+      {
+        "family": "flat",
+        "seed": 73,
+        "direction": "DOWN",
+        "strategy": "LEFT",
+        "before": 289,
+        "after": 271,
+        "lostMatch": false,
+        "gainedMatch": false
+      },
+      {
+        "family": "flat",
+        "seed": 52,
+        "direction": "UP",
+        "strategy": "LEFT_RIGHT_CONNECTION_LOCKING",
+        "before": 171,
+        "after": 30,
+        "lostMatch": false,
+        "gainedMatch": false
+      },
+      {
+        "family": "flat",
+        "seed": 53,
+        "direction": "UP",
+        "strategy": "LEFT",
+        "before": 186,
+        "after": 236,
+        "lostMatch": false,
+        "gainedMatch": false
+      },
+      {
+        "family": "flat",
+        "seed": 57,
+        "direction": "UP",
+        "strategy": "LEFT",
+        "before": 135,
+        "after": 73,
+        "lostMatch": false,
+        "gainedMatch": false
+      },
+      {
+        "family": "flat",
+        "seed": 58,
+        "direction": "UP",
+        "strategy": "RIGHT",
+        "before": 326,
+        "after": 329,
+        "lostMatch": false,
+        "gainedMatch": false
+      },
+      {
+        "family": "flat",
+        "seed": 63,
+        "direction": "UP",
+        "strategy": "LEFT_RIGHT_CONSTRAINT_LOCKING",
+        "before": 144,
+        "after": 196,
+        "lostMatch": false,
+        "gainedMatch": false
+      },
+      {
+        "family": "flat",
+        "seed": 68,
+        "direction": "UP",
+        "strategy": "LEFT_RIGHT_CONNECTION_LOCKING",
+        "before": 280,
+        "after": 22,
+        "lostMatch": false,
+        "gainedMatch": false
+      },
+      {
+        "family": "flat",
+        "seed": 73,
+        "direction": "UP",
+        "strategy": "LEFT",
+        "before": 312,
+        "after": 346,
+        "lostMatch": false,
+        "gainedMatch": false
+      }
+    ]
+  }
+]

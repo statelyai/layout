@@ -1,3 +1,5 @@
+import { countAllCrossings } from "./crossing-counter";
+import { crossingGraph } from "./crossing-graph";
 import { isMergedHyperedgeDummy } from "./hyperedge-dummy-merger";
 import { externalPortDummyOf } from "./external-port-dummy";
 import { routingCoordinates } from "./routing-coordinates";
@@ -12,11 +14,7 @@ import { networkSimplexComponents } from "./network-simplex";
 import { minimizeHierarchyCrossings } from "./hierarchy-crossing";
 import { orthogonalJunctionPoints, type OrthogonalJunctionGroup } from "./orthogonal-junctions";
 import { routeOrthogonalSegments } from "./orthogonal-segments";
-import {
-  createOrthogonalHypersegments,
-  countOrthogonalHypersegmentCrossings,
-  type OrthogonalPort,
-} from "./orthogonal-hypersegments";
+import { createOrthogonalHypersegments, type OrthogonalPort } from "./orthogonal-hypersegments";
 import {
   associatedBarycenters,
   resolveCrossingConstraints,
@@ -892,6 +890,17 @@ export function applyGreedySwitch(
   for (const [layerIndex, layer] of layers.entries()) {
     for (const id of layer) layerByNodeId.set(id, layerIndex);
   }
+  const greedyGraph =
+    order.inputPortOrderByNodeId && order.outputPortOrderByNodeId
+      ? crossingGraph(
+          input,
+          orientation,
+          layers,
+          order.inputPortOrderByNodeId,
+          order.outputPortOrderByNodeId,
+        )
+      : undefined;
+  const greedyNodes = new Map(greedyGraph?.layers.flat().map((node) => [node.id, node]));
   const edgeById = new Map(input.graph.edges.map((edge) => [edge.id, edge]));
   const portPositions = (layer: readonly string[], incoming: boolean) => {
     const positions = new Map<string, number>();
@@ -953,6 +962,11 @@ export function applyGreedySwitch(
     return crossings;
   };
   const countForLayer = (layerIndex: number, oneSidedBoundary?: number) => {
+    // Greedy swapping counts edge pairs, rather than the sweep's hyperedge estimate.
+    if (oneSidedBoundary === undefined && greedyGraph) {
+      greedyGraph.layers = layers.map((layer) => layer.map((id) => greedyNodes.get(id)!));
+      return countAllCrossings(greedyGraph, "edges").total;
+    }
     if (oneSidedBoundary !== undefined) return countBoundary(oneSidedBoundary);
     return (
       (layerIndex > 0 ? countBoundary(layerIndex - 1) : 0) +
@@ -1835,139 +1849,28 @@ export function createLayerSweepSession(
     }
   }
   const countCrossings = (candidateLayers: readonly (readonly string[])[]): number => {
-    if (!exactPortSweep) {
-      const positions = new Map<string, number>();
-      for (const layer of candidateLayers) {
-        for (const [index, id] of layer.entries()) positions.set(id, index);
-      }
-      let crossings = 0;
-      for (let left = 0; left < input.graph.edges.length; left++) {
-        const [leftSource, leftTarget] = getOrientedEndpoints(
-          input.graph.edges[left]!,
-          orientation,
-        );
-        for (let right = left + 1; right < input.graph.edges.length; right++) {
-          const [rightSource, rightTarget] = getOrientedEndpoints(
-            input.graph.edges[right]!,
-            orientation,
-          );
-          if (leftSource === rightSource || leftTarget === rightTarget) continue;
-          const sourceDifference =
-            (positions.get(leftSource) ?? 0) - (positions.get(rightSource) ?? 0);
-          const targetDifference =
-            (positions.get(leftTarget) ?? 0) - (positions.get(rightTarget) ?? 0);
-          if (sourceDifference * targetDifference < 0) crossings++;
-        }
-      }
-      return crossings;
-    }
-    const layerIndex = new Map<string, number>();
-    for (const [index, layer] of candidateLayers.entries()) {
-      for (const id of layer) {
-        layerIndex.set(id, index);
-      }
+    if (exactPortSweep)
+      return countAllCrossings(
+        crossingGraph(input, orientation, candidateLayers, inputPortOrder, outputPortOrder),
+      ).total;
+    const positions = new Map<string, number>();
+    for (const layer of candidateLayers) {
+      for (const [index, id] of layer.entries()) positions.set(id, index);
     }
     let crossings = 0;
-    for (let index = 0; index < candidateLayers.length - 1; index++) {
-      const between = input.graph.edges.filter((edge) => {
-        const [sourceId, targetId] = getOrientedEndpoints(edge, orientation);
-        return layerIndex.get(sourceId) === index && layerIndex.get(targetId) === index + 1;
-      });
-      const sourceRanks = new Map<string, number>();
-      const targetRanks = new Map<string, number>();
-      let consumed = 0;
-      for (const nodeId of candidateLayers[index] ?? []) {
-        const edgeIds = outputPortOrder.get(nodeId) ?? [];
-        for (const [portIndex, edgeId] of edgeIds.entries()) {
-          sourceRanks.set(
-            edgeId,
-            consumed +
-              (fixedOrderNodes.has(nodeId)
-                ? fixedPortRank(nodeId, edgeId, false) /
-                  (2 * (input.sizes.get(nodeId)!.width + input.sizes.get(nodeId)!.height) || 1)
-                : portIndex + 1),
-          );
-        }
-        consumed += fixedOrderNodes.has(nodeId) ? 1 : edgeIds.length;
-      }
-      consumed = 0;
-      for (const nodeId of candidateLayers[index + 1] ?? []) {
-        const edgeIds = inputPortOrder.get(nodeId) ?? [];
-        for (const [portIndex, edgeId] of edgeIds.entries()) {
-          targetRanks.set(
-            edgeId,
-            consumed +
-              (fixedOrderNodes.has(nodeId)
-                ? 1 -
-                  fixedPortRank(nodeId, edgeId, true) /
-                    (2 * (input.sizes.get(nodeId)!.width + input.sizes.get(nodeId)!.height) || 1)
-                : edgeIds.length - portIndex),
-          );
-        }
-        consumed += fixedOrderNodes.has(nodeId) ? 1 : edgeIds.length;
-      }
-      const countedPorts = new Map<string, OrthogonalPort>();
-      const key = (edge: GraphEdge, source: boolean) => {
-        const [sourceId, targetId] = getOrientedEndpoints(edge, orientation);
-        const nodeId = source ? sourceId : targetId;
-        const reversed = orientation.reversedEdgeIds.has(edge.id);
-        const name = source !== reversed ? edge.sourcePort : edge.targetPort;
-        const node = input.graph.nodes.find((n) => n.id === nodeId)!;
-        if (name !== undefined) return JSON.stringify([nodeId, "port", name]);
-        if (input.settings.mergeEdges === true || input.nodeSettings?.(node)?.hypernode === true)
-          return JSON.stringify([nodeId, "implicit", source]);
-        return JSON.stringify([edge.id, "edge", source]);
-      };
-      const connections = between.map((edge) => {
-        const source = key(edge, true),
-          target = key(edge, false);
-        if (!countedPorts.has(source))
-          countedPorts.set(source, {
-            id: source,
-            side: "source",
-            position: sourceRanks.get(edge.id) ?? 0,
-          });
-        if (!countedPorts.has(target))
-          countedPorts.set(target, {
-            id: target,
-            side: "target",
-            position: targetRanks.get(edge.id) ?? 0,
-          });
-        return { source, target };
-      });
-      if (countedPorts.size < between.length * 2) {
-        const ports: OrthogonalPort[] = [];
-        for (const side of ["source", "target"] as const) {
-          const ordered = [...countedPorts.values()]
-            .filter((p) => p.side === side)
-            .sort((a, b) => a.position - b.position);
-          ports.push(...ordered.map((p, position) => ({ ...p, position })));
-        }
-        crossings += countOrthogonalHypersegmentCrossings(ports, connections);
-        continue;
-      }
-      const orderedTargets = between
-        .map((edge) => ({
-          source: sourceRanks.get(edge.id) ?? 0,
-          target: targetRanks.get(edge.id) ?? 0,
-        }))
-        .sort((left, right) => left.source - right.source || left.target - right.target)
-        .map(({ target }) => target);
-      const sortedTargets = [...orderedTargets].sort((left, right) => left - right);
-      const targetIndex = new Map(sortedTargets.map((rank, rankIndex) => [rank, rankIndex + 1]));
-      const fenwick = Array.from({ length: sortedTargets.length + 1 }, () => 0);
-      let seen = 0;
-      for (const target of orderedTargets) {
-        const rank = targetIndex.get(target) ?? 1;
-        let preceding = 0;
-        for (let cursor = rank; cursor > 0; cursor -= cursor & -cursor) {
-          preceding += fenwick[cursor] ?? 0;
-        }
-        crossings += seen - preceding;
-        for (let cursor = rank; cursor < fenwick.length; cursor += cursor & -cursor) {
-          fenwick[cursor] = (fenwick[cursor] ?? 0) + 1;
-        }
-        seen++;
+    for (let left = 0; left < input.graph.edges.length; left++) {
+      const [leftSource, leftTarget] = getOrientedEndpoints(input.graph.edges[left]!, orientation);
+      for (let right = left + 1; right < input.graph.edges.length; right++) {
+        const [rightSource, rightTarget] = getOrientedEndpoints(
+          input.graph.edges[right]!,
+          orientation,
+        );
+        if (leftSource === rightSource || leftTarget === rightTarget) continue;
+        const sourceDifference =
+          (positions.get(leftSource) ?? 0) - (positions.get(rightSource) ?? 0);
+        const targetDifference =
+          (positions.get(leftTarget) ?? 0) - (positions.get(rightTarget) ?? 0);
+        if (sourceDifference * targetDifference < 0) crossings++;
       }
     }
     return crossings;
