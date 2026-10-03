@@ -1,6 +1,7 @@
-import { readFileSync, writeFileSync } from "node:fs";
+import { writeFileSync } from "node:fs";
 import NativeELK from "../../src/elkjs";
 import { JavaRandom } from "../../src/java-random";
+import { readReport } from "./read-report.mjs";
 
 // Development-only observation; delegates every call to the original implementation.
 const events: { name: string; result: string; bound?: number }[] = [];
@@ -29,7 +30,7 @@ JavaRandom.prototype.nextInt = function (bound: number) {
     depth--;
   }
 };
-const report = JSON.parse(readFileSync(process.argv[2]!, "utf8"));
+const report = readReport(process.argv[2]!);
 const input = report.rows[Number(process.argv[4] ?? 0)]?.input;
 if (!input) throw new Error("Requested report row does not exist");
 const output = await new NativeELK().layout(structuredClone(input));

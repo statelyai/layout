@@ -24,3 +24,5 @@ pnpm exec tsx scripts/parity/trace-native-rng.ts docs/heuristics/model-order-int
 ```
 
 Next: trace final physical-port and placement differences in seed 1 despite aligned RNG, plus the remaining fixed/non-flow-port cases. Continue unified port preparation, helper/comparator branches, weighted settings, valid reference hierarchy families and existing suite failures. Retain all worsened cases; do not relax the geometry gate.
+
+The subsequent [greedy traversal repair](../greedy-starting-layer/README.md) brings seed 1 to full parity in all directions and improves this strict gate to 54/200. This folder retains its earlier 50/200 evidence.

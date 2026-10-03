@@ -2,6 +2,7 @@
 import fs from "node:fs";
 import vm from "node:vm";
 import { createRequire } from "node:module";
+import { readReport } from "./read-report.mjs";
 const require = createRequire(import.meta.url);
 const source = fs.readFileSync(require.resolve("elkjs/lib/elk-worker.js"), "utf8");
 const module = { exports: {} };
@@ -47,6 +48,7 @@ const stages = [],
   observed = new WeakSet();
 let scopeCount = 0;
 const originId = (value) => {
+  if (!value) return null;
   const origin = context.$getProperty(value, context.ORIGIN_0);
   return origin?.identifier ?? origin?.id ?? null;
 };
@@ -117,6 +119,27 @@ const snapshot = (graph) => ({
   })),
   layers: graph.layers.array.map((layer) => layer.nodes.array.map((node) => originId(node))),
 });
+// Observe greedy decisions without changing the decider or its crossing counters.
+const greedyEvents = [];
+const decideSwitch = context.$doesSwitchReduceCrossings;
+context.$doesSwitchReduceCrossings = (decider, upperIndex, lowerIndex) => {
+  const identity = (node) =>
+    originId(node) ??
+    originId(
+      node.ports.array.flatMap((port) => port.incomingEdges.array)[0] ??
+        node.ports.array.flatMap((port) => port.outgoingEdges.array)[0],
+    );
+  const upper = decider.freeLayer[upperIndex],
+    lower = decider.freeLayer[lowerIndex];
+  const accepted = decideSwitch(decider, upperIndex, lowerIndex);
+  greedyEvents.push({
+    layer: upper.layer.id_0,
+    upper: identity(upper),
+    lower: identity(lower),
+    accepted,
+  });
+  return accepted;
+};
 const bkCandidates = [];
 const checkBk = context.$checkOrderConstraint;
 context.$checkOrderConstraint = (graph, bal, monitor) => {
@@ -217,9 +240,7 @@ const elk = new Elk({
     return worker;
   },
 });
-const report = JSON.parse(
-  fs.readFileSync(process.argv[2] ?? "docs/heuristics/compound-baseline/report.json", "utf8"),
-);
+const report = readReport(process.argv[2] ?? "docs/heuristics/compound-baseline/report.json");
 const input = report.rows[Number(process.argv[4] ?? 0)]?.input;
 if (!input) throw new Error("Requested compound report row does not exist");
 const output = await elk.layout(structuredClone(input));
@@ -233,6 +254,7 @@ fs.writeFileSync(
       output,
       pipelineCalls,
       rngEvents,
+      greedyEvents,
       sweepScopes,
       sweepEvents,
       stages,

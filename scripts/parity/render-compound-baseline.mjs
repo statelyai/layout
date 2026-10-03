@@ -1,7 +1,8 @@
 import fs from "node:fs";
+import { readReport } from "./read-report.mjs";
 const root = process.argv[2] ?? "docs/heuristics/compound-baseline";
-const report = JSON.parse(fs.readFileSync(`${root}/report.json`, "utf8"));
-const before = process.argv[3] ? JSON.parse(fs.readFileSync(process.argv[3], "utf8")) : undefined;
+const report = readReport(`${root}/report.json`);
+const before = process.argv[3] ? readReport(process.argv[3]) : undefined;
 if (
   before &&
   JSON.stringify(before.rows.map((row) => row.input)) !==

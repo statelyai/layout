@@ -1015,7 +1015,9 @@ export function applyGreedySwitch(
             [layer[index], layer[index + 1]] = [layer[index + 1]!, layer[index]!];
           }
         }
-      } while (improved);
+        // ELK scans the starting layer once, then converges each later layer.
+        // Repeating the start immediately changes the following layers' local optimum.
+      } while (improved && layerIndex !== indices[0]);
     }
     return changed;
   };
