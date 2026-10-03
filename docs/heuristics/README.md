@@ -122,3 +122,5 @@ and bends. Full per-graph results and matching visual proof remain available.
 The [constraint orientation probe](constraint-orientation-probe.md) retains ten further measurements, including larger-case quality regressions. It precedes the later fixed-endpoint repair; parity still fails.
 
 The [compaction port-margin proof](compaction-port-margins/README.md) records 40 new full-geometry matches and 56 newly matching random hierarchy graphs. Broad parity remains incomplete.
+
+The [long-edge joining proof](long-edge-compaction-joining/README.md) preserves ELK segment bends after compaction, including retraced sections. Directional full matches improve from 64 to 74/200; broad parity remains incomplete.

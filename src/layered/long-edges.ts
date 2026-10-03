@@ -348,9 +348,36 @@ export function joinLongEdgeRoutes(
       }
     }
     const points: Point[] = [];
-    // POLYLINE joining excludes dummy anchors. Orthogonal joining keeps
-    // potential corners until collinear simplification to avoid diagonal joins.
-    if (!preserveInternalDuplicates && !preserveOrthogonalCorners && segmentIds.length > 1) {
+    // ELK joins segment bend lists without their dummy anchors. Orthogonal
+    // compaction can collapse bends; those original bends still remain public.
+    if (!preserveInternalDuplicates && preserveOrthogonalCorners && segmentIds.length > 1) {
+      const joined = segmentIds.flatMap((segmentId, segmentIndex) => {
+        const segment = routes.pointsByEdgeId.get(segmentId) ?? [];
+        return segment.map((point, index) => ({
+          point,
+          dummyAnchor:
+            (index === 0 && segmentIndex !== 0) ||
+            (index === segment.length - 1 && segmentIndex !== segmentIds.length - 1),
+        }));
+      });
+      // Native dummy anchors may supply a real corner. Discard only redundant
+      // anchors; retain segment bends even when compaction made them collinear.
+      for (let index = 1; index + 1 < joined.length;) {
+        const first = joined[index - 1]!.point;
+        const middle = joined[index]!;
+        const last = joined[index + 1]!.point;
+        const equal = (a: number, b: number) => Math.abs(a - b) < 1e-9;
+        if (
+          middle.dummyAnchor &&
+          ((equal(first.x, middle.point.x) && equal(middle.point.x, last.x)) ||
+            (equal(first.y, middle.point.y) && equal(middle.point.y, last.y)))
+        ) {
+          joined.splice(index, 1);
+          index = Math.max(1, index - 1);
+        } else index++;
+      }
+      points.push(...joined.map(({ point }) => point));
+    } else if (!preserveInternalDuplicates && segmentIds.length > 1) {
       const segments = segmentIds.map((segmentId) => routes.pointsByEdgeId.get(segmentId) ?? []);
       const firstPoint = segments[0]?.[0];
       if (firstPoint) points.push(firstPoint);
@@ -368,7 +395,9 @@ export function joinLongEdgeRoutes(
     }
     pointsByEdgeId.set(
       edgeId,
-      preserveInternalDuplicates || segmentIds.length === 1 ? points : simplify(points),
+      preserveInternalDuplicates || preserveOrthogonalCorners || segmentIds.length === 1
+        ? points
+        : simplify(points),
     );
   }
   return { pointsByEdgeId, outsideFeedbackEdgeIds };
