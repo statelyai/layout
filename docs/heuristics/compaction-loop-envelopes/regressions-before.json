@@ -1,0 +1,913 @@
+{
+  "numTotalTestSuites": 2,
+  "numPassedTestSuites": 0,
+  "numFailedTestSuites": 2,
+  "numPendingTestSuites": 0,
+  "numTotalTests": 80,
+  "numPassedTests": 48,
+  "numFailedTests": 32,
+  "numPendingTests": 0,
+  "numTodoTests": 0,
+  "snapshot": {
+    "added": 0,
+    "failure": false,
+    "filesAdded": 0,
+    "filesRemoved": 0,
+    "filesRemovedList": [],
+    "filesUnmatched": 0,
+    "filesUpdated": 0,
+    "matched": 0,
+    "total": 0,
+    "unchecked": 0,
+    "uncheckedKeysByFile": [],
+    "unmatched": 0,
+    "updated": 0,
+    "didUpdate": false
+  },
+  "startTime": 1791012344917,
+  "success": false,
+  "testResults": [
+    {
+      "assertionResults": [
+        {
+          "ancestorTitles": [],
+          "fullName": "compacts loop-owned hitboxes (random seed 1, RIGHT, LEFT)",
+          "status": "failed",
+          "title": "compacts loop-owned hitboxes (random seed 1, RIGHT, LEFT)",
+          "duration": 549.029,
+          "failureMessages": [
+            "AssertionError: expected [ { path: '$.width', …(2) }, …(54) ] to deeply equal []\n    at /Users/davidkpiano/.codex/worktrees/layout/heuristic-graph-corpus/.scratch/compaction-loop-before/test/oracle-compaction-self-loop-hitboxes.test.ts:22:89\n    at file:///Users/davidkpiano/.codex/worktrees/layout/heuristic-graph-corpus/node_modules/.pnpm/@vitest+runner@4.1.10/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:20"
+          ],
+          "meta": {},
+          "tags": []
+        },
+        {
+          "ancestorTitles": [],
+          "fullName": "compacts loop-owned hitboxes (random seed 1, RIGHT, RIGHT)",
+          "status": "failed",
+          "title": "compacts loop-owned hitboxes (random seed 1, RIGHT, RIGHT)",
+          "duration": 331.6039579999999,
+          "failureMessages": [
+            "AssertionError: expected [ { path: '$.width', …(2) }, …(129) ] to deeply equal []\n    at /Users/davidkpiano/.codex/worktrees/layout/heuristic-graph-corpus/.scratch/compaction-loop-before/test/oracle-compaction-self-loop-hitboxes.test.ts:22:89\n    at file:///Users/davidkpiano/.codex/worktrees/layout/heuristic-graph-corpus/node_modules/.pnpm/@vitest+runner@4.1.10/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:20"
+          ],
+          "meta": {},
+          "tags": []
+        },
+        {
+          "ancestorTitles": [],
+          "fullName": "compacts loop-owned hitboxes (random seed 1, RIGHT, LEFT_RIGHT_CONSTRAINT_LOCKING)",
+          "status": "failed",
+          "title": "compacts loop-owned hitboxes (random seed 1, RIGHT, LEFT_RIGHT_CONSTRAINT_LOCKING)",
+          "duration": 282.42587500000013,
+          "failureMessages": [
+            "AssertionError: expected [ { path: '$.width', …(2) }, …(129) ] to deeply equal []\n    at /Users/davidkpiano/.codex/worktrees/layout/heuristic-graph-corpus/.scratch/compaction-loop-before/test/oracle-compaction-self-loop-hitboxes.test.ts:22:89\n    at file:///Users/davidkpiano/.codex/worktrees/layout/heuristic-graph-corpus/node_modules/.pnpm/@vitest+runner@4.1.10/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:20"
+          ],
+          "meta": {},
+          "tags": []
+        },
+        {
+          "ancestorTitles": [],
+          "fullName": "compacts loop-owned hitboxes (random seed 1, RIGHT, LEFT_RIGHT_CONNECTION_LOCKING)",
+          "status": "failed",
+          "title": "compacts loop-owned hitboxes (random seed 1, RIGHT, LEFT_RIGHT_CONNECTION_LOCKING)",
+          "duration": 257.71137499999986,
+          "failureMessages": [
+            "AssertionError: expected [ { path: '$.width', …(2) }, …(94) ] to deeply equal []\n    at /Users/davidkpiano/.codex/worktrees/layout/heuristic-graph-corpus/.scratch/compaction-loop-before/test/oracle-compaction-self-loop-hitboxes.test.ts:22:89\n    at file:///Users/davidkpiano/.codex/worktrees/layout/heuristic-graph-corpus/node_modules/.pnpm/@vitest+runner@4.1.10/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:20"
+          ],
+          "meta": {},
+          "tags": []
+        },
+        {
+          "ancestorTitles": [],
+          "fullName": "compacts loop-owned hitboxes (random seed 1, LEFT, LEFT)",
+          "status": "failed",
+          "title": "compacts loop-owned hitboxes (random seed 1, LEFT, LEFT)",
+          "duration": 266.2218749999997,
+          "failureMessages": [
+            "AssertionError: expected [ { path: '$.width', …(2) }, …(169) ] to deeply equal []\n    at /Users/davidkpiano/.codex/worktrees/layout/heuristic-graph-corpus/.scratch/compaction-loop-before/test/oracle-compaction-self-loop-hitboxes.test.ts:22:89\n    at file:///Users/davidkpiano/.codex/worktrees/layout/heuristic-graph-corpus/node_modules/.pnpm/@vitest+runner@4.1.10/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:20"
+          ],
+          "meta": {},
+          "tags": []
+        },
+        {
+          "ancestorTitles": [],
+          "fullName": "compacts loop-owned hitboxes (random seed 1, LEFT, RIGHT)",
+          "status": "failed",
+          "title": "compacts loop-owned hitboxes (random seed 1, LEFT, RIGHT)",
+          "duration": 254.80949999999984,
+          "failureMessages": [
+            "AssertionError: expected [ { path: '$.width', …(2) }, …(96) ] to deeply equal []\n    at /Users/davidkpiano/.codex/worktrees/layout/heuristic-graph-corpus/.scratch/compaction-loop-before/test/oracle-compaction-self-loop-hitboxes.test.ts:22:89\n    at file:///Users/davidkpiano/.codex/worktrees/layout/heuristic-graph-corpus/node_modules/.pnpm/@vitest+runner@4.1.10/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:20"
+          ],
+          "meta": {},
+          "tags": []
+        },
+        {
+          "ancestorTitles": [],
+          "fullName": "compacts loop-owned hitboxes (random seed 1, LEFT, LEFT_RIGHT_CONSTRAINT_LOCKING)",
+          "status": "failed",
+          "title": "compacts loop-owned hitboxes (random seed 1, LEFT, LEFT_RIGHT_CONSTRAINT_LOCKING)",
+          "duration": 263.37970799999994,
+          "failureMessages": [
+            "AssertionError: expected [ { path: '$.width', …(2) }, …(109) ] to deeply equal []\n    at /Users/davidkpiano/.codex/worktrees/layout/heuristic-graph-corpus/.scratch/compaction-loop-before/test/oracle-compaction-self-loop-hitboxes.test.ts:22:89\n    at file:///Users/davidkpiano/.codex/worktrees/layout/heuristic-graph-corpus/node_modules/.pnpm/@vitest+runner@4.1.10/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:20"
+          ],
+          "meta": {},
+          "tags": []
+        },
+        {
+          "ancestorTitles": [],
+          "fullName": "compacts loop-owned hitboxes (random seed 1, LEFT, LEFT_RIGHT_CONNECTION_LOCKING)",
+          "status": "failed",
+          "title": "compacts loop-owned hitboxes (random seed 1, LEFT, LEFT_RIGHT_CONNECTION_LOCKING)",
+          "duration": 286.4175,
+          "failureMessages": [
+            "AssertionError: expected [ { path: '$.width', …(2) }, …(135) ] to deeply equal []\n    at /Users/davidkpiano/.codex/worktrees/layout/heuristic-graph-corpus/.scratch/compaction-loop-before/test/oracle-compaction-self-loop-hitboxes.test.ts:22:89\n    at file:///Users/davidkpiano/.codex/worktrees/layout/heuristic-graph-corpus/node_modules/.pnpm/@vitest+runner@4.1.10/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:20"
+          ],
+          "meta": {},
+          "tags": []
+        },
+        {
+          "ancestorTitles": [],
+          "fullName": "compacts loop-owned hitboxes (random seed 1, DOWN, LEFT)",
+          "status": "failed",
+          "title": "compacts loop-owned hitboxes (random seed 1, DOWN, LEFT)",
+          "duration": 278.1695829999999,
+          "failureMessages": [
+            "AssertionError: expected [ …(17) ] to deeply equal []\n    at /Users/davidkpiano/.codex/worktrees/layout/heuristic-graph-corpus/.scratch/compaction-loop-before/test/oracle-compaction-self-loop-hitboxes.test.ts:22:89\n    at file:///Users/davidkpiano/.codex/worktrees/layout/heuristic-graph-corpus/node_modules/.pnpm/@vitest+runner@4.1.10/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:20"
+          ],
+          "meta": {},
+          "tags": []
+        },
+        {
+          "ancestorTitles": [],
+          "fullName": "compacts loop-owned hitboxes (random seed 1, DOWN, RIGHT)",
+          "status": "failed",
+          "title": "compacts loop-owned hitboxes (random seed 1, DOWN, RIGHT)",
+          "duration": 258.2455839999998,
+          "failureMessages": [
+            "AssertionError: expected [ …(23) ] to deeply equal []\n    at /Users/davidkpiano/.codex/worktrees/layout/heuristic-graph-corpus/.scratch/compaction-loop-before/test/oracle-compaction-self-loop-hitboxes.test.ts:22:89\n    at file:///Users/davidkpiano/.codex/worktrees/layout/heuristic-graph-corpus/node_modules/.pnpm/@vitest+runner@4.1.10/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:20"
+          ],
+          "meta": {},
+          "tags": []
+        },
+        {
+          "ancestorTitles": [],
+          "fullName": "compacts loop-owned hitboxes (random seed 1, DOWN, LEFT_RIGHT_CONSTRAINT_LOCKING)",
+          "status": "failed",
+          "title": "compacts loop-owned hitboxes (random seed 1, DOWN, LEFT_RIGHT_CONSTRAINT_LOCKING)",
+          "duration": 256.3955000000001,
+          "failureMessages": [
+            "AssertionError: expected [ …(34) ] to deeply equal []\n    at /Users/davidkpiano/.codex/worktrees/layout/heuristic-graph-corpus/.scratch/compaction-loop-before/test/oracle-compaction-self-loop-hitboxes.test.ts:22:89\n    at file:///Users/davidkpiano/.codex/worktrees/layout/heuristic-graph-corpus/node_modules/.pnpm/@vitest+runner@4.1.10/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:20"
+          ],
+          "meta": {},
+          "tags": []
+        },
+        {
+          "ancestorTitles": [],
+          "fullName": "compacts loop-owned hitboxes (random seed 1, DOWN, LEFT_RIGHT_CONNECTION_LOCKING)",
+          "status": "failed",
+          "title": "compacts loop-owned hitboxes (random seed 1, DOWN, LEFT_RIGHT_CONNECTION_LOCKING)",
+          "duration": 296.8456670000005,
+          "failureMessages": [
+            "AssertionError: expected [ …(19) ] to deeply equal []\n    at /Users/davidkpiano/.codex/worktrees/layout/heuristic-graph-corpus/.scratch/compaction-loop-before/test/oracle-compaction-self-loop-hitboxes.test.ts:22:89\n    at file:///Users/davidkpiano/.codex/worktrees/layout/heuristic-graph-corpus/node_modules/.pnpm/@vitest+runner@4.1.10/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:20"
+          ],
+          "meta": {},
+          "tags": []
+        },
+        {
+          "ancestorTitles": [],
+          "fullName": "compacts loop-owned hitboxes (random seed 1, UP, LEFT)",
+          "status": "failed",
+          "title": "compacts loop-owned hitboxes (random seed 1, UP, LEFT)",
+          "duration": 304.47083399999974,
+          "failureMessages": [
+            "AssertionError: expected [ …(17) ] to deeply equal []\n    at /Users/davidkpiano/.codex/worktrees/layout/heuristic-graph-corpus/.scratch/compaction-loop-before/test/oracle-compaction-self-loop-hitboxes.test.ts:22:89\n    at file:///Users/davidkpiano/.codex/worktrees/layout/heuristic-graph-corpus/node_modules/.pnpm/@vitest+runner@4.1.10/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:20"
+          ],
+          "meta": {},
+          "tags": []
+        },
+        {
+          "ancestorTitles": [],
+          "fullName": "compacts loop-owned hitboxes (random seed 1, UP, RIGHT)",
+          "status": "failed",
+          "title": "compacts loop-owned hitboxes (random seed 1, UP, RIGHT)",
+          "duration": 270.88524999999936,
+          "failureMessages": [
+            "AssertionError: expected [ …(23) ] to deeply equal []\n    at /Users/davidkpiano/.codex/worktrees/layout/heuristic-graph-corpus/.scratch/compaction-loop-before/test/oracle-compaction-self-loop-hitboxes.test.ts:22:89\n    at file:///Users/davidkpiano/.codex/worktrees/layout/heuristic-graph-corpus/node_modules/.pnpm/@vitest+runner@4.1.10/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:20"
+          ],
+          "meta": {},
+          "tags": []
+        },
+        {
+          "ancestorTitles": [],
+          "fullName": "compacts loop-owned hitboxes (random seed 1, UP, LEFT_RIGHT_CONSTRAINT_LOCKING)",
+          "status": "failed",
+          "title": "compacts loop-owned hitboxes (random seed 1, UP, LEFT_RIGHT_CONSTRAINT_LOCKING)",
+          "duration": 299.69841599999927,
+          "failureMessages": [
+            "AssertionError: expected [ …(34) ] to deeply equal []\n    at /Users/davidkpiano/.codex/worktrees/layout/heuristic-graph-corpus/.scratch/compaction-loop-before/test/oracle-compaction-self-loop-hitboxes.test.ts:22:89\n    at file:///Users/davidkpiano/.codex/worktrees/layout/heuristic-graph-corpus/node_modules/.pnpm/@vitest+runner@4.1.10/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:20"
+          ],
+          "meta": {},
+          "tags": []
+        },
+        {
+          "ancestorTitles": [],
+          "fullName": "compacts loop-owned hitboxes (random seed 1, UP, LEFT_RIGHT_CONNECTION_LOCKING)",
+          "status": "failed",
+          "title": "compacts loop-owned hitboxes (random seed 1, UP, LEFT_RIGHT_CONNECTION_LOCKING)",
+          "duration": 278.3985419999999,
+          "failureMessages": [
+            "AssertionError: expected [ …(19) ] to deeply equal []\n    at /Users/davidkpiano/.codex/worktrees/layout/heuristic-graph-corpus/.scratch/compaction-loop-before/test/oracle-compaction-self-loop-hitboxes.test.ts:22:89\n    at file:///Users/davidkpiano/.codex/worktrees/layout/heuristic-graph-corpus/node_modules/.pnpm/@vitest+runner@4.1.10/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:20"
+          ],
+          "meta": {},
+          "tags": []
+        }
+      ],
+      "startTime": 1791012345873,
+      "endTime": 1791012350608.3984,
+      "status": "failed",
+      "message": "",
+      "name": "/Users/davidkpiano/.codex/worktrees/layout/heuristic-graph-corpus/.scratch/compaction-loop-before/test/oracle-compaction-self-loop-hitboxes.test.ts"
+    },
+    {
+      "assertionResults": [
+        {
+          "ancestorTitles": [],
+          "fullName": "routes fixed loop NORTH to NORTH in RIGHT",
+          "status": "failed",
+          "title": "routes fixed loop NORTH to NORTH in RIGHT",
+          "duration": 156.580875,
+          "failureMessages": [
+            "AssertionError: expected [ { …(3) }, { …(3) } ] to deeply equal []\n    at /Users/davidkpiano/.codex/worktrees/layout/heuristic-graph-corpus/.scratch/compaction-loop-before/test/oracle-fixed-port-loop-pairs.test.ts:34:91\n    at runNextTicks (node:internal/process/task_queues:65:5)\n    at processTimers (node:internal/timers:538:9)\n    at file:///Users/davidkpiano/.codex/worktrees/layout/heuristic-graph-corpus/node_modules/.pnpm/@vitest+runner@4.1.10/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:20"
+          ],
+          "meta": {},
+          "tags": []
+        },
+        {
+          "ancestorTitles": [],
+          "fullName": "routes fixed loop NORTH to EAST in RIGHT",
+          "status": "passed",
+          "title": "routes fixed loop NORTH to EAST in RIGHT",
+          "duration": 73.22079100000008,
+          "failureMessages": [],
+          "meta": {},
+          "tags": []
+        },
+        {
+          "ancestorTitles": [],
+          "fullName": "routes fixed loop NORTH to SOUTH in RIGHT",
+          "status": "passed",
+          "title": "routes fixed loop NORTH to SOUTH in RIGHT",
+          "duration": 20.538249999999834,
+          "failureMessages": [],
+          "meta": {},
+          "tags": []
+        },
+        {
+          "ancestorTitles": [],
+          "fullName": "routes fixed loop NORTH to WEST in RIGHT",
+          "status": "passed",
+          "title": "routes fixed loop NORTH to WEST in RIGHT",
+          "duration": 13.108834000000115,
+          "failureMessages": [],
+          "meta": {},
+          "tags": []
+        },
+        {
+          "ancestorTitles": [],
+          "fullName": "routes fixed loop EAST to NORTH in RIGHT",
+          "status": "passed",
+          "title": "routes fixed loop EAST to NORTH in RIGHT",
+          "duration": 12.241999999999962,
+          "failureMessages": [],
+          "meta": {},
+          "tags": []
+        },
+        {
+          "ancestorTitles": [],
+          "fullName": "routes fixed loop EAST to EAST in RIGHT",
+          "status": "failed",
+          "title": "routes fixed loop EAST to EAST in RIGHT",
+          "duration": 14.671749999999975,
+          "failureMessages": [
+            "AssertionError: expected [ { path: '$.width', …(2) }, …(6) ] to deeply equal []\n    at /Users/davidkpiano/.codex/worktrees/layout/heuristic-graph-corpus/.scratch/compaction-loop-before/test/oracle-fixed-port-loop-pairs.test.ts:34:91\n    at file:///Users/davidkpiano/.codex/worktrees/layout/heuristic-graph-corpus/node_modules/.pnpm/@vitest+runner@4.1.10/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:20"
+          ],
+          "meta": {},
+          "tags": []
+        },
+        {
+          "ancestorTitles": [],
+          "fullName": "routes fixed loop EAST to SOUTH in RIGHT",
+          "status": "passed",
+          "title": "routes fixed loop EAST to SOUTH in RIGHT",
+          "duration": 13.42879199999993,
+          "failureMessages": [],
+          "meta": {},
+          "tags": []
+        },
+        {
+          "ancestorTitles": [],
+          "fullName": "routes fixed loop EAST to WEST in RIGHT",
+          "status": "passed",
+          "title": "routes fixed loop EAST to WEST in RIGHT",
+          "duration": 11.717292000000043,
+          "failureMessages": [],
+          "meta": {},
+          "tags": []
+        },
+        {
+          "ancestorTitles": [],
+          "fullName": "routes fixed loop SOUTH to NORTH in RIGHT",
+          "status": "passed",
+          "title": "routes fixed loop SOUTH to NORTH in RIGHT",
+          "duration": 12.887166999999863,
+          "failureMessages": [],
+          "meta": {},
+          "tags": []
+        },
+        {
+          "ancestorTitles": [],
+          "fullName": "routes fixed loop SOUTH to EAST in RIGHT",
+          "status": "passed",
+          "title": "routes fixed loop SOUTH to EAST in RIGHT",
+          "duration": 12.399541,
+          "failureMessages": [],
+          "meta": {},
+          "tags": []
+        },
+        {
+          "ancestorTitles": [],
+          "fullName": "routes fixed loop SOUTH to SOUTH in RIGHT",
+          "status": "failed",
+          "title": "routes fixed loop SOUTH to SOUTH in RIGHT",
+          "duration": 13.098874999999907,
+          "failureMessages": [
+            "AssertionError: expected [ { path: '$.height', …(2) }, …(2) ] to deeply equal []\n    at /Users/davidkpiano/.codex/worktrees/layout/heuristic-graph-corpus/.scratch/compaction-loop-before/test/oracle-fixed-port-loop-pairs.test.ts:34:91\n    at file:///Users/davidkpiano/.codex/worktrees/layout/heuristic-graph-corpus/node_modules/.pnpm/@vitest+runner@4.1.10/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:20"
+          ],
+          "meta": {},
+          "tags": []
+        },
+        {
+          "ancestorTitles": [],
+          "fullName": "routes fixed loop SOUTH to WEST in RIGHT",
+          "status": "passed",
+          "title": "routes fixed loop SOUTH to WEST in RIGHT",
+          "duration": 12.139874999999847,
+          "failureMessages": [],
+          "meta": {},
+          "tags": []
+        },
+        {
+          "ancestorTitles": [],
+          "fullName": "routes fixed loop WEST to NORTH in RIGHT",
+          "status": "passed",
+          "title": "routes fixed loop WEST to NORTH in RIGHT",
+          "duration": 12.22349999999983,
+          "failureMessages": [],
+          "meta": {},
+          "tags": []
+        },
+        {
+          "ancestorTitles": [],
+          "fullName": "routes fixed loop WEST to EAST in RIGHT",
+          "status": "passed",
+          "title": "routes fixed loop WEST to EAST in RIGHT",
+          "duration": 11.351042000000007,
+          "failureMessages": [],
+          "meta": {},
+          "tags": []
+        },
+        {
+          "ancestorTitles": [],
+          "fullName": "routes fixed loop WEST to SOUTH in RIGHT",
+          "status": "passed",
+          "title": "routes fixed loop WEST to SOUTH in RIGHT",
+          "duration": 12.101249999999936,
+          "failureMessages": [],
+          "meta": {},
+          "tags": []
+        },
+        {
+          "ancestorTitles": [],
+          "fullName": "routes fixed loop WEST to WEST in RIGHT",
+          "status": "failed",
+          "title": "routes fixed loop WEST to WEST in RIGHT",
+          "duration": 12.01279099999988,
+          "failureMessages": [
+            "AssertionError: expected [ { path: '$.width', …(2) }, …(7) ] to deeply equal []\n    at /Users/davidkpiano/.codex/worktrees/layout/heuristic-graph-corpus/.scratch/compaction-loop-before/test/oracle-fixed-port-loop-pairs.test.ts:34:91\n    at file:///Users/davidkpiano/.codex/worktrees/layout/heuristic-graph-corpus/node_modules/.pnpm/@vitest+runner@4.1.10/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:20"
+          ],
+          "meta": {},
+          "tags": []
+        },
+        {
+          "ancestorTitles": [],
+          "fullName": "routes fixed loop NORTH to NORTH in LEFT",
+          "status": "failed",
+          "title": "routes fixed loop NORTH to NORTH in LEFT",
+          "duration": 13.58262499999978,
+          "failureMessages": [
+            "AssertionError: expected [ { …(3) }, { …(3) } ] to deeply equal []\n    at /Users/davidkpiano/.codex/worktrees/layout/heuristic-graph-corpus/.scratch/compaction-loop-before/test/oracle-fixed-port-loop-pairs.test.ts:34:91\n    at file:///Users/davidkpiano/.codex/worktrees/layout/heuristic-graph-corpus/node_modules/.pnpm/@vitest+runner@4.1.10/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:20"
+          ],
+          "meta": {},
+          "tags": []
+        },
+        {
+          "ancestorTitles": [],
+          "fullName": "routes fixed loop NORTH to EAST in LEFT",
+          "status": "passed",
+          "title": "routes fixed loop NORTH to EAST in LEFT",
+          "duration": 12.730916999999863,
+          "failureMessages": [],
+          "meta": {},
+          "tags": []
+        },
+        {
+          "ancestorTitles": [],
+          "fullName": "routes fixed loop NORTH to SOUTH in LEFT",
+          "status": "passed",
+          "title": "routes fixed loop NORTH to SOUTH in LEFT",
+          "duration": 11.54058299999997,
+          "failureMessages": [],
+          "meta": {},
+          "tags": []
+        },
+        {
+          "ancestorTitles": [],
+          "fullName": "routes fixed loop NORTH to WEST in LEFT",
+          "status": "passed",
+          "title": "routes fixed loop NORTH to WEST in LEFT",
+          "duration": 19.422250000000076,
+          "failureMessages": [],
+          "meta": {},
+          "tags": []
+        },
+        {
+          "ancestorTitles": [],
+          "fullName": "routes fixed loop EAST to NORTH in LEFT",
+          "status": "passed",
+          "title": "routes fixed loop EAST to NORTH in LEFT",
+          "duration": 16.022000000000162,
+          "failureMessages": [],
+          "meta": {},
+          "tags": []
+        },
+        {
+          "ancestorTitles": [],
+          "fullName": "routes fixed loop EAST to EAST in LEFT",
+          "status": "failed",
+          "title": "routes fixed loop EAST to EAST in LEFT",
+          "duration": 15.029624999999896,
+          "failureMessages": [
+            "AssertionError: expected [ { path: '$.width', …(2) }, …(6) ] to deeply equal []\n    at /Users/davidkpiano/.codex/worktrees/layout/heuristic-graph-corpus/.scratch/compaction-loop-before/test/oracle-fixed-port-loop-pairs.test.ts:34:91\n    at file:///Users/davidkpiano/.codex/worktrees/layout/heuristic-graph-corpus/node_modules/.pnpm/@vitest+runner@4.1.10/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:20"
+          ],
+          "meta": {},
+          "tags": []
+        },
+        {
+          "ancestorTitles": [],
+          "fullName": "routes fixed loop EAST to SOUTH in LEFT",
+          "status": "passed",
+          "title": "routes fixed loop EAST to SOUTH in LEFT",
+          "duration": 11.49329200000011,
+          "failureMessages": [],
+          "meta": {},
+          "tags": []
+        },
+        {
+          "ancestorTitles": [],
+          "fullName": "routes fixed loop EAST to WEST in LEFT",
+          "status": "passed",
+          "title": "routes fixed loop EAST to WEST in LEFT",
+          "duration": 14.651875000000018,
+          "failureMessages": [],
+          "meta": {},
+          "tags": []
+        },
+        {
+          "ancestorTitles": [],
+          "fullName": "routes fixed loop SOUTH to NORTH in LEFT",
+          "status": "passed",
+          "title": "routes fixed loop SOUTH to NORTH in LEFT",
+          "duration": 11.394667000000027,
+          "failureMessages": [],
+          "meta": {},
+          "tags": []
+        },
+        {
+          "ancestorTitles": [],
+          "fullName": "routes fixed loop SOUTH to EAST in LEFT",
+          "status": "passed",
+          "title": "routes fixed loop SOUTH to EAST in LEFT",
+          "duration": 11.038708000000042,
+          "failureMessages": [],
+          "meta": {},
+          "tags": []
+        },
+        {
+          "ancestorTitles": [],
+          "fullName": "routes fixed loop SOUTH to SOUTH in LEFT",
+          "status": "failed",
+          "title": "routes fixed loop SOUTH to SOUTH in LEFT",
+          "duration": 13.282083000000057,
+          "failureMessages": [
+            "AssertionError: expected [ { path: '$.height', …(2) }, …(2) ] to deeply equal []\n    at /Users/davidkpiano/.codex/worktrees/layout/heuristic-graph-corpus/.scratch/compaction-loop-before/test/oracle-fixed-port-loop-pairs.test.ts:34:91\n    at file:///Users/davidkpiano/.codex/worktrees/layout/heuristic-graph-corpus/node_modules/.pnpm/@vitest+runner@4.1.10/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:20"
+          ],
+          "meta": {},
+          "tags": []
+        },
+        {
+          "ancestorTitles": [],
+          "fullName": "routes fixed loop SOUTH to WEST in LEFT",
+          "status": "passed",
+          "title": "routes fixed loop SOUTH to WEST in LEFT",
+          "duration": 13.045665999999983,
+          "failureMessages": [],
+          "meta": {},
+          "tags": []
+        },
+        {
+          "ancestorTitles": [],
+          "fullName": "routes fixed loop WEST to NORTH in LEFT",
+          "status": "passed",
+          "title": "routes fixed loop WEST to NORTH in LEFT",
+          "duration": 13.101374999999962,
+          "failureMessages": [],
+          "meta": {},
+          "tags": []
+        },
+        {
+          "ancestorTitles": [],
+          "fullName": "routes fixed loop WEST to EAST in LEFT",
+          "status": "passed",
+          "title": "routes fixed loop WEST to EAST in LEFT",
+          "duration": 15.423084000000017,
+          "failureMessages": [],
+          "meta": {},
+          "tags": []
+        },
+        {
+          "ancestorTitles": [],
+          "fullName": "routes fixed loop WEST to SOUTH in LEFT",
+          "status": "passed",
+          "title": "routes fixed loop WEST to SOUTH in LEFT",
+          "duration": 11.551083999999946,
+          "failureMessages": [],
+          "meta": {},
+          "tags": []
+        },
+        {
+          "ancestorTitles": [],
+          "fullName": "routes fixed loop WEST to WEST in LEFT",
+          "status": "failed",
+          "title": "routes fixed loop WEST to WEST in LEFT",
+          "duration": 18.572167000000036,
+          "failureMessages": [
+            "AssertionError: expected [ { path: '$.width', …(2) }, …(7) ] to deeply equal []\n    at /Users/davidkpiano/.codex/worktrees/layout/heuristic-graph-corpus/.scratch/compaction-loop-before/test/oracle-fixed-port-loop-pairs.test.ts:34:91\n    at file:///Users/davidkpiano/.codex/worktrees/layout/heuristic-graph-corpus/node_modules/.pnpm/@vitest+runner@4.1.10/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:20"
+          ],
+          "meta": {},
+          "tags": []
+        },
+        {
+          "ancestorTitles": [],
+          "fullName": "routes fixed loop NORTH to NORTH in DOWN",
+          "status": "failed",
+          "title": "routes fixed loop NORTH to NORTH in DOWN",
+          "duration": 13.005083000000013,
+          "failureMessages": [
+            "AssertionError: expected [ { …(3) }, { …(3) } ] to deeply equal []\n    at /Users/davidkpiano/.codex/worktrees/layout/heuristic-graph-corpus/.scratch/compaction-loop-before/test/oracle-fixed-port-loop-pairs.test.ts:34:91\n    at file:///Users/davidkpiano/.codex/worktrees/layout/heuristic-graph-corpus/node_modules/.pnpm/@vitest+runner@4.1.10/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:20"
+          ],
+          "meta": {},
+          "tags": []
+        },
+        {
+          "ancestorTitles": [],
+          "fullName": "routes fixed loop NORTH to EAST in DOWN",
+          "status": "passed",
+          "title": "routes fixed loop NORTH to EAST in DOWN",
+          "duration": 12.264333999999963,
+          "failureMessages": [],
+          "meta": {},
+          "tags": []
+        },
+        {
+          "ancestorTitles": [],
+          "fullName": "routes fixed loop NORTH to SOUTH in DOWN",
+          "status": "passed",
+          "title": "routes fixed loop NORTH to SOUTH in DOWN",
+          "duration": 12.733249999999998,
+          "failureMessages": [],
+          "meta": {},
+          "tags": []
+        },
+        {
+          "ancestorTitles": [],
+          "fullName": "routes fixed loop NORTH to WEST in DOWN",
+          "status": "passed",
+          "title": "routes fixed loop NORTH to WEST in DOWN",
+          "duration": 12.002500000000055,
+          "failureMessages": [],
+          "meta": {},
+          "tags": []
+        },
+        {
+          "ancestorTitles": [],
+          "fullName": "routes fixed loop EAST to NORTH in DOWN",
+          "status": "passed",
+          "title": "routes fixed loop EAST to NORTH in DOWN",
+          "duration": 15.479332999999997,
+          "failureMessages": [],
+          "meta": {},
+          "tags": []
+        },
+        {
+          "ancestorTitles": [],
+          "fullName": "routes fixed loop EAST to EAST in DOWN",
+          "status": "failed",
+          "title": "routes fixed loop EAST to EAST in DOWN",
+          "duration": 28.16037499999993,
+          "failureMessages": [
+            "AssertionError: expected [ { path: '$.width', …(2) }, …(6) ] to deeply equal []\n    at /Users/davidkpiano/.codex/worktrees/layout/heuristic-graph-corpus/.scratch/compaction-loop-before/test/oracle-fixed-port-loop-pairs.test.ts:34:91\n    at file:///Users/davidkpiano/.codex/worktrees/layout/heuristic-graph-corpus/node_modules/.pnpm/@vitest+runner@4.1.10/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:20"
+          ],
+          "meta": {},
+          "tags": []
+        },
+        {
+          "ancestorTitles": [],
+          "fullName": "routes fixed loop EAST to SOUTH in DOWN",
+          "status": "passed",
+          "title": "routes fixed loop EAST to SOUTH in DOWN",
+          "duration": 12.4396670000001,
+          "failureMessages": [],
+          "meta": {},
+          "tags": []
+        },
+        {
+          "ancestorTitles": [],
+          "fullName": "routes fixed loop EAST to WEST in DOWN",
+          "status": "passed",
+          "title": "routes fixed loop EAST to WEST in DOWN",
+          "duration": 12.197625000000016,
+          "failureMessages": [],
+          "meta": {},
+          "tags": []
+        },
+        {
+          "ancestorTitles": [],
+          "fullName": "routes fixed loop SOUTH to NORTH in DOWN",
+          "status": "passed",
+          "title": "routes fixed loop SOUTH to NORTH in DOWN",
+          "duration": 13.33420799999999,
+          "failureMessages": [],
+          "meta": {},
+          "tags": []
+        },
+        {
+          "ancestorTitles": [],
+          "fullName": "routes fixed loop SOUTH to EAST in DOWN",
+          "status": "passed",
+          "title": "routes fixed loop SOUTH to EAST in DOWN",
+          "duration": 15.312666000000036,
+          "failureMessages": [],
+          "meta": {},
+          "tags": []
+        },
+        {
+          "ancestorTitles": [],
+          "fullName": "routes fixed loop SOUTH to SOUTH in DOWN",
+          "status": "failed",
+          "title": "routes fixed loop SOUTH to SOUTH in DOWN",
+          "duration": 14.842083000000002,
+          "failureMessages": [
+            "AssertionError: expected [ { path: '$.height', …(2) }, …(2) ] to deeply equal []\n    at /Users/davidkpiano/.codex/worktrees/layout/heuristic-graph-corpus/.scratch/compaction-loop-before/test/oracle-fixed-port-loop-pairs.test.ts:34:91\n    at file:///Users/davidkpiano/.codex/worktrees/layout/heuristic-graph-corpus/node_modules/.pnpm/@vitest+runner@4.1.10/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:20"
+          ],
+          "meta": {},
+          "tags": []
+        },
+        {
+          "ancestorTitles": [],
+          "fullName": "routes fixed loop SOUTH to WEST in DOWN",
+          "status": "passed",
+          "title": "routes fixed loop SOUTH to WEST in DOWN",
+          "duration": 13.159750000000031,
+          "failureMessages": [],
+          "meta": {},
+          "tags": []
+        },
+        {
+          "ancestorTitles": [],
+          "fullName": "routes fixed loop WEST to NORTH in DOWN",
+          "status": "passed",
+          "title": "routes fixed loop WEST to NORTH in DOWN",
+          "duration": 11.569707999999991,
+          "failureMessages": [],
+          "meta": {},
+          "tags": []
+        },
+        {
+          "ancestorTitles": [],
+          "fullName": "routes fixed loop WEST to EAST in DOWN",
+          "status": "passed",
+          "title": "routes fixed loop WEST to EAST in DOWN",
+          "duration": 11.388374999999996,
+          "failureMessages": [],
+          "meta": {},
+          "tags": []
+        },
+        {
+          "ancestorTitles": [],
+          "fullName": "routes fixed loop WEST to SOUTH in DOWN",
+          "status": "passed",
+          "title": "routes fixed loop WEST to SOUTH in DOWN",
+          "duration": 10.190832999999884,
+          "failureMessages": [],
+          "meta": {},
+          "tags": []
+        },
+        {
+          "ancestorTitles": [],
+          "fullName": "routes fixed loop WEST to WEST in DOWN",
+          "status": "failed",
+          "title": "routes fixed loop WEST to WEST in DOWN",
+          "duration": 12.959500000000162,
+          "failureMessages": [
+            "AssertionError: expected [ { path: '$.width', …(2) }, …(7) ] to deeply equal []\n    at /Users/davidkpiano/.codex/worktrees/layout/heuristic-graph-corpus/.scratch/compaction-loop-before/test/oracle-fixed-port-loop-pairs.test.ts:34:91\n    at file:///Users/davidkpiano/.codex/worktrees/layout/heuristic-graph-corpus/node_modules/.pnpm/@vitest+runner@4.1.10/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:20"
+          ],
+          "meta": {},
+          "tags": []
+        },
+        {
+          "ancestorTitles": [],
+          "fullName": "routes fixed loop NORTH to NORTH in UP",
+          "status": "failed",
+          "title": "routes fixed loop NORTH to NORTH in UP",
+          "duration": 12.918582999999899,
+          "failureMessages": [
+            "AssertionError: expected [ { …(3) }, { …(3) } ] to deeply equal []\n    at /Users/davidkpiano/.codex/worktrees/layout/heuristic-graph-corpus/.scratch/compaction-loop-before/test/oracle-fixed-port-loop-pairs.test.ts:34:91\n    at file:///Users/davidkpiano/.codex/worktrees/layout/heuristic-graph-corpus/node_modules/.pnpm/@vitest+runner@4.1.10/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:20"
+          ],
+          "meta": {},
+          "tags": []
+        },
+        {
+          "ancestorTitles": [],
+          "fullName": "routes fixed loop NORTH to EAST in UP",
+          "status": "passed",
+          "title": "routes fixed loop NORTH to EAST in UP",
+          "duration": 11.547458000000006,
+          "failureMessages": [],
+          "meta": {},
+          "tags": []
+        },
+        {
+          "ancestorTitles": [],
+          "fullName": "routes fixed loop NORTH to SOUTH in UP",
+          "status": "passed",
+          "title": "routes fixed loop NORTH to SOUTH in UP",
+          "duration": 11.545499999999947,
+          "failureMessages": [],
+          "meta": {},
+          "tags": []
+        },
+        {
+          "ancestorTitles": [],
+          "fullName": "routes fixed loop NORTH to WEST in UP",
+          "status": "passed",
+          "title": "routes fixed loop NORTH to WEST in UP",
+          "duration": 11.036207999999988,
+          "failureMessages": [],
+          "meta": {},
+          "tags": []
+        },
+        {
+          "ancestorTitles": [],
+          "fullName": "routes fixed loop EAST to NORTH in UP",
+          "status": "passed",
+          "title": "routes fixed loop EAST to NORTH in UP",
+          "duration": 9.724375000000009,
+          "failureMessages": [],
+          "meta": {},
+          "tags": []
+        },
+        {
+          "ancestorTitles": [],
+          "fullName": "routes fixed loop EAST to EAST in UP",
+          "status": "failed",
+          "title": "routes fixed loop EAST to EAST in UP",
+          "duration": 13.464917000000014,
+          "failureMessages": [
+            "AssertionError: expected [ { path: '$.width', …(2) }, …(6) ] to deeply equal []\n    at /Users/davidkpiano/.codex/worktrees/layout/heuristic-graph-corpus/.scratch/compaction-loop-before/test/oracle-fixed-port-loop-pairs.test.ts:34:91\n    at file:///Users/davidkpiano/.codex/worktrees/layout/heuristic-graph-corpus/node_modules/.pnpm/@vitest+runner@4.1.10/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:20"
+          ],
+          "meta": {},
+          "tags": []
+        },
+        {
+          "ancestorTitles": [],
+          "fullName": "routes fixed loop EAST to SOUTH in UP",
+          "status": "passed",
+          "title": "routes fixed loop EAST to SOUTH in UP",
+          "duration": 10.94320800000014,
+          "failureMessages": [],
+          "meta": {},
+          "tags": []
+        },
+        {
+          "ancestorTitles": [],
+          "fullName": "routes fixed loop EAST to WEST in UP",
+          "status": "passed",
+          "title": "routes fixed loop EAST to WEST in UP",
+          "duration": 10.265083000000004,
+          "failureMessages": [],
+          "meta": {},
+          "tags": []
+        },
+        {
+          "ancestorTitles": [],
+          "fullName": "routes fixed loop SOUTH to NORTH in UP",
+          "status": "passed",
+          "title": "routes fixed loop SOUTH to NORTH in UP",
+          "duration": 11.594957999999906,
+          "failureMessages": [],
+          "meta": {},
+          "tags": []
+        },
+        {
+          "ancestorTitles": [],
+          "fullName": "routes fixed loop SOUTH to EAST in UP",
+          "status": "passed",
+          "title": "routes fixed loop SOUTH to EAST in UP",
+          "duration": 11.801125000000184,
+          "failureMessages": [],
+          "meta": {},
+          "tags": []
+        },
+        {
+          "ancestorTitles": [],
+          "fullName": "routes fixed loop SOUTH to SOUTH in UP",
+          "status": "failed",
+          "title": "routes fixed loop SOUTH to SOUTH in UP",
+          "duration": 13.286417000000029,
+          "failureMessages": [
+            "AssertionError: expected [ { path: '$.height', …(2) }, …(2) ] to deeply equal []\n    at /Users/davidkpiano/.codex/worktrees/layout/heuristic-graph-corpus/.scratch/compaction-loop-before/test/oracle-fixed-port-loop-pairs.test.ts:34:91\n    at file:///Users/davidkpiano/.codex/worktrees/layout/heuristic-graph-corpus/node_modules/.pnpm/@vitest+runner@4.1.10/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:20"
+          ],
+          "meta": {},
+          "tags": []
+        },
+        {
+          "ancestorTitles": [],
+          "fullName": "routes fixed loop SOUTH to WEST in UP",
+          "status": "passed",
+          "title": "routes fixed loop SOUTH to WEST in UP",
+          "duration": 14.564542000000074,
+          "failureMessages": [],
+          "meta": {},
+          "tags": []
+        },
+        {
+          "ancestorTitles": [],
+          "fullName": "routes fixed loop WEST to NORTH in UP",
+          "status": "passed",
+          "title": "routes fixed loop WEST to NORTH in UP",
+          "duration": 11.409457999999859,
+          "failureMessages": [],
+          "meta": {},
+          "tags": []
+        },
+        {
+          "ancestorTitles": [],
+          "fullName": "routes fixed loop WEST to EAST in UP",
+          "status": "passed",
+          "title": "routes fixed loop WEST to EAST in UP",
+          "duration": 11.593249999999898,
+          "failureMessages": [],
+          "meta": {},
+          "tags": []
+        },
+        {
+          "ancestorTitles": [],
+          "fullName": "routes fixed loop WEST to SOUTH in UP",
+          "status": "passed",
+          "title": "routes fixed loop WEST to SOUTH in UP",
+          "duration": 12.15120899999988,
+          "failureMessages": [],
+          "meta": {},
+          "tags": []
+        },
+        {
+          "ancestorTitles": [],
+          "fullName": "routes fixed loop WEST to WEST in UP",
+          "status": "failed",
+          "title": "routes fixed loop WEST to WEST in UP",
+          "duration": 12.76191700000004,
+          "failureMessages": [
+            "AssertionError: expected [ { path: '$.width', …(2) }, …(7) ] to deeply equal []\n    at /Users/davidkpiano/.codex/worktrees/layout/heuristic-graph-corpus/.scratch/compaction-loop-before/test/oracle-fixed-port-loop-pairs.test.ts:34:91\n    at file:///Users/davidkpiano/.codex/worktrees/layout/heuristic-graph-corpus/node_modules/.pnpm/@vitest+runner@4.1.10/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:20"
+          ],
+          "meta": {},
+          "tags": []
+        }
+      ],
+      "startTime": 1791012345873,
+      "endTime": 1791012346921.762,
+      "status": "failed",
+      "message": "",
+      "name": "/Users/davidkpiano/.codex/worktrees/layout/heuristic-graph-corpus/.scratch/compaction-loop-before/test/oracle-fixed-port-loop-pairs.test.ts"
+    }
+  ]
+}

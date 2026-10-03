@@ -1,5 +1,7 @@
 import type { GraphEdge } from "@statelyai/graph";
 import type { LayeredPhaseInput, NodePlacement } from "./types";
+import { getPortPoint } from "./strategies";
+import { fixedSelfLoopSide, routeFixedSelfLoop } from "./fixed-self-loop";
 
 export interface LoopEnvelope {
   before: number;
@@ -25,9 +27,84 @@ export function loopEnvelopes(input: LayeredPhaseInput): ReadonlyMap<string, Loo
   const envelopes = new Map<string, LoopEnvelope>();
   if ((input.settings.edgeRouting ?? "ORTHOGONAL") !== "ORTHOGONAL") return envelopes;
   for (const node of input.graph.nodes) {
-    const loops = input.graph.edges.filter(
-      (edge) => edge.sourceId === node.id && hasMovableLoopPorts(input, edge),
+    const allLoops = input.graph.edges.filter(
+      (edge) => edge.sourceId === node.id && edge.targetId === node.id,
     );
+    const constraints = input.nodeSettings?.(node)?.portConstraints;
+    if (
+      allLoops.length &&
+      constraints &&
+      constraints !== "FREE" &&
+      constraints !== "UNDEFINED" &&
+      allLoops.every(
+        (edge) =>
+          edge.sourcePort !== undefined &&
+          edge.targetPort !== undefined &&
+          input.edgeSettings?.(edge)?.["edgeLabels.inline"] !== true &&
+          (edge.width ?? 0) === 0 &&
+          (edge.height ?? 0) === 0,
+      )
+    ) {
+      const size = input.sizes.get(node.id) ?? { width: 0, height: 0 };
+      const rect = { x: 0, y: 0, ...size };
+      const envelope = { before: 0, after: 0, flowBefore: 0, flowAfter: 0 };
+      const horizontal = input.direction === "right" || input.direction === "left";
+      const reverse = input.direction === "left" || input.direction === "up";
+      const spacing = Number(input.settings["spacing.nodeSelfLoop"] ?? 10);
+      let supported = true;
+      for (const [index, edge] of allLoops.entries()) {
+        const from = node.ports?.find((port) => port.name === edge.sourcePort);
+        const to = node.ports?.find((port) => port.name === edge.targetPort);
+        const sourceSide =
+          from && fixedSelfLoopSide(input.portSettings?.(from, node)?.["port.side"]);
+        const targetSide = to && fixedSelfLoopSide(input.portSettings?.(to, node)?.["port.side"]);
+        if (!sourceSide || !targetSide) {
+          supported = false;
+          break;
+        }
+        const start = getPortPoint(
+          node,
+          edge.sourcePort,
+          rect,
+          { x: 0, y: 0 },
+          input.direction,
+          input,
+        );
+        const end = getPortPoint(
+          node,
+          edge.targetPort,
+          rect,
+          { x: 0, y: 0 },
+          input.direction,
+          input,
+        );
+        for (const point of routeFixedSelfLoop(
+          rect,
+          start,
+          end,
+          sourceSide,
+          targetSide,
+          spacing * (index + 1),
+          input.direction,
+        )) {
+          const cross = horizontal ? point.y : point.x;
+          const flow = horizontal ? point.x : point.y;
+          const flowSize = horizontal ? size.width : size.height;
+          envelope.before = Math.max(envelope.before, -cross);
+          envelope.after = Math.max(
+            envelope.after,
+            cross - (horizontal ? size.height : size.width),
+          );
+          envelope.flowBefore = Math.max(envelope.flowBefore, reverse ? flow - flowSize : -flow);
+          envelope.flowAfter = Math.max(envelope.flowAfter, reverse ? -flow : flow - flowSize);
+        }
+      }
+      if (supported) {
+        envelopes.set(node.id, envelope);
+        continue;
+      }
+    }
+    const loops = allLoops.filter((edge) => hasMovableLoopPorts(input, edge));
     // Inline labels remain owned by the existing labeled-loop phase. Move
     // the entire node together when that phase is ported, rather than mixing
     // two different loop distributions and reservations on the same node.

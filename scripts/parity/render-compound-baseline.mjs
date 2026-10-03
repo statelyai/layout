@@ -14,10 +14,26 @@ const escape = (value) =>
 const title = escape(process.argv[4] ?? "Compound parity baseline");
 const colors = ["#2563eb", "#9333ea", "#059669", "#d97706", "#db2777"];
 function scene(graph, error) {
-  if (!graph)
+  const invalidNumber = (value) =>
+    value === null || (typeof value === "number" && !Number.isFinite(value));
+  const invalid = (node) =>
+    [node.x, node.y, node.width, node.height].some(invalidNumber) ||
+    (node.children ?? []).some(invalid) ||
+    (node.ports ?? []).some(invalid) ||
+    (node.edges ?? []).some((edge) =>
+      (edge.sections ?? []).some((section) =>
+        [section.startPoint, ...(section.bendPoints ?? []), section.endPoint].some((point) =>
+          [point.x, point.y].some(invalidNumber),
+        ),
+      ),
+    );
+  if (graph && invalid(graph))
+    error = "Non-finite layout geometry; complete reference output remains in the report.";
+  if (!graph || error)
     return {
       bounds: [],
-      markup: `<text x="0" y="20" font-size="12">${escape(error ?? "Missing engine output")}</text>`,
+      error: escape(error ?? "Missing engine output"),
+      markup: "",
     };
   const nodes = [],
     owners = [],
@@ -79,7 +95,7 @@ const entries = report.rows
     const width = Math.max(points.length ? 0 : 300, ...points.map((p) => p.x)) - left + 20,
       height = Math.max(points.length ? 0 : 50, ...points.map((p) => p.y)) - top + 20;
     const svg = (s) =>
-      `<svg viewBox="${left} ${top} ${width} ${height}" width="${width}" height="${height}" role="img">${s.markup}</svg>`;
+      `${s.error ? `<p role="status">${s.error}</p>` : ""}<svg viewBox="${left} ${top} ${width} ${height}" width="${width}" height="${height}" role="img">${s.markup}</svg>`;
     return `<section id="case-${index}" hidden><p>Seed ${row.seed} · ${row.direction} · ${row.differences.length} differing values</p><div class="pair">${previous ? `<article><h2>Native before</h2>${svg(previous)}</article>` : ""}<article><h2>${previous ? "Native after" : "Native Stately"}</h2>${svg(a)}</article><article><h2>Real ELK 0.11.1</h2>${svg(b)}</article></div></section>`;
   })
   .join("\n");

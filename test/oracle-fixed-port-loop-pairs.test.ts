@@ -7,7 +7,6 @@ import { compoundGeometry, geometryDifferences } from "../scripts/parity/compoun
 for (const direction of ["RIGHT", "LEFT", "DOWN", "UP"] as const)
   for (const sourceSide of ["NORTH", "EAST", "SOUTH", "WEST"] as const)
     for (const targetSide of ["NORTH", "EAST", "SOUTH", "WEST"] as const) {
-      if (sourceSide === targetSide) continue;
       it(`routes fixed loop ${sourceSide} to ${targetSide} in ${direction}`, async () => {
         const input: ElkNode = {
           id: "root",

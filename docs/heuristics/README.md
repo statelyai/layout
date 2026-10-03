@@ -128,3 +128,5 @@ The [long-edge joining proof](long-edge-compaction-joining/README.md) preserves 
 The [compound boundary-spacing proof](compound-boundary-spacing/README.md) replaces blanket spacing and compensating child shifts with ELK routing-track reservations. Directional full matches improve from 74 to 80/200; broad parity remains incomplete.
 
 The [fixed-port loop proof](fixed-port-loop-pairs/README.md) records 48 face-pair/direction regressions matching real ELK, with no new full-suite failure. Broad random parity remains incomplete.
+
+The [loop-envelope compaction proof](compaction-loop-envelopes/README.md) improves directional full matches from 122 to 132/200, with zero native errors and five resolved suite failures. Broad parity remains incomplete.

@@ -241,7 +241,7 @@ default class also accepts the library's broader internal graph inputs.
 
 <!-- fixed-port placement and inline center-label guarantees from src/layered/index.ts and src/layered/strategies.ts -->
 
-Fixed port sides constrain routes without collapsing fan-out targets onto each other. Port preferences cannot reintroduce cycles before layering. Inline center labels use reserved inter-rank space; orthogonally routed labels use distinct cross-axis lanes that avoid other labels and states. Dedicated label layers and route-track compaction retain their placement strategies. Inline self-loop labels reserve clearance on their assigned sides from both their owner and neighboring nodes. Hierarchy decomposition preserves native self-loop routes for ancestor-to-descendant edges. FIRST/FIRST_SEPARATE nodes may have self-loops.
+Fixed port sides constrain routes without collapsing fan-out targets onto each other. Port preferences cannot reintroduce cycles before layering. Inline center labels use reserved inter-rank space; orthogonally routed labels use distinct cross-axis lanes that avoid other labels and states. Dedicated label layers and route-track compaction retain their placement strategies. Inline self-loop labels reserve clearance on their assigned sides from both their owner and neighboring nodes. Hierarchy decomposition preserves native self-loop routes for ancestor-to-descendant edges. FIRST/FIRST_SEPARATE nodes may have self-loops. Fixed loops reserve their perimeter clearance before placement. Infeasible post-compaction relations retain the initial finite geometry.
 
 Advanced layered settings use shorter names such as
 `layering.strategy`, `spacing.edgeNode`, and `nodePlacement.strategy`.

@@ -9,6 +9,7 @@
 import type { EntityRect, Point } from "@statelyai/graph";
 import type { AcyclicOrientation, EdgeRoutes, LayeredPhaseInput, NodePlacement } from "./types";
 import { compactionBounds, recordCompactionBounds } from "./compaction-bounds";
+import { InfeasibleCompactionError } from "./compaction-errors";
 import { scanlineConstraints } from "./compaction-scanline";
 import { preparePortMargins, portCrossMargins } from "./node-margins";
 import { nodeNodeSpacing } from "./spacing";
@@ -133,6 +134,23 @@ function compactJoinedGeometry(
   routes?: EdgeRoutes,
   orientation?: AcyclicOrientation,
 ): NodePlacement {
+  try {
+    return compactJoinedGeometryUnchecked(input, placement, routes, orientation);
+  } catch (error) {
+    // Compaction is transactional: only apply positions after a complete solve.
+    // Degenerate port leads can make the visibility relation infeasible. Keep
+    // the initial layout/routes rather than publishing partial or NaN geometry.
+    if (error instanceof InfeasibleCompactionError) return placement;
+    throw error;
+  }
+}
+
+function compactJoinedGeometryUnchecked(
+  input: LayeredPhaseInput,
+  placement: NodePlacement,
+  routes?: EdgeRoutes,
+  orientation?: AcyclicOrientation,
+): NodePlacement {
   const vertical = input.direction === "down" || input.direction === "up";
   const negative = input.direction === "left" || input.direction === "up";
   const pointToCanonical = (point: Point): Point => ({
@@ -157,7 +175,25 @@ function compactJoinedGeometry(
   for (const [id, rect] of placement.rectByNodeId) {
     const content = rectToCanonical(rect);
     contentRects.set(id, content);
-    const margins = portCrossMargins(input, id);
+    const portMargins = portCrossMargins(input, id);
+    const margins = {
+      before: portMargins?.before ?? 0,
+      after: portMargins?.after ?? 0,
+      flowBefore: portMargins?.flowBefore ?? 0,
+      flowAfter: portMargins?.flowAfter ?? 0,
+    };
+    // Self-loop routes belong to their owner's hitbox in ELK's compaction graph.
+    // Reserve their measured envelope before clipping rigid port leads.
+    for (const edge of input.graph.edges) {
+      if (edge.sourceId !== id || edge.targetId !== id) continue;
+      const points = routes?.pointsByEdgeId.get(edge.id)?.map(pointToCanonical) ?? [];
+      for (const point of points) {
+        margins.before = Math.max(margins.before, content.y - point.y);
+        margins.after = Math.max(margins.after, point.y - content.y - content.height);
+        margins.flowBefore = Math.max(margins.flowBefore, content.x - point.x);
+        margins.flowAfter = Math.max(margins.flowAfter, point.x - content.x - content.width);
+      }
+    }
     const canonical = {
       x: content.x - (margins?.flowBefore ?? 0),
       y: content.y - (margins?.before ?? 0),
@@ -217,23 +253,34 @@ function compactJoinedGeometry(
       const first = points[index]!;
       const second = points[index + 1]!;
       if (Math.abs(first.x - second.x) > 1e-9 || Math.abs(first.y - second.y) < 1e-9) continue;
+      // The ELK transformer collects endpoint leads only on cross-axis faces.
+      // Flow-face endpoints are not bends, even when a split label route turns
+      // vertically immediately beside its temporary endpoint.
+      if (index === 0 && !crossSide(endpointSide(edge.sourceId, edge.sourcePort, first))) continue;
+      if (
+        index === points.length - 2 &&
+        !crossSide(endpointSide(edge.targetId, edge.targetPort, second))
+      )
+        continue;
       const owner =
         index === 0
           ? nodes.get(edge.sourceId)
           : index === points.length - 2
             ? nodes.get(edge.targetId)
             : undefined;
-      // Port leads constrain only the span outside their owner's hitbox.
-      // ELK constructs that span from the first bend to the node border.
-      const leadBefore = owner && (index === 0 ? second.y < first.y : first.y < second.y);
-      const segmentStart =
-        owner && !leadBefore
-          ? Math.max(Math.min(first.y, second.y), owner.y + owner.height)
-          : Math.min(first.y, second.y);
-      const segmentEnd =
-        owner && leadBefore
-          ? Math.min(Math.max(first.y, second.y), owner.y)
-          : Math.max(first.y, second.y);
+      // ELK constructs port-lead spans from the first bend to the margin
+      // border, including bends lying inside the owner's reserved envelope.
+      const ownerSide = owner
+        ? endpointSide(
+            index === 0 ? edge.sourceId : edge.targetId,
+            index === 0 ? edge.sourcePort : edge.targetPort,
+            index === 0 ? first : second,
+          )
+        : undefined;
+      const bend = index === 0 ? second : first;
+      const border = ownerSide === "NORTH" ? owner?.y : owner && owner.y + owner.height;
+      const segmentStart = owner ? Math.min(bend.y, border!) : Math.min(first.y, second.y);
+      const segmentEnd = owner ? Math.max(bend.y, border!) : Math.max(first.y, second.y);
       const id = `track:${edgeId}:${index}`;
       const group = owner?.group ?? id;
       if (!owner) groupOrigin.set(group, first.x);
@@ -247,8 +294,8 @@ function compactJoinedGeometry(
         height: Math.max(0, segmentEnd - segmentStart),
         edges: new Set([edgeId]),
         points: [first, second],
-        ignoreUp: owner ? (index === 0 ? second.y > first.y : first.y > second.y) : false,
-        ignoreDown: owner ? (index === 0 ? second.y < first.y : first.y < second.y) : false,
+        ignoreUp: owner ? ownerSide === "SOUTH" : false,
+        ignoreDown: owner ? ownerSide === "NORTH" : false,
       };
       segments.push(segment);
       if (!owner) edgeSegments.push(segment);
@@ -344,7 +391,7 @@ function compactJoinedGeometry(
   };
   const visible = new Map<Compactable, Set<Compactable>>();
   const sweep = (hitboxes: Compactable[]) => {
-    for (const [left, right] of scanlineConstraints(hitboxes)) {
+    for (const [left, right] of scanlineConstraints(hitboxes, true)) {
       const originalLeft = items.find((item) => item.id === left.id)!;
       const originalRight = items.find((item) => item.id === right.id)!;
       let targets = visible.get(originalLeft);
@@ -468,6 +515,25 @@ function compactJoinedGeometry(
         });
     }
   }
+  // Synthetic LABEL terminals retain their initial flow order. A short or
+  // vertical terminal approach may have no collected CGraph bend segment,
+  // so scanline visibility alone does not retain the owner/label relation.
+  for (const [id, points] of canonicalRoutes) {
+    const edge = edgeById.get(id)!;
+    const source = nodes.get(edge.sourceId),
+      target = nodes.get(edge.targetId);
+    if (!source || !target || points.length < 3 || source.x === target.x) continue;
+    const sourceLabel = edge.sourceId.startsWith("__layout_dummy:label:");
+    const targetLabel = edge.targetId.startsWith("__layout_dummy:label:");
+    if (!sourceLabel && !targetLabel) continue;
+    const [before, after] = source.x < target.x ? [source, target] : [target, source];
+    constraints.push({
+      source: before.group,
+      target: after.group,
+      delta: before.offset + before.width - after.offset,
+      weight: 1,
+    });
+  }
   let solved: Map<string, number>;
   try {
     solved =
@@ -483,6 +549,8 @@ function compactJoinedGeometry(
       };
     throw error;
   }
+  if ([...solved.values()].some((position) => !Number.isFinite(position)))
+    throw new InfeasibleCompactionError("Non-finite compaction solution");
   const flowPadding = negative
     ? vertical
       ? input.padding.bottom
@@ -510,6 +578,24 @@ function compactJoinedGeometry(
     };
     const end = pointToCanonical(originals.at(-1)!);
     points[points.length - 1] = { ...end, x: end.x + (nodeDelta.get(edge.targetId) ?? 0) };
+    // Flow-face terminals do not create CGraph port-lead hitboxes. A split
+    // label route may nevertheless turn vertically beside that terminal;
+    // keep its adjacent corner attached when moving the endpoint's owner.
+    if (points.length > 2) {
+      const start = pointToCanonical(originals[0]!);
+      const next = pointToCanonical(originals[1]!);
+      const previous = pointToCanonical(originals.at(-2)!);
+      if (
+        !crossSide(endpointSide(edge.sourceId, edge.sourcePort, start)) &&
+        Math.abs(start.x - next.x) < 1e-9
+      )
+        points[1]!.x = points[0]!.x;
+      if (
+        !crossSide(endpointSide(edge.targetId, edge.targetPort, end)) &&
+        Math.abs(end.x - previous.x) < 1e-9
+      )
+        points[points.length - 2]!.x = points.at(-1)!.x;
+    }
   }
   // Reflect negative directions around the new extent, preserving positive physical bounds.
   const extent = Math.max(
@@ -624,7 +710,8 @@ function directionalCompaction(
         if (incoming.get(edge.target) === 0) queue.push(edge.target);
       }
     }
-    if (processed !== groups.length) throw new Error("Cyclic directional compaction groups");
+    if (processed !== groups.length)
+      throw new InfeasibleCompactionError("Cyclic directional compaction groups");
     return new Map([...position].map(([group, value]) => [group, sign * value]));
   };
   if (strategy === "RIGHT") return pass(true, origins, undefined);

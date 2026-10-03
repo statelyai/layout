@@ -6,6 +6,7 @@
  * SPDX-License-Identifier: EPL-2.0
  *******************************************************************************/
 import { runNetworkSimplex, type SimplexEdge, type SimplexNode } from "./network-simplex";
+import { InfeasibleCompactionError } from "./compaction-errors";
 
 export interface CompactionConstraint {
   source: string;
@@ -63,7 +64,8 @@ export function solveWeightedCompaction(
       if (count === 0) queue.push(edge.target);
     }
   }
-  if (visited !== nodes.length) throw new Error("Cyclic compaction constraints");
+  if (visited !== nodes.length)
+    throw new InfeasibleCompactionError("Cyclic compaction constraints");
   const sources = nodes.filter((node) => node.incoming.length === 0);
   if (sources.length > 1) {
     const source: SimplexNode = {

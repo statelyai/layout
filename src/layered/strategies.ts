@@ -3289,12 +3289,16 @@ export function getPortPoint(
   input: LayeredPhaseInput,
 ): Point {
   if (portName === undefined) return fallback;
+  const orientation = getPlacementOrientation(input);
   const port = placePorts(
     node.ports,
     rect,
     direction,
     (candidate) => input.portSettings?.(candidate, node),
     { ...input.settings, ...input.nodeSettings?.(node) },
+    orientation
+      ? (candidate) => getOrientedPortDirection(input, orientation, node, candidate)
+      : undefined,
   )?.find((candidate) => candidate.name === portName);
   if (port?.x === undefined || port.y === undefined) return fallback;
   const settings = input.portSettings?.(port, node);
@@ -3778,9 +3782,7 @@ function routeEdges(style: "ORTHOGONAL" | "POLYLINE" | "SPLINES"): EdgeRouter {
     };
     const northReserveByLayer = new Map<number, number>();
     for (const [id, nodeLoops] of selfLoopsByNodeId) {
-      const loops = nodeLoops.filter(
-        (edge) => !hasPlacementLoopEnvelope(placement, id) || !hasMovableLoopPorts(input, edge),
-      );
+      const loops = nodeLoops.filter(() => !hasPlacementLoopEnvelope(placement, id));
       if (loops.length === 0) continue;
       const rect = mutableRects.get(id);
       if (!rect) continue;
@@ -4847,7 +4849,10 @@ function routeEdges(style: "ORTHOGONAL" | "POLYLINE" | "SPLINES"): EdgeRouter {
         source.id === target.id &&
         hasFixedPortSide(source) &&
         (feedbackSourcePortSide !== undefined || feedbackTargetPortSide !== undefined) &&
-        (edge.sourcePort === undefined || edge.targetPort === undefined || !sameSideSelfLoop)
+        (edge.sourcePort === undefined ||
+          edge.targetPort === undefined ||
+          !sameSideSelfLoop ||
+          ((edge.width ?? 0) === 0 && (edge.height ?? 0) === 0))
       ) {
         const endpoints = implicitEndpoints.get(edge.id)!;
         const start = getPortPoint(
@@ -4877,7 +4882,7 @@ function routeEdges(style: "ORTHOGONAL" | "POLYLINE" | "SPLINES"): EdgeRouter {
           Number(input.settings["spacing.nodeSelfLoop"] ?? 10) * (loops.indexOf(edge) + 1);
         pointsByEdgeId.set(
           edge.id,
-          simplifyRoute(
+          (sameSideSelfLoop ? (points: Point[]) => points : simplifyRoute)(
             routeFixedSelfLoop(
               sourceRect,
               start,
