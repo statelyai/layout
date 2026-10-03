@@ -605,6 +605,22 @@ function compactJoinedGeometryUnchecked(
     const edge = edgeById.get(edgeId)!;
     const originals = routes!.pointsByEdgeId.get(edgeId)!;
     if (!points.length) continue;
+    if (edge.sourceId === edge.targetId && points.every((point) => point.y === points[0]!.y)) {
+      // Zero-length self-loop spans create no compaction item. Move their
+      // unowned corners with the node; collected spans already moved above.
+      const delta = nodeDelta.get(edge.sourceId) ?? 0;
+      for (const [index, point] of points.entries()) {
+        if (
+          index > 0 &&
+          index < points.length - 1 &&
+          items.some((item) => item.points.includes(point))
+        )
+          continue;
+        const original = pointToCanonical(originals[index]!);
+        points[index] = { ...original, x: original.x + delta };
+      }
+      continue;
+    }
     points[0] = {
       ...pointToCanonical(originals[0]!),
       x: pointToCanonical(originals[0]!).x + (nodeDelta.get(edge.sourceId) ?? 0),

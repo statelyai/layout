@@ -4041,13 +4041,15 @@ function routeEdges(style: "ORTHOGONAL" | "POLYLINE" | "SPLINES"): EdgeRouter {
     ) {
       const edgeNodeSpacing = Number(input.settings["spacing.edgeNodeBetweenLayers"] ?? 10);
       const edgeEdgeSpacing = Number(input.settings["spacing.edgeEdgeBetweenLayers"] ?? 10);
-      const candidatesByGap = flowLayers.slice(0, -1).map(
+      const candidatesByGap = Array.from(
+        { length: flowLayers.length + 1 },
         () =>
           [] as Array<{
             edge: GraphEdge;
             sourceCross: number;
             targetCross: number;
             straight: boolean;
+            sameLayerPortSide?: "source" | "target";
             slot?: number;
             secondSlot?: number;
             crossover?: number;
@@ -4061,17 +4063,47 @@ function routeEdges(style: "ORTHOGONAL" | "POLYLINE" | "SPLINES"): EdgeRouter {
           endpoints === undefined ||
           sourceLayer === undefined ||
           targetLayer === undefined ||
-          Math.abs(sourceLayer - targetLayer) !== 1
+          Math.abs(sourceLayer - targetLayer) > 1
         ) {
           continue;
         }
+        const sameLayer = sourceLayer === targetLayer;
+        let positiveFace = true;
+        if (sameLayer) {
+          if (edge.sourceId === edge.targetId) continue;
+          const positiveSide = horizontal ? "EAST" : "SOUTH";
+          const face = (id: string, name: string | undefined) => {
+            const node = nodeById.get(id)!;
+            const port = node.ports?.find((port) => port.name === name);
+            return port && input.portSettings?.(port, node)?.["port.side"];
+          };
+          const negativeSide = horizontal ? "WEST" : "NORTH";
+          const sourceFace = face(edge.sourceId, edge.sourcePort);
+          if (
+            sourceFace !== face(edge.targetId, edge.targetPort) ||
+            (sourceFace !== positiveSide && sourceFace !== negativeSide)
+          )
+            continue;
+          positiveFace = sourceFace === positiveSide;
+        }
         const graphSourceCross = horizontal ? endpoints.source.y : endpoints.source.x;
         const graphTargetCross = horizontal ? endpoints.target.y : endpoints.target.x;
-        const sourceBeforeTarget = sourceLayer < targetLayer;
+        const sourceBeforeTarget = sameLayer
+          ? !orientation.reversedEdgeIds.has(edge.id)
+          : sourceLayer < targetLayer;
         const sourceCross = sourceBeforeTarget ? graphSourceCross : graphTargetCross;
         const targetCross = sourceBeforeTarget ? graphTargetCross : graphSourceCross;
-        candidatesByGap[Math.min(sourceLayer, targetLayer)]?.push({
+        const gap = sameLayer
+          ? sourceLayer - (positiveFace ? 0 : 1)
+          : Math.min(sourceLayer, targetLayer);
+        candidatesByGap[gap + 1]?.push({
           edge,
+          ...(sameLayer
+            ? {
+                sameLayerPortSide:
+                  increasing === positiveFace ? ("source" as const) : ("target" as const),
+              }
+            : {}),
           sourceCross,
           targetCross,
           straight: Math.abs(sourceCross - targetCross) < 1e-3,
@@ -4111,35 +4143,46 @@ function routeEdges(style: "ORTHOGONAL" | "POLYLINE" | "SPLINES"): EdgeRouter {
           const edge = candidate.edge;
           const sourceIsBefore =
             flowLayerByNodeId.get(edge.sourceId)! < flowLayerByNodeId.get(edge.targetId)!;
-          const graphSource = (side === "source") === (sourceIsBefore === increasing);
+          const graphSource = candidate.sameLayerPortSide
+            ? (side === "source") !== orientation.reversedEdgeIds.has(edge.id)
+            : (side === "source") === (sourceIsBefore === increasing);
           const nodeId = graphSource ? edge.sourceId : edge.targetId;
           const name = graphSource ? edge.sourcePort : edge.targetPort;
           const node = nodeById.get(nodeId)!;
           if (isMergedHyperedgeDummy(input, nodeId))
-            return JSON.stringify(["hyperedge", nodeId, side]);
+            return JSON.stringify(["hyperedge", nodeId, candidate.sameLayerPortSide ?? side]);
           if (name !== undefined) return JSON.stringify(["port", nodeId, name]);
           if (input.settings.mergeEdges === true || input.nodeSettings?.(node)?.hypernode === true)
-            return JSON.stringify(["implicit", nodeId, side]);
+            return JSON.stringify(["implicit", nodeId, candidate.sameLayerPortSide ?? side]);
           return JSON.stringify(["edge", edge.id, side]);
         };
         for (const side of ["source", "target"] as const)
           for (const candidate of candidates) {
             const key = portKey(candidate, side);
             if (!byPort.has(key)) {
-              const position =
-                (side === "source") === increasing ? candidate.sourceCross : candidate.targetCross;
+              const position = candidate.sameLayerPortSide
+                ? side === "source"
+                  ? candidate.sourceCross
+                  : candidate.targetCross
+                : (side === "source") === increasing
+                  ? candidate.sourceCross
+                  : candidate.targetCross;
               const endpoints = rawEndpoints.get(candidate.edge.id);
               const sourceBefore =
                 flowLayerByNodeId.get(candidate.edge.sourceId)! <
                 flowLayerByNodeId.get(candidate.edge.targetId)!;
               const rawPoint =
                 endpoints &&
-                ((side === "source") === (sourceBefore === increasing)
+                ((
+                  candidate.sameLayerPortSide
+                    ? (side === "source") !== orientation.reversedEdgeIds.has(candidate.edge.id)
+                    : (side === "source") === (sourceBefore === increasing)
+                )
                   ? endpoints.source
                   : endpoints.target);
               const port = {
                 id: key,
-                side,
+                side: candidate.sameLayerPortSide ?? side,
                 position: rawPoint ? (horizontal ? rawPoint.y : rawPoint.x) : position,
               };
               byPort.set(key, port);
@@ -4230,7 +4273,10 @@ function routeEdges(style: "ORTHOGONAL" | "POLYLINE" | "SPLINES"): EdgeRouter {
               input.nodeSettings?.(node)?.["nodePlacement.networkSimplex.nodeFlexibility"] !==
                 "NONE",
           ));
-      let nextStart = flowLayers[0]?.start ?? 0;
+      const leadingSlots = slotsByGap[0] ?? 0;
+      const leadingWidth =
+        leadingSlots > 0 ? edgeNodeSpacing + (leadingSlots - 1) * edgeEdgeSpacing : 0;
+      let nextStart = (flowLayers[0]?.start ?? 0) + leadingWidth;
       // ELK omits ordinary node spacing beside an external-port-only layer.
       const externalFlowLayers = new Set(
         flowLayers.flatMap((_, layer) => {
@@ -4259,14 +4305,14 @@ function routeEdges(style: "ORTHOGONAL" | "POLYLINE" | "SPLINES"): EdgeRouter {
         const size = bounds.end - bounds.start;
         bounds.start = nextStart;
         bounds.end = nextStart + size;
-        const slots = slotsByGap[layerNo] ?? 0;
-        const routesNearTarget = candidatesByGap[layerNo]?.some(
+        const slots = slotsByGap[layerNo + 1] ?? 0;
+        const routesNearTarget = candidatesByGap[layerNo + 1]?.some(
           (candidate) =>
             hasZeroFixedSideTarget(candidate.edge) &&
-            candidatesByGap[layerNo]!.filter(
+            candidatesByGap[layerNo + 1]!.filter(
               ({ edge }) => edge.targetId === candidate.edge.targetId,
             ).length >
-              candidatesByGap[layerNo]!.filter(
+              candidatesByGap[layerNo + 1]!.filter(
                 ({ edge }) => edge.sourceId === candidate.edge.sourceId,
               ).length,
         );
@@ -4318,7 +4364,14 @@ function routeEdges(style: "ORTHOGONAL" | "POLYLINE" | "SPLINES"): EdgeRouter {
       }
       implicitEndpoints = implicitEdgeEndpoints(input, placement, orientation);
 
-      for (const [gap, candidates] of candidatesByGap.entries()) {
+      for (const [boundary, candidates] of candidatesByGap.entries()) {
+        const gap = boundary - 1;
+        const firstBoundaryTrack =
+          gap < 0
+            ? (flowLayers[0]?.start ?? 0) -
+              edgeNodeSpacing -
+              Math.max(0, leadingSlots - 1) * edgeEdgeSpacing
+            : (flowLayers[gap]?.end ?? 0) + edgeNodeSpacing;
         for (const candidate of candidates) {
           if (candidate.straight) continue;
           const routeNearTarget =
@@ -4330,16 +4383,11 @@ function routeEdges(style: "ORTHOGONAL" | "POLYLINE" | "SPLINES"): EdgeRouter {
             ? (flowLayers[gap + 1]?.start ?? 0) -
               edgeNodeSpacing -
               (candidate.slot ?? 0) * edgeEdgeSpacing
-            : (flowLayers[gap]?.end ?? 0) +
-              edgeNodeSpacing +
-              (candidate.slot ?? 0) * edgeEdgeSpacing;
+            : firstBoundaryTrack + (candidate.slot ?? 0) * edgeEdgeSpacing;
           if (candidate.secondSlot !== undefined && candidate.crossover !== undefined) {
             orthogonalDetourByEdgeId.set(candidate.edge.id, {
               firstTrack,
-              secondTrack:
-                (flowLayers[gap]?.end ?? 0) +
-                edgeNodeSpacing +
-                candidate.secondSlot * edgeEdgeSpacing,
+              secondTrack: firstBoundaryTrack + candidate.secondSlot * edgeEdgeSpacing,
               crossover: candidate.crossover,
             });
           } else {
@@ -4769,14 +4817,26 @@ function routeEdges(style: "ORTHOGONAL" | "POLYLINE" | "SPLINES"): EdgeRouter {
         if (reversedEdge) outsideFeedbackEdgeIds.add(edge.id);
         const side = feedbackSourcePortSide;
         const spacing = Number(input.settings["spacing.edgeNodeBetweenLayers"] ?? 10);
+        // Clear the whole occupied layer, including ports and self-loop
+        // reservations; endpoint anchors alone omit those margins.
+        const occupied = flowLayers[flowLayerByNodeId.get(source.id) ?? -1];
         const track =
-          side === "WEST"
-            ? Math.min(start.x, end.x) - spacing
+          orthogonalTrackByEdgeId.get(edge.id) ??
+          (side === "WEST"
+            ? (horizontal
+                ? (occupied?.start ?? Math.min(start.x, end.x))
+                : Math.min(start.x, end.x)) - spacing
             : side === "EAST"
-              ? Math.max(start.x, end.x) + spacing
+              ? (horizontal
+                  ? (occupied?.end ?? Math.max(start.x, end.x))
+                  : Math.max(start.x, end.x)) + spacing
               : side === "NORTH"
-                ? Math.min(start.y, end.y) - spacing
-                : Math.max(start.y, end.y) + spacing;
+                ? (!horizontal
+                    ? (occupied?.start ?? Math.min(start.y, end.y))
+                    : Math.min(start.y, end.y)) - spacing
+                : (!horizontal
+                    ? (occupied?.end ?? Math.max(start.y, end.y))
+                    : Math.max(start.y, end.y)) + spacing);
         pointsByEdgeId.set(
           edge.id,
           simplifyRoute(

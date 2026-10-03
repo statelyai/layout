@@ -125,6 +125,9 @@ export function orthogonalJunctionPoints(
       inLayer: from === to,
     });
   }
+  const routedEdges = new Set(
+    junctionGroups.flatMap((group) => group.map((record) => record.edgeId)),
+  );
   const inLayerGroups: typeof junctionGroups = [];
   for (const [, boundary] of [...boundaries].sort(([a], [b]) => (increasing ? a - b : b - a))) {
     if (!boundary.edges.some((e) => e.inLayer)) continue;
@@ -133,7 +136,9 @@ export function orthogonalJunctionPoints(
     const records: (typeof junctionGroups)[number] = [];
     for (const group of grouped.segments)
       for (const port of group.ports) {
-        const members = boundary.edges.filter((e) => e.source === port && e.inLayer);
+        const members = boundary.edges.filter(
+          (e) => e.source === port && e.inLayer && !routedEdges.has(e.edge.id),
+        );
         for (const record of members) {
           const values = [...group.incoming, ...group.outgoing];
           records.push({
