@@ -1,0 +1,2506 @@
+<!doctype html><meta charset="utf-8" /><title>Fixed-port self-loop parity</title
+><style>
+  body {
+    font: 14px system-ui;
+    margin: 24px;
+    color: #172033;
+  }
+  header {
+    position: sticky;
+    top: 0;
+    background: white;
+    padding: 12px 0;
+  }
+  .pair {
+    display: flex;
+    gap: 24px;
+    align-items: flex-start;
+  }
+  article {
+    border: 1px solid #ddd;
+    padding: 12px;
+    overflow: auto;
+    flex: 1;
+    min-width: 0;
+  }
+  h2 {
+    font-size: 14px;
+  }
+  svg {
+    display: block;
+    width: 100%;
+    height: auto;
+  }
+  select {
+    font: inherit;
+  }
+</style>
+<header>
+  <h1>Fixed-port self-loop parity</h1>
+  <p>48/48 full matches. Equal viewports and scale across every view; original routes preserved.</p>
+  <label
+    >Graph
+    <select id="cases">
+      <option value="0">NORTH to EAST · RIGHT seed 1</option>
+      <option value="1">NORTH to SOUTH · RIGHT seed 2</option>
+      <option value="2">NORTH to WEST · RIGHT seed 3</option>
+      <option value="3">EAST to NORTH · RIGHT seed 4</option>
+      <option value="4">EAST to SOUTH · RIGHT seed 5</option>
+      <option value="5">EAST to WEST · RIGHT seed 6</option>
+      <option value="6">SOUTH to NORTH · RIGHT seed 7</option>
+      <option value="7">SOUTH to EAST · RIGHT seed 8</option>
+      <option value="8">SOUTH to WEST · RIGHT seed 9</option>
+      <option value="9">WEST to NORTH · RIGHT seed 10</option>
+      <option value="10">WEST to EAST · RIGHT seed 11</option>
+      <option value="11">WEST to SOUTH · RIGHT seed 12</option>
+      <option value="12">NORTH to EAST · LEFT seed 13</option>
+      <option value="13">NORTH to SOUTH · LEFT seed 14</option>
+      <option value="14">NORTH to WEST · LEFT seed 15</option>
+      <option value="15">EAST to NORTH · LEFT seed 16</option>
+      <option value="16">EAST to SOUTH · LEFT seed 17</option>
+      <option value="17">EAST to WEST · LEFT seed 18</option>
+      <option value="18">SOUTH to NORTH · LEFT seed 19</option>
+      <option value="19">SOUTH to EAST · LEFT seed 20</option>
+      <option value="20">SOUTH to WEST · LEFT seed 21</option>
+      <option value="21">WEST to NORTH · LEFT seed 22</option>
+      <option value="22">WEST to EAST · LEFT seed 23</option>
+      <option value="23">WEST to SOUTH · LEFT seed 24</option>
+      <option value="24">NORTH to EAST · DOWN seed 25</option>
+      <option value="25">NORTH to SOUTH · DOWN seed 26</option>
+      <option value="26">NORTH to WEST · DOWN seed 27</option>
+      <option value="27">EAST to NORTH · DOWN seed 28</option>
+      <option value="28">EAST to SOUTH · DOWN seed 29</option>
+      <option value="29">EAST to WEST · DOWN seed 30</option>
+      <option value="30">SOUTH to NORTH · DOWN seed 31</option>
+      <option value="31">SOUTH to EAST · DOWN seed 32</option>
+      <option value="32">SOUTH to WEST · DOWN seed 33</option>
+      <option value="33">WEST to NORTH · DOWN seed 34</option>
+      <option value="34">WEST to EAST · DOWN seed 35</option>
+      <option value="35">WEST to SOUTH · DOWN seed 36</option>
+      <option value="36">NORTH to EAST · UP seed 37</option>
+      <option value="37">NORTH to SOUTH · UP seed 38</option>
+      <option value="38">NORTH to WEST · UP seed 39</option>
+      <option value="39">EAST to NORTH · UP seed 40</option>
+      <option value="40">EAST to SOUTH · UP seed 41</option>
+      <option value="41">EAST to WEST · UP seed 42</option>
+      <option value="42">SOUTH to NORTH · UP seed 43</option>
+      <option value="43">SOUTH to EAST · UP seed 44</option>
+      <option value="44">SOUTH to WEST · UP seed 45</option>
+      <option value="45">WEST to NORTH · UP seed 46</option>
+      <option value="46">WEST to EAST · UP seed 47</option>
+      <option value="47">WEST to SOUTH · UP seed 48</option>
+    </select></label
+  >
+  · <a href="report.json">Complete inputs, outputs and differences</a>
+</header>
+<section id="case-0" hidden>
+  <p>Seed 1 · RIGHT · 0 differing values</p>
+  <div class="pair">
+    <article>
+      <h2>Native before</h2>
+      <svg viewBox="-20 -20 170 150" width="170" height="150" role="img">
+        <rect x="12" y="30" width="100" height="80" fill="white" stroke="#94a3b8" />
+        <text x="17" y="43" font-size="10">a</text>
+        <polyline
+          points="45.33333333333333,30 45.33333333333333,20 78.66666666666666,20 78.66666666666666,30"
+          fill="none"
+          stroke="#2563eb"
+          stroke-width="1.5"
+        >
+          <title>e</title>
+        </polyline>
+      </svg>
+    </article>
+    <article>
+      <h2>Native after</h2>
+      <svg viewBox="-20 -20 170 150" width="170" height="150" role="img">
+        <rect x="12" y="30" width="100" height="80" fill="white" stroke="#94a3b8" />
+        <text x="17" y="43" font-size="10">a</text>
+        <polyline
+          points="56,22 56,12 130,12 130,64 120,64"
+          fill="none"
+          stroke="#2563eb"
+          stroke-width="1.5"
+        >
+          <title>e</title>
+        </polyline>
+      </svg>
+    </article>
+    <article>
+      <h2>Real ELK 0.11.1</h2>
+      <svg viewBox="-20 -20 170 150" width="170" height="150" role="img">
+        <rect x="12" y="30" width="100" height="80" fill="white" stroke="#94a3b8" />
+        <text x="17" y="43" font-size="10">a</text>
+        <polyline
+          points="56,22 56,12 130,12 130,64 120,64"
+          fill="none"
+          stroke="#2563eb"
+          stroke-width="1.5"
+        >
+          <title>e</title>
+        </polyline>
+      </svg>
+    </article>
+  </div>
+</section>
+<section id="case-1" hidden>
+  <p>Seed 2 · RIGHT · 0 differing values</p>
+  <div class="pair">
+    <article>
+      <h2>Native before</h2>
+      <svg viewBox="-20 -20 162 168" width="162" height="168" role="img">
+        <rect x="12" y="30" width="100" height="80" fill="white" stroke="#94a3b8" />
+        <text x="17" y="43" font-size="10">a</text>
+        <polyline
+          points="45.33333333333333,30 45.33333333333333,20 78.66666666666666,20 78.66666666666666,30"
+          fill="none"
+          stroke="#2563eb"
+          stroke-width="1.5"
+        >
+          <title>e</title>
+        </polyline>
+      </svg>
+    </article>
+    <article>
+      <h2>Native after</h2>
+      <svg viewBox="-20 -20 162 168" width="162" height="168" role="img">
+        <rect x="12" y="30" width="100" height="80" fill="white" stroke="#94a3b8" />
+        <text x="17" y="43" font-size="10">a</text>
+        <polyline
+          points="56,22 56,12 122,12 122,128 56,128 56,118"
+          fill="none"
+          stroke="#2563eb"
+          stroke-width="1.5"
+        >
+          <title>e</title>
+        </polyline>
+      </svg>
+    </article>
+    <article>
+      <h2>Real ELK 0.11.1</h2>
+      <svg viewBox="-20 -20 162 168" width="162" height="168" role="img">
+        <rect x="12" y="30" width="100" height="80" fill="white" stroke="#94a3b8" />
+        <text x="17" y="43" font-size="10">a</text>
+        <polyline
+          points="56,22 56,12 122,12 122,128 56,128 56,118"
+          fill="none"
+          stroke="#2563eb"
+          stroke-width="1.5"
+        >
+          <title>e</title>
+        </polyline>
+      </svg>
+    </article>
+  </div>
+</section>
+<section id="case-2" hidden>
+  <p>Seed 3 · RIGHT · 0 differing values</p>
+  <div class="pair">
+    <article>
+      <h2>Native before</h2>
+      <svg viewBox="-20 -20 180 160.5" width="180" height="160.5" role="img">
+        <rect x="40" y="30" width="100" height="80" fill="white" stroke="#94a3b8" />
+        <text x="45" y="43" font-size="10">a</text>
+        <polyline
+          points="84,22 104,22 104,120.5 12,120.5 12,64 32,64"
+          fill="none"
+          stroke="#2563eb"
+          stroke-width="1.5"
+        >
+          <title>e</title>
+        </polyline>
+      </svg>
+    </article>
+    <article>
+      <h2>Native after</h2>
+      <svg viewBox="-20 -20 180 160.5" width="180" height="160.5" role="img">
+        <rect x="30" y="30" width="100" height="80" fill="white" stroke="#94a3b8" />
+        <text x="35" y="43" font-size="10">a</text>
+        <polyline
+          points="74,22 74,12 12,12 12,64 22,64"
+          fill="none"
+          stroke="#2563eb"
+          stroke-width="1.5"
+        >
+          <title>e</title>
+        </polyline>
+      </svg>
+    </article>
+    <article>
+      <h2>Real ELK 0.11.1</h2>
+      <svg viewBox="-20 -20 180 160.5" width="180" height="160.5" role="img">
+        <rect x="30" y="30" width="100" height="80" fill="white" stroke="#94a3b8" />
+        <text x="35" y="43" font-size="10">a</text>
+        <polyline
+          points="74,22 74,12 12,12 12,64 22,64"
+          fill="none"
+          stroke="#2563eb"
+          stroke-width="1.5"
+        >
+          <title>e</title>
+        </polyline>
+      </svg>
+    </article>
+  </div>
+</section>
+<section id="case-3" hidden>
+  <p>Seed 4 · RIGHT · 0 differing values</p>
+  <div class="pair">
+    <article>
+      <h2>Native before</h2>
+      <svg viewBox="-20 -20 180 160.5" width="180" height="160.5" role="img">
+        <rect x="12" y="30" width="100" height="80" fill="white" stroke="#94a3b8" />
+        <text x="17" y="43" font-size="10">a</text>
+        <polyline
+          points="120,64 140,64 140,120.5 36,120.5 36,22 56,22"
+          fill="none"
+          stroke="#2563eb"
+          stroke-width="1.5"
+        >
+          <title>e</title>
+        </polyline>
+      </svg>
+    </article>
+    <article>
+      <h2>Native after</h2>
+      <svg viewBox="-20 -20 180 160.5" width="180" height="160.5" role="img">
+        <rect x="12" y="30" width="100" height="80" fill="white" stroke="#94a3b8" />
+        <text x="17" y="43" font-size="10">a</text>
+        <polyline
+          points="120,64 130,64 130,12 56,12 56,22"
+          fill="none"
+          stroke="#2563eb"
+          stroke-width="1.5"
+        >
+          <title>e</title>
+        </polyline>
+      </svg>
+    </article>
+    <article>
+      <h2>Real ELK 0.11.1</h2>
+      <svg viewBox="-20 -20 180 160.5" width="180" height="160.5" role="img">
+        <rect x="12" y="30" width="100" height="80" fill="white" stroke="#94a3b8" />
+        <text x="17" y="43" font-size="10">a</text>
+        <polyline
+          points="120,64 130,64 130,12 56,12 56,22"
+          fill="none"
+          stroke="#2563eb"
+          stroke-width="1.5"
+        >
+          <title>e</title>
+        </polyline>
+      </svg>
+    </article>
+  </div>
+</section>
+<section id="case-4" hidden>
+  <p>Seed 5 · RIGHT · 0 differing values</p>
+  <div class="pair">
+    <article>
+      <h2>Native before</h2>
+      <svg viewBox="-20 -20 180 152.5" width="180" height="152.5" role="img">
+        <rect x="12" y="22" width="100" height="80" fill="white" stroke="#94a3b8" />
+        <text x="17" y="35" font-size="10">a</text>
+        <polyline
+          points="120,56 140,56 140,112.5 36,112.5 36,110 56,110"
+          fill="none"
+          stroke="#2563eb"
+          stroke-width="1.5"
+        >
+          <title>e</title>
+        </polyline>
+      </svg>
+    </article>
+    <article>
+      <h2>Native after</h2>
+      <svg viewBox="-20 -20 180 152.5" width="180" height="152.5" role="img">
+        <rect x="12" y="12" width="100" height="80" fill="white" stroke="#94a3b8" />
+        <text x="17" y="25" font-size="10">a</text>
+        <polyline
+          points="120,46 130,46 130,110 56,110 56,100"
+          fill="none"
+          stroke="#2563eb"
+          stroke-width="1.5"
+        >
+          <title>e</title>
+        </polyline>
+      </svg>
+    </article>
+    <article>
+      <h2>Real ELK 0.11.1</h2>
+      <svg viewBox="-20 -20 180 152.5" width="180" height="152.5" role="img">
+        <rect x="12" y="12" width="100" height="80" fill="white" stroke="#94a3b8" />
+        <text x="17" y="25" font-size="10">a</text>
+        <polyline
+          points="120,46 130,46 130,110 56,110 56,100"
+          fill="none"
+          stroke="#2563eb"
+          stroke-width="1.5"
+        >
+          <title>e</title>
+        </polyline>
+      </svg>
+    </article>
+  </div>
+</section>
+<section id="case-5" hidden>
+  <p>Seed 6 · RIGHT · 0 differing values</p>
+  <div class="pair">
+    <article>
+      <h2>Native before</h2>
+      <svg viewBox="-20 -20 208 152.5" width="208" height="152.5" role="img">
+        <rect x="40" y="22" width="100" height="80" fill="white" stroke="#94a3b8" />
+        <text x="45" y="35" font-size="10">a</text>
+        <polyline
+          points="148,56 168,56 168,112.5 12,112.5 12,56 32,56"
+          fill="none"
+          stroke="#2563eb"
+          stroke-width="1.5"
+        >
+          <title>e</title>
+        </polyline>
+      </svg>
+    </article>
+    <article>
+      <h2>Native after</h2>
+      <svg viewBox="-20 -20 208 152.5" width="208" height="152.5" role="img">
+        <rect x="30" y="12" width="100" height="80" fill="white" stroke="#94a3b8" />
+        <text x="35" y="25" font-size="10">a</text>
+        <polyline
+          points="138,46 148,46 148,102 12,102 12,46 22,46"
+          fill="none"
+          stroke="#2563eb"
+          stroke-width="1.5"
+        >
+          <title>e</title>
+        </polyline>
+      </svg>
+    </article>
+    <article>
+      <h2>Real ELK 0.11.1</h2>
+      <svg viewBox="-20 -20 208 152.5" width="208" height="152.5" role="img">
+        <rect x="30" y="12" width="100" height="80" fill="white" stroke="#94a3b8" />
+        <text x="35" y="25" font-size="10">a</text>
+        <polyline
+          points="138,46 148,46 148,102 12,102 12,46 22,46"
+          fill="none"
+          stroke="#2563eb"
+          stroke-width="1.5"
+        >
+          <title>e</title>
+        </polyline>
+      </svg>
+    </article>
+  </div>
+</section>
+<section id="case-6" hidden>
+  <p>Seed 7 · RIGHT · 0 differing values</p>
+  <div class="pair">
+    <article>
+      <h2>Native before</h2>
+      <svg viewBox="-20 -20 162 168" width="162" height="168" role="img">
+        <rect x="12" y="30" width="100" height="80" fill="white" stroke="#94a3b8" />
+        <text x="17" y="43" font-size="10">a</text>
+        <polyline
+          points="45.33333333333333,30 45.33333333333333,20 78.66666666666666,20 78.66666666666666,30"
+          fill="none"
+          stroke="#2563eb"
+          stroke-width="1.5"
+        >
+          <title>e</title>
+        </polyline>
+      </svg>
+    </article>
+    <article>
+      <h2>Native after</h2>
+      <svg viewBox="-20 -20 162 168" width="162" height="168" role="img">
+        <rect x="22" y="30" width="100" height="80" fill="white" stroke="#94a3b8" />
+        <text x="27" y="43" font-size="10">a</text>
+        <polyline
+          points="66,118 66,128 12,128 12,12 66,12 66,22"
+          fill="none"
+          stroke="#2563eb"
+          stroke-width="1.5"
+        >
+          <title>e</title>
+        </polyline>
+      </svg>
+    </article>
+    <article>
+      <h2>Real ELK 0.11.1</h2>
+      <svg viewBox="-20 -20 162 168" width="162" height="168" role="img">
+        <rect x="22" y="30" width="100" height="80" fill="white" stroke="#94a3b8" />
+        <text x="27" y="43" font-size="10">a</text>
+        <polyline
+          points="66,118 66,128 12,128 12,12 66,12 66,22"
+          fill="none"
+          stroke="#2563eb"
+          stroke-width="1.5"
+        >
+          <title>e</title>
+        </polyline>
+      </svg>
+    </article>
+  </div>
+</section>
+<section id="case-7" hidden>
+  <p>Seed 8 · RIGHT · 0 differing values</p>
+  <div class="pair">
+    <article>
+      <h2>Native before</h2>
+      <svg viewBox="-20 -20 170 150" width="170" height="150" role="img">
+        <rect x="12" y="22" width="100" height="80" fill="white" stroke="#94a3b8" />
+        <text x="17" y="35" font-size="10">a</text>
+        <polyline
+          points="45.33333333333333,22 45.33333333333333,12 78.66666666666666,12 78.66666666666666,22"
+          fill="none"
+          stroke="#2563eb"
+          stroke-width="1.5"
+        >
+          <title>e</title>
+        </polyline>
+      </svg>
+    </article>
+    <article>
+      <h2>Native after</h2>
+      <svg viewBox="-20 -20 170 150" width="170" height="150" role="img">
+        <rect x="12" y="12" width="100" height="80" fill="white" stroke="#94a3b8" />
+        <text x="17" y="25" font-size="10">a</text>
+        <polyline
+          points="56,100 56,110 130,110 130,46 120,46"
+          fill="none"
+          stroke="#2563eb"
+          stroke-width="1.5"
+        >
+          <title>e</title>
+        </polyline>
+      </svg>
+    </article>
+    <article>
+      <h2>Real ELK 0.11.1</h2>
+      <svg viewBox="-20 -20 170 150" width="170" height="150" role="img">
+        <rect x="12" y="12" width="100" height="80" fill="white" stroke="#94a3b8" />
+        <text x="17" y="25" font-size="10">a</text>
+        <polyline
+          points="56,100 56,110 130,110 130,46 120,46"
+          fill="none"
+          stroke="#2563eb"
+          stroke-width="1.5"
+        >
+          <title>e</title>
+        </polyline>
+      </svg>
+    </article>
+  </div>
+</section>
+<section id="case-8" hidden>
+  <p>Seed 9 · RIGHT · 0 differing values</p>
+  <div class="pair">
+    <article>
+      <h2>Native before</h2>
+      <svg viewBox="-20 -20 180 152.5" width="180" height="152.5" role="img">
+        <rect x="40" y="22" width="100" height="80" fill="white" stroke="#94a3b8" />
+        <text x="45" y="35" font-size="10">a</text>
+        <polyline
+          points="84,110 104,110 104,112.5 12,112.5 12,56 32,56"
+          fill="none"
+          stroke="#2563eb"
+          stroke-width="1.5"
+        >
+          <title>e</title>
+        </polyline>
+      </svg>
+    </article>
+    <article>
+      <h2>Native after</h2>
+      <svg viewBox="-20 -20 180 152.5" width="180" height="152.5" role="img">
+        <rect x="30" y="12" width="100" height="80" fill="white" stroke="#94a3b8" />
+        <text x="35" y="25" font-size="10">a</text>
+        <polyline
+          points="74,100 74,110 12,110 12,46 22,46"
+          fill="none"
+          stroke="#2563eb"
+          stroke-width="1.5"
+        >
+          <title>e</title>
+        </polyline>
+      </svg>
+    </article>
+    <article>
+      <h2>Real ELK 0.11.1</h2>
+      <svg viewBox="-20 -20 180 152.5" width="180" height="152.5" role="img">
+        <rect x="30" y="12" width="100" height="80" fill="white" stroke="#94a3b8" />
+        <text x="35" y="25" font-size="10">a</text>
+        <polyline
+          points="74,100 74,110 12,110 12,46 22,46"
+          fill="none"
+          stroke="#2563eb"
+          stroke-width="1.5"
+        >
+          <title>e</title>
+        </polyline>
+      </svg>
+    </article>
+  </div>
+</section>
+<section id="case-9" hidden>
+  <p>Seed 10 · RIGHT · 0 differing values</p>
+  <div class="pair">
+    <article>
+      <h2>Native before</h2>
+      <svg viewBox="-20 -20 170 150" width="170" height="150" role="img">
+        <rect x="20" y="30" width="100" height="80" fill="white" stroke="#94a3b8" />
+        <text x="25" y="43" font-size="10">a</text>
+        <polyline
+          points="53.33333333333333,30 53.33333333333333,20 86.66666666666666,20 86.66666666666666,30"
+          fill="none"
+          stroke="#2563eb"
+          stroke-width="1.5"
+        >
+          <title>e</title>
+        </polyline>
+      </svg>
+    </article>
+    <article>
+      <h2>Native after</h2>
+      <svg viewBox="-20 -20 170 150" width="170" height="150" role="img">
+        <rect x="30" y="30" width="100" height="80" fill="white" stroke="#94a3b8" />
+        <text x="35" y="43" font-size="10">a</text>
+        <polyline
+          points="22,64 12,64 12,12 74,12 74,22"
+          fill="none"
+          stroke="#2563eb"
+          stroke-width="1.5"
+        >
+          <title>e</title>
+        </polyline>
+      </svg>
+    </article>
+    <article>
+      <h2>Real ELK 0.11.1</h2>
+      <svg viewBox="-20 -20 170 150" width="170" height="150" role="img">
+        <rect x="30" y="30" width="100" height="80" fill="white" stroke="#94a3b8" />
+        <text x="35" y="43" font-size="10">a</text>
+        <polyline
+          points="22,64 12,64 12,12 74,12 74,22"
+          fill="none"
+          stroke="#2563eb"
+          stroke-width="1.5"
+        >
+          <title>e</title>
+        </polyline>
+      </svg>
+    </article>
+  </div>
+</section>
+<section id="case-10" hidden>
+  <p>Seed 11 · RIGHT · 0 differing values</p>
+  <div class="pair">
+    <article>
+      <h2>Native before</h2>
+      <svg viewBox="-20 -20 188 142" width="188" height="142" role="img">
+        <rect x="20" y="22" width="100" height="80" fill="white" stroke="#94a3b8" />
+        <text x="25" y="35" font-size="10">a</text>
+        <polyline
+          points="53.33333333333333,22 53.33333333333333,12 86.66666666666666,12 86.66666666666666,22"
+          fill="none"
+          stroke="#2563eb"
+          stroke-width="1.5"
+        >
+          <title>e</title>
+        </polyline>
+      </svg>
+    </article>
+    <article>
+      <h2>Native after</h2>
+      <svg viewBox="-20 -20 188 142" width="188" height="142" role="img">
+        <rect x="30" y="12" width="100" height="80" fill="white" stroke="#94a3b8" />
+        <text x="35" y="25" font-size="10">a</text>
+        <polyline
+          points="22,46 12,46 12,102 148,102 148,46 138,46"
+          fill="none"
+          stroke="#2563eb"
+          stroke-width="1.5"
+        >
+          <title>e</title>
+        </polyline>
+      </svg>
+    </article>
+    <article>
+      <h2>Real ELK 0.11.1</h2>
+      <svg viewBox="-20 -20 188 142" width="188" height="142" role="img">
+        <rect x="30" y="12" width="100" height="80" fill="white" stroke="#94a3b8" />
+        <text x="35" y="25" font-size="10">a</text>
+        <polyline
+          points="22,46 12,46 12,102 148,102 148,46 138,46"
+          fill="none"
+          stroke="#2563eb"
+          stroke-width="1.5"
+        >
+          <title>e</title>
+        </polyline>
+      </svg>
+    </article>
+  </div>
+</section>
+<section id="case-11" hidden>
+  <p>Seed 12 · RIGHT · 0 differing values</p>
+  <div class="pair">
+    <article>
+      <h2>Native before</h2>
+      <svg viewBox="-20 -20 170 150" width="170" height="150" role="img">
+        <rect x="20" y="22" width="100" height="80" fill="white" stroke="#94a3b8" />
+        <text x="25" y="35" font-size="10">a</text>
+        <polyline
+          points="53.33333333333333,22 53.33333333333333,12 86.66666666666666,12 86.66666666666666,22"
+          fill="none"
+          stroke="#2563eb"
+          stroke-width="1.5"
+        >
+          <title>e</title>
+        </polyline>
+      </svg>
+    </article>
+    <article>
+      <h2>Native after</h2>
+      <svg viewBox="-20 -20 170 150" width="170" height="150" role="img">
+        <rect x="30" y="12" width="100" height="80" fill="white" stroke="#94a3b8" />
+        <text x="35" y="25" font-size="10">a</text>
+        <polyline
+          points="22,46 12,46 12,110 74,110 74,100"
+          fill="none"
+          stroke="#2563eb"
+          stroke-width="1.5"
+        >
+          <title>e</title>
+        </polyline>
+      </svg>
+    </article>
+    <article>
+      <h2>Real ELK 0.11.1</h2>
+      <svg viewBox="-20 -20 170 150" width="170" height="150" role="img">
+        <rect x="30" y="12" width="100" height="80" fill="white" stroke="#94a3b8" />
+        <text x="35" y="25" font-size="10">a</text>
+        <polyline
+          points="22,46 12,46 12,110 74,110 74,100"
+          fill="none"
+          stroke="#2563eb"
+          stroke-width="1.5"
+        >
+          <title>e</title>
+        </polyline>
+      </svg>
+    </article>
+  </div>
+</section>
+<section id="case-12" hidden>
+  <p>Seed 13 · LEFT · 0 differing values</p>
+  <div class="pair">
+    <article>
+      <h2>Native before</h2>
+      <svg viewBox="-20 -20 170 150" width="170" height="150" role="img">
+        <rect x="12" y="30" width="100" height="80" fill="white" stroke="#94a3b8" />
+        <text x="17" y="43" font-size="10">a</text>
+        <polyline
+          points="45.33333333333333,30 45.33333333333333,20 78.66666666666666,20 78.66666666666666,30"
+          fill="none"
+          stroke="#2563eb"
+          stroke-width="1.5"
+        >
+          <title>e</title>
+        </polyline>
+      </svg>
+    </article>
+    <article>
+      <h2>Native after</h2>
+      <svg viewBox="-20 -20 170 150" width="170" height="150" role="img">
+        <rect x="12" y="30" width="100" height="80" fill="white" stroke="#94a3b8" />
+        <text x="17" y="43" font-size="10">a</text>
+        <polyline
+          points="56,22 56,12 130,12 130,64 120,64"
+          fill="none"
+          stroke="#2563eb"
+          stroke-width="1.5"
+        >
+          <title>e</title>
+        </polyline>
+      </svg>
+    </article>
+    <article>
+      <h2>Real ELK 0.11.1</h2>
+      <svg viewBox="-20 -20 170 150" width="170" height="150" role="img">
+        <rect x="12" y="30" width="100" height="80" fill="white" stroke="#94a3b8" />
+        <text x="17" y="43" font-size="10">a</text>
+        <polyline
+          points="56,22 56,12 130,12 130,64 120,64"
+          fill="none"
+          stroke="#2563eb"
+          stroke-width="1.5"
+        >
+          <title>e</title>
+        </polyline>
+      </svg>
+    </article>
+  </div>
+</section>
+<section id="case-13" hidden>
+  <p>Seed 14 · LEFT · 0 differing values</p>
+  <div class="pair">
+    <article>
+      <h2>Native before</h2>
+      <svg viewBox="-20 -20 162 168" width="162" height="168" role="img">
+        <rect x="12" y="30" width="100" height="80" fill="white" stroke="#94a3b8" />
+        <text x="17" y="43" font-size="10">a</text>
+        <polyline
+          points="45.33333333333333,30 45.33333333333333,20 78.66666666666666,20 78.66666666666666,30"
+          fill="none"
+          stroke="#2563eb"
+          stroke-width="1.5"
+        >
+          <title>e</title>
+        </polyline>
+      </svg>
+    </article>
+    <article>
+      <h2>Native after</h2>
+      <svg viewBox="-20 -20 162 168" width="162" height="168" role="img">
+        <rect x="22" y="30" width="100" height="80" fill="white" stroke="#94a3b8" />
+        <text x="27" y="43" font-size="10">a</text>
+        <polyline
+          points="66,22 66,12 12,12 12,128 66,128 66,118"
+          fill="none"
+          stroke="#2563eb"
+          stroke-width="1.5"
+        >
+          <title>e</title>
+        </polyline>
+      </svg>
+    </article>
+    <article>
+      <h2>Real ELK 0.11.1</h2>
+      <svg viewBox="-20 -20 162 168" width="162" height="168" role="img">
+        <rect x="22" y="30" width="100" height="80" fill="white" stroke="#94a3b8" />
+        <text x="27" y="43" font-size="10">a</text>
+        <polyline
+          points="66,22 66,12 12,12 12,128 66,128 66,118"
+          fill="none"
+          stroke="#2563eb"
+          stroke-width="1.5"
+        >
+          <title>e</title>
+        </polyline>
+      </svg>
+    </article>
+  </div>
+</section>
+<section id="case-14" hidden>
+  <p>Seed 15 · LEFT · 0 differing values</p>
+  <div class="pair">
+    <article>
+      <h2>Native before</h2>
+      <svg viewBox="-20 -20 180 160.5" width="180" height="160.5" role="img">
+        <rect x="40" y="30" width="100" height="80" fill="white" stroke="#94a3b8" />
+        <text x="45" y="43" font-size="10">a</text>
+        <polyline
+          points="84,22 104,22 104,120.5 12,120.5 12,64 32,64"
+          fill="none"
+          stroke="#2563eb"
+          stroke-width="1.5"
+        >
+          <title>e</title>
+        </polyline>
+      </svg>
+    </article>
+    <article>
+      <h2>Native after</h2>
+      <svg viewBox="-20 -20 180 160.5" width="180" height="160.5" role="img">
+        <rect x="30" y="30" width="100" height="80" fill="white" stroke="#94a3b8" />
+        <text x="35" y="43" font-size="10">a</text>
+        <polyline
+          points="74,22 74,12 12,12 12,64 22,64"
+          fill="none"
+          stroke="#2563eb"
+          stroke-width="1.5"
+        >
+          <title>e</title>
+        </polyline>
+      </svg>
+    </article>
+    <article>
+      <h2>Real ELK 0.11.1</h2>
+      <svg viewBox="-20 -20 180 160.5" width="180" height="160.5" role="img">
+        <rect x="30" y="30" width="100" height="80" fill="white" stroke="#94a3b8" />
+        <text x="35" y="43" font-size="10">a</text>
+        <polyline
+          points="74,22 74,12 12,12 12,64 22,64"
+          fill="none"
+          stroke="#2563eb"
+          stroke-width="1.5"
+        >
+          <title>e</title>
+        </polyline>
+      </svg>
+    </article>
+  </div>
+</section>
+<section id="case-15" hidden>
+  <p>Seed 16 · LEFT · 0 differing values</p>
+  <div class="pair">
+    <article>
+      <h2>Native before</h2>
+      <svg viewBox="-20 -20 180 160.5" width="180" height="160.5" role="img">
+        <rect x="12" y="30" width="100" height="80" fill="white" stroke="#94a3b8" />
+        <text x="17" y="43" font-size="10">a</text>
+        <polyline
+          points="120,64 140,64 140,120.5 36,120.5 36,22 56,22"
+          fill="none"
+          stroke="#2563eb"
+          stroke-width="1.5"
+        >
+          <title>e</title>
+        </polyline>
+      </svg>
+    </article>
+    <article>
+      <h2>Native after</h2>
+      <svg viewBox="-20 -20 180 160.5" width="180" height="160.5" role="img">
+        <rect x="12" y="30" width="100" height="80" fill="white" stroke="#94a3b8" />
+        <text x="17" y="43" font-size="10">a</text>
+        <polyline
+          points="120,64 130,64 130,12 56,12 56,22"
+          fill="none"
+          stroke="#2563eb"
+          stroke-width="1.5"
+        >
+          <title>e</title>
+        </polyline>
+      </svg>
+    </article>
+    <article>
+      <h2>Real ELK 0.11.1</h2>
+      <svg viewBox="-20 -20 180 160.5" width="180" height="160.5" role="img">
+        <rect x="12" y="30" width="100" height="80" fill="white" stroke="#94a3b8" />
+        <text x="17" y="43" font-size="10">a</text>
+        <polyline
+          points="120,64 130,64 130,12 56,12 56,22"
+          fill="none"
+          stroke="#2563eb"
+          stroke-width="1.5"
+        >
+          <title>e</title>
+        </polyline>
+      </svg>
+    </article>
+  </div>
+</section>
+<section id="case-16" hidden>
+  <p>Seed 17 · LEFT · 0 differing values</p>
+  <div class="pair">
+    <article>
+      <h2>Native before</h2>
+      <svg viewBox="-20 -20 180 152.5" width="180" height="152.5" role="img">
+        <rect x="12" y="22" width="100" height="80" fill="white" stroke="#94a3b8" />
+        <text x="17" y="35" font-size="10">a</text>
+        <polyline
+          points="120,56 140,56 140,112.5 36,112.5 36,110 56,110"
+          fill="none"
+          stroke="#2563eb"
+          stroke-width="1.5"
+        >
+          <title>e</title>
+        </polyline>
+      </svg>
+    </article>
+    <article>
+      <h2>Native after</h2>
+      <svg viewBox="-20 -20 180 152.5" width="180" height="152.5" role="img">
+        <rect x="12" y="12" width="100" height="80" fill="white" stroke="#94a3b8" />
+        <text x="17" y="25" font-size="10">a</text>
+        <polyline
+          points="120,46 130,46 130,110 56,110 56,100"
+          fill="none"
+          stroke="#2563eb"
+          stroke-width="1.5"
+        >
+          <title>e</title>
+        </polyline>
+      </svg>
+    </article>
+    <article>
+      <h2>Real ELK 0.11.1</h2>
+      <svg viewBox="-20 -20 180 152.5" width="180" height="152.5" role="img">
+        <rect x="12" y="12" width="100" height="80" fill="white" stroke="#94a3b8" />
+        <text x="17" y="25" font-size="10">a</text>
+        <polyline
+          points="120,46 130,46 130,110 56,110 56,100"
+          fill="none"
+          stroke="#2563eb"
+          stroke-width="1.5"
+        >
+          <title>e</title>
+        </polyline>
+      </svg>
+    </article>
+  </div>
+</section>
+<section id="case-17" hidden>
+  <p>Seed 18 · LEFT · 0 differing values</p>
+  <div class="pair">
+    <article>
+      <h2>Native before</h2>
+      <svg viewBox="-20 -20 208 152.5" width="208" height="152.5" role="img">
+        <rect x="40" y="22" width="100" height="80" fill="white" stroke="#94a3b8" />
+        <text x="45" y="35" font-size="10">a</text>
+        <polyline
+          points="148,56 168,56 168,112.5 12,112.5 12,56 32,56"
+          fill="none"
+          stroke="#2563eb"
+          stroke-width="1.5"
+        >
+          <title>e</title>
+        </polyline>
+      </svg>
+    </article>
+    <article>
+      <h2>Native after</h2>
+      <svg viewBox="-20 -20 208 152.5" width="208" height="152.5" role="img">
+        <rect x="30" y="12" width="100" height="80" fill="white" stroke="#94a3b8" />
+        <text x="35" y="25" font-size="10">a</text>
+        <polyline
+          points="138,46 148,46 148,102 12,102 12,46 22,46"
+          fill="none"
+          stroke="#2563eb"
+          stroke-width="1.5"
+        >
+          <title>e</title>
+        </polyline>
+      </svg>
+    </article>
+    <article>
+      <h2>Real ELK 0.11.1</h2>
+      <svg viewBox="-20 -20 208 152.5" width="208" height="152.5" role="img">
+        <rect x="30" y="12" width="100" height="80" fill="white" stroke="#94a3b8" />
+        <text x="35" y="25" font-size="10">a</text>
+        <polyline
+          points="138,46 148,46 148,102 12,102 12,46 22,46"
+          fill="none"
+          stroke="#2563eb"
+          stroke-width="1.5"
+        >
+          <title>e</title>
+        </polyline>
+      </svg>
+    </article>
+  </div>
+</section>
+<section id="case-18" hidden>
+  <p>Seed 19 · LEFT · 0 differing values</p>
+  <div class="pair">
+    <article>
+      <h2>Native before</h2>
+      <svg viewBox="-20 -20 162 168" width="162" height="168" role="img">
+        <rect x="12" y="30" width="100" height="80" fill="white" stroke="#94a3b8" />
+        <text x="17" y="43" font-size="10">a</text>
+        <polyline
+          points="45.33333333333333,30 45.33333333333333,20 78.66666666666666,20 78.66666666666666,30"
+          fill="none"
+          stroke="#2563eb"
+          stroke-width="1.5"
+        >
+          <title>e</title>
+        </polyline>
+      </svg>
+    </article>
+    <article>
+      <h2>Native after</h2>
+      <svg viewBox="-20 -20 162 168" width="162" height="168" role="img">
+        <rect x="12" y="30" width="100" height="80" fill="white" stroke="#94a3b8" />
+        <text x="17" y="43" font-size="10">a</text>
+        <polyline
+          points="56,118 56,128 122,128 122,12 56,12 56,22"
+          fill="none"
+          stroke="#2563eb"
+          stroke-width="1.5"
+        >
+          <title>e</title>
+        </polyline>
+      </svg>
+    </article>
+    <article>
+      <h2>Real ELK 0.11.1</h2>
+      <svg viewBox="-20 -20 162 168" width="162" height="168" role="img">
+        <rect x="12" y="30" width="100" height="80" fill="white" stroke="#94a3b8" />
+        <text x="17" y="43" font-size="10">a</text>
+        <polyline
+          points="56,118 56,128 122,128 122,12 56,12 56,22"
+          fill="none"
+          stroke="#2563eb"
+          stroke-width="1.5"
+        >
+          <title>e</title>
+        </polyline>
+      </svg>
+    </article>
+  </div>
+</section>
+<section id="case-19" hidden>
+  <p>Seed 20 · LEFT · 0 differing values</p>
+  <div class="pair">
+    <article>
+      <h2>Native before</h2>
+      <svg viewBox="-20 -20 170 150" width="170" height="150" role="img">
+        <rect x="12" y="22" width="100" height="80" fill="white" stroke="#94a3b8" />
+        <text x="17" y="35" font-size="10">a</text>
+        <polyline
+          points="45.33333333333333,22 45.33333333333333,12 78.66666666666666,12 78.66666666666666,22"
+          fill="none"
+          stroke="#2563eb"
+          stroke-width="1.5"
+        >
+          <title>e</title>
+        </polyline>
+      </svg>
+    </article>
+    <article>
+      <h2>Native after</h2>
+      <svg viewBox="-20 -20 170 150" width="170" height="150" role="img">
+        <rect x="12" y="12" width="100" height="80" fill="white" stroke="#94a3b8" />
+        <text x="17" y="25" font-size="10">a</text>
+        <polyline
+          points="56,100 56,110 130,110 130,46 120,46"
+          fill="none"
+          stroke="#2563eb"
+          stroke-width="1.5"
+        >
+          <title>e</title>
+        </polyline>
+      </svg>
+    </article>
+    <article>
+      <h2>Real ELK 0.11.1</h2>
+      <svg viewBox="-20 -20 170 150" width="170" height="150" role="img">
+        <rect x="12" y="12" width="100" height="80" fill="white" stroke="#94a3b8" />
+        <text x="17" y="25" font-size="10">a</text>
+        <polyline
+          points="56,100 56,110 130,110 130,46 120,46"
+          fill="none"
+          stroke="#2563eb"
+          stroke-width="1.5"
+        >
+          <title>e</title>
+        </polyline>
+      </svg>
+    </article>
+  </div>
+</section>
+<section id="case-20" hidden>
+  <p>Seed 21 · LEFT · 0 differing values</p>
+  <div class="pair">
+    <article>
+      <h2>Native before</h2>
+      <svg viewBox="-20 -20 180 152.5" width="180" height="152.5" role="img">
+        <rect x="40" y="22" width="100" height="80" fill="white" stroke="#94a3b8" />
+        <text x="45" y="35" font-size="10">a</text>
+        <polyline
+          points="84,110 104,110 104,112.5 12,112.5 12,56 32,56"
+          fill="none"
+          stroke="#2563eb"
+          stroke-width="1.5"
+        >
+          <title>e</title>
+        </polyline>
+      </svg>
+    </article>
+    <article>
+      <h2>Native after</h2>
+      <svg viewBox="-20 -20 180 152.5" width="180" height="152.5" role="img">
+        <rect x="30" y="12" width="100" height="80" fill="white" stroke="#94a3b8" />
+        <text x="35" y="25" font-size="10">a</text>
+        <polyline
+          points="74,100 74,110 12,110 12,46 22,46"
+          fill="none"
+          stroke="#2563eb"
+          stroke-width="1.5"
+        >
+          <title>e</title>
+        </polyline>
+      </svg>
+    </article>
+    <article>
+      <h2>Real ELK 0.11.1</h2>
+      <svg viewBox="-20 -20 180 152.5" width="180" height="152.5" role="img">
+        <rect x="30" y="12" width="100" height="80" fill="white" stroke="#94a3b8" />
+        <text x="35" y="25" font-size="10">a</text>
+        <polyline
+          points="74,100 74,110 12,110 12,46 22,46"
+          fill="none"
+          stroke="#2563eb"
+          stroke-width="1.5"
+        >
+          <title>e</title>
+        </polyline>
+      </svg>
+    </article>
+  </div>
+</section>
+<section id="case-21" hidden>
+  <p>Seed 22 · LEFT · 0 differing values</p>
+  <div class="pair">
+    <article>
+      <h2>Native before</h2>
+      <svg viewBox="-20 -20 170 150" width="170" height="150" role="img">
+        <rect x="20" y="30" width="100" height="80" fill="white" stroke="#94a3b8" />
+        <text x="25" y="43" font-size="10">a</text>
+        <polyline
+          points="53.33333333333333,30 53.33333333333333,20 86.66666666666666,20 86.66666666666666,30"
+          fill="none"
+          stroke="#2563eb"
+          stroke-width="1.5"
+        >
+          <title>e</title>
+        </polyline>
+      </svg>
+    </article>
+    <article>
+      <h2>Native after</h2>
+      <svg viewBox="-20 -20 170 150" width="170" height="150" role="img">
+        <rect x="30" y="30" width="100" height="80" fill="white" stroke="#94a3b8" />
+        <text x="35" y="43" font-size="10">a</text>
+        <polyline
+          points="22,64 12,64 12,12 74,12 74,22"
+          fill="none"
+          stroke="#2563eb"
+          stroke-width="1.5"
+        >
+          <title>e</title>
+        </polyline>
+      </svg>
+    </article>
+    <article>
+      <h2>Real ELK 0.11.1</h2>
+      <svg viewBox="-20 -20 170 150" width="170" height="150" role="img">
+        <rect x="30" y="30" width="100" height="80" fill="white" stroke="#94a3b8" />
+        <text x="35" y="43" font-size="10">a</text>
+        <polyline
+          points="22,64 12,64 12,12 74,12 74,22"
+          fill="none"
+          stroke="#2563eb"
+          stroke-width="1.5"
+        >
+          <title>e</title>
+        </polyline>
+      </svg>
+    </article>
+  </div>
+</section>
+<section id="case-22" hidden>
+  <p>Seed 23 · LEFT · 0 differing values</p>
+  <div class="pair">
+    <article>
+      <h2>Native before</h2>
+      <svg viewBox="-20 -20 188 142" width="188" height="142" role="img">
+        <rect x="20" y="22" width="100" height="80" fill="white" stroke="#94a3b8" />
+        <text x="25" y="35" font-size="10">a</text>
+        <polyline
+          points="53.33333333333333,22 53.33333333333333,12 86.66666666666666,12 86.66666666666666,22"
+          fill="none"
+          stroke="#2563eb"
+          stroke-width="1.5"
+        >
+          <title>e</title>
+        </polyline>
+      </svg>
+    </article>
+    <article>
+      <h2>Native after</h2>
+      <svg viewBox="-20 -20 188 142" width="188" height="142" role="img">
+        <rect x="30" y="12" width="100" height="80" fill="white" stroke="#94a3b8" />
+        <text x="35" y="25" font-size="10">a</text>
+        <polyline
+          points="22,46 12,46 12,102 148,102 148,46 138,46"
+          fill="none"
+          stroke="#2563eb"
+          stroke-width="1.5"
+        >
+          <title>e</title>
+        </polyline>
+      </svg>
+    </article>
+    <article>
+      <h2>Real ELK 0.11.1</h2>
+      <svg viewBox="-20 -20 188 142" width="188" height="142" role="img">
+        <rect x="30" y="12" width="100" height="80" fill="white" stroke="#94a3b8" />
+        <text x="35" y="25" font-size="10">a</text>
+        <polyline
+          points="22,46 12,46 12,102 148,102 148,46 138,46"
+          fill="none"
+          stroke="#2563eb"
+          stroke-width="1.5"
+        >
+          <title>e</title>
+        </polyline>
+      </svg>
+    </article>
+  </div>
+</section>
+<section id="case-23" hidden>
+  <p>Seed 24 · LEFT · 0 differing values</p>
+  <div class="pair">
+    <article>
+      <h2>Native before</h2>
+      <svg viewBox="-20 -20 170 150" width="170" height="150" role="img">
+        <rect x="20" y="22" width="100" height="80" fill="white" stroke="#94a3b8" />
+        <text x="25" y="35" font-size="10">a</text>
+        <polyline
+          points="53.33333333333333,22 53.33333333333333,12 86.66666666666666,12 86.66666666666666,22"
+          fill="none"
+          stroke="#2563eb"
+          stroke-width="1.5"
+        >
+          <title>e</title>
+        </polyline>
+      </svg>
+    </article>
+    <article>
+      <h2>Native after</h2>
+      <svg viewBox="-20 -20 170 150" width="170" height="150" role="img">
+        <rect x="30" y="12" width="100" height="80" fill="white" stroke="#94a3b8" />
+        <text x="35" y="25" font-size="10">a</text>
+        <polyline
+          points="22,46 12,46 12,110 74,110 74,100"
+          fill="none"
+          stroke="#2563eb"
+          stroke-width="1.5"
+        >
+          <title>e</title>
+        </polyline>
+      </svg>
+    </article>
+    <article>
+      <h2>Real ELK 0.11.1</h2>
+      <svg viewBox="-20 -20 170 150" width="170" height="150" role="img">
+        <rect x="30" y="12" width="100" height="80" fill="white" stroke="#94a3b8" />
+        <text x="35" y="25" font-size="10">a</text>
+        <polyline
+          points="22,46 12,46 12,110 74,110 74,100"
+          fill="none"
+          stroke="#2563eb"
+          stroke-width="1.5"
+        >
+          <title>e</title>
+        </polyline>
+      </svg>
+    </article>
+  </div>
+</section>
+<section id="case-24" hidden>
+  <p>Seed 25 · DOWN · 0 differing values</p>
+  <div class="pair">
+    <article>
+      <h2>Native before</h2>
+      <svg viewBox="-20 -20 170 150" width="170" height="150" role="img">
+        <rect x="12" y="30" width="100" height="80" fill="white" stroke="#94a3b8" />
+        <text x="17" y="43" font-size="10">a</text>
+        <polyline
+          points="45.33333333333333,30 45.33333333333333,20 78.66666666666666,20 78.66666666666666,30"
+          fill="none"
+          stroke="#2563eb"
+          stroke-width="1.5"
+        >
+          <title>e</title>
+        </polyline>
+      </svg>
+    </article>
+    <article>
+      <h2>Native after</h2>
+      <svg viewBox="-20 -20 170 150" width="170" height="150" role="img">
+        <rect x="12" y="30" width="100" height="80" fill="white" stroke="#94a3b8" />
+        <text x="17" y="43" font-size="10">a</text>
+        <polyline
+          points="56,22 56,12 130,12 130,64 120,64"
+          fill="none"
+          stroke="#2563eb"
+          stroke-width="1.5"
+        >
+          <title>e</title>
+        </polyline>
+      </svg>
+    </article>
+    <article>
+      <h2>Real ELK 0.11.1</h2>
+      <svg viewBox="-20 -20 170 150" width="170" height="150" role="img">
+        <rect x="12" y="30" width="100" height="80" fill="white" stroke="#94a3b8" />
+        <text x="17" y="43" font-size="10">a</text>
+        <polyline
+          points="56,22 56,12 130,12 130,64 120,64"
+          fill="none"
+          stroke="#2563eb"
+          stroke-width="1.5"
+        >
+          <title>e</title>
+        </polyline>
+      </svg>
+    </article>
+  </div>
+</section>
+<section id="case-25" hidden>
+  <p>Seed 26 · DOWN · 0 differing values</p>
+  <div class="pair">
+    <article>
+      <h2>Native before</h2>
+      <svg viewBox="-20 -20 162 168" width="162" height="168" role="img">
+        <rect x="12" y="30" width="100" height="80" fill="white" stroke="#94a3b8" />
+        <text x="17" y="43" font-size="10">a</text>
+        <polyline
+          points="45.33333333333333,30 45.33333333333333,20 78.66666666666666,20 78.66666666666666,30"
+          fill="none"
+          stroke="#2563eb"
+          stroke-width="1.5"
+        >
+          <title>e</title>
+        </polyline>
+      </svg>
+    </article>
+    <article>
+      <h2>Native after</h2>
+      <svg viewBox="-20 -20 162 168" width="162" height="168" role="img">
+        <rect x="12" y="30" width="100" height="80" fill="white" stroke="#94a3b8" />
+        <text x="17" y="43" font-size="10">a</text>
+        <polyline
+          points="56,22 56,12 122,12 122,128 56,128 56,118"
+          fill="none"
+          stroke="#2563eb"
+          stroke-width="1.5"
+        >
+          <title>e</title>
+        </polyline>
+      </svg>
+    </article>
+    <article>
+      <h2>Real ELK 0.11.1</h2>
+      <svg viewBox="-20 -20 162 168" width="162" height="168" role="img">
+        <rect x="12" y="30" width="100" height="80" fill="white" stroke="#94a3b8" />
+        <text x="17" y="43" font-size="10">a</text>
+        <polyline
+          points="56,22 56,12 122,12 122,128 56,128 56,118"
+          fill="none"
+          stroke="#2563eb"
+          stroke-width="1.5"
+        >
+          <title>e</title>
+        </polyline>
+      </svg>
+    </article>
+  </div>
+</section>
+<section id="case-26" hidden>
+  <p>Seed 27 · DOWN · 0 differing values</p>
+  <div class="pair">
+    <article>
+      <h2>Native before</h2>
+      <svg viewBox="-20 -20 170 150" width="170" height="150" role="img">
+        <rect x="20" y="30" width="100" height="80" fill="white" stroke="#94a3b8" />
+        <text x="25" y="43" font-size="10">a</text>
+        <polyline
+          points="53.33333333333333,30 53.33333333333333,20 86.66666666666666,20 86.66666666666666,30"
+          fill="none"
+          stroke="#2563eb"
+          stroke-width="1.5"
+        >
+          <title>e</title>
+        </polyline>
+      </svg>
+    </article>
+    <article>
+      <h2>Native after</h2>
+      <svg viewBox="-20 -20 170 150" width="170" height="150" role="img">
+        <rect x="30" y="30" width="100" height="80" fill="white" stroke="#94a3b8" />
+        <text x="35" y="43" font-size="10">a</text>
+        <polyline
+          points="74,22 74,12 12,12 12,64 22,64"
+          fill="none"
+          stroke="#2563eb"
+          stroke-width="1.5"
+        >
+          <title>e</title>
+        </polyline>
+      </svg>
+    </article>
+    <article>
+      <h2>Real ELK 0.11.1</h2>
+      <svg viewBox="-20 -20 170 150" width="170" height="150" role="img">
+        <rect x="30" y="30" width="100" height="80" fill="white" stroke="#94a3b8" />
+        <text x="35" y="43" font-size="10">a</text>
+        <polyline
+          points="74,22 74,12 12,12 12,64 22,64"
+          fill="none"
+          stroke="#2563eb"
+          stroke-width="1.5"
+        >
+          <title>e</title>
+        </polyline>
+      </svg>
+    </article>
+  </div>
+</section>
+<section id="case-27" hidden>
+  <p>Seed 28 · DOWN · 0 differing values</p>
+  <div class="pair">
+    <article>
+      <h2>Native before</h2>
+      <svg viewBox="-20 -20 170 160" width="170" height="160" role="img">
+        <rect x="12" y="40" width="100" height="80" fill="white" stroke="#94a3b8" />
+        <text x="17" y="53" font-size="10">a</text>
+        <polyline
+          points="120,74 120,94 122.5,94 122.5,12 56,12 56,32"
+          fill="none"
+          stroke="#2563eb"
+          stroke-width="1.5"
+        >
+          <title>e</title>
+        </polyline>
+      </svg>
+    </article>
+    <article>
+      <h2>Native after</h2>
+      <svg viewBox="-20 -20 170 160" width="170" height="160" role="img">
+        <rect x="12" y="30" width="100" height="80" fill="white" stroke="#94a3b8" />
+        <text x="17" y="43" font-size="10">a</text>
+        <polyline
+          points="120,64 130,64 130,12 56,12 56,22"
+          fill="none"
+          stroke="#2563eb"
+          stroke-width="1.5"
+        >
+          <title>e</title>
+        </polyline>
+      </svg>
+    </article>
+    <article>
+      <h2>Real ELK 0.11.1</h2>
+      <svg viewBox="-20 -20 170 160" width="170" height="160" role="img">
+        <rect x="12" y="30" width="100" height="80" fill="white" stroke="#94a3b8" />
+        <text x="17" y="43" font-size="10">a</text>
+        <polyline
+          points="120,64 130,64 130,12 56,12 56,22"
+          fill="none"
+          stroke="#2563eb"
+          stroke-width="1.5"
+        >
+          <title>e</title>
+        </polyline>
+      </svg>
+    </article>
+  </div>
+</section>
+<section id="case-28" hidden>
+  <p>Seed 29 · DOWN · 0 differing values</p>
+  <div class="pair">
+    <article>
+      <h2>Native before</h2>
+      <svg viewBox="-20 -20 170 150" width="170" height="150" role="img">
+        <rect x="12" y="22" width="100" height="80" fill="white" stroke="#94a3b8" />
+        <text x="17" y="35" font-size="10">a</text>
+        <polyline
+          points="45.33333333333333,22 45.33333333333333,12 78.66666666666666,12 78.66666666666666,22"
+          fill="none"
+          stroke="#2563eb"
+          stroke-width="1.5"
+        >
+          <title>e</title>
+        </polyline>
+      </svg>
+    </article>
+    <article>
+      <h2>Native after</h2>
+      <svg viewBox="-20 -20 170 150" width="170" height="150" role="img">
+        <rect x="12" y="12" width="100" height="80" fill="white" stroke="#94a3b8" />
+        <text x="17" y="25" font-size="10">a</text>
+        <polyline
+          points="120,46 130,46 130,110 56,110 56,100"
+          fill="none"
+          stroke="#2563eb"
+          stroke-width="1.5"
+        >
+          <title>e</title>
+        </polyline>
+      </svg>
+    </article>
+    <article>
+      <h2>Real ELK 0.11.1</h2>
+      <svg viewBox="-20 -20 170 150" width="170" height="150" role="img">
+        <rect x="12" y="12" width="100" height="80" fill="white" stroke="#94a3b8" />
+        <text x="17" y="25" font-size="10">a</text>
+        <polyline
+          points="120,46 130,46 130,110 56,110 56,100"
+          fill="none"
+          stroke="#2563eb"
+          stroke-width="1.5"
+        >
+          <title>e</title>
+        </polyline>
+      </svg>
+    </article>
+  </div>
+</section>
+<section id="case-29" hidden>
+  <p>Seed 30 · DOWN · 0 differing values</p>
+  <div class="pair">
+    <article>
+      <h2>Native before</h2>
+      <svg viewBox="-20 -20 188 142" width="188" height="142" role="img">
+        <rect x="20" y="22" width="100" height="80" fill="white" stroke="#94a3b8" />
+        <text x="25" y="35" font-size="10">a</text>
+        <polyline
+          points="53.33333333333333,22 53.33333333333333,12 86.66666666666666,12 86.66666666666666,22"
+          fill="none"
+          stroke="#2563eb"
+          stroke-width="1.5"
+        >
+          <title>e</title>
+        </polyline>
+      </svg>
+    </article>
+    <article>
+      <h2>Native after</h2>
+      <svg viewBox="-20 -20 188 142" width="188" height="142" role="img">
+        <rect x="30" y="22" width="100" height="80" fill="white" stroke="#94a3b8" />
+        <text x="35" y="35" font-size="10">a</text>
+        <polyline
+          points="138,56 148,56 148,12 12,12 12,56 22,56"
+          fill="none"
+          stroke="#2563eb"
+          stroke-width="1.5"
+        >
+          <title>e</title>
+        </polyline>
+      </svg>
+    </article>
+    <article>
+      <h2>Real ELK 0.11.1</h2>
+      <svg viewBox="-20 -20 188 142" width="188" height="142" role="img">
+        <rect x="30" y="22" width="100" height="80" fill="white" stroke="#94a3b8" />
+        <text x="35" y="35" font-size="10">a</text>
+        <polyline
+          points="138,56 148,56 148,12 12,12 12,56 22,56"
+          fill="none"
+          stroke="#2563eb"
+          stroke-width="1.5"
+        >
+          <title>e</title>
+        </polyline>
+      </svg>
+    </article>
+  </div>
+</section>
+<section id="case-30" hidden>
+  <p>Seed 31 · DOWN · 0 differing values</p>
+  <div class="pair">
+    <article>
+      <h2>Native before</h2>
+      <svg viewBox="-20 -20 162.5 188" width="162.5" height="188" role="img">
+        <rect x="12" y="40" width="100" height="80" fill="white" stroke="#94a3b8" />
+        <text x="17" y="53" font-size="10">a</text>
+        <polyline
+          points="56,128 56,148 122.5,148 122.5,12 56,12 56,32"
+          fill="none"
+          stroke="#2563eb"
+          stroke-width="1.5"
+        >
+          <title>e</title>
+        </polyline>
+      </svg>
+    </article>
+    <article>
+      <h2>Native after</h2>
+      <svg viewBox="-20 -20 162.5 188" width="162.5" height="188" role="img">
+        <rect x="12" y="30" width="100" height="80" fill="white" stroke="#94a3b8" />
+        <text x="17" y="43" font-size="10">a</text>
+        <polyline
+          points="56,118 56,128 122,128 122,12 56,12 56,22"
+          fill="none"
+          stroke="#2563eb"
+          stroke-width="1.5"
+        >
+          <title>e</title>
+        </polyline>
+      </svg>
+    </article>
+    <article>
+      <h2>Real ELK 0.11.1</h2>
+      <svg viewBox="-20 -20 162.5 188" width="162.5" height="188" role="img">
+        <rect x="12" y="30" width="100" height="80" fill="white" stroke="#94a3b8" />
+        <text x="17" y="43" font-size="10">a</text>
+        <polyline
+          points="56,118 56,128 122,128 122,12 56,12 56,22"
+          fill="none"
+          stroke="#2563eb"
+          stroke-width="1.5"
+        >
+          <title>e</title>
+        </polyline>
+      </svg>
+    </article>
+  </div>
+</section>
+<section id="case-31" hidden>
+  <p>Seed 32 · DOWN · 0 differing values</p>
+  <div class="pair">
+    <article>
+      <h2>Native before</h2>
+      <svg viewBox="-20 -20 170 170" width="170" height="170" role="img">
+        <rect x="12" y="22" width="100" height="80" fill="white" stroke="#94a3b8" />
+        <text x="17" y="35" font-size="10">a</text>
+        <polyline
+          points="56,110 56,130 122.5,130 122.5,36 120,36 120,56"
+          fill="none"
+          stroke="#2563eb"
+          stroke-width="1.5"
+        >
+          <title>e</title>
+        </polyline>
+      </svg>
+    </article>
+    <article>
+      <h2>Native after</h2>
+      <svg viewBox="-20 -20 170 170" width="170" height="170" role="img">
+        <rect x="12" y="12" width="100" height="80" fill="white" stroke="#94a3b8" />
+        <text x="17" y="25" font-size="10">a</text>
+        <polyline
+          points="56,100 56,110 130,110 130,46 120,46"
+          fill="none"
+          stroke="#2563eb"
+          stroke-width="1.5"
+        >
+          <title>e</title>
+        </polyline>
+      </svg>
+    </article>
+    <article>
+      <h2>Real ELK 0.11.1</h2>
+      <svg viewBox="-20 -20 170 170" width="170" height="170" role="img">
+        <rect x="12" y="12" width="100" height="80" fill="white" stroke="#94a3b8" />
+        <text x="17" y="25" font-size="10">a</text>
+        <polyline
+          points="56,100 56,110 130,110 130,46 120,46"
+          fill="none"
+          stroke="#2563eb"
+          stroke-width="1.5"
+        >
+          <title>e</title>
+        </polyline>
+      </svg>
+    </article>
+  </div>
+</section>
+<section id="case-32" hidden>
+  <p>Seed 33 · DOWN · 0 differing values</p>
+  <div class="pair">
+    <article>
+      <h2>Native before</h2>
+      <svg viewBox="-20 -20 170.5 170" width="170.5" height="170" role="img">
+        <rect x="20" y="22" width="100" height="80" fill="white" stroke="#94a3b8" />
+        <text x="25" y="35" font-size="10">a</text>
+        <polyline
+          points="64,110 64,130 130.5,130 130.5,36 12,36 12,56"
+          fill="none"
+          stroke="#2563eb"
+          stroke-width="1.5"
+        >
+          <title>e</title>
+        </polyline>
+      </svg>
+    </article>
+    <article>
+      <h2>Native after</h2>
+      <svg viewBox="-20 -20 170.5 170" width="170.5" height="170" role="img">
+        <rect x="30" y="12" width="100" height="80" fill="white" stroke="#94a3b8" />
+        <text x="35" y="25" font-size="10">a</text>
+        <polyline
+          points="74,100 74,110 12,110 12,46 22,46"
+          fill="none"
+          stroke="#2563eb"
+          stroke-width="1.5"
+        >
+          <title>e</title>
+        </polyline>
+      </svg>
+    </article>
+    <article>
+      <h2>Real ELK 0.11.1</h2>
+      <svg viewBox="-20 -20 170.5 170" width="170.5" height="170" role="img">
+        <rect x="30" y="12" width="100" height="80" fill="white" stroke="#94a3b8" />
+        <text x="35" y="25" font-size="10">a</text>
+        <polyline
+          points="74,100 74,110 12,110 12,46 22,46"
+          fill="none"
+          stroke="#2563eb"
+          stroke-width="1.5"
+        >
+          <title>e</title>
+        </polyline>
+      </svg>
+    </article>
+  </div>
+</section>
+<section id="case-33" hidden>
+  <p>Seed 34 · DOWN · 0 differing values</p>
+  <div class="pair">
+    <article>
+      <h2>Native before</h2>
+      <svg viewBox="-20 -20 170.5 160" width="170.5" height="160" role="img">
+        <rect x="20" y="40" width="100" height="80" fill="white" stroke="#94a3b8" />
+        <text x="25" y="53" font-size="10">a</text>
+        <polyline
+          points="12,74 12,94 130.5,94 130.5,12 64,12 64,32"
+          fill="none"
+          stroke="#2563eb"
+          stroke-width="1.5"
+        >
+          <title>e</title>
+        </polyline>
+      </svg>
+    </article>
+    <article>
+      <h2>Native after</h2>
+      <svg viewBox="-20 -20 170.5 160" width="170.5" height="160" role="img">
+        <rect x="30" y="30" width="100" height="80" fill="white" stroke="#94a3b8" />
+        <text x="35" y="43" font-size="10">a</text>
+        <polyline
+          points="22,64 12,64 12,12 74,12 74,22"
+          fill="none"
+          stroke="#2563eb"
+          stroke-width="1.5"
+        >
+          <title>e</title>
+        </polyline>
+      </svg>
+    </article>
+    <article>
+      <h2>Real ELK 0.11.1</h2>
+      <svg viewBox="-20 -20 170.5 160" width="170.5" height="160" role="img">
+        <rect x="30" y="30" width="100" height="80" fill="white" stroke="#94a3b8" />
+        <text x="35" y="43" font-size="10">a</text>
+        <polyline
+          points="22,64 12,64 12,12 74,12 74,22"
+          fill="none"
+          stroke="#2563eb"
+          stroke-width="1.5"
+        >
+          <title>e</title>
+        </polyline>
+      </svg>
+    </article>
+  </div>
+</section>
+<section id="case-34" hidden>
+  <p>Seed 35 · DOWN · 0 differing values</p>
+  <div class="pair">
+    <article>
+      <h2>Native before</h2>
+      <svg viewBox="-20 -20 188 142" width="188" height="142" role="img">
+        <rect x="20" y="22" width="100" height="80" fill="white" stroke="#94a3b8" />
+        <text x="25" y="35" font-size="10">a</text>
+        <polyline
+          points="53.33333333333333,22 53.33333333333333,12 86.66666666666666,12 86.66666666666666,22"
+          fill="none"
+          stroke="#2563eb"
+          stroke-width="1.5"
+        >
+          <title>e</title>
+        </polyline>
+      </svg>
+    </article>
+    <article>
+      <h2>Native after</h2>
+      <svg viewBox="-20 -20 188 142" width="188" height="142" role="img">
+        <rect x="30" y="12" width="100" height="80" fill="white" stroke="#94a3b8" />
+        <text x="35" y="25" font-size="10">a</text>
+        <polyline
+          points="22,46 12,46 12,102 148,102 148,46 138,46"
+          fill="none"
+          stroke="#2563eb"
+          stroke-width="1.5"
+        >
+          <title>e</title>
+        </polyline>
+      </svg>
+    </article>
+    <article>
+      <h2>Real ELK 0.11.1</h2>
+      <svg viewBox="-20 -20 188 142" width="188" height="142" role="img">
+        <rect x="30" y="12" width="100" height="80" fill="white" stroke="#94a3b8" />
+        <text x="35" y="25" font-size="10">a</text>
+        <polyline
+          points="22,46 12,46 12,102 148,102 148,46 138,46"
+          fill="none"
+          stroke="#2563eb"
+          stroke-width="1.5"
+        >
+          <title>e</title>
+        </polyline>
+      </svg>
+    </article>
+  </div>
+</section>
+<section id="case-35" hidden>
+  <p>Seed 36 · DOWN · 0 differing values</p>
+  <div class="pair">
+    <article>
+      <h2>Native before</h2>
+      <svg viewBox="-20 -20 170 150" width="170" height="150" role="img">
+        <rect x="20" y="22" width="100" height="80" fill="white" stroke="#94a3b8" />
+        <text x="25" y="35" font-size="10">a</text>
+        <polyline
+          points="53.33333333333333,22 53.33333333333333,12 86.66666666666666,12 86.66666666666666,22"
+          fill="none"
+          stroke="#2563eb"
+          stroke-width="1.5"
+        >
+          <title>e</title>
+        </polyline>
+      </svg>
+    </article>
+    <article>
+      <h2>Native after</h2>
+      <svg viewBox="-20 -20 170 150" width="170" height="150" role="img">
+        <rect x="30" y="12" width="100" height="80" fill="white" stroke="#94a3b8" />
+        <text x="35" y="25" font-size="10">a</text>
+        <polyline
+          points="22,46 12,46 12,110 74,110 74,100"
+          fill="none"
+          stroke="#2563eb"
+          stroke-width="1.5"
+        >
+          <title>e</title>
+        </polyline>
+      </svg>
+    </article>
+    <article>
+      <h2>Real ELK 0.11.1</h2>
+      <svg viewBox="-20 -20 170 150" width="170" height="150" role="img">
+        <rect x="30" y="12" width="100" height="80" fill="white" stroke="#94a3b8" />
+        <text x="35" y="25" font-size="10">a</text>
+        <polyline
+          points="22,46 12,46 12,110 74,110 74,100"
+          fill="none"
+          stroke="#2563eb"
+          stroke-width="1.5"
+        >
+          <title>e</title>
+        </polyline>
+      </svg>
+    </article>
+  </div>
+</section>
+<section id="case-36" hidden>
+  <p>Seed 37 · UP · 0 differing values</p>
+  <div class="pair">
+    <article>
+      <h2>Native before</h2>
+      <svg viewBox="-20 -20 170 150" width="170" height="150" role="img">
+        <rect x="12" y="30" width="100" height="80" fill="white" stroke="#94a3b8" />
+        <text x="17" y="43" font-size="10">a</text>
+        <polyline
+          points="45.33333333333333,30 45.33333333333333,20 78.66666666666666,20 78.66666666666666,30"
+          fill="none"
+          stroke="#2563eb"
+          stroke-width="1.5"
+        >
+          <title>e</title>
+        </polyline>
+      </svg>
+    </article>
+    <article>
+      <h2>Native after</h2>
+      <svg viewBox="-20 -20 170 150" width="170" height="150" role="img">
+        <rect x="12" y="30" width="100" height="80" fill="white" stroke="#94a3b8" />
+        <text x="17" y="43" font-size="10">a</text>
+        <polyline
+          points="56,22 56,12 130,12 130,64 120,64"
+          fill="none"
+          stroke="#2563eb"
+          stroke-width="1.5"
+        >
+          <title>e</title>
+        </polyline>
+      </svg>
+    </article>
+    <article>
+      <h2>Real ELK 0.11.1</h2>
+      <svg viewBox="-20 -20 170 150" width="170" height="150" role="img">
+        <rect x="12" y="30" width="100" height="80" fill="white" stroke="#94a3b8" />
+        <text x="17" y="43" font-size="10">a</text>
+        <polyline
+          points="56,22 56,12 130,12 130,64 120,64"
+          fill="none"
+          stroke="#2563eb"
+          stroke-width="1.5"
+        >
+          <title>e</title>
+        </polyline>
+      </svg>
+    </article>
+  </div>
+</section>
+<section id="case-37" hidden>
+  <p>Seed 38 · UP · 0 differing values</p>
+  <div class="pair">
+    <article>
+      <h2>Native before</h2>
+      <svg viewBox="-20 -20 162 168" width="162" height="168" role="img">
+        <rect x="12" y="30" width="100" height="80" fill="white" stroke="#94a3b8" />
+        <text x="17" y="43" font-size="10">a</text>
+        <polyline
+          points="45.33333333333333,30 45.33333333333333,20 78.66666666666666,20 78.66666666666666,30"
+          fill="none"
+          stroke="#2563eb"
+          stroke-width="1.5"
+        >
+          <title>e</title>
+        </polyline>
+      </svg>
+    </article>
+    <article>
+      <h2>Native after</h2>
+      <svg viewBox="-20 -20 162 168" width="162" height="168" role="img">
+        <rect x="12" y="30" width="100" height="80" fill="white" stroke="#94a3b8" />
+        <text x="17" y="43" font-size="10">a</text>
+        <polyline
+          points="56,22 56,12 122,12 122,128 56,128 56,118"
+          fill="none"
+          stroke="#2563eb"
+          stroke-width="1.5"
+        >
+          <title>e</title>
+        </polyline>
+      </svg>
+    </article>
+    <article>
+      <h2>Real ELK 0.11.1</h2>
+      <svg viewBox="-20 -20 162 168" width="162" height="168" role="img">
+        <rect x="12" y="30" width="100" height="80" fill="white" stroke="#94a3b8" />
+        <text x="17" y="43" font-size="10">a</text>
+        <polyline
+          points="56,22 56,12 122,12 122,128 56,128 56,118"
+          fill="none"
+          stroke="#2563eb"
+          stroke-width="1.5"
+        >
+          <title>e</title>
+        </polyline>
+      </svg>
+    </article>
+  </div>
+</section>
+<section id="case-38" hidden>
+  <p>Seed 39 · UP · 0 differing values</p>
+  <div class="pair">
+    <article>
+      <h2>Native before</h2>
+      <svg viewBox="-20 -20 170 150" width="170" height="150" role="img">
+        <rect x="20" y="30" width="100" height="80" fill="white" stroke="#94a3b8" />
+        <text x="25" y="43" font-size="10">a</text>
+        <polyline
+          points="53.33333333333333,30 53.33333333333333,20 86.66666666666666,20 86.66666666666666,30"
+          fill="none"
+          stroke="#2563eb"
+          stroke-width="1.5"
+        >
+          <title>e</title>
+        </polyline>
+      </svg>
+    </article>
+    <article>
+      <h2>Native after</h2>
+      <svg viewBox="-20 -20 170 150" width="170" height="150" role="img">
+        <rect x="30" y="30" width="100" height="80" fill="white" stroke="#94a3b8" />
+        <text x="35" y="43" font-size="10">a</text>
+        <polyline
+          points="74,22 74,12 12,12 12,64 22,64"
+          fill="none"
+          stroke="#2563eb"
+          stroke-width="1.5"
+        >
+          <title>e</title>
+        </polyline>
+      </svg>
+    </article>
+    <article>
+      <h2>Real ELK 0.11.1</h2>
+      <svg viewBox="-20 -20 170 150" width="170" height="150" role="img">
+        <rect x="30" y="30" width="100" height="80" fill="white" stroke="#94a3b8" />
+        <text x="35" y="43" font-size="10">a</text>
+        <polyline
+          points="74,22 74,12 12,12 12,64 22,64"
+          fill="none"
+          stroke="#2563eb"
+          stroke-width="1.5"
+        >
+          <title>e</title>
+        </polyline>
+      </svg>
+    </article>
+  </div>
+</section>
+<section id="case-39" hidden>
+  <p>Seed 40 · UP · 0 differing values</p>
+  <div class="pair">
+    <article>
+      <h2>Native before</h2>
+      <svg viewBox="-20 -20 170 160" width="170" height="160" role="img">
+        <rect x="12" y="40" width="100" height="80" fill="white" stroke="#94a3b8" />
+        <text x="17" y="53" font-size="10">a</text>
+        <polyline
+          points="120,74 120,94 122.5,94 122.5,12 56,12 56,32"
+          fill="none"
+          stroke="#2563eb"
+          stroke-width="1.5"
+        >
+          <title>e</title>
+        </polyline>
+      </svg>
+    </article>
+    <article>
+      <h2>Native after</h2>
+      <svg viewBox="-20 -20 170 160" width="170" height="160" role="img">
+        <rect x="12" y="30" width="100" height="80" fill="white" stroke="#94a3b8" />
+        <text x="17" y="43" font-size="10">a</text>
+        <polyline
+          points="120,64 130,64 130,12 56,12 56,22"
+          fill="none"
+          stroke="#2563eb"
+          stroke-width="1.5"
+        >
+          <title>e</title>
+        </polyline>
+      </svg>
+    </article>
+    <article>
+      <h2>Real ELK 0.11.1</h2>
+      <svg viewBox="-20 -20 170 160" width="170" height="160" role="img">
+        <rect x="12" y="30" width="100" height="80" fill="white" stroke="#94a3b8" />
+        <text x="17" y="43" font-size="10">a</text>
+        <polyline
+          points="120,64 130,64 130,12 56,12 56,22"
+          fill="none"
+          stroke="#2563eb"
+          stroke-width="1.5"
+        >
+          <title>e</title>
+        </polyline>
+      </svg>
+    </article>
+  </div>
+</section>
+<section id="case-40" hidden>
+  <p>Seed 41 · UP · 0 differing values</p>
+  <div class="pair">
+    <article>
+      <h2>Native before</h2>
+      <svg viewBox="-20 -20 170 150" width="170" height="150" role="img">
+        <rect x="12" y="22" width="100" height="80" fill="white" stroke="#94a3b8" />
+        <text x="17" y="35" font-size="10">a</text>
+        <polyline
+          points="45.33333333333333,22 45.33333333333333,12 78.66666666666666,12 78.66666666666666,22"
+          fill="none"
+          stroke="#2563eb"
+          stroke-width="1.5"
+        >
+          <title>e</title>
+        </polyline>
+      </svg>
+    </article>
+    <article>
+      <h2>Native after</h2>
+      <svg viewBox="-20 -20 170 150" width="170" height="150" role="img">
+        <rect x="12" y="12" width="100" height="80" fill="white" stroke="#94a3b8" />
+        <text x="17" y="25" font-size="10">a</text>
+        <polyline
+          points="120,46 130,46 130,110 56,110 56,100"
+          fill="none"
+          stroke="#2563eb"
+          stroke-width="1.5"
+        >
+          <title>e</title>
+        </polyline>
+      </svg>
+    </article>
+    <article>
+      <h2>Real ELK 0.11.1</h2>
+      <svg viewBox="-20 -20 170 150" width="170" height="150" role="img">
+        <rect x="12" y="12" width="100" height="80" fill="white" stroke="#94a3b8" />
+        <text x="17" y="25" font-size="10">a</text>
+        <polyline
+          points="120,46 130,46 130,110 56,110 56,100"
+          fill="none"
+          stroke="#2563eb"
+          stroke-width="1.5"
+        >
+          <title>e</title>
+        </polyline>
+      </svg>
+    </article>
+  </div>
+</section>
+<section id="case-41" hidden>
+  <p>Seed 42 · UP · 0 differing values</p>
+  <div class="pair">
+    <article>
+      <h2>Native before</h2>
+      <svg viewBox="-20 -20 188 142" width="188" height="142" role="img">
+        <rect x="20" y="22" width="100" height="80" fill="white" stroke="#94a3b8" />
+        <text x="25" y="35" font-size="10">a</text>
+        <polyline
+          points="53.33333333333333,22 53.33333333333333,12 86.66666666666666,12 86.66666666666666,22"
+          fill="none"
+          stroke="#2563eb"
+          stroke-width="1.5"
+        >
+          <title>e</title>
+        </polyline>
+      </svg>
+    </article>
+    <article>
+      <h2>Native after</h2>
+      <svg viewBox="-20 -20 188 142" width="188" height="142" role="img">
+        <rect x="30" y="12" width="100" height="80" fill="white" stroke="#94a3b8" />
+        <text x="35" y="25" font-size="10">a</text>
+        <polyline
+          points="138,46 148,46 148,102 12,102 12,46 22,46"
+          fill="none"
+          stroke="#2563eb"
+          stroke-width="1.5"
+        >
+          <title>e</title>
+        </polyline>
+      </svg>
+    </article>
+    <article>
+      <h2>Real ELK 0.11.1</h2>
+      <svg viewBox="-20 -20 188 142" width="188" height="142" role="img">
+        <rect x="30" y="12" width="100" height="80" fill="white" stroke="#94a3b8" />
+        <text x="35" y="25" font-size="10">a</text>
+        <polyline
+          points="138,46 148,46 148,102 12,102 12,46 22,46"
+          fill="none"
+          stroke="#2563eb"
+          stroke-width="1.5"
+        >
+          <title>e</title>
+        </polyline>
+      </svg>
+    </article>
+  </div>
+</section>
+<section id="case-42" hidden>
+  <p>Seed 43 · UP · 0 differing values</p>
+  <div class="pair">
+    <article>
+      <h2>Native before</h2>
+      <svg viewBox="-20 -20 162.5 188" width="162.5" height="188" role="img">
+        <rect x="12" y="40" width="100" height="80" fill="white" stroke="#94a3b8" />
+        <text x="17" y="53" font-size="10">a</text>
+        <polyline
+          points="56,128 56,148 122.5,148 122.5,12 56,12 56,32"
+          fill="none"
+          stroke="#2563eb"
+          stroke-width="1.5"
+        >
+          <title>e</title>
+        </polyline>
+      </svg>
+    </article>
+    <article>
+      <h2>Native after</h2>
+      <svg viewBox="-20 -20 162.5 188" width="162.5" height="188" role="img">
+        <rect x="12" y="30" width="100" height="80" fill="white" stroke="#94a3b8" />
+        <text x="17" y="43" font-size="10">a</text>
+        <polyline
+          points="56,118 56,128 122,128 122,12 56,12 56,22"
+          fill="none"
+          stroke="#2563eb"
+          stroke-width="1.5"
+        >
+          <title>e</title>
+        </polyline>
+      </svg>
+    </article>
+    <article>
+      <h2>Real ELK 0.11.1</h2>
+      <svg viewBox="-20 -20 162.5 188" width="162.5" height="188" role="img">
+        <rect x="12" y="30" width="100" height="80" fill="white" stroke="#94a3b8" />
+        <text x="17" y="43" font-size="10">a</text>
+        <polyline
+          points="56,118 56,128 122,128 122,12 56,12 56,22"
+          fill="none"
+          stroke="#2563eb"
+          stroke-width="1.5"
+        >
+          <title>e</title>
+        </polyline>
+      </svg>
+    </article>
+  </div>
+</section>
+<section id="case-43" hidden>
+  <p>Seed 44 · UP · 0 differing values</p>
+  <div class="pair">
+    <article>
+      <h2>Native before</h2>
+      <svg viewBox="-20 -20 170 170" width="170" height="170" role="img">
+        <rect x="12" y="22" width="100" height="80" fill="white" stroke="#94a3b8" />
+        <text x="17" y="35" font-size="10">a</text>
+        <polyline
+          points="56,110 56,130 122.5,130 122.5,36 120,36 120,56"
+          fill="none"
+          stroke="#2563eb"
+          stroke-width="1.5"
+        >
+          <title>e</title>
+        </polyline>
+      </svg>
+    </article>
+    <article>
+      <h2>Native after</h2>
+      <svg viewBox="-20 -20 170 170" width="170" height="170" role="img">
+        <rect x="12" y="12" width="100" height="80" fill="white" stroke="#94a3b8" />
+        <text x="17" y="25" font-size="10">a</text>
+        <polyline
+          points="56,100 56,110 130,110 130,46 120,46"
+          fill="none"
+          stroke="#2563eb"
+          stroke-width="1.5"
+        >
+          <title>e</title>
+        </polyline>
+      </svg>
+    </article>
+    <article>
+      <h2>Real ELK 0.11.1</h2>
+      <svg viewBox="-20 -20 170 170" width="170" height="170" role="img">
+        <rect x="12" y="12" width="100" height="80" fill="white" stroke="#94a3b8" />
+        <text x="17" y="25" font-size="10">a</text>
+        <polyline
+          points="56,100 56,110 130,110 130,46 120,46"
+          fill="none"
+          stroke="#2563eb"
+          stroke-width="1.5"
+        >
+          <title>e</title>
+        </polyline>
+      </svg>
+    </article>
+  </div>
+</section>
+<section id="case-44" hidden>
+  <p>Seed 45 · UP · 0 differing values</p>
+  <div class="pair">
+    <article>
+      <h2>Native before</h2>
+      <svg viewBox="-20 -20 170.5 170" width="170.5" height="170" role="img">
+        <rect x="20" y="22" width="100" height="80" fill="white" stroke="#94a3b8" />
+        <text x="25" y="35" font-size="10">a</text>
+        <polyline
+          points="64,110 64,130 130.5,130 130.5,36 12,36 12,56"
+          fill="none"
+          stroke="#2563eb"
+          stroke-width="1.5"
+        >
+          <title>e</title>
+        </polyline>
+      </svg>
+    </article>
+    <article>
+      <h2>Native after</h2>
+      <svg viewBox="-20 -20 170.5 170" width="170.5" height="170" role="img">
+        <rect x="30" y="12" width="100" height="80" fill="white" stroke="#94a3b8" />
+        <text x="35" y="25" font-size="10">a</text>
+        <polyline
+          points="74,100 74,110 12,110 12,46 22,46"
+          fill="none"
+          stroke="#2563eb"
+          stroke-width="1.5"
+        >
+          <title>e</title>
+        </polyline>
+      </svg>
+    </article>
+    <article>
+      <h2>Real ELK 0.11.1</h2>
+      <svg viewBox="-20 -20 170.5 170" width="170.5" height="170" role="img">
+        <rect x="30" y="12" width="100" height="80" fill="white" stroke="#94a3b8" />
+        <text x="35" y="25" font-size="10">a</text>
+        <polyline
+          points="74,100 74,110 12,110 12,46 22,46"
+          fill="none"
+          stroke="#2563eb"
+          stroke-width="1.5"
+        >
+          <title>e</title>
+        </polyline>
+      </svg>
+    </article>
+  </div>
+</section>
+<section id="case-45" hidden>
+  <p>Seed 46 · UP · 0 differing values</p>
+  <div class="pair">
+    <article>
+      <h2>Native before</h2>
+      <svg viewBox="-20 -20 170.5 160" width="170.5" height="160" role="img">
+        <rect x="20" y="40" width="100" height="80" fill="white" stroke="#94a3b8" />
+        <text x="25" y="53" font-size="10">a</text>
+        <polyline
+          points="12,74 12,94 130.5,94 130.5,12 64,12 64,32"
+          fill="none"
+          stroke="#2563eb"
+          stroke-width="1.5"
+        >
+          <title>e</title>
+        </polyline>
+      </svg>
+    </article>
+    <article>
+      <h2>Native after</h2>
+      <svg viewBox="-20 -20 170.5 160" width="170.5" height="160" role="img">
+        <rect x="30" y="30" width="100" height="80" fill="white" stroke="#94a3b8" />
+        <text x="35" y="43" font-size="10">a</text>
+        <polyline
+          points="22,64 12,64 12,12 74,12 74,22"
+          fill="none"
+          stroke="#2563eb"
+          stroke-width="1.5"
+        >
+          <title>e</title>
+        </polyline>
+      </svg>
+    </article>
+    <article>
+      <h2>Real ELK 0.11.1</h2>
+      <svg viewBox="-20 -20 170.5 160" width="170.5" height="160" role="img">
+        <rect x="30" y="30" width="100" height="80" fill="white" stroke="#94a3b8" />
+        <text x="35" y="43" font-size="10">a</text>
+        <polyline
+          points="22,64 12,64 12,12 74,12 74,22"
+          fill="none"
+          stroke="#2563eb"
+          stroke-width="1.5"
+        >
+          <title>e</title>
+        </polyline>
+      </svg>
+    </article>
+  </div>
+</section>
+<section id="case-46" hidden>
+  <p>Seed 47 · UP · 0 differing values</p>
+  <div class="pair">
+    <article>
+      <h2>Native before</h2>
+      <svg viewBox="-20 -20 188 142" width="188" height="142" role="img">
+        <rect x="20" y="22" width="100" height="80" fill="white" stroke="#94a3b8" />
+        <text x="25" y="35" font-size="10">a</text>
+        <polyline
+          points="53.33333333333333,22 53.33333333333333,12 86.66666666666666,12 86.66666666666666,22"
+          fill="none"
+          stroke="#2563eb"
+          stroke-width="1.5"
+        >
+          <title>e</title>
+        </polyline>
+      </svg>
+    </article>
+    <article>
+      <h2>Native after</h2>
+      <svg viewBox="-20 -20 188 142" width="188" height="142" role="img">
+        <rect x="30" y="22" width="100" height="80" fill="white" stroke="#94a3b8" />
+        <text x="35" y="35" font-size="10">a</text>
+        <polyline
+          points="22,56 12,56 12,12 148,12 148,56 138,56"
+          fill="none"
+          stroke="#2563eb"
+          stroke-width="1.5"
+        >
+          <title>e</title>
+        </polyline>
+      </svg>
+    </article>
+    <article>
+      <h2>Real ELK 0.11.1</h2>
+      <svg viewBox="-20 -20 188 142" width="188" height="142" role="img">
+        <rect x="30" y="22" width="100" height="80" fill="white" stroke="#94a3b8" />
+        <text x="35" y="35" font-size="10">a</text>
+        <polyline
+          points="22,56 12,56 12,12 148,12 148,56 138,56"
+          fill="none"
+          stroke="#2563eb"
+          stroke-width="1.5"
+        >
+          <title>e</title>
+        </polyline>
+      </svg>
+    </article>
+  </div>
+</section>
+<section id="case-47" hidden>
+  <p>Seed 48 · UP · 0 differing values</p>
+  <div class="pair">
+    <article>
+      <h2>Native before</h2>
+      <svg viewBox="-20 -20 170 150" width="170" height="150" role="img">
+        <rect x="20" y="22" width="100" height="80" fill="white" stroke="#94a3b8" />
+        <text x="25" y="35" font-size="10">a</text>
+        <polyline
+          points="53.33333333333333,22 53.33333333333333,12 86.66666666666666,12 86.66666666666666,22"
+          fill="none"
+          stroke="#2563eb"
+          stroke-width="1.5"
+        >
+          <title>e</title>
+        </polyline>
+      </svg>
+    </article>
+    <article>
+      <h2>Native after</h2>
+      <svg viewBox="-20 -20 170 150" width="170" height="150" role="img">
+        <rect x="30" y="12" width="100" height="80" fill="white" stroke="#94a3b8" />
+        <text x="35" y="25" font-size="10">a</text>
+        <polyline
+          points="22,46 12,46 12,110 74,110 74,100"
+          fill="none"
+          stroke="#2563eb"
+          stroke-width="1.5"
+        >
+          <title>e</title>
+        </polyline>
+      </svg>
+    </article>
+    <article>
+      <h2>Real ELK 0.11.1</h2>
+      <svg viewBox="-20 -20 170 150" width="170" height="150" role="img">
+        <rect x="30" y="12" width="100" height="80" fill="white" stroke="#94a3b8" />
+        <text x="35" y="25" font-size="10">a</text>
+        <polyline
+          points="22,46 12,46 12,110 74,110 74,100"
+          fill="none"
+          stroke="#2563eb"
+          stroke-width="1.5"
+        >
+          <title>e</title>
+        </polyline>
+      </svg>
+    </article>
+  </div>
+</section>
+<script>
+  const select = document.querySelector("#cases");
+  function show() {
+    const i = Math.max(0, Math.min(select.options.length - 1, Number(location.hash.slice(1)) || 0));
+    select.value = i;
+    document.querySelectorAll("section").forEach((s, n) => (s.hidden = n !== i));
+  }
+  select.onchange = () => (location.hash = select.value);
+  onhashchange = show;
+  show();
+</script>

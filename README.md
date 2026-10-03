@@ -378,7 +378,7 @@ API, supported controls, tradeoffs and reproducible visual comparison.
 For the strict seeded hierarchy comparison with real ELK, run
 `pnpm test:parity:compound`. See the
 [compound baseline](./docs/heuristics/compound-baseline/README.md) for preserved
-failures and side-by-side diagrams. This gate currently fails; native parity
+failures and side-by-side diagrams. This finite gate passes; broad native parity
 remains work in progress.
 
 For bounded random fixed-port self-loops, run `pnpm test:parity:self-loops`.

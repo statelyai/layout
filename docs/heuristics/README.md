@@ -126,3 +126,5 @@ The [compaction port-margin proof](compaction-port-margins/README.md) records 40
 The [long-edge joining proof](long-edge-compaction-joining/README.md) preserves ELK segment bends after compaction, including retraced sections. Directional full matches improve from 64 to 74/200; broad parity remains incomplete.
 
 The [compound boundary-spacing proof](compound-boundary-spacing/README.md) replaces blanket spacing and compensating child shifts with ELK routing-track reservations. Directional full matches improve from 74 to 80/200; broad parity remains incomplete.
+
+The [fixed-port loop proof](fixed-port-loop-pairs/README.md) records 48 face-pair/direction regressions matching real ELK, with no new full-suite failure. Broad random parity remains incomplete.

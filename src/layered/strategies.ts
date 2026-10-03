@@ -3772,6 +3772,10 @@ function routeEdges(style: "ORTHOGONAL" | "POLYLINE" | "SPLINES"): EdgeRouter {
         (size(edge) > 0 ? size(edge) / 2 + labelSpacing : 0)
       );
     };
+    const hasFixedLoopPorts = (node: GraphNode): boolean => {
+      const constraints = String(input.nodeSettings?.(node)?.portConstraints ?? "UNDEFINED");
+      return constraints !== "UNDEFINED" && constraints !== "FREE";
+    };
     const northReserveByLayer = new Map<number, number>();
     for (const [id, nodeLoops] of selfLoopsByNodeId) {
       const loops = nodeLoops.filter(
@@ -3794,6 +3798,20 @@ function routeEdges(style: "ORTHOGONAL" | "POLYLINE" | "SPLINES"): EdgeRouter {
         });
       } else {
         const northLoops = loops.filter((edge, index) => {
+          if (
+            style === "ORTHOGONAL" &&
+            node &&
+            edge.sourcePort !== undefined &&
+            edge.targetPort !== undefined &&
+            hasFixedLoopPorts(node)
+          ) {
+            const sourcePort = node.ports?.find((port) => port.name === edge.sourcePort);
+            const targetPort = node.ports?.find((port) => port.name === edge.targetPort);
+            return (
+              (sourcePort && input.portSettings?.(sourcePort, node)?.["port.side"] === "NORTH") ||
+              (targetPort && input.portSettings?.(targetPort, node)?.["port.side"] === "NORTH")
+            );
+          }
           if (
             style === "ORTHOGONAL" &&
             node &&
@@ -4829,7 +4847,7 @@ function routeEdges(style: "ORTHOGONAL" | "POLYLINE" | "SPLINES"): EdgeRouter {
         source.id === target.id &&
         hasFixedPortSide(source) &&
         (feedbackSourcePortSide !== undefined || feedbackTargetPortSide !== undefined) &&
-        (edge.sourcePort === undefined || edge.targetPort === undefined)
+        (edge.sourcePort === undefined || edge.targetPort === undefined || !sameSideSelfLoop)
       ) {
         const endpoints = implicitEndpoints.get(edge.id)!;
         const start = getPortPoint(
