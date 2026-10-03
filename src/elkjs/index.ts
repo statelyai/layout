@@ -1925,14 +1925,18 @@ function normalizeElkGraphBounds(
           : (source.y ?? 0) < (target.y ?? 0);
   }).length;
   const hasWrappedEdge = wrappedEdgeCount > 0;
-  const addBoundaryPixel =
+  const retainPlacementBounds =
     wrappingStrategy !== "MULTI_EDGE" &&
     !(wrappingStrategy === "SINGLE_EDGE" && hasWrappedEdge) &&
     String(getOption(layoutOptions, "layered.compaction.postCompaction.strategy") ?? "NONE") ===
       "NONE" &&
     getBooleanOption(layoutOptions, "layered.feedbackEdges") !== true &&
     String(getOption(layoutOptions, "layered.layering.nodePromotion.strategy") ?? "NONE") !==
-      "MODEL_ORDER_LEFT_TO_RIGHT" &&
+      "MODEL_ORDER_LEFT_TO_RIGHT";
+  // Actual helper extents survive nested scopes. The legacy route-pixel
+  // allowance still excludes compound scopes.
+  const addBoundaryPixel =
+    retainPlacementBounds &&
     !(root.children ?? []).some((child) => (child.children?.length ?? 0) > 0);
   // Prefer the retained placement extent on the cross axis. Other placers
   // retain the legacy route-bound allowance until they expose phase bounds.
@@ -1993,7 +1997,7 @@ function normalizeElkGraphBounds(
   const calculatedWidth =
     Math.max(
       compactionBounds ? compactionBounds.right + shiftX : 0,
-      addBoundaryPixel && placementCrossBounds?.axis === "x"
+      retainPlacementBounds && placementCrossBounds?.axis === "x"
         ? placementCrossBounds.maximum + shiftX
         : 0,
       ...layoutChildren.flatMap((node) => [
@@ -2032,7 +2036,7 @@ function normalizeElkGraphBounds(
   const calculatedHeight =
     Math.max(
       compactionBounds ? compactionBounds.bottom + shiftY : 0,
-      addBoundaryPixel && placementCrossBounds?.axis === "y"
+      retainPlacementBounds && placementCrossBounds?.axis === "y"
         ? placementCrossBounds.maximum + shiftY
         : 0,
       ...layoutChildren.flatMap((node) => [

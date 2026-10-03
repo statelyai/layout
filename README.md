@@ -27,6 +27,7 @@ the selected descendant port across a compound boundary.
 Initial model ordering and port-helper alignment have seven retained random
 full-geometry regressions across independent seed ranges. Mixed-port junction
 restoration has nineteen more, covering direct and joined routes in all directions.
+Nested helper bounds have twelve complete-geometry regressions, including parent placement/routing after child resizing.
 A deeper random corpus adds three levels of nesting, bounded ports, cycles, loops and cross-boundary edges. Physical hierarchy boundaries now survive feedback reversal; complete comparisons still expose substantial geometry differences.
 That coverage does not establish broad geometry or aesthetic parity: native
 hierarchy placement and routing still diverge materially from real ELK. The
