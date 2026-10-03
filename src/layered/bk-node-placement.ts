@@ -663,9 +663,11 @@ function createStraighteningThreshold(
   const rootOf = (id: string) => bal.root.get(id) ?? id;
   const pick = (pending: Pending): Pending => {
     const incoming = pending.isRoot ? bal.hdir === "RIGHT" : bal.hdir === "LEFT";
-    const ports = (incoming ? order.inputPortOrderByNodeId : order.outputPortOrderByNodeId)?.get(
-      pending.free,
-    );
+    const ports =
+      (incoming
+        ? getCrossingUnits(input)?.incomingEdgeOrderByDummyId?.get(pending.free)
+        : undefined) ??
+      (incoming ? order.inputPortOrderByNodeId : order.outputPortOrderByNodeId)?.get(pending.free);
     // Feedback segments retain model direction; BK traverses their layer direction.
     const edges = input.graph.edges
       .filter((edge) => {

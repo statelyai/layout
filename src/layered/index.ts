@@ -2,7 +2,7 @@ import { compactionBounds } from "./compaction-bounds";
 import { setElkjs0111ResultPolicy } from "../internal/elkjs-compatibility";
 import { networkSimplexComponents } from "./network-simplex";
 import { mergeHyperedgeDummies } from "./hyperedge-dummy-merger";
-import { recordCrossingUnits } from "./crossing-constraints";
+import { getCrossingUnits, recordCrossingUnits } from "./crossing-constraints";
 import { externalPortDummyOf } from "./external-port-dummy";
 import type { EntityRect } from "@statelyai/graph";
 import { setPlacementOrientation, setPlacementOrder } from "./placement-orientation";
@@ -1584,6 +1584,7 @@ export function* createLayeredScopePipeline<N, E, G, P>(
       if (side === lower) southEdges.add(id!);
     }
   recordCrossingUnits(expanded.input, {
+    incomingEdgeOrderByDummyId: northSouth.incomingEdgeOrderByDummyId,
     successors: northSouth.successorsByNodeId,
     units: northSouth.layoutUnitByNodeId,
     unitMembers,
@@ -1679,11 +1680,13 @@ export function* createLayeredScopePipeline<N, E, G, P>(
     }
   }
   order = applyDirectionCongruency(expanded.input, order);
+  const crossingUnits = getCrossingUnits(expanded.input);
   const switchedLabels = switchCenterLabelDummies(expanded, labels, order);
   expanded = switchedLabels.expansion;
   order = switchedLabels.order;
   const labelSelection = selectCenterLabelSides(expanded, labels, order);
   expanded = labelSelection.expansion;
+  if (crossingUnits) recordCrossingUnits(expanded.input, crossingUnits);
   order = mergeHyperedgeDummies(expanded, order);
   setPlacementOrder(expanded.input, order);
   const nodePlacementStrategy = options.settings?.["nodePlacement.strategy"] ?? "BRANDES_KOEPF";

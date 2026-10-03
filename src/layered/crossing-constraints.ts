@@ -12,6 +12,7 @@ export interface CrossingUnits {
   unitMembers?: ReadonlyMap<string, readonly string[]>;
   associates: ReadonlyMap<string, readonly string[]>;
   normalNodes: ReadonlySet<string>;
+  incomingEdgeOrderByDummyId?: ReadonlyMap<string, readonly string[]>;
   longEdgeNodes?: ReadonlySet<string>;
   northEdges?: ReadonlySet<string>;
   southEdges?: ReadonlySet<string>;

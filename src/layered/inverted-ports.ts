@@ -106,9 +106,34 @@ export function insertInvertedPortDummies(expansion: LongEdgeExpansion): LongEdg
     }
     replacements.set(edge.id, segments);
   }
+  const incomingEdgeOrderByNodeId = new Map(
+    [...(expansion.incomingEdgeOrderByNodeId ?? [])].map(([id, order]) => [id, [...order]]),
+  );
+  // A source-side inversion retargets the original segment and appends a new
+  // continuation to its target port. Interior chain targets are temporary;
+  // only terminal segments change an authored node's incoming adjacency.
+  for (const node of [...input.graph.nodes].sort(
+    (a, b) => (layers.get(a.id) ?? 0) - (layers.get(b.id) ?? 0),
+  )) {
+    for (const edge of input.graph.edges) {
+      const rev = expansion.orientation.reversedEdgeIds.has(edge.id);
+      const source = rev ? edge.targetId : edge.sourceId;
+      const target = rev ? edge.sourceId : edge.targetId;
+      const sourcePort = rev ? edge.targetPort : edge.sourcePort;
+      if (source !== node.id || fixedSide(node, sourcePort, true) !== backward) continue;
+      const order = incomingEdgeOrderByNodeId.get(target);
+      if (!order || (replacements.get(edge.id)?.length ?? 0) < 2) continue;
+      const original = [...expansion.segmentIdsByEdgeId].find(([, ids]) =>
+        ids.includes(edge.id),
+      )?.[0];
+      if (original && order.includes(original))
+        incomingEdgeOrderByNodeId.set(target, [...order.filter((id) => id !== original), original]);
+    }
+  }
   if (!dummyIds.size) return expansion;
   return {
     ...expansion,
+    incomingEdgeOrderByNodeId,
     input: inheritCycleRandom(input, {
       ...input,
       graph: { ...input.graph, nodes, edges },

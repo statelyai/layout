@@ -15,6 +15,8 @@ export interface LongEdgeExpansion {
   assignment: LayerAssignment;
   segmentIdsByEdgeId: ReadonlyMap<string, readonly string[]>;
   labelDummyIdByEdgeId: ReadonlyMap<string, string>;
+  /** Physical incoming adjacency after cycle reversal and long-edge retargeting. */
+  incomingEdgeOrderByNodeId?: ReadonlyMap<string, readonly string[]>;
 }
 
 function uniqueDummyId(usedIds: Set<string>, edgeId: string, layer: number): string {
@@ -141,6 +143,54 @@ export function splitLongEdges(
     segmentIdsByEdgeId.set(edge.id, segmentIds);
   }
 
+  const incomingEdgeOrderByNodeId = new Map<string, string[]>();
+  const orientedSource = (edge: GraphEdge) =>
+    orientation.reversedEdgeIds.has(edge.id) ? edge.targetId : edge.sourceId;
+  const orientedTarget = (edge: GraphEdge) =>
+    orientation.reversedEdgeIds.has(edge.id) ? edge.sourceId : edge.targetId;
+  const appendIncoming = (edge: GraphEdge) => {
+    const target = orientedTarget(edge);
+    incomingEdgeOrderByNodeId.set(target, [
+      ...(incomingEdgeOrderByNodeId.get(target) ?? []),
+      edge.id,
+    ]);
+  };
+  for (const edge of input.graph.edges)
+    if (!orientation.reversedEdgeIds.has(edge.id)) appendIncoming(edge);
+  for (const id of orientation.reversedEdgeIds) {
+    const edge = input.graph.edges.find((candidate) => candidate.id === id);
+    if (edge) appendIncoming(edge);
+  }
+  // Upstream walks source layers, nodes, then their existing ports. Splitting
+  // retargets the last chain segment, appending it to its physical target port.
+  const sourceNodes = [...input.graph.nodes].sort(
+    (a, b) => (assignment.layerByNodeId.get(a.id) ?? 0) - (assignment.layerByNodeId.get(b.id) ?? 0),
+  );
+  for (const node of sourceNodes) {
+    const outgoing = input.graph.edges.filter((edge) => orientedSource(edge) === node.id);
+    const portIndex = (edge: GraphEdge) =>
+      node.ports?.findIndex(
+        (port) =>
+          port.name ===
+          (orientation.reversedEdgeIds.has(edge.id) ? edge.targetPort : edge.sourcePort),
+      ) ?? -1;
+    outgoing.sort(
+      (a, b) =>
+        portIndex(a) - portIndex(b) ||
+        Number(orientation.reversedEdgeIds.has(a.id)) -
+          Number(orientation.reversedEdgeIds.has(b.id)),
+    );
+    for (const edge of outgoing) {
+      if ((segmentIdsByEdgeId.get(edge.id)?.length ?? 0) < 2) continue;
+      const target = orientedTarget(edge);
+      incomingEdgeOrderByNodeId.set(
+        target,
+        incomingEdgeOrderByNodeId.get(target)!.filter((id) => id !== edge.id),
+      );
+      appendIncoming(edge);
+    }
+  }
+
   // ELK creates long-edge dummies while walking layers. Thus dummies for an
   // edge whose source is in the next layer can precede later parts of an edge
   // that started in an earlier layer. Preserve that order for crossing ties.
@@ -224,6 +274,7 @@ export function splitLongEdges(
         };
       },
     }),
+    incomingEdgeOrderByNodeId,
     orientation: { reversedEdgeIds },
     assignment: { ...assignment, layerByNodeId },
     segmentIdsByEdgeId,

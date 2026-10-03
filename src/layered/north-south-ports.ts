@@ -21,6 +21,7 @@ export interface CrossPortOrigin {
 export interface NorthSouthPortExpansion {
   expansion: LongEdgeExpansion;
   originsByDummyId: ReadonlyMap<string, CrossPortOrigin>;
+  incomingEdgeOrderByDummyId?: ReadonlyMap<string, readonly string[]>;
   successorsByNodeId: ReadonlyMap<string, readonly string[]>;
   layoutUnitByNodeId: ReadonlyMap<string, string>;
 }
@@ -167,6 +168,23 @@ export function insertNorthSouthPortDummies(expansion: LongEdgeExpansion): North
         coordinate(a) - coordinate(b),
     );
   });
+  const incomingEdgeOrderByDummyId = new Map<string, readonly string[]>();
+  for (const [dummy, origin] of origins) {
+    if (!origin.input) continue;
+    const ordered = expansion.incomingEdgeOrderByNodeId?.get(origin.node.id) ?? [];
+    if (!ordered.length) continue;
+    const ids = ordered.flatMap((id) => expansion.segmentIdsByEdgeId.get(id) ?? [id]);
+    incomingEdgeOrderByDummyId.set(
+      dummy,
+      ids.filter((id) =>
+        edges.some(
+          (edge) =>
+            edge.id === id &&
+            (orientation.reversedEdgeIds.has(id) ? edge.sourceId : edge.targetId) === dummy,
+        ),
+      ),
+    );
+  }
   origins.clear();
   for (const [id, origin] of orderedOrigins) origins.set(id, origin);
   const seed = expansion.assignment.seedOrder ?? input.graph.nodes.map((n) => n.id);
@@ -195,6 +213,7 @@ export function insertNorthSouthPortDummies(expansion: LongEdgeExpansion): North
       assignment: { ...expansion.assignment, layerByNodeId: layers, seedOrder },
     },
     originsByDummyId: origins,
+    incomingEdgeOrderByDummyId,
     successorsByNodeId: successors,
     layoutUnitByNodeId: units,
   };

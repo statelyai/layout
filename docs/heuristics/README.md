@@ -132,3 +132,5 @@ The [fixed-port loop proof](fixed-port-loop-pairs/README.md) records 48 face-pai
 The [loop-envelope compaction proof](compaction-loop-envelopes/README.md) improves directional full matches from 122 to 132/200, with zero native errors and five resolved suite failures. Broad parity remains incomplete.
 
 The [label routing clearance proof](label-routing-clearance/README.md) improves directional full matches from 132 to 134/200 and original flat matches from 32 to 34/100. Seeds 26–50 add 200 preserved random comparisons; combined exact matches are 266/400, with zero native errors. Broad parity remains incomplete.
+
+The [shared cross-port adjacency proof](shared-cross-port-adjacency/README.md) corrects BK straightening on detached port rows through physical edge append order. Combined exact matches remain 266/400; differing values improve by ten, with no matches lost. Broad parity remains incomplete.
