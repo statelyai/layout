@@ -5485,13 +5485,15 @@ function routeEdges(style: "ORTHOGONAL" | "POLYLINE" | "SPLINES"): EdgeRouter {
       const laterLayer = Math.max(sourceLayer, targetLayer);
       const earlier = flowLayers[earlierLayer];
       const later = flowLayers[laterLayer];
+      // Inverted-port links clear the occupied layer, including protruding
+      // ports and routing reservations, rather than only the two node bodies.
       const sameLayerTrack =
         sourceLayer === targetLayer
-          ? horizontal
-            ? Math.max(sourceRect.x + sourceRect.width, targetRect.x + targetRect.width) +
-              Number(input.settings["spacing.edgeNodeBetweenLayers"] ?? 10)
-            : Math.max(sourceRect.y + sourceRect.height, targetRect.y + targetRect.height) +
-              Number(input.settings["spacing.edgeNodeBetweenLayers"] ?? 10)
+          ? (flowLayers[sourceLayer]?.end ??
+              (horizontal
+                ? Math.max(sourceRect.x + sourceRect.width, targetRect.x + targetRect.width)
+                : Math.max(sourceRect.y + sourceRect.height, targetRect.y + targetRect.height))) +
+            Number(input.settings["spacing.edgeNodeBetweenLayers"] ?? 10)
           : undefined;
       const track =
         orthogonalTrackByEdgeId.get(edge.id) ??

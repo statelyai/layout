@@ -148,3 +148,5 @@ The [smart vertical label proof](smart-vertical-labels/README.md) fixes a second
 The [cycle-aware compaction proof](cycle-connection-locking/README.md) corrects connection locks to use physical cycle-broken adjacency. Combined strict matches improve to **278/400**, with no lost complete matches or increased differences. Seed 44 now matches all directions. Its scoped vertical tests now assert complete geometry.
 
 The [mixed loop bounds proof](mixed-loop-bounds/README.md) restores ordinary long-edge cross-axis bounds even when an unrelated self-loop is present. Default flat exact matches improve to **42/100**; all 600 directional results remain byte-identical to their retained evidence.
+
+The [port-aware track proof](port-aware-tracks/README.md) fixes seed 22 RIGHT routing and junctions. Default flat matches improve to **43/100**; directional exact matches remain **412/600**. Two incomplete compaction cases worsen and remain preserved.
