@@ -14,6 +14,23 @@ const context = vm.createContext({
 });
 context.global = context;
 vm.runInContext(source, context);
+const rngEvents = [];
+let rngDepth = 0;
+for (const name of ["$nextLong", "$nextDouble", "$nextFloat", "$nextInternal"]) {
+  const original = context[name];
+  context[name] = (...args) => {
+    const top = rngDepth++ === 0;
+    const result = original(...args);
+    rngDepth--;
+    if (top)
+      rngEvents.push({
+        name,
+        bits: name === "$nextInternal" ? args[1] : undefined,
+        result: String(result),
+      });
+    return result;
+  };
+}
 const pipelineCalls = {};
 for (const name of ["$doCompoundLayout", "$doLayout", "$split_2", "$combine"]) {
   const original = context[name];
@@ -210,6 +227,7 @@ fs.writeFileSync(
       input,
       output,
       pipelineCalls,
+      rngEvents,
       sweepScopes,
       sweepEvents,
       stages,

@@ -22,6 +22,8 @@ export interface LayoutPadding {
 }
 
 export interface LayeredPhaseInput {
+  /** Authored edge order retained through label and long-edge expansion. */
+  modelOrderByEdgeId?: ReadonlyMap<string, number>;
   graph: Graph<unknown, unknown, unknown, unknown>;
   sizes: ReadonlyMap<string, NodeSize>;
   direction: LayoutDirection;

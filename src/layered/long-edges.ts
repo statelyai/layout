@@ -243,6 +243,15 @@ export function splitLongEdges(
     input: inheritCycleRandom(input, {
       ...input,
       graph,
+      modelOrderByEdgeId: new Map(
+        edges.map((edge) => {
+          const original = originalEdgeBySegmentId.get(edge.id) ?? edge;
+          return [
+            edge.id,
+            input.modelOrderByEdgeId?.get(original.id) ?? input.graph.edges.indexOf(original),
+          ];
+        }),
+      ),
       sizes,
       edgeSettings: (edge) => {
         const original = originalEdgeBySegmentId.get(edge.id) ?? edge;

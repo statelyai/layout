@@ -66,7 +66,16 @@ export function minimizeHierarchyCrossings(
       best = snapshot();
     for (let attempt = 0; attempt < scope.session.attempts; attempt++) {
       let forward = stream.nextBoolean();
-      scope.session.shuffleFirstLayer(forward);
+      if (scope.session.usesInitialModelOrder && attempt === 0) {
+        if (attempt === 0 && count() === 0) {
+          bestCount = 0;
+          best = snapshot();
+          break;
+        }
+        // ELK 0.11.1 gives FIRST_TRY and SECOND_TRY the same property id.
+        // Clearing SECOND_TRY therefore clears FIRST_TRY after this attempt.
+        forward = true;
+      } else scope.session.shuffleFirstLayer(forward);
       sweep(scope, forward, true);
       let crossings = count(),
         selected = snapshot();

@@ -1,3 +1,10 @@
+import {
+  sortInitialModelOrder,
+  countModelOrderChanges,
+  normalModelComparator,
+  insertionSort,
+  transitiveComparator,
+} from "./initial-model-order";
 import { CanonicalPortDistributor } from "./port-distributor";
 import { countAllCrossings } from "./crossing-counter";
 import { crossingGraph } from "./crossing-graph";
@@ -47,6 +54,8 @@ import { nodeNodeSpacing } from "./spacing";
 import type { ElkLayeredOptionValueByName } from "./elk-options";
 import { conservativeSpline } from "./spline-bezier";
 import { getFlexiblePortPosition } from "./flexible-ports";
+
+const modelSweepInputs = new WeakSet<LayeredPhaseInput>();
 
 const nodeRelativePortRanksByInput = new WeakMap<LayeredPhaseInput, boolean>();
 
@@ -1065,7 +1074,7 @@ export function applyForcedModelOrder(
   order: LayerOrder,
 ): LayerOrder {
   const strategy = input.settings["considerModelOrder.strategy"] ?? "NONE";
-  if (strategy === "NONE") return order;
+  if (strategy === "NONE" || modelSweepInputs.has(input)) return order;
   const forceNodeOrder =
     input.settings["crossingMinimization.forceNodeModelOrder"] === true &&
     (strategy === "NODES_AND_EDGES" || strategy === "PREFER_NODES");
@@ -1660,6 +1669,7 @@ function sortLayerByAdjacentPosition(
   units?: CrossingUnits,
   sameLayerNeighbors: ReadonlyMap<string, readonly string[]> = new Map(),
   orderedVisits?: ReadonlyMap<string, readonly (number | string)[]>,
+  forcedCompare?: (left: string, right: string) => number,
 ): void {
   const originalIndex = new Map(layer.map((nodeId, index) => [nodeId, index] as const));
   const adjacentPosition = new Map<string, number | undefined>();
@@ -1735,13 +1745,20 @@ function sortLayerByAdjacentPosition(
     }
   }
 
-  layer.sort((a, b) => {
+  const compare = (a: string, b: string) => {
     return (
+      forcedCompare?.(a, b) ||
       (adjacentPosition.get(a) ?? 0) - (adjacentPosition.get(b) ?? 0) ||
       (originalIndex.get(a) ?? 0) - (originalIndex.get(b) ?? 0)
     );
-  });
-  if (units)
+  };
+  if (forcedCompare)
+    insertionSort(
+      layer,
+      transitiveComparator((id: string) => id, compare),
+    );
+  else layer.sort(compare);
+  if (units && !forcedCompare)
     layer.splice(0, layer.length, ...resolveCrossingConstraints(layer, adjacentPosition, units));
 }
 
@@ -1757,6 +1774,7 @@ export interface LayerSweepSession {
   readonly random: JavaRandom;
   readonly attempts: number;
   readonly restoreRejectedSweep: boolean;
+  readonly usesInitialModelOrder?: boolean;
   useRandom(random: JavaRandom): void;
   lockPortOrder(nodeId: string): void;
   markHierarchicalNode(nodeId: string): void;
@@ -1889,10 +1907,32 @@ export function createLayerSweepSession(
     }
   }
   const countCrossings = (candidateLayers: readonly (readonly string[])[]): number => {
-    if (exactPortSweep)
-      return countAllCrossings(
-        crossingGraph(input, orientation, candidateLayers, inputPortOrder, outputPortOrder),
-      ).total;
+    if (exactPortSweep) {
+      const graph = crossingGraph(
+        input,
+        orientation,
+        candidateLayers,
+        inputPortOrder,
+        outputPortOrder,
+      );
+      let total = countAllCrossings(graph).total;
+      const nodeInfluence = Number(
+        input.settings["considerModelOrder.crossingCounterNodeInfluence"] ?? 0,
+      );
+      // ELK 0.11.1 tests node influence twice when selecting the weighted counter.
+      // Port influence alone therefore does not enable its model-order objective.
+      if (
+        (input.settings["considerModelOrder.strategy"] ?? "NONE") !== "NONE" &&
+        nodeInfluence !== 0
+      ) {
+        const changes = countModelOrderChanges(input, orientation, graph);
+        total +=
+          nodeInfluence * changes.nodeChanges +
+          Number(input.settings["considerModelOrder.crossingCounterPortInfluence"] ?? 0) *
+            changes.portChanges;
+      }
+      return total;
+    }
     const positions = new Map<string, number>();
     for (const layer of candidateLayers) {
       for (const [index, id] of layer.entries()) positions.set(id, index);
@@ -1928,8 +1968,13 @@ export function createLayerSweepSession(
     statistic === "median" || randomSeed === undefined ? sharedRandom : new JavaRandom(randomSeed);
   const thoroughness = Math.max(1, input.settings.thoroughness ?? sweeps ?? 7);
   let working = layers.map((layer) => [...layer]);
-  const sourceUnknownPlacement =
-    (input.settings["considerModelOrder.strategy"] ?? "NONE") === "NONE";
+  const usesInitialModelOrder =
+    statistic === "mean" && (input.settings["considerModelOrder.strategy"] ?? "NONE") !== "NONE";
+  const sourceUnknownPlacement = true;
+  const forcedCompare =
+    usesInitialModelOrder && input.settings["crossingMinimization.forceNodeModelOrder"] === true
+      ? normalModelComparator(input)
+      : undefined;
   const usePortRanks = true;
   const medianWeights = new Map<string, number>();
 
@@ -2062,6 +2107,28 @@ export function createLayerSweepSession(
   };
 
   let canonicalGraph = crossingGraph(input, orientation, working, inputPortOrder, outputPortOrder);
+  if (usesInitialModelOrder) {
+    sortInitialModelOrder(input, orientation, canonicalGraph);
+    working = canonicalGraph.layers.map((layer) => layer.map((node) => node.id));
+    const edges = input.graph.edges.filter((edge) => edge.sourceId !== edge.targetId);
+    const endpoints = new Map(edges.map((edge, index) => [edge.id, canonicalGraph.edges[index]!]));
+    for (const node of canonicalGraph.layers.flat()) {
+      const ordinal = new Map(node.ports.map((port, index) => [port.id, index]));
+      for (const [orders, source] of [
+        [outputPortOrder, true],
+        [inputPortOrder, false],
+      ] as const) {
+        orders
+          .get(node.id)
+          ?.sort(
+            (a, b) =>
+              ordinal.get(endpoints.get(a)![source ? "source" : "target"])! -
+              ordinal.get(endpoints.get(b)![source ? "source" : "target"])!,
+          );
+      }
+    }
+    modelSweepInputs.add(input);
+  }
   let canonicalNodes = new Map(canonicalGraph.layers.flat().map((node) => [node.id, node]));
   const canonicalDistributor = new CanonicalPortDistributor(canonicalGraph);
   const canonicalEdges = input.graph.edges.filter((edge) => edge.sourceId !== edge.targetId);
@@ -2111,10 +2178,19 @@ export function createLayerSweepSession(
     const firstLayerWeights = new Map(
       (working[firstLayerIndex] ?? []).map((id) => [id, random.nextDouble()]),
     );
-    working[firstLayerIndex]?.sort(
-      (left, right) => (firstLayerWeights.get(left) ?? 0) - (firstLayerWeights.get(right) ?? 0),
-    );
-    if (units && working[firstLayerIndex])
+    const compare = (left: string, right: string) =>
+      forcedCompare?.(left, right) ||
+      (firstLayerWeights.get(left) ?? 0) - (firstLayerWeights.get(right) ?? 0);
+    const first = working[firstLayerIndex];
+    if (first) {
+      if (forcedCompare)
+        insertionSort(
+          first,
+          transitiveComparator((id: string) => id, compare),
+        );
+      else first.sort(compare);
+    }
+    if (units && !forcedCompare && working[firstLayerIndex])
       working[firstLayerIndex] = resolveCrossingConstraints(
         working[firstLayerIndex]!,
         firstLayerWeights,
@@ -2175,6 +2251,7 @@ export function createLayerSweepSession(
               units,
               sameLayerNeighbors(isForward),
               adjacent.visits,
+              forcedCompare,
             );
           }
           if (exactPortSweep) distributePorts(layer, true);
@@ -2200,6 +2277,7 @@ export function createLayerSweepSession(
               units,
               sameLayerNeighbors(isForward),
               adjacent.visits,
+              forcedCompare,
             );
           }
           if (exactPortSweep) distributePorts(layer, false);
@@ -2285,6 +2363,7 @@ export function createLayerSweepSession(
       return random;
     },
     attempts,
+    usesInitialModelOrder,
     restoreRejectedSweep: !exactPortSweep,
     lockPortOrder: (id) => {
       lockedPortOrders.add(id);

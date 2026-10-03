@@ -142,6 +142,15 @@ export function insertCenterLabelDummies(
   const prepared = labels.size
     ? inheritCycleRandom(input, {
         ...input,
+        modelOrderByEdgeId: new Map(
+          edges.map((edge) => {
+            const original = originals.get(edge.id) ?? edge;
+            return [
+              edge.id,
+              input.modelOrderByEdgeId?.get(original.id) ?? input.graph.edges.indexOf(original),
+            ];
+          }),
+        ),
         graph: { ...input.graph, nodes, edges },
         sizes,
         nodeSettings: (n: GraphNode) =>

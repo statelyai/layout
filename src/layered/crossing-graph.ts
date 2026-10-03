@@ -25,6 +25,22 @@ export function crossingGraph(
     return sides[side]!;
   };
   const key = (id: string, name: string) => JSON.stringify([id, name]);
+  const degrees = new Map<string, { incoming: number; outgoing: number }>();
+  for (const edge of input.graph.edges) {
+    if (edge.sourceId === edge.targetId) continue;
+    const reversed = orientation.reversedEdgeIds.has(edge.id);
+    for (const [nodeId, name, source] of [
+      [edge.sourceId, edge.sourcePort, !reversed],
+      [edge.targetId, edge.targetPort, reversed],
+    ] as const) {
+      if (name === undefined) continue;
+      const id = key(nodeId, name),
+        degree = degrees.get(id) ?? { incoming: 0, outgoing: 0 };
+      if (source) degree.outgoing++;
+      else degree.incoming++;
+      degrees.set(id, degree);
+    }
+  }
   const ports = new Map<string, Map<string, { port: CrossingPort; rank: number }>>();
   const add = (node: GraphNode, name: string, source: boolean, edge?: GraphEdge): string => {
     let members = ports.get(node.id);
@@ -32,11 +48,30 @@ export function crossingGraph(
     const id = key(node.id, name);
     const authored = node.ports?.find((port) => port.name === name);
     const configuredSide = authored && input.portSettings?.(authored, node)?.["port.side"];
-    const side = configuredSide ? canonicalSide(configuredSide) : source ? "EAST" : "WEST";
+    const constraints = input.nodeSettings?.(node)?.portConstraints;
+    const flexible =
+      constraints === undefined || constraints === "UNDEFINED" || constraints === "FREE";
+    const degree = degrees.get(id);
+    // The initial model-order pass requires ELK PortSideProcessor's free sides.
+    // Existing non-model sweep integration retains its separate side policy.
+    // Resolve these ports from cycle-broken connectivity,
+    // even when an authored side was supplied. Equal degrees choose WEST.
+    const side =
+      flexible &&
+      (input.settings["considerModelOrder.strategy"] ?? "NONE") !== "NONE" &&
+      authored &&
+      degree
+        ? degree.outgoing > degree.incoming
+          ? "EAST"
+          : "WEST"
+        : configuredSide
+          ? canonicalSide(configuredSide)
+          : source
+            ? "EAST"
+            : "WEST";
     const selected = (source ? outgoing : incoming)?.get(node.id);
     let rank = edge ? (selected?.indexOf(edge.id) ?? -1) : -1;
     if (rank < 0) rank = authored ? node.ports!.indexOf(authored) : members.size;
-    const constraints = input.nodeSettings?.(node)?.portConstraints;
     if (authored && (constraints === "FIXED_POS" || constraints === "FIXED_RATIO")) {
       const vertical = input.direction === "down" || input.direction === "up";
       const reverse = input.direction === "left" || input.direction === "up";
