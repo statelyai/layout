@@ -1,3 +1,9 @@
+import {
+  hasMovableLoopPorts,
+  hasPlacementLoopEnvelope,
+  loopEnvelopes,
+  preparedLoopEnvelopes,
+} from "./loop-envelopes";
 import { routeFixedSelfLoop, fixedSelfLoopSide } from "./fixed-self-loop";
 import { networkSimplexComponents } from "./network-simplex";
 import { minimizeHierarchyCrossings } from "./hierarchy-crossing";
@@ -3006,6 +3012,7 @@ function nodeFlowOffset(
     const orientation = getPlacementOrientation(input);
     for (const edge of input.graph.edges) {
       if (edge.sourceId !== id && edge.targetId !== id) continue;
+      if (hasMovableLoopPorts(input, edge)) continue;
       const source = edge.sourceId === id;
       const portName = source ? edge.sourcePort : edge.targetPort;
       const key = portName === undefined ? `edge:${edge.id}` : `port:${portName}`;
@@ -3038,6 +3045,7 @@ export const placeNodesInLayers: NodePlacer = (input, order) => {
   const horizontal = input.direction === "left" || input.direction === "right";
   const reverse = input.direction === "left" || input.direction === "up";
   const orientation = getPlacementOrientation(input);
+  const loopMargins = preparedLoopEnvelopes(input);
   const flowMargins = new Map(
     input.graph.nodes.map((node) => {
       const size = input.sizes.get(node.id) ?? { width: 0, height: 0 };
@@ -3059,7 +3067,13 @@ export const placeNodesInLayers: NodePlacer = (input, order) => {
         low = Math.max(low, -start);
         high = Math.max(high, end - (horizontal ? size.width : size.height));
       }
-      return [node.id, { leading: reverse ? high : low, trailing: reverse ? low : high }] as const;
+      return [
+        node.id,
+        {
+          leading: Math.max(reverse ? high : low, loopMargins?.get(node.id)?.flowBefore ?? 0),
+          trailing: Math.max(reverse ? low : high, loopMargins?.get(node.id)?.flowAfter ?? 0),
+        },
+      ] as const;
     }),
   );
   const layerByNodeId = new Map(
@@ -3307,6 +3321,7 @@ function implicitEdgeEndpoints(
   const nodeById = new Map(input.graph.nodes.map((node) => [node.id, node]));
   const groups = new Map<string, Array<{ edge: GraphEdge; endpoint: "source" | "target" }>>();
   for (const edge of input.graph.edges) {
+    if (hasMovableLoopPorts(input, edge)) continue;
     const sourceRect = placement.rectByNodeId.get(edge.sourceId);
     const targetRect = placement.rectByNodeId.get(edge.targetId);
     if (!sourceRect || !targetRect) continue;
@@ -3719,7 +3734,11 @@ function routeEdges(style: "ORTHOGONAL" | "POLYLINE" | "SPLINES"): EdgeRouter {
       );
     };
     const northReserveByLayer = new Map<number, number>();
-    for (const [id, loops] of selfLoopsByNodeId) {
+    for (const [id, nodeLoops] of selfLoopsByNodeId) {
+      const loops = nodeLoops.filter(
+        (edge) => !hasPlacementLoopEnvelope(placement, id) || !hasMovableLoopPorts(input, edge),
+      );
+      if (loops.length === 0) continue;
       const rect = mutableRects.get(id);
       if (!rect) continue;
       const spacing = Number(input.settings["spacing.nodeSelfLoop"] ?? 10);
@@ -5052,6 +5071,31 @@ function routeEdges(style: "ORTHOGONAL" | "POLYLINE" | "SPLINES"): EdgeRouter {
             outsideFeedbackEdgeIds.add(edge.id);
             continue;
           }
+          const movable =
+            hasMovableLoopPorts(input, edge) &&
+            hasPlacementLoopEnvelope(placement, source.id) &&
+            input.edgeSettings?.(edge)?.["edgeLabels.inline"] !== true;
+          // Route unconstrained loops in the canonical rightward system, then
+          // apply the same direction transform as the layer pipeline.
+          const loopRect = movable
+            ? {
+                x: 0,
+                y: 0,
+                width: horizontal ? sourceRect.width : sourceRect.height,
+                height: horizontal ? sourceRect.height : sourceRect.width,
+              }
+            : sourceRect;
+          const publishLoop = (points: readonly Point[]) => {
+            const physical = !movable
+              ? points
+              : points.map((point) => {
+                  const flow = reverse ? loopRect.width - point.x : point.x;
+                  return horizontal
+                    ? { x: sourceRect.x + flow, y: sourceRect.y + point.y }
+                    : { x: sourceRect.x + point.y, y: sourceRect.y + flow };
+                });
+            pointsByEdgeId.set(edge.id, physical);
+          };
           const routeHorizontalSide = (
             side: "NORTH" | "SOUTH",
             indexOnSide: number,
@@ -5084,15 +5128,13 @@ function routeEdges(style: "ORTHOGONAL" | "POLYLINE" | "SPLINES"): EdgeRouter {
             );
             const distance = loopDistance(sideLoops, edge, side, ordering);
             const y =
-              side === "NORTH"
-                ? sourceRect.y - distance
-                : sourceRect.y + sourceRect.height + distance;
+              side === "NORTH" ? loopRect.y - distance : loopRect.y + loopRect.height + distance;
             const start = {
-              x: sourceRect.x + sourceRect.width * startRatio,
-              y: side === "NORTH" ? sourceRect.y : sourceRect.y + sourceRect.height,
+              x: loopRect.x + loopRect.width * startRatio,
+              y: side === "NORTH" ? loopRect.y : loopRect.y + loopRect.height,
             };
             const end = {
-              x: sourceRect.x + sourceRect.width * endRatio,
+              x: loopRect.x + loopRect.width * endRatio,
               y: start.y,
             };
             return [start, { x: start.x, y }, { x: end.x, y }, end];
@@ -5118,34 +5160,31 @@ function routeEdges(style: "ORTHOGONAL" | "POLYLINE" | "SPLINES"): EdgeRouter {
                   )
                 : spacing * (indexOnSide + 1);
             const x =
-              side === "EAST"
-                ? sourceRect.x + sourceRect.width + distance
-                : sourceRect.x - distance;
+              side === "EAST" ? loopRect.x + loopRect.width + distance : loopRect.x - distance;
             const start = {
-              x: side === "EAST" ? sourceRect.x + sourceRect.width : sourceRect.x,
-              y: sourceRect.y + sourceRect.height * startRatio,
+              x: side === "EAST" ? loopRect.x + loopRect.width : loopRect.x,
+              y: loopRect.y + loopRect.height * startRatio,
             };
-            const end = { x: start.x, y: sourceRect.y + sourceRect.height * endRatio };
+            const end = { x: start.x, y: loopRect.y + loopRect.height * endRatio };
             return [start, { x, y: start.y }, { x, y: end.y }, end];
           };
           if (distribution === "NORTH_SOUTH") {
             const side = loopIndex % 2 === 0 ? "NORTH" : "SOUTH";
             const indexOnSide = Math.floor(loopIndex / 2);
             const countOnSide = Math.ceil((loops.length - (side === "SOUTH" ? 1 : 0)) / 2);
-            pointsByEdgeId.set(edge.id, routeHorizontalSide(side, indexOnSide, countOnSide));
+            publishLoop(routeHorizontalSide(side, indexOnSide, countOnSide));
           } else if (distribution === "EQUALLY") {
             const sides = ["NORTH", "SOUTH", "EAST", "WEST"] as const;
             const side = sides[loopIndex % sides.length]!;
             const indexOnSide = Math.floor(loopIndex / sides.length);
             const countOnSide = Math.ceil((loops.length - sides.indexOf(side)) / sides.length);
-            pointsByEdgeId.set(
-              edge.id,
+            publishLoop(
               side === "NORTH" || side === "SOUTH"
                 ? routeHorizontalSide(side, indexOnSide, countOnSide)
                 : routeVerticalSide(side, indexOnSide, countOnSide),
             );
           } else {
-            pointsByEdgeId.set(edge.id, routeHorizontalSide("NORTH", loopIndex, loops.length));
+            publishLoop(routeHorizontalSide("NORTH", loopIndex, loops.length));
           }
           continue;
         }
@@ -5810,11 +5849,23 @@ export function normalizePlacementForPortExtents(
 
   let minimumX = Number.POSITIVE_INFINITY;
   let minimumY = Number.POSITIVE_INFINITY;
+  const envelopes = loopEnvelopes(input);
+  const reverse = input.direction === "left" || input.direction === "up";
   for (const node of input.graph.nodes) {
     const rect = placement.rectByNodeId.get(node.id);
     if (!rect) continue;
-    minimumX = Math.min(minimumX, rect.x);
-    minimumY = Math.min(minimumY, rect.y);
+    const envelope = hasPlacementLoopEnvelope(placement, node.id)
+      ? envelopes.get(node.id)
+      : undefined;
+    const flowBefore = reverse ? envelope?.flowAfter : envelope?.flowBefore;
+    minimumX = Math.min(
+      minimumX,
+      rect.x - (horizontal ? (flowBefore ?? 0) : (envelope?.before ?? 0)),
+    );
+    minimumY = Math.min(
+      minimumY,
+      rect.y - (horizontal ? (envelope?.before ?? 0) : (flowBefore ?? 0)),
+    );
     const ports = placePorts(
       node.ports,
       rect,

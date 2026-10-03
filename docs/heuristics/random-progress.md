@@ -1030,3 +1030,14 @@ selects the current target's first clockwise port connection. Hierarchy improves
 geometry regressions fail before and pass after. Full suite 2,129 pass / 108
 existing failures. Next: pre-placement loop margins and post-placement blanket
 loop relocation; seed 1's chosen placement now agrees before routing.
+
+## Loop envelopes before placement
+
+[Proof](./loop-envelopes/README.md): movable implicit loops reserve canonical
+margins before BK alignment/compaction and route through the direction transform.
+Their restored ports no longer consume ordinary flow ranks. Flat improves 16 to
+22/100 (13,643 to 11,692 differences), no errors/lost matches; hierarchy 72/100
+and fixed loops 100/100 unchanged. 42 full geometry regressions pass, 33 red on
+5bb70e5. Full suite 2,171 pass / 108 existing failures. Inline loop label behavior
+remains in its old phase; original assertions unchanged. Next: seed 1's first
+orthogonal routing gap, 10 pixels narrower despite matching chosen BK placement.

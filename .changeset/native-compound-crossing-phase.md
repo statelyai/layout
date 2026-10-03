@@ -22,3 +22,7 @@ self-loop connectivity from crossing sweep ranks. Broad parity remains incomplet
 
 Select parallel alignment connections independently from the current node's
 clockwise ports in both BK sweep directions.
+
+Reserve movable implicit orthogonal loop envelopes during BK placement and
+transform canonical loop routes by direction. Exclude restored loop ports from
+ordinary flow ranks; retain the existing inline-label and fixed-port phases.

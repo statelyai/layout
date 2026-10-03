@@ -9,6 +9,12 @@ import type { EntityRect, GraphEdge } from "@statelyai/graph";
 import { placeNodesInLayers, placePorts } from "./strategies";
 import type { LayerOrder, LayeredPhaseInput, NodePlacement } from "./types";
 import { nodeNodeSpacing } from "./spacing";
+import { prepareLoopEnvelopes, preparedLoopEnvelopes, recordLoopEnvelopes } from "./loop-envelopes";
+
+const beforeMargin = (input: LayeredPhaseInput, id: string) =>
+  preparedLoopEnvelopes(input)?.get(id)?.before ?? 0;
+const afterMargin = (input: LayeredPhaseInput, id: string) =>
+  preparedLoopEnvelopes(input)?.get(id)?.after ?? 0;
 
 type HDirection = "LEFT" | "RIGHT";
 type VDirection = "UP" | "DOWN";
@@ -410,8 +416,8 @@ function alignBlocks(
 
   const roots = new Set(bal.root.values());
   for (const root of roots) {
-    let above = 0;
-    let below = crossSize(input, root);
+    let above = beforeMargin(input, root);
+    let below = crossSize(input, root) + afterMargin(input, root);
     bal.innerShift.set(root, 0);
     let current = root;
     let next = bal.align.get(current) ?? root;
@@ -425,8 +431,8 @@ function alignBlocks(
         : anchorCrossSize(input, next) / 2;
       const nextShift = (bal.innerShift.get(current) ?? 0) + currentAnchor - nextAnchor;
       bal.innerShift.set(next, nextShift);
-      above = Math.max(above, -nextShift);
-      below = Math.max(below, nextShift + crossSize(input, next));
+      above = Math.max(above, beforeMargin(input, next) - nextShift);
+      below = Math.max(below, nextShift + crossSize(input, next) + afterMargin(input, next));
       current = next;
       next = bal.align.get(current) ?? root;
     }
@@ -488,12 +494,16 @@ function compact(
             bal.vdir === "UP"
               ? (bal.y.get(neighborRoot) ?? 0) +
                 (bal.innerShift.get(neighbor) ?? 0) -
+                beforeMargin(input, neighbor) -
+                afterMargin(input, current) -
                 spacing -
                 crossSize(input, current) -
                 (bal.innerShift.get(current) ?? 0)
               : (bal.y.get(neighborRoot) ?? 0) +
                 (bal.innerShift.get(neighbor) ?? 0) +
                 crossSize(input, neighbor) +
+                afterMargin(input, neighbor) +
+                beforeMargin(input, current) +
                 spacing -
                 (bal.innerShift.get(current) ?? 0);
           bal.y.set(
@@ -516,11 +526,15 @@ function compact(
               ? (bal.y.get(root) ?? 0) +
                 (bal.innerShift.get(current) ?? 0) +
                 crossSize(input, current) +
+                afterMargin(input, current) +
+                beforeMargin(input, neighbor) +
                 classSpacing -
                 (bal.y.get(neighborRoot) ?? 0) -
                 (bal.innerShift.get(neighbor) ?? 0)
               : (bal.y.get(root) ?? 0) +
                 (bal.innerShift.get(current) ?? 0) -
+                beforeMargin(input, current) -
+                afterMargin(input, neighbor) -
                 (bal.y.get(neighborRoot) ?? 0) -
                 (bal.innerShift.get(neighbor) ?? 0) -
                 crossSize(input, neighbor) -
@@ -580,8 +594,8 @@ function extent(input: LayeredPhaseInput, bal: Alignment): [number, number] {
   let min = Number.POSITIVE_INFINITY;
   let max = Number.NEGATIVE_INFINITY;
   for (const [id, value] of bal.y) {
-    min = Math.min(min, value);
-    max = Math.max(max, value + crossSize(input, id));
+    min = Math.min(min, value - beforeMargin(input, id));
+    max = Math.max(max, value + crossSize(input, id) + afterMargin(input, id));
   }
   return [min, max];
 }
@@ -594,8 +608,9 @@ function preservesLayerOrder(
   for (const layer of order.layers) {
     let previousEnd = Number.NEGATIVE_INFINITY;
     for (const id of layer) {
-      const start = positions.get(id) ?? 0;
-      const end = start + crossSize(input, id);
+      const position = positions.get(id) ?? 0;
+      const start = position - beforeMargin(input, id);
+      const end = position + crossSize(input, id) + afterMargin(input, id);
       if (start <= previousEnd || end <= previousEnd) return false;
       previousEnd = end;
     }
@@ -707,7 +722,11 @@ function createStraighteningThreshold(
         delta < 0
           ? (bal.y.get(id) ?? 0) - (bal.y.get(adjacent) ?? 0) - crossSize(input, adjacent)
           : (bal.y.get(adjacent) ?? 0) - (bal.y.get(id) ?? 0) - crossSize(input, id);
-      available = Math.min(available, gap - nodeNodeSpacing(input, id, adjacent));
+      const margins =
+        delta < 0
+          ? beforeMargin(input, id) + afterMargin(input, adjacent)
+          : afterMargin(input, id) + beforeMargin(input, adjacent);
+      available = Math.min(available, gap - margins - nodeNodeSpacing(input, id, adjacent));
     }
     for (const id of blocks.get(rootOf(free)) ?? [])
       bal.y.set(id, (bal.y.get(id) ?? 0) + (delta < 0 ? -available : available));
@@ -733,6 +752,7 @@ export function placeNodesWithBrandesKoepf(
   input: LayeredPhaseInput,
   order: LayerOrder,
 ): NodePlacement {
+  const envelopes = prepareLoopEnvelopes(input);
   const base = placeNodesInLayers(input, order);
   const neighbors = buildNeighbors(input, order);
   const markedEdges = markConflicts(order, neighbors);
@@ -801,7 +821,7 @@ export function placeNodesWithBrandesKoepf(
   } else {
     positions = smallestFeasibleLayout().y;
   }
-  const minimum = Math.min(...positions.values());
+  const minimum = Math.min(...[...positions].map(([id, value]) => value - beforeMargin(input, id)));
   const crossPadding =
     input.direction === "left" || input.direction === "right"
       ? input.padding.top
@@ -816,5 +836,7 @@ export function placeNodesWithBrandesKoepf(
         : { ...rect, x: cross },
     );
   }
-  return { rectByNodeId };
+  const placement = { rectByNodeId };
+  recordLoopEnvelopes(placement, new Set(envelopes.keys()));
+  return placement;
 }
