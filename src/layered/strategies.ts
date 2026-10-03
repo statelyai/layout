@@ -4340,8 +4340,8 @@ function routeEdges(style: "ORTHOGONAL" | "POLYLINE" | "SPLINES"): EdgeRouter {
                   )
                   ? preservedGap
                   : minimumGap,
-                (labelAdjacent ? edgeNodeSpacing : 2 * edgeNodeSpacing) +
-                  Math.max(0, slots - 1) * edgeEdgeSpacing,
+                // LABEL nodes also need clearance beyond the final routing track.
+                2 * edgeNodeSpacing + Math.max(0, slots - 1) * edgeEdgeSpacing,
               );
         nextStart = bounds.end + gapSpacing;
       }
