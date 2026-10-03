@@ -572,7 +572,7 @@ function compactJoinedGeometryUnchecked(
     solved =
       input.settings["compaction.postCompaction.strategy"] === "EDGE_LENGTH"
         ? solveWeightedCompaction(groups, constraints)
-        : directionalCompaction(input, groups, constraints, items, groupOrigin);
+        : directionalCompaction(input, groups, constraints, items, groupOrigin, orientation);
   } catch (error) {
     if (error instanceof Error)
       error.cause = {
@@ -686,6 +686,7 @@ function directionalCompaction(
   constraints: readonly CompactionConstraint[],
   items: readonly Compactable[],
   origins: ReadonlyMap<string, number>,
+  orientation?: AcyclicOrientation,
 ): Map<string, number> {
   const strategy = input.settings["compaction.postCompaction.strategy"];
   const pass = (
@@ -724,10 +725,20 @@ function directionalCompaction(
     if (lock === "LEFT_RIGHT_CONSTRAINT_LOCKING")
       for (const group of groups) if (incoming.get(group) === 0) locked.add(group);
     if (lock === "LEFT_RIGHT_CONNECTION_LOCKING") {
+      // ELK locks against the physical adjacency after cycle breaking.
+      // Authored directions can turn a sink into an apparent transit node.
       for (const item of items)
         if (item.nodeId) {
-          const before = input.graph.edges.filter((edge) => edge.targetId === item.nodeId).length;
-          const after = input.graph.edges.filter((edge) => edge.sourceId === item.nodeId).length;
+          const before = input.graph.edges.filter(
+            (edge) =>
+              (orientation?.reversedEdgeIds.has(edge.id) ? edge.sourceId : edge.targetId) ===
+              item.nodeId,
+          ).length;
+          const after = input.graph.edges.filter(
+            (edge) =>
+              (orientation?.reversedEdgeIds.has(edge.id) ? edge.targetId : edge.sourceId) ===
+              item.nodeId,
+          ).length;
           if (before > after) locked.add(item.group);
         }
     }
