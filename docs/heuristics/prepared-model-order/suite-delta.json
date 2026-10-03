@@ -1,0 +1,14 @@
+{
+  "before": {
+    "passed": 2848,
+    "failed": 101,
+    "total": 2949
+  },
+  "after": {
+    "passed": 2855,
+    "failed": 101,
+    "total": 2956
+  },
+  "newFailures": [],
+  "resolved": []
+}

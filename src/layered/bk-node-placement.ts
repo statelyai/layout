@@ -364,9 +364,14 @@ function markConflicts(
 ): Set<string> {
   const marked = new Set<string>();
   if (order.layers.length < 3) return marked;
-  const isInner = (id: string): boolean =>
+  const longEdge = (id: string): boolean =>
     id.startsWith("__layout_dummy:") &&
-    (neighbors.left.get(id) ?? []).some((neighbor) => neighbor.id.startsWith("__layout_dummy:"));
+    !id.startsWith("__layout_dummy:north-south:") &&
+    !id.startsWith("__layout_dummy:label:");
+  // ELK only marks inner segments between LONG_EDGE nodes. Port helpers are
+  // separate node types and must not block valid Brandes-Koepf alignments.
+  const isInner = (id: string): boolean =>
+    longEdge(id) && (neighbors.left.get(id) ?? []).some((neighbor) => longEdge(neighbor.id));
   for (let previousLayerNo = 1; previousLayerNo + 1 < order.layers.length; previousLayerNo++) {
     const previousLayer = order.layers[previousLayerNo]!;
     const currentLayer = order.layers[previousLayerNo + 1]!;

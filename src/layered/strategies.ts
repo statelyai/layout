@@ -1,5 +1,6 @@
 import {
   sortInitialModelOrder,
+  restoreInitialModelOrder,
   countModelOrderChanges,
   normalModelComparator,
   insertionSort,
@@ -2116,7 +2117,8 @@ export function createLayerSweepSession(
 
   let canonicalGraph = crossingGraph(input, orientation, working, inputPortOrder, outputPortOrder);
   if (usesInitialModelOrder) {
-    sortInitialModelOrder(input, orientation, canonicalGraph);
+    if (!restoreInitialModelOrder(input, canonicalGraph))
+      sortInitialModelOrder(input, orientation, canonicalGraph);
     working = canonicalGraph.layers.map((layer) => layer.map((node) => node.id));
     const edges = input.graph.edges.filter((edge) => edge.sourceId !== edge.targetId);
     const endpoints = new Map(edges.map((edge, index) => [edge.id, canonicalGraph.edges[index]!]));

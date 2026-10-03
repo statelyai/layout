@@ -23,12 +23,14 @@ export function insertionSort<T>(items: T[], compare: (left: T, right: T) => num
 export function transitiveComparator<T>(
   key: (value: T) => string,
   compare: (left: T, right: T) => number,
+  compareEqualKeys = false,
 ) {
   const follows = new Map<string, Set<string>>();
   return (left: T, right: T): number => {
     const a = key(left),
       b = key(right);
-    if (a === b) return 0;
+    // Shared-port helper comparisons intentionally retain ELK's nonzero tie.
+    if (a === b) return compareEqualKeys ? compare(left, right) : 0;
     if (follows.get(a)?.has(b)) return -1;
     if (follows.get(b)?.has(a)) return 1;
     const result = compare(left, right);
@@ -96,6 +98,7 @@ function createModelOrderComparators(
   input: LayeredPhaseInput,
   orientation: AcyclicOrientation,
   graph: CrossingGraph,
+  incomingOrder?: ReadonlyMap<string, readonly string[]>,
 ) {
   const strategy = input.settings["considerModelOrder.strategy"] ?? "NONE";
   const owner = new Map(
@@ -114,6 +117,11 @@ function createModelOrderComparators(
     incoming.set(edge.target, [...(incoming.get(edge.target) ?? []), i]);
     outgoing.set(edge.source, [...(outgoing.get(edge.source) ?? []), i]);
   });
+  for (const [port, indices] of incoming) {
+    const order = incomingOrder?.get(owner.get(port)!.id);
+    if (order)
+      indices.sort((a, b) => order.indexOf(nativeEdges[a]!.id) - order.indexOf(nativeEdges[b]!.id));
+  }
   const edgeOrder = (i: number) =>
     input.modelOrderByEdgeId?.get(nativeEdges[i]!.id) ?? input.graph.edges.indexOf(nativeEdges[i]!);
   const firstIncoming = (node: CrossingNode) =>
@@ -202,6 +210,7 @@ function createModelOrderComparators(
         if (a.side === "WEST" || a.side === "SOUTH") reverse = -reverse;
         return reverse * (authored() || -1);
       },
+      true,
     );
   const longMode = input.settings["considerModelOrder.longEdgeStrategy"] ?? "DUMMY_NODE_OVER";
   const missingEdgeOrder =
@@ -233,39 +242,75 @@ function createModelOrderComparators(
             const an = owner.get(ap.id)!,
               bn = owner.get(bp.id)!;
             if (an === bn && ap !== bp) return an.ports.indexOf(ap) - an.ports.indexOf(bp);
-            if (an === bn) return connectedEdgeOrder(a) > connectedEdgeOrder(b) ? 1 : -1;
+            if (an === bn) return -1;
             const ar = previous.indexOf(an),
               br = previous.indexOf(bn);
             if (ar >= 0 || br >= 0) return ar < 0 ? 1 : br < 0 ? -1 : ar - br;
           }
-          const reference = (node: CrossingNode) => {
-            if (node.type !== "LONG_EDGE") return node;
+          const endpoints = (node: CrossingNode) => {
             const source = firstIncoming(node),
               next = node.ports.flatMap((p) => outgoing.get(p.id) ?? [])[0];
-            const sn = source === undefined ? undefined : owner.get(sourcePort(source).id),
-              tn = next === undefined ? undefined : owner.get(targetPort(next).id);
-            return sn && layerByNode.get(sn.id) === layerByNode.get(node.id)
-              ? sn
-              : tn && layerByNode.get(tn.id) === layerByNode.get(node.id)
-                ? tn
-                : node;
+            const sourcePhysical = source === undefined ? undefined : sourcePort(source),
+              targetPhysical = next === undefined ? undefined : targetPort(next);
+            return {
+              source: sourcePhysical && owner.get(sourcePhysical.id),
+              target: targetPhysical && owner.get(targetPhysical.id),
+              sourcePort: sourcePhysical,
+              targetPort: targetPhysical,
+            };
           };
-          const ar = reference(a),
-            br = reference(b);
-          if (ar !== a || br !== b) {
+          const helperCompare = (): number => {
+            if (a.type === "LONG_EDGE" && b.type === "NORMAL") {
+              const { source, target } = endpoints(a);
+              const layer = layerByNode.get(a.id);
+              if (
+                layerByNode.get(source?.id ?? "") !== layer &&
+                layerByNode.get(target?.id ?? "") !== layer
+              )
+                return 0;
+              if (source === b || target === b) return 1;
+              return source ? compare(source, b) : 0;
+            }
+            if (a.type === "NORMAL" && b.type === "LONG_EDGE") {
+              const { source, target } = endpoints(b);
+              const layer = layerByNode.get(a.id);
+              if (
+                layerByNode.get(source?.id ?? "") !== layer &&
+                layerByNode.get(target?.id ?? "") !== layer
+              )
+                return 0;
+              if (source === a || target === a) return -1;
+              return source ? compare(a, source) : 0;
+            }
+            if (a.type !== "LONG_EDGE" || b.type !== "LONG_EDGE") return 0;
+            const ae = endpoints(a),
+              be = endpoints(b);
+            const as = ae.source && layerByNode.get(ae.source.id) === layerByNode.get(a.id),
+              at = !as && ae.target && layerByNode.get(ae.target.id) === layerByNode.get(a.id),
+              bs = be.source && layerByNode.get(be.source.id) === layerByNode.get(b.id),
+              bt = !bs && be.target && layerByNode.get(be.target.id) === layerByNode.get(b.id);
+            const ar = as ? ae.source! : at ? ae.target! : a,
+              br = bs ? be.source! : bt ? be.target! : b;
+            if (ar === a && br === b) return 0;
             if (ar === br) {
-              if (a.type !== "LONG_EDGE" || b.type !== "LONG_EDGE")
-                return a.type === "LONG_EDGE" ? 1 : -1;
-              const ai = firstIncoming(a),
-                bi = firstIncoming(b);
-              if (ai !== undefined && bi !== undefined) {
-                const asp = sourcePort(ai),
-                  bsp = sourcePort(bi);
-                return beforePorts
-                  ? portCompare(previous)(asp, bsp)
-                  : owner.get(asp.id)!.ports.indexOf(asp) - owner.get(bsp.id)!.ports.indexOf(bsp);
+              if (beforePorts) {
+                if (as && bs && ae.sourcePort && be.sourcePort)
+                  return portCompare(previous)(ae.sourcePort, be.sourcePort) > 0 ? 1 : -1;
+                if (as && bt) return 1;
+                if (at && bs) return -1;
+                if (at && bt) return 0;
+              } else {
+                for (const port of ar.ports) {
+                  if (port === ae.sourcePort) return -1;
+                  if (port === be.sourcePort) return 1;
+                }
               }
-            } else return compare(ar, br);
+            }
+            return ar === br ? 0 : compare(ar, br);
+          };
+          if (!ap || !bp) {
+            const helperResult = helperCompare();
+            if (helperResult !== 0) return helperResult;
           }
           if (!!ap !== !!bp && (am === undefined || bm === undefined))
             return connectedEdgeOrder(a) > connectedEdgeOrder(b) ? 1 : -1;
@@ -337,8 +382,9 @@ export function sortInitialModelOrder(
   input: LayeredPhaseInput,
   orientation: AcyclicOrientation,
   graph: CrossingGraph,
+  incomingOrder?: ReadonlyMap<string, readonly string[]>,
 ): void {
-  createModelOrderComparators(input, orientation, graph).sort();
+  createModelOrderComparators(input, orientation, graph, incomingOrder).sort();
 }
 
 export function countModelOrderChanges(
@@ -348,3 +394,23 @@ export function countModelOrderChanges(
 ): { nodeChanges: number; portChanges: number } {
   return createModelOrderComparators(input, orientation, graph).countChanges();
 }
+
+const preparedInputs = new WeakMap<LayeredPhaseInput, ReadonlyMap<string, readonly string[]>>();
+export const markInitialModelOrderPrepared = (
+  input: LayeredPhaseInput,
+  ports: ReadonlyMap<string, readonly string[]>,
+) => {
+  preparedInputs.set(input, ports);
+};
+export const restoreInitialModelOrder = (
+  input: LayeredPhaseInput,
+  graph: CrossingGraph,
+): boolean => {
+  const prepared = preparedInputs.get(input);
+  if (!prepared) return false;
+  for (const node of graph.layers.flat()) {
+    const order = prepared.get(node.id);
+    if (order) node.ports.sort((a, b) => order.indexOf(a.id) - order.indexOf(b.id));
+  }
+  return true;
+};

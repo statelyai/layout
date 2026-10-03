@@ -30,6 +30,10 @@ export function insertInvertedPortDummies(expansion: LongEdgeExpansion): LongEdg
   const replacements = new Map<string, string[]>();
   const originals = new Map<string, GraphEdge>();
   const dummyIds = new Set<string>();
+  const creationOrder = new Map<string, number[]>();
+  const ownerOrder = new Map(
+    (expansion.assignment.seedOrder ?? input.graph.nodes.map((n) => n.id)).map((id, i) => [id, i]),
+  );
   const usedEdges = new Set(input.graph.edges.map((e) => e.id));
   const fixedSide = (
     node: GraphNode | undefined,
@@ -60,6 +64,18 @@ export function insertInvertedPortDummies(expansion: LongEdgeExpansion): LongEdg
     nodes.push(node);
     nodeById.set(id, node);
     dummyIds.add(id);
+    const reverse = expansion.orientation.reversedEdgeIds.has(edge.id);
+    const incoming = (end === "target") !== reverse;
+    const owner = nodeById.get(at)!;
+    const name = end === "source" ? edge.sourcePort : edge.targetPort;
+    creationOrder.set(id, [
+      layers.get(at) ?? 0,
+      ownerOrder.get(at) ?? 0,
+      incoming ? 0 : 1,
+      owner.ports?.findIndex((p) => p.name === name) ?? -1,
+      Number(reverse),
+      input.graph.edges.indexOf(edge),
+    ]);
     sizes.set(id, { width: 0, height: 0 });
     layers.set(id, layers.get(at) ?? 0);
     return id;
@@ -131,6 +147,17 @@ export function insertInvertedPortDummies(expansion: LongEdgeExpansion): LongEdg
     }
   }
   if (!dummyIds.size) return expansion;
+  // InvertedPortProcessor visits owners and their ports, rather than the
+  // root edge list. Cycle-reversed incident edges are appended afterward.
+  const orderedDummies = nodes
+    .filter((n) => dummyIds.has(n.id))
+    .sort((a, b) => {
+      const aa = creationOrder.get(a.id)!,
+        bb = creationOrder.get(b.id)!;
+      for (let i = 0; i < aa.length; i++) if (aa[i] !== bb[i]) return aa[i]! - bb[i]!;
+      return 0;
+    });
+  nodes.splice(0, nodes.length, ...input.graph.nodes, ...orderedDummies);
   return {
     ...expansion,
     incomingEdgeOrderByNodeId,

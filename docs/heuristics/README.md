@@ -150,3 +150,5 @@ The [cycle-aware compaction proof](cycle-connection-locking/README.md) corrects 
 The [mixed loop bounds proof](mixed-loop-bounds/README.md) restores ordinary long-edge cross-axis bounds even when an unrelated self-loop is present. Default flat exact matches improve to **42/100**; all 600 directional results remain byte-identical to their retained evidence.
 
 The [port-aware track proof](port-aware-tracks/README.md) fixes seed 22 RIGHT routing and junctions. Default flat matches improve to **43/100**; directional exact matches remain **412/600**. Two incomplete compaction cases worsen and remain preserved.
+
+The [initial model and port-helper alignment proof](prepared-model-order/README.md) sorts before north/south helper insertion, preserves physical order and excludes port helpers from BK inner segments. Across 1,100 retained inputs, strict matches rise **566 → 573**, no complete matches are lost and 16 worsened rows remain recorded. Seed 2 RIGHT now matches nodes and routes; eight junction differences remain. Broad parity remains incomplete.

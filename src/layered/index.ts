@@ -1,3 +1,5 @@
+import { crossingGraph } from "./crossing-graph";
+import { sortInitialModelOrder, markInitialModelOrderPrepared } from "./initial-model-order";
 import { hasMovableLoopPorts } from "./loop-envelopes";
 import { compactionBounds } from "./compaction-bounds";
 import { setElkjs0111ResultPolicy } from "../internal/elkjs-compatibility";
@@ -1558,8 +1560,47 @@ export function* createLayeredScopePipeline<N, E, G, P>(
       insertInvertedPortDummies(splitLongEdges(phaseInput, phaseOrientation, assignment)),
     ),
   );
+  // ELK sorts before north/south helpers exist. Carry both node and physical
+  // port order into the crossing session, including newly generated helpers.
+  const prepareModelOrder =
+    (expanded.input.settings["considerModelOrder.strategy"] ?? "NONE") !== "NONE" &&
+    (expanded.input.settings["crossingMinimization.strategy"] ?? "LAYER_SWEEP") === "LAYER_SWEEP" &&
+    !options.strategies?.minimizeCrossings;
+  let preparedPorts: ReadonlyMap<string, readonly string[]> | undefined;
+  if (prepareModelOrder) {
+    const count = Math.max(...expanded.assignment.layerByNodeId.values()) + 1;
+    const layers: string[][] = Array.from({ length: count }, () => []);
+    const seeded = expanded.assignment.seedOrder ?? [];
+    const initialIds = [
+      ...seeded,
+      ...expanded.input.graph.nodes.map((node) => node.id).filter((id) => !seeded.includes(id)),
+    ];
+    for (const id of initialIds) layers[expanded.assignment.layerByNodeId.get(id) ?? 0]!.push(id);
+    const initial = crossingGraph(expanded.input, expanded.orientation, layers);
+    for (const node of initial.layers.flat())
+      if (node.id.startsWith("__layout_dummy:"))
+        node.type = node.id.startsWith("__layout_dummy:label:") ? "LABEL" : "LONG_EDGE";
+    const adjacency = new Map(
+      [...(expanded.incomingEdgeOrderByNodeId ?? [])].map(([id, edges]) => [
+        id,
+        edges.flatMap((edge) => expanded.segmentIdsByEdgeId.get(edge) ?? [edge]),
+      ]),
+    );
+    sortInitialModelOrder(expanded.input, expanded.orientation, initial, adjacency);
+    preparedPorts = new Map(
+      initial.layers.flat().map((node) => [node.id, node.ports.map((port) => port.id)]),
+    );
+    expanded = {
+      ...expanded,
+      assignment: {
+        ...expanded.assignment,
+        seedOrder: initial.layers.flatMap((layer) => layer.map((node) => node.id)),
+      },
+    };
+  }
   const northSouth = insertNorthSouthPortDummies(expanded);
   expanded = northSouth.expansion;
+  if (prepareModelOrder) markInitialModelOrderPrepared(expanded.input, preparedPorts!);
   const associates = new Map<string, string[]>(),
     unitMembers = new Map<string, string[]>();
   for (const [dummy, origin] of northSouth.originsByDummyId)

@@ -102,6 +102,23 @@ context.$compare_13 = (comparator, a, b) => {
     });
   return result;
 };
+const crossingScores = [];
+for (const name of [
+  "$countCurrentNumberOfCrossings",
+  "$countCurrentNumberOfCrossingsNodePortOrder",
+]) {
+  const count = context[name];
+  context[name] = (processor, graph) => {
+    const value = count(processor, graph);
+    crossingScores.push({
+      kind: name,
+      scope: scopes.get(graph.lGraph),
+      value,
+      order: sweepOrder(graph.currentNodeOrder),
+    });
+    return value;
+  };
+}
 const initializeSweep = context.$initialize_5;
 context.$initialize_5 = (processor, root) => {
   const result = initializeSweep(processor, root);
@@ -178,6 +195,31 @@ context.$doesSwitchReduceCrossings = (decider, upperIndex, lowerIndex) => {
     accepted,
   });
   return accepted;
+};
+const bkConflicts = [];
+const markBkConflicts = context.$markConflicts;
+context.$markConflicts = (placer, graph) => {
+  const result = markBkConflicts(placer, graph);
+  const edges = new Set(
+    graph.layers.array.flatMap((layer) =>
+      layer.nodes.array.flatMap((node) =>
+        node.ports.array.flatMap((port) => port.outgoingEdges.array),
+      ),
+    ),
+  );
+  bkConflicts.push({
+    scope: scopes.get(graph),
+    edges: [...edges]
+      .filter((edge) => context.$contains_6(placer.markedEdges, edge))
+      .map((edge) => ({
+        origin: originId(edge),
+        source: originId(edge.source.owner),
+        target: originId(edge.target.owner),
+        sourceType: edge.source.owner.type_0?.name_0,
+        targetType: edge.target.owner.type_0?.name_0,
+      })),
+  });
+  return result;
 };
 const bkCandidates = [];
 const checkBk = context.$checkOrderConstraint;
@@ -296,9 +338,11 @@ fs.writeFileSync(
       greedyEvents,
       modelOrderEvents,
       modelPortSelfEvents,
+      crossingScores,
       sweepScopes,
       sweepEvents,
       stages,
+      bkConflicts,
       bkCandidates,
       routingCalls,
     },

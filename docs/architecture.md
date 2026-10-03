@@ -63,7 +63,9 @@ constraint edge orientation
   -> center-label dummy insertion
   -> layer assignment
   -> long-edge splitting
-  -> inverted-port and north/south-port preprocessing
+  -> inverted-port preprocessing
+  -> initial model and physical-port ordering
+  -> north/south-port preprocessing
   -> FIRST/LAST layer-order preprocessing
   -> crossing minimization
   -> label dummy switching and side selection
