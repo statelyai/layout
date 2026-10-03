@@ -23,9 +23,14 @@ it("joins ancestor edges at their actual descendant faces with orthogonal segmen
   };
   for (const id of ["parent-child", "child-parent"]) {
     const edge = graph.edges!.find((candidate) => candidate.id === id)!;
+    expect(edge.container).toBe(parent.id);
     const section = edge.sections![0]!;
-    const childPoint = id === "parent-child" ? section.endPoint : section.startPoint;
-    const parentPoint = id === "parent-child" ? section.startPoint : section.endPoint;
+    const globalPoint = (point: ElkPoint): ElkPoint => ({
+      x: point.x + parent.x!,
+      y: point.y + parent.y!,
+    });
+    const childPoint = globalPoint(id === "parent-child" ? section.endPoint : section.startPoint);
+    const parentPoint = globalPoint(id === "parent-child" ? section.startPoint : section.endPoint);
     expect(onFace(childPoint, child, { x: parent.x!, y: parent.y! })).toBe(true);
     expect(onFace(parentPoint, parent, { x: 0, y: 0 })).toBe(true);
     const points = [section.startPoint, ...(section.bendPoints ?? []), section.endPoint];

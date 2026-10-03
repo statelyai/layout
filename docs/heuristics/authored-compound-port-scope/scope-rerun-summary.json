@@ -1,0 +1,7 @@
+{
+  "fullSuite": "full-suite.json",
+  "scopedRerun": "scope-tests.json",
+  "passed": 3173,
+  "failed": 209,
+  "total": 3382
+}

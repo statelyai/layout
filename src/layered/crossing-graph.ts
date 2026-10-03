@@ -119,6 +119,12 @@ export function crossingGraph(
   const edges = input.graph.edges
     .filter((edge) => edge.sourceId !== edge.targetId)
     .map((edge) => ({ source: endpoint(edge, true), target: endpoint(edge, false) }));
+  // Real ELK retains ports with no incident edge in this scope.
+  for (const node of input.graph.nodes)
+    for (const port of node.ports ?? []) {
+      if (!ports.get(node.id)?.has(key(node.id, port.name)))
+        add(node, port.name, port.direction === "out");
+    }
   for (const [dummy, origin] of units?.northSouthOrigins ?? []) {
     const owner = nodes.get(origin.node.id)!;
     const original = add(owner, origin.port.name, false);

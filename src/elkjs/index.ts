@@ -16,6 +16,7 @@ import {
   createExternalPortDummy,
   externalPortDummyOf,
   type ExternalPortConstraints,
+  type ExternalPortSide,
 } from "../layered/external-port-dummy";
 import { applyOrthogonalJunctions } from "./orthogonal-junctions";
 import { createGraph, type Graph, type VisualGraph } from "@statelyai/graph";
@@ -362,7 +363,17 @@ export default class ELK {
             descendantOwnerByEndpointId.has(sourceId) && descendantOwnerByEndpointId.has(targetId)
           );
         });
-        const crossingEdges = (graph.edges ?? []).filter((edge) => {
+        for (const edge of child.edges ?? [])
+          if (!originalHierarchyEndpoints.has(edge))
+            originalHierarchyEndpoints.set(edge, {
+              sourceId: String(edge.sources?.[0] ?? edge.source),
+              targetId: String(edge.targets?.[0] ?? edge.target),
+              sources: edge.sources,
+              targets: edge.targets,
+              source: edge.source,
+              target: edge.target,
+            });
+        const crossingEdges = [...(graph.edges ?? []), ...(child.edges ?? [])].filter((edge) => {
           const { sourceId, targetId } = originalHierarchyEndpoints.get(edge)!;
           const sourceInside = descendantOwnerByEndpointId.has(sourceId);
           const targetInside = descendantOwnerByEndpointId.has(targetId);
@@ -387,7 +398,35 @@ export default class ELK {
           getBooleanOption(layoutOptions, "layered.mergeHierarchyEdges") !== false;
         // ELK merges only edges incident to the same descendant port.
         const proxyByKind = new Map<string, ElkNode>();
+        const implicitOwnPorts = new Map<ElkEdge, ElkPort>();
+        const ownPortFor = (edge: ElkEdge): ElkPort | undefined => {
+          const e = originalHierarchyEndpoints.get(edge)!;
+          const outside = descendantOwnerByEndpointId.has(e.sourceId) ? e.targetId : e.sourceId;
+          if (e.sourceId === String(child.id) || e.targetId === String(child.id)) {
+            let port = implicitOwnPorts.get(edge);
+            if (!port) {
+              const direction = getDirection(layoutOptions);
+              const sourceInside = e.sourceId === String(child.id);
+              const side = sourceInside
+                ? ({ right: "EAST", left: "WEST", down: "SOUTH", up: "NORTH" } as const)[direction]
+                : ({ right: "WEST", left: "EAST", down: "NORTH", up: "SOUTH" } as const)[direction];
+              port = {
+                id: `__native_hierarchy_own_${String(child.id)}_${implicitOwnPorts.size}`,
+                width: 0,
+                height: 0,
+                layoutOptions: { "elk.port.side": side },
+              };
+              implicitOwnPorts.set(edge, port);
+              syntheticPortIds.add(String(port.id));
+            }
+            return child.ports?.find((p) => p.id === port!.id) ?? port;
+          }
+          return child.ports?.find((p) => String(p.id) === outside);
+        };
+
         const proxyKey = (kind: "input" | "output", edge: ElkEdge): string => {
+          const own = ownPortFor(edge);
+          if (own) return JSON.stringify(["authored", own.id]);
           const endpoints = originalHierarchyEndpoints.get(edge)!;
           const endpoint = kind === "output" ? endpoints.sourceId : endpoints.targetId;
           const owner = descendantOwnerByEndpointId.get(endpoint);
@@ -397,21 +436,40 @@ export default class ELK {
             mergeHierarchyEdges && explicitPort ? endpoint : String(edge.id),
           ]);
         };
-        const proxyFor = (kind: "input" | "output", edge: ElkEdge): ElkNode => {
-          const key = proxyKey(kind, edge);
+        const createBoundaryProxy = (
+          key: string,
+          kind: "input" | "output",
+          own: ElkPort | undefined,
+          netFlow: number,
+        ): ElkNode => {
           let proxy = proxyByKind.get(key);
           if (!proxy) {
             const direction = getDirection({ ...layoutOptions, ...child.layoutOptions });
+            const authoredAnchor = own
+              ? (getElementLayeredSettings(own.layoutOptions ?? {})["port.anchor"] as
+                  | ElkPoint
+                  | undefined)
+              : undefined;
             const origin = createExternalPortDummy({
               constraints: (getOption(child.layoutOptions ?? {}, "portConstraints") ??
                 "FREE") as ExternalPortConstraints,
-              side: kind === "output" ? "EAST" : "WEST",
-              position: { x: 0, y: 0 },
+              side: own
+                ? ((getOption(own.layoutOptions ?? {}, "port.side") ??
+                    (kind === "output" ? "EAST" : "WEST")) as ExternalPortSide)
+                : kind === "output"
+                  ? "EAST"
+                  : "WEST",
+              position: { x: own?.x ?? 0, y: own?.y ?? 0 },
+              anchor: authoredAnchor,
+              index: own ? getNumberOption(own.layoutOptions ?? {}, "port.index") : undefined,
               direction: direction.toUpperCase() as "RIGHT" | "LEFT" | "DOWN" | "UP",
-              netFlow: kind === "output" ? 1 : -1,
-              borderOffset: (getNumberOption(layoutOptions, "spacing.edgeEdge") ?? 10) / 2,
-              size: { width: 0, height: 0 },
+              netFlow,
+              borderOffset: own
+                ? (getNumberOption(own.layoutOptions ?? {}, "port.borderOffset") ?? 0)
+                : (getNumberOption(layoutOptions, "spacing.edgeEdge") ?? 10) / 2,
+              size: { width: own?.width ?? 0, height: own?.height ?? 0 },
             });
+            if (own) origin.parentPortId = String(own.id);
             const id = `__native_hierarchy_${String(child.id)}_${proxyByKind.size}`;
             proxy = attachExternalPortDummy(
               {
@@ -450,6 +508,29 @@ export default class ELK {
           }
           return proxy;
         };
+        const ownedPortNetFlow = (id: string): number => {
+          let votes = 0;
+          for (const edge of originalHierarchyEndpoints.values()) {
+            if (edge.sourceId === id)
+              votes += descendantOwnerByEndpointId.has(edge.targetId) ? -1 : 1;
+            if (edge.targetId === id)
+              votes += descendantOwnerByEndpointId.has(edge.sourceId) ? 1 : -1;
+          }
+          return votes;
+        };
+        const proxyFor = (kind: "input" | "output", edge: ElkEdge): ElkNode => {
+          const own = ownPortFor(edge);
+          const flow = implicitOwnPorts.has(edge)
+            ? kind === "output"
+              ? 1
+              : -1
+            : own
+              ? ownedPortNetFlow(String(own.id))
+              : kind === "output"
+                ? 1
+                : -1;
+          return createBoundaryProxy(proxyKey(kind, edge), kind, own, flow);
+        };
         // ELK imports ancestor edges before descendant-local edges. Preserve
         // that implicit port creation order through child phase preparation.
         const temporaryEdges: ElkEdge[] = [
@@ -467,12 +548,39 @@ export default class ELK {
               sections: undefined,
             };
           }),
-          ...(child.edges ?? []),
+          ...(child.edges ?? []).filter((edge) => !crossingEdges.includes(edge)),
           ...internalEdges.filter(
             (edge) =>
               !(child.edges ?? []).some((candidate) => String(candidate.id) === String(edge.id)),
           ),
         ];
+        const hasExternalPorts = proxyByKind.size > 0;
+        const inactiveAuthoredPorts: Array<{ port: ElkPort; proxy: ElkNode }> = [];
+        if (hasExternalPorts) {
+          for (const port of child.ports ?? []) {
+            const key = JSON.stringify(["authored", port.id]);
+            if (proxyByKind.has(key)) continue;
+            const flow = ownedPortNetFlow(String(port.id));
+            inactiveAuthoredPorts.push({
+              port,
+              proxy: createBoundaryProxy(key, flow >= 0 ? "output" : "input", port, flow),
+            });
+          }
+        }
+        const outsideNodeEdges = !hasExternalPorts
+          ? []
+          : (graph.edges ?? []).filter((edge) => {
+              const e = originalHierarchyEndpoints.get(edge)!;
+              return (
+                (e.sourceId === String(child.id) || e.targetId === String(child.id)) &&
+                !descendantOwnerByEndpointId.has(e.sourceId) &&
+                !descendantOwnerByEndpointId.has(e.targetId)
+              );
+            });
+        for (const edge of outsideNodeEdges) {
+          const e = originalHierarchyEndpoints.get(edge)!;
+          proxyFor(e.sourceId === String(child.id) ? "output" : "input", edge);
+        }
         const temporaryChild: ElkNode = {
           ...child,
           children: [...(child.children ?? []), ...proxyByKind.values()],
@@ -495,8 +603,26 @@ export default class ELK {
         preparedChildren.set(String(child.id), preparedChild);
         authoredPortsByCompound.set(child, child.ports);
         authoredOptionsByCompound.set(child, child.layoutOptions);
-        const initialPorts = [...(child.ports ?? [])];
+        const initialPorts = (child.ports ?? []).map((port) => ({
+          ...port,
+          layoutOptions: port.layoutOptions ? { ...port.layoutOptions } : undefined,
+        }));
         for (const edge of crossingEdges) {
+          const own = ownPortFor(edge);
+          if (own) {
+            const original = originalHierarchyEndpoints.get(edge)!;
+            const sourceInside = descendantOwnerByEndpointId.has(original.sourceId);
+            const origin = externalPortDummyOf(
+              proxyByKind.get(proxyKey(sourceInside ? "output" : "input", edge))!,
+            )!;
+            let port = initialPorts.find((p) => p.id === own.id);
+            if (!port) {
+              port = { ...own, layoutOptions: { ...own.layoutOptions } };
+              initialPorts.push(port);
+            }
+            port.layoutOptions = { ...port.layoutOptions, "elk.port.side": origin.side };
+            continue;
+          }
           const original = originalHierarchyEndpoints.get(edge)!;
           const sourceInside = descendantOwnerByEndpointId.has(original.sourceId);
           const proxy = proxyByKind.get(proxyKey(sourceInside ? "output" : "input", edge))!;
@@ -522,13 +648,38 @@ export default class ELK {
           edge.source = undefined;
           edge.target = undefined;
         }
+        for (const { port, proxy } of inactiveAuthoredPorts) {
+          const actual = initialPorts.find((p) => p.id === port.id)!;
+          actual.layoutOptions = {
+            ...actual.layoutOptions,
+            "elk.port.side": externalPortDummyOf(proxy)!.side,
+          };
+        }
+        for (const edge of outsideNodeEdges) {
+          const original = originalHierarchyEndpoints.get(edge)!;
+          const source = original.sourceId === String(child.id);
+          const proxy = proxyFor(source ? "output" : "input", edge),
+            own = ownPortFor(edge)!;
+          const origin = externalPortDummyOf(proxy)!;
+          if (!initialPorts.some((p) => p.id === own.id))
+            initialPorts.push({
+              ...own,
+              layoutOptions: { ...own.layoutOptions, "elk.port.side": origin.side },
+            });
+          if (!hierarchyRestorations.some((r) => r.edge === edge))
+            hierarchyRestorations.push({ edge, ...original });
+          if (source) edge.sources = [own.id!];
+          else edge.targets = [own.id!];
+          edge.source = undefined;
+          edge.target = undefined;
+        }
         child.ports = initialPorts;
         child.layoutOptions = {
           ...child.layoutOptions,
           "elk.portConstraints":
             // ELK fixes physical boundary sides after introducing hierarchy dummies.
             // Authored constraints are restored when finishing the public graph.
-            crossingEdges.length > 0
+            crossingEdges.length > 0 || outsideNodeEdges.length > 0
               ? "FIXED_SIDE"
               : (getOption(authoredOptionsByCompound.get(child) ?? {}, "portConstraints") ??
                 "FREE"),
@@ -597,7 +748,9 @@ export default class ELK {
               height: path.at(-1)?.height ?? 0,
             };
           };
-          const ports = [...(authoredPortsByCompound.get(child) ?? [])];
+          const ports = (authoredPortsByCompound.get(child) ?? []).map(
+            (original) => child.ports?.find((port) => port.id === original.id) ?? original,
+          );
           for (const edge of crossingEdges) {
             const original = originalHierarchyEndpoints.get(edge)!;
             const { sourceId, targetId } = original;
@@ -626,8 +779,8 @@ export default class ELK {
               padding: childPadding,
               offset: { x: 0, y: 0 },
               dummy: {
-                x: endpoint.x - childPadding.left,
-                y: endpoint.y - childPadding.top,
+                x: endpoint.x - childPadding.left - (ownPortFor(edge) ? origin.port.x : 0),
+                y: endpoint.y - childPadding.top - (ownPortFor(edge) ? origin.port.y : 0),
                 width: origin.width,
                 height: origin.height,
               },
@@ -645,6 +798,43 @@ export default class ELK {
             const boundary = sourceInside ? points.at(-1)! : points[0]!;
             boundary.x = transferred.dummy.x + childPadding.left;
             boundary.y = transferred.dummy.y + childPadding.top;
+            const own = ownPortFor(edge);
+            if (own) {
+              if (implicitOwnPorts.has(edge) && !ports.some((p) => p.id === own.id))
+                ports.push(own);
+              own.x = transferred.port.x;
+              own.y = transferred.port.y;
+              const anchor = (getElementLayeredSettings(own.layoutOptions ?? {})["port.anchor"] as
+                | ElkPoint
+                | undefined) ?? {
+                x:
+                  origin.side === "EAST"
+                    ? (own.width ?? 0)
+                    : origin.side === "WEST"
+                      ? 0
+                      : (own.width ?? 0) / 2,
+                y:
+                  origin.side === "SOUTH"
+                    ? (own.height ?? 0)
+                    : origin.side === "NORTH"
+                      ? 0
+                      : (own.height ?? 0) / 2,
+              };
+              boundary.x = own.x + anchor.x;
+              boundary.y = own.y + anchor.y;
+              edge.sections = [
+                {
+                  id: `${String(edge.id)}_s0`,
+                  startPoint: points[0]!,
+                  endPoint: points.at(-1)!,
+                  ...(points.length > 2 ? { bendPoints: points.slice(1, -1) } : {}),
+                  incomingShape: sourceId,
+                  outgoingShape: targetId,
+                },
+              ];
+              edge.container = child.id;
+              continue;
+            }
             const routes = boundaryRoutes.get(edge) ?? {};
             routes[sourceInside ? "source" : "target"] = { owner: child, points };
             boundaryRoutes.set(edge, routes);
@@ -669,6 +859,58 @@ export default class ELK {
             else edge.targets = [portId];
             edge.source = undefined;
             edge.target = undefined;
+          }
+          for (const { port, proxy } of inactiveAuthoredPorts) {
+            const origin = externalPortDummyOf(proxy)!;
+            const actual = ports.find((p) => p.id === port.id)!;
+            const transferred = transferExternalPort({
+              contentSize: {
+                width: child.width! - childPadding.left - childPadding.right,
+                height: child.height! - childPadding.top - childPadding.bottom,
+              },
+              padding: childPadding,
+              offset: { x: 0, y: 0 },
+              dummy: {
+                x: (proxy.x ?? 0) - childPadding.left,
+                y: (proxy.y ?? 0) - childPadding.top,
+                width: origin.width,
+                height: origin.height,
+              },
+              side: origin.side,
+              borderOffset: origin.borderOffset,
+              portSize: origin.externalSize,
+            });
+            actual.x = transferred.port.x;
+            actual.y = transferred.port.y;
+          }
+          for (const edge of outsideNodeEdges) {
+            const original = originalHierarchyEndpoints.get(edge)!;
+            const proxy = proxyFor(
+                original.sourceId === String(child.id) ? "output" : "input",
+                edge,
+              ),
+              origin = externalPortDummyOf(proxy)!,
+              own = ownPortFor(edge)!;
+            const transferred = transferExternalPort({
+              contentSize: {
+                width: child.width! - childPadding.left - childPadding.right,
+                height: child.height! - childPadding.top - childPadding.bottom,
+              },
+              padding: childPadding,
+              offset: { x: 0, y: 0 },
+              dummy: {
+                x: (proxy.x ?? 0) - childPadding.left,
+                y: (proxy.y ?? 0) - childPadding.top,
+                width: origin.width,
+                height: origin.height,
+              },
+              side: origin.side,
+              borderOffset: origin.borderOffset,
+              portSize: origin.externalSize,
+            });
+            own.x = transferred.port.x;
+            own.y = transferred.port.y;
+            if (!ports.some((p) => p.id === own.id)) ports.push(own);
           }
           child.ports = ports;
           child.layoutOptions = { ...child.layoutOptions, "elk.portConstraints": "FIXED_POS" };
@@ -958,7 +1200,19 @@ export default class ELK {
           }
         }
       }
-      for (const [compound, ports] of authoredPortsByCompound) compound.ports = ports;
+      for (const [compound, ports] of authoredPortsByCompound) {
+        for (const port of ports ?? []) {
+          const actual = compound.ports?.find((p) => p.id === port.id);
+          if (actual)
+            Object.assign(port, {
+              x: actual.x,
+              y: actual.y,
+              width: actual.width,
+              height: actual.height,
+            });
+        }
+        compound.ports = ports;
+      }
       for (const [compound, options_] of authoredOptionsByCompound)
         compound.layoutOptions = options_;
       if (hasHierarchy && topdownLayout) {
@@ -1065,10 +1319,14 @@ function coordinatePreparedScopes(
           // Parent port positions are physical; feedback reversal changes
           // edge direction without changing the boundary port's identity.
           const physical = parentOrder.physicalPortOrderByNodeId?.get(id) ?? [];
+          const dummyByParentPort = new Map(
+            childPhase.input.graph.nodes
+              .filter((n) => externalPortDummyOf(n))
+              .map((n) => [externalPortDummyOf(n)!.parentPortId ?? `${n.id}:parent`, n.id]),
+          );
           const ordered = physical.flatMap((portId) => {
             const [nodeId, portName] = JSON.parse(portId) as [string, string];
-            const dummy =
-              nodeId === id && portName.endsWith(":parent") ? portName.slice(0, -7) : undefined;
+            const dummy = nodeId === id ? dummyByParentPort.get(portName) : undefined;
             return dummy && layer.includes(dummy) ? [dummy] : [];
           });
           if (forward) ordered.reverse();
@@ -1090,7 +1348,13 @@ function coordinatePreparedScopes(
             )
           )
             return;
-          const rank = new Map(layer.map((dummy, index) => [`${dummy}:parent`, index]));
+          const rank = new Map(
+            layer.map((dummy, index) => [
+              externalPortDummyOf(childPhase.input.graph.nodes.find((n) => n.id === dummy)!)!
+                .parentPortId ?? `${dummy}:parent`,
+              index,
+            ]),
+          );
           const parentOrder = parentScope.session.snapshot();
           const physical = parentOrder.physicalPortOrderByNodeId?.get(id) ?? [];
           const boundarySlots = physical.flatMap((portId, index) => {
@@ -1849,6 +2113,10 @@ function normalizeElkGraphBounds(
   compactionBounds?: Elkjs0111ResultPolicy["normalizationBounds"],
   placementCrossBounds?: Elkjs0111ResultPolicy["placementCrossBounds"],
 ): void {
+  // Edge coordinates belong to their layout container, not their JSON storage owner.
+  const layoutEdges = (root.edges ?? []).filter(
+    (edge) => edge.container == null || String(edge.container) === String(root.id),
+  );
   const authoredWidth = root.width;
   const authoredHeight = root.height;
   const fixedGraphSize = getBooleanOption(layoutOptions, "nodeSize.fixedGraphSize") === true;
@@ -1877,7 +2145,7 @@ function normalizeElkGraphBounds(
       ),
     );
   }
-  for (const edge of root.edges ?? []) {
+  for (const edge of layoutEdges) {
     const laidOutLabels = (edge.labels ?? []).filter(isLayoutEdgeLabel);
     minimumX = Math.min(minimumX, ...laidOutLabels.map((label) => label.x ?? 0));
     minimumY = Math.min(minimumY, ...laidOutLabels.map((label) => label.y ?? 0));
@@ -1898,7 +2166,7 @@ function normalizeElkGraphBounds(
       node.x = (node.x ?? 0) + shiftX;
       node.y = (node.y ?? 0) + shiftY;
     }
-    for (const edge of root.edges ?? []) {
+    for (const edge of layoutEdges) {
       for (const section of edge.sections ?? []) {
         for (const point of [section.startPoint, ...(section.bendPoints ?? []), section.endPoint]) {
           point.x += shiftX;
@@ -1923,7 +2191,7 @@ function normalizeElkGraphBounds(
     0,
     ...layoutChildren.map((node) => (node.y ?? 0) + (node.height ?? 0)),
   );
-  const layoutEdgePoints = (root.edges ?? []).flatMap((edge) =>
+  const layoutEdgePoints = layoutEdges.flatMap((edge) =>
     getBooleanOption(edge.layoutOptions ?? {}, "noLayout") === true
       ? []
       : (edge.sections ?? []).flatMap((section) => [
@@ -1939,7 +2207,7 @@ function normalizeElkGraphBounds(
   for (const child of root.children ?? []) {
     for (const port of child.ports ?? []) childByEndpointId.set(String(port.id), child);
   }
-  const wrappedEdgeCount = (root.edges ?? []).filter((edge) => {
+  const wrappedEdgeCount = layoutEdges.filter((edge) => {
     const source = childByEndpointId.get(String(edge.sources?.[0] ?? edge.source));
     const target = childByEndpointId.get(String(edge.targets?.[0] ?? edge.target));
     if (!source || !target) return false;
@@ -1977,7 +2245,7 @@ function normalizeElkGraphBounds(
       source === childByEndpointId.get(String(edge.targets?.[0] ?? edge.target))
     );
   };
-  const hasSelfLoops = (root.edges ?? []).some(isSelfLoop);
+  const hasSelfLoops = layoutEdges.some(isSelfLoop);
   const edgeBoundsExtraX =
     addBoundaryPixel &&
     placementCrossBounds?.axis !== "x" &&
@@ -2037,12 +2305,12 @@ function normalizeElkGraphBounds(
           ),
         ),
       ]),
-      ...(root.edges ?? []).flatMap((edge) =>
+      ...layoutEdges.flatMap((edge) =>
         (edge.labels ?? [])
           .filter(isLayoutEdgeLabel)
           .map((label) => (label.x ?? 0) + (label.width ?? 0)),
       ),
-      ...(root.edges ?? []).flatMap((edge) =>
+      ...layoutEdges.flatMap((edge) =>
         getBooleanOption(edge.layoutOptions ?? {}, "noLayout") === true
           ? []
           : (edge.sections ?? []).flatMap((section) => [
@@ -2076,7 +2344,7 @@ function normalizeElkGraphBounds(
           ),
         ),
       ]),
-      ...(root.edges ?? []).flatMap((edge) =>
+      ...layoutEdges.flatMap((edge) =>
         (edge.labels ?? [])
           .filter(isLayoutEdgeLabel)
           .map(
@@ -2091,7 +2359,7 @@ function normalizeElkGraphBounds(
                 : 0),
           ),
       ),
-      ...(root.edges ?? []).flatMap((edge) =>
+      ...layoutEdges.flatMap((edge) =>
         getBooleanOption(edge.layoutOptions ?? {}, "noLayout") === true
           ? []
           : (edge.sections ?? []).flatMap((section) => [

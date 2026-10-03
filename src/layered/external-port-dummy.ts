@@ -27,6 +27,8 @@ export interface ExternalPortDummyInput {
 }
 export interface ExternalPortDummy {
   type: "EXTERNAL_PORT";
+  /** Parent-scope port identity for a reused compound endpoint. */
+  parentPortId?: string;
   constraints: "FIXED_POS";
   side: ExternalPortSide;
   borderOffset: number;
