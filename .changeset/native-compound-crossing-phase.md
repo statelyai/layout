@@ -19,3 +19,6 @@ new reproducible corpus covering ports, cycles, self-loops and labels.
 
 Count selected physical ports during native greedy switching and exclude
 self-loop connectivity from crossing sweep ranks. Broad parity remains incomplete.
+
+Select parallel alignment connections independently from the current node's
+clockwise ports in both BK sweep directions.

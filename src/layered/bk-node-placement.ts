@@ -262,7 +262,6 @@ function buildNeighbors(input: LayeredPhaseInput, order: LayerOrder) {
       if (firstByNeighbor.has(entry.id)) continue;
       firstByNeighbor.add(entry.id);
       edgeIdByNodePair.set(`${id}\0${entry.id}`, entry.edgeId);
-      edgeIdByNodePair.set(`${entry.id}\0${id}`, entry.edgeId);
     }
     portOrder.forEach((entry, index) => {
       anchor.set(
@@ -299,6 +298,14 @@ function buildNeighbors(input: LayeredPhaseInput, order: LayerOrder) {
                   (edgeModelOrder.get(rightEntry.edgeId) ?? 0) -
                   (edgeModelOrder.get(leftEntry.edgeId) ?? 0),
               );
+    // getEdge(current, next) walks current's clockwise ports. The reverse
+    // sweep must choose from the target's order, independently of the source.
+    const firstByNeighbor = new Set<string>();
+    for (const entry of [...portOrder].reverse()) {
+      if (firstByNeighbor.has(entry.id)) continue;
+      firstByNeighbor.add(entry.id);
+      edgeIdByNodePair.set(`${id}\0${entry.id}`, entry.edgeId);
+    }
     portOrder.forEach((entry, index) => {
       anchor.set(
         `${entry.edgeId}:${id}`,

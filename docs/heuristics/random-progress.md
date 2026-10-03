@@ -1021,3 +1021,12 @@ Flat gate remains 12/100, differences 14,813 to 14,741, no lost matches/errors.
 Hierarchy 60/100 and fixed self-loops 100/100 unchanged. Two red/green regressions;
 full suite 2,113 pass / 108 fail, no new failures. Parity incomplete; next trace
 placement/routing after crossing order and remaining in-layer/hierarchy counters.
+
+## Directional BK parallel anchors
+
+[Proof](./bk-directional-anchors/README.md): reverse BK alignment independently
+selects the current target's first clockwise port connection. Hierarchy improves
+60 to 72/100 and flat 12 to 16/100, zero errors/lost matches. All 16 new full
+geometry regressions fail before and pass after. Full suite 2,129 pass / 108
+existing failures. Next: pre-placement loop margins and post-placement blanket
+loop relocation; seed 1's chosen placement now agrees before routing.

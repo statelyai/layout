@@ -19,7 +19,8 @@ for (const direction of ["RIGHT", "LEFT", "DOWN", "UP"]) {
     15,
     18,
     19,
-    ...(direction === "RIGHT" || direction === "LEFT" ? [14, 25] : [13, 17, 22, 23]),
+    24,
+    ...(direction === "RIGHT" || direction === "LEFT" ? [14, 23, 25] : [6, 13, 14, 17, 22, 23, 25]),
   ])(
     `matches complete seed %i geometry and route containers through a ${direction} boundary`,
     async (seed) => {
