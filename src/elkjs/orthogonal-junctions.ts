@@ -88,6 +88,12 @@ export function applyOrthogonalJunctions(
   const created = new Set<string>();
   for (const group of grouped.segments) {
     const members = records.filter((r) => group.ports.includes(r.source));
+    // Restoring a north/south endpoint may add an elbow after routing. A
+    // singleton connection has no branch; that elbow is not a junction.
+    if (members.length === 1) {
+      delete members[0]!.edge.junctionPoints;
+      continue;
+    }
     const tracks = new Map<
       number,
       { start: number; end: number; incoming: number[]; outgoing: number[] }

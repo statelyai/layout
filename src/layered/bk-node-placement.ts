@@ -190,11 +190,22 @@ function buildNeighbors(input: LayeredPhaseInput, order: LayerOrder) {
           (connected.sourceId === id ? connected.sourcePort : connected.targetPort) === portName
         );
       });
+    const physicalSide = input.portSettings?.(port, node)?.["port.side"];
+    const uniqueFixedSide =
+      constraints === "FIXED_SIDE" &&
+      physicalSide !== undefined &&
+      physicalSide !== "UNDEFINED" &&
+      node.ports?.filter(
+        (candidate) => input.portSettings?.(candidate, node)?.["port.side"] === physicalSide,
+      ).length === 1;
     // A fan-out on one physical port has one anchor, irrespective of edge count.
+    // Multiple FIXED_SIDE ports still follow the crossing sweep's selected order.
     if (
       anchor === undefined &&
       constraints !== "FIXED_RATIO" &&
       constraints !== "FIXED_POS" &&
+      !uniqueFixedSide &&
+      constraints !== "FIXED_ORDER" &&
       !singlePhysicalPort
     ) {
       return undefined;
