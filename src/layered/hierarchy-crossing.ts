@@ -31,6 +31,7 @@ export function minimizeHierarchyCrossings(
     const nodeIds = new Set(scope.session.snapshot().layers.flat());
     for (const [id, child] of scope.childrenByNodeId) {
       if (!nodeIds.has(id)) throw new Error(`Missing parent crossing node ${id}`);
+      scope.session.markHierarchicalNode(id);
       if (seen.has(child)) throw new Error("Crossing scopes must form a tree");
       seen.add(child);
       scopes.push(child);

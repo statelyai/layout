@@ -1,3 +1,4 @@
+import { networkSimplexComponents } from "./network-simplex";
 import { mergeHyperedgeDummies } from "./hyperedge-dummy-merger";
 import { recordCrossingUnits } from "./crossing-constraints";
 import { externalPortDummyOf } from "./external-port-dummy";
@@ -1515,9 +1516,12 @@ export function* createLayeredScopePipeline<N, E, G, P>(
       ),
     ),
   );
+  // Preserve network-simplex component order before restoring detached boundary
+  // nodes; recomputing components after splitting changes the initial sweep.
   // ELK restores FIRST/LAST nodes before LongEdgeSplitter appends dummies.
   // Changing that order changes the initial sweep and selected port order.
   if (
+    separateBoundaryIds.size > 0 ||
     phaseInput.graph.nodes.some((node) => {
       const constraint = phaseInput.nodeSettings?.(node)?.["layering.layerConstraint"];
       return constraint === "FIRST" || constraint === "LAST";
@@ -1527,7 +1531,11 @@ export function* createLayeredScopePipeline<N, E, G, P>(
       { length: Math.max(0, ...assignment.layerByNodeId.values()) + 1 },
       () => [] as string[],
     );
-    const seed = assignment.seedOrder ?? phaseInput.graph.nodes.map((node) => node.id);
+    const seed =
+      assignment.seedOrder ??
+      ((phaseInput.settings["layering.strategy"] ?? "NETWORK_SIMPLEX") === "NETWORK_SIMPLEX"
+        ? networkSimplexComponents(layeringInput).flat()
+        : phaseInput.graph.nodes.map((node) => node.id));
     const seeded = new Set(seed);
     for (const id of [
       ...seed,

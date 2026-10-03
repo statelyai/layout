@@ -717,15 +717,13 @@ export default class ELK {
         ...(compoundLayout || (hasHierarchy && !separateHierarchy && !topdownLayout)
           ? { separateConnectedComponents: false }
           : {}),
-        ...(hierarchyHandling === "INCLUDE_CHILDREN" &&
-        getOption(layoutOptions, "layered.crossingMinimization.greedySwitchHierarchical.type") !==
-          undefined
+        ...(hierarchyHandling === "INCLUDE_CHILDREN"
           ? {
               "crossingMinimization.greedySwitch.type": String(
                 getOption(
                   layoutOptions,
                   "layered.crossingMinimization.greedySwitchHierarchical.type",
-                ),
+                ) ?? "OFF",
               ) as LayeredAdvancedOptions["crossingMinimization.greedySwitch.type"],
             }
           : {}),

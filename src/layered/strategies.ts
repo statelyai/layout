@@ -1704,6 +1704,7 @@ export interface LayerSweepSession {
   readonly restoreRejectedSweep: boolean;
   useRandom(random: JavaRandom): void;
   lockPortOrder(nodeId: string): void;
+  markHierarchicalNode(nodeId: string): void;
   minimize(): LayerOrder;
   shuffleFirstLayer(forward: boolean): void;
   sweep(forward: boolean, firstSweep: boolean, visitLayer?: LayerSweepVisitor): void;
@@ -1781,6 +1782,7 @@ export function createLayerSweepSession(
   const edgeById = new Map(input.graph.edges.map((edge) => [edge.id, edge]));
   const edgeModelOrder = new Map(input.graph.edges.map((edge, index) => [edge.id, index]));
   const lockedPortOrders = new Set<string>();
+  const hierarchicalNodes = new Set<string>();
   const fixedOrderNodes = new Set(
     input.graph.nodes
       .filter((node) => {
@@ -2121,9 +2123,16 @@ export function createLayerSweepSession(
       orders: Map<string, string[]>,
       oppositeRanks: ReadonlyMap<string, number>,
       reverse: boolean,
+      fixedLayer = false,
     ) => {
       for (const nodeId of nodeIds) {
-        if (fixedOrderNodes.has(nodeId) || lockedPortOrders.has(nodeId)) continue;
+        // ELK preserves ports already ordered by a nested graph on the fixed layer.
+        if (
+          fixedOrderNodes.has(nodeId) ||
+          lockedPortOrders.has(nodeId) ||
+          (fixedLayer && hierarchicalNodes.has(nodeId))
+        )
+          continue;
         orders.get(nodeId)?.sort((leftId, rightId) => {
           const difference = (oppositeRanks.get(leftId) ?? 0) - (oppositeRanks.get(rightId) ?? 0);
           return reverse ? -difference : difference;
@@ -2134,12 +2143,12 @@ export function createLayerSweepSession(
       const fixedRanks = calculateRanks(fixedLayer, outputPortOrder, false);
       reorder(freeLayer, inputPortOrder, fixedRanks, true);
       const freeRanks = calculateRanks(freeLayer, inputPortOrder, true);
-      reorder(fixedLayer, outputPortOrder, freeRanks, false);
+      reorder(fixedLayer, outputPortOrder, freeRanks, false, true);
     } else {
       const fixedRanks = calculateRanks(fixedLayer, inputPortOrder, true);
       reorder(freeLayer, outputPortOrder, fixedRanks, false);
       const freeRanks = calculateRanks(freeLayer, outputPortOrder, false);
-      reorder(fixedLayer, inputPortOrder, freeRanks, true);
+      reorder(fixedLayer, inputPortOrder, freeRanks, true, true);
     }
   };
 
@@ -2322,6 +2331,9 @@ export function createLayerSweepSession(
     restoreRejectedSweep: !exactPortSweep,
     lockPortOrder: (id) => {
       lockedPortOrders.add(id);
+    },
+    markHierarchicalNode: (id) => {
+      hierarchicalNodes.add(id);
     },
     useRandom: (source) => {
       random = source;
