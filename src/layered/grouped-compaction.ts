@@ -9,6 +9,7 @@
 import type { EntityRect, Point } from "@statelyai/graph";
 import type { AcyclicOrientation, EdgeRoutes, LayeredPhaseInput, NodePlacement } from "./types";
 import { scanlineConstraints } from "./compaction-scanline";
+import { preparePortMargins, portCrossMargins } from "./node-margins";
 import { nodeNodeSpacing } from "./spacing";
 import { solveWeightedCompaction, type CompactionConstraint } from "./weighted-compaction";
 
@@ -144,23 +145,33 @@ function compactJoinedGeometry(
       height: vertical ? rect.width : rect.height,
     };
   };
+  preparePortMargins(input, placement.rectByNodeId);
+  const contentRects = new Map<string, EntityRect>();
   const items: Compactable[] = [];
   const nodes = new Map<string, Compactable>();
   const groupOrigin = new Map<string, number>();
   for (const [id, rect] of placement.rectByNodeId) {
-    const canonical = rectToCanonical(rect);
+    const content = rectToCanonical(rect);
+    contentRects.set(id, content);
+    const margins = portCrossMargins(input, id);
+    const canonical = {
+      x: content.x - (margins?.flowBefore ?? 0),
+      y: content.y - (margins?.before ?? 0),
+      width: content.width + (margins?.flowBefore ?? 0) + (margins?.flowAfter ?? 0),
+      height: content.height + (margins?.before ?? 0) + (margins?.after ?? 0),
+    };
     const item: Compactable = {
       ...canonical,
       id: `node:${id}`,
       group: `node:${id}`,
-      offset: 0,
+      offset: -(margins?.flowBefore ?? 0),
       nodeId: id,
       edges: new Set(),
       points: [],
     };
     items.push(item);
     nodes.set(id, item);
-    groupOrigin.set(item.group, item.x);
+    groupOrigin.set(item.group, content.x);
   }
   if (!items.length) return placement;
   const canonicalRoutes = new Map(
@@ -186,7 +197,7 @@ function compactJoinedGeometry(
       if (side === "EAST") return "SOUTH";
       return side === (negative ? "NORTH" : "SOUTH") ? "EAST" : "WEST";
     }
-    const rect = nodes.get(nodeId);
+    const rect = contentRects.get(nodeId);
     if (!point || !rect) return undefined;
     if (point.x <= rect.x + 1e-9) return "WEST";
     if (point.x >= rect.x + rect.width - 1e-9) return "EAST";
@@ -494,11 +505,15 @@ function compactJoinedGeometry(
     return vertical ? { x: point.y, y: flow } : { x: flow, y: point.y };
   };
   for (const [id, item] of nodes) {
-    const point = pointFromCanonical({ x: item.x + (negative ? item.width : 0), y: item.y });
+    const content = contentRects.get(id)!;
+    const point = pointFromCanonical({
+      x: item.x - item.offset + (negative ? content.width : 0),
+      y: content.y,
+    });
     (placement.rectByNodeId as Map<string, EntityRect>).set(id, {
       ...point,
-      width: vertical ? item.height : item.width,
-      height: vertical ? item.width : item.height,
+      width: vertical ? content.height : content.width,
+      height: vertical ? content.width : content.height,
     });
   }
   for (const [id, points] of canonicalRoutes) {

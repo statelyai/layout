@@ -1,0 +1,10 @@
+{
+  "passed": 2335,
+  "failed": 106,
+  "introduced": [],
+  "resolved": [],
+  "baseline": "ebf84cb",
+  "focusedFixtures": 40,
+  "beforeMatched": 0,
+  "currentMatched": 40
+}
