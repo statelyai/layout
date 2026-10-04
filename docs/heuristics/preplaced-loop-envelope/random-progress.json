@@ -1,5 +1,5 @@
 {
-  "replayComplete": false,
+  "replayComplete": true,
   "parity": false,
   "expectedCases": 1280,
   "summaries": [
@@ -52,6 +52,14 @@
       "elkErrors": 4
     },
     {
+      "name": "complex-report.json",
+      "cases": 100,
+      "matched": 20,
+      "differingValues": 59278,
+      "nativeErrors": 0,
+      "elkErrors": 0
+    },
+    {
       "name": "options-report.json",
       "cases": 80,
       "matched": 8,
@@ -61,9 +69,9 @@
     }
   ],
   "total": {
-    "cases": 1180,
-    "matched": 616,
-    "differingValues": 49817,
+    "cases": 1280,
+    "matched": 636,
+    "differingValues": 109095,
     "nativeErrors": 0,
     "elkErrors": 217
   }
