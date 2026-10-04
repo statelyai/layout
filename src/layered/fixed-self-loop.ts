@@ -63,6 +63,15 @@ export function routeFixedSelfLoop(
   });
   const first = outward(a, from),
     last = outward(b, to);
+  // A loop on a single port closes a small square beside the port instead of
+  // retracing its own outward segment.
+  if (from === to && a.x === b.x && a.y === b.y) {
+    const alongY = from === "WEST" || from === "EAST";
+    const step = (alongY ? a.y < height / 2 : a.x < width / 2) ? distance : -distance;
+    const shift = (p: Point): Point =>
+      alongY ? { x: p.x, y: p.y + step } : { x: p.x + step, y: p.y };
+    return [a, first, shift(first), shift(b), b].map(physical);
+  }
   const points = [a, first];
   if (from !== to) {
     const verticalFrom = from === "WEST" || from === "EAST";

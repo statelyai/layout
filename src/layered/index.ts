@@ -60,6 +60,7 @@ import {
   breakCyclesWithDepthFirstSearch,
   getPolylineMidpoint,
   getPortPoint,
+  removeRouteSpurs,
   simplifyRoute,
   getOrientedPortDirection,
   minimizeCrossingsWithBarycenter,
@@ -2657,6 +2658,9 @@ export function* createLayeredScopePipeline<N, E, G, P>(
   const maximumFeedbackNodeX = Math.max(...feedbackNodeRects.map((rect) => rect.x + rect.width));
   const minimumFeedbackNodeY = Math.min(...feedbackNodeRects.map((rect) => rect.y));
   const maximumFeedbackNodeY = Math.max(...feedbackNodeRects.map((rect) => rect.y + rect.height));
+  if (edgeRouting === "ORTHOGONAL")
+    for (const [id, points] of routes.pointsByEdgeId)
+      (routes.pointsByEdgeId as Map<string, readonly Point[]>).set(id, removeRouteSpurs(points));
   const edges = graph.edges.map((edge) => {
     const points = [...(routes.pointsByEdgeId.get(edge.id) ?? [])];
     const midpoint = getPolylineMidpoint(points);

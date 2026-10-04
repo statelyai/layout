@@ -133,8 +133,14 @@ export function score(graph: ElkNode, input: ElkNode): Metrics {
 const differs = (metric: string, native: number, elk: number) =>
   Math.abs(native - elk) > (TOLERANT.has(metric) ? Math.max(TOLERANCE * Math.abs(elk), 1e-6) : 0);
 
-/** WIN or TIE when native is no worse at the first soft metric where the engines differ. */
+/**
+ * A layout without hard violations beats one with them. Otherwise, WIN or TIE
+ * when native is no worse at the first soft metric where the engines differ.
+ */
 export function compare(native: Metrics, elk: Metrics): { status: Status; metric?: string } {
+  const nativeClean = HARD.every((key) => !native[key]),
+    elkClean = HARD.every((key) => !elk[key]);
+  if (nativeClean !== elkClean) return { status: nativeClean ? "WIN" : "LOSS", metric: "hard" };
   for (const metric of SOFT)
     if (differs(metric, native[metric]!, elk[metric]!))
       return { status: native[metric]! < elk[metric]! ? "WIN" : "LOSS", metric };
@@ -208,7 +214,7 @@ function summarize(results: Array<Record<string, any>>) {
     ]),
   );
   const decidedBy = Object.fromEntries(
-    SOFT.map((metric) => [
+    ["hard", ...SOFT].map((metric) => [
       metric,
       {
         win: results.filter((row) => row.status === "WIN" && row.metric === metric).length,

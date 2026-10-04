@@ -3435,6 +3435,30 @@ export function getPortPoint(
   };
 }
 
+/**
+ * Drop interior bends where an orthogonal route doubles back along one line,
+ * so it never retraces itself. Terminal segments keep their port direction.
+ */
+export function removeRouteSpurs(points: readonly Point[]): readonly Point[] {
+  const equal = (left: number, right: number) => Math.abs(left - right) < 1e-9;
+  const route = points.filter(
+    (point, index) =>
+      index === 0 || !equal(point.x, points[index - 1]!.x) || !equal(point.y, points[index - 1]!.y),
+  );
+  let changed = false;
+  for (let index = 2; index < route.length - 2; index++) {
+    const [previous, middle, next] = [route[index - 1]!, route[index]!, route[index + 1]!];
+    const sameX = equal(previous.x, middle.x) && equal(middle.x, next.x),
+      sameY = equal(previous.y, middle.y) && equal(middle.y, next.y);
+    const axis = sameX ? "y" : sameY ? "x" : undefined;
+    if (!axis || (middle[axis] - previous[axis]) * (next[axis] - middle[axis]) >= 0) continue;
+    route.splice(index, 1);
+    changed = true;
+    index = Math.max(1, index - 2);
+  }
+  return changed ? route : points;
+}
+
 export function simplifyRoute(points: readonly Point[]): Point[] {
   const equal = (left: number, right: number) => Math.abs(left - right) < 1e-9;
   const simplified: Point[] = [];
