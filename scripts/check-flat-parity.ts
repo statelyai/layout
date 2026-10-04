@@ -7,11 +7,15 @@ import { compoundGeometry, geometryDifferences } from "./parity/compound-corpus"
 import { flatFixture } from "./parity/flat-corpus";
 
 const output = resolve(process.argv[2] ?? ".scratch/flat-parity/report.json");
+const firstSeed = Number(process.argv[3] ?? 1);
+const lastSeed = Number(process.argv[4] ?? 25);
+if (!Number.isSafeInteger(firstSeed) || !Number.isSafeInteger(lastSeed) || lastSeed < firstSeed)
+  throw new Error("Expected an inclusive seed range: [output] [firstSeed] [lastSeed]");
 const native = new NativeELK(),
   oracle = new OracleELK();
 const rows = [];
 for (const direction of ["RIGHT", "LEFT", "DOWN", "UP"]) {
-  for (let seed = 1; seed <= 25; seed++) {
+  for (let seed = firstSeed; seed <= lastSeed; seed++) {
     const input = flatFixture(seed, direction);
     const run = async (engine: "native" | "elk") => {
       try {
