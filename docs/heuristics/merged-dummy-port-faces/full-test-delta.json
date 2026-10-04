@@ -1,0 +1,19 @@
+{
+  "before": {
+    "total": 3402,
+    "passed": 3293,
+    "failed": 109
+  },
+  "after": {
+    "total": 3404,
+    "passed": 3295,
+    "failed": 109
+  },
+  "newFailures": [],
+  "newPasses": [],
+  "added": [
+    "test/oracle-merged-dummy-port-faces.test.ts > routes merged dummy in-layer edges (flat seed 27 UP, LEFT_RIGHT_CONSTRAINT_LOCKING compaction): passed",
+    "test/oracle-merged-dummy-port-faces.test.ts > routes merged dummy in-layer edges (flat seed 73 RIGHT, LEFT compaction): passed"
+  ],
+  "removed": []
+}
