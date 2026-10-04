@@ -4374,6 +4374,12 @@ function routeEdges(style: "ORTHOGONAL" | "POLYLINE" | "SPLINES"): EdgeRouter {
             // Merging adjacent helpers concatenates their physical incident
             // edges in retained layer order; root edge order loses that state.
             outgoing.sort((a, b) => {
+              // Reversing incoming edges appends them after retained outgoing
+              // edges on the physical port, regardless of original model order.
+              const reverseOrder =
+                Number(orientation.reversedEdgeIds.has(a.edge.id)) -
+                Number(orientation.reversedEdgeIds.has(b.edge.id));
+              if (reverseOrder) return reverseOrder;
               const source = orientation.reversedEdgeIds.has(a.edge.id)
                 ? a.edge.targetId
                 : a.edge.sourceId;

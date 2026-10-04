@@ -1,0 +1,13 @@
+{
+  "fixed": [],
+  "introduced": [],
+  "added": [
+    [
+      [
+        "oracle-in-layer-junction-owner.test.ts",
+        "retains physical incident edge order for in-layer junction ownership (seed 20 RIGHT)"
+      ],
+      "passed"
+    ]
+  ]
+}

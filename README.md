@@ -411,3 +411,5 @@ fails. See the [inverted-port model-order proof](docs/heuristics/inverted-port-m
 Movable self-loop labels reserve clearance before placement and retain directional alignment and stacked routing clearance. Compaction retains their complete label envelopes. See the [native loop label comparison](docs/heuristics/movable-loop-labels/README.md).
 
 Routing reuses self-loop envelopes already reserved by placement, keeping neighboring hierarchy helpers in their chosen positions. See the [preplaced loop envelope regression](docs/heuristics/preplaced-loop-envelope/README.md).
+
+Orthogonal junction ownership follows physical incident edge order after reversal. See the [junction ownership regression](docs/heuristics/physical-junction-order/README.md).

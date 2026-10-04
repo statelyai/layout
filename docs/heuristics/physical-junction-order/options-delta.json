@@ -1,0 +1,174 @@
+{
+  "summary": {
+    "cases": 80,
+    "matched": 9,
+    "differingValues": 8560,
+    "nativeErrors": 0,
+    "elkErrors": 4
+  },
+  "changed": 18,
+  "delta": [
+    {
+      "index": 8,
+      "seed": 9,
+      "direction": "RIGHT",
+      "before": 105,
+      "after": 106,
+      "lost": false,
+      "gained": false
+    },
+    {
+      "index": 9,
+      "seed": 10,
+      "direction": "RIGHT",
+      "before": 25,
+      "after": 22,
+      "lost": false,
+      "gained": false
+    },
+    {
+      "index": 13,
+      "seed": 14,
+      "direction": "RIGHT",
+      "before": 88,
+      "after": 89,
+      "lost": false,
+      "gained": false
+    },
+    {
+      "index": 19,
+      "seed": 20,
+      "direction": "RIGHT",
+      "before": 2,
+      "after": 0,
+      "lost": false,
+      "gained": true
+    },
+    {
+      "index": 20,
+      "seed": 1,
+      "direction": "LEFT",
+      "before": 1,
+      "after": 1,
+      "lost": false,
+      "gained": false
+    },
+    {
+      "index": 22,
+      "seed": 3,
+      "direction": "LEFT",
+      "before": 251,
+      "after": 248,
+      "lost": false,
+      "gained": false
+    },
+    {
+      "index": 26,
+      "seed": 7,
+      "direction": "LEFT",
+      "before": 171,
+      "after": 171,
+      "lost": false,
+      "gained": false
+    },
+    {
+      "index": 30,
+      "seed": 11,
+      "direction": "LEFT",
+      "before": 388,
+      "after": 388,
+      "lost": false,
+      "gained": false
+    },
+    {
+      "index": 32,
+      "seed": 13,
+      "direction": "LEFT",
+      "before": 198,
+      "after": 197,
+      "lost": false,
+      "gained": false
+    },
+    {
+      "index": 33,
+      "seed": 14,
+      "direction": "LEFT",
+      "before": 133,
+      "after": 133,
+      "lost": false,
+      "gained": false
+    },
+    {
+      "index": 34,
+      "seed": 15,
+      "direction": "LEFT",
+      "before": 66,
+      "after": 64,
+      "lost": false,
+      "gained": false
+    },
+    {
+      "index": 37,
+      "seed": 18,
+      "direction": "LEFT",
+      "before": 214,
+      "after": 214,
+      "lost": false,
+      "gained": false
+    },
+    {
+      "index": 47,
+      "seed": 8,
+      "direction": "DOWN",
+      "before": 196,
+      "after": 196,
+      "lost": false,
+      "gained": false
+    },
+    {
+      "index": 50,
+      "seed": 11,
+      "direction": "DOWN",
+      "before": 378,
+      "after": 378,
+      "lost": false,
+      "gained": false
+    },
+    {
+      "index": 56,
+      "seed": 17,
+      "direction": "DOWN",
+      "before": 162,
+      "after": 160,
+      "lost": false,
+      "gained": false
+    },
+    {
+      "index": 69,
+      "seed": 10,
+      "direction": "UP",
+      "before": 29,
+      "after": 23,
+      "lost": false,
+      "gained": false
+    },
+    {
+      "index": 74,
+      "seed": 15,
+      "direction": "UP",
+      "before": 114,
+      "after": 114,
+      "lost": false,
+      "gained": false
+    },
+    {
+      "index": 76,
+      "seed": 17,
+      "direction": "UP",
+      "before": 128,
+      "after": 126,
+      "lost": false,
+      "gained": false
+    }
+  ]
+}
