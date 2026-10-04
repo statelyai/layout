@@ -27,4 +27,4 @@ pnpm exec tsx scripts/parity/audit-junction-transfer.ts docs/heuristics/integrat
 node scripts/render-compound-parity-comparison.mjs docs/heuristics/compound-junction-transfer/before.json docs/heuristics/compound-junction-transfer/after.json .scratch/junction-comparison 0
 ```
 
-The random replay intentionally exits nonzero while any geometry case differs. Overall parity remains incomplete.
+The random replay intentionally exits nonzero while any geometry case differs. The completed newest-revision random portion covers **1,180 cases: 614 exact, 49,844 differing values, zero native errors and 217 oracle errors**. All 1,100 ordinary outputs remain byte-for-byte unchanged. Its final 100 complex cases are still running against the frozen source; `random-progress.json` explicitly records incomplete replay and failed parity. Overall parity remains incomplete.
