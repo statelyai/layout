@@ -12,7 +12,13 @@ import { setElkjs0111ResultPolicy } from "../internal/elkjs-compatibility";
 import { traceLayeredPhase } from "../internal/layered-trace";
 import { networkSimplexComponents } from "./network-simplex";
 import { incomingAfterLongEdgeSplitting, withLongEdgeSplitterOrder } from "./splitter-order";
-import { elkComponentOrder, insertLabelDummyPorts, simulatePortEdgeLists } from "./elk-port-lists";
+import {
+  edgeListRanks,
+  elkComponentOrder,
+  insertLabelDummyPorts,
+  simulatePortEdgeLists,
+  type PortEdgeList,
+} from "./elk-port-lists";
 import { mergeHyperedgeDummies } from "./hyperedge-dummy-merger";
 import { getCrossingUnits, recordCrossingUnits } from "./crossing-constraints";
 import { externalPortDummyOf } from "./external-port-dummy";
@@ -1573,6 +1579,7 @@ export function* createLayeredScopePipeline<N, E, G, P>(
   phaseInput = hierarchicalPorts.input;
   assignment = hierarchicalPorts.assignment;
   const labeledPortLists = insertLabelDummyPorts(portLists, orientation, labels.segmentIdsByEdgeId);
+  let incomingLists: ReadonlyMap<string, readonly PortEdgeList[]> = labeledPortLists;
   let expanded = measure("long-edge-splitting", () => {
     const split = withLongEdgeSplitterOrder(
       phaseInput,
@@ -1583,10 +1590,8 @@ export function* createLayeredScopePipeline<N, E, G, P>(
           : phaseInput.graph.nodes.map((node) => node.id)),
       portLists,
     );
-    return composeCenterLabelExpansion(
-      labels,
-      insertInvertedPortDummies(split, incomingAfterLongEdgeSplitting(labeledPortLists, split)),
-    );
+    incomingLists = incomingAfterLongEdgeSplitting(labeledPortLists, split);
+    return composeCenterLabelExpansion(labels, insertInvertedPortDummies(split, incomingLists));
   });
   // ELK sorts before north/south helpers exist. Carry both node and physical
   // port order into the crossing session, including newly generated helpers.
@@ -1655,6 +1660,10 @@ export function* createLayeredScopePipeline<N, E, G, P>(
       if (side === lower) southEdges.add(id!);
     }
   recordCrossingUnits(expanded.input, {
+    edgeListRanks: {
+      incoming: edgeListRanks(incomingLists, "incoming"),
+      outgoing: edgeListRanks(labeledPortLists, "outgoing"),
+    },
     northSouthOrigins: northSouth.originsByDummyId,
     incomingEdgeOrderByDummyId: northSouth.incomingEdgeOrderByDummyId,
     successors: northSouth.successorsByNodeId,

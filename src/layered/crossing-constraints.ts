@@ -7,6 +7,11 @@
 import type { JavaRandom } from "../java-random";
 import type { LayeredPhaseInput } from "./types";
 export interface CrossingUnits {
+  /** Edge positions in ELK's port edge lists at crossing minimization. */
+  edgeListRanks?: {
+    incoming: ReadonlyMap<string, ReadonlyMap<string, number>>;
+    outgoing: ReadonlyMap<string, ReadonlyMap<string, number>>;
+  };
   northSouthOrigins?: ReadonlyMap<string, import("./north-south-ports").CrossPortOrigin>;
   successors: ReadonlyMap<string, readonly string[]>;
   units: ReadonlyMap<string, string>;

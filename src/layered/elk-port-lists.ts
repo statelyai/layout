@@ -228,3 +228,16 @@ export function elkComponentOrder(
   }
   return components.flat();
 }
+
+/** Each node's edge positions within ELK's port edge lists, keyed by listed edge id. */
+export function edgeListRanks(
+  lists: ReadonlyMap<string, readonly PortEdgeList[]>,
+  kind: "incoming" | "outgoing",
+): Map<string, Map<string, number>> {
+  return new Map(
+    [...lists].map(([id, ports]) => [
+      id,
+      new Map(ports.flatMap((port) => port[kind]).map((edgeId, index) => [edgeId, index])),
+    ]),
+  );
+}

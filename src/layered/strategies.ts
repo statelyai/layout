@@ -2138,8 +2138,16 @@ export function createLayerSweepSession(
         groups.set(key, [...(groups.get(key) ?? []), edgeId]);
       }
       for (const group of groups.values()) {
-        // Port sorting reorders ports, not the edges on one port.
-        group.sort((a, b) => edgeModelOrder.get(a)! - edgeModelOrder.get(b)!);
+        // Port sorting reorders ports, not the edges on one port; those keep
+        // ELK's edge list order. Expanded segments keep their listed edge id.
+        const listed = units?.edgeListRanks?.[forward ? "incoming" : "outgoing"].get(id);
+        const rank = (edgeId: string) =>
+          listed?.get(edgeId.replace(/(::(segment|inverted):\d+:*)+$/, ""));
+        group.sort(
+          (a, b) =>
+            (rank(a) !== undefined && rank(b) !== undefined ? rank(a)! - rank(b)! : 0) ||
+            edgeModelOrder.get(a)! - edgeModelOrder.get(b)!,
+        );
         for (const edgeId of group) {
           const edge = edgeById.get(edgeId)!;
           const [source, target] = getOrientedEndpoints(edge, orientation);
