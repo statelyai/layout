@@ -55,6 +55,7 @@ import { nodeNodeSpacing } from "./spacing";
 import type { ElkLayeredOptionValueByName } from "./elk-options";
 import { conservativeSpline } from "./spline-bezier";
 import { getFlexiblePortPosition } from "./flexible-ports";
+import { traceLayeredPhase } from "../internal/layered-trace";
 
 const modelSweepInputs = new WeakSet<LayeredPhaseInput>();
 
@@ -2377,6 +2378,11 @@ export function createLayerSweepSession(
       if (node) node.ports.sort((a, b) => ports.indexOf(a.id) - ports.indexOf(b.id));
     }
   };
+  traceLayeredPhase(() => ({
+    kind: "initial-order",
+    scope: input.graph.id,
+    layers: working.map((layer) => [...layer]),
+  }));
   const session: LayerSweepSession = {
     get random() {
       return random;

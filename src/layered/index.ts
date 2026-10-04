@@ -9,6 +9,7 @@ import { sortInitialModelOrder, markInitialModelOrderPrepared } from "./initial-
 import { hasMovableLoopPorts } from "./loop-envelopes";
 import { compactionBounds, placementCrossBounds } from "./compaction-bounds";
 import { setElkjs0111ResultPolicy } from "../internal/elkjs-compatibility";
+import { traceLayeredPhase } from "../internal/layered-trace";
 import { networkSimplexComponents } from "./network-simplex";
 import { withLongEdgeSplitterOrder } from "./splitter-order";
 import { mergeHyperedgeDummies } from "./hyperedge-dummy-merger";
@@ -1720,6 +1721,14 @@ export function* createLayeredScopePipeline<N, E, G, P>(
     minimize: minimizeScope,
     finishOrder: finishCrossingOrder,
   };
+  traceLayeredPhase(() => ({
+    kind: "crossing-order",
+    scope: graph.id,
+    edgeIds: phaseInput.graph.edges.map((edge) => edge.id),
+    reversedEdgeIds: [...phaseOrientation.reversedEdgeIds],
+    layerByNodeId: assignment.layerByNodeId,
+    layers: order.layers,
+  }));
   // Preserve the existing merged-edge dummy policy without moving FIRST/LAST
   // nodes after crossing minimization.
   if (expanded.input.settings.mergeEdges === true) {
