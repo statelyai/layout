@@ -1,0 +1,36 @@
+{
+  "method": "Native scope phases (cycle reversal, layering, crossing order) vs read-only real elkjs 0.11.1 processor snapshots; flat corpus rows failing at HEAD (46 non-oracle-error cases).",
+  "earliestDivergence": {
+    "head": {
+      "crossingMin": 26,
+      "cycleBreaking": 2,
+      "postOrder": 8,
+      "layering": 10
+    },
+    "fixed": {
+      "postOrder": 20,
+      "crossingMin": 14,
+      "cycleBreaking": 2,
+      "layering": 10
+    },
+    "note": "postOrder = cycle reversal, layering and final crossing order all match ELK; remaining differences arise later (placement/routing)."
+  },
+  "initialCrossingOrder": {
+    "metric": "pre-sweep layer order identical to ELK first crossing count, flat 100 cases (label dummies excluded as naming artifacts: 20 cases)",
+    "head": {
+      "identical": 20,
+      "differing": 60
+    },
+    "fixed": {
+      "identical": 66,
+      "differing": 14
+    }
+  },
+  "minimizedCase": {
+    "case": "flat seed 10 RIGHT (DAG, no ports/labels/cycles)",
+    "headDifferences": 178,
+    "fixedDifferences": 0,
+    "finding": "Same port ranks and same Random draws; native visited layer 7 as [n7,e8,e11,e12,e20], ELK as [n7,e11,e12,e8,e20] (LongEdgeSplitter append order). Each +-0.035 barycenter perturbation therefore landed on a different node. Rank ties (layer 2: n2 and dummy e19 both rank 4) then broke differently, diverging the first backward sweep at layer 2."
+  },
+  "cause": "Native seeded crossing minimization with authored node order plus dummies in edge-creation order. ELK seeds with network-simplex component DFS order, then LongEdgeSplitter appends dummies while visiting each layer, its nodes, their authored ports and each port outgoing edges (reversed edges after retained ones). The facade pre-sorted FIXED_SIDE ports, hiding authored port order."
+}

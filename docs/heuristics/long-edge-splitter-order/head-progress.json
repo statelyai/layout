@@ -1,0 +1,78 @@
+{
+  "replayComplete": true,
+  "parity": false,
+  "expectedCases": 1280,
+  "summaries": [
+    {
+      "name": "report.json",
+      "cases": 200,
+      "matched": 59,
+      "differingValues": 4620,
+      "nativeErrors": 0,
+      "elkErrors": 100
+    },
+    {
+      "name": "fresh-report.json",
+      "cases": 200,
+      "matched": 56,
+      "differingValues": 5061,
+      "nativeErrors": 0,
+      "elkErrors": 100
+    },
+    {
+      "name": "flat-report.json",
+      "cases": 100,
+      "matched": 54,
+      "differingValues": 7157,
+      "nativeErrors": 0,
+      "elkErrors": 0
+    },
+    {
+      "name": "directional-report.json",
+      "cases": 200,
+      "matched": 146,
+      "differingValues": 8502,
+      "nativeErrors": 0,
+      "elkErrors": 6
+    },
+    {
+      "name": "expanded-report.json",
+      "cases": 200,
+      "matched": 154,
+      "differingValues": 9063,
+      "nativeErrors": 0,
+      "elkErrors": 3
+    },
+    {
+      "name": "directional-fresh-report.json",
+      "cases": 200,
+      "matched": 149,
+      "differingValues": 6699,
+      "nativeErrors": 0,
+      "elkErrors": 4
+    },
+    {
+      "name": "options-report.json",
+      "cases": 80,
+      "matched": 10,
+      "differingValues": 8552,
+      "nativeErrors": 0,
+      "elkErrors": 4
+    },
+    {
+      "name": "complex-head-report.json",
+      "cases": 100,
+      "matched": 20,
+      "differingValues": 59247,
+      "nativeErrors": 0,
+      "elkErrors": 0
+    }
+  ],
+  "total": {
+    "cases": 1280,
+    "matched": 648,
+    "differingValues": 108901,
+    "nativeErrors": 0,
+    "elkErrors": 217
+  }
+}
