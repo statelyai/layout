@@ -16,5 +16,9 @@ export function traceElkPhases(input: ElkNode): Promise<{
     layering?: Layers;
     initialOrder?: Layers;
     crossingOrder?: Layers;
+    sweeps: Array<
+      | { kind: "count"; scope: number; crossings: number }
+      | { kind: "sweep"; scope: number; forward: boolean; firstSweep: boolean; layers: Layers }
+    >;
   }>;
 }>;

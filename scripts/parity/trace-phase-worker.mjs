@@ -86,6 +86,7 @@ context.$prepareGraphForLayout = (configurator, graph) => {
   }
 };
 // The first crossing count of a scope sees its order before any sweep.
+let sweepEvents = [];
 const count = context.$countCurrentNumberOfCrossings;
 context.$countCurrentNumberOfCrossings = (self, gData) => {
   const scope = scopes.get(gData.lGraph);
@@ -94,7 +95,21 @@ context.$countCurrentNumberOfCrossings = (self, gData) => {
       scope,
       gData.currentNodeOrder.map((layer) => layer.map(token)),
     );
-  return count(self, gData);
+  const crossings = count(self, gData);
+  sweepEvents.push({ kind: "count", scope, crossings });
+  return crossings;
+};
+const sweep = context.$sweepReducingCrossings;
+context.$sweepReducingCrossings = (self, gData, forward, firstSweep) => {
+  const result = sweep(self, gData, forward, firstSweep);
+  sweepEvents.push({
+    kind: "sweep",
+    scope: scopes.get(gData.lGraph),
+    forward,
+    firstSweep,
+    layers: gData.currentNodeOrder.map((layer) => layer.map(token)),
+  });
+  return result;
 };
 const Elk = require("elkjs/lib/elk-api.js");
 const elk = new Elk({
@@ -115,6 +130,7 @@ export async function traceElkPhases(input) {
   scopeCount = 0;
   stages = [];
   initialOrders = new Map();
+  sweepEvents = [];
   const output = await elk.layout(structuredClone(input));
   const byScope = new Map();
   for (const stage of stages) {
@@ -136,6 +152,7 @@ export async function traceElkPhases(input) {
         layering: (splitter > 0 ? stages[splitter - 1] : last(/Layerer$|Postprocessor$/))?.layers,
         initialOrder: initialOrders.get(scope),
         crossingOrder: last(/CrossingMinimizer$/)?.layers,
+        sweeps: sweepEvents.filter((event) => event.scope === scope),
       };
     }),
   };

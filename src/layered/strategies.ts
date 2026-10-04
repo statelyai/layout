@@ -56,6 +56,7 @@ import type { ElkLayeredOptionValueByName } from "./elk-options";
 import { conservativeSpline } from "./spline-bezier";
 import { getFlexiblePortPosition } from "./flexible-ports";
 import { traceLayeredPhase } from "../internal/layered-trace";
+import { assertNorthSouthPortSides, GreedySwitchDecider } from "./greedy-switch-decider";
 
 const modelSweepInputs = new WeakSet<LayeredPhaseInput>();
 
@@ -914,6 +915,7 @@ export function applyGreedySwitch(
         )
       : undefined;
   const greedyNodes = new Map(greedyGraph?.layers.flat().map((node) => [node.id, node]));
+  if (greedyGraph) assertNorthSouthPortSides(greedyGraph);
   const edgeById = new Map(input.graph.edges.map((edge) => [edge.id, edge]));
   const portPositions = (layer: readonly string[], incoming: boolean) => {
     const positions = new Map<string, number>();
@@ -994,6 +996,31 @@ export function applyGreedySwitch(
     for (const layerIndex of indices) {
       const layer = layers[layerIndex]!;
       let improved: boolean;
+      if (greedyGraph) {
+        // ELK decides each switch from local two-node crossing counts.
+        const units = getCrossingUnits(input);
+        greedyGraph.layers = layers.map((ids) => ids.map((id) => greedyNodes.get(id)!));
+        const decider = new GreedySwitchDecider(
+          greedyGraph,
+          layerIndex,
+          type === "ONE_SIDED" ? (forward ? "WEST" : "EAST") : undefined,
+        );
+        do {
+          improved = false;
+          for (let index = 0; index + 1 < layer.length; index++) {
+            const upper = greedyNodes.get(layer[index]!)!,
+              lower = greedyNodes.get(layer[index + 1]!)!;
+            if (decider.preventsSwitch(upper, lower, units?.successors ?? new Map())) continue;
+            const [current, switched] = decider.crossings(upper, lower);
+            if (current <= switched) continue;
+            decider.notifySwitch(upper, lower);
+            [layer[index], layer[index + 1]] = [layer[index + 1]!, layer[index]!];
+            improved = true;
+            changed = true;
+          }
+        } while (improved && layerIndex !== indices[0]);
+        continue;
+      }
       do {
         improved = false;
         for (let index = 0; index + 1 < layer.length; index++) {
@@ -1026,6 +1053,15 @@ export function applyGreedySwitch(
   let improved: boolean;
   do {
     improved = sweep(forward);
+    traceLayeredPhase(() => ({
+      kind: "sweep",
+      scope: input.graph.id,
+      attempt: -1,
+      forward,
+      firstSweep: false,
+      crossings: -1,
+      layers,
+    }));
     forward = !forward;
   } while (improved);
   return { ...order, layers };
@@ -1775,6 +1811,8 @@ type LayerSweepVisitor = (
 
 /** @internal */
 export interface LayerSweepSession {
+  /** Scope graph id, for development tracing. */
+  readonly scope: string;
   readonly random: JavaRandom;
   readonly attempts: number;
   readonly restoreRejectedSweep: boolean;
@@ -2384,6 +2422,7 @@ export function createLayerSweepSession(
     layers: working.map((layer) => [...layer]),
   }));
   const session: LayerSweepSession = {
+    scope: input.graph.id,
     get random() {
       return random;
     },

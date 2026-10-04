@@ -419,3 +419,5 @@ Joining reversed edge chains retains physical routing order for junction points.
 Crossing minimization starts from ELK's long-edge splitter order: component order, then dummies appended through authored port order. See the [splitter order replay](docs/heuristics/long-edge-splitter-order/README.md).
 
 That order walks ELK's per-port edge lists, replayed through reversal history, label dummies and hierarchy segment creation. See the [port edge-list replay](docs/heuristics/elk-port-edge-lists/README.md).
+
+Greedy switching decides each swap from ELK's local two-node crossing estimates. See the [greedy switch decider](docs/heuristics/greedy-switch-decider/README.md).

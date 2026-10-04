@@ -1,6 +1,15 @@
 /** Development-only phase observations for differential tracing against real ELK. */
 export type LayeredTraceEvent =
   | {
+      kind: "sweep";
+      scope: string;
+      attempt: number;
+      forward: boolean;
+      firstSweep: boolean;
+      crossings: number;
+      layers: readonly (readonly string[])[];
+    }
+  | {
       kind: "port-lists";
       scope: string;
       ports: ReadonlyMap<

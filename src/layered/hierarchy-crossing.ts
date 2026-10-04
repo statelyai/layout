@@ -1,3 +1,4 @@
+import { traceLayeredPhase } from "../internal/layered-trace";
 import type { LayerSweepSession } from "./strategies";
 import type { LayerOrder } from "./types";
 
@@ -80,11 +81,23 @@ export function minimizeHierarchyCrossings(
       scope.session.finishInitialOrderAttempt?.();
       let crossings = count(),
         selected = snapshot();
+      const trace = (first: boolean, value: number) =>
+        traceLayeredPhase(() => ({
+          kind: "sweep",
+          scope: scope.session.scope,
+          attempt,
+          forward,
+          firstSweep: first,
+          crossings: value,
+          layers: scope.session.snapshot().layers,
+        }));
+      trace(true, crossings);
       while (crossings > 0) {
         forward = !forward;
         const previous = snapshot();
         sweep(scope, forward, false);
         const next = count();
+        trace(false, next);
         if (next >= crossings) {
           // Preserve the legacy wrapped/unzipped standalone rollback policy.
           for (const [scope, order] of previous)
