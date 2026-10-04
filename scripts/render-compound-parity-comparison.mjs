@@ -17,6 +17,7 @@ function scene(root) {
   const nodes = [],
     ports = [],
     edges = [],
+    junctions = [],
     origins = new Map([[String(root.id), { x: 0, y: 0 }]]),
     containers = [];
   const visit = (graph, x, y) => {
@@ -39,6 +40,8 @@ function scene(root) {
   for (const { graph, x, y } of containers)
     for (const edge of graph.edges ?? []) {
       const origin = origins.get(String(edge.container ?? graph.id)) ?? { x, y };
+      for (const point of edge.junctionPoints ?? [])
+        junctions.push({ id: edge.id, x: point.x + origin.x, y: point.y + origin.y });
       for (const section of edge.sections ?? []) {
         const points = [section.startPoint, ...(section.bendPoints ?? []), section.endPoint].map(
           (p) => ({ x: p.x + origin.x, y: p.y + origin.y }),
@@ -46,10 +49,10 @@ function scene(root) {
         edges.push({ id: edge.id, points });
       }
     }
-  return { root, nodes, ports, edges };
+  return { root, nodes, ports, edges, junctions };
 }
 function svg(scene, box) {
-  return `<svg viewBox="${box.join(" ")}" role="img">${scene.nodes.map((n) => `<rect x="${n.x}" y="${n.y}" width="${n.width ?? 0}" height="${n.height ?? 0}" fill="${n.children?.length ? "#f1f5f9" : "white"}" stroke="#94a3b8"/><text x="${n.x + 5}" y="${n.y + 14}" font-size="10">${escape(n.id)}</text>`).join("")}${scene.edges.map((e, i) => `<polyline points="${e.points.map((p) => `${p.x},${p.y}`).join(" ")}" fill="none" stroke="${["#2563eb", "#9333ea", "#059669", "#ea580c"][i % 4]}" stroke-width="1.5"><title>${escape(e.id)}</title></polyline>`).join("")}${scene.ports.map((p) => `<circle cx="${p.x}" cy="${p.y}" r="2" fill="#0f172a"><title>${escape(p.id)}</title></circle>`).join("")}</svg>`;
+  return `<svg viewBox="${box.join(" ")}" role="img">${scene.nodes.map((n) => `<rect x="${n.x}" y="${n.y}" width="${n.width ?? 0}" height="${n.height ?? 0}" fill="${n.children?.length ? "#f1f5f9" : "white"}" stroke="#94a3b8"/><text x="${n.x + 5}" y="${n.y + 14}" font-size="10">${escape(n.id)}</text>`).join("")}${scene.edges.map((e, i) => `<polyline points="${e.points.map((p) => `${p.x},${p.y}`).join(" ")}" fill="none" stroke="${["#2563eb", "#9333ea", "#059669", "#ea580c"][i % 4]}" stroke-width="1.5"><title>${escape(e.id)}</title></polyline>`).join("")}${scene.junctions.map((p) => `<circle cx="${p.x}" cy="${p.y}" r="3" fill="#0f172a" stroke="white" stroke-width="1"><title>Junction ${escape(p.id)}</title></circle>`).join("")}${scene.ports.map((p) => `<circle cx="${p.x}" cy="${p.y}" r="2" fill="#0f172a"><title>${escape(p.id)}</title></circle>`).join("")}</svg>`;
 }
 const rows = indices.map((index) => {
   const old = before.rows[index],
@@ -72,6 +75,7 @@ for (const [index, row] of rows.entries()) {
             { x: n.x + (n.width ?? 0), y: n.y + (n.height ?? 0) },
           ]),
           ...s.ports,
+          ...s.junctions,
           ...s.edges.flatMap((e) => e.points),
         ]
       : [],
@@ -84,7 +88,7 @@ for (const [index, row] of rows.entries()) {
     Math.max(...points.map((p) => p.x)) - x + 20,
     Math.max(...points.map((p) => p.y)) - y + 20,
   ];
-  html += `<section id="case-${index}" hidden><p>Row ${row.index} · ${escape(row.direction)} · ${row.differences.length} differing values</p><div class="pair">${scenes.map((s, i) => `<article><h2>${["Native before", "Native after", "Real ELK 0.11.1"][i]}</h2>${s ? svg(s, box) : `<p>${escape(outputs[i].error)}</p>`}</article>`).join("")}</div></section>`;
+  html += `<section id="case-${index}" hidden><p>Row ${row.index} · ${escape(row.direction)} · ${row.differences.length} differing values</p><div class="pair">${scenes.map((s, i) => `<article><h2>${["Native before", "Native after", "Real ELK 0.11.1"][i]}</h2><p>${s?.junctions.length ?? 0} junction points</p>${s ? svg(s, box) : `<p>${escape(outputs[i].error)}</p>`}</article>`).join("")}</div></section>`;
 }
 html += `<script>const select=document.querySelector('#cases');function show(){const i=Math.max(0,Math.min(select.options.length-1,Number(location.hash.slice(1))||0));select.value=i;document.querySelectorAll('section').forEach((s,n)=>s.hidden=n!==i)}select.onchange=()=>location.hash=select.value;onhashchange=show;show()</script>`;
 fs.mkdirSync(destination, { recursive: true });

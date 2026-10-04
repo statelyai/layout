@@ -255,8 +255,8 @@ export default class ELK {
     const boundaryRoutes = new Map<
       ElkEdge,
       {
-        source?: { owner: ElkNode; points: ElkPoint[] };
-        target?: { owner: ElkNode; points: ElkPoint[] };
+        source?: { owner: ElkNode; points: ElkPoint[]; junctionPoints?: ElkPoint[] };
+        target?: { owner: ElkNode; points: ElkPoint[]; junctionPoints?: ElkPoint[] };
       }
     >();
     const syntheticPortIds = new Set<string>();
@@ -770,11 +770,12 @@ export default class ELK {
             const descendantId = sourceInside ? sourceId : targetId;
             const rect = relativeRect(descendantId);
             if (!rect) continue;
-            const internalRoute = temporaryEdges.find(
+            const internalEdge = temporaryEdges.find(
               (candidate) =>
                 String(candidate.id) ===
                 `__native_hierarchy_edge_${String(child.id)}_${String(edge.id)}`,
-            )?.sections;
+            );
+            const internalRoute = internalEdge?.sections;
             const kind = sourceInside ? "output" : "input";
             const proxy = proxyByKind.get(proxyKey(kind, edge))!;
             const origin = externalPortDummyOf(proxy)!;
@@ -844,11 +845,18 @@ export default class ELK {
                   outgoingShape: targetId,
                 },
               ];
+              if (internalEdge?.junctionPoints?.length)
+                edge.junctionPoints = internalEdge.junctionPoints.map((point) => ({ ...point }));
+              else delete edge.junctionPoints;
               edge.container = child.id;
               continue;
             }
             const routes = boundaryRoutes.get(edge) ?? {};
-            routes[sourceInside ? "source" : "target"] = { owner: child, points };
+            routes[sourceInside ? "source" : "target"] = {
+              owner: child,
+              points,
+              junctionPoints: internalEdge?.junctionPoints,
+            };
             boundaryRoutes.set(edge, routes);
             const portId = `${String(proxy.id)}:parent`;
             syntheticPortIds.add(portId);
@@ -1184,6 +1192,18 @@ export default class ELK {
             segments,
             getBooleanOption(layoutOptions, "unnecessaryBendpoints") === true,
           );
+          const childJunctions = (split: typeof splits.source) =>
+            (split?.junctionPoints ?? []).map((point) => ({
+              x: point.x + (split?.owner.x ?? 0),
+              y: point.y + (split?.owner.y ?? 0),
+            }));
+          const junctions = [
+            ...childJunctions(splits.source),
+            ...(restoration.edge.junctionPoints ?? []),
+            ...childJunctions(splits.target),
+          ];
+          if (junctions.length) restoration.edge.junctionPoints = junctions;
+          else delete restoration.edge.junctionPoints;
           restoration.edge.sections = [
             {
               ...sections[0]!,

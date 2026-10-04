@@ -1,0 +1,22 @@
+{
+  "fixed": [],
+  "introduced": [
+    [
+      "hierarchy-physical-port-state.test.ts",
+      "retains every physical hierarchy boundary through feedback reversal, seed 1 LEFT"
+    ],
+    [
+      "oracle-nested-placement-bounds.test.ts",
+      "retains helper extents through nested compounds, seed 16 RIGHT"
+    ]
+  ],
+  "added": [
+    [
+      [
+        "oracle-compound-junction-transfer.test.ts",
+        "preserves child-scope junctions when joining random cross-hierarchy routes (seed 13)"
+      ],
+      "failed"
+    ]
+  ]
+}
