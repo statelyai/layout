@@ -18,14 +18,28 @@ export interface OrthogonalConnection {
 export function createOrthogonalHypersegments(
   ports: readonly OrthogonalPort[],
   connections: readonly OrthogonalConnection[],
+  /** Position of a connection in its port's incoming or outgoing edge list, when known. */
+  listRank?: (connection: number, list: "incoming" | "outgoing") => number | undefined,
 ) {
   const byId = new Map(ports.map((p) => [p.id, p]));
-  const incoming = new Map(ports.map((p) => [p.id, [] as string[]]));
-  const outgoing = new Map(ports.map((p) => [p.id, [] as string[]]));
-  for (const edge of connections) {
-    incoming.get(edge.target)!.push(edge.source);
-    outgoing.get(edge.source)!.push(edge.target);
+  const incoming = new Map(ports.map((p) => [p.id, [] as number[]]));
+  const outgoing = new Map(ports.map((p) => [p.id, [] as number[]]));
+  for (const [index, edge] of connections.entries()) {
+    incoming.get(edge.target)!.push(index);
+    outgoing.get(edge.source)!.push(index);
   }
+  // ELK follows each port's edges in list order; fall back to connection order.
+  if (listRank)
+    for (const [lists, list] of [
+      [incoming, "incoming"],
+      [outgoing, "outgoing"],
+    ] as const)
+      for (const members of lists.values())
+        members.sort((a, b) => {
+          const ra = listRank(a, list),
+            rb = listRank(b, list);
+          return ra !== undefined && rb !== undefined ? ra - rb || a - b : a - b;
+        });
   const segmentByPort = new Map<string, number>();
   const segments: Array<{ ports: string[]; incoming: number[]; outgoing: number[] }> = [];
   const visit = (id: string, index: number) => {
@@ -35,7 +49,8 @@ export function createOrthogonalHypersegments(
       segment = segments[index]!;
     segment.ports.push(id);
     (port.side === "source" ? segment.incoming : segment.outgoing).push(port.position);
-    for (const peer of [...incoming.get(id)!, ...outgoing.get(id)!]) visit(peer, index);
+    for (const connection of incoming.get(id)!) visit(connections[connection]!.source, index);
+    for (const connection of outgoing.get(id)!) visit(connections[connection]!.target, index);
   };
   for (const side of ["source", "target"] as const)
     for (const port of ports) {

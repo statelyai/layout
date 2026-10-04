@@ -4411,9 +4411,18 @@ function routeEdges(style: "ORTHOGONAL" | "POLYLINE" | "SPLINES"): EdgeRouter {
             source: portKey(candidate, "source"),
             target: portKey(candidate, "target"),
           });
+        const edgeLists = getCrossingUnits(input)?.edgeListRanks;
+        const listedId = (edgeId: string) => edgeId.replace(/(::(segment|inverted):\d+:*)+$/, "");
         const grouped = createOrthogonalHypersegments(
           ports,
           candidates.map((candidate) => portByCandidate.get(candidate)!),
+          (index, list) => {
+            const { edge } = candidates[index]!;
+            const reversed = orientation.reversedEdgeIds.has(edge.id);
+            // The port side that lists this connection: its source lists it as outgoing.
+            const node = (list === "outgoing") !== reversed ? edge.sourceId : edge.targetId;
+            return edgeLists?.[list].get(node)?.get(listedId(edge.id));
+          },
         );
         const criticalThreshold =
           0.2 *
@@ -4437,7 +4446,27 @@ function routeEdges(style: "ORTHOGONAL" | "POLYLINE" | "SPLINES"): EdgeRouter {
             );
             // Merging adjacent helpers concatenates their physical incident
             // edges in retained layer order; root edge order loses that state.
+            const listedOutgoing = getCrossingUnits(input)?.edgeListRanks?.outgoing;
+            const listed = (edgeId: string) => edgeId.replace(/(::(segment|inverted):\d+:*)+$/, "");
             outgoing.sort((a, b) => {
+              // ELK visits a port's outgoing edges in list order, which records
+              // reversal history; edges from dummies keep the fallbacks below.
+              const sourceOf = (candidate: (typeof outgoing)[number]) =>
+                orientation.reversedEdgeIds.has(candidate.edge.id)
+                  ? candidate.edge.targetId
+                  : candidate.edge.sourceId;
+              const ranks =
+                sourceOf(a) === sourceOf(b) ? listedOutgoing?.get(sourceOf(a)) : undefined;
+              const ra = ranks?.get(listed(a.edge.id)),
+                rb = ranks?.get(listed(b.edge.id));
+              if (ra !== undefined && rb !== undefined) return ra - rb;
+              // Merging appends a lower dummy's edges after the kept dummy's.
+              if (sourceOf(a) === sourceOf(b) && isMergedHyperedgeDummy(input, sourceOf(a))) {
+                const merged = getPlacementOrder(input)?.outputPortOrderByNodeId?.get(sourceOf(a));
+                const ma = merged?.indexOf(a.edge.id) ?? -1,
+                  mb = merged?.indexOf(b.edge.id) ?? -1;
+                if (ma >= 0 && mb >= 0) return ma - mb;
+              }
               // Reversing incoming edges appends them after retained outgoing
               // edges on the physical port, regardless of original model order.
               const reverseOrder =
