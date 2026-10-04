@@ -684,14 +684,22 @@ function createStraighteningThreshold(
         : undefined) ??
       (incoming ? order.inputPortOrderByNodeId : order.outputPortOrderByNodeId)?.get(pending.free);
     // Feedback segments retain model direction; BK traverses their layer direction.
+    // SelfLoopPreProcessor hides self loops until after node placement.
     const edges = input.graph.edges
       .filter((edge) => {
+        if (edge.sourceId === edge.targetId) return false;
         const reversed =
           (neighbors.layerIndex.get(edge.sourceId) ?? 0) >
           (neighbors.layerIndex.get(edge.targetId) ?? 0);
         return (incoming !== reversed ? edge.targetId : edge.sourceId) === pending.free;
       })
-      .sort((a, b) => (ports ? ports.indexOf(a.id) - ports.indexOf(b.id) : 0));
+      // Edges missing from the port order (a merged dummy's in-layer parts)
+      // follow the listed edges.
+      .sort((a, b) => {
+        if (!ports) return 0;
+        const rank = (id: string) => (ports.includes(id) ? ports.indexOf(id) : ports.length);
+        return rank(a.id) - rank(b.id);
+      });
     // ELK initializes this flag true and changes it only on alignment.
     // A singleton normal node therefore remains eligible for same-layer edges.
     const onlyDummies = bal.onlyDummies.get(rootOf(pending.free)) ?? true;
@@ -700,7 +708,6 @@ function createStraighteningThreshold(
     for (const edge of edges) {
       if (
         !onlyDummies &&
-        edge.sourceId !== edge.targetId &&
         neighbors.layerIndex.get(edge.sourceId) === neighbors.layerIndex.get(edge.targetId)
       )
         continue;
