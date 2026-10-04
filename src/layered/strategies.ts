@@ -4281,7 +4281,18 @@ function routeEdges(style: "ORTHOGONAL" | "POLYLINE" | "SPLINES"): EdgeRouter {
           const face = (id: string, name: string | undefined) => {
             const node = nodeById.get(id)!;
             const port = node.ports?.find((port) => port.name === name);
-            return port && input.portSettings?.(port, node)?.["port.side"];
+            if (port) return input.portSettings?.(port, node)?.["port.side"];
+            // A merged hyperedge dummy keeps an inverted dummy's in-layer
+            // edge, whose dummy ports face backward (input) or forward (output).
+            if (!id.startsWith("__layout_dummy:") || (name !== "input" && name !== "output"))
+              return undefined;
+            const forward = { right: "EAST", left: "WEST", down: "SOUTH", up: "NORTH" }[
+              input.direction
+            ]!;
+            const backward = { EAST: "WEST", WEST: "EAST", SOUTH: "NORTH", NORTH: "SOUTH" }[
+              forward
+            ]!;
+            return name === "output" ? forward : backward;
           };
           const negativeSide = horizontal ? "WEST" : "NORTH";
           const sourceFace = face(edge.sourceId, edge.sourcePort);
