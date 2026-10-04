@@ -427,3 +427,5 @@ Barycenter sweeps visit each port's edges in ELK's list order. See the [port edg
 A north/south port whose dummy ends crossing minimization on the other side of its node moves to that side. See the [north/south port sides](docs/heuristics/north-south-port-sides/README.md).
 
 In-layer edges kept by merged hyperedge dummies join their routing hyperedge. See the [merged dummy port faces](docs/heuristics/merged-dummy-port-faces/README.md).
+
+Self loops that share a port route on one track. See the [shared self-loop tracks](docs/heuristics/shared-self-loop-tracks/README.md).

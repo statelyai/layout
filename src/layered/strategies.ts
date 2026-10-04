@@ -18,7 +18,7 @@ import {
   loopEnvelopes,
   preparedLoopEnvelopes,
 } from "./loop-envelopes";
-import { routeFixedSelfLoop, fixedSelfLoopSide } from "./fixed-self-loop";
+import { routeFixedSelfLoop, fixedSelfLoopSide, selfLoopTracks } from "./fixed-self-loop";
 import { networkSimplexComponents } from "./network-simplex";
 import { minimizeHierarchyCrossings } from "./hierarchy-crossing";
 import { orthogonalJunctionPoints, type OrthogonalJunctionGroup } from "./orthogonal-junctions";
@@ -5145,7 +5145,8 @@ function routeEdges(style: "ORTHOGONAL" | "POLYLINE" | "SPLINES"): EdgeRouter {
         ];
         const loops = selfLoopsByNodeId.get(source.id) ?? [edge];
         const distance =
-          Number(input.settings["spacing.nodeSelfLoop"] ?? 10) * (loops.indexOf(edge) + 1);
+          Number(input.settings["spacing.nodeSelfLoop"] ?? 10) *
+          (selfLoopTracks(loops).get(edge.id)! + 1);
         pointsByEdgeId.set(
           edge.id,
           (sameSideSelfLoop ? (points: Point[]) => points : simplifyRoute)(

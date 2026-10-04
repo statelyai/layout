@@ -1,5 +1,5 @@
 /* Native fixed-port perimeter routing following ELK self-loop semantics. SPDX-License-Identifier: EPL-2.0 */
-import type { EntityRect, Point } from "@statelyai/graph";
+import type { EntityRect, GraphEdge, Point } from "@statelyai/graph";
 import type { LayoutDirection } from "../types";
 type Side = "NORTH" | "EAST" | "SOUTH" | "WEST";
 
@@ -78,4 +78,30 @@ export function routeFixedSelfLoop(
   }
   points.push(last, b);
   return points.map(physical);
+}
+
+/**
+ * ELK combines self loops that share a port into one self hyperloop routed on
+ * a single track. Returns each loop's track index, in order of first loop.
+ */
+export function selfLoopTracks(loops: readonly GraphEdge[]): Map<string, number> {
+  const parent = loops.map((_, index) => index);
+  const root = (index: number): number =>
+    parent[index] === index ? index : (parent[index] = root(parent[index]!));
+  const ownerByPort = new Map<string, number>();
+  for (const [index, loop] of loops.entries())
+    for (const port of [loop.sourcePort, loop.targetPort]) {
+      if (port === undefined) continue;
+      const other = ownerByPort.get(port);
+      if (other === undefined) ownerByPort.set(port, index);
+      else parent[root(index)] = root(other);
+    }
+  const trackByRoot = new Map<number, number>();
+  return new Map(
+    loops.map((loop, index) => {
+      const group = root(index);
+      if (!trackByRoot.has(group)) trackByRoot.set(group, trackByRoot.size);
+      return [loop.id, trackByRoot.get(group)!];
+    }),
+  );
 }

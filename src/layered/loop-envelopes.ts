@@ -1,7 +1,7 @@
 import type { GraphEdge } from "@statelyai/graph";
 import type { LayeredPhaseInput, NodePlacement } from "./types";
 import { getPortPoint } from "./strategies";
-import { fixedSelfLoopSide, routeFixedSelfLoop } from "./fixed-self-loop";
+import { fixedSelfLoopSide, routeFixedSelfLoop, selfLoopTracks } from "./fixed-self-loop";
 
 export interface LoopEnvelope {
   before: number;
@@ -52,7 +52,8 @@ export function loopEnvelopes(input: LayeredPhaseInput): ReadonlyMap<string, Loo
       const reverse = input.direction === "left" || input.direction === "up";
       const spacing = Number(input.settings["spacing.nodeSelfLoop"] ?? 10);
       let supported = true;
-      for (const [index, edge] of allLoops.entries()) {
+      const tracks = selfLoopTracks(allLoops);
+      for (const edge of allLoops) {
         const from = node.ports?.find((port) => port.name === edge.sourcePort);
         const to = node.ports?.find((port) => port.name === edge.targetPort);
         const sourceSide =
@@ -84,7 +85,7 @@ export function loopEnvelopes(input: LayeredPhaseInput): ReadonlyMap<string, Loo
           end,
           sourceSide,
           targetSide,
-          spacing * (index + 1),
+          spacing * (tracks.get(edge.id)! + 1),
           input.direction,
         )) {
           const cross = horizontal ? point.y : point.x;
