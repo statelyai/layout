@@ -1,0 +1,84 @@
+{
+  "summary": {
+    "cases": 80,
+    "matched": 8,
+    "differingValues": 8579,
+    "nativeErrors": 0,
+    "elkErrors": 4
+  },
+  "changed": 8,
+  "delta": [
+    {
+      "index": 21,
+      "seed": 2,
+      "direction": "LEFT",
+      "before": 20,
+      "after": 0,
+      "lost": false,
+      "gained": true
+    },
+    {
+      "index": 28,
+      "seed": 9,
+      "direction": "LEFT",
+      "before": 153,
+      "after": 153,
+      "lost": false,
+      "gained": false
+    },
+    {
+      "index": 40,
+      "seed": 1,
+      "direction": "DOWN",
+      "before": 235,
+      "after": 230,
+      "lost": false,
+      "gained": false
+    },
+    {
+      "index": 41,
+      "seed": 2,
+      "direction": "DOWN",
+      "before": 2,
+      "after": 0,
+      "lost": false,
+      "gained": true
+    },
+    {
+      "index": 48,
+      "seed": 9,
+      "direction": "DOWN",
+      "before": 141,
+      "after": 141,
+      "lost": false,
+      "gained": false
+    },
+    {
+      "index": 60,
+      "seed": 1,
+      "direction": "UP",
+      "before": 199,
+      "after": 199,
+      "lost": false,
+      "gained": false
+    },
+    {
+      "index": 61,
+      "seed": 2,
+      "direction": "UP",
+      "before": 43,
+      "after": 43,
+      "lost": false,
+      "gained": false
+    },
+    {
+      "index": 68,
+      "seed": 9,
+      "direction": "UP",
+      "before": 111,
+      "after": 111,
+      "lost": false,
+      "gained": false
+    }
+  ]
+}

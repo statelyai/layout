@@ -1,0 +1,9 @@
+
+ RUN  v4.1.10 /Users/davidkpiano/.codex/worktrees/layout/heuristic-graph-corpus/.scratch/crossing-constraints-clean-validation
+
+
+ Test Files  4 passed (4)
+      Tests  31 passed (31)
+   Start at  16:57:26
+   Duration  1.03s (transform 292ms, setup 0ms, import 492ms, tests 745ms, environment 0ms)
+

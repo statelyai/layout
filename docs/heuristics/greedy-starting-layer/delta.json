@@ -1,0 +1,51 @@
+{
+  "reports": [
+    {
+      "report": "report.json",
+      "before": {
+        "cases": 200,
+        "matched": 50,
+        "nativeErrors": 0,
+        "elkErrors": 100,
+        "differingValues": 6512
+      },
+      "after": {
+        "cases": 200,
+        "matched": 54,
+        "nativeErrors": 0,
+        "elkErrors": 100,
+        "differingValues": 5876
+      },
+      "updatedIndices": [
+        0,
+        25,
+        50,
+        75
+      ],
+      "lostMatches": [],
+      "worsened": [],
+      "normalization": "Only runtime ELK $H identifiers in exception text."
+    },
+    {
+      "report": "fresh-report.json",
+      "before": {
+        "cases": 200,
+        "matched": 39,
+        "nativeErrors": 0,
+        "elkErrors": 100,
+        "differingValues": 9320
+      },
+      "after": {
+        "cases": 200,
+        "matched": 39,
+        "nativeErrors": 0,
+        "elkErrors": 100,
+        "differingValues": 9320
+      },
+      "updatedIndices": [],
+      "lostMatches": [],
+      "worsened": [],
+      "normalization": "Only runtime ELK $H identifiers in exception text."
+    }
+  ]
+}

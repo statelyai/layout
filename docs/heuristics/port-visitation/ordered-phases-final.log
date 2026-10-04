@@ -1,0 +1,9 @@
+
+ RUN  v4.1.10 /Users/davidkpiano/.codex/worktrees/layout/heuristic-graph-corpus
+
+
+ Test Files  2 passed (2)
+      Tests  2 passed (2)
+   Start at  17:10:48
+   Duration  2.46s (transform 188ms, setup 0ms, import 979ms, tests 2.69s, environment 0ms)
+

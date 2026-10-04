@@ -178,8 +178,14 @@ export function scoreStatechartLayout(
       height: shape.height ?? 0,
     };
   };
-  const visit = (node: ElkNode, x: number, y: number, ancestors: ElkNode[]) => {
-    const direction = String(option(node, "direction") ?? "RIGHT").toUpperCase();
+  const visit = (
+    node: ElkNode,
+    x: number,
+    y: number,
+    ancestors: ElkNode[],
+    inheritedDirection = "RIGHT",
+  ) => {
+    const direction = String(option(node, "direction") ?? inheritedDirection).toUpperCase();
     const horizontal = direction === "RIGHT" || direction === "LEFT";
     const sign = direction === "LEFT" || direction === "UP" ? -1 : 1;
     const path = paths[String(node.id)] ?? [];
@@ -199,7 +205,7 @@ export function scoreStatechartLayout(
       )
         score.invalid++;
       boxes.push({ rect: box, ancestors, node: child });
-      visit(child, box.x, box.y, [...ancestors, child]);
+      visit(child, box.x, box.y, [...ancestors, child], direction);
     }
     for (const edge of node.edges ?? []) {
       if (String(option(edge, "noLayout")).toLowerCase() === "true") continue;

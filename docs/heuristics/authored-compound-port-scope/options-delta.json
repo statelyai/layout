@@ -1,0 +1,324 @@
+{
+  "before": {
+    "cases": 80,
+    "matched": 4,
+    "differingValues": 8769,
+    "nativeErrors": 2,
+    "elkErrors": 4
+  },
+  "after": {
+    "cases": 80,
+    "matched": 4,
+    "differingValues": 9421,
+    "nativeErrors": 0,
+    "elkErrors": 4
+  },
+  "delta": [
+    {
+      "seed": 3,
+      "direction": "RIGHT",
+      "before": 256,
+      "after": 262,
+      "lost": false,
+      "gained": false
+    },
+    {
+      "seed": 7,
+      "direction": "RIGHT",
+      "before": 1,
+      "after": 137,
+      "lost": false,
+      "gained": false,
+      "beforeError": "Error: Incomplete hierarchical port order for g0"
+    },
+    {
+      "seed": 9,
+      "direction": "RIGHT",
+      "before": 115,
+      "after": 103,
+      "lost": false,
+      "gained": false
+    },
+    {
+      "seed": 12,
+      "direction": "RIGHT",
+      "before": 93,
+      "after": 91,
+      "lost": false,
+      "gained": false
+    },
+    {
+      "seed": 13,
+      "direction": "RIGHT",
+      "before": 8,
+      "after": 93,
+      "lost": false,
+      "gained": false
+    },
+    {
+      "seed": 17,
+      "direction": "RIGHT",
+      "before": 81,
+      "after": 129,
+      "lost": false,
+      "gained": false
+    },
+    {
+      "seed": 18,
+      "direction": "RIGHT",
+      "before": 133,
+      "after": 131,
+      "lost": false,
+      "gained": false
+    },
+    {
+      "seed": 19,
+      "direction": "RIGHT",
+      "before": 84,
+      "after": 88,
+      "lost": false,
+      "gained": false
+    },
+    {
+      "seed": 3,
+      "direction": "LEFT",
+      "before": 264,
+      "after": 251,
+      "lost": false,
+      "gained": false
+    },
+    {
+      "seed": 7,
+      "direction": "LEFT",
+      "before": 1,
+      "after": 178,
+      "lost": false,
+      "gained": false,
+      "beforeError": "Error: Incomplete hierarchical port order for g0"
+    },
+    {
+      "seed": 9,
+      "direction": "LEFT",
+      "before": 143,
+      "after": 151,
+      "lost": false,
+      "gained": false
+    },
+    {
+      "seed": 11,
+      "direction": "LEFT",
+      "before": 381,
+      "after": 426,
+      "lost": false,
+      "gained": false
+    },
+    {
+      "seed": 12,
+      "direction": "LEFT",
+      "before": 75,
+      "after": 91,
+      "lost": false,
+      "gained": false
+    },
+    {
+      "seed": 14,
+      "direction": "LEFT",
+      "before": 129,
+      "after": 117,
+      "lost": false,
+      "gained": false
+    },
+    {
+      "seed": 17,
+      "direction": "LEFT",
+      "before": 112,
+      "after": 135,
+      "lost": false,
+      "gained": false
+    },
+    {
+      "seed": 1,
+      "direction": "DOWN",
+      "before": 232,
+      "after": 297,
+      "lost": false,
+      "gained": false
+    },
+    {
+      "seed": 3,
+      "direction": "DOWN",
+      "before": 316,
+      "after": 318,
+      "lost": false,
+      "gained": false
+    },
+    {
+      "seed": 7,
+      "direction": "DOWN",
+      "before": 166,
+      "after": 192,
+      "lost": false,
+      "gained": false
+    },
+    {
+      "seed": 8,
+      "direction": "DOWN",
+      "before": 185,
+      "after": 222,
+      "lost": false,
+      "gained": false
+    },
+    {
+      "seed": 9,
+      "direction": "DOWN",
+      "before": 142,
+      "after": 125,
+      "lost": false,
+      "gained": false
+    },
+    {
+      "seed": 11,
+      "direction": "DOWN",
+      "before": 396,
+      "after": 421,
+      "lost": false,
+      "gained": false
+    },
+    {
+      "seed": 12,
+      "direction": "DOWN",
+      "before": 87,
+      "after": 74,
+      "lost": false,
+      "gained": false
+    },
+    {
+      "seed": 13,
+      "direction": "DOWN",
+      "before": 109,
+      "after": 136,
+      "lost": false,
+      "gained": false
+    },
+    {
+      "seed": 14,
+      "direction": "DOWN",
+      "before": 108,
+      "after": 88,
+      "lost": false,
+      "gained": false
+    },
+    {
+      "seed": 17,
+      "direction": "DOWN",
+      "before": 165,
+      "after": 197,
+      "lost": false,
+      "gained": false
+    },
+    {
+      "seed": 18,
+      "direction": "DOWN",
+      "before": 192,
+      "after": 193,
+      "lost": false,
+      "gained": false
+    },
+    {
+      "seed": 19,
+      "direction": "DOWN",
+      "before": 30,
+      "after": 23,
+      "lost": false,
+      "gained": false
+    },
+    {
+      "seed": 1,
+      "direction": "UP",
+      "before": 281,
+      "after": 279,
+      "lost": false,
+      "gained": false
+    },
+    {
+      "seed": 3,
+      "direction": "UP",
+      "before": 275,
+      "after": 315,
+      "lost": false,
+      "gained": false
+    },
+    {
+      "seed": 7,
+      "direction": "UP",
+      "before": 184,
+      "after": 174,
+      "lost": false,
+      "gained": false
+    },
+    {
+      "seed": 8,
+      "direction": "UP",
+      "before": 133,
+      "after": 118,
+      "lost": false,
+      "gained": false
+    },
+    {
+      "seed": 9,
+      "direction": "UP",
+      "before": 134,
+      "after": 128,
+      "lost": false,
+      "gained": false
+    },
+    {
+      "seed": 11,
+      "direction": "UP",
+      "before": 375,
+      "after": 406,
+      "lost": false,
+      "gained": false
+    },
+    {
+      "seed": 12,
+      "direction": "UP",
+      "before": 83,
+      "after": 80,
+      "lost": false,
+      "gained": false
+    },
+    {
+      "seed": 14,
+      "direction": "UP",
+      "before": 79,
+      "after": 67,
+      "lost": false,
+      "gained": false
+    },
+    {
+      "seed": 17,
+      "direction": "UP",
+      "before": 184,
+      "after": 165,
+      "lost": false,
+      "gained": false
+    },
+    {
+      "seed": 18,
+      "direction": "UP",
+      "before": 239,
+      "after": 235,
+      "lost": false,
+      "gained": false
+    },
+    {
+      "seed": 19,
+      "direction": "UP",
+      "before": 58,
+      "after": 45,
+      "lost": false,
+      "gained": false
+    }
+  ]
+}

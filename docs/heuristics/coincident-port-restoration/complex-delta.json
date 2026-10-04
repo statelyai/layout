@@ -1,0 +1,69 @@
+[
+  {
+    "name": "complex-report.json",
+    "summary": {
+      "cases": 100,
+      "matched": 20,
+      "differingValues": 57938,
+      "nativeErrors": 0,
+      "elkErrors": 0
+    },
+    "changed": 6,
+    "delta": [
+      {
+        "index": 8,
+        "seed": 9,
+        "direction": "RIGHT",
+        "before": 1168,
+        "after": 1168,
+        "lost": false,
+        "gained": false
+      },
+      {
+        "index": 17,
+        "seed": 18,
+        "direction": "RIGHT",
+        "before": 993,
+        "after": 993,
+        "lost": false,
+        "gained": false
+      },
+      {
+        "index": 74,
+        "seed": 25,
+        "direction": "DOWN",
+        "before": 1196,
+        "after": 1196,
+        "lost": false,
+        "gained": false
+      },
+      {
+        "index": 79,
+        "seed": 5,
+        "direction": "UP",
+        "before": 1110,
+        "after": 1110,
+        "lost": false,
+        "gained": false
+      },
+      {
+        "index": 87,
+        "seed": 13,
+        "direction": "UP",
+        "before": 1244,
+        "after": 1244,
+        "lost": false,
+        "gained": false
+      },
+      {
+        "index": 96,
+        "seed": 22,
+        "direction": "UP",
+        "before": 924,
+        "after": 924,
+        "lost": false,
+        "gained": false
+      }
+    ]
+  }
+]

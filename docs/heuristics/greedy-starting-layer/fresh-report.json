@@ -1,0 +1,11 @@
+{
+  "baseline": "../model-order-interpolation/fresh-report.json",
+  "summary": {
+    "cases": 200,
+    "matched": 39,
+    "nativeErrors": 0,
+    "elkErrors": 100,
+    "differingValues": 9320
+  },
+  "updates": []
+}

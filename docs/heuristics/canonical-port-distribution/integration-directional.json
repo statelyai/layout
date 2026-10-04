@@ -1,0 +1,1613 @@
+{
+  "baseline": "../canonical-crossing-scores/report.json",
+  "summary": {
+    "cases": 200,
+    "matched": 143,
+    "nativeErrors": 0,
+    "elkErrors": 6,
+    "differingValues": 9183
+  },
+  "changedRows": 0,
+  "rows": [
+    {
+      "seed": 1,
+      "direction": "RIGHT",
+      "equal": true,
+      "family": "flat",
+      "changed": false,
+      "differingValues": 0
+    },
+    {
+      "seed": 2,
+      "direction": "RIGHT",
+      "equal": false,
+      "family": "flat",
+      "changed": false,
+      "differingValues": 138
+    },
+    {
+      "seed": 3,
+      "direction": "RIGHT",
+      "equal": false,
+      "family": "flat",
+      "changed": false,
+      "differingValues": 27
+    },
+    {
+      "seed": 4,
+      "direction": "RIGHT",
+      "equal": true,
+      "family": "flat",
+      "changed": false,
+      "differingValues": 0
+    },
+    {
+      "seed": 5,
+      "direction": "RIGHT",
+      "equal": true,
+      "family": "flat",
+      "changed": false,
+      "differingValues": 0
+    },
+    {
+      "seed": 6,
+      "direction": "RIGHT",
+      "equal": true,
+      "family": "flat",
+      "changed": false,
+      "differingValues": 0
+    },
+    {
+      "seed": 7,
+      "direction": "RIGHT",
+      "equal": false,
+      "family": "flat",
+      "changed": false,
+      "differingValues": 190
+    },
+    {
+      "seed": 8,
+      "direction": "RIGHT",
+      "equal": false,
+      "family": "flat",
+      "changed": false,
+      "differingValues": 257
+    },
+    {
+      "seed": 9,
+      "direction": "RIGHT",
+      "equal": true,
+      "family": "flat",
+      "changed": false,
+      "differingValues": 0
+    },
+    {
+      "seed": 10,
+      "direction": "RIGHT",
+      "equal": false,
+      "family": "flat",
+      "changed": false,
+      "differingValues": 174
+    },
+    {
+      "seed": 11,
+      "direction": "RIGHT",
+      "equal": true,
+      "family": "flat",
+      "changed": false,
+      "differingValues": 0
+    },
+    {
+      "seed": 12,
+      "direction": "RIGHT",
+      "equal": false,
+      "family": "flat",
+      "changed": false,
+      "differingValues": 92
+    },
+    {
+      "seed": 13,
+      "direction": "RIGHT",
+      "equal": false,
+      "family": "flat",
+      "changed": false,
+      "differingValues": 381
+    },
+    {
+      "seed": 14,
+      "direction": "RIGHT",
+      "equal": true,
+      "family": "flat",
+      "changed": false,
+      "differingValues": 0
+    },
+    {
+      "seed": 15,
+      "direction": "RIGHT",
+      "equal": true,
+      "family": "flat",
+      "changed": false,
+      "differingValues": 0
+    },
+    {
+      "seed": 16,
+      "direction": "RIGHT",
+      "equal": false,
+      "family": "flat",
+      "changed": false,
+      "differingValues": 322
+    },
+    {
+      "seed": 17,
+      "direction": "RIGHT",
+      "equal": false,
+      "family": "flat",
+      "changed": false,
+      "differingValues": 62
+    },
+    {
+      "seed": 18,
+      "direction": "RIGHT",
+      "equal": false,
+      "family": "flat",
+      "changed": false,
+      "differingValues": 89
+    },
+    {
+      "seed": 19,
+      "direction": "RIGHT",
+      "equal": false,
+      "family": "flat",
+      "changed": false,
+      "differingValues": 128
+    },
+    {
+      "seed": 20,
+      "direction": "RIGHT",
+      "equal": true,
+      "family": "flat",
+      "changed": false,
+      "differingValues": 0
+    },
+    {
+      "seed": 21,
+      "direction": "RIGHT",
+      "equal": true,
+      "family": "flat",
+      "changed": false,
+      "differingValues": 0
+    },
+    {
+      "seed": 22,
+      "direction": "RIGHT",
+      "equal": true,
+      "family": "flat",
+      "changed": false,
+      "differingValues": 0
+    },
+    {
+      "seed": 23,
+      "direction": "RIGHT",
+      "equal": false,
+      "family": "flat",
+      "changed": false,
+      "differingValues": 106
+    },
+    {
+      "seed": 24,
+      "direction": "RIGHT",
+      "equal": false,
+      "family": "flat",
+      "changed": false,
+      "differingValues": 137
+    },
+    {
+      "seed": 25,
+      "direction": "RIGHT",
+      "equal": true,
+      "family": "flat",
+      "changed": false,
+      "differingValues": 0
+    },
+    {
+      "seed": 1,
+      "direction": "LEFT",
+      "equal": true,
+      "family": "flat",
+      "changed": false,
+      "differingValues": 0
+    },
+    {
+      "seed": 2,
+      "direction": "LEFT",
+      "equal": false,
+      "family": "flat",
+      "changed": false,
+      "differingValues": 314
+    },
+    {
+      "seed": 3,
+      "direction": "LEFT",
+      "equal": true,
+      "family": "flat",
+      "changed": false,
+      "differingValues": 0
+    },
+    {
+      "seed": 4,
+      "direction": "LEFT",
+      "equal": true,
+      "family": "flat",
+      "changed": false,
+      "differingValues": 0
+    },
+    {
+      "seed": 5,
+      "direction": "LEFT",
+      "equal": true,
+      "family": "flat",
+      "changed": false,
+      "differingValues": 0
+    },
+    {
+      "seed": 6,
+      "direction": "LEFT",
+      "equal": true,
+      "family": "flat",
+      "changed": false,
+      "differingValues": 0
+    },
+    {
+      "seed": 7,
+      "direction": "LEFT",
+      "equal": false,
+      "family": "flat",
+      "changed": false,
+      "differingValues": 231
+    },
+    {
+      "seed": 8,
+      "direction": "LEFT",
+      "equal": false,
+      "family": "flat",
+      "changed": false,
+      "differingValues": 296
+    },
+    {
+      "seed": 9,
+      "direction": "LEFT",
+      "equal": true,
+      "family": "flat",
+      "changed": false,
+      "differingValues": 0
+    },
+    {
+      "seed": 10,
+      "direction": "LEFT",
+      "equal": false,
+      "family": "flat",
+      "changed": false,
+      "differingValues": 174
+    },
+    {
+      "seed": 11,
+      "direction": "LEFT",
+      "equal": true,
+      "family": "flat",
+      "changed": false,
+      "differingValues": 0
+    },
+    {
+      "seed": 12,
+      "direction": "LEFT",
+      "equal": false,
+      "family": "flat",
+      "changed": false,
+      "differingValues": 79
+    },
+    {
+      "seed": 13,
+      "direction": "LEFT",
+      "equal": false,
+      "family": "flat",
+      "changed": false,
+      "differingValues": 198
+    },
+    {
+      "seed": 14,
+      "direction": "LEFT",
+      "equal": true,
+      "family": "flat",
+      "changed": false,
+      "differingValues": 0
+    },
+    {
+      "seed": 15,
+      "direction": "LEFT",
+      "equal": true,
+      "family": "flat",
+      "changed": false,
+      "differingValues": 0
+    },
+    {
+      "seed": 16,
+      "direction": "LEFT",
+      "equal": false,
+      "family": "flat",
+      "changed": false,
+      "differingValues": 322
+    },
+    {
+      "seed": 17,
+      "direction": "LEFT",
+      "equal": false,
+      "family": "flat",
+      "changed": false,
+      "differingValues": 170
+    },
+    {
+      "seed": 18,
+      "direction": "LEFT",
+      "equal": false,
+      "family": "flat",
+      "changed": false,
+      "differingValues": 51
+    },
+    {
+      "seed": 19,
+      "direction": "LEFT",
+      "equal": false,
+      "family": "flat",
+      "changed": false,
+      "differingValues": 128
+    },
+    {
+      "seed": 20,
+      "direction": "LEFT",
+      "equal": true,
+      "family": "flat",
+      "changed": false,
+      "differingValues": 0
+    },
+    {
+      "seed": 21,
+      "direction": "LEFT",
+      "equal": true,
+      "family": "flat",
+      "changed": false,
+      "differingValues": 0
+    },
+    {
+      "seed": 22,
+      "direction": "LEFT",
+      "equal": false,
+      "family": "flat",
+      "changed": false,
+      "differingValues": 40
+    },
+    {
+      "seed": 23,
+      "direction": "LEFT",
+      "equal": true,
+      "family": "flat",
+      "changed": false,
+      "differingValues": 0
+    },
+    {
+      "seed": 24,
+      "direction": "LEFT",
+      "equal": false,
+      "family": "flat",
+      "changed": false,
+      "differingValues": 230
+    },
+    {
+      "seed": 25,
+      "direction": "LEFT",
+      "equal": true,
+      "family": "flat",
+      "changed": false,
+      "differingValues": 0
+    },
+    {
+      "seed": 1,
+      "direction": "DOWN",
+      "equal": true,
+      "family": "flat",
+      "changed": false,
+      "differingValues": 0
+    },
+    {
+      "seed": 2,
+      "direction": "DOWN",
+      "equal": false,
+      "family": "flat",
+      "changed": false,
+      "differingValues": 232
+    },
+    {
+      "seed": 3,
+      "direction": "DOWN",
+      "equal": false,
+      "family": "flat",
+      "changed": false,
+      "differingValues": 1
+    },
+    {
+      "seed": 4,
+      "direction": "DOWN",
+      "equal": true,
+      "family": "flat",
+      "changed": false,
+      "differingValues": 0
+    },
+    {
+      "seed": 5,
+      "direction": "DOWN",
+      "equal": true,
+      "family": "flat",
+      "changed": false,
+      "differingValues": 0
+    },
+    {
+      "seed": 6,
+      "direction": "DOWN",
+      "equal": true,
+      "family": "flat",
+      "changed": false,
+      "differingValues": 0
+    },
+    {
+      "seed": 7,
+      "direction": "DOWN",
+      "equal": false,
+      "family": "flat",
+      "changed": false,
+      "differingValues": 236
+    },
+    {
+      "seed": 8,
+      "direction": "DOWN",
+      "equal": false,
+      "family": "flat",
+      "changed": false,
+      "differingValues": 201
+    },
+    {
+      "seed": 9,
+      "direction": "DOWN",
+      "equal": false,
+      "family": "flat",
+      "changed": false,
+      "differingValues": 84
+    },
+    {
+      "seed": 10,
+      "direction": "DOWN",
+      "equal": false,
+      "family": "flat",
+      "changed": false,
+      "differingValues": 182
+    },
+    {
+      "seed": 11,
+      "direction": "DOWN",
+      "equal": true,
+      "family": "flat",
+      "changed": false,
+      "differingValues": 0
+    },
+    {
+      "seed": 12,
+      "direction": "DOWN",
+      "equal": false,
+      "family": "flat",
+      "changed": false,
+      "differingValues": 113
+    },
+    {
+      "seed": 13,
+      "direction": "DOWN",
+      "equal": false,
+      "family": "flat",
+      "changed": false,
+      "differingValues": 439
+    },
+    {
+      "seed": 14,
+      "direction": "DOWN",
+      "equal": true,
+      "family": "flat",
+      "changed": false,
+      "differingValues": 0
+    },
+    {
+      "seed": 15,
+      "direction": "DOWN",
+      "equal": true,
+      "family": "flat",
+      "changed": false,
+      "differingValues": 0
+    },
+    {
+      "seed": 16,
+      "direction": "DOWN",
+      "equal": false,
+      "family": "flat",
+      "changed": false,
+      "differingValues": 312
+    },
+    {
+      "seed": 17,
+      "direction": "DOWN",
+      "equal": false,
+      "family": "flat",
+      "changed": false,
+      "differingValues": 57
+    },
+    {
+      "seed": 18,
+      "direction": "DOWN",
+      "equal": false,
+      "family": "flat",
+      "changed": false,
+      "differingValues": 1
+    },
+    {
+      "seed": 19,
+      "direction": "DOWN",
+      "equal": false,
+      "family": "flat",
+      "changed": false,
+      "differingValues": 125
+    },
+    {
+      "seed": 20,
+      "direction": "DOWN",
+      "equal": true,
+      "family": "flat",
+      "changed": false,
+      "differingValues": 0
+    },
+    {
+      "seed": 21,
+      "direction": "DOWN",
+      "equal": false,
+      "family": "flat",
+      "changed": false,
+      "differingValues": 85
+    },
+    {
+      "seed": 22,
+      "direction": "DOWN",
+      "equal": false,
+      "family": "flat",
+      "changed": false,
+      "differingValues": 5
+    },
+    {
+      "seed": 23,
+      "direction": "DOWN",
+      "equal": false,
+      "family": "flat",
+      "changed": false,
+      "differingValues": 1
+    },
+    {
+      "seed": 24,
+      "direction": "DOWN",
+      "equal": false,
+      "family": "flat",
+      "changed": false,
+      "differingValues": 237
+    },
+    {
+      "seed": 25,
+      "direction": "DOWN",
+      "equal": true,
+      "family": "flat",
+      "changed": false,
+      "differingValues": 0
+    },
+    {
+      "seed": 1,
+      "direction": "UP",
+      "equal": true,
+      "family": "flat",
+      "changed": false,
+      "differingValues": 0
+    },
+    {
+      "seed": 2,
+      "direction": "UP",
+      "equal": false,
+      "family": "flat",
+      "changed": false,
+      "differingValues": 305
+    },
+    {
+      "seed": 3,
+      "direction": "UP",
+      "equal": false,
+      "family": "flat",
+      "changed": false,
+      "differingValues": 1
+    },
+    {
+      "seed": 4,
+      "direction": "UP",
+      "equal": true,
+      "family": "flat",
+      "changed": false,
+      "differingValues": 0
+    },
+    {
+      "seed": 5,
+      "direction": "UP",
+      "equal": true,
+      "family": "flat",
+      "changed": false,
+      "differingValues": 0
+    },
+    {
+      "seed": 6,
+      "direction": "UP",
+      "equal": true,
+      "family": "flat",
+      "changed": false,
+      "differingValues": 0
+    },
+    {
+      "seed": 7,
+      "direction": "UP",
+      "equal": false,
+      "family": "flat",
+      "changed": false,
+      "differingValues": 203
+    },
+    {
+      "seed": 8,
+      "direction": "UP",
+      "equal": false,
+      "family": "flat",
+      "changed": false,
+      "differingValues": 269
+    },
+    {
+      "seed": 9,
+      "direction": "UP",
+      "equal": false,
+      "family": "flat",
+      "changed": false,
+      "differingValues": 84
+    },
+    {
+      "seed": 10,
+      "direction": "UP",
+      "equal": false,
+      "family": "flat",
+      "changed": false,
+      "differingValues": 173
+    },
+    {
+      "seed": 11,
+      "direction": "UP",
+      "equal": true,
+      "family": "flat",
+      "changed": false,
+      "differingValues": 0
+    },
+    {
+      "seed": 12,
+      "direction": "UP",
+      "equal": false,
+      "family": "flat",
+      "changed": false,
+      "differingValues": 113
+    },
+    {
+      "seed": 13,
+      "direction": "UP",
+      "equal": false,
+      "family": "flat",
+      "changed": false,
+      "differingValues": 439
+    },
+    {
+      "seed": 14,
+      "direction": "UP",
+      "equal": true,
+      "family": "flat",
+      "changed": false,
+      "differingValues": 0
+    },
+    {
+      "seed": 15,
+      "direction": "UP",
+      "equal": true,
+      "family": "flat",
+      "changed": false,
+      "differingValues": 0
+    },
+    {
+      "seed": 16,
+      "direction": "UP",
+      "equal": false,
+      "family": "flat",
+      "changed": false,
+      "differingValues": 312
+    },
+    {
+      "seed": 17,
+      "direction": "UP",
+      "equal": false,
+      "family": "flat",
+      "changed": false,
+      "differingValues": 105
+    },
+    {
+      "seed": 18,
+      "direction": "UP",
+      "equal": false,
+      "family": "flat",
+      "changed": false,
+      "differingValues": 1
+    },
+    {
+      "seed": 19,
+      "direction": "UP",
+      "equal": false,
+      "family": "flat",
+      "changed": false,
+      "differingValues": 125
+    },
+    {
+      "seed": 20,
+      "direction": "UP",
+      "equal": true,
+      "family": "flat",
+      "changed": false,
+      "differingValues": 0
+    },
+    {
+      "seed": 21,
+      "direction": "UP",
+      "equal": false,
+      "family": "flat",
+      "changed": false,
+      "differingValues": 85
+    },
+    {
+      "seed": 22,
+      "direction": "UP",
+      "equal": false,
+      "family": "flat",
+      "changed": false,
+      "differingValues": 83
+    },
+    {
+      "seed": 23,
+      "direction": "UP",
+      "equal": false,
+      "family": "flat",
+      "changed": false,
+      "differingValues": 1
+    },
+    {
+      "seed": 24,
+      "direction": "UP",
+      "equal": false,
+      "family": "flat",
+      "changed": false,
+      "differingValues": 237
+    },
+    {
+      "seed": 25,
+      "direction": "UP",
+      "equal": true,
+      "family": "flat",
+      "changed": false,
+      "differingValues": 0
+    },
+    {
+      "seed": 1,
+      "direction": "RIGHT",
+      "equal": true,
+      "family": "hierarchy",
+      "changed": false,
+      "differingValues": 0
+    },
+    {
+      "seed": 2,
+      "direction": "RIGHT",
+      "equal": true,
+      "family": "hierarchy",
+      "changed": false,
+      "differingValues": 0
+    },
+    {
+      "seed": 3,
+      "direction": "RIGHT",
+      "equal": true,
+      "family": "hierarchy",
+      "changed": false,
+      "differingValues": 0
+    },
+    {
+      "seed": 4,
+      "direction": "RIGHT",
+      "equal": true,
+      "family": "hierarchy",
+      "changed": false,
+      "differingValues": 0
+    },
+    {
+      "seed": 5,
+      "direction": "RIGHT",
+      "equal": true,
+      "family": "hierarchy",
+      "changed": false,
+      "differingValues": 0
+    },
+    {
+      "seed": 6,
+      "direction": "RIGHT",
+      "equal": true,
+      "family": "hierarchy",
+      "changed": false,
+      "differingValues": 0
+    },
+    {
+      "seed": 7,
+      "direction": "RIGHT",
+      "equal": true,
+      "family": "hierarchy",
+      "changed": false,
+      "differingValues": 0
+    },
+    {
+      "seed": 8,
+      "direction": "RIGHT",
+      "equal": true,
+      "family": "hierarchy",
+      "changed": false,
+      "differingValues": 0
+    },
+    {
+      "seed": 9,
+      "direction": "RIGHT",
+      "equal": true,
+      "family": "hierarchy",
+      "changed": false,
+      "differingValues": 0
+    },
+    {
+      "seed": 10,
+      "direction": "RIGHT",
+      "equal": true,
+      "family": "hierarchy",
+      "changed": false,
+      "differingValues": 0
+    },
+    {
+      "seed": 11,
+      "direction": "RIGHT",
+      "equal": true,
+      "family": "hierarchy",
+      "changed": false,
+      "differingValues": 0
+    },
+    {
+      "seed": 12,
+      "direction": "RIGHT",
+      "equal": true,
+      "family": "hierarchy",
+      "changed": false,
+      "differingValues": 0
+    },
+    {
+      "seed": 13,
+      "direction": "RIGHT",
+      "equal": true,
+      "family": "hierarchy",
+      "changed": false,
+      "differingValues": 0
+    },
+    {
+      "seed": 14,
+      "direction": "RIGHT",
+      "equal": true,
+      "family": "hierarchy",
+      "changed": false,
+      "differingValues": 0
+    },
+    {
+      "seed": 15,
+      "direction": "RIGHT",
+      "equal": true,
+      "family": "hierarchy",
+      "changed": false,
+      "differingValues": 0
+    },
+    {
+      "seed": 16,
+      "direction": "RIGHT",
+      "equal": true,
+      "family": "hierarchy",
+      "changed": false,
+      "differingValues": 0
+    },
+    {
+      "seed": 17,
+      "direction": "RIGHT",
+      "equal": true,
+      "family": "hierarchy",
+      "changed": false,
+      "differingValues": 0
+    },
+    {
+      "seed": 18,
+      "direction": "RIGHT",
+      "equal": true,
+      "family": "hierarchy",
+      "changed": false,
+      "differingValues": 0
+    },
+    {
+      "seed": 19,
+      "direction": "RIGHT",
+      "equal": true,
+      "family": "hierarchy",
+      "changed": false,
+      "differingValues": 0
+    },
+    {
+      "seed": 20,
+      "direction": "RIGHT",
+      "equal": true,
+      "family": "hierarchy",
+      "changed": false,
+      "differingValues": 0
+    },
+    {
+      "seed": 21,
+      "direction": "RIGHT",
+      "equal": true,
+      "family": "hierarchy",
+      "changed": false,
+      "differingValues": 0
+    },
+    {
+      "seed": 22,
+      "direction": "RIGHT",
+      "equal": true,
+      "family": "hierarchy",
+      "changed": false,
+      "differingValues": 0
+    },
+    {
+      "seed": 23,
+      "direction": "RIGHT",
+      "equal": true,
+      "family": "hierarchy",
+      "changed": false,
+      "differingValues": 0
+    },
+    {
+      "seed": 24,
+      "direction": "RIGHT",
+      "equal": true,
+      "family": "hierarchy",
+      "changed": false,
+      "differingValues": 0
+    },
+    {
+      "seed": 25,
+      "direction": "RIGHT",
+      "equal": true,
+      "family": "hierarchy",
+      "changed": false,
+      "differingValues": 0
+    },
+    {
+      "seed": 1,
+      "direction": "LEFT",
+      "equal": true,
+      "family": "hierarchy",
+      "changed": false,
+      "differingValues": 0
+    },
+    {
+      "seed": 2,
+      "direction": "LEFT",
+      "equal": true,
+      "family": "hierarchy",
+      "changed": false,
+      "differingValues": 0
+    },
+    {
+      "seed": 3,
+      "direction": "LEFT",
+      "equal": true,
+      "family": "hierarchy",
+      "changed": false,
+      "differingValues": 0
+    },
+    {
+      "seed": 4,
+      "direction": "LEFT",
+      "equal": true,
+      "family": "hierarchy",
+      "changed": false,
+      "differingValues": 0
+    },
+    {
+      "seed": 5,
+      "direction": "LEFT",
+      "equal": true,
+      "family": "hierarchy",
+      "changed": false,
+      "differingValues": 0
+    },
+    {
+      "seed": 6,
+      "direction": "LEFT",
+      "equal": true,
+      "family": "hierarchy",
+      "changed": false,
+      "differingValues": 0
+    },
+    {
+      "seed": 7,
+      "direction": "LEFT",
+      "equal": true,
+      "family": "hierarchy",
+      "changed": false,
+      "differingValues": 0
+    },
+    {
+      "seed": 8,
+      "direction": "LEFT",
+      "equal": true,
+      "family": "hierarchy",
+      "changed": false,
+      "differingValues": 0
+    },
+    {
+      "seed": 9,
+      "direction": "LEFT",
+      "equal": true,
+      "family": "hierarchy",
+      "changed": false,
+      "differingValues": 0
+    },
+    {
+      "seed": 10,
+      "direction": "LEFT",
+      "equal": true,
+      "family": "hierarchy",
+      "changed": false,
+      "differingValues": 0
+    },
+    {
+      "seed": 11,
+      "direction": "LEFT",
+      "equal": true,
+      "family": "hierarchy",
+      "changed": false,
+      "differingValues": 0
+    },
+    {
+      "seed": 12,
+      "direction": "LEFT",
+      "equal": true,
+      "family": "hierarchy",
+      "changed": false,
+      "differingValues": 0
+    },
+    {
+      "seed": 13,
+      "direction": "LEFT",
+      "equal": true,
+      "family": "hierarchy",
+      "changed": false,
+      "differingValues": 0
+    },
+    {
+      "seed": 14,
+      "direction": "LEFT",
+      "equal": true,
+      "family": "hierarchy",
+      "changed": false,
+      "differingValues": 0
+    },
+    {
+      "seed": 15,
+      "direction": "LEFT",
+      "equal": true,
+      "family": "hierarchy",
+      "changed": false,
+      "differingValues": 0
+    },
+    {
+      "seed": 16,
+      "direction": "LEFT",
+      "equal": true,
+      "family": "hierarchy",
+      "changed": false,
+      "differingValues": 0
+    },
+    {
+      "seed": 17,
+      "direction": "LEFT",
+      "equal": true,
+      "family": "hierarchy",
+      "changed": false,
+      "differingValues": 0
+    },
+    {
+      "seed": 18,
+      "direction": "LEFT",
+      "equal": true,
+      "family": "hierarchy",
+      "changed": false,
+      "differingValues": 0
+    },
+    {
+      "seed": 19,
+      "direction": "LEFT",
+      "equal": true,
+      "family": "hierarchy",
+      "changed": false,
+      "differingValues": 0
+    },
+    {
+      "seed": 20,
+      "direction": "LEFT",
+      "equal": true,
+      "family": "hierarchy",
+      "changed": false,
+      "differingValues": 0
+    },
+    {
+      "seed": 21,
+      "direction": "LEFT",
+      "equal": true,
+      "family": "hierarchy",
+      "changed": false,
+      "differingValues": 0
+    },
+    {
+      "seed": 22,
+      "direction": "LEFT",
+      "equal": true,
+      "family": "hierarchy",
+      "changed": false,
+      "differingValues": 0
+    },
+    {
+      "seed": 23,
+      "direction": "LEFT",
+      "equal": true,
+      "family": "hierarchy",
+      "changed": false,
+      "differingValues": 0
+    },
+    {
+      "seed": 24,
+      "direction": "LEFT",
+      "equal": true,
+      "family": "hierarchy",
+      "changed": false,
+      "differingValues": 0
+    },
+    {
+      "seed": 25,
+      "direction": "LEFT",
+      "equal": true,
+      "family": "hierarchy",
+      "changed": false,
+      "differingValues": 0
+    },
+    {
+      "seed": 1,
+      "direction": "DOWN",
+      "equal": true,
+      "family": "hierarchy",
+      "changed": false,
+      "differingValues": 0
+    },
+    {
+      "seed": 2,
+      "direction": "DOWN",
+      "equal": true,
+      "family": "hierarchy",
+      "changed": false,
+      "differingValues": 0
+    },
+    {
+      "seed": 3,
+      "direction": "DOWN",
+      "equal": true,
+      "family": "hierarchy",
+      "changed": false,
+      "differingValues": 0
+    },
+    {
+      "seed": 4,
+      "direction": "DOWN",
+      "equal": true,
+      "family": "hierarchy",
+      "changed": false,
+      "differingValues": 0
+    },
+    {
+      "seed": 5,
+      "direction": "DOWN",
+      "equal": true,
+      "family": "hierarchy",
+      "changed": false,
+      "differingValues": 0
+    },
+    {
+      "seed": 6,
+      "direction": "DOWN",
+      "equal": true,
+      "family": "hierarchy",
+      "changed": false,
+      "differingValues": 0
+    },
+    {
+      "seed": 7,
+      "direction": "DOWN",
+      "equal": true,
+      "family": "hierarchy",
+      "changed": false,
+      "differingValues": 0
+    },
+    {
+      "seed": 8,
+      "direction": "DOWN",
+      "equal": true,
+      "family": "hierarchy",
+      "changed": false,
+      "differingValues": 0
+    },
+    {
+      "seed": 9,
+      "direction": "DOWN",
+      "equal": true,
+      "family": "hierarchy",
+      "changed": false,
+      "differingValues": 0
+    },
+    {
+      "seed": 10,
+      "direction": "DOWN",
+      "equal": true,
+      "family": "hierarchy",
+      "changed": false,
+      "differingValues": 0
+    },
+    {
+      "seed": 11,
+      "direction": "DOWN",
+      "equal": true,
+      "family": "hierarchy",
+      "changed": false,
+      "differingValues": 0
+    },
+    {
+      "seed": 12,
+      "direction": "DOWN",
+      "equal": true,
+      "family": "hierarchy",
+      "changed": false,
+      "differingValues": 0
+    },
+    {
+      "seed": 13,
+      "direction": "DOWN",
+      "equal": true,
+      "family": "hierarchy",
+      "changed": false,
+      "differingValues": 0
+    },
+    {
+      "seed": 14,
+      "direction": "DOWN",
+      "equal": true,
+      "family": "hierarchy",
+      "changed": false,
+      "differingValues": 0
+    },
+    {
+      "seed": 15,
+      "direction": "DOWN",
+      "equal": true,
+      "family": "hierarchy",
+      "changed": false,
+      "differingValues": 0
+    },
+    {
+      "seed": 16,
+      "direction": "DOWN",
+      "equal": true,
+      "family": "hierarchy",
+      "changed": false,
+      "differingValues": 0
+    },
+    {
+      "seed": 17,
+      "direction": "DOWN",
+      "equal": true,
+      "family": "hierarchy",
+      "changed": false,
+      "differingValues": 0
+    },
+    {
+      "seed": 18,
+      "direction": "DOWN",
+      "equal": true,
+      "family": "hierarchy",
+      "changed": false,
+      "differingValues": 0
+    },
+    {
+      "seed": 19,
+      "direction": "DOWN",
+      "equal": true,
+      "family": "hierarchy",
+      "changed": false,
+      "differingValues": 0
+    },
+    {
+      "seed": 20,
+      "direction": "DOWN",
+      "equal": true,
+      "family": "hierarchy",
+      "changed": false,
+      "differingValues": 0
+    },
+    {
+      "seed": 21,
+      "direction": "DOWN",
+      "equal": true,
+      "family": "hierarchy",
+      "changed": false,
+      "differingValues": 0
+    },
+    {
+      "seed": 22,
+      "direction": "DOWN",
+      "equal": true,
+      "family": "hierarchy",
+      "changed": false,
+      "differingValues": 0
+    },
+    {
+      "seed": 23,
+      "direction": "DOWN",
+      "equal": true,
+      "family": "hierarchy",
+      "changed": false,
+      "differingValues": 0
+    },
+    {
+      "seed": 24,
+      "direction": "DOWN",
+      "equal": true,
+      "family": "hierarchy",
+      "changed": false,
+      "differingValues": 0
+    },
+    {
+      "seed": 25,
+      "direction": "DOWN",
+      "equal": true,
+      "family": "hierarchy",
+      "changed": false,
+      "differingValues": 0
+    },
+    {
+      "seed": 1,
+      "direction": "UP",
+      "equal": true,
+      "family": "hierarchy",
+      "changed": false,
+      "differingValues": 0
+    },
+    {
+      "seed": 2,
+      "direction": "UP",
+      "equal": true,
+      "family": "hierarchy",
+      "changed": false,
+      "differingValues": 0
+    },
+    {
+      "seed": 3,
+      "direction": "UP",
+      "equal": true,
+      "family": "hierarchy",
+      "changed": false,
+      "differingValues": 0
+    },
+    {
+      "seed": 4,
+      "direction": "UP",
+      "equal": true,
+      "family": "hierarchy",
+      "changed": false,
+      "differingValues": 0
+    },
+    {
+      "seed": 5,
+      "direction": "UP",
+      "equal": true,
+      "family": "hierarchy",
+      "changed": false,
+      "differingValues": 0
+    },
+    {
+      "seed": 6,
+      "direction": "UP",
+      "equal": true,
+      "family": "hierarchy",
+      "changed": false,
+      "differingValues": 0
+    },
+    {
+      "seed": 7,
+      "direction": "UP",
+      "equal": true,
+      "family": "hierarchy",
+      "changed": false,
+      "differingValues": 0
+    },
+    {
+      "seed": 8,
+      "direction": "UP",
+      "equal": true,
+      "family": "hierarchy",
+      "changed": false,
+      "differingValues": 0
+    },
+    {
+      "seed": 9,
+      "direction": "UP",
+      "equal": true,
+      "family": "hierarchy",
+      "changed": false,
+      "differingValues": 0
+    },
+    {
+      "seed": 10,
+      "direction": "UP",
+      "equal": true,
+      "family": "hierarchy",
+      "changed": false,
+      "differingValues": 0
+    },
+    {
+      "seed": 11,
+      "direction": "UP",
+      "equal": true,
+      "family": "hierarchy",
+      "changed": false,
+      "differingValues": 0
+    },
+    {
+      "seed": 12,
+      "direction": "UP",
+      "equal": true,
+      "family": "hierarchy",
+      "changed": false,
+      "differingValues": 0
+    },
+    {
+      "seed": 13,
+      "direction": "UP",
+      "equal": true,
+      "family": "hierarchy",
+      "changed": false,
+      "differingValues": 0
+    },
+    {
+      "seed": 14,
+      "direction": "UP",
+      "equal": true,
+      "family": "hierarchy",
+      "changed": false,
+      "differingValues": 0
+    },
+    {
+      "seed": 15,
+      "direction": "UP",
+      "equal": true,
+      "family": "hierarchy",
+      "changed": false,
+      "differingValues": 0
+    },
+    {
+      "seed": 16,
+      "direction": "UP",
+      "equal": true,
+      "family": "hierarchy",
+      "changed": false,
+      "differingValues": 0
+    },
+    {
+      "seed": 17,
+      "direction": "UP",
+      "equal": true,
+      "family": "hierarchy",
+      "changed": false,
+      "differingValues": 0
+    },
+    {
+      "seed": 18,
+      "direction": "UP",
+      "equal": true,
+      "family": "hierarchy",
+      "changed": false,
+      "differingValues": 0
+    },
+    {
+      "seed": 19,
+      "direction": "UP",
+      "equal": true,
+      "family": "hierarchy",
+      "changed": false,
+      "differingValues": 0
+    },
+    {
+      "seed": 20,
+      "direction": "UP",
+      "equal": true,
+      "family": "hierarchy",
+      "changed": false,
+      "differingValues": 0
+    },
+    {
+      "seed": 21,
+      "direction": "UP",
+      "equal": true,
+      "family": "hierarchy",
+      "changed": false,
+      "differingValues": 0
+    },
+    {
+      "seed": 22,
+      "direction": "UP",
+      "equal": true,
+      "family": "hierarchy",
+      "changed": false,
+      "differingValues": 0
+    },
+    {
+      "seed": 23,
+      "direction": "UP",
+      "equal": true,
+      "family": "hierarchy",
+      "changed": false,
+      "differingValues": 0
+    },
+    {
+      "seed": 24,
+      "direction": "UP",
+      "equal": true,
+      "family": "hierarchy",
+      "changed": false,
+      "differingValues": 0
+    },
+    {
+      "seed": 25,
+      "direction": "UP",
+      "equal": true,
+      "family": "hierarchy",
+      "changed": false,
+      "differingValues": 0
+    }
+  ]
+}

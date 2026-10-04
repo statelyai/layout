@@ -1,0 +1,148 @@
+{
+  "seed": 1,
+  "direction": "RIGHT",
+  "scope": "g4",
+  "forward": true,
+  "childBoundaryDummies": [
+    "__native_hierarchy_g4_0",
+    "__native_hierarchy_g4_2",
+    "__native_hierarchy_g4_5",
+    "__native_hierarchy_g4_8"
+  ],
+  "nativeDirectedIncomingOrder": [],
+  "realPhysicalPorts": [
+    {
+      "x": 0,
+      "y": 0,
+      "side": "EAST",
+      "outgoing": 1,
+      "outgoingEdges": [
+        "e46"
+      ],
+      "incomingEdges": [],
+      "incoming": 0
+    },
+    {
+      "x": 0,
+      "y": 0,
+      "side": "EAST",
+      "outgoing": 1,
+      "outgoingEdges": [
+        "e32"
+      ],
+      "incomingEdges": [],
+      "incoming": 0
+    },
+    {
+      "x": 0,
+      "y": 0,
+      "side": "EAST",
+      "outgoing": 3,
+      "outgoingEdges": [
+        "e17",
+        "e25",
+        "e27"
+      ],
+      "incomingEdges": [],
+      "incoming": 0
+    },
+    {
+      "x": 0,
+      "y": 0,
+      "side": "EAST",
+      "outgoing": 1,
+      "outgoingEdges": [
+        "e28"
+      ],
+      "incomingEdges": [],
+      "incoming": 0
+    },
+    {
+      "x": 0,
+      "y": 0,
+      "side": "EAST",
+      "outgoing": 2,
+      "outgoingEdges": [
+        "e20",
+        "e41"
+      ],
+      "incomingEdges": [],
+      "incoming": 0
+    },
+    {
+      "x": 0,
+      "y": 0,
+      "side": "WEST",
+      "outgoing": 1,
+      "outgoingEdges": [
+        "e22"
+      ],
+      "incomingEdges": [],
+      "incoming": 0
+    },
+    {
+      "x": 0,
+      "y": 0,
+      "side": "WEST",
+      "outgoing": 1,
+      "outgoingEdges": [
+        "e43"
+      ],
+      "incomingEdges": [],
+      "incoming": 0
+    },
+    {
+      "x": 0,
+      "y": 0,
+      "side": "WEST",
+      "outgoing": 1,
+      "outgoingEdges": [
+        "e35"
+      ],
+      "incomingEdges": [],
+      "incoming": 0
+    },
+    {
+      "x": 0,
+      "y": 0,
+      "side": "WEST",
+      "outgoing": 3,
+      "outgoingEdges": [
+        "e39",
+        "e12",
+        "e40"
+      ],
+      "incomingEdges": [],
+      "incoming": 0
+    }
+  ],
+  "nativeReversedEdges": [
+    "e9",
+    "e12::segment:0",
+    "e12::segment:1",
+    "e12::segment:2",
+    "e12::segment:3",
+    "e22::segment:0",
+    "e22::segment:1",
+    "e22::segment:2",
+    "e22::segment:3",
+    "e22::segment:4",
+    "e30",
+    "e35::segment:0",
+    "e35::segment:1",
+    "e35::segment:2",
+    "e35::segment:3",
+    "e35::segment:4",
+    "e36",
+    "e39::segment:0",
+    "e39::segment:1",
+    "e39::segment:2",
+    "e39::segment:3",
+    "e39::segment:4",
+    "e40",
+    "e43::segment:0",
+    "e43::segment:1",
+    "e43::segment:2",
+    "e43::segment:3"
+  ]
+}

@@ -1,0 +1,11 @@
+{
+  "baseline": "../integrated-boundary-routing/fresh-report.json",
+  "summary": {
+    "cases": 200,
+    "matched": 56,
+    "differingValues": 5075,
+    "nativeErrors": 0,
+    "elkErrors": 100
+  },
+  "updates": []
+}

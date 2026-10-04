@@ -1,0 +1,84 @@
+{
+  "baselineCommit": "d2095c69f2a4898035538ffbd8aee81362099f14",
+  "directional": {
+    "before": {
+      "cases": 200,
+      "matched": 132,
+      "nativeErrors": 0,
+      "elkErrors": 6,
+      "differingValues": 10632
+    },
+    "after": {
+      "cases": 200,
+      "matched": 134,
+      "nativeErrors": 0,
+      "elkErrors": 6,
+      "differingValues": 10602
+    },
+    "lost": [],
+    "gained": [
+      {
+        "family": "flat",
+        "seed": 9,
+        "direction": "RIGHT"
+      },
+      {
+        "family": "flat",
+        "seed": 9,
+        "direction": "LEFT"
+      }
+    ]
+  },
+  "expanded": {
+    "before": {
+      "cases": 200,
+      "matched": 132,
+      "nativeErrors": 0,
+      "elkErrors": 3,
+      "differingValues": 12419
+    },
+    "after": {
+      "cases": 200,
+      "matched": 132,
+      "nativeErrors": 0,
+      "elkErrors": 3,
+      "differingValues": 12394
+    },
+    "lost": [],
+    "gained": []
+  },
+  "combined": {
+    "cases": 400,
+    "matched": 266,
+    "nativeErrors": 0,
+    "elkErrors": 9
+  },
+  "flat": {
+    "cases": 100,
+    "matched": 34,
+    "nativeErrors": 0,
+    "elkErrors": 0,
+    "differingValues": 9777
+  },
+  "focused": {
+    "passed": 122,
+    "failed": 0
+  },
+  "regressionsBefore": {
+    "passed": 0,
+    "failed": 10
+  },
+  "sourceChecks": [
+    "source and repo tsc passed",
+    "selected oxfmt and oxlint passed",
+    "package build passed"
+  ],
+  "browser": "before-after.png: identical input, direction, dimensions and scale",
+  "suite": {
+    "passed": 2530,
+    "failed": 101,
+    "total": 2631,
+    "introduced": [],
+    "resolved": []
+  }
+}

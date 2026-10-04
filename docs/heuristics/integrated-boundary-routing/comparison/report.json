@@ -1,0 +1,2656 @@
+{
+  "rows": [
+    {
+      "index": 68,
+      "before": {
+        "graph": {
+          "id": "root",
+          "layoutOptions": {
+            "elk.algorithm": "layered",
+            "elk.direction": "RIGHT",
+            "elk.hierarchyHandling": "INCLUDE_CHILDREN",
+            "elk.separateConnectedComponents": false
+          },
+          "children": [
+            {
+              "id": "g",
+              "width": 128,
+              "height": 84,
+              "layoutOptions": {
+                "elk.portConstraints": "FIXED_SIDE"
+              },
+              "ports": [
+                {
+                  "id": "gp",
+                  "width": 4,
+                  "height": 4,
+                  "layoutOptions": {
+                    "elk.port.side": "NORTH",
+                    "elk.port.index": 0
+                  },
+                  "x": 12,
+                  "y": -4
+                }
+              ],
+              "children": [
+                {
+                  "id": "a",
+                  "width": 80,
+                  "height": 60,
+                  "x": 36,
+                  "y": 12
+                }
+              ],
+              "edges": [],
+              "x": 12,
+              "y": 56
+            },
+            {
+              "id": "c",
+              "width": 80,
+              "height": 60,
+              "x": 160,
+              "y": 12
+            }
+          ],
+          "edges": [
+            {
+              "id": "outside",
+              "sources": [
+                "gp"
+              ],
+              "targets": [
+                "c"
+              ],
+              "sections": [
+                {
+                  "id": "outside_s0",
+                  "startPoint": {
+                    "x": 26,
+                    "y": 52
+                  },
+                  "endPoint": {
+                    "x": 160,
+                    "y": 42
+                  },
+                  "incomingShape": "gp",
+                  "outgoingShape": "c",
+                  "bendPoints": [
+                    {
+                      "x": 26,
+                      "y": 42
+                    }
+                  ]
+                }
+              ],
+              "container": "root"
+            },
+            {
+              "id": "ancestor",
+              "sources": [
+                "gp"
+              ],
+              "targets": [
+                "a"
+              ],
+              "sections": [
+                {
+                  "id": "ancestor_s0",
+                  "startPoint": {
+                    "x": 14,
+                    "y": -4
+                  },
+                  "endPoint": {
+                    "x": 36,
+                    "y": 42
+                  },
+                  "bendPoints": [
+                    {
+                      "x": 14,
+                      "y": 42
+                    }
+                  ],
+                  "incomingShape": "gp",
+                  "outgoingShape": "a"
+                }
+              ],
+              "container": "g"
+            }
+          ],
+          "width": 252,
+          "height": 152
+        }
+      },
+      "family": "port-FIXED_SIDE-root-NORTH-input",
+      "seed": 69,
+      "direction": "RIGHT",
+      "input": {
+        "id": "root",
+        "layoutOptions": {
+          "elk.algorithm": "layered",
+          "elk.direction": "RIGHT",
+          "elk.hierarchyHandling": "INCLUDE_CHILDREN",
+          "elk.separateConnectedComponents": false
+        },
+        "children": [
+          {
+            "id": "g",
+            "width": 120,
+            "height": 100,
+            "layoutOptions": {
+              "elk.portConstraints": "FIXED_SIDE"
+            },
+            "ports": [
+              {
+                "id": "gp",
+                "width": 4,
+                "height": 4,
+                "layoutOptions": {
+                  "elk.port.side": "NORTH",
+                  "elk.port.index": 0
+                }
+              }
+            ],
+            "children": [
+              {
+                "id": "a",
+                "width": 80,
+                "height": 60
+              }
+            ],
+            "edges": []
+          },
+          {
+            "id": "c",
+            "width": 80,
+            "height": 60
+          }
+        ],
+        "edges": [
+          {
+            "id": "outside",
+            "sources": [
+              "gp"
+            ],
+            "targets": [
+              "c"
+            ]
+          },
+          {
+            "id": "ancestor",
+            "sources": [
+              "gp"
+            ],
+            "targets": [
+              "a"
+            ]
+          }
+        ]
+      },
+      "native": {
+        "graph": {
+          "id": "root",
+          "layoutOptions": {
+            "elk.algorithm": "layered",
+            "elk.direction": "RIGHT",
+            "elk.hierarchyHandling": "INCLUDE_CHILDREN",
+            "elk.separateConnectedComponents": false
+          },
+          "children": [
+            {
+              "id": "g",
+              "width": 124,
+              "height": 84,
+              "layoutOptions": {
+                "elk.portConstraints": "FIXED_SIDE"
+              },
+              "ports": [
+                {
+                  "id": "gp",
+                  "width": 4,
+                  "height": 4,
+                  "layoutOptions": {
+                    "elk.port.side": "NORTH",
+                    "elk.port.index": 0
+                  },
+                  "x": 10,
+                  "y": -4
+                }
+              ],
+              "children": [
+                {
+                  "id": "a",
+                  "width": 80,
+                  "height": 60,
+                  "x": 32,
+                  "y": 12
+                }
+              ],
+              "edges": [],
+              "x": 12,
+              "y": 56
+            },
+            {
+              "id": "c",
+              "width": 80,
+              "height": 60,
+              "x": 156,
+              "y": 12
+            }
+          ],
+          "edges": [
+            {
+              "id": "outside",
+              "sources": [
+                "gp"
+              ],
+              "targets": [
+                "c"
+              ],
+              "sections": [
+                {
+                  "id": "outside_s0",
+                  "startPoint": {
+                    "x": 24,
+                    "y": 52
+                  },
+                  "endPoint": {
+                    "x": 156,
+                    "y": 42
+                  },
+                  "incomingShape": "gp",
+                  "outgoingShape": "c",
+                  "bendPoints": [
+                    {
+                      "x": 24,
+                      "y": 42
+                    }
+                  ]
+                }
+              ],
+              "container": "root"
+            },
+            {
+              "id": "ancestor",
+              "sources": [
+                "gp"
+              ],
+              "targets": [
+                "a"
+              ],
+              "sections": [
+                {
+                  "id": "ancestor_s0",
+                  "startPoint": {
+                    "x": 12,
+                    "y": -4
+                  },
+                  "endPoint": {
+                    "x": 32,
+                    "y": 42
+                  },
+                  "bendPoints": [
+                    {
+                      "x": 12,
+                      "y": 42
+                    }
+                  ],
+                  "incomingShape": "gp",
+                  "outgoingShape": "a"
+                }
+              ],
+              "container": "g"
+            }
+          ],
+          "width": 248,
+          "height": 152
+        }
+      },
+      "elk": {
+        "graph": {
+          "id": "root",
+          "layoutOptions": {
+            "elk.algorithm": "layered",
+            "elk.direction": "RIGHT",
+            "elk.hierarchyHandling": "INCLUDE_CHILDREN",
+            "elk.separateConnectedComponents": false
+          },
+          "children": [
+            {
+              "id": "g",
+              "width": 124,
+              "height": 84,
+              "layoutOptions": {
+                "elk.portConstraints": "FIXED_SIDE"
+              },
+              "ports": [
+                {
+                  "id": "gp",
+                  "width": 4,
+                  "height": 4,
+                  "layoutOptions": {
+                    "elk.port.side": "NORTH",
+                    "elk.port.index": 0
+                  },
+                  "x": 10,
+                  "y": -4
+                }
+              ],
+              "children": [
+                {
+                  "id": "a",
+                  "width": 80,
+                  "height": 60,
+                  "$H": 2232,
+                  "x": 32,
+                  "y": 12
+                }
+              ],
+              "edges": [],
+              "$H": 2229,
+              "x": 12,
+              "y": 56
+            },
+            {
+              "id": "c",
+              "width": 80,
+              "height": 60,
+              "$H": 2234,
+              "x": 156,
+              "y": 12
+            }
+          ],
+          "edges": [
+            {
+              "id": "outside",
+              "sources": [
+                "gp"
+              ],
+              "targets": [
+                "c"
+              ],
+              "sections": [
+                {
+                  "id": "outside_s0",
+                  "startPoint": {
+                    "x": 24,
+                    "y": 52
+                  },
+                  "endPoint": {
+                    "x": 156,
+                    "y": 42
+                  },
+                  "bendPoints": [
+                    {
+                      "x": 24,
+                      "y": 42
+                    }
+                  ],
+                  "incomingShape": "gp",
+                  "outgoingShape": "c"
+                }
+              ],
+              "container": "root"
+            },
+            {
+              "id": "ancestor",
+              "sources": [
+                "gp"
+              ],
+              "targets": [
+                "a"
+              ],
+              "sections": [
+                {
+                  "id": "ancestor_s0",
+                  "startPoint": {
+                    "x": 12,
+                    "y": -4
+                  },
+                  "endPoint": {
+                    "x": 32,
+                    "y": 42
+                  },
+                  "bendPoints": [
+                    {
+                      "x": 12,
+                      "y": 42
+                    }
+                  ],
+                  "incomingShape": "gp",
+                  "outgoingShape": "a"
+                }
+              ],
+              "container": "g"
+            }
+          ],
+          "$H": 2227,
+          "x": 0,
+          "y": 0,
+          "width": 248,
+          "height": 152
+        }
+      },
+      "differences": [],
+      "equal": true
+    },
+    {
+      "index": 69,
+      "before": {
+        "graph": {
+          "id": "root",
+          "layoutOptions": {
+            "elk.algorithm": "layered",
+            "elk.direction": "RIGHT",
+            "elk.hierarchyHandling": "INCLUDE_CHILDREN",
+            "elk.separateConnectedComponents": false
+          },
+          "children": [
+            {
+              "id": "g",
+              "width": 128,
+              "height": 84,
+              "layoutOptions": {
+                "elk.portConstraints": "FIXED_SIDE"
+              },
+              "ports": [
+                {
+                  "id": "gp",
+                  "width": 4,
+                  "height": 4,
+                  "layoutOptions": {
+                    "elk.port.side": "NORTH",
+                    "elk.port.index": 0
+                  },
+                  "x": 112,
+                  "y": -4
+                }
+              ],
+              "children": [
+                {
+                  "id": "a",
+                  "width": 80,
+                  "height": 60,
+                  "x": 12,
+                  "y": 12
+                }
+              ],
+              "edges": [],
+              "x": 12,
+              "y": 56
+            },
+            {
+              "id": "c",
+              "width": 80,
+              "height": 60,
+              "x": 160,
+              "y": 12
+            }
+          ],
+          "edges": [
+            {
+              "id": "outside",
+              "sources": [
+                "gp"
+              ],
+              "targets": [
+                "c"
+              ],
+              "sections": [
+                {
+                  "id": "outside_s0",
+                  "startPoint": {
+                    "x": 126,
+                    "y": 52
+                  },
+                  "endPoint": {
+                    "x": 160,
+                    "y": 42
+                  },
+                  "incomingShape": "gp",
+                  "outgoingShape": "c",
+                  "bendPoints": [
+                    {
+                      "x": 126,
+                      "y": 42
+                    }
+                  ]
+                }
+              ],
+              "container": "root"
+            },
+            {
+              "id": "ancestor",
+              "sources": [
+                "a"
+              ],
+              "targets": [
+                "gp"
+              ],
+              "sections": [
+                {
+                  "id": "ancestor_s0",
+                  "startPoint": {
+                    "x": 92,
+                    "y": 42
+                  },
+                  "endPoint": {
+                    "x": 114,
+                    "y": -4
+                  },
+                  "bendPoints": [
+                    {
+                      "x": 114,
+                      "y": 42
+                    }
+                  ],
+                  "incomingShape": "a",
+                  "outgoingShape": "gp"
+                }
+              ],
+              "container": "g"
+            }
+          ],
+          "width": 252,
+          "height": 152
+        }
+      },
+      "family": "port-FIXED_SIDE-root-NORTH-output",
+      "seed": 70,
+      "direction": "RIGHT",
+      "input": {
+        "id": "root",
+        "layoutOptions": {
+          "elk.algorithm": "layered",
+          "elk.direction": "RIGHT",
+          "elk.hierarchyHandling": "INCLUDE_CHILDREN",
+          "elk.separateConnectedComponents": false
+        },
+        "children": [
+          {
+            "id": "g",
+            "width": 120,
+            "height": 100,
+            "layoutOptions": {
+              "elk.portConstraints": "FIXED_SIDE"
+            },
+            "ports": [
+              {
+                "id": "gp",
+                "width": 4,
+                "height": 4,
+                "layoutOptions": {
+                  "elk.port.side": "NORTH",
+                  "elk.port.index": 0
+                }
+              }
+            ],
+            "children": [
+              {
+                "id": "a",
+                "width": 80,
+                "height": 60
+              }
+            ],
+            "edges": []
+          },
+          {
+            "id": "c",
+            "width": 80,
+            "height": 60
+          }
+        ],
+        "edges": [
+          {
+            "id": "outside",
+            "sources": [
+              "gp"
+            ],
+            "targets": [
+              "c"
+            ]
+          },
+          {
+            "id": "ancestor",
+            "sources": [
+              "a"
+            ],
+            "targets": [
+              "gp"
+            ]
+          }
+        ]
+      },
+      "native": {
+        "graph": {
+          "id": "root",
+          "layoutOptions": {
+            "elk.algorithm": "layered",
+            "elk.direction": "RIGHT",
+            "elk.hierarchyHandling": "INCLUDE_CHILDREN",
+            "elk.separateConnectedComponents": false
+          },
+          "children": [
+            {
+              "id": "g",
+              "width": 124,
+              "height": 84,
+              "layoutOptions": {
+                "elk.portConstraints": "FIXED_SIDE"
+              },
+              "ports": [
+                {
+                  "id": "gp",
+                  "width": 4,
+                  "height": 4,
+                  "layoutOptions": {
+                    "elk.port.side": "NORTH",
+                    "elk.port.index": 0
+                  },
+                  "x": 110,
+                  "y": -4
+                }
+              ],
+              "children": [
+                {
+                  "id": "a",
+                  "width": 80,
+                  "height": 60,
+                  "x": 12,
+                  "y": 12
+                }
+              ],
+              "edges": [],
+              "x": 12,
+              "y": 56
+            },
+            {
+              "id": "c",
+              "width": 80,
+              "height": 60,
+              "x": 156,
+              "y": 12
+            }
+          ],
+          "edges": [
+            {
+              "id": "outside",
+              "sources": [
+                "gp"
+              ],
+              "targets": [
+                "c"
+              ],
+              "sections": [
+                {
+                  "id": "outside_s0",
+                  "startPoint": {
+                    "x": 124,
+                    "y": 52
+                  },
+                  "endPoint": {
+                    "x": 156,
+                    "y": 42
+                  },
+                  "incomingShape": "gp",
+                  "outgoingShape": "c",
+                  "bendPoints": [
+                    {
+                      "x": 124,
+                      "y": 42
+                    }
+                  ]
+                }
+              ],
+              "container": "root"
+            },
+            {
+              "id": "ancestor",
+              "sources": [
+                "a"
+              ],
+              "targets": [
+                "gp"
+              ],
+              "sections": [
+                {
+                  "id": "ancestor_s0",
+                  "startPoint": {
+                    "x": 92,
+                    "y": 42
+                  },
+                  "endPoint": {
+                    "x": 112,
+                    "y": -4
+                  },
+                  "bendPoints": [
+                    {
+                      "x": 112,
+                      "y": 42
+                    }
+                  ],
+                  "incomingShape": "a",
+                  "outgoingShape": "gp"
+                }
+              ],
+              "container": "g"
+            }
+          ],
+          "width": 248,
+          "height": 152
+        }
+      },
+      "elk": {
+        "graph": {
+          "id": "root",
+          "layoutOptions": {
+            "elk.algorithm": "layered",
+            "elk.direction": "RIGHT",
+            "elk.hierarchyHandling": "INCLUDE_CHILDREN",
+            "elk.separateConnectedComponents": false
+          },
+          "children": [
+            {
+              "id": "g",
+              "width": 124,
+              "height": 84,
+              "layoutOptions": {
+                "elk.portConstraints": "FIXED_SIDE"
+              },
+              "ports": [
+                {
+                  "id": "gp",
+                  "width": 4,
+                  "height": 4,
+                  "layoutOptions": {
+                    "elk.port.side": "NORTH",
+                    "elk.port.index": 0
+                  },
+                  "x": 110,
+                  "y": -4
+                }
+              ],
+              "children": [
+                {
+                  "id": "a",
+                  "width": 80,
+                  "height": 60,
+                  "$H": 2267,
+                  "x": 12,
+                  "y": 12
+                }
+              ],
+              "edges": [],
+              "$H": 2264,
+              "x": 12,
+              "y": 56
+            },
+            {
+              "id": "c",
+              "width": 80,
+              "height": 60,
+              "$H": 2269,
+              "x": 156,
+              "y": 12
+            }
+          ],
+          "edges": [
+            {
+              "id": "outside",
+              "sources": [
+                "gp"
+              ],
+              "targets": [
+                "c"
+              ],
+              "sections": [
+                {
+                  "id": "outside_s0",
+                  "startPoint": {
+                    "x": 124,
+                    "y": 52
+                  },
+                  "endPoint": {
+                    "x": 156,
+                    "y": 42
+                  },
+                  "bendPoints": [
+                    {
+                      "x": 124,
+                      "y": 42
+                    }
+                  ],
+                  "incomingShape": "gp",
+                  "outgoingShape": "c"
+                }
+              ],
+              "container": "root"
+            },
+            {
+              "id": "ancestor",
+              "sources": [
+                "a"
+              ],
+              "targets": [
+                "gp"
+              ],
+              "sections": [
+                {
+                  "id": "ancestor_s0",
+                  "startPoint": {
+                    "x": 92,
+                    "y": 42
+                  },
+                  "endPoint": {
+                    "x": 112,
+                    "y": -4
+                  },
+                  "bendPoints": [
+                    {
+                      "x": 112,
+                      "y": 42
+                    }
+                  ],
+                  "incomingShape": "a",
+                  "outgoingShape": "gp"
+                }
+              ],
+              "container": "g"
+            }
+          ],
+          "$H": 2262,
+          "x": 0,
+          "y": 0,
+          "width": 248,
+          "height": 152
+        }
+      },
+      "differences": [],
+      "equal": true
+    },
+    {
+      "index": 76,
+      "before": {
+        "graph": {
+          "id": "root",
+          "layoutOptions": {
+            "elk.algorithm": "layered",
+            "elk.direction": "LEFT",
+            "elk.hierarchyHandling": "INCLUDE_CHILDREN",
+            "elk.separateConnectedComponents": false
+          },
+          "children": [
+            {
+              "id": "g",
+              "width": 128,
+              "height": 84,
+              "layoutOptions": {
+                "elk.portConstraints": "FIXED_SIDE"
+              },
+              "ports": [
+                {
+                  "id": "gp",
+                  "width": 4,
+                  "height": 4,
+                  "layoutOptions": {
+                    "elk.port.side": "NORTH",
+                    "elk.port.index": 0
+                  },
+                  "x": 112,
+                  "y": -4
+                }
+              ],
+              "children": [
+                {
+                  "id": "a",
+                  "width": 80,
+                  "height": 60,
+                  "x": 12,
+                  "y": 12
+                }
+              ],
+              "edges": [],
+              "x": 112,
+              "y": 56
+            },
+            {
+              "id": "c",
+              "width": 80,
+              "height": 60,
+              "x": 12,
+              "y": 12
+            }
+          ],
+          "edges": [
+            {
+              "id": "outside",
+              "sources": [
+                "gp"
+              ],
+              "targets": [
+                "c"
+              ],
+              "sections": [
+                {
+                  "id": "outside_s0",
+                  "startPoint": {
+                    "x": 226,
+                    "y": 52
+                  },
+                  "endPoint": {
+                    "x": 92,
+                    "y": 42
+                  },
+                  "incomingShape": "gp",
+                  "outgoingShape": "c",
+                  "bendPoints": [
+                    {
+                      "x": 226,
+                      "y": 42
+                    }
+                  ]
+                }
+              ],
+              "container": "root"
+            },
+            {
+              "id": "ancestor",
+              "sources": [
+                "gp"
+              ],
+              "targets": [
+                "a"
+              ],
+              "sections": [
+                {
+                  "id": "ancestor_s0",
+                  "startPoint": {
+                    "x": 114,
+                    "y": -4
+                  },
+                  "endPoint": {
+                    "x": 92,
+                    "y": 42
+                  },
+                  "bendPoints": [
+                    {
+                      "x": 114,
+                      "y": 42
+                    }
+                  ],
+                  "incomingShape": "gp",
+                  "outgoingShape": "a"
+                }
+              ],
+              "container": "g"
+            }
+          ],
+          "width": 252,
+          "height": 152
+        }
+      },
+      "family": "port-FIXED_SIDE-root-NORTH-input",
+      "seed": 77,
+      "direction": "LEFT",
+      "input": {
+        "id": "root",
+        "layoutOptions": {
+          "elk.algorithm": "layered",
+          "elk.direction": "LEFT",
+          "elk.hierarchyHandling": "INCLUDE_CHILDREN",
+          "elk.separateConnectedComponents": false
+        },
+        "children": [
+          {
+            "id": "g",
+            "width": 120,
+            "height": 100,
+            "layoutOptions": {
+              "elk.portConstraints": "FIXED_SIDE"
+            },
+            "ports": [
+              {
+                "id": "gp",
+                "width": 4,
+                "height": 4,
+                "layoutOptions": {
+                  "elk.port.side": "NORTH",
+                  "elk.port.index": 0
+                }
+              }
+            ],
+            "children": [
+              {
+                "id": "a",
+                "width": 80,
+                "height": 60
+              }
+            ],
+            "edges": []
+          },
+          {
+            "id": "c",
+            "width": 80,
+            "height": 60
+          }
+        ],
+        "edges": [
+          {
+            "id": "outside",
+            "sources": [
+              "gp"
+            ],
+            "targets": [
+              "c"
+            ]
+          },
+          {
+            "id": "ancestor",
+            "sources": [
+              "gp"
+            ],
+            "targets": [
+              "a"
+            ]
+          }
+        ]
+      },
+      "native": {
+        "graph": {
+          "id": "root",
+          "layoutOptions": {
+            "elk.algorithm": "layered",
+            "elk.direction": "LEFT",
+            "elk.hierarchyHandling": "INCLUDE_CHILDREN",
+            "elk.separateConnectedComponents": false
+          },
+          "children": [
+            {
+              "id": "g",
+              "width": 124,
+              "height": 84,
+              "layoutOptions": {
+                "elk.portConstraints": "FIXED_SIDE"
+              },
+              "ports": [
+                {
+                  "id": "gp",
+                  "width": 4,
+                  "height": 4,
+                  "layoutOptions": {
+                    "elk.port.side": "NORTH",
+                    "elk.port.index": 0
+                  },
+                  "x": 110,
+                  "y": -4
+                }
+              ],
+              "children": [
+                {
+                  "id": "a",
+                  "width": 80,
+                  "height": 60,
+                  "x": 12,
+                  "y": 12
+                }
+              ],
+              "edges": [],
+              "x": 112,
+              "y": 56
+            },
+            {
+              "id": "c",
+              "width": 80,
+              "height": 60,
+              "x": 12,
+              "y": 12
+            }
+          ],
+          "edges": [
+            {
+              "id": "outside",
+              "sources": [
+                "gp"
+              ],
+              "targets": [
+                "c"
+              ],
+              "sections": [
+                {
+                  "id": "outside_s0",
+                  "startPoint": {
+                    "x": 224,
+                    "y": 52
+                  },
+                  "endPoint": {
+                    "x": 92,
+                    "y": 42
+                  },
+                  "incomingShape": "gp",
+                  "outgoingShape": "c",
+                  "bendPoints": [
+                    {
+                      "x": 224,
+                      "y": 42
+                    }
+                  ]
+                }
+              ],
+              "container": "root"
+            },
+            {
+              "id": "ancestor",
+              "sources": [
+                "gp"
+              ],
+              "targets": [
+                "a"
+              ],
+              "sections": [
+                {
+                  "id": "ancestor_s0",
+                  "startPoint": {
+                    "x": 112,
+                    "y": -4
+                  },
+                  "endPoint": {
+                    "x": 92,
+                    "y": 42
+                  },
+                  "bendPoints": [
+                    {
+                      "x": 112,
+                      "y": 42
+                    }
+                  ],
+                  "incomingShape": "gp",
+                  "outgoingShape": "a"
+                }
+              ],
+              "container": "g"
+            }
+          ],
+          "width": 248,
+          "height": 152
+        }
+      },
+      "elk": {
+        "graph": {
+          "id": "root",
+          "layoutOptions": {
+            "elk.algorithm": "layered",
+            "elk.direction": "LEFT",
+            "elk.hierarchyHandling": "INCLUDE_CHILDREN",
+            "elk.separateConnectedComponents": false
+          },
+          "children": [
+            {
+              "id": "g",
+              "width": 124,
+              "height": 84,
+              "layoutOptions": {
+                "elk.portConstraints": "FIXED_SIDE"
+              },
+              "ports": [
+                {
+                  "id": "gp",
+                  "width": 4,
+                  "height": 4,
+                  "layoutOptions": {
+                    "elk.port.side": "NORTH",
+                    "elk.port.index": 0
+                  },
+                  "x": 110,
+                  "y": -4
+                }
+              ],
+              "children": [
+                {
+                  "id": "a",
+                  "width": 80,
+                  "height": 60,
+                  "$H": 2481,
+                  "x": 12,
+                  "y": 12
+                }
+              ],
+              "edges": [],
+              "$H": 2478,
+              "x": 112,
+              "y": 56
+            },
+            {
+              "id": "c",
+              "width": 80,
+              "height": 60,
+              "$H": 2483,
+              "x": 12,
+              "y": 12
+            }
+          ],
+          "edges": [
+            {
+              "id": "outside",
+              "sources": [
+                "gp"
+              ],
+              "targets": [
+                "c"
+              ],
+              "sections": [
+                {
+                  "id": "outside_s0",
+                  "startPoint": {
+                    "x": 224,
+                    "y": 52
+                  },
+                  "endPoint": {
+                    "x": 92,
+                    "y": 42
+                  },
+                  "bendPoints": [
+                    {
+                      "x": 224,
+                      "y": 42
+                    }
+                  ],
+                  "incomingShape": "gp",
+                  "outgoingShape": "c"
+                }
+              ],
+              "container": "root"
+            },
+            {
+              "id": "ancestor",
+              "sources": [
+                "gp"
+              ],
+              "targets": [
+                "a"
+              ],
+              "sections": [
+                {
+                  "id": "ancestor_s0",
+                  "startPoint": {
+                    "x": 112,
+                    "y": -4
+                  },
+                  "endPoint": {
+                    "x": 92,
+                    "y": 42
+                  },
+                  "bendPoints": [
+                    {
+                      "x": 112,
+                      "y": 42
+                    }
+                  ],
+                  "incomingShape": "gp",
+                  "outgoingShape": "a"
+                }
+              ],
+              "container": "g"
+            }
+          ],
+          "$H": 2476,
+          "x": 0,
+          "y": 0,
+          "width": 248,
+          "height": 152
+        }
+      },
+      "differences": [],
+      "equal": true
+    },
+    {
+      "index": 81,
+      "before": {
+        "graph": {
+          "id": "root",
+          "layoutOptions": {
+            "elk.algorithm": "layered",
+            "elk.direction": "DOWN",
+            "elk.hierarchyHandling": "INCLUDE_CHILDREN",
+            "elk.separateConnectedComponents": false
+          },
+          "children": [
+            {
+              "id": "g",
+              "width": 104,
+              "height": 108,
+              "layoutOptions": {
+                "elk.portConstraints": "FIXED_SIDE"
+              },
+              "ports": [
+                {
+                  "id": "gp",
+                  "width": 4,
+                  "height": 4,
+                  "layoutOptions": {
+                    "elk.port.side": "WEST",
+                    "elk.port.index": 0
+                  },
+                  "x": -4,
+                  "y": 92
+                }
+              ],
+              "children": [
+                {
+                  "id": "a",
+                  "width": 80,
+                  "height": 60,
+                  "x": 12,
+                  "y": 12
+                }
+              ],
+              "edges": [],
+              "x": 66,
+              "y": 12
+            },
+            {
+              "id": "c",
+              "width": 80,
+              "height": 60,
+              "x": 12,
+              "y": 140
+            }
+          ],
+          "edges": [
+            {
+              "id": "outside",
+              "sources": [
+                "gp"
+              ],
+              "targets": [
+                "c"
+              ],
+              "sections": [
+                {
+                  "id": "outside_s0",
+                  "startPoint": {
+                    "x": 62,
+                    "y": 106
+                  },
+                  "endPoint": {
+                    "x": 52,
+                    "y": 140
+                  },
+                  "incomingShape": "gp",
+                  "outgoingShape": "c",
+                  "bendPoints": [
+                    {
+                      "x": 52,
+                      "y": 106
+                    }
+                  ]
+                }
+              ],
+              "container": "root"
+            },
+            {
+              "id": "ancestor",
+              "sources": [
+                "a"
+              ],
+              "targets": [
+                "gp"
+              ],
+              "sections": [
+                {
+                  "id": "ancestor_s0",
+                  "startPoint": {
+                    "x": 52,
+                    "y": 72
+                  },
+                  "endPoint": {
+                    "x": -4,
+                    "y": 94
+                  },
+                  "bendPoints": [
+                    {
+                      "x": 52,
+                      "y": 94
+                    }
+                  ],
+                  "incomingShape": "a",
+                  "outgoingShape": "gp"
+                }
+              ],
+              "container": "g"
+            }
+          ],
+          "width": 182,
+          "height": 212
+        }
+      },
+      "family": "port-FIXED_SIDE-root-WEST-output",
+      "seed": 82,
+      "direction": "DOWN",
+      "input": {
+        "id": "root",
+        "layoutOptions": {
+          "elk.algorithm": "layered",
+          "elk.direction": "DOWN",
+          "elk.hierarchyHandling": "INCLUDE_CHILDREN",
+          "elk.separateConnectedComponents": false
+        },
+        "children": [
+          {
+            "id": "g",
+            "width": 120,
+            "height": 100,
+            "layoutOptions": {
+              "elk.portConstraints": "FIXED_SIDE"
+            },
+            "ports": [
+              {
+                "id": "gp",
+                "width": 4,
+                "height": 4,
+                "layoutOptions": {
+                  "elk.port.side": "WEST",
+                  "elk.port.index": 0
+                }
+              }
+            ],
+            "children": [
+              {
+                "id": "a",
+                "width": 80,
+                "height": 60
+              }
+            ],
+            "edges": []
+          },
+          {
+            "id": "c",
+            "width": 80,
+            "height": 60
+          }
+        ],
+        "edges": [
+          {
+            "id": "outside",
+            "sources": [
+              "gp"
+            ],
+            "targets": [
+              "c"
+            ]
+          },
+          {
+            "id": "ancestor",
+            "sources": [
+              "a"
+            ],
+            "targets": [
+              "gp"
+            ]
+          }
+        ]
+      },
+      "native": {
+        "graph": {
+          "id": "root",
+          "layoutOptions": {
+            "elk.algorithm": "layered",
+            "elk.direction": "DOWN",
+            "elk.hierarchyHandling": "INCLUDE_CHILDREN",
+            "elk.separateConnectedComponents": false
+          },
+          "children": [
+            {
+              "id": "g",
+              "width": 124,
+              "height": 104,
+              "layoutOptions": {
+                "elk.portConstraints": "FIXED_SIDE"
+              },
+              "ports": [
+                {
+                  "id": "gp",
+                  "width": 4,
+                  "height": 4,
+                  "layoutOptions": {
+                    "elk.port.side": "WEST",
+                    "elk.port.index": 0
+                  },
+                  "x": -4,
+                  "y": 92
+                }
+              ],
+              "children": [
+                {
+                  "id": "a",
+                  "width": 80,
+                  "height": 60,
+                  "x": 32,
+                  "y": 12
+                }
+              ],
+              "edges": [],
+              "x": 66,
+              "y": 12
+            },
+            {
+              "id": "c",
+              "width": 80,
+              "height": 60,
+              "x": 12,
+              "y": 136
+            }
+          ],
+          "edges": [
+            {
+              "id": "outside",
+              "sources": [
+                "gp"
+              ],
+              "targets": [
+                "c"
+              ],
+              "sections": [
+                {
+                  "id": "outside_s0",
+                  "startPoint": {
+                    "x": 62,
+                    "y": 106
+                  },
+                  "endPoint": {
+                    "x": 52,
+                    "y": 136
+                  },
+                  "incomingShape": "gp",
+                  "outgoingShape": "c",
+                  "bendPoints": [
+                    {
+                      "x": 52,
+                      "y": 106
+                    }
+                  ]
+                }
+              ],
+              "container": "root"
+            },
+            {
+              "id": "ancestor",
+              "sources": [
+                "a"
+              ],
+              "targets": [
+                "gp"
+              ],
+              "sections": [
+                {
+                  "id": "ancestor_s0",
+                  "startPoint": {
+                    "x": 72,
+                    "y": 72
+                  },
+                  "endPoint": {
+                    "x": -4,
+                    "y": 94
+                  },
+                  "bendPoints": [
+                    {
+                      "x": 72,
+                      "y": 92
+                    },
+                    {
+                      "x": 12,
+                      "y": 92
+                    },
+                    {
+                      "x": 12,
+                      "y": 94
+                    }
+                  ],
+                  "incomingShape": "a",
+                  "outgoingShape": "gp"
+                }
+              ],
+              "container": "g"
+            }
+          ],
+          "width": 202,
+          "height": 208
+        }
+      },
+      "elk": {
+        "graph": {
+          "id": "root",
+          "layoutOptions": {
+            "elk.algorithm": "layered",
+            "elk.direction": "DOWN",
+            "elk.hierarchyHandling": "INCLUDE_CHILDREN",
+            "elk.separateConnectedComponents": false
+          },
+          "children": [
+            {
+              "id": "g",
+              "width": 124,
+              "height": 104,
+              "layoutOptions": {
+                "elk.portConstraints": "FIXED_SIDE"
+              },
+              "ports": [
+                {
+                  "id": "gp",
+                  "width": 4,
+                  "height": 4,
+                  "layoutOptions": {
+                    "elk.port.side": "WEST",
+                    "elk.port.index": 0
+                  },
+                  "x": -4,
+                  "y": 92
+                }
+              ],
+              "children": [
+                {
+                  "id": "a",
+                  "width": 80,
+                  "height": 60,
+                  "$H": 2651,
+                  "x": 32,
+                  "y": 12
+                }
+              ],
+              "edges": [],
+              "$H": 2648,
+              "x": 66,
+              "y": 12
+            },
+            {
+              "id": "c",
+              "width": 80,
+              "height": 60,
+              "$H": 2653,
+              "x": 12,
+              "y": 136
+            }
+          ],
+          "edges": [
+            {
+              "id": "outside",
+              "sources": [
+                "gp"
+              ],
+              "targets": [
+                "c"
+              ],
+              "sections": [
+                {
+                  "id": "outside_s0",
+                  "startPoint": {
+                    "x": 62,
+                    "y": 106
+                  },
+                  "endPoint": {
+                    "x": 52,
+                    "y": 136
+                  },
+                  "bendPoints": [
+                    {
+                      "x": 52,
+                      "y": 106
+                    }
+                  ],
+                  "incomingShape": "gp",
+                  "outgoingShape": "c"
+                }
+              ],
+              "container": "root"
+            },
+            {
+              "id": "ancestor",
+              "sources": [
+                "a"
+              ],
+              "targets": [
+                "gp"
+              ],
+              "sections": [
+                {
+                  "id": "ancestor_s0",
+                  "startPoint": {
+                    "x": 72,
+                    "y": 72
+                  },
+                  "endPoint": {
+                    "x": -4,
+                    "y": 94
+                  },
+                  "bendPoints": [
+                    {
+                      "x": 72,
+                      "y": 92
+                    },
+                    {
+                      "x": 12,
+                      "y": 92
+                    },
+                    {
+                      "x": 12,
+                      "y": 94
+                    }
+                  ],
+                  "incomingShape": "a",
+                  "outgoingShape": "gp"
+                }
+              ],
+              "container": "g"
+            }
+          ],
+          "$H": 2646,
+          "x": 0,
+          "y": 0,
+          "width": 202,
+          "height": 208
+        }
+      },
+      "differences": [],
+      "equal": true
+    },
+    {
+      "index": 90,
+      "before": {
+        "graph": {
+          "id": "root",
+          "layoutOptions": {
+            "elk.algorithm": "layered",
+            "elk.direction": "UP",
+            "elk.hierarchyHandling": "INCLUDE_CHILDREN",
+            "elk.separateConnectedComponents": false
+          },
+          "children": [
+            {
+              "id": "g",
+              "width": 104,
+              "height": 108,
+              "layoutOptions": {
+                "elk.portConstraints": "FIXED_SIDE"
+              },
+              "ports": [
+                {
+                  "id": "gp",
+                  "width": 4,
+                  "height": 4,
+                  "layoutOptions": {
+                    "elk.port.side": "EAST",
+                    "elk.port.index": 0
+                  },
+                  "x": 104,
+                  "y": 92
+                }
+              ],
+              "children": [
+                {
+                  "id": "a",
+                  "width": 80,
+                  "height": 60,
+                  "x": 12,
+                  "y": 12
+                }
+              ],
+              "edges": [],
+              "x": 12,
+              "y": 92
+            },
+            {
+              "id": "c",
+              "width": 80,
+              "height": 60,
+              "x": 90,
+              "y": 12
+            }
+          ],
+          "edges": [
+            {
+              "id": "outside",
+              "sources": [
+                "gp"
+              ],
+              "targets": [
+                "c"
+              ],
+              "sections": [
+                {
+                  "id": "outside_s0",
+                  "startPoint": {
+                    "x": 120,
+                    "y": 186
+                  },
+                  "endPoint": {
+                    "x": 130,
+                    "y": 72
+                  },
+                  "incomingShape": "gp",
+                  "outgoingShape": "c",
+                  "bendPoints": [
+                    {
+                      "x": 130,
+                      "y": 186
+                    }
+                  ]
+                }
+              ],
+              "container": "root"
+            },
+            {
+              "id": "ancestor",
+              "sources": [
+                "gp"
+              ],
+              "targets": [
+                "a"
+              ],
+              "sections": [
+                {
+                  "id": "ancestor_s0",
+                  "startPoint": {
+                    "x": 108,
+                    "y": 94
+                  },
+                  "endPoint": {
+                    "x": 52,
+                    "y": 72
+                  },
+                  "bendPoints": [
+                    {
+                      "x": 52,
+                      "y": 94
+                    }
+                  ],
+                  "incomingShape": "gp",
+                  "outgoingShape": "a"
+                }
+              ],
+              "container": "g"
+            }
+          ],
+          "width": 182,
+          "height": 212
+        }
+      },
+      "family": "port-FIXED_SIDE-root-EAST-input",
+      "seed": 91,
+      "direction": "UP",
+      "input": {
+        "id": "root",
+        "layoutOptions": {
+          "elk.algorithm": "layered",
+          "elk.direction": "UP",
+          "elk.hierarchyHandling": "INCLUDE_CHILDREN",
+          "elk.separateConnectedComponents": false
+        },
+        "children": [
+          {
+            "id": "g",
+            "width": 120,
+            "height": 100,
+            "layoutOptions": {
+              "elk.portConstraints": "FIXED_SIDE"
+            },
+            "ports": [
+              {
+                "id": "gp",
+                "width": 4,
+                "height": 4,
+                "layoutOptions": {
+                  "elk.port.side": "EAST",
+                  "elk.port.index": 0
+                }
+              }
+            ],
+            "children": [
+              {
+                "id": "a",
+                "width": 80,
+                "height": 60
+              }
+            ],
+            "edges": []
+          },
+          {
+            "id": "c",
+            "width": 80,
+            "height": 60
+          }
+        ],
+        "edges": [
+          {
+            "id": "outside",
+            "sources": [
+              "gp"
+            ],
+            "targets": [
+              "c"
+            ]
+          },
+          {
+            "id": "ancestor",
+            "sources": [
+              "gp"
+            ],
+            "targets": [
+              "a"
+            ]
+          }
+        ]
+      },
+      "native": {
+        "graph": {
+          "id": "root",
+          "layoutOptions": {
+            "elk.algorithm": "layered",
+            "elk.direction": "UP",
+            "elk.hierarchyHandling": "INCLUDE_CHILDREN",
+            "elk.separateConnectedComponents": false
+          },
+          "children": [
+            {
+              "id": "g",
+              "width": 124,
+              "height": 104,
+              "layoutOptions": {
+                "elk.portConstraints": "FIXED_SIDE"
+              },
+              "ports": [
+                {
+                  "id": "gp",
+                  "width": 4,
+                  "height": 4,
+                  "layoutOptions": {
+                    "elk.port.side": "EAST",
+                    "elk.port.index": 0
+                  },
+                  "x": 124,
+                  "y": 88
+                }
+              ],
+              "children": [
+                {
+                  "id": "a",
+                  "width": 80,
+                  "height": 60,
+                  "x": 12,
+                  "y": 12
+                }
+              ],
+              "edges": [],
+              "x": 12,
+              "y": 92
+            },
+            {
+              "id": "c",
+              "width": 80,
+              "height": 60,
+              "x": 110,
+              "y": 12
+            }
+          ],
+          "edges": [
+            {
+              "id": "outside",
+              "sources": [
+                "gp"
+              ],
+              "targets": [
+                "c"
+              ],
+              "sections": [
+                {
+                  "id": "outside_s0",
+                  "startPoint": {
+                    "x": 140,
+                    "y": 182
+                  },
+                  "endPoint": {
+                    "x": 150,
+                    "y": 72
+                  },
+                  "incomingShape": "gp",
+                  "outgoingShape": "c",
+                  "bendPoints": [
+                    {
+                      "x": 150,
+                      "y": 182
+                    }
+                  ]
+                }
+              ],
+              "container": "root"
+            },
+            {
+              "id": "ancestor",
+              "sources": [
+                "gp"
+              ],
+              "targets": [
+                "a"
+              ],
+              "sections": [
+                {
+                  "id": "ancestor_s0",
+                  "startPoint": {
+                    "x": 128,
+                    "y": 90
+                  },
+                  "endPoint": {
+                    "x": 52,
+                    "y": 72
+                  },
+                  "bendPoints": [
+                    {
+                      "x": 112,
+                      "y": 90
+                    },
+                    {
+                      "x": 112,
+                      "y": 92
+                    },
+                    {
+                      "x": 52,
+                      "y": 92
+                    }
+                  ],
+                  "incomingShape": "gp",
+                  "outgoingShape": "a"
+                }
+              ],
+              "container": "g"
+            }
+          ],
+          "width": 202,
+          "height": 208
+        }
+      },
+      "elk": {
+        "graph": {
+          "id": "root",
+          "layoutOptions": {
+            "elk.algorithm": "layered",
+            "elk.direction": "UP",
+            "elk.hierarchyHandling": "INCLUDE_CHILDREN",
+            "elk.separateConnectedComponents": false
+          },
+          "children": [
+            {
+              "id": "g",
+              "width": 124,
+              "height": 104,
+              "layoutOptions": {
+                "elk.portConstraints": "FIXED_SIDE"
+              },
+              "ports": [
+                {
+                  "id": "gp",
+                  "width": 4,
+                  "height": 4,
+                  "layoutOptions": {
+                    "elk.port.side": "EAST",
+                    "elk.port.index": 0
+                  },
+                  "x": 124,
+                  "y": 88
+                }
+              ],
+              "children": [
+                {
+                  "id": "a",
+                  "width": 80,
+                  "height": 60,
+                  "$H": 2933,
+                  "x": 12,
+                  "y": 12
+                }
+              ],
+              "edges": [],
+              "$H": 2930,
+              "x": 12,
+              "y": 92
+            },
+            {
+              "id": "c",
+              "width": 80,
+              "height": 60,
+              "$H": 2935,
+              "x": 110,
+              "y": 12
+            }
+          ],
+          "edges": [
+            {
+              "id": "outside",
+              "sources": [
+                "gp"
+              ],
+              "targets": [
+                "c"
+              ],
+              "sections": [
+                {
+                  "id": "outside_s0",
+                  "startPoint": {
+                    "x": 140,
+                    "y": 182
+                  },
+                  "endPoint": {
+                    "x": 150,
+                    "y": 72
+                  },
+                  "bendPoints": [
+                    {
+                      "x": 150,
+                      "y": 182
+                    }
+                  ],
+                  "incomingShape": "gp",
+                  "outgoingShape": "c"
+                }
+              ],
+              "container": "root"
+            },
+            {
+              "id": "ancestor",
+              "sources": [
+                "gp"
+              ],
+              "targets": [
+                "a"
+              ],
+              "sections": [
+                {
+                  "id": "ancestor_s0",
+                  "startPoint": {
+                    "x": 128,
+                    "y": 90
+                  },
+                  "endPoint": {
+                    "x": 52,
+                    "y": 72
+                  },
+                  "bendPoints": [
+                    {
+                      "x": 112,
+                      "y": 90
+                    },
+                    {
+                      "x": 112,
+                      "y": 92
+                    },
+                    {
+                      "x": 52,
+                      "y": 92
+                    }
+                  ],
+                  "incomingShape": "gp",
+                  "outgoingShape": "a"
+                }
+              ],
+              "container": "g"
+            }
+          ],
+          "$H": 2928,
+          "x": 0,
+          "y": 0,
+          "width": 202,
+          "height": 208
+        }
+      },
+      "differences": [],
+      "equal": true
+    },
+    {
+      "index": 91,
+      "before": {
+        "graph": {
+          "id": "root",
+          "layoutOptions": {
+            "elk.algorithm": "layered",
+            "elk.direction": "UP",
+            "elk.hierarchyHandling": "INCLUDE_CHILDREN",
+            "elk.separateConnectedComponents": false
+          },
+          "children": [
+            {
+              "id": "g",
+              "width": 104,
+              "height": 108,
+              "layoutOptions": {
+                "elk.portConstraints": "FIXED_SIDE"
+              },
+              "ports": [
+                {
+                  "id": "gp",
+                  "width": 4,
+                  "height": 4,
+                  "layoutOptions": {
+                    "elk.port.side": "EAST",
+                    "elk.port.index": 0
+                  },
+                  "x": 104,
+                  "y": 12
+                }
+              ],
+              "children": [
+                {
+                  "id": "a",
+                  "width": 80,
+                  "height": 60,
+                  "x": 12,
+                  "y": 36
+                }
+              ],
+              "edges": [],
+              "x": 12,
+              "y": 92
+            },
+            {
+              "id": "c",
+              "width": 80,
+              "height": 60,
+              "x": 90,
+              "y": 12
+            }
+          ],
+          "edges": [
+            {
+              "id": "outside",
+              "sources": [
+                "gp"
+              ],
+              "targets": [
+                "c"
+              ],
+              "sections": [
+                {
+                  "id": "outside_s0",
+                  "startPoint": {
+                    "x": 120,
+                    "y": 106
+                  },
+                  "endPoint": {
+                    "x": 130,
+                    "y": 72
+                  },
+                  "incomingShape": "gp",
+                  "outgoingShape": "c",
+                  "bendPoints": [
+                    {
+                      "x": 130,
+                      "y": 106
+                    }
+                  ]
+                }
+              ],
+              "container": "root"
+            },
+            {
+              "id": "ancestor",
+              "sources": [
+                "a"
+              ],
+              "targets": [
+                "gp"
+              ],
+              "sections": [
+                {
+                  "id": "ancestor_s0",
+                  "startPoint": {
+                    "x": 52,
+                    "y": 36
+                  },
+                  "endPoint": {
+                    "x": 108,
+                    "y": 14
+                  },
+                  "bendPoints": [
+                    {
+                      "x": 52,
+                      "y": 14
+                    }
+                  ],
+                  "incomingShape": "a",
+                  "outgoingShape": "gp"
+                }
+              ],
+              "container": "g"
+            }
+          ],
+          "width": 182,
+          "height": 212
+        }
+      },
+      "family": "port-FIXED_SIDE-root-EAST-output",
+      "seed": 92,
+      "direction": "UP",
+      "input": {
+        "id": "root",
+        "layoutOptions": {
+          "elk.algorithm": "layered",
+          "elk.direction": "UP",
+          "elk.hierarchyHandling": "INCLUDE_CHILDREN",
+          "elk.separateConnectedComponents": false
+        },
+        "children": [
+          {
+            "id": "g",
+            "width": 120,
+            "height": 100,
+            "layoutOptions": {
+              "elk.portConstraints": "FIXED_SIDE"
+            },
+            "ports": [
+              {
+                "id": "gp",
+                "width": 4,
+                "height": 4,
+                "layoutOptions": {
+                  "elk.port.side": "EAST",
+                  "elk.port.index": 0
+                }
+              }
+            ],
+            "children": [
+              {
+                "id": "a",
+                "width": 80,
+                "height": 60
+              }
+            ],
+            "edges": []
+          },
+          {
+            "id": "c",
+            "width": 80,
+            "height": 60
+          }
+        ],
+        "edges": [
+          {
+            "id": "outside",
+            "sources": [
+              "gp"
+            ],
+            "targets": [
+              "c"
+            ]
+          },
+          {
+            "id": "ancestor",
+            "sources": [
+              "a"
+            ],
+            "targets": [
+              "gp"
+            ]
+          }
+        ]
+      },
+      "native": {
+        "graph": {
+          "id": "root",
+          "layoutOptions": {
+            "elk.algorithm": "layered",
+            "elk.direction": "UP",
+            "elk.hierarchyHandling": "INCLUDE_CHILDREN",
+            "elk.separateConnectedComponents": false
+          },
+          "children": [
+            {
+              "id": "g",
+              "width": 124,
+              "height": 104,
+              "layoutOptions": {
+                "elk.portConstraints": "FIXED_SIDE"
+              },
+              "ports": [
+                {
+                  "id": "gp",
+                  "width": 4,
+                  "height": 4,
+                  "layoutOptions": {
+                    "elk.port.side": "EAST",
+                    "elk.port.index": 0
+                  },
+                  "x": 124,
+                  "y": 8
+                }
+              ],
+              "children": [
+                {
+                  "id": "a",
+                  "width": 80,
+                  "height": 60,
+                  "x": 12,
+                  "y": 32
+                }
+              ],
+              "edges": [],
+              "x": 12,
+              "y": 92
+            },
+            {
+              "id": "c",
+              "width": 80,
+              "height": 60,
+              "x": 110,
+              "y": 12
+            }
+          ],
+          "edges": [
+            {
+              "id": "outside",
+              "sources": [
+                "gp"
+              ],
+              "targets": [
+                "c"
+              ],
+              "sections": [
+                {
+                  "id": "outside_s0",
+                  "startPoint": {
+                    "x": 140,
+                    "y": 102
+                  },
+                  "endPoint": {
+                    "x": 150,
+                    "y": 72
+                  },
+                  "incomingShape": "gp",
+                  "outgoingShape": "c",
+                  "bendPoints": [
+                    {
+                      "x": 150,
+                      "y": 102
+                    }
+                  ]
+                }
+              ],
+              "container": "root"
+            },
+            {
+              "id": "ancestor",
+              "sources": [
+                "a"
+              ],
+              "targets": [
+                "gp"
+              ],
+              "sections": [
+                {
+                  "id": "ancestor_s0",
+                  "startPoint": {
+                    "x": 52,
+                    "y": 32
+                  },
+                  "endPoint": {
+                    "x": 128,
+                    "y": 10
+                  },
+                  "bendPoints": [
+                    {
+                      "x": 52,
+                      "y": 12
+                    },
+                    {
+                      "x": 112,
+                      "y": 12
+                    },
+                    {
+                      "x": 112,
+                      "y": 10
+                    }
+                  ],
+                  "incomingShape": "a",
+                  "outgoingShape": "gp"
+                }
+              ],
+              "container": "g"
+            }
+          ],
+          "width": 202,
+          "height": 208
+        }
+      },
+      "elk": {
+        "graph": {
+          "id": "root",
+          "layoutOptions": {
+            "elk.algorithm": "layered",
+            "elk.direction": "UP",
+            "elk.hierarchyHandling": "INCLUDE_CHILDREN",
+            "elk.separateConnectedComponents": false
+          },
+          "children": [
+            {
+              "id": "g",
+              "width": 124,
+              "height": 104,
+              "layoutOptions": {
+                "elk.portConstraints": "FIXED_SIDE"
+              },
+              "ports": [
+                {
+                  "id": "gp",
+                  "width": 4,
+                  "height": 4,
+                  "layoutOptions": {
+                    "elk.port.side": "EAST",
+                    "elk.port.index": 0
+                  },
+                  "x": 124,
+                  "y": 8
+                }
+              ],
+              "children": [
+                {
+                  "id": "a",
+                  "width": 80,
+                  "height": 60,
+                  "$H": 2967,
+                  "x": 12,
+                  "y": 32
+                }
+              ],
+              "edges": [],
+              "$H": 2964,
+              "x": 12,
+              "y": 92
+            },
+            {
+              "id": "c",
+              "width": 80,
+              "height": 60,
+              "$H": 2969,
+              "x": 110,
+              "y": 12
+            }
+          ],
+          "edges": [
+            {
+              "id": "outside",
+              "sources": [
+                "gp"
+              ],
+              "targets": [
+                "c"
+              ],
+              "sections": [
+                {
+                  "id": "outside_s0",
+                  "startPoint": {
+                    "x": 140,
+                    "y": 102
+                  },
+                  "endPoint": {
+                    "x": 150,
+                    "y": 72
+                  },
+                  "bendPoints": [
+                    {
+                      "x": 150,
+                      "y": 102
+                    }
+                  ],
+                  "incomingShape": "gp",
+                  "outgoingShape": "c"
+                }
+              ],
+              "container": "root"
+            },
+            {
+              "id": "ancestor",
+              "sources": [
+                "a"
+              ],
+              "targets": [
+                "gp"
+              ],
+              "sections": [
+                {
+                  "id": "ancestor_s0",
+                  "startPoint": {
+                    "x": 52,
+                    "y": 32
+                  },
+                  "endPoint": {
+                    "x": 128,
+                    "y": 10
+                  },
+                  "bendPoints": [
+                    {
+                      "x": 52,
+                      "y": 12
+                    },
+                    {
+                      "x": 112,
+                      "y": 12
+                    },
+                    {
+                      "x": 112,
+                      "y": 10
+                    }
+                  ],
+                  "incomingShape": "a",
+                  "outgoingShape": "gp"
+                }
+              ],
+              "container": "g"
+            }
+          ],
+          "$H": 2962,
+          "x": 0,
+          "y": 0,
+          "width": 202,
+          "height": 208
+        }
+      },
+      "differences": [],
+      "equal": true
+    }
+  ]
+}

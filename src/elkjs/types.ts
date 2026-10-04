@@ -35,6 +35,8 @@ export interface ElkEdgeSection extends ElkGraphElement {
 }
 
 export interface ElkEdge extends ElkGraphElement {
+  /** Node whose coordinate frame contains the exported route. */
+  container?: ElkId;
   sources?: ElkId[];
   targets?: ElkId[];
   source?: ElkId;

@@ -1,0 +1,46 @@
+
+ RUN  v4.1.10 /Users/davidkpiano/.codex/worktrees/layout/heuristic-graph-corpus
+
+ ❯ test/oracle-associated-barycenters.test.ts (1 test | 1 failed) 14ms
+   × matches real elkjs barycenters and random consumption for 512 ordered port graphs 13ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  test/oracle-associated-barycenters.test.ts > matches real elkjs barycenters and random consumption for 512 ordered port graphs
+AssertionError: case 0: {"layer":["n0","n1","n2","n3","n4"],"visits":[["n0",["n4",1.5687839050474062,13.846633837089788]],["n1",["n2",0.3743782124387507,17.882098576065587,7.998354178498072]],["n2",["n3",13.392307771042429,5.5626536776234285,9.093084429004632,16.619312942422926,7.939607849469157]],["n3",[]],["n4",["n0","n4",4.773433972843377,"n3"]]],"associates":[["n0",[]],["n1",[]],["n2",[]],["n3",["n4"]],["n4",[]]],"seed":933710567,"forward":true}: expected { scores: { …(5) }, …(1) } to deeply equal { scores: { …(5) }, …(1) }
+
+- Expected
++ Received
+
+  {
+    "nextFloat": 0.8549433946609497,
+    "scores": {
+-     "n0": 6.2315249771736,
+-     "n1": 9.29573364431961,
+-     "n2": 9.567696579059211,
+-     "n3": 4.765285375925865,
+-     "n4": 4.762624114654025,
++     "n0": 6.969616924121099,
++     "n1": 9.00700186736488,
++     "n2": 9.102699652061558,
++     "n3": 6.726901039354353,
++     "n4": 6.726013952263741,
+    },
+  }
+
+ ❯ test/oracle-associated-barycenters.test.ts:22:126
+     20|     const random = new JavaRandom(input.seed);
+     21|     const actual = associatedBarycenters(input.layer, ranks, neighbors…
+     22|     expect({ scores: Object.fromEntries(actual), nextFloat: random.nex…
+       |                                                                                                                              ^
+     23|   }
+     24| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed (1)
+   Start at  17:02:04
+   Duration  352ms (transform 42ms, setup 0ms, import 149ms, tests 14ms, environment 0ms)
+

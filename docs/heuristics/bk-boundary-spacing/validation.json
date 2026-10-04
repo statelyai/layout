@@ -1,0 +1,22 @@
+{
+  "passed": 2100,
+  "failed": 108,
+  "total": 2208,
+  "newFailures": [],
+  "resolvedFailures": [],
+  "before": {
+    "cases": 100,
+    "matched": 24,
+    "nativeErrors": 0,
+    "elkErrors": 0,
+    "differingValues": 2324
+  },
+  "after": {
+    "cases": 100,
+    "matched": 50,
+    "nativeErrors": 0,
+    "elkErrors": 0,
+    "differingValues": 1607
+  },
+  "lostMatches": []
+}

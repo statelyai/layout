@@ -1,0 +1,30 @@
+{
+  "beforeCommit": "3a42b66",
+  "newFailures": [],
+  "resolvedFailures": [],
+  "fullSuite": {
+    "passed": 2129,
+    "failed": 108,
+    "total": 2237
+  },
+  "newRegressions": 16,
+  "beforeRegressionSuite": {
+    "passed": 64,
+    "failed": 16
+  },
+  "afterRegressionSuite": {
+    "passed": 80,
+    "failed": 0
+  },
+  "unchangedInputs": true,
+  "lostCompleteMatches": 0,
+  "sourceTypecheck": "passed",
+  "repositoryTypecheck": "passed",
+  "selectedLint": "passed",
+  "selectedFormat": "passed",
+  "build": "passed",
+  "browserProof": [
+    "RIGHT hierarchy seed 24",
+    "RIGHT flat seed 15"
+  ]
+}

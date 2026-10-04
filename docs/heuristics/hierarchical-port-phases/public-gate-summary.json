@@ -1,0 +1,11 @@
+{
+  "oracle": "elkjs@0.11.1",
+  "tolerance": 5e-13,
+  "summary": {
+    "cases": 320,
+    "matched": 224,
+    "differingValues": 1176,
+    "nativeErrors": 0,
+    "elkErrors": 0
+  }
+}

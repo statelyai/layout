@@ -1,0 +1,11 @@
+{
+  "baseline": "../compound-junction-transfer/expanded-report.json",
+  "summary": {
+    "cases": 200,
+    "matched": 150,
+    "differingValues": 9087,
+    "nativeErrors": 0,
+    "elkErrors": 3
+  },
+  "updates": []
+}

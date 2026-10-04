@@ -1,0 +1,1088 @@
+
+ RUN  v4.1.10 /Users/davidkpiano/.codex/worktrees/layout/heuristic-graph-corpus
+
+ ❯ test/oracle-direction-feedback.test.ts (17 tests | 2 failed) 1497ms
+     × keeps a vertical fixed-side cycle straight and routes its long feedback edge outside 69ms
+     × keeps a targetless sink after a node that also has a fixed-side self loop 69ms
+ ❯ test/oracle-edge-labels.test.ts (23 tests | 3 failed) 1498ms
+   × keeps ELK-like backward-edge labels in a vertical sibling corridor 547ms
+   × matches ELK geometry for Viz's two-state cycle 38ms
+   × matches ELK geometry with a compact fixed-port label corridor 32ms
+ ❯ test/statechart-layout.test.ts (9 tests | 2 failed) 1688ms
+     × compiles the babyfood initial paths, shared exit and mixed directions 1115ms
+     × deduplicates port successors and preserves all parallel transitions 109ms
+ ❯ test/inline-label-constraints.test.ts (88 tests | 80 failed) 2107ms
+     × reserves one compact, centered label corridor with 48px flow ports 27ms
+     × reserves neighboring-node clearance for 'NORTH'/'STACKED' loops 50ms
+     × reserves neighboring-node clearance for 'NORTH'/'REVERSE_STACKED' loops 16ms
+     × reserves neighboring-node clearance for 'NORTH'/'SEQUENCED' loops 14ms
+     × reserves neighboring-node clearance for 'NORTH_SOUTH'/'STACKED' loops 14ms
+     × reserves neighboring-node clearance for 'NORTH_SOUTH'/'REVERSE_STACKED' loops 25ms
+     × reserves neighboring-node clearance for 'NORTH_SOUTH'/'SEQUENCED' loops 41ms
+     × reserves neighboring-node clearance for 'EQUALLY'/'STACKED' loops 18ms
+     × reserves neighboring-node clearance for 'EQUALLY'/'REVERSE_STACKED' loops 43ms
+     × reserves neighboring-node clearance for 'EQUALLY'/'SEQUENCED' loops 16ms
+     × keeps tall/wide center labels inside reserved endpoint intervals (NONE) 21ms
+     × keeps tall/wide center labels inside reserved endpoint intervals (LEFT) 17ms
+     × keeps tall/wide center labels inside reserved endpoint intervals (RIGHT) 18ms
+     × reserves labeled fixed-port loops on NORTH 10ms
+     × reserves labeled fixed-port loops on SOUTH 12ms
+     × reserves labeled fixed-port loops on EAST 14ms
+     × reserves labeled fixed-port loops on WEST 23ms
+     × preserves ancestor loop routing with edge-level inline options 29ms
+     × preserves ancestor loop routing with label-level inline options 61ms
+     × preserves ancestor loop routing with override-level inline options 15ms
+     × reserves one compact, centered label corridor with 48px flow ports 12ms
+     × reserves neighboring-node clearance for 'NORTH'/'STACKED' loops 74ms
+     × reserves neighboring-node clearance for 'NORTH'/'REVERSE_STACKED' loops 13ms
+     × reserves neighboring-node clearance for 'NORTH'/'SEQUENCED' loops 41ms
+     × reserves neighboring-node clearance for 'NORTH_SOUTH'/'STACKED' loops 74ms
+     × reserves neighboring-node clearance for 'NORTH_SOUTH'/'REVERSE_STACKED' loops 99ms
+     × reserves neighboring-node clearance for 'NORTH_SOUTH'/'SEQUENCED' loops 179ms
+     × reserves neighboring-node clearance for 'EQUALLY'/'STACKED' loops 59ms
+     × reserves neighboring-node clearance for 'EQUALLY'/'REVERSE_STACKED' loops 34ms
+     × reserves neighboring-node clearance for 'EQUALLY'/'SEQUENCED' loops 14ms
+     × keeps tall/wide center labels inside reserved endpoint intervals (NONE) 40ms
+     × keeps tall/wide center labels inside reserved endpoint intervals (LEFT) 18ms
+     × keeps tall/wide center labels inside reserved endpoint intervals (RIGHT) 11ms
+     × reserves labeled fixed-port loops on NORTH 17ms
+     × reserves labeled fixed-port loops on SOUTH 16ms
+     × reserves labeled fixed-port loops on EAST 10ms
+     × reserves labeled fixed-port loops on WEST 27ms
+     × preserves ancestor loop routing with edge-level inline options 5ms
+     × preserves ancestor loop routing with label-level inline options 19ms
+     × preserves ancestor loop routing with override-level inline options 19ms
+     × reserves one compact, centered label corridor with 48px flow ports 6ms
+     × reserves neighboring-node clearance for 'NORTH'/'STACKED' loops 16ms
+     × reserves neighboring-node clearance for 'NORTH'/'REVERSE_STACKED' loops 10ms
+     × reserves neighboring-node clearance for 'NORTH'/'SEQUENCED' loops 8ms
+     × reserves neighboring-node clearance for 'NORTH_SOUTH'/'STACKED' loops 22ms
+     × reserves neighboring-node clearance for 'NORTH_SOUTH'/'REVERSE_STACKED' loops 30ms
+     × reserves neighboring-node clearance for 'NORTH_SOUTH'/'SEQUENCED' loops 33ms
+     × reserves neighboring-node clearance for 'EQUALLY'/'STACKED' loops 15ms
+     × reserves neighboring-node clearance for 'EQUALLY'/'REVERSE_STACKED' loops 20ms
+     × reserves neighboring-node clearance for 'EQUALLY'/'SEQUENCED' loops 40ms
+     × keeps tall/wide center labels inside reserved endpoint intervals (NONE) 24ms
+     × keeps tall/wide center labels inside reserved endpoint intervals (LEFT) 18ms
+     × keeps tall/wide center labels inside reserved endpoint intervals (RIGHT) 28ms
+     × reserves labeled fixed-port loops on NORTH 18ms
+     × reserves labeled fixed-port loops on SOUTH 17ms
+     × reserves labeled fixed-port loops on EAST 13ms
+     × reserves labeled fixed-port loops on WEST 21ms
+     × preserves ancestor loop routing with edge-level inline options 10ms
+     × preserves ancestor loop routing with label-level inline options 24ms
+     × preserves ancestor loop routing with override-level inline options 20ms
+     × reserves one compact, centered label corridor with 48px flow ports 29ms
+     × reserves neighboring-node clearance for 'NORTH'/'STACKED' loops 35ms
+     × reserves neighboring-node clearance for 'NORTH'/'REVERSE_STACKED' loops 9ms
+     × reserves neighboring-node clearance for 'NORTH'/'SEQUENCED' loops 35ms
+     × reserves neighboring-node clearance for 'NORTH_SOUTH'/'STACKED' loops 15ms
+     × reserves neighboring-node clearance for 'NORTH_SOUTH'/'REVERSE_STACKED' loops 9ms
+     × reserves neighboring-node clearance for 'NORTH_SOUTH'/'SEQUENCED' loops 15ms
+     × reserves neighboring-node clearance for 'EQUALLY'/'STACKED' loops 30ms
+     × reserves neighboring-node clearance for 'EQUALLY'/'REVERSE_STACKED' loops 14ms
+     × reserves neighboring-node clearance for 'EQUALLY'/'SEQUENCED' loops 14ms
+     × keeps tall/wide center labels inside reserved endpoint intervals (NONE) 10ms
+     × keeps tall/wide center labels inside reserved endpoint intervals (LEFT) 13ms
+     × keeps tall/wide center labels inside reserved endpoint intervals (RIGHT) 18ms
+     × reserves labeled fixed-port loops on NORTH 9ms
+     × reserves labeled fixed-port loops on SOUTH 9ms
+     × reserves labeled fixed-port loops on EAST 10ms
+     × reserves labeled fixed-port loops on WEST 10ms
+     × preserves ancestor loop routing with edge-level inline options 20ms
+     × preserves ancestor loop routing with label-level inline options 9ms
+     × preserves ancestor loop routing with override-level inline options 5ms
+ ❯ test/elkjs-compat/labels.test.ts (5 tests | 4 failed) 353ms
+     × places a backward edge label beside the corridor between its endpoint layers 80ms
+     × keeps a DOWN backward label clear of a wider intermediate state 62ms
+     × keeps a RIGHT backward label clear of a wider intermediate state 62ms
+     × keeps a long feedback label inside its endpoint span 99ms
+ ❯ test/grouped-merged-port-column.test.ts (1 test | 1 failed) 8ms
+   × keeps a merged cross-port column attached to both endpoint nodes 7ms
+ ❯ test/oracle-port-count-alignment.test.ts (4 tests | 2 failed) 488ms
+   × aligns a node by connected ports, not shared-port edge multiplicity (LEFT) 68ms
+   × aligns a node by connected ports, not shared-port edge multiplicity (UP) 34ms
+ ❯ test/elkjs-compat/exterior-label-separation.test.ts (4 tests | 2 failed) 668ms
+     × keeps every orthogonal exterior label clear of all label types 148ms
+     × keeps equivalent edge orders collision-free 116ms
+ ❯ test/elkjs-compat/exterior-label-differential.test.ts (12 tests | 9 failed) 2949ms
+     × preserves compatibility invariants for 'game-feedback-down-orthogonal' 627ms
+     × preserves compatibility invariants for 'feedback-up-orthogonal' 172ms
+     × preserves compatibility invariants for 'feedback-right-orthogonal' 186ms
+     × preserves compatibility invariants for 'feedback-left-orthogonal' 221ms
+     × preserves compatibility invariants for 'clear-down-orthogonal' 29ms
+     × preserves compatibility invariants for 'feedback-down-polyline' 133ms
+     × preserves compatibility invariants for 'feedback-down-splines' 134ms
+     × preserves compatibility invariants for 'hierarchy' 50ms
+     × removes the game-loop collision with bounded growth 148ms
+ ❯ test/email-drafter.test.ts (16 tests | 5 failed) 3756ms
+     × separates states and keeps labels between endpoints (DOWN) 544ms
+     × separates states and keeps labels between endpoints (UP) 736ms
+     × separates states and keeps labels between endpoints (RIGHT) 408ms
+     × separates states and keeps labels between endpoints (LEFT) 295ms
+   × reserves tall EQUALLY north-loop labels after a preceding rank 8ms
+ ❯ test/oracle-default-fuzz.test.ts (100 tests | 1 failed) 4847ms
+   × matches default layered geometry for generated DAG seed 56 78ms
+ ❯ test/oracle-crossing-constraints.test.ts (1 test | 1 failed) 7073ms
+   × matches real elkjs constrained group order and every barycenter on 512 seeded unit graphs 7071ms
+ ❯ test/elkjs-compat/regressions.test.ts (17 tests | 1 failed) 29830ms
+     × does not compact a right-directed wide edge label into its nodes 347ms
+ ❯ test/oracle-option-target-matrix.test.ts (394 tests | 2 failed) 41067ms
+   × matches port.side="NORTH" on PORTS 32ms
+   × matches port.side="SOUTH" on PORTS 11ms
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 115 ⎯⎯⎯⎯⎯⎯
+
+ FAIL  test/email-drafter.test.ts > email drafter Viz geometry ('legacy invoke ports') > separates states and keeps labels between endpoints (DOWN)
+AssertionError: root.evaluating-invoke-$auto-invoke-evaluatePrompt-done-0 starts after an endpoint: expected 82 to be greater than or equal to 222
+ ❯ test/email-drafter.test.ts:46:70
+     44|         const end = Math.max(source[axis]!, target[axis]!);
+     45|         for (const label of edge.labels ?? []) {
+     46|           expect(label[axis], `${edge.id} starts after an endpoint`).t…
+       |                                                                      ^
+     47|           expect(
+     48|             label[axis]! + label[size]!,
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/115]⎯
+
+ FAIL  test/email-drafter.test.ts > email drafter Viz geometry ('legacy invoke ports') > separates states and keeps labels between endpoints (UP)
+AssertionError: root.evaluating-invoke-$auto-invoke-evaluatePrompt-done-0 ends before an endpoint: expected 1942 to be less than or equal to 1802
+ ❯ test/email-drafter.test.ts:50:13
+     48|             label[axis]! + label[size]!,
+     49|             `${edge.id} ends before an endpoint`,
+     50|           ).toBeLessThanOrEqual(end);
+       |             ^
+     51|         }
+     52|       }
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/115]⎯
+
+ FAIL  test/email-drafter.test.ts > email drafter Viz geometry ('legacy invoke ports') > separates states and keeps labels between endpoints (RIGHT)
+AssertionError: root.needsMoreInfo-DRAFT_ANYWAY-0 starts after an endpoint: expected 12 to be greater than or equal to 1112
+ ❯ test/email-drafter.test.ts:46:70
+     44|         const end = Math.max(source[axis]!, target[axis]!);
+     45|         for (const label of edge.labels ?? []) {
+     46|           expect(label[axis], `${edge.id} starts after an endpoint`).t…
+       |                                                                      ^
+     47|           expect(
+     48|             label[axis]! + label[size]!,
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/115]⎯
+
+ FAIL  test/email-drafter.test.ts > email drafter Viz geometry ('legacy invoke ports') > separates states and keeps labels between endpoints (LEFT)
+AssertionError: root.needsMoreInfo-DRAFT_ANYWAY-0 ends before an endpoint: expected 3312 to be less than or equal to 3182
+ ❯ test/email-drafter.test.ts:50:13
+     48|             label[axis]! + label[size]!,
+     49|             `${edge.id} ends before an endpoint`,
+     50|           ).toBeLessThanOrEqual(end);
+       |             ^
+     51|         }
+     52|       }
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/115]⎯
+
+ FAIL  test/email-drafter.test.ts > reserves tall EQUALLY north-loop labels after a preceding rank
+AssertionError: expected 0 to be greater than or equal to 112
+ ❯ test/email-drafter.test.ts:231:20
+    229|   const previous = result.children!.find((node) => node.id === "previo…
+    230|   const label = result.edges!.find((edge) => edge.id === "loop")!.labe…
+    231|   expect(label.y!).toBeGreaterThanOrEqual(previous.y! + previous.heigh…
+       |                    ^
+    232| });
+    233|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/115]⎯
+
+ FAIL  test/grouped-merged-port-column.test.ts > keeps a merged cross-port column attached to both endpoint nodes
+Error: Invalid hitboxes for scanline constraint calculation.
+ ❯ scanlineConstraints src/layered/compaction-scanline.ts:32:15
+     30|       const position = index < 0 ? active.length : index;
+     31|       if (active[position] && center(active[position]!) === center(ite…
+     32|         throw new Error("Invalid hitboxes for scanline constraint calc…
+       |               ^
+     33|           cause: { first: active[position], second: item },
+     34|         });
+ ❯ sweep src/layered/grouped-compaction.ts:236:33
+ ❯ applyGroupedEdgeLengthCompaction src/layered/grouped-compaction.ts:279:3
+ ❯ test/grouped-merged-port-column.test.ts:39:3
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/115]⎯
+
+ FAIL  test/inline-label-constraints.test.ts > inline label constraints (DOWN) > reserves one compact, centered label corridor with 48px flow ports
+ FAIL  test/inline-label-constraints.test.ts > inline label constraints (UP) > reserves one compact, centered label corridor with 48px flow ports
+AssertionError: expected 108 to be 164 // Object.is equality
+
+- Expected
++ Received
+
+- 164
++ 108
+
+ ❯ test/inline-label-constraints.test.ts:103:43
+    101|
+    102|       const endpointClearance = Math.max(30, portFlowSize + 10);
+    103|       expect(corridorEnd - corridorStart).toBe(label[size]! + 2 * endp…
+       |                                           ^
+    104|       expect(
+    105|         Math.abs(label[axis]! + label[size]! / 2 - (corridorStart + co…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/115]⎯
+
+ FAIL  test/inline-label-constraints.test.ts > inline label constraints (DOWN) > reserves neighboring-node clearance for 'NORTH'/'STACKED' loops
+ FAIL  test/inline-label-constraints.test.ts > inline label constraints (DOWN) > reserves neighboring-node clearance for 'NORTH'/'REVERSE_STACKED' loops
+ FAIL  test/inline-label-constraints.test.ts > inline label constraints (DOWN) > reserves neighboring-node clearance for 'NORTH'/'SEQUENCED' loops
+ FAIL  test/inline-label-constraints.test.ts > inline label constraints (DOWN) > reserves neighboring-node clearance for 'NORTH_SOUTH'/'STACKED' loops
+ FAIL  test/inline-label-constraints.test.ts > inline label constraints (DOWN) > reserves neighboring-node clearance for 'NORTH_SOUTH'/'REVERSE_STACKED' loops
+ FAIL  test/inline-label-constraints.test.ts > inline label constraints (DOWN) > reserves neighboring-node clearance for 'NORTH_SOUTH'/'SEQUENCED' loops
+ FAIL  test/inline-label-constraints.test.ts > inline label constraints (DOWN) > reserves neighboring-node clearance for 'EQUALLY'/'STACKED' loops
+ FAIL  test/inline-label-constraints.test.ts > inline label constraints (DOWN) > reserves neighboring-node clearance for 'EQUALLY'/'REVERSE_STACKED' loops
+ FAIL  test/inline-label-constraints.test.ts > inline label constraints (DOWN) > reserves neighboring-node clearance for 'EQUALLY'/'SEQUENCED' loops
+ FAIL  test/inline-label-constraints.test.ts > inline label constraints (RIGHT) > reserves neighboring-node clearance for 'NORTH'/'STACKED' loops
+ FAIL  test/inline-label-constraints.test.ts > inline label constraints (RIGHT) > reserves neighboring-node clearance for 'NORTH'/'REVERSE_STACKED' loops
+ FAIL  test/inline-label-constraints.test.ts > inline label constraints (RIGHT) > reserves neighboring-node clearance for 'NORTH'/'SEQUENCED' loops
+ FAIL  test/inline-label-constraints.test.ts > inline label constraints (RIGHT) > reserves neighboring-node clearance for 'NORTH_SOUTH'/'STACKED' loops
+ FAIL  test/inline-label-constraints.test.ts > inline label constraints (RIGHT) > reserves neighboring-node clearance for 'NORTH_SOUTH'/'REVERSE_STACKED' loops
+ FAIL  test/inline-label-constraints.test.ts > inline label constraints (RIGHT) > reserves neighboring-node clearance for 'NORTH_SOUTH'/'SEQUENCED' loops
+ FAIL  test/inline-label-constraints.test.ts > inline label constraints (RIGHT) > reserves neighboring-node clearance for 'EQUALLY'/'STACKED' loops
+ FAIL  test/inline-label-constraints.test.ts > inline label constraints (RIGHT) > reserves neighboring-node clearance for 'EQUALLY'/'REVERSE_STACKED' loops
+ FAIL  test/inline-label-constraints.test.ts > inline label constraints (RIGHT) > reserves neighboring-node clearance for 'EQUALLY'/'SEQUENCED' loops
+AssertionError: loop0/a: expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ test/inline-label-constraints.test.ts:162:79
+    160|         for (const label of edge.labels ?? [])
+    161|           for (const node of result.children!)
+    162|             expect(separate(label as ElkNode, node), `${edge.id}/${nod…
+       |                                                                               ^
+    163|     },
+    164|   );
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/115]⎯
+
+ FAIL  test/inline-label-constraints.test.ts > inline label constraints (DOWN) > keeps tall/wide center labels inside reserved endpoint intervals (NONE)
+ FAIL  test/inline-label-constraints.test.ts > inline label constraints (DOWN) > keeps tall/wide center labels inside reserved endpoint intervals (LEFT)
+ FAIL  test/inline-label-constraints.test.ts > inline label constraints (DOWN) > keeps tall/wide center labels inside reserved endpoint intervals (RIGHT)
+AssertionError: expected 0 to be greater than or equal to 92
+ ❯ test/inline-label-constraints.test.ts:205:29
+    203|         const target = nodes.get(edge.targets![0]!)!;
+    204|         const label = edge.labels![0]!;
+    205|         expect(label[axis]).toBeGreaterThanOrEqual(
+       |                             ^
+    206|           Math.min(source[axis]! + source[size]!, target[axis]! + targ…
+    207|         );
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/115]⎯
+
+ FAIL  test/inline-label-constraints.test.ts > inline label constraints (DOWN) > reserves labeled fixed-port loops on NORTH
+ FAIL  test/inline-label-constraints.test.ts > inline label constraints (RIGHT) > reserves labeled fixed-port loops on NORTH
+AssertionError: NORTH/a: expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ test/inline-label-constraints.test.ts:257:72
+    255|       const label = result.edges![2]!.labels![0]!;
+    256|       for (const node of result.children!)
+    257|         expect(separate(label as ElkNode, node), `${side}/${node.id}`)…
+       |                                                                        ^
+    258|     },
+    259|   );
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/115]⎯
+
+ FAIL  test/inline-label-constraints.test.ts > inline label constraints (DOWN) > reserves labeled fixed-port loops on SOUTH
+ FAIL  test/inline-label-constraints.test.ts > inline label constraints (RIGHT) > reserves labeled fixed-port loops on SOUTH
+AssertionError: SOUTH/a: expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ test/inline-label-constraints.test.ts:257:72
+    255|       const label = result.edges![2]!.labels![0]!;
+    256|       for (const node of result.children!)
+    257|         expect(separate(label as ElkNode, node), `${side}/${node.id}`)…
+       |                                                                        ^
+    258|     },
+    259|   );
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[11/115]⎯
+
+ FAIL  test/inline-label-constraints.test.ts > inline label constraints (DOWN) > reserves labeled fixed-port loops on EAST
+ FAIL  test/inline-label-constraints.test.ts > inline label constraints (RIGHT) > reserves labeled fixed-port loops on EAST
+AssertionError: EAST/a: expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ test/inline-label-constraints.test.ts:257:72
+    255|       const label = result.edges![2]!.labels![0]!;
+    256|       for (const node of result.children!)
+    257|         expect(separate(label as ElkNode, node), `${side}/${node.id}`)…
+       |                                                                        ^
+    258|     },
+    259|   );
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[12/115]⎯
+
+ FAIL  test/inline-label-constraints.test.ts > inline label constraints (DOWN) > reserves labeled fixed-port loops on WEST
+ FAIL  test/inline-label-constraints.test.ts > inline label constraints (RIGHT) > reserves labeled fixed-port loops on WEST
+AssertionError: WEST/a: expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ test/inline-label-constraints.test.ts:257:72
+    255|       const label = result.edges![2]!.labels![0]!;
+    256|       for (const node of result.children!)
+    257|         expect(separate(label as ElkNode, node), `${side}/${node.id}`)…
+       |                                                                        ^
+    258|     },
+    259|   );
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[13/115]⎯
+
+ FAIL  test/inline-label-constraints.test.ts > inline label constraints (DOWN) > preserves ancestor loop routing with edge-level inline options
+ FAIL  test/inline-label-constraints.test.ts > inline label constraints (DOWN) > preserves ancestor loop routing with label-level inline options
+ FAIL  test/inline-label-constraints.test.ts > inline label constraints (DOWN) > preserves ancestor loop routing with override-level inline options
+ FAIL  test/inline-label-constraints.test.ts > inline label constraints (UP) > preserves ancestor loop routing with edge-level inline options
+ FAIL  test/inline-label-constraints.test.ts > inline label constraints (UP) > preserves ancestor loop routing with label-level inline options
+ FAIL  test/inline-label-constraints.test.ts > inline label constraints (UP) > preserves ancestor loop routing with override-level inline options
+ FAIL  test/inline-label-constraints.test.ts > inline label constraints (RIGHT) > preserves ancestor loop routing with edge-level inline options
+ FAIL  test/inline-label-constraints.test.ts > inline label constraints (RIGHT) > preserves ancestor loop routing with label-level inline options
+ FAIL  test/inline-label-constraints.test.ts > inline label constraints (RIGHT) > preserves ancestor loop routing with override-level inline options
+ FAIL  test/inline-label-constraints.test.ts > inline label constraints (LEFT) > preserves ancestor loop routing with edge-level inline options
+ FAIL  test/inline-label-constraints.test.ts > inline label constraints (LEFT) > preserves ancestor loop routing with label-level inline options
+ FAIL  test/inline-label-constraints.test.ts > inline label constraints (LEFT) > preserves ancestor loop routing with override-level inline options
+AssertionError: expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ test/inline-label-constraints.test.ts:287:75
+    285|       });
+    286|       const edge = result.edges![0]!;
+    287|       expect(separate(edge.labels![0]! as ElkNode, result.children![0]…
+       |                                                                           ^
+    288|       expect(edge.sections![0]!.bendPoints!.length).toBeGreaterThanOrE…
+    289|     },
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[14/115]⎯
+
+ FAIL  test/inline-label-constraints.test.ts > inline label constraints (UP) > reserves neighboring-node clearance for 'NORTH'/'STACKED' loops
+ FAIL  test/inline-label-constraints.test.ts > inline label constraints (UP) > reserves neighboring-node clearance for 'NORTH'/'REVERSE_STACKED' loops
+ FAIL  test/inline-label-constraints.test.ts > inline label constraints (UP) > reserves neighboring-node clearance for 'NORTH'/'SEQUENCED' loops
+ FAIL  test/inline-label-constraints.test.ts > inline label constraints (UP) > reserves neighboring-node clearance for 'NORTH_SOUTH'/'STACKED' loops
+ FAIL  test/inline-label-constraints.test.ts > inline label constraints (UP) > reserves neighboring-node clearance for 'NORTH_SOUTH'/'REVERSE_STACKED' loops
+ FAIL  test/inline-label-constraints.test.ts > inline label constraints (UP) > reserves neighboring-node clearance for 'NORTH_SOUTH'/'SEQUENCED' loops
+ FAIL  test/inline-label-constraints.test.ts > inline label constraints (UP) > reserves neighboring-node clearance for 'EQUALLY'/'STACKED' loops
+ FAIL  test/inline-label-constraints.test.ts > inline label constraints (UP) > reserves neighboring-node clearance for 'EQUALLY'/'REVERSE_STACKED' loops
+ FAIL  test/inline-label-constraints.test.ts > inline label constraints (UP) > reserves neighboring-node clearance for 'EQUALLY'/'SEQUENCED' loops
+ FAIL  test/inline-label-constraints.test.ts > inline label constraints (LEFT) > reserves neighboring-node clearance for 'NORTH'/'STACKED' loops
+ FAIL  test/inline-label-constraints.test.ts > inline label constraints (LEFT) > reserves neighboring-node clearance for 'NORTH'/'REVERSE_STACKED' loops
+ FAIL  test/inline-label-constraints.test.ts > inline label constraints (LEFT) > reserves neighboring-node clearance for 'NORTH'/'SEQUENCED' loops
+ FAIL  test/inline-label-constraints.test.ts > inline label constraints (LEFT) > reserves neighboring-node clearance for 'NORTH_SOUTH'/'STACKED' loops
+ FAIL  test/inline-label-constraints.test.ts > inline label constraints (LEFT) > reserves neighboring-node clearance for 'NORTH_SOUTH'/'REVERSE_STACKED' loops
+ FAIL  test/inline-label-constraints.test.ts > inline label constraints (LEFT) > reserves neighboring-node clearance for 'NORTH_SOUTH'/'SEQUENCED' loops
+ FAIL  test/inline-label-constraints.test.ts > inline label constraints (LEFT) > reserves neighboring-node clearance for 'EQUALLY'/'STACKED' loops
+ FAIL  test/inline-label-constraints.test.ts > inline label constraints (LEFT) > reserves neighboring-node clearance for 'EQUALLY'/'REVERSE_STACKED' loops
+ FAIL  test/inline-label-constraints.test.ts > inline label constraints (LEFT) > reserves neighboring-node clearance for 'EQUALLY'/'SEQUENCED' loops
+AssertionError: loop0/c: expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ test/inline-label-constraints.test.ts:162:79
+    160|         for (const label of edge.labels ?? [])
+    161|           for (const node of result.children!)
+    162|             expect(separate(label as ElkNode, node), `${edge.id}/${nod…
+       |                                                                               ^
+    163|     },
+    164|   );
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[15/115]⎯
+
+ FAIL  test/inline-label-constraints.test.ts > inline label constraints (UP) > keeps tall/wide center labels inside reserved endpoint intervals (NONE)
+ FAIL  test/inline-label-constraints.test.ts > inline label constraints (UP) > keeps tall/wide center labels inside reserved endpoint intervals (LEFT)
+ FAIL  test/inline-label-constraints.test.ts > inline label constraints (UP) > keeps tall/wide center labels inside reserved endpoint intervals (RIGHT)
+AssertionError: expected 0 to be greater than or equal to 212
+ ❯ test/inline-label-constraints.test.ts:205:29
+    203|         const target = nodes.get(edge.targets![0]!)!;
+    204|         const label = edge.labels![0]!;
+    205|         expect(label[axis]).toBeGreaterThanOrEqual(
+       |                             ^
+    206|           Math.min(source[axis]! + source[size]!, target[axis]! + targ…
+    207|         );
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[16/115]⎯
+
+ FAIL  test/inline-label-constraints.test.ts > inline label constraints (UP) > reserves labeled fixed-port loops on NORTH
+ FAIL  test/inline-label-constraints.test.ts > inline label constraints (LEFT) > reserves labeled fixed-port loops on NORTH
+AssertionError: NORTH/c: expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ test/inline-label-constraints.test.ts:257:72
+    255|       const label = result.edges![2]!.labels![0]!;
+    256|       for (const node of result.children!)
+    257|         expect(separate(label as ElkNode, node), `${side}/${node.id}`)…
+       |                                                                        ^
+    258|     },
+    259|   );
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[17/115]⎯
+
+ FAIL  test/inline-label-constraints.test.ts > inline label constraints (UP) > reserves labeled fixed-port loops on SOUTH
+ FAIL  test/inline-label-constraints.test.ts > inline label constraints (LEFT) > reserves labeled fixed-port loops on SOUTH
+AssertionError: SOUTH/c: expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ test/inline-label-constraints.test.ts:257:72
+    255|       const label = result.edges![2]!.labels![0]!;
+    256|       for (const node of result.children!)
+    257|         expect(separate(label as ElkNode, node), `${side}/${node.id}`)…
+       |                                                                        ^
+    258|     },
+    259|   );
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[18/115]⎯
+
+ FAIL  test/inline-label-constraints.test.ts > inline label constraints (UP) > reserves labeled fixed-port loops on EAST
+ FAIL  test/inline-label-constraints.test.ts > inline label constraints (LEFT) > reserves labeled fixed-port loops on EAST
+AssertionError: EAST/c: expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ test/inline-label-constraints.test.ts:257:72
+    255|       const label = result.edges![2]!.labels![0]!;
+    256|       for (const node of result.children!)
+    257|         expect(separate(label as ElkNode, node), `${side}/${node.id}`)…
+       |                                                                        ^
+    258|     },
+    259|   );
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[19/115]⎯
+
+ FAIL  test/inline-label-constraints.test.ts > inline label constraints (UP) > reserves labeled fixed-port loops on WEST
+ FAIL  test/inline-label-constraints.test.ts > inline label constraints (LEFT) > reserves labeled fixed-port loops on WEST
+AssertionError: WEST/c: expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ test/inline-label-constraints.test.ts:257:72
+    255|       const label = result.edges![2]!.labels![0]!;
+    256|       for (const node of result.children!)
+    257|         expect(separate(label as ElkNode, node), `${side}/${node.id}`)…
+       |                                                                        ^
+    258|     },
+    259|   );
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[20/115]⎯
+
+ FAIL  test/inline-label-constraints.test.ts > inline label constraints (RIGHT) > reserves one compact, centered label corridor with 48px flow ports
+ FAIL  test/inline-label-constraints.test.ts > inline label constraints (LEFT) > reserves one compact, centered label corridor with 48px flow ports
+AssertionError: expected 220 to be 276 // Object.is equality
+
+- Expected
++ Received
+
+- 276
++ 220
+
+ ❯ test/inline-label-constraints.test.ts:103:43
+    101|
+    102|       const endpointClearance = Math.max(30, portFlowSize + 10);
+    103|       expect(corridorEnd - corridorStart).toBe(label[size]! + 2 * endp…
+       |                                           ^
+    104|       expect(
+    105|         Math.abs(label[axis]! + label[size]! / 2 - (corridorStart + co…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[21/115]⎯
+
+ FAIL  test/inline-label-constraints.test.ts > inline label constraints (RIGHT) > keeps tall/wide center labels inside reserved endpoint intervals (NONE)
+ FAIL  test/inline-label-constraints.test.ts > inline label constraints (RIGHT) > keeps tall/wide center labels inside reserved endpoint intervals (LEFT)
+ FAIL  test/inline-label-constraints.test.ts > inline label constraints (RIGHT) > keeps tall/wide center labels inside reserved endpoint intervals (RIGHT)
+AssertionError: expected 0 to be greater than or equal to 112
+ ❯ test/inline-label-constraints.test.ts:205:29
+    203|         const target = nodes.get(edge.targets![0]!)!;
+    204|         const label = edge.labels![0]!;
+    205|         expect(label[axis]).toBeGreaterThanOrEqual(
+       |                             ^
+    206|           Math.min(source[axis]! + source[size]!, target[axis]! + targ…
+    207|         );
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[22/115]⎯
+
+ FAIL  test/inline-label-constraints.test.ts > inline label constraints (LEFT) > keeps tall/wide center labels inside reserved endpoint intervals (NONE)
+AssertionError: expected 0 to be greater than or equal to 252
+ ❯ test/inline-label-constraints.test.ts:205:29
+    203|         const target = nodes.get(edge.targets![0]!)!;
+    204|         const label = edge.labels![0]!;
+    205|         expect(label[axis]).toBeGreaterThanOrEqual(
+       |                             ^
+    206|           Math.min(source[axis]! + source[size]!, target[axis]! + targ…
+    207|         );
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[23/115]⎯
+
+ FAIL  test/inline-label-constraints.test.ts > inline label constraints (LEFT) > keeps tall/wide center labels inside reserved endpoint intervals (LEFT)
+ FAIL  test/inline-label-constraints.test.ts > inline label constraints (LEFT) > keeps tall/wide center labels inside reserved endpoint intervals (RIGHT)
+AssertionError: expected 0 to be greater than or equal to 272
+ ❯ test/inline-label-constraints.test.ts:205:29
+    203|         const target = nodes.get(edge.targets![0]!)!;
+    204|         const label = edge.labels![0]!;
+    205|         expect(label[axis]).toBeGreaterThanOrEqual(
+       |                             ^
+    206|           Math.min(source[axis]! + source[size]!, target[axis]! + targ…
+    207|         );
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[24/115]⎯
+
+ FAIL  test/oracle-crossing-constraints.test.ts > matches real elkjs constrained group order and every barycenter on 512 seeded unit graphs
+Error: Test timed out in 5000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ❯ test/oracle-crossing-constraints.test.ts:8:1
+      6| } from "../src/layered/crossing-constraints";
+      7| import { elkResolveConstraints, type ConstraintOracleInput } from "./h…
+      8| it("matches real elkjs constrained group order and every barycenter on…
+       | ^
+      9|   const random = new JavaRandom(3468112780);
+     10|   for (let index = 0; index < 512; index++) {
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[25/115]⎯
+
+ FAIL  test/oracle-default-fuzz.test.ts > matches default layered geometry for generated DAG seed 56
+AssertionError: e2-3: expected [ …(6) ] to have a length of 4 but got 6
+
+- Expected
++ Received
+
+- 4
++ 6
+
+ ❯ expectGeometry test/oracle-default-fuzz.test.ts:64:51
+     62|       ? [actualSection.startPoint, ...(actualSection.bendPoints ?? [])…
+     63|       : [];
+     64|     expect(actualPoints, String(expectedEdge.id)).toHaveLength(expecte…
+       |                                                   ^
+     65|     actualPoints.forEach((point, index) => {
+     66|       expect(point.x, `${String(expectedEdge.id)}.${index}.x`).toBeClo…
+ ❯ test/oracle-default-fuzz.test.ts:85:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[26/115]⎯
+
+ FAIL  test/oracle-direction-feedback.test.ts > ELK feedback-edge parity > keeps a vertical fixed-side cycle straight and routes its long feedback edge outside
+Error: Invalid hitboxes for scanline constraint calculation.
+ ❯ scanlineConstraints src/layered/compaction-scanline.ts:32:15
+     30|       const position = index < 0 ? active.length : index;
+     31|       if (active[position] && center(active[position]!) === center(ite…
+     32|         throw new Error("Invalid hitboxes for scanline constraint calc…
+       |               ^
+     33|           cause: { first: active[position], second: item },
+     34|         });
+ ❯ sweep src/layered/grouped-compaction.ts:236:33
+ ❯ applyGroupedEdgeLengthCompaction src/layered/grouped-compaction.ts:258:3
+ ❯ applyPostCompaction src/layered/strategies.ts:2492:12
+ ❯ src/layered/index.ts:1788:7
+ ❯ Object.measurePhase src/internal/layout-engine.ts:83:14
+ ❯ measure src/layered/index.ts:1342:30
+ ❯ runLayeredPipeline src/layered/index.ts:1787:5
+ ❯ Object.layout src/layered/index.ts:2786:12
+ ❯ executeLayoutAlgorithm src/internal/layout-engine.ts:75:20
+ ❯ executeElkjs0111Layout src/internal/layout-engine.ts:119:10
+ ❯ ELK.#layout src/elkjs/index.ts:605:19
+ ❯ ELK.layout src/elkjs/index.ts:132:17
+ ❯ test/oracle-direction-feedback.test.ts:374:42
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[27/115]⎯
+
+ FAIL  test/oracle-direction-feedback.test.ts > ELK feedback-edge parity > keeps a targetless sink after a node that also has a fixed-side self loop
+AssertionError: expected 5 to be 15 // Object.is equality
+
+- Expected
++ Received
+
+- 15
++ 5
+
+ ❯ test/oracle-direction-feedback.test.ts:502:20
+    500|       "sink node",
+    501|     );
+    502|     expect(idle.y).toBe(expected.children?.find((node) => node.id === …
+       |                    ^
+    503|     expect(sink.y).toBeGreaterThan((idle.y ?? 0) + (idle.height ?? 0));
+    504|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[28/115]⎯
+
+ FAIL  test/oracle-edge-labels.test.ts > keeps ELK-like backward-edge labels in a vertical sibling corridor
+AssertionError: expected 342 to deeply equal 402
+
+- Expected
++ Received
+
+- 402
++ 342
+
+ ❯ test/oracle-edge-labels.test.ts:159:26
+    157|   const endpointCenters = [actualSource, actualTarget].map((node) => n…
+    158|
+    159|   expect(actualLabel!.y).toEqual(expectedLabel!.y);
+       |                          ^
+    160|   expect(labelCenterX).toBeGreaterThanOrEqual(Math.min(...endpointCent…
+    161|   expect(labelCenterX).toBeLessThanOrEqual(Math.max(...endpointCenters…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[29/115]⎯
+
+ FAIL  test/oracle-edge-labels.test.ts > matches ELK geometry for Viz's two-state cycle
+AssertionError: expected [ 361.59375, 284 ] to deeply equal [ 173.21875, 284 ]
+
+- Expected
++ Received
+
+  [
+-   173.21875,
++   361.59375,
+    284,
+  ]
+
+ ❯ test/oracle-edge-labels.test.ts:200:59
+    198|     value === undefined ? value : Math.round(value * 1_000_000_000) / …
+    199|
+    200|   expect([rounded(actual.width), rounded(actual.height)]).toEqual([
+       |                                                           ^
+    201|     rounded(expected.width),
+    202|     rounded(expected.height),
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[30/115]⎯
+
+ FAIL  test/oracle-edge-labels.test.ts > matches ELK geometry with a compact fixed-port label corridor
+AssertionError: expected { size: [ 405.1025, 214 ], …(2) } to deeply equal { size: [ 207.375, 214 ], …(2) }
+
+- Expected
++ Received
+
+@@ -5,11 +5,11 @@
+        12,
+        102,
+      ],
+      [
+        "red",
+-       123.453125,
++       321.140625,
+        102,
+      ],
+    ],
+    "nodes": [
+      [
+@@ -46,9 +46,9 @@
+          ],
+        ],
+      ],
+    ],
+    "size": [
+-     207.375,
++     405.1025,
+      214,
+    ],
+  }
+
+ ❯ test/oracle-edge-labels.test.ts:327:26
+    325|   const actualGeometry = geometry(actual);
+    326|   const expectedGeometry = geometry(expected);
+    327|   expect(actualGeometry).toEqual({
+       |                          ^
+    328|     ...expectedGeometry,
+    329|     size: [
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[31/115]⎯
+
+ FAIL  test/oracle-option-target-matrix.test.ts > matches port.side="NORTH" on PORTS
+ FAIL  test/oracle-option-target-matrix.test.ts > matches port.side="SOUTH" on PORTS
+AssertionError: root.height: expected 104 to be close to 110, received difference is 6, but expected 5e-13
+ ❯ expectNumber test/oracle-option-target-matrix.test.ts:198:30
+    196|   label: string,
+    197| ): void {
+    198|   expect(actual ?? 0, label).toBeCloseTo(expected ?? 0, 12);
+       |                              ^
+    199| }
+    200|
+ ❯ compareGraph test/oracle-option-target-matrix.test.ts:240:5
+ ❯ test/oracle-option-target-matrix.test.ts:305:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[32/115]⎯
+
+ FAIL  test/oracle-port-count-alignment.test.ts > aligns a node by connected ports, not shared-port edge multiplicity (LEFT)
+ FAIL  test/oracle-port-count-alignment.test.ts > aligns a node by connected ports, not shared-port edge multiplicity (UP)
+AssertionError: expected 87 to be close to 67, received difference is 20, but expected 5e-13
+ ❯ test/oracle-port-count-alignment.test.ts:52:33
+     50|     const expectedSmall = expected.children?.find((n) => n.id === "sma…
+     51|     const actualSmall = actual.children?.find((n) => n.id === "small");
+     52|     expect(actualSmall?.[flow]).toBeCloseTo(expectedSmall?.[flow] ?? N…
+       |                                 ^
+     53|     const expectedBig = expected.children?.find((n) => n.id === "big");
+     54|     const actualBig = actual.children?.find((n) => n.id === "big");
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[33/115]⎯
+
+ FAIL  test/statechart-layout.test.ts > statechart policy layout > compiles the babyfood initial paths, shared exit and mixed directions
+AssertionError: expected 0 to be less than 0
+ ❯ test/statechart-layout.test.ts:57:35
+     55|     expect(plan.commonExits.babyfood).toEqual(["babyfood.allergyCheck"…
+     56|     const result = await layoutStatechart(babyfood as ElkNode, { scope…
+     57|     expect(result.score.overlaps).toBeLessThan(result.attempts[0].scor…
+       |                                   ^
+     58|     const intro = result.graph.children!.find((node) => node.id === "b…
+     59|     expect([...intro.children!].sort((a, b) => a.y! - b.y!).map((node)…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[34/115]⎯
+
+ FAIL  test/statechart-layout.test.ts > statechart policy layout > deduplicates port successors and preserves all parallel transitions
+AssertionError: expected +0 to be 2 // Object.is equality
+
+- Expected
++ Received
+
+- 2
++ 0
+
+ ❯ test/statechart-layout.test.ts:163:28
+    161|     expect(result.paths.r).toEqual(["a", "b"]);
+    162|     expect(result.graph.edges).toHaveLength(3);
+    163|     expect(result.attempt).toBe(2);
+       |                            ^
+    164|     expect(result.attempts[2].score.overlaps).toBeLessThan(result.atte…
+    165|     expect(result.graph.edges?.[1].labels?.[0].layoutOptions).toMatchO…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[35/115]⎯
+
+ FAIL  test/elkjs-compat/exterior-label-differential.test.ts > exterior label separation: ELK/pre-change/patched differential > preserves compatibility invariants for 'game-feedback-down-orthogonal'
+AssertionError: game-feedback-down-orthogonal: area growth: expected 1.7779212433966016 to be less than 1.02
+ ❯ test/elkjs-compat/exterior-label-differential.test.ts:380:86
+    378|       Math.abs(reports.baseline.nonOrthogonalSegments - reports.oracle…
+    379|     );
+    380|     expect(reports.patched.area / reports.baseline.area, `${entry.id}:…
+       |                                                                                      ^
+    381|       1.02,
+    382|     );
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[36/115]⎯
+
+ FAIL  test/elkjs-compat/exterior-label-differential.test.ts > exterior label separation: ELK/pre-change/patched differential > preserves compatibility invariants for 'feedback-up-orthogonal'
+AssertionError: feedback-up-orthogonal: label/node regression: expected 1 to be less than or equal to 0
+ ❯ test/elkjs-compat/exterior-label-differential.test.ts:367:7
+    365|       reports.patched.labelNodeOverlaps,
+    366|       `${entry.id}: label/node regression`,
+    367|     ).toBeLessThanOrEqual(reports.baseline.labelNodeOverlaps);
+       |       ^
+    368|     expect(
+    369|       Math.abs(reports.patched.labelNodeOverlaps - reports.oracle.labe…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[37/115]⎯
+
+ FAIL  test/elkjs-compat/exterior-label-differential.test.ts > exterior label separation: ELK/pre-change/patched differential > preserves compatibility invariants for 'feedback-right-orthogonal'
+AssertionError: feedback-right-orthogonal: label/node regression: expected 1 to be less than or equal to 0
+ ❯ test/elkjs-compat/exterior-label-differential.test.ts:367:7
+    365|       reports.patched.labelNodeOverlaps,
+    366|       `${entry.id}: label/node regression`,
+    367|     ).toBeLessThanOrEqual(reports.baseline.labelNodeOverlaps);
+       |       ^
+    368|     expect(
+    369|       Math.abs(reports.patched.labelNodeOverlaps - reports.oracle.labe…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[38/115]⎯
+
+ FAIL  test/elkjs-compat/exterior-label-differential.test.ts > exterior label separation: ELK/pre-change/patched differential > preserves compatibility invariants for 'feedback-left-orthogonal'
+AssertionError: feedback-left-orthogonal: area growth: expected 1.2462291839969866 to be less than 1.02
+ ❯ test/elkjs-compat/exterior-label-differential.test.ts:380:86
+    378|       Math.abs(reports.baseline.nonOrthogonalSegments - reports.oracle…
+    379|     );
+    380|     expect(reports.patched.area / reports.baseline.area, `${entry.id}:…
+       |                                                                                      ^
+    381|       1.02,
+    382|     );
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[39/115]⎯
+
+ FAIL  test/elkjs-compat/exterior-label-differential.test.ts > exterior label separation: ELK/pre-change/patched differential > preserves compatibility invariants for 'clear-down-orthogonal'
+AssertionError: expected { id: 'root', x: undefined, …(7) } to deeply equal { id: 'root', x: undefined, …(7) }
+
+- Expected
++ Received
+
+@@ -45,11 +45,11 @@
+            "id": "ab-label",
+            "labels": undefined,
+            "ports": undefined,
+            "width": 32,
+            "x": 41,
+-           "y": 101.5,
++           "y": 102,
+          },
+        ],
+        "sections": [
+          {
+            "endPoint": {
+@@ -76,11 +76,11 @@
+            "id": "bc-label",
+            "labels": undefined,
+            "ports": undefined,
+            "width": 32,
+            "x": 41,
+-           "y": 271.5,
++           "y": 272,
+          },
+        ],
+        "sections": [
+          {
+            "endPoint": {
+
+ ❯ test/elkjs-compat/exterior-label-differential.test.ts:388:60
+    386|     ).toBeLessThan(3.1);
+    387|
+    388|     if (!entry.repairApplicable) expect(geometry(patched)).toEqual(geo…
+       |                                                            ^
+    389|   });
+    390|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[40/115]⎯
+
+ FAIL  test/elkjs-compat/exterior-label-differential.test.ts > exterior label separation: ELK/pre-change/patched differential > preserves compatibility invariants for 'feedback-down-polyline'
+AssertionError: feedback-down-polyline: area growth: expected 1.332656784190394 to be less than 1.02
+ ❯ test/elkjs-compat/exterior-label-differential.test.ts:380:86
+    378|       Math.abs(reports.baseline.nonOrthogonalSegments - reports.oracle…
+    379|     );
+    380|     expect(reports.patched.area / reports.baseline.area, `${entry.id}:…
+       |                                                                                      ^
+    381|       1.02,
+    382|     );
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[41/115]⎯
+
+ FAIL  test/elkjs-compat/exterior-label-differential.test.ts > exterior label separation: ELK/pre-change/patched differential > preserves compatibility invariants for 'feedback-down-splines'
+AssertionError: feedback-down-splines: area growth: expected 1.3295050911674164 to be less than 1.02
+ ❯ test/elkjs-compat/exterior-label-differential.test.ts:380:86
+    378|       Math.abs(reports.baseline.nonOrthogonalSegments - reports.oracle…
+    379|     );
+    380|     expect(reports.patched.area / reports.baseline.area, `${entry.id}:…
+       |                                                                                      ^
+    381|       1.02,
+    382|     );
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[42/115]⎯
+
+ FAIL  test/elkjs-compat/exterior-label-differential.test.ts > exterior label separation: ELK/pre-change/patched differential > preserves compatibility invariants for 'hierarchy'
+AssertionError: expected { id: 'root', x: undefined, …(7) } to deeply equal { id: 'root', x: undefined, …(7) }
+
+- Expected
++ Received
+
+@@ -36,11 +36,11 @@
+                "id": "inside-edge-label",
+                "labels": undefined,
+                "ports": undefined,
+                "width": 44,
+                "x": 25,
+-               "y": 91.5,
++               "y": 92,
+              },
+            ],
+            "sections": [
+              {
+                "endPoint": {
+
+ ❯ test/elkjs-compat/exterior-label-differential.test.ts:388:60
+    386|     ).toBeLessThan(3.1);
+    387|
+    388|     if (!entry.repairApplicable) expect(geometry(patched)).toEqual(geo…
+       |                                                            ^
+    389|   });
+    390|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[43/115]⎯
+
+ FAIL  test/elkjs-compat/exterior-label-differential.test.ts > exterior label separation: ELK/pre-change/patched differential > removes the game-loop collision with bounded growth
+AssertionError: expected 1.7779212433966016 to be less than 1.02
+ ❯ test/elkjs-compat/exterior-label-differential.test.ts:427:56
+    425|     expect(patchedMetrics.labelLabelOverlaps).toBe(0);
+    426|     expect(patchedMetrics.labelLabelOverlaps).toBe(oracleMetrics.label…
+    427|     expect(patchedMetrics.area / baselineMetrics.area).toBeLessThan(1.…
+       |                                                        ^
+    428|   });
+    429| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[44/115]⎯
+
+ FAIL  test/elkjs-compat/exterior-label-separation.test.ts > elkjs compatibility: exterior label separation > keeps every orthogonal exterior label clear of all label types
+AssertionError: ab-label: expected true to be false // Object.is equality
+
+- Expected
++ Received
+
+- false
++ true
+
+ ❯ test/elkjs-compat/exterior-label-separation.test.ts:77:9
+     75|         ),
+     76|         String(label.id),
+     77|       ).toBe(false);
+       |         ^
+     78|     }
+     79|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[45/115]⎯
+
+ FAIL  test/elkjs-compat/exterior-label-separation.test.ts > elkjs compatibility: exterior label separation > keeps equivalent edge orders collision-free
+AssertionError: da-label: expected true to be false // Object.is equality
+
+- Expected
++ Received
+
+- false
++ true
+
+ ❯ test/elkjs-compat/exterior-label-separation.test.ts:97:11
+     95|           ),
+     96|           String(label.id),
+     97|         ).toBe(false);
+       |           ^
+     98|       }
+     99|     }
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[46/115]⎯
+
+ FAIL  test/elkjs-compat/labels.test.ts > elkjs compatibility: node labels > places a backward edge label beside the corridor between its endpoint layers
+AssertionError: expected 0 to be greater than or equal to 94
+ ❯ test/elkjs-compat/labels.test.ts:141:20
+    139|     expect(back).toBeDefined();
+    140|     if (!first || !second || !back) throw new Error("Expected laid-out…
+    141|     expect(back.y).toBeGreaterThanOrEqual((first.y ?? 0) + (first.heig…
+       |                    ^
+    142|     expect((back.y ?? 0) + (back.height ?? 0)).toBeLessThanOrEqual(sec…
+    143|     expect(back.x).toBeGreaterThanOrEqual(
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[47/115]⎯
+
+ FAIL  test/elkjs-compat/labels.test.ts > elkjs compatibility: node labels > keeps a DOWN backward label clear of a wider intermediate state
+AssertionError: expected 0 to be greater than or equal to 443
+ ❯ test/elkjs-compat/labels.test.ts:232:24
+    230|       expect(overlaps).toBe(false);
+    231|       if (vertical) {
+    232|         expect(back.x).toBeGreaterThanOrEqual((middle.x ?? 0) + (middl…
+       |                        ^
+    233|       } else {
+    234|         expect(back.y).toBeGreaterThanOrEqual((middle.y ?? 0) + (middl…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[48/115]⎯
+
+ FAIL  test/elkjs-compat/labels.test.ts > elkjs compatibility: node labels > keeps a RIGHT backward label clear of a wider intermediate state
+AssertionError: expected 0 to be greater than or equal to 343
+ ❯ test/elkjs-compat/labels.test.ts:234:24
+    232|         expect(back.x).toBeGreaterThanOrEqual((middle.x ?? 0) + (middl…
+    233|       } else {
+    234|         expect(back.y).toBeGreaterThanOrEqual((middle.y ?? 0) + (middl…
+       |                        ^
+    235|       }
+    236|     },
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[49/115]⎯
+
+ FAIL  test/elkjs-compat/labels.test.ts > elkjs compatibility: node labels > keeps a long feedback label inside its endpoint span
+AssertionError: expected 0 to be greater than or equal to 64
+ ❯ test/elkjs-compat/labels.test.ts:342:23
+    340|     expect(restart).toBeDefined();
+    341|     if (!title || !gameOver || !restart) throw new Error("Expected gam…
+    342|     expect(restart.y).toBeGreaterThanOrEqual((title.y ?? 0) + (title.h…
+       |                       ^
+    343|     expect((restart.y ?? 0) + (restart.height ?? 0)).toBeLessThanOrEqu…
+    344|     const overlaps = (
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[50/115]⎯
+
+ FAIL  test/elkjs-compat/regressions.test.ts > elkjs compatibility: regressions > does not compact a right-directed wide edge label into its nodes
+AssertionError: expected { nodes: [ { …(5) }, { …(5) } ], …(1) } to deeply equal { nodes: [ { …(5) }, { …(5) } ], …(1) }
+
+- Expected
++ Received
+
+@@ -2,11 +2,11 @@
+    "labels": [
+      {
+        "height": 1,
+        "id": "label",
+        "width": 24,
+-       "x": 28,
++       "x": 42,
+        "y": 12.5,
+      },
+    ],
+    "nodes": [
+      {
+@@ -18,10 +18,10 @@
+      },
+      {
+        "height": 3,
+        "id": "target",
+        "width": 10,
+-       "x": 58,
++       "x": 86,
+        "y": 12,
+      },
+    ],
+  }
+
+ ❯ test/elkjs-compat/regressions.test.ts:390:30
+    388|     });
+    389|
+    390|     expect(geometry(actual)).toEqual(geometry(expected));
+       |                              ^
+    391|   });
+    392|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[51/115]⎯
+
+
+ Test Files  14 failed | 92 passed (106)
+      Tests  115 failed | 1671 passed (1786)
+   Start at  17:10:15
+   Duration  46.22s (transform 10.65s, setup 0ms, import 48.86s, tests 313.51s, environment 16ms)
+

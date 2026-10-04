@@ -10,6 +10,7 @@ import type {
   VisualNode,
 } from "@statelyai/graph";
 import type { CompoundLayoutGeometry, LayeredLayoutOptions, LayoutPadding } from "./types";
+import { placePorts } from "./strategies";
 
 export type CompoundVisualGraph<N = unknown, E = unknown, G = unknown, P = unknown> = VisualGraph<
   N,
@@ -213,7 +214,20 @@ export function layoutCompounds<N, E, G, P>(
     );
     for (const placed of result.nodes) {
       const node = byId.get(placed.id);
-      if (node) Object.assign(node, { x: placed.x, y: placed.y, ports: placed.ports });
+      if (node)
+        Object.assign(node, {
+          x: placed.x,
+          y: placed.y,
+          // Placement reserves an envelope for boundary labels. Ports belong to
+          // the actual node rectangle, never that larger occupied envelope.
+          ports: placePorts(
+            node.ports,
+            { ...placed, width: node.width, height: node.height },
+            direction,
+            (port) => options.portSettings?.(port, node),
+            { ...options.settings, ...options.nodeSettings?.(node) },
+          ),
+        });
     }
     for (const edge of projected) {
       const labelId = labelIds.get(edge.id);
@@ -365,8 +379,23 @@ export function layoutCompounds<N, E, G, P>(
             },
           }
         : {}),
-      ...(targetGeometry && intent?.target === "content"
-        ? { targetAttachment: { bounds: targetGeometry.content, facing: "inward" } }
+      ...(targetGeometry &&
+      edge.sourceId !== edge.targetId &&
+      (intent?.target === "content" || ancestry(edge.sourceId).includes(edge.targetId))
+        ? {
+            targetAttachment: {
+              bounds:
+                intent?.target === "outer"
+                  ? {
+                      x: 0,
+                      y: 0,
+                      width: targetGeometry.bounds.width,
+                      height: targetGeometry.bounds.height,
+                    }
+                  : targetGeometry.content,
+              facing: intent?.target === "outer" ? "outward" : "inward",
+            },
+          }
         : {}),
     };
   }
@@ -392,7 +421,7 @@ export function layoutCompounds<N, E, G, P>(
   });
   const snapshot = orthogonalRouting.route(
     { ...graph, nodes: [...worldNodes, ...headers], edges: [...edges.values()] },
-    { coordinateSpace: "world", edges: attachmentSettings },
+    { coordinateSpace: "world", edges: attachmentSettings, maxSearchNodes: 40000 },
   );
   for (const [id, route] of snapshot.routes) {
     const polylines = routeToPolylines(route);

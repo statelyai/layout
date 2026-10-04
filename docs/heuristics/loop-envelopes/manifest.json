@@ -1,0 +1,11 @@
+{
+  "beforeCommit": "5bb70e5",
+  "sha256": {
+    "src/layered/loop-envelopes.ts": "e3ff113911a0556862b7123e16727c9befc3be7c6061be81aa3cede2371d8aff",
+    "src/layered/bk-node-placement.ts": "efed9023325329ecb2ccc44c081043b65e9e0278a1cb9f0cae3f804716bd6872",
+    "src/layered/strategies.ts": "2d12dd97984464b865ee1b16757c623ec4554d91bc4473ba0502f7f9aa7926c0",
+    "test/oracle-loop-envelopes.test.ts": "a9bc592d9733fb83b910a9c6a65728540ee5ef0e73145f95ffdb67c34b0aec4a",
+    "scripts/parity/flat-corpus.ts": "b5369d59c89047689376278d1e5c57925a85f8edb03bcffa987e2c13a577ab28",
+    "scripts/parity/compound-corpus.ts": "05a5587a622f5ce2fca56ba354db190a01ce4dfbcf5568146d66c1a41c116d70"
+  }
+}

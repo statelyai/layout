@@ -1,0 +1,12 @@
+{
+  "baseline": "d01aca5",
+  "passed": 2347,
+  "failed": 106,
+  "introduced": [],
+  "resolved": [],
+  "beforeFixturesMatched": 2,
+  "currentFixturesMatched": 12,
+  "directionalMatched": 74,
+  "nativeErrors": 0,
+  "elkErrors": 6
+}

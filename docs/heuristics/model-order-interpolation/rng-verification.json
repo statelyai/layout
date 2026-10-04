@@ -1,0 +1,14 @@
+{
+  "calls": 469,
+  "matchingCallKinds": 469,
+  "matchingComparableResults": 467,
+  "skippedGwtLongValues": 2,
+  "firstSweepDivergenceBefore": {
+    "layer": 2,
+    "helper": "e9",
+    "node": "n4",
+    "nativeNodeBarycenter": 4.472172018878783,
+    "elkNodeBarycenter": 10.489933095233496
+  },
+  "rootCause": "Initial model-order attempts must interpolate unknown barycenters from preserved neighboring order instead of randomizing."
+}

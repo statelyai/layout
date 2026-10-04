@@ -1,0 +1,56 @@
+{
+  "input": {
+    "nodes": [
+      {
+        "id": "a",
+        "width": 80,
+        "height": 60
+      },
+      {
+        "id": "b",
+        "width": 80,
+        "height": 60,
+        "ports": [
+          {
+            "name": "shared",
+            "direction": "inout",
+            "x": 0,
+            "y": 20,
+            "width": 6,
+            "height": 6
+          }
+        ]
+      },
+      {
+        "id": "c",
+        "width": 80,
+        "height": 60
+      }
+    ],
+    "edges": [
+      {
+        "id": "ab",
+        "sourceId": "a",
+        "targetId": "b",
+        "targetPort": "shared"
+      },
+      {
+        "id": "bc",
+        "sourceId": "b",
+        "targetId": "c",
+        "sourcePort": "shared"
+      }
+    ]
+  },
+  "options": {
+    "settings": {
+      "separateConnectedComponents": false
+    },
+    "nodeSettings": {
+      "portConstraints": "FIXED_POS"
+    },
+    "portSettings": {
+      "port.side": "WEST"
+    }
+  }
+}

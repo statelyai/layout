@@ -1,0 +1,36 @@
+{
+  "oracle": "elkjs@0.11.1",
+  "unobservedByteIdentical": true,
+  "preparedCompoundConstraints": [
+    {
+      "scope": 1,
+      "id": "g2",
+      "constraints": "FIXED_SIDE"
+    },
+    {
+      "scope": 3,
+      "id": "g5",
+      "constraints": "FIXED_SIDE"
+    },
+    {
+      "scope": 5,
+      "id": "g1",
+      "constraints": "FIXED_SIDE"
+    },
+    {
+      "scope": 6,
+      "id": "g0",
+      "constraints": "FIXED_SIDE"
+    },
+    {
+      "scope": 6,
+      "id": "g3",
+      "constraints": "FIXED_SIDE"
+    },
+    {
+      "scope": 6,
+      "id": "g4",
+      "constraints": "FIXED_SIDE"
+    }
+  ]
+}

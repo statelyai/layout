@@ -1,0 +1,30 @@
+{
+  "seed": 4,
+  "direction": "RIGHT",
+  "freshUnobservedByteIdentical": true,
+  "savedReferenceGeometryDifferences": [],
+  "savedReferenceOtherDifferences": [
+    "$.children.0.children.0.$H",
+    "$.children.0.children.1.$H",
+    "$.children.0.children.2.children.0.$H",
+    "$.children.0.children.2.children.1.$H",
+    "$.children.0.children.2.children.2.$H",
+    "$.children.0.children.2.children.3.$H",
+    "$.children.0.children.2.children.4.$H",
+    "$.children.0.children.2.children.5.children.0.$H",
+    "$.children.0.children.2.children.5.children.1.$H",
+    "$.children.0.children.2.children.5.children.2.$H",
+    "$.children.0.children.2.children.5.$H",
+    "$.children.0.children.2.$H",
+    "$.children.0.$H",
+    "$.children.1.children.0.$H",
+    "$.children.1.children.1.$H",
+    "$.children.1.children.2.$H",
+    "$.children.1.$H",
+    "$.children.2.$H",
+    "$.children.3.$H",
+    "$.children.4.$H",
+    "$.$H"
+  ],
+  "note": "Only Java runtime hash IDs differ from the reused saved oracle; all public geometry and other output fields match."
+}

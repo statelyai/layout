@@ -1,0 +1,14 @@
+{
+  "base": "2064833e64a1a773b51f9cb16d718f92705be934",
+  "sourceSha256": {
+    "src/layered/bk-node-placement.ts": "72c11d17b203e049a03578eb0cba9879db22b617fca1c16272f6a589867449a6",
+    "src/layered/spacing.ts": "20decfa1f33590259d44ef26f5d6c38d0a0df224075a0debdb8e7f3e699c48cc",
+    "test/external-port-spacing.test.ts": "3db3cdd625b2f7a2c46b8e2a4613a5d45af00577115378f1b442c2fca57b137e",
+    "test/oracle-compound-port-identity.test.ts": "cdfda1dea8cc78f357ea8f3f018683e474f1564989538b81be5e1e9ad30c9c3c",
+    "scripts/parity/trace-bk-worker.mjs": "a70912b7975631f926a48bdc7d60b7b4ce75494e81a6685b2fd0f6e3e5c6c607",
+    "scripts/check-compound-parity.ts": "653e501cd08af3737fcb6285007754b4863534f5d67ffe3e2b8e0e5e1ddde746",
+    "scripts/parity/compound-corpus.ts": "05a5587a622f5ce2fca56ba354db190a01ce4dfbcf5568146d66c1a41c116d70"
+  },
+  "inputsUnchanged": true,
+  "tolerance": 5e-13
+}

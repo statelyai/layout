@@ -1,0 +1,25 @@
+{
+  "generator": "compound-options-v1",
+  "seedRange": [
+    1,
+    20
+  ],
+  "inputsSha256": "bedef2f9dae7627a86b019c87f0930a39effb7ec8fcc4b33067c2a4f3107667a",
+  "coverage": {
+    "cases": 80,
+    "flat": 16,
+    "hierarchical": 64,
+    "maxDepth": 4,
+    "maxPortsPerNode": 4,
+    "maxPortsOnOneSide": 1,
+    "compoundConstraints": {
+      "FIXED_SIDE": 36,
+      "FREE": 52,
+      "FIXED_ORDER": 40,
+      "FIXED_POS": 32
+    },
+    "authoredCompoundPorts": 92,
+    "labels": 248,
+    "selfLoops": 36
+  }
+}

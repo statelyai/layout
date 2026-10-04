@@ -1,0 +1,11 @@
+{
+  "baseline": "../inverted-loop-clearance/flat-report.json",
+  "summary": {
+    "cases": 100,
+    "matched": 51,
+    "nativeErrors": 0,
+    "elkErrors": 0,
+    "differingValues": 7649
+  },
+  "updates": []
+}

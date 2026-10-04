@@ -1,0 +1,83 @@
+{
+  "beforeRevision": "9e6b762fdfe22706846b48f55e9367c2e148510c",
+  "suite": {
+    "numPassedTests": 2586,
+    "numFailedTests": 101,
+    "numTotalTests": 2687
+  },
+  "suiteDelta": {
+    "introduced": [],
+    "resolved": []
+  },
+  "sourceTypes": "passed",
+  "repositoryTypes": "passed",
+  "selectedLint": "passed",
+  "build": "passed",
+  "knownWorsenedCases": [
+    {
+      "seed": 44,
+      "direction": "DOWN",
+      "beforeDifferences": 60,
+      "afterDifferences": 121
+    },
+    {
+      "seed": 44,
+      "direction": "UP",
+      "beforeDifferences": 60,
+      "afterDifferences": 75
+    }
+  ],
+  "original": {
+    "before": {
+      "cases": 200,
+      "matched": 137,
+      "nativeErrors": 0,
+      "elkErrors": 6,
+      "differingValues": 10153
+    },
+    "after": {
+      "cases": 200,
+      "matched": 139,
+      "nativeErrors": 0,
+      "elkErrors": 6,
+      "differingValues": 10096
+    },
+    "lostMatches": []
+  },
+  "expanded": {
+    "before": {
+      "cases": 200,
+      "matched": 133,
+      "nativeErrors": 0,
+      "elkErrors": 3,
+      "differingValues": 11399
+    },
+    "after": {
+      "cases": 200,
+      "matched": 133,
+      "nativeErrors": 0,
+      "elkErrors": 3,
+      "differingValues": 11455
+    },
+    "lostMatches": []
+  },
+  "flat": {
+    "before": {
+      "cases": 100,
+      "matched": 36,
+      "nativeErrors": 0,
+      "elkErrors": 0,
+      "differingValues": 9084
+    },
+    "after": {
+      "cases": 100,
+      "matched": 36,
+      "nativeErrors": 0,
+      "elkErrors": 0,
+      "differingValues": 9084
+    },
+    "lostMatches": []
+  },
+  "browserProof": "Seed 4 RIGHT, identical inputs and equal viewports/scale, label boxes visible.",
+  "selectedFormat": "passed"
+}

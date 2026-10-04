@@ -1,0 +1,41 @@
+{
+  "deltas": [
+    {
+      "family": "flat",
+      "seed": 52,
+      "direction": "LEFT",
+      "before": 311,
+      "after": 304
+    },
+    {
+      "family": "flat",
+      "seed": 68,
+      "direction": "LEFT",
+      "before": 254,
+      "after": 249
+    },
+    {
+      "family": "flat",
+      "seed": 72,
+      "direction": "LEFT",
+      "before": 120,
+      "after": 114
+    },
+    {
+      "family": "flat",
+      "seed": 68,
+      "direction": "DOWN",
+      "before": 190,
+      "after": 179
+    },
+    {
+      "family": "flat",
+      "seed": 68,
+      "direction": "UP",
+      "before": 281,
+      "after": 280
+    }
+  ],
+  "lostCompleteMatches": 0,
+  "worsenedRows": 0
+}

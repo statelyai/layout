@@ -1,0 +1,10 @@
+{
+  "baseline": "0db5f13",
+  "passed": 2371,
+  "failed": 106,
+  "total": 2477,
+  "introduced": [],
+  "resolved": [],
+  "fixturesBeforeMatched": 12,
+  "fixturesCurrentMatched": 24
+}

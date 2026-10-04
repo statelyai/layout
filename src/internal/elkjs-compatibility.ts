@@ -1,6 +1,9 @@
-import type { VisualGraph } from "@statelyai/graph";
+import type { VisualGraph, Point } from "@statelyai/graph";
 
 export interface Elkjs0111ResultPolicy {
+  junctionPointsByEdgeId?: ReadonlyMap<string, readonly Point[]>;
+  placementCrossBounds?: { axis: "x" | "y"; maximum: number };
+  normalizationBounds?: { left: number; top: number; right: number; bottom: number };
   providerBounds?: { width: number; height: number };
   preserveEdgeSections?: boolean;
   skipBoundsNormalization?: boolean;

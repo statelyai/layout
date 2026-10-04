@@ -1,0 +1,57 @@
+{
+  "nextDiagnostic": "Identical geometry except one graph-bound pixel; trace self-loop extent and thickness handling before changing bounds.",
+  "rows": [
+    {
+      "seed": 21,
+      "direction": "RIGHT",
+      "differences": [
+        {
+          "path": "$.height",
+          "actual": 355,
+          "expected": 356
+        }
+      ],
+      "nativeRouteExtent": 343,
+      "elkRouteExtent": 343
+    },
+    {
+      "seed": 21,
+      "direction": "LEFT",
+      "differences": [
+        {
+          "path": "$.height",
+          "actual": 355,
+          "expected": 356
+        }
+      ],
+      "nativeRouteExtent": 343,
+      "elkRouteExtent": 343
+    },
+    {
+      "seed": 4,
+      "direction": "DOWN",
+      "differences": [
+        {
+          "path": "$.width",
+          "actual": 253,
+          "expected": 254
+        }
+      ],
+      "nativeRouteExtent": 241,
+      "elkRouteExtent": 241
+    },
+    {
+      "seed": 4,
+      "direction": "UP",
+      "differences": [
+        {
+          "path": "$.width",
+          "actual": 253,
+          "expected": 254
+        }
+      ],
+      "nativeRouteExtent": 241,
+      "elkRouteExtent": 241
+    }
+  ]
+}

@@ -12,14 +12,29 @@ immutable structured routes and incremental patches alongside the existing
 
 <!-- layered compatibility coverage from test/oracle*.test.ts -->
 
-The native layered implementation covers the complete 152-option elkjs 0.11.1
-layered inventory with one simplified typed name per ELK option. Flat and
-compound graphs, cross-hierarchy edges, ports, labels, self-loops, wrapping,
-four directions, constraints, and replaceable phases are differential-tested
-against elkjs, including a curated complex state-machine corpus in both primary
-layout orientations. Native layered layout also supports partial selection,
-route-only execution, and geometric constraints. Incremental layout remains
-explicitly unsupported.
+The native layered implementation reimplements ELK-derived phases and maps the
+complete 152-option elkjs 0.11.1 layered inventory to simplified typed names.
+Focused differential tests cover flat/compound graphs, cross-hierarchy edges,
+ports, labels, self-loops, wrapping, directions, constraints, and phase overrides.
+A development-only oracle compares native constraint-group resolution against
+unmodified elkjs internals on 512 seeded intermediate graphs, including complete
+node order and barycenters. This validates that phase independently of the
+unfinished pipeline integration. Ordered barycenter traversal has 512 seeded
+port-graph comparisons; cross-port layer and associate order has 256 seeded
+mixed-role comparisons. External-port dummy construction matches every real
+ELK factory field on 1,536 seeded boundaries; four direction regressions preserve
+the selected descendant port across a compound boundary.
+Initial model ordering and port-helper alignment have seven retained random
+full-geometry regressions across independent seed ranges. Mixed-port junction
+restoration has nineteen more, covering direct and joined routes in all directions.
+Nested helper bounds have twelve complete-geometry regressions, including parent placement/routing after child resizing. Hierarchy boundary-side preparation and canonical port sorting add a 48-case constraint matrix and fifteen retained direction regressions. Coincident cross-port restoration retains both physical endpoints. Preserving authored compound constraints and transforming boundary-helper placement raises the matrix to 36 matches, with twelve failures retained. A separate frozen random corpus covers compound constraints and authored compound ports; see [compound helper evidence](docs/heuristics/compound-helper-orientation/README.md). Authored and implicit ancestor endpoints have a further 320-case strict gate: 320 complete matches after perpendicular-port pipeline integration. See [compound endpoint evidence](docs/heuristics/authored-compound-port-scope/README.md). Internal perpendicular boundary processors pass 800 phase/direction checks against the real worker; public pipeline integration now passes the strict endpoint gate. See [phase evidence](docs/heuristics/hierarchical-port-phases/README.md) and [integration evidence](docs/heuristics/integrated-boundary-routing/README.md). Child-scope junction transfer adds two exact random compound matches; broader random parity remains incomplete. See [junction evidence](docs/heuristics/compound-junction-transfer/README.md).
+A deeper random corpus adds three levels of nesting, bounded ports, cycles, loops and cross-boundary edges. Physical hierarchy boundaries now survive feedback reversal; complete comparisons still expose substantial geometry differences.
+That coverage does not establish broad geometry or aesthetic parity: native
+hierarchy placement and routing still diverge materially from real ELK. The
+[side-by-side random corpus](docs/heuristics/README.md) uses the actual elkjs
+runtime and one shared scorer to track that gap. Native layered layout also
+supports partial selection, route-only execution, and geometric constraints.
+Incremental layout remains explicitly unsupported.
 
 ## Install
 
@@ -91,6 +106,32 @@ orthogonal sections independently of the flat layout routing setting.
 These options belong to the native contract; they do not change the pinned
 ELK compatibility contract. The existing simplified advanced options still
 map to ELK option IDs, but identical geometry is not guaranteed between contracts.
+
+## Replace initial routes
+
+<!-- layered post-layout routing option from src/layered/types.ts and src/layered/replace-routing.ts -->
+
+Initial layered layout computes placement, labels, ports, and routes. An optional
+replacement router then discards those routes and computes new ones on the finalized
+geometry:
+
+```ts
+import { getLayeredLayout } from "@statelyai/layout";
+import { bezierRouting } from "@statelyai/layout/routing";
+
+const result = getLayeredLayout(graph, {
+  routing: { strategy: bezierRouting, settings: { clearance: 8 } },
+});
+```
+
+The replacement receives world-space nodes and labels, without initial paths or
+route caches. It must synchronously return one route per edge. Node, port, label,
+and compound geometry remain unchanged; render `getLayoutRoutes(result)` to retain
+curves and disconnected sections. Async routers can be run separately after layout.
+`strategies.routeEdges` remains an initial layout phase override; `routing` runs after
+initial layout. Neither this separation nor API compatibility establishes ELK quality parity.
+
+Post-layout replacement currently requires unconstrained full layout through `getLayout`. For scoped or constrained geometry, run standalone routing after applying the layout result.
 
 ## Standalone incremental routing
 
@@ -203,9 +244,9 @@ The compatibility entry's named graph, edge, option, and result types are
 mutually assignable with the declarations shipped by `elkjs@0.11.1`. Its
 default class also accepts the library's broader internal graph inputs.
 
-<!-- fixed-port placement and inline center-label guarantees from src/layered/index.ts and src/layered/strategies.ts -->
+<!-- fixed-port placement and inline center-label guarantees from src/layered/index.ts, src/layered/strategies.ts and src/layered/orthogonal-junctions.ts -->
 
-Fixed port sides constrain routes without collapsing fan-out targets onto each other. Port preferences cannot reintroduce cycles before layering. Inline center labels use reserved inter-rank space; orthogonally routed labels use distinct cross-axis lanes that avoid other labels and states. Dedicated label layers and route-track compaction retain their placement strategies. Inline self-loop labels reserve clearance on their assigned sides from both their owner and neighboring nodes. Hierarchy decomposition preserves native self-loop routes for ancestor-to-descendant edges. FIRST/FIRST_SEPARATE nodes may have self-loops.
+Fixed port sides constrain routes without collapsing fan-out targets onto each other. Detached cross-port rows retain incoming adjacency through splitting and inversion for BK straightening. Port preferences cannot reintroduce cycles before layering. Inline center labels use reserved inter-rank space; orthogonally routed labels use distinct cross-axis lanes that avoid other labels and states. Dedicated label layers reserve clearance on both sides of routing tracks; route-track compaction retains their placement strategies. Inline self-loop labels reserve clearance on their assigned sides from both their owner and neighboring nodes. Hierarchy decomposition preserves native self-loop routes for ancestor-to-descendant edges. FIRST/FIRST_SEPARATE nodes may have self-loops. Fixed loops reserve their perimeter clearance before placement and in routing ranks. Track clearance follows physical edge direction through cycle reversal. Orthogonal junctions retain physical routing ownership through joining and compaction. Infeasible post-compaction relations retain the initial finite geometry.
 
 Advanced layered settings use shorter names such as
 `layering.strategy`, `spacing.edgeNode`, and `nodePlacement.strategy`.
@@ -278,6 +319,11 @@ API coverage separately from native algorithm fidelity.
 
 ## Development
 
+<!-- heuristic corpus generation from scripts/generate-heuristic-corpus.mjs -->
+
+For seeded native Stately layout examples and aesthetic review notes, see the
+[heuristic review corpus](docs/heuristics/README.md).
+
 <!-- scripts derived from package.json#scripts -->
 
 ```bash
@@ -330,5 +376,46 @@ Publishing uses npm Trusted Publishing through `.github/workflows/release.yml`.
 The opt-in `layoutStatechart` export from `@statelyai/layout/elkjs` compiles
 initial-state and preferred-path hints into scoped settings, then selects among
 at most three fresh layout attempts. It returns all quality scores, including
-remaining defects. See [statechart policies](docs/statechart-layout.md) for the
+remaining defects. Path scoring honors inherited compound directions and
+explicit scope overrides. See [statechart policies](docs/statechart-layout.md) for the
 API, supported controls, tradeoffs and reproducible visual comparison.
+
+For the strict seeded hierarchy comparison with real ELK, run
+`pnpm test:parity:compound`. See the
+[compound baseline](./docs/heuristics/compound-baseline/README.md) for preserved
+failures and side-by-side diagrams. This finite gate passes; broad native parity
+remains work in progress.
+
+For bounded random fixed-port self-loops, run `pnpm test:parity:self-loops`.
+This smaller gate compares complete node/port geometry, routes and junctions
+with real ELK; passing it does not establish broad hierarchy parity.
+
+For bounded random flat graphs with cycles, self-loops, fixed-side/fixed-position
+ports and labels, run `pnpm test:parity:flat`. This strict geometry gate preserves
+all mismatches and engine errors; it currently fails. See the
+[flat random proof](./docs/heuristics/bk-compaction-thresholds/README.md).
+
+For directional compaction on the same bounded random flat/hierarchical families,
+run `pnpm exec tsx scripts/check-directional-compaction-parity.ts`. This additional
+200-case gate preserves all failures, including real ELK errors; it currently
+fails. See the [directional compaction proof](./docs/heuristics/directional-compaction/README.md).
+
+For model-order settings on bounded random flat/hierarchical graphs, run
+`pnpm test:parity:model-order`. This strict 200-case gate alternates forced node
+ordering, preserves complete failures and reference exceptions, and currently
+fails. See the [inverted-port model-order proof](docs/heuristics/inverted-port-model-order/README.md). Remaining fixed-port route differences are traced in the
+[helper ordering investigation](docs/heuristics/fixed-port-helper-investigation/README.md).
+
+<!-- implementation from src/layered/loop-envelopes.ts, src/layered/strategies.ts, src/layered/index.ts and src/elkjs/index.ts -->
+
+Movable self-loop labels reserve clearance before placement and retain directional alignment and stacked routing clearance. Compaction retains their complete label envelopes. See the [native loop label comparison](docs/heuristics/movable-loop-labels/README.md).
+
+Routing reuses self-loop envelopes already reserved by placement, keeping neighboring hierarchy helpers in their chosen positions. See the [preplaced loop envelope regression](docs/heuristics/preplaced-loop-envelope/README.md).
+
+Orthogonal junction ownership follows physical incident edge order after reversal. See the [junction ownership regression](docs/heuristics/physical-junction-order/README.md).
+
+Joining reversed edge chains retains physical routing order for junction points. See the [reversed chain regression](docs/heuristics/reversed-junction-chains/README.md).
+
+Crossing minimization starts from ELK's long-edge splitter order: component order, then dummies appended through authored port order. See the [splitter order replay](docs/heuristics/long-edge-splitter-order/README.md).
+
+That order walks ELK's per-port edge lists, replayed through reversal history, label dummies and hierarchy segment creation. See the [port edge-list replay](docs/heuristics/elk-port-edge-lists/README.md).

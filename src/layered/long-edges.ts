@@ -1,3 +1,4 @@
+import { inheritCycleRandom } from "./cycle-random";
 import type { GraphEdge, GraphNode, Point } from "@statelyai/graph";
 import type {
   AcyclicOrientation,
@@ -14,6 +15,8 @@ export interface LongEdgeExpansion {
   assignment: LayerAssignment;
   segmentIdsByEdgeId: ReadonlyMap<string, readonly string[]>;
   labelDummyIdByEdgeId: ReadonlyMap<string, string>;
+  /** Physical incoming adjacency after cycle reversal and long-edge retargeting. */
+  incomingEdgeOrderByNodeId?: ReadonlyMap<string, readonly string[]>;
 }
 
 function uniqueDummyId(usedIds: Set<string>, edgeId: string, layer: number): string {
@@ -41,50 +44,15 @@ export function splitLongEdges(
   const originalEdgeBySegmentId = new Map<string, GraphEdge>();
   const usedNodeIds = new Set(nodes.map((node) => node.id));
   const originalNodeIds = new Set(usedNodeIds);
-  const nodeById = new Map(input.graph.nodes.map((node) => [node.id, node]));
-  const forwardSourceSide =
-    input.direction === "right"
-      ? "EAST"
-      : input.direction === "left"
-        ? "WEST"
-        : input.direction === "down"
-          ? "SOUTH"
-          : "NORTH";
-  const forwardTargetSide =
-    input.direction === "right"
-      ? "WEST"
-      : input.direction === "left"
-        ? "EAST"
-        : input.direction === "down"
-          ? "NORTH"
-          : "SOUTH";
 
   for (const edge of input.graph.edges) {
     const sourceLayer = layerByNodeId.get(edge.sourceId) ?? 0;
     const targetLayer = layerByNodeId.get(edge.targetId) ?? 0;
     const span = Math.abs(targetLayer - sourceLayer);
-    const source = nodeById.get(edge.sourceId);
-    const target = nodeById.get(edge.targetId);
-    const sourcePort = source?.ports?.find((port) => port.name === edge.sourcePort);
-    const targetPort = target?.ports?.find((port) => port.name === edge.targetPort);
-    const sourceSide =
-      source && sourcePort ? input.portSettings?.(sourcePort, source)?.["port.side"] : undefined;
-    const targetSide =
-      target && targetPort ? input.portSettings?.(targetPort, target)?.["port.side"] : undefined;
-    const hasFixedPortSide = (node: GraphNode | undefined): boolean => {
-      if (!node) return false;
-      const constraints = String(input.nodeSettings?.(node)?.portConstraints ?? "UNDEFINED");
-      return constraints !== "UNDEFINED" && constraints !== "FREE";
-    };
-    const fixedSideFeedback =
-      sourceLayer > targetLayer &&
-      ((hasFixedPortSide(source) && sourceSide === forwardSourceSide) ||
-        (hasFixedPortSide(target) && targetSide === forwardTargetSide));
     if (
       span <= 1 ||
       edge.sourceId === edge.targetId ||
-      (input.settings.feedbackEdges === true && orientation.reversedEdgeIds.has(edge.id)) ||
-      fixedSideFeedback
+      (input.settings.feedbackEdges === true && orientation.reversedEdgeIds.has(edge.id))
     ) {
       edges.push(edge);
       originalEdgeBySegmentId.set(edge.id, edge);
@@ -175,10 +143,58 @@ export function splitLongEdges(
     segmentIdsByEdgeId.set(edge.id, segmentIds);
   }
 
+  const incomingEdgeOrderByNodeId = new Map<string, string[]>();
+  const orientedSource = (edge: GraphEdge) =>
+    orientation.reversedEdgeIds.has(edge.id) ? edge.targetId : edge.sourceId;
+  const orientedTarget = (edge: GraphEdge) =>
+    orientation.reversedEdgeIds.has(edge.id) ? edge.sourceId : edge.targetId;
+  const appendIncoming = (edge: GraphEdge) => {
+    const target = orientedTarget(edge);
+    incomingEdgeOrderByNodeId.set(target, [
+      ...(incomingEdgeOrderByNodeId.get(target) ?? []),
+      edge.id,
+    ]);
+  };
+  for (const edge of input.graph.edges)
+    if (!orientation.reversedEdgeIds.has(edge.id)) appendIncoming(edge);
+  for (const id of orientation.reversedEdgeIds) {
+    const edge = input.graph.edges.find((candidate) => candidate.id === id);
+    if (edge) appendIncoming(edge);
+  }
+  // Upstream walks source layers, nodes, then their existing ports. Splitting
+  // retargets the last chain segment, appending it to its physical target port.
+  const sourceNodes = [...input.graph.nodes].sort(
+    (a, b) => (assignment.layerByNodeId.get(a.id) ?? 0) - (assignment.layerByNodeId.get(b.id) ?? 0),
+  );
+  for (const node of sourceNodes) {
+    const outgoing = input.graph.edges.filter((edge) => orientedSource(edge) === node.id);
+    const portIndex = (edge: GraphEdge) =>
+      node.ports?.findIndex(
+        (port) =>
+          port.name ===
+          (orientation.reversedEdgeIds.has(edge.id) ? edge.targetPort : edge.sourcePort),
+      ) ?? -1;
+    outgoing.sort(
+      (a, b) =>
+        portIndex(a) - portIndex(b) ||
+        Number(orientation.reversedEdgeIds.has(a.id)) -
+          Number(orientation.reversedEdgeIds.has(b.id)),
+    );
+    for (const edge of outgoing) {
+      if ((segmentIdsByEdgeId.get(edge.id)?.length ?? 0) < 2) continue;
+      const target = orientedTarget(edge);
+      incomingEdgeOrderByNodeId.set(
+        target,
+        incomingEdgeOrderByNodeId.get(target)!.filter((id) => id !== edge.id),
+      );
+      appendIncoming(edge);
+    }
+  }
+
   // ELK creates long-edge dummies while walking layers. Thus dummies for an
   // edge whose source is in the next layer can precede later parts of an edge
   // that started in an earlier layer. Preserve that order for crossing ties.
-  const maximumLayer = Math.max(0, ...layerByNodeId.values());
+  const maximumLayer = Math.max(0, (assignment.layerCount ?? 1) - 1, ...layerByNodeId.values());
   const nodesByLayer = Array.from({ length: maximumLayer + 1 }, () => [] as string[]);
   for (const node of input.graph.nodes) {
     nodesByLayer[layerByNodeId.get(node.id) ?? 0]?.push(node.id);
@@ -224,9 +240,18 @@ export function splitLongEdges(
   ];
   const graph = { ...input.graph, nodes: orderedNodes, edges } as LayeredPhaseInput["graph"];
   return {
-    input: {
+    input: inheritCycleRandom(input, {
       ...input,
       graph,
+      modelOrderByEdgeId: new Map(
+        edges.map((edge) => {
+          const original = originalEdgeBySegmentId.get(edge.id) ?? edge;
+          return [
+            edge.id,
+            input.modelOrderByEdgeId?.get(original.id) ?? input.graph.edges.indexOf(original),
+          ];
+        }),
+      ),
       sizes,
       edgeSettings: (edge) => {
         const original = originalEdgeBySegmentId.get(edge.id) ?? edge;
@@ -257,7 +282,8 @@ export function splitLongEdges(
               : {}),
         };
       },
-    },
+    }),
+    incomingEdgeOrderByNodeId,
     orientation: { reversedEdgeIds },
     assignment: { ...assignment, layerByNodeId },
     segmentIdsByEdgeId,
@@ -289,6 +315,9 @@ export function joinLongEdgeRoutes(
   preserveInternalDuplicates = false,
   convertLongSplines = false,
   longSplineEdgeNodeSpacing = 10,
+  preserveOrthogonalCorners = false,
+  restoredJunctionCounts?: ReadonlyMap<string, number>,
+  reversedSegmentIds?: ReadonlySet<string>,
 ): EdgeRoutes {
   const simplify = (points: readonly Point[]): Point[] => {
     const result: Point[] = [];
@@ -381,7 +410,36 @@ export function joinLongEdgeRoutes(
       }
     }
     const points: Point[] = [];
-    if (!preserveInternalDuplicates && segmentIds.length > 1) {
+    // ELK joins segment bend lists without their dummy anchors. Orthogonal
+    // compaction can collapse bends; those original bends still remain public.
+    if (!preserveInternalDuplicates && preserveOrthogonalCorners && segmentIds.length > 1) {
+      const joined = segmentIds.flatMap((segmentId, segmentIndex) => {
+        const segment = routes.pointsByEdgeId.get(segmentId) ?? [];
+        return segment.map((point, index) => ({
+          point,
+          dummyAnchor:
+            (index === 0 && segmentIndex !== 0) ||
+            (index === segment.length - 1 && segmentIndex !== segmentIds.length - 1),
+        }));
+      });
+      // Native dummy anchors may supply a real corner. Discard only redundant
+      // anchors; retain segment bends even when compaction made them collinear.
+      for (let index = 1; index + 1 < joined.length;) {
+        const first = joined[index - 1]!.point;
+        const middle = joined[index]!;
+        const last = joined[index + 1]!.point;
+        const equal = (a: number, b: number) => Math.abs(a - b) < 1e-9;
+        if (
+          middle.dummyAnchor &&
+          ((equal(first.x, middle.point.x) && equal(middle.point.x, last.x)) ||
+            (equal(first.y, middle.point.y) && equal(middle.point.y, last.y)))
+        ) {
+          joined.splice(index, 1);
+          index = Math.max(1, index - 1);
+        } else index++;
+      }
+      points.push(...joined.map(({ point }) => point));
+    } else if (!preserveInternalDuplicates && segmentIds.length > 1) {
       const segments = segmentIds.map((segmentId) => routes.pointsByEdgeId.get(segmentId) ?? []);
       const firstPoint = segments[0]?.[0];
       if (firstPoint) points.push(firstPoint);
@@ -399,8 +457,35 @@ export function joinLongEdgeRoutes(
     }
     pointsByEdgeId.set(
       edgeId,
-      preserveInternalDuplicates || segmentIds.length === 1 ? points : simplify(points),
+      preserveInternalDuplicates || preserveOrthogonalCorners || segmentIds.length === 1
+        ? points
+        : simplify(points),
     );
   }
-  return { pointsByEdgeId, outsideFeedbackEdgeIds };
+  const junctionPointsByEdgeId =
+    routes.junctionPointsByEdgeId &&
+    new Map(
+      [...segmentIdsByEdgeId].map(([edgeId, ids]) => [
+        edgeId,
+        // ELK restores north/south branches after long-edge joining. Keep
+        // those appended junctions after all original routing junctions.
+        [
+          // Long-edge joining runs before edge-direction restoration. Its
+          // junction chain retains physical flow order on reversed edges.
+          ...(reversedSegmentIds?.has(ids[0]!) ? [...ids].reverse() : ids).flatMap((id) => {
+            const points = routes.junctionPointsByEdgeId?.get(id) ?? [];
+            return points.slice(0, points.length - (restoredJunctionCounts?.get(id) ?? 0));
+          }),
+          ...ids.flatMap((id) => {
+            const count = restoredJunctionCounts?.get(id) ?? 0;
+            return count ? (routes.junctionPointsByEdgeId?.get(id) ?? []).slice(-count) : [];
+          }),
+        ],
+      ]),
+    );
+  return {
+    pointsByEdgeId,
+    outsideFeedbackEdgeIds,
+    ...(junctionPointsByEdgeId ? { junctionPointsByEdgeId } : {}),
+  };
 }

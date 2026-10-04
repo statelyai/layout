@@ -1,0 +1,22 @@
+{
+  "revision": "c5f2083",
+  "inputReference": "../inverted-port-model-order/report.json",
+  "row": 1,
+  "events": [
+    {
+      "id": "[\"n1\",\"n1:p2\"]",
+      "side": "WEST",
+      "result": 0
+    },
+    {
+      "id": "[\"n5\",\"n5:p2\"]",
+      "side": "WEST",
+      "result": 0
+    },
+    {
+      "id": "[\"n5\",\"n5:p2\"]",
+      "side": "WEST",
+      "result": 0
+    }
+  ]
+}

@@ -1,0 +1,14 @@
+{
+  "base": "468e0dd1411e13e59e94df3765de9f19b0515cf2",
+  "sourceSha256": {
+    "src/elkjs/index.ts": "4d5c68082812e5ce6871fb16f3b61de886814162c07197adb8434afb006baad9",
+    "src/layered/index.ts": "9bc64d10aac652ca52cc4b80bb9230b03c071776b673c855e271c22e9d146a2e",
+    "test/layered-sweep-session.test.ts": "95c409bf6a51112ae391f062c162b9f3459c8309f796a20c005d3fbba05e3360",
+    "test/oracle-compound-port-identity.test.ts": "635d5a1472e54c8c2420845da319ece112490a2de5ce1a8572f81da70c0b47c5",
+    "scripts/check-compound-parity.ts": "653e501cd08af3737fcb6285007754b4863534f5d67ffe3e2b8e0e5e1ddde746",
+    "scripts/parity/compound-corpus.ts": "05a5587a622f5ce2fca56ba354db190a01ce4dfbcf5568146d66c1a41c116d70",
+    "scripts/parity/render-compound-baseline.mjs": "4c983ead37e66e0e20665b8ac7cc3394c5a996289f7c2d906221f11f997ae6f8"
+  },
+  "inputsUnchanged": true,
+  "tolerance": 5e-13
+}

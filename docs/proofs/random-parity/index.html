@@ -1,0 +1,78 @@
+<!doctype html><meta charset="utf-8" /><title>Random routing proof</title
+><style>
+  body {
+    font: 16px system-ui;
+    margin: 24px;
+    background: #f8fafc;
+  }
+  section {
+    margin-bottom: 32px;
+  }
+  .pair {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+  }
+  img {
+    width: 100%;
+    background: white;
+  }
+  h2 {
+    font-size: 18px;
+  }
+</style>
+<h1>Matching native before / after</h1>
+<section>
+  <h2>Fixed-port fan · same input, dimensions, scale, viewport</h2>
+  <div class="pair">
+    <div>Before main 81363b4<img src="fixed-ports-before.svg" /></div>
+    <div>After ceef0b1<img src="fixed-ports-after.svg" /></div>
+  </div>
+</section>
+<section>
+  <h2>Seed 196613, graph 5 · identical input, direction, dimensions, scale, viewport</h2>
+  <div class="pair">
+    <div>Before 015b0b5<img src="196613-5-before.svg" /></div>
+    <div>After ceef0b1<img src="196613-5-after.svg" /></div>
+  </div>
+</section>
+<section>
+  <h2>Seed 130363, graph 8 · identical input, direction, dimensions, scale, viewport</h2>
+  <div class="pair">
+    <div>Before 015b0b5<img src="130363-8-before.svg" /></div>
+    <div>After ceef0b1<img src="130363-8-after.svg" /></div>
+  </div>
+</section>
+
+<section id="feedback">
+  <h2>Mixed WEST-port flow · identical input and viewport</h2>
+  <div class="pair">
+    <div>Before f913778<img alt="Before: chain order a c b" src="feedback-before.svg" /></div>
+    <div>Native after<img alt="After: chain order a b c" src="feedback-after.svg" /></div>
+  </div>
+  <div style="width: calc(50% - 8px)">
+    Real ELK 0.11.1<img alt="Real ELK: chain order a b c" src="feedback-elk.svg" />
+  </div>
+</section>
+
+<section id="fixed-coordinate">
+  <h2>Fixed implicit coordinates · same input, direction, sizes, scale and viewport</h2>
+  <div class="pair">
+    <div>
+      Before bb693a4 · ab: 4 bends<img
+        src="fixed-coordinate-before.svg"
+        alt="Before fixed coordinate repair"
+      />
+    </div>
+    <div>
+      After bc4e7e2 · ab: 0 bends<img
+        src="fixed-coordinate-after.svg"
+        alt="Native fixed coordinates"
+      />
+    </div>
+  </div>
+  <div style="width: calc(50% - 8px)">
+    Real ELK 0.11.1 · ab: 0 bends<img src="fixed-coordinate-elk.svg" alt="Real ELK comparison" />
+  </div>
+  <p>bc remains 4 bends in native vs 2 in ELK. This demonstrates a correction, not parity.</p>
+</section>

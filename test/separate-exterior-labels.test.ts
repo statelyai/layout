@@ -80,6 +80,27 @@ describe("exterior label separation", () => {
     ]);
   });
 
+  it("moves the full exterior track across retained label-dummy junctions", () => {
+    const edges = fixture(["moving", "head", "farther", "tail"]);
+    edges[0]!.points = [
+      { x: 120, y: 80 },
+      { x: 130, y: 80 },
+      { x: 130, y: 119 },
+      { x: 130, y: 120 },
+      { x: 130, y: 150 },
+      { x: 120, y: 150 },
+    ];
+    separate(edges);
+    expect(edges[0]!.points).toEqual([
+      { x: 120, y: 80 },
+      { x: 290, y: 80 },
+      { x: 290, y: 119 },
+      { x: 290, y: 120 },
+      { x: 290, y: 150 },
+      { x: 120, y: 150 },
+    ]);
+  });
+
   it("does not depend on input edge order", () => {
     const forward = fixture(["moving", "head", "farther", "tail"]);
     const reverse = fixture(["tail", "farther", "head", "moving"]);
