@@ -423,3 +423,5 @@ That order walks ELK's per-port edge lists, replayed through reversal history, l
 Greedy switching decides each swap from ELK's local two-node crossing estimates. See the [greedy switch decider](docs/heuristics/greedy-switch-decider/README.md).
 
 Barycenter sweeps visit each port's edges in ELK's list order. See the [port edge visit order](docs/heuristics/port-edge-visit-order/README.md).
+
+A north/south port whose dummy ends crossing minimization on the other side of its node moves to that side. See the [north/south port sides](docs/heuristics/north-south-port-sides/README.md).

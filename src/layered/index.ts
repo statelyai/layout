@@ -1742,6 +1742,20 @@ export function* createLayeredScopePipeline<N, E, G, P>(
     layerByNodeId: assignment.layerByNodeId,
     layers: order.layers,
   }));
+  // ELK's SweepCopy.assertCorrectPortSides: a north/south port whose dummy
+  // ended on the other side of its node switches to that side.
+  for (const layer of order.layers) {
+    const position = new Map(layer.map((id, index) => [id, index]));
+    for (const [dummy, origin] of northSouth.originsByDummyId) {
+      const at = position.get(dummy),
+        owner = position.get(origin.node.id);
+      if (at === undefined || owner === undefined || at < owner === origin.beforeOwner) continue;
+      const opposite = ({ NORTH: "SOUTH", SOUTH: "NORTH", WEST: "EAST", EAST: "WEST" } as const)[
+        origin.side
+      ];
+      switchedSideByPort.set(`${origin.node.id}\0${origin.port.name}`, opposite);
+    }
+  }
   // Preserve the existing merged-edge dummy policy without moving FIRST/LAST
   // nodes after crossing minimization.
   if (expanded.input.settings.mergeEdges === true) {
