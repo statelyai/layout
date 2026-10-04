@@ -1,0 +1,20 @@
+{
+  "before": {
+    "total": 3404,
+    "passed": 3295,
+    "failed": 109
+  },
+  "after": {
+    "total": 3407,
+    "passed": 3298,
+    "failed": 109
+  },
+  "newFailures": [],
+  "newPasses": [],
+  "added": [
+    "test/oracle-shared-self-loop-tracks.test.ts > shares self-loop tracks across shared ports (flat seed 7 DOWN): passed",
+    "test/oracle-shared-self-loop-tracks.test.ts > shares self-loop tracks across shared ports (flat seed 7 UP): passed",
+    "test/oracle-shared-self-loop-tracks.test.ts > shares self-loop tracks across shared ports (options seed 10 DOWN): passed"
+  ],
+  "removed": []
+}
