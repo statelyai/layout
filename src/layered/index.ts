@@ -19,7 +19,7 @@ import {
   simulatePortEdgeLists,
   type PortEdgeList,
 } from "./elk-port-lists";
-import { mergeHyperedgeDummies } from "./hyperedge-dummy-merger";
+import { importsHyperedges, mergeHyperedgeDummies } from "./hyperedge-dummy-merger";
 import { getCrossingUnits, recordCrossingUnits } from "./crossing-constraints";
 import { externalPortDummyOf } from "./external-port-dummy";
 import type { EntityRect } from "@statelyai/graph";
@@ -1432,6 +1432,7 @@ export function* createLayeredScopePipeline<N, E, G, P>(
     applyPartitionOrientation(input, breakCyclesWithConstraints(input, cycleBreaker)),
   );
   const portLists = simulatePortEdgeLists(input, orientation);
+  const hyperedges = importsHyperedges(input);
   traceLayeredPhase(() => ({ kind: "port-lists", scope: graph.id, ports: portLists }));
   const layeringStrategy = options.settings?.["layering.strategy"] ?? "NETWORK_SIMPLEX";
   const layerAssigner = (() => {
@@ -1790,7 +1791,7 @@ export function* createLayeredScopePipeline<N, E, G, P>(
   const labelSelection = selectCenterLabelSides(expanded, labels, order);
   expanded = labelSelection.expansion;
   if (crossingUnits) recordCrossingUnits(expanded.input, crossingUnits);
-  order = mergeHyperedgeDummies(expanded, order);
+  if (hyperedges) order = mergeHyperedgeDummies(expanded, order);
   expanded = {
     ...expanded,
     input: sizeHierarchicalPortDummies(expanded.input, order, hierarchicalPorts),

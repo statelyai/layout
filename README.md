@@ -433,3 +433,5 @@ Self loops that share a port route on one track. See the [shared self-loop track
 Orthogonal routing walks port edge lists in ELK order when building hyperedge segments and assigning junctions. See the [orthogonal edge lists](docs/heuristics/orthogonal-edge-lists/README.md).
 
 A merged hyperedge dummy that absorbed an inverted-port dummy keeps its in-layer route in the adjacent channel. See [merged inverted routes](docs/heuristics/merged-inverted-routes/README.md).
+
+BK edge straightening ignores self loops, and hyperedge dummies merge only when ELK import detects a hyperedge. See [BK hidden self loops](docs/heuristics/bk-hidden-self-loops/README.md).

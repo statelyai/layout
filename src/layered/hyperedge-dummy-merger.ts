@@ -10,6 +10,42 @@ const mergedNodes = new WeakMap<LayeredPhaseInput, Set<string>>();
 export const isMergedHyperedgeDummy = (input: LayeredPhaseInput, id: string): boolean =>
   mergedNodes.get(input)?.has(id) ?? false;
 
+/**
+ * ELK schedules HyperedgeDummyMerger only when import finds a port with more
+ * than one incoming or outgoing edge (or a hypernode). Hierarchy scopes keep
+ * the merger: their imported edges are not visible here.
+ */
+export function importsHyperedges(input: LayeredPhaseInput): boolean {
+  const { graph } = input;
+  if (
+    graph.nodes.some(
+      (node) =>
+        node.id.startsWith("__native_hierarchy") || input.nodeSettings?.(node)?.hypernode === true,
+    ) ||
+    graph.edges.some((edge) => edge.id.startsWith("__native_hierarchy"))
+  )
+    return true;
+  const counts = new Map<string, number>();
+  const exceeds = (nodeId: string, port: string | undefined, kind: string, edgeId: string) => {
+    const key =
+      port !== undefined
+        ? `${nodeId}\0${port}\0${kind}`
+        : nodeId.startsWith("__") || input.settings.mergeEdges === true
+          ? `${nodeId}\0\0${kind}`
+          : `\0${edgeId}\0${kind}`;
+    const count = (counts.get(key) ?? 0) + 1;
+    counts.set(key, count);
+    return count > 1;
+  };
+  let found = false;
+  for (const edge of graph.edges) {
+    const source = exceeds(edge.sourceId, edge.sourcePort, "out", edge.id);
+    const target = exceeds(edge.targetId, edge.targetPort, "in", edge.id);
+    found ||= source || target;
+  }
+  return found;
+}
+
 /** Merge adjacent long-edge dummies connected through the same physical hyperedge. */
 export function mergeHyperedgeDummies(expansion: LongEdgeExpansion, order: LayerOrder): LayerOrder {
   const { input } = expansion;
