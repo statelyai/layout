@@ -431,3 +431,5 @@ In-layer edges kept by merged hyperedge dummies join their routing hyperedge. Se
 Self loops that share a port route on one track. See the [shared self-loop tracks](docs/heuristics/shared-self-loop-tracks/README.md).
 
 Orthogonal routing walks port edge lists in ELK order when building hyperedge segments and assigning junctions. See the [orthogonal edge lists](docs/heuristics/orthogonal-edge-lists/README.md).
+
+A merged hyperedge dummy that absorbed an inverted-port dummy keeps its in-layer route in the adjacent channel. See [merged inverted routes](docs/heuristics/merged-inverted-routes/README.md).

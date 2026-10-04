@@ -5043,16 +5043,31 @@ function routeEdges(style: "ORTHOGONAL" | "POLYLINE" | "SPLINES"): EdgeRouter {
       const feedbackTargetPortSide = feedbackTargetPort
         ? input.portSettings?.(feedbackTargetPort, target)?.["port.side"]
         : undefined;
+      // A merged hyperedge dummy keeps an inverted dummy's in-layer edge,
+      // whose dummy ports face backward (input) or forward (output).
+      const mergedFace = (id: string, name: string | undefined) => {
+        if (!isMergedHyperedgeDummy(input, id) || (name !== "input" && name !== "output"))
+          return undefined;
+        const forward = { right: "EAST", left: "WEST", down: "SOUTH", up: "NORTH" }[
+          input.direction
+        ]!;
+        const backward = { EAST: "WEST", WEST: "EAST", SOUTH: "NORTH", NORTH: "SOUTH" }[forward]!;
+        return name === "output" ? forward : backward;
+      };
+      const inLayerSourceSide = feedbackSourcePortSide ?? mergedFace(source.id, edge.sourcePort);
+      const inLayerTargetSide = feedbackTargetPortSide ?? mergedFace(target.id, edge.targetPort);
       // Inverted-port dummies keep the turn in the node's own layer. Both
       // terminals face the same exterior corridor; this is not an outer
       // feedback loop around the entire graph.
       if (
         style === "ORTHOGONAL" &&
         (source.id.startsWith("__layout_dummy:inverted:") ||
-          target.id.startsWith("__layout_dummy:inverted:")) &&
+          target.id.startsWith("__layout_dummy:inverted:") ||
+          isMergedHyperedgeDummy(input, source.id) ||
+          isMergedHyperedgeDummy(input, target.id)) &&
         flowLayerByNodeId.get(source.id) === flowLayerByNodeId.get(target.id) &&
-        feedbackSourcePortSide === feedbackTargetPortSide &&
-        feedbackSourcePortSide !== undefined
+        inLayerSourceSide === inLayerTargetSide &&
+        inLayerSourceSide !== undefined
       ) {
         const sourceFallback = implicitEndpoints.get(edge.id)?.source ?? {
           x: sourceRect.x,
@@ -5079,7 +5094,7 @@ function routeEdges(style: "ORTHOGONAL" | "POLYLINE" | "SPLINES"): EdgeRouter {
           input,
         );
         if (reversedEdge) outsideFeedbackEdgeIds.add(edge.id);
-        const side = feedbackSourcePortSide;
+        const side = inLayerSourceSide;
         const spacing = Number(input.settings["spacing.edgeNodeBetweenLayers"] ?? 10);
         // Clear the whole occupied layer, including ports and self-loop
         // reservations; endpoint anchors alone omit those margins.
