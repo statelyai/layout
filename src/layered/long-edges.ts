@@ -317,6 +317,7 @@ export function joinLongEdgeRoutes(
   longSplineEdgeNodeSpacing = 10,
   preserveOrthogonalCorners = false,
   restoredJunctionCounts?: ReadonlyMap<string, number>,
+  reversedSegmentIds?: ReadonlySet<string>,
 ): EdgeRoutes {
   const simplify = (points: readonly Point[]): Point[] => {
     const result: Point[] = [];
@@ -469,7 +470,9 @@ export function joinLongEdgeRoutes(
         // ELK restores north/south branches after long-edge joining. Keep
         // those appended junctions after all original routing junctions.
         [
-          ...ids.flatMap((id) => {
+          // Long-edge joining runs before edge-direction restoration. Its
+          // junction chain retains physical flow order on reversed edges.
+          ...(reversedSegmentIds?.has(ids[0]!) ? [...ids].reverse() : ids).flatMap((id) => {
             const points = routes.junctionPointsByEdgeId?.get(id) ?? [];
             return points.slice(0, points.length - (restoredJunctionCounts?.get(id) ?? 0));
           }),

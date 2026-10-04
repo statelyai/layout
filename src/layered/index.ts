@@ -2327,6 +2327,7 @@ export function* createLayeredScopePipeline<N, E, G, P>(
       Number(options.settings?.["spacing.edgeNodeBetweenLayers"] ?? 10),
       edgeRouting === "ORTHOGONAL",
       restoredJunctionCounts,
+      expanded.orientation.reversedEdgeIds,
     ),
   );
   if (options.settings?.["layering.nodePromotion.strategy"] === "MODEL_ORDER_LEFT_TO_RIGHT") {

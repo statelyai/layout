@@ -413,3 +413,5 @@ Movable self-loop labels reserve clearance before placement and retain direction
 Routing reuses self-loop envelopes already reserved by placement, keeping neighboring hierarchy helpers in their chosen positions. See the [preplaced loop envelope regression](docs/heuristics/preplaced-loop-envelope/README.md).
 
 Orthogonal junction ownership follows physical incident edge order after reversal. See the [junction ownership regression](docs/heuristics/physical-junction-order/README.md).
+
+Joining reversed edge chains retains physical routing order for junction points. See the [reversed chain regression](docs/heuristics/reversed-junction-chains/README.md).

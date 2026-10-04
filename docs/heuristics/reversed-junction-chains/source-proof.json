@@ -1,0 +1,40 @@
+{
+  "rows": [
+    {
+      "file": "elkjs/index.ts",
+      "promotedSha256": "ce3e155a7863137c944f10ed800f970fbf98a887d8935e80ddcfdad0dd21da4b",
+      "frozenSha256": "ce3e155a7863137c944f10ed800f970fbf98a887d8935e80ddcfdad0dd21da4b",
+      "sameAst": true
+    },
+    {
+      "file": "layered/index.ts",
+      "promotedSha256": "2db2703da72c73225fdd9f3c27ea3d9c5468337718c52ef2dfc6cd059da1cea8",
+      "frozenSha256": "2db2703da72c73225fdd9f3c27ea3d9c5468337718c52ef2dfc6cd059da1cea8",
+      "sameAst": true
+    },
+    {
+      "file": "layered/types.ts",
+      "promotedSha256": "fad9e0c5cac3e1ea33ad452713b29adef3c9a85c1c8d65be8d2e36a9d3e900cb",
+      "frozenSha256": "fad9e0c5cac3e1ea33ad452713b29adef3c9a85c1c8d65be8d2e36a9d3e900cb",
+      "sameAst": true
+    },
+    {
+      "file": "layered/strategies.ts",
+      "promotedSha256": "db7bbdc54443273b4797010a670afcd052f96ea0297d528d3fa93ead1594bd64",
+      "frozenSha256": "db7bbdc54443273b4797010a670afcd052f96ea0297d528d3fa93ead1594bd64",
+      "sameAst": true
+    },
+    {
+      "file": "layered/long-edges.ts",
+      "promotedSha256": "5c8268e4983544f44e03cc8c577f48742a4870eef0465bdb9c1ca33de62522ce",
+      "frozenSha256": "61a6523f6d9bccfcfd5d1b3f61f7e7d1329f975ccf7b4ec229c24e71ea03c31c",
+      "sameAst": true
+    },
+    {
+      "file": "layered/hierarchical-port-restoration.ts",
+      "promotedSha256": "e2b3b7bd6dbbf93a925135c717f129162c260541cecbb042a8f634b5edc08e45",
+      "frozenSha256": "e2b3b7bd6dbbf93a925135c717f129162c260541cecbb042a8f634b5edc08e45",
+      "sameAst": true
+    }
+  ]
+}
