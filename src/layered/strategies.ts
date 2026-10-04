@@ -3772,6 +3772,7 @@ function routeEdges(style: "ORTHOGONAL" | "POLYLINE" | "SPLINES"): EdgeRouter {
         (mutableRects.get(leftId)?.x ?? 0) - (mutableRects.get(rightId)?.x ?? 0),
     );
     for (const [id, loops] of selfLoopEntriesByX) {
+      if (hasPlacementLoopEnvelope(placement, id)) continue;
       const rect = mutableRects.get(id);
       const node = nodeById.get(id);
       if (!rect || !node) continue;
