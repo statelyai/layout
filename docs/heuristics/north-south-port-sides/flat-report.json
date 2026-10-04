@@ -1,0 +1,11 @@
+{
+  "baseline": "../port-edge-visit-order/flat-report.json",
+  "summary": {
+    "cases": 100,
+    "matched": 71,
+    "differingValues": 2270,
+    "nativeErrors": 0,
+    "elkErrors": 0
+  },
+  "updates": []
+}

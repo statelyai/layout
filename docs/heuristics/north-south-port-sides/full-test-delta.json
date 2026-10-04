@@ -1,0 +1,20 @@
+{
+  "before": {
+    "total": 3399,
+    "passed": 3290,
+    "failed": 109
+  },
+  "after": {
+    "total": 3402,
+    "passed": 3293,
+    "failed": 109
+  },
+  "newFailures": [],
+  "newPasses": [],
+  "added": [
+    "test/oracle-north-south-port-sides.test.ts > switches north/south ports to their dummy's side (flat seed 3 RIGHT): passed",
+    "test/oracle-north-south-port-sides.test.ts > switches north/south ports to their dummy's side (flat seed 23 DOWN): passed",
+    "test/oracle-north-south-port-sides.test.ts > switches north/south ports to their dummy's side (flat seed 17 RIGHT): passed"
+  ],
+  "removed": []
+}

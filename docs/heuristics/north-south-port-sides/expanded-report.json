@@ -1,0 +1,11 @@
+{
+  "baseline": "../port-edge-visit-order/expanded-report.json",
+  "summary": {
+    "cases": 200,
+    "matched": 161,
+    "differingValues": 4566,
+    "nativeErrors": 0,
+    "elkErrors": 3
+  },
+  "updates": []
+}
