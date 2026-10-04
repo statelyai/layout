@@ -11,7 +11,8 @@ import { compactionBounds, placementCrossBounds } from "./compaction-bounds";
 import { setElkjs0111ResultPolicy } from "../internal/elkjs-compatibility";
 import { traceLayeredPhase } from "../internal/layered-trace";
 import { networkSimplexComponents } from "./network-simplex";
-import { withLongEdgeSplitterOrder } from "./splitter-order";
+import { incomingAfterLongEdgeSplitting, withLongEdgeSplitterOrder } from "./splitter-order";
+import { elkComponentOrder, insertLabelDummyPorts, simulatePortEdgeLists } from "./elk-port-lists";
 import { mergeHyperedgeDummies } from "./hyperedge-dummy-merger";
 import { getCrossingUnits, recordCrossingUnits } from "./crossing-constraints";
 import { externalPortDummyOf } from "./external-port-dummy";
@@ -1424,6 +1425,8 @@ export function* createLayeredScopePipeline<N, E, G, P>(
   const orientation = measure("cycle-breaking", () =>
     applyPartitionOrientation(input, breakCyclesWithConstraints(input, cycleBreaker)),
   );
+  const portLists = simulatePortEdgeLists(input, orientation);
+  traceLayeredPhase(() => ({ kind: "port-lists", scope: graph.id, ports: portLists }));
   const layeringStrategy = options.settings?.["layering.strategy"] ?? "NETWORK_SIMPLEX";
   const layerAssigner = (() => {
     if (options.strategies?.assignLayers) return options.strategies.assignLayers;
@@ -1569,21 +1572,22 @@ export function* createLayeredScopePipeline<N, E, G, P>(
   );
   phaseInput = hierarchicalPorts.input;
   assignment = hierarchicalPorts.assignment;
-  let expanded = measure("long-edge-splitting", () =>
-    composeCenterLabelExpansion(
+  const labeledPortLists = insertLabelDummyPorts(portLists, orientation, labels.segmentIdsByEdgeId);
+  let expanded = measure("long-edge-splitting", () => {
+    const split = withLongEdgeSplitterOrder(
+      phaseInput,
+      splitLongEdges(phaseInput, phaseOrientation, assignment),
+      assignment.seedOrder ??
+        ((phaseInput.settings["layering.strategy"] ?? "NETWORK_SIMPLEX") === "NETWORK_SIMPLEX"
+          ? elkComponentOrder(layeringInput, labeledPortLists)
+          : phaseInput.graph.nodes.map((node) => node.id)),
+      portLists,
+    );
+    return composeCenterLabelExpansion(
       labels,
-      insertInvertedPortDummies(
-        withLongEdgeSplitterOrder(
-          phaseInput,
-          splitLongEdges(phaseInput, phaseOrientation, assignment),
-          assignment.seedOrder ??
-            ((phaseInput.settings["layering.strategy"] ?? "NETWORK_SIMPLEX") === "NETWORK_SIMPLEX"
-              ? networkSimplexComponents(layeringInput).flat()
-              : phaseInput.graph.nodes.map((node) => node.id)),
-        ),
-      ),
-    ),
-  );
+      insertInvertedPortDummies(split, incomingAfterLongEdgeSplitting(labeledPortLists, split)),
+    );
+  });
   // ELK sorts before north/south helpers exist. Carry both node and physical
   // port order into the crossing session, including newly generated helpers.
   const prepareModelOrder =

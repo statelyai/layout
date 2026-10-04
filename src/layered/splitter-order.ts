@@ -1,4 +1,5 @@
-import type { GraphEdge, GraphNode } from "@statelyai/graph";
+import type { GraphEdge } from "@statelyai/graph";
+import type { PortEdgeList } from "./elk-port-lists";
 import type { LongEdgeExpansion } from "./long-edges";
 import type { LayeredPhaseInput } from "./types";
 
@@ -11,6 +12,7 @@ export function withLongEdgeSplitterOrder(
   unsplit: LayeredPhaseInput,
   expansion: LongEdgeExpansion,
   baseOrder: readonly string[],
+  portLists: ReadonlyMap<string, readonly PortEdgeList[]>,
 ): LongEdgeExpansion {
   const { input, orientation, assignment } = expansion;
   const authoredIds = new Set(unsplit.graph.nodes.map((node) => node.id));
@@ -34,24 +36,22 @@ export function withLongEdgeSplitterOrder(
     if (!outgoing.has(source)) outgoing.set(source, []);
     outgoing.get(source)!.push(edge);
   }
-  const nodeById = new Map(input.graph.nodes.map((node) => [node.id, node]));
-  // Explicit ports precede implicit edge ports. Reversal appends an edge after
-  // the port's retained outgoing edges.
+  // Visit ports and their outgoing edges in ELK's simulated list order, which
+  // records reversal history. Expanded segment ids keep the original edge id.
+  const original = (id: string) => id.split("::")[0]!;
   const targetsInPortOrder = (id: string): string[] => {
-    const node = nodeById.get(id);
     const edges = outgoing.get(id) ?? [];
-    const ranked = edges.map((edge, index) => {
-      const port = authoredPortIndex(
-        input,
-        node,
-        reversed(edge) ? edge.targetPort : edge.sourcePort,
-      );
-      return port < 0
-        ? { edge, port: (node?.ports?.length ?? 0) + index, appended: 0, index }
-        : { edge, port, appended: Number(reversed(edge)), index };
-    });
-    return ranked
-      .sort((a, b) => a.port - b.port || a.appended - b.appended || a.index - b.index)
+    const lists = portLists.get(id);
+    if (!lists) return edges.map((edge) => (reversed(edge) ? edge.sourceId : edge.targetId));
+    const rank = new Map<string, number>();
+    for (const port of lists) for (const edgeId of port.outgoing) rank.set(edgeId, rank.size);
+    return edges
+      .map((edge, index) => ({
+        edge,
+        index,
+        rank: rank.get(original(edge.id)) ?? rank.size + index,
+      }))
+      .sort((a, b) => a.rank - b.rank || a.index - b.index)
       .map(({ edge }) => (reversed(edge) ? edge.sourceId : edge.targetId));
   };
   for (let index = 0; index < layers.length; index++) {
@@ -69,16 +69,38 @@ export function withLongEdgeSplitterOrder(
   return { ...expansion, assignment: { ...assignment, seedOrder } };
 }
 
-/** ELK imports ports in authored order; side sorting happens after dummy insertion. */
-function authoredPortIndex(
-  input: LayeredPhaseInput,
-  node: GraphNode | undefined,
-  name: string | undefined,
-): number {
-  const port = name === undefined ? undefined : node?.ports?.find((p) => p.name === name);
-  if (!node || !port) return -1;
-  const settings = input.portSettings?.(port, node) as
-    | { "port.authoredIndex"?: number }
-    | undefined;
-  return settings?.["port.authoredIndex"] ?? node.ports!.indexOf(port);
+/**
+ * Each split re-targets a long edge through a new segment appended to the
+ * target port's incoming edges. Long edges therefore follow retained short
+ * edges, in the order of their final split.
+ */
+export function incomingAfterLongEdgeSplitting(
+  lists: ReadonlyMap<string, readonly PortEdgeList[]>,
+  expansion: LongEdgeExpansion,
+): Map<string, PortEdgeList[]> {
+  const { input, orientation, assignment } = expansion;
+  const seed = new Map((assignment.seedOrder ?? []).map((id, index) => [id, index]));
+  const listed = (id: string) => id.replace(/::segment:\d+$/, "");
+  const finalSplit = new Map<string, number>();
+  for (const edge of input.graph.edges) {
+    const reversed = orientation.reversedEdgeIds.has(edge.id);
+    const [source, target] = reversed
+      ? [edge.targetId, edge.sourceId]
+      : [edge.sourceId, edge.targetId];
+    const at = seed.get(source);
+    if (source.startsWith("__layout_dummy:") && at !== undefined)
+      finalSplit.set(`${target}\0${listed(edge.id)}`, at);
+  }
+  return new Map(
+    [...lists].map(([id, ports]) => [
+      id,
+      ports.map((port) => ({
+        ...port,
+        incoming: port.incoming
+          .map((edgeId, index) => ({ edgeId, index, split: finalSplit.get(`${id}\0${edgeId}`) }))
+          .sort((a, b) => (a.split ?? -1) - (b.split ?? -1) || a.index - b.index)
+          .map(({ edgeId }) => edgeId),
+      })),
+    ]),
+  );
 }

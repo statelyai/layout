@@ -344,13 +344,14 @@ export default class ELK {
       }
     } else if (hasHierarchy && !separateHierarchy) {
       // Prepare boundary identities before coordinating parent and child crossing sweeps.
+      const scopeSegmentOrder =
+        segmentOrderByScope.get(graph) ??
+        elkSegmentOrder(graph, graph, originalHierarchyEndpoints, false);
       for (const child of graph.children ?? []) {
         if ((child.children?.length ?? 0) === 0) continue;
-        const descendantById = new Map<string, ElkNode>();
         const descendantOwnerByEndpointId = new Map<string, ElkNode>();
         const collectDescendants = (node: ElkNode): void => {
           for (const descendant of node.children ?? []) {
-            descendantById.set(String(descendant.id), descendant);
             descendantOwnerByEndpointId.set(String(descendant.id), descendant);
             for (const port of descendant.ports ?? []) {
               descendantOwnerByEndpointId.set(String(port.id), descendant);
@@ -381,20 +382,19 @@ export default class ELK {
           const targetInside = descendantOwnerByEndpointId.has(targetId);
           return sourceInside !== targetInside;
         });
-        const descendantOrder = new Map(
-          [...descendantById.values()].map((node, index) => [node, index]),
+        // CompoundGraphPreprocessor creates boundary ports bottom-up: ports
+        // exported by nested groups first, then direct children's ports in
+        // port order, outgoing edges before incoming edges.
+        const boundaryRank = new Map(
+          elkBoundaryEdgeOrder(child, graph, originalHierarchyEndpoints).map((edge, index) => [
+            edge,
+            index,
+          ]),
         );
-        const insideOwner = (edge: ElkEdge) => {
-          const { sourceId, targetId } = originalHierarchyEndpoints.get(edge)!;
-          return (
-            descendantOwnerByEndpointId.get(sourceId) ?? descendantOwnerByEndpointId.get(targetId)!
-          );
-        };
-        // The worker introduces boundary dummies by walking descendant nodes,
-        // then their incident ports, rather than walking root edges.
         crossingEdges.sort(
           (a, b) =>
-            (descendantOrder.get(insideOwner(a)) ?? 0) - (descendantOrder.get(insideOwner(b)) ?? 0),
+            (boundaryRank.get(a) ?? Number.MAX_SAFE_INTEGER) -
+            (boundaryRank.get(b) ?? Number.MAX_SAFE_INTEGER),
         );
         const mergeHierarchyEdges =
           getBooleanOption(layoutOptions, "layered.mergeHierarchyEdges") !== false;
@@ -540,7 +540,7 @@ export default class ELK {
             const { sourceId, targetId } = originalHierarchyEndpoints.get(edge)!;
             const sourceInside = descendantOwnerByEndpointId.has(sourceId);
             const proxy = proxyFor(sourceInside ? "output" : "input", edge);
-            return {
+            const segment: ElkEdge = {
               ...edge,
               id: `__native_hierarchy_edge_${String(child.id)}_${String(edge.id)}`,
               sources: [sourceInside ? sourceId : proxy.ports![0]!.id!],
@@ -549,6 +549,8 @@ export default class ELK {
               target: undefined,
               sections: undefined,
             };
+            originalEdgeId.set(segment, originalEdgeId.get(edge) ?? String(edge.id));
+            return segment;
           }),
           ...(child.edges ?? []).filter((edge) => !crossingEdges.includes(edge)),
           ...internalEdges.filter(
@@ -591,6 +593,14 @@ export default class ELK {
           children: [...(child.children ?? []), ...proxyByKind.values()],
           edges: temporaryEdges,
         };
+        const childSegmentOrder = elkSegmentOrder(child, graph, originalHierarchyEndpoints, true);
+        segmentOrderByScope.set(temporaryChild, childSegmentOrder);
+        // Boundary segments copied into the child scope keep their original identity.
+        for (const edge of temporaryEdges) {
+          const id = originalEdgeId.get(edge);
+          const rank = id === undefined ? undefined : childSegmentOrder.get(id);
+          if (rank !== undefined) hierarchySegmentRank.set(edge, rank);
+        }
         const preparedChild = await this.#prepareLayout(
           temporaryChild,
           {
@@ -650,6 +660,8 @@ export default class ELK {
             hierarchyRestorations.push({ edge, ...original });
           if (sourceInside) edge.sources = [portId];
           else edge.targets = [portId];
+          const rank = scopeSegmentOrder.get(originalEdgeId.get(edge) ?? String(edge.id));
+          if (rank !== undefined) hierarchySegmentRank.set(edge, rank);
           edge.source = undefined;
           edge.target = undefined;
         }
@@ -1017,6 +1029,8 @@ export default class ELK {
         return {
           ...getElementLayeredSettings(elkEdge?.layoutOptions ?? {}),
           ...getElementLayeredSettings(elkEdge?.labels?.[0]?.layoutOptions ?? {}),
+          // ELK appends hierarchy segments to port edge lists in creation order.
+          "edge.hierarchyRank": elkEdge && hierarchySegmentRank.get(elkEdge),
         };
       },
       portSettings: (port, node) => {
@@ -2611,3 +2625,76 @@ export type {
 
 export { getElkRoutes } from "./routes";
 export type { ElkRouteOptions } from "./routes";
+
+/** Edges crossing `group`, in the order ELK's CompoundGraphPreprocessor creates its boundary ports. */
+function elkBoundaryEdgeOrder(
+  group: ElkNode,
+  scope: ElkNode,
+  originals: ReadonlyMap<ElkEdge, { sourceId: string; targetId: string }>,
+): ElkEdge[] {
+  const edges: ElkEdge[] = [];
+  const collect = (node: ElkNode) => {
+    edges.push(...(node.edges ?? []));
+    for (const child of node.children ?? []) collect(child);
+  };
+  collect(scope);
+  const endpoints = (edge: ElkEdge) =>
+    originals.get(edge) ?? {
+      sourceId: String(edge.sources?.[0] ?? edge.source),
+      targetId: String(edge.targets?.[0] ?? edge.target),
+    };
+  const order = (node: ElkNode): ElkEdge[] => {
+    const inside = new Set<string>();
+    const mark = (parent: ElkNode) => {
+      for (const child of parent.children ?? []) {
+        inside.add(String(child.id));
+        for (const port of child.ports ?? []) inside.add(String(port.id));
+        mark(child);
+      }
+    };
+    mark(node);
+    const leaves = (edge: ElkEdge) =>
+      inside.has(endpoints(edge).sourceId) !== inside.has(endpoints(edge).targetId);
+    const result = new Set<ElkEdge>();
+    for (const child of node.children ?? [])
+      if (child.children?.length)
+        for (const edge of order(child)) if (leaves(edge)) result.add(edge);
+    for (const child of node.children ?? []) {
+      for (const port of [...(child.ports ?? []).map((p) => String(p.id)), String(child.id)]) {
+        for (const edge of edges)
+          if (endpoints(edge).sourceId === port && leaves(edge)) result.add(edge);
+        for (const edge of edges)
+          if (endpoints(edge).targetId === port && leaves(edge)) result.add(edge);
+      }
+    }
+    return [...result];
+  };
+  return order(group);
+}
+
+/** Creation order of hierarchy segments in ELK's CompoundGraphPreprocessor. */
+const hierarchySegmentRank = new WeakMap<ElkEdge, number>();
+const segmentOrderByScope = new WeakMap<ElkNode, ReadonlyMap<string, number>>();
+const originalEdgeId = new WeakMap<ElkEdge, string>();
+
+/**
+ * Segments inside `group`, in creation order: the inner pass connects child
+ * groups' exported ports first, then the outer pass leaves `group` itself.
+ */
+function elkSegmentOrder(
+  group: ElkNode,
+  scope: ElkNode,
+  originals: ReadonlyMap<ElkEdge, { sourceId: string; targetId: string }>,
+  ownBoundary: boolean,
+): Map<string, number> {
+  const order = new Map<string, number>();
+  const add = (edge: ElkEdge) => {
+    const id = originalEdgeId.get(edge) ?? String(edge.id);
+    if (!order.has(id)) order.set(id, order.size);
+  };
+  for (const child of group.children ?? [])
+    if (child.children?.length)
+      for (const edge of elkBoundaryEdgeOrder(child, scope, originals)) add(edge);
+  if (ownBoundary) for (const edge of elkBoundaryEdgeOrder(group, scope, originals)) add(edge);
+  return order;
+}

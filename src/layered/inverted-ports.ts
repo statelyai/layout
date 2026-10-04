@@ -6,9 +6,13 @@
 import type { GraphNode, GraphEdge } from "@statelyai/graph";
 import type { LongEdgeExpansion } from "./long-edges";
 import { inheritCycleRandom } from "./cycle-random";
+import type { PortEdgeList } from "./elk-port-lists";
 
 /** Insert same-layer long-edge dummies before crossing minimization. */
-export function insertInvertedPortDummies(expansion: LongEdgeExpansion): LongEdgeExpansion {
+export function insertInvertedPortDummies(
+  expansion: LongEdgeExpansion,
+  portLists?: ReadonlyMap<string, readonly PortEdgeList[]>,
+): LongEdgeExpansion {
   const { input } = expansion;
   const forward =
     input.direction === "right"
@@ -68,13 +72,22 @@ export function insertInvertedPortDummies(expansion: LongEdgeExpansion): LongEdg
     const incoming = (end === "target") !== reverse;
     const owner = nodeById.get(at)!;
     const name = end === "source" ? edge.sourcePort : edge.targetPort;
+    // ELK visits the owner's ports in list order and each port's edges in the
+    // order reversal history left them.
+    const listed = edge.id.replace(/::segment:\d+$/, "");
+    const lists = portLists?.get(at);
+    const port = lists?.findIndex((p) => (incoming ? p.incoming : p.outgoing).includes(listed));
     creationOrder.set(id, [
       layers.get(at) ?? 0,
       ownerOrder.get(at) ?? 0,
       incoming ? 0 : 1,
-      owner.ports?.findIndex((p) => p.name === name) ?? -1,
-      Number(reverse),
-      input.graph.edges.indexOf(edge),
+      ...(lists && port !== undefined && port >= 0
+        ? [port, 0, (incoming ? lists[port]!.incoming : lists[port]!.outgoing).indexOf(listed)]
+        : [
+            owner.ports?.findIndex((p) => p.name === name) ?? -1,
+            Number(reverse),
+            input.graph.edges.indexOf(edge),
+          ]),
     ]);
     sizes.set(id, { width: 0, height: 0 });
     layers.set(id, layers.get(at) ?? 0);

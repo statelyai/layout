@@ -9,6 +9,10 @@ export function traceElkPhases(input: ElkNode): Promise<{
     scope: number;
     edgeIds: string[];
     reversed: string[];
+    portLists: Record<
+      string,
+      Array<{ name: string | null; outgoing: string[]; incoming: string[] }>
+    >;
     layering?: Layers;
     initialOrder?: Layers;
     crossingOrder?: Layers;

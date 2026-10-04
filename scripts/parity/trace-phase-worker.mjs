@@ -46,7 +46,20 @@ const snapshot = (graph) => {
     ...graph.layers.array.flatMap((l) => l.nodes.array),
   ];
   const edges = nodes.flatMap((node) => node.ports.array.flatMap((p) => p.outgoingEdges.array));
+  const portLists = Object.fromEntries(
+    nodes
+      .filter((node) => node.type_0?.name_0 === "NORMAL")
+      .map((node) => [
+        String(originId(node)),
+        node.ports.array.map((port) => ({
+          name: originId(port),
+          outgoing: port.outgoingEdges.array.map(originId),
+          incoming: port.incomingEdges.array.map(originId),
+        })),
+      ]),
+  );
   return {
+    portLists,
     scope: scopes.get(graph),
     layers: graph.layers.array.map((layer) => layer.nodes.array.map(token)),
     edgeIds: [...new Set(edges.map(originId).filter((id) => id != null))],
@@ -119,6 +132,7 @@ export async function traceElkPhases(input) {
         scope,
         edgeIds: stages[0]?.edgeIds ?? [],
         reversed: (at(/CycleBreaker$/) ?? stages[0])?.reversed ?? [],
+        portLists: (at(/CycleBreaker$/) ?? stages[0])?.portLists ?? {},
         layering: (splitter > 0 ? stages[splitter - 1] : last(/Layerer$|Postprocessor$/))?.layers,
         initialOrder: initialOrders.get(scope),
         crossingOrder: last(/CrossingMinimizer$/)?.layers,

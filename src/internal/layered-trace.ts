@@ -1,6 +1,14 @@
 /** Development-only phase observations for differential tracing against real ELK. */
 export type LayeredTraceEvent =
   | {
+      kind: "port-lists";
+      scope: string;
+      ports: ReadonlyMap<
+        string,
+        readonly { name?: string; outgoing: readonly string[]; incoming: readonly string[] }[]
+      >;
+    }
+  | {
       kind: "initial-order";
       scope: string;
       layers: readonly (readonly string[])[];

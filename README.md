@@ -417,3 +417,5 @@ Orthogonal junction ownership follows physical incident edge order after reversa
 Joining reversed edge chains retains physical routing order for junction points. See the [reversed chain regression](docs/heuristics/reversed-junction-chains/README.md).
 
 Crossing minimization starts from ELK's long-edge splitter order: component order, then dummies appended through authored port order. See the [splitter order replay](docs/heuristics/long-edge-splitter-order/README.md).
+
+That order walks ELK's per-port edge lists, replayed through reversal history, label dummies and hierarchy segment creation. See the [port edge-list replay](docs/heuristics/elk-port-edge-lists/README.md).

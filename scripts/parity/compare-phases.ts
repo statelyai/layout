@@ -37,11 +37,13 @@ const isReal = (token: string) =>
 const nativeToken = (id: string) => {
   if (!id.startsWith("__")) return id;
   if (id.startsWith("__layout_dummy:north-south:")) return "NS";
+  if (/^__native_hierarchy_(?!edge_)/.test(id)) return "EXTERNAL_PORT";
   const edge = id
     .replace(/^__layout_dummy:(label:|inverted:)?/, "")
     .split("::")[0]!
     .replace(/:(source|target|\d+)(:\d+)?$/, "")
-    .replace(/:+$/, "");
+    .replace(/:+$/, "")
+    .replace(/^(__native_hierarchy_edge_[^_]+_)+/, "");
   return id.startsWith("__layout_dummy:") ? `L:${edge}` : "?";
 };
 const realOrder = (layers: Layers) => layers.map((layer) => layer.filter(isReal));

@@ -12,8 +12,9 @@ import { inheritCycleRandom } from "./cycle-random";
 export function orientConstrainedEdges(
   input: LayeredPhaseInput,
   initial: ReadonlySet<string>,
-): AcyclicOrientation {
+): AcyclicOrientation & { reversedNodeIds: readonly string[] } {
   const reversedEdgeIds = new Set(initial);
+  const reversedNodeIds: string[] = [];
   const constraints = new Map(
     input.graph.nodes.map((n) => [n.id, input.nodeSettings?.(n)?.["layering.layerConstraint"]]),
   );
@@ -102,9 +103,12 @@ export function orientConstrainedEdges(
       const side = p.side === "UNDEFINED" ? (p.net > 0 ? forward : backward) : p.side;
       return (side === forward && p.net > 0) || (side === backward && p.net < 0);
     });
-    if (allReversed && !protectedNeighbor) reverse(node.id, "all");
+    if (allReversed && !protectedNeighbor) {
+      reversedNodeIds.push(node.id);
+      reverse(node.id, "all");
+    }
   }
-  return { reversedEdgeIds };
+  return { reversedEdgeIds, reversedNodeIds };
 }
 
 /** Preserve original edge identities and carry the actual post-cycle RNG back. */
