@@ -1,0 +1,2606 @@
+{
+  "oracle": "elkjs@0.11.1",
+  "note": "Simulated outgoing port edge lists vs real ELK after cycle breaking; edge ids normalized to originals.",
+  "total": {
+    "nodes": 11724,
+    "matched": 11406,
+    "cases": 1063,
+    "casesMatched": 966
+  },
+  "byCorpus": {
+    "complex-report": {
+      "nodes": 2524,
+      "matched": 2233,
+      "cases": 100,
+      "casesMatched": 24
+    },
+    "directional-fresh-report": {
+      "nodes": 1818,
+      "matched": 1818,
+      "cases": 196,
+      "casesMatched": 196
+    },
+    "directional-report": {
+      "nodes": 1804,
+      "matched": 1804,
+      "cases": 194,
+      "casesMatched": 194
+    },
+    "expanded-report": {
+      "nodes": 1896,
+      "matched": 1896,
+      "cases": 197,
+      "casesMatched": 197
+    },
+    "flat-report": {
+      "nodes": 996,
+      "matched": 996,
+      "cases": 100,
+      "casesMatched": 100
+    },
+    "fresh-report": {
+      "nodes": 1016,
+      "matched": 1016,
+      "cases": 100,
+      "casesMatched": 100
+    },
+    "options-report": {
+      "nodes": 674,
+      "matched": 647,
+      "cases": 76,
+      "casesMatched": 55
+    },
+    "report": {
+      "nodes": 996,
+      "matched": 996,
+      "cases": 100,
+      "casesMatched": 100
+    }
+  },
+  "mismatches": [
+    {
+      "report": "docs/heuristics/elk-port-edge-lists/complex-report.json",
+      "seed": 1,
+      "direction": "RIGHT",
+      "node": "n9",
+      "native": "[[\"e9\"],[\"e22\",\"e35\"]]",
+      "elk": "[[\"e9\"],[\"e22\"]]"
+    },
+    {
+      "report": "docs/heuristics/elk-port-edge-lists/complex-report.json",
+      "seed": 1,
+      "direction": "RIGHT",
+      "node": "g2",
+      "native": "[[\"e39\"],[\"e9\"],[\"e22\",\"e35\"]]",
+      "elk": "[[\"e39\"],[\"e9\"],[\"e22\"]]"
+    },
+    {
+      "report": "docs/heuristics/elk-port-edge-lists/complex-report.json",
+      "seed": 1,
+      "direction": "RIGHT",
+      "node": "g1",
+      "native": "[[\"e39\"],[\"e9\"],[\"e22\",\"e35\"],[\"e36\"],[\"e30\"]]",
+      "elk": "[[\"e39\"],[\"e9\"],[\"e22\"],[\"e36\"],[\"e30\"]]"
+    },
+    {
+      "report": "docs/heuristics/elk-port-edge-lists/complex-report.json",
+      "seed": 1,
+      "direction": "RIGHT",
+      "node": "n12",
+      "native": "[[\"e12\"],[\"e38\",\"e43\",\"e45\"]]",
+      "elk": "[[\"e12\"],[\"e38\"]]"
+    },
+    {
+      "report": "docs/heuristics/elk-port-edge-lists/complex-report.json",
+      "seed": 1,
+      "direction": "RIGHT",
+      "node": "n16",
+      "native": "[[\"e20\",\"e41\"],[\"e16\",\"e28\",\"e24\"]]",
+      "elk": "[[\"e20\"],[\"e16\",\"e28\"]]"
+    },
+    {
+      "report": "docs/heuristics/elk-port-edge-lists/complex-report.json",
+      "seed": 1,
+      "direction": "RIGHT",
+      "node": "n17",
+      "native": "[[\"e17\",\"e25\",\"e27\"]]",
+      "elk": "[[\"e17\"]]"
+    },
+    {
+      "report": "docs/heuristics/elk-port-edge-lists/complex-report.json",
+      "seed": 1,
+      "direction": "RIGHT",
+      "node": "g5",
+      "native": "[[\"e20\",\"e41\"],[\"e15\"],[\"e28\",\"e24\"],[\"e17\",\"e25\",\"e27\"]]",
+      "elk": "[[\"e20\"],[\"e15\"],[\"e28\",\"e24\"],[\"e17\"]]"
+    },
+    {
+      "report": "docs/heuristics/elk-port-edge-lists/complex-report.json",
+      "seed": 1,
+      "direction": "RIGHT",
+      "node": "g4",
+      "native": "[[\"e20\",\"e41\"],[\"e28\"],[\"e22\"],[\"e25\",\"e27\",\"e17\"],[\"e43\"],[\"e32\"],[\"e39\",\"e12\",\"e40\"],[\"e35\"],[\"e46\"]]",
+      "elk": "[[\"e20\",\"e41\"],[\"e28\"],[\"e22\"],[\"e17\",\"e25\",\"e27\"],[\"e43\"],[\"e32\"],[\"e39\",\"e12\",\"e40\"],[\"e35\"],[\"e46\"]]"
+    },
+    {
+      "report": "docs/heuristics/elk-port-edge-lists/complex-report.json",
+      "seed": 2,
+      "direction": "RIGHT",
+      "node": "n10",
+      "native": "[[\"e20\",\"e28\",\"e35\"],[\"e30\"],[\"e10\"],[\"e21\",\"e29\"]]",
+      "elk": "[[\"e20\",\"e28\",\"e35\"],[\"e30\"],[\"e10\"],[\"e21\"]]"
+    },
+    {
+      "report": "docs/heuristics/elk-port-edge-lists/complex-report.json",
+      "seed": 2,
+      "direction": "RIGHT",
+      "node": "n11",
+      "native": "[[\"e32\"],[\"e11\",\"e19\",\"e33\"]]",
+      "elk": "[[\"e32\"],[\"e11\",\"e19\"]]"
+    },
+    {
+      "report": "docs/heuristics/elk-port-edge-lists/complex-report.json",
+      "seed": 2,
+      "direction": "RIGHT",
+      "node": "g2",
+      "native": "[[\"e25\"],[\"e40\"],[\"e38\"],[\"e16\"],[\"e8\"],[\"e28\"],[\"e30\"],[\"e21\",\"e29\"],[\"e32\"],[\"e19\",\"e33\"]]",
+      "elk": "[[\"e25\"],[\"e40\"],[\"e38\"],[\"e16\"],[\"e8\"],[\"e28\"],[\"e30\"],[\"e21\"],[\"e32\"],[\"e19\"]]"
+    },
+    {
+      "report": "docs/heuristics/elk-port-edge-lists/complex-report.json",
+      "seed": 2,
+      "direction": "RIGHT",
+      "node": "g1",
+      "native": "[[\"e25\"],[\"e31\"],[\"e36\"],[\"e28\"],[\"e39\"],[\"e21\",\"e29\"],[\"e33\",\"e19\"],[\"e3\"],[\"e41\"]]",
+      "elk": "[[\"e25\"],[\"e31\"],[\"e36\"],[\"e28\"],[\"e39\"],[\"e21\",\"e29\"],[\"e19\",\"e33\"],[\"e3\"],[\"e41\"]]"
+    },
+    {
+      "report": "docs/heuristics/elk-port-edge-lists/complex-report.json",
+      "seed": 3,
+      "direction": "RIGHT",
+      "node": "g3",
+      "native": "[[\"e39\"],[\"e57\"],[\"e45\"],[\"e22\"],[\"e47\"],[\"e69\"],[\"e28\"],[\"e29\"],[\"e54\"],[\"e48\"],[\"e61\"],[\"e67\"],[\"e58\"],[\"e66\"],[\"e68\"],[\"e64\"],[\"e38\"],[\"e51\"],[\"e30\"],[\"e52\"],[\"e49\"],[\"e12\"],[\"e46\"],[\"e63\"]]",
+      "elk": "[[\"e39\"],[\"e57\"],[\"e45\"],[\"e22\"],[\"e28\"],[\"e47\"],[\"e69\"],[\"e29\"],[\"e54\"],[\"e48\"],[\"e61\"],[\"e67\"],[\"e58\"],[\"e64\"],[\"e66\"],[\"e68\"],[\"e30\"],[\"e38\"],[\"e51\"],[\"e52\"],[\"e12\"],[\"e49\"],[\"e46\"],[\"e63\"]]"
+    },
+    {
+      "report": "docs/heuristics/elk-port-edge-lists/complex-report.json",
+      "seed": 5,
+      "direction": "RIGHT",
+      "node": "n7",
+      "native": "[[\"e53\",\"e29\"]]",
+      "elk": "[[\"e53\"]]"
+    },
+    {
+      "report": "docs/heuristics/elk-port-edge-lists/complex-report.json",
+      "seed": 5,
+      "direction": "RIGHT",
+      "node": "n2",
+      "native": "[[\"e50\",\"e59\"]]",
+      "elk": "[[\"e50\"]]"
+    },
+    {
+      "report": "docs/heuristics/elk-port-edge-lists/complex-report.json",
+      "seed": 5,
+      "direction": "RIGHT",
+      "node": "n15",
+      "native": "[[\"e28\",\"e45\"],[\"e15\"]]",
+      "elk": "[[\"e28\"],[\"e15\"]]"
+    },
+    {
+      "report": "docs/heuristics/elk-port-edge-lists/complex-report.json",
+      "seed": 5,
+      "direction": "RIGHT",
+      "node": "n19",
+      "native": "[[\"e19\",\"e37\",\"e42\",\"e62\",\"e63\"]]",
+      "elk": "[[\"e19\",\"e37\"]]"
+    },
+    {
+      "report": "docs/heuristics/elk-port-edge-lists/complex-report.json",
+      "seed": 6,
+      "direction": "RIGHT",
+      "node": "n6",
+      "native": "[[\"e6\",\"e16\",\"e32\"]]",
+      "elk": "[[\"e6\",\"e16\"]]"
+    },
+    {
+      "report": "docs/heuristics/elk-port-edge-lists/complex-report.json",
+      "seed": 6,
+      "direction": "RIGHT",
+      "node": "g1",
+      "native": "[[\"e31\"],[\"e23\"],[\"e14\"],[\"e16\",\"e32\"],[\"e7\"]]",
+      "elk": "[[\"e31\"],[\"e23\"],[\"e14\"],[\"e16\"],[\"e7\"]]"
+    },
+    {
+      "report": "docs/heuristics/elk-port-edge-lists/complex-report.json",
+      "seed": 7,
+      "direction": "RIGHT",
+      "node": "g2",
+      "native": "[[\"e18\"],[\"e20\"],[\"e30\"],[\"e34\"],[\"e22\"],[\"e15\"],[\"e27\"],[\"e8\"],[\"e21\"],[\"e23\"],[\"e25\"],[\"e31\"]]",
+      "elk": "[[\"e18\"],[\"e20\"],[\"e22\"],[\"e30\"],[\"e34\"],[\"e15\"],[\"e27\"],[\"e8\"],[\"e21\"],[\"e23\"],[\"e25\"],[\"e31\"]]"
+    },
+    {
+      "report": "docs/heuristics/elk-port-edge-lists/complex-report.json",
+      "seed": 9,
+      "direction": "RIGHT",
+      "node": "n11",
+      "native": "[[\"e11\",\"e66\"],[\"e32\",\"e51\"]]",
+      "elk": "[[\"e11\"],[\"e32\"]]"
+    },
+    {
+      "report": "docs/heuristics/elk-port-edge-lists/complex-report.json",
+      "seed": 9,
+      "direction": "RIGHT",
+      "node": "n3",
+      "native": "[[\"e59\",\"e62\"],[\"e3\",\"e27\"]]",
+      "elk": "[[\"e59\"],[\"e3\",\"e27\"]]"
+    },
+    {
+      "report": "docs/heuristics/elk-port-edge-lists/complex-report.json",
+      "seed": 9,
+      "direction": "RIGHT",
+      "node": "g2",
+      "native": "[[\"e39\"],[\"e6\"],[\"e41\"],[\"e55\"],[\"e30\"],[\"e37\"],[\"e63\"],[\"e43\"],[\"e11\",\"e66\"],[\"e32\",\"e51\"]]",
+      "elk": "[[\"e39\"],[\"e6\"],[\"e41\"],[\"e55\"],[\"e30\"],[\"e37\"],[\"e63\"],[\"e43\"],[\"e11\",\"e66\"],[\"e32\"]]"
+    },
+    {
+      "report": "docs/heuristics/elk-port-edge-lists/complex-report.json",
+      "seed": 9,
+      "direction": "RIGHT",
+      "node": "g1",
+      "native": "[[\"e39\"],[\"e41\"],[\"e55\"],[\"e30\"],[\"e63\"],[\"e43\"],[\"e11\"],[\"e32\",\"e51\"],[\"e59\",\"e62\"],[\"e27\"],[\"e28\"],[\"e47\"],[\"e38\"],[\"e52\"]]",
+      "elk": "[[\"e39\"],[\"e41\"],[\"e55\"],[\"e30\"],[\"e63\"],[\"e43\"],[\"e11\"],[\"e32\"],[\"e59\"],[\"e27\"],[\"e28\"],[\"e47\"],[\"e38\"],[\"e52\"]]"
+    },
+    {
+      "report": "docs/heuristics/elk-port-edge-lists/complex-report.json",
+      "seed": 9,
+      "direction": "RIGHT",
+      "node": "n23",
+      "native": "[[\"e33\",\"e61\"],[\"e23\"]]",
+      "elk": "[[\"e33\"],[\"e23\"]]"
+    },
+    {
+      "report": "docs/heuristics/elk-port-edge-lists/complex-report.json",
+      "seed": 9,
+      "direction": "RIGHT",
+      "node": "g5",
+      "native": "[[\"e33\",\"e61\"],[\"e24\"],[\"e65\"]]",
+      "elk": "[[\"e33\"],[\"e24\"],[\"e65\"]]"
+    },
+    {
+      "report": "docs/heuristics/elk-port-edge-lists/complex-report.json",
+      "seed": 10,
+      "direction": "RIGHT",
+      "node": "n10",
+      "native": "[[\"e10\",\"e24\"]]",
+      "elk": "[[\"e10\"]]"
+    },
+    {
+      "report": "docs/heuristics/elk-port-edge-lists/complex-report.json",
+      "seed": 11,
+      "direction": "RIGHT",
+      "node": "g3",
+      "native": "[[\"e28\"],[\"e48\"],[\"e81\"],[\"e9\"],[\"e33\"],[\"e71\"],[\"e72\"],[\"e80\"],[\"e41\"],[\"e57\"],[\"e77\"],[\"e69\"],[\"e75\"],[\"e35\"],[\"e44\"],[\"e49\"],[\"e59\"],[\"e60\"],[\"e39\"],[\"e56\"],[\"e78\"],[\"e14\"],[\"e32\"],[\"e40\"],[\"e79\"],[\"e54\"]]",
+      "elk": "[[\"e9\"],[\"e28\"],[\"e33\"],[\"e48\"],[\"e71\"],[\"e72\"],[\"e80\"],[\"e81\"],[\"e41\"],[\"e57\"],[\"e69\"],[\"e75\"],[\"e77\"],[\"e35\"],[\"e44\"],[\"e49\"],[\"e59\"],[\"e60\"],[\"e39\"],[\"e56\"],[\"e78\"],[\"e14\"],[\"e32\"],[\"e40\"],[\"e54\"],[\"e79\"]]"
+    },
+    {
+      "report": "docs/heuristics/elk-port-edge-lists/complex-report.json",
+      "seed": 11,
+      "direction": "RIGHT",
+      "node": "g4",
+      "native": "[[\"e25\"],[\"e73\"],[\"e45\"],[\"e63\"],[\"e52\"],[\"e46\"],[\"e47\"],[\"e67\"],[\"e55\"],[\"e50\"],[\"e76\"],[\"e37\"],[\"e36\"],[\"e70\"],[\"e65\"],[\"e51\"]]",
+      "elk": "[[\"e25\"],[\"e73\"],[\"e45\"],[\"e63\"],[\"e46\"],[\"e52\"],[\"e47\"],[\"e67\"],[\"e50\"],[\"e55\"],[\"e76\"],[\"e37\"],[\"e36\"],[\"e65\"],[\"e70\"],[\"e51\"]]"
+    },
+    {
+      "report": "docs/heuristics/elk-port-edge-lists/complex-report.json",
+      "seed": 13,
+      "direction": "RIGHT",
+      "node": "n24",
+      "native": "[[\"e24\",\"e57\",\"e46\",\"e63\"]]",
+      "elk": "[[\"e24\",\"e57\",\"e46\"]]"
+    },
+    {
+      "report": "docs/heuristics/elk-port-edge-lists/complex-report.json",
+      "seed": 13,
+      "direction": "RIGHT",
+      "node": "n26",
+      "native": "[[\"e26\",\"e45\"],[\"e30\",\"e44\"]]",
+      "elk": "[[\"e26\",\"e45\"],[\"e30\"]]"
+    },
+    {
+      "report": "docs/heuristics/elk-port-edge-lists/complex-report.json",
+      "seed": 13,
+      "direction": "RIGHT",
+      "node": "n27",
+      "native": "[[\"e27\",\"e42\"]]",
+      "elk": "[[\"e27\"]]"
+    },
+    {
+      "report": "docs/heuristics/elk-port-edge-lists/complex-report.json",
+      "seed": 13,
+      "direction": "RIGHT",
+      "node": "g7",
+      "native": "[[\"e67\"],[\"e46\",\"e63\"],[\"e52\"],[\"e45\"],[\"e30\",\"e44\"],[\"e27\",\"e42\"]]",
+      "elk": "[[\"e67\"],[\"e46\"],[\"e52\"],[\"e45\"],[\"e30\",\"e44\"],[\"e27\"]]"
+    },
+    {
+      "report": "docs/heuristics/elk-port-edge-lists/complex-report.json",
+      "seed": 13,
+      "direction": "RIGHT",
+      "node": "g6",
+      "native": "[[\"e46\",\"e63\"],[\"e52\"],[\"e45\"],[\"e30\"],[\"e27\",\"e42\"],[\"e38\"],[\"e48\"]]",
+      "elk": "[[\"e46\"],[\"e52\"],[\"e45\"],[\"e30\"],[\"e27\"],[\"e38\"],[\"e48\"]]"
+    },
+    {
+      "report": "docs/heuristics/elk-port-edge-lists/complex-report.json",
+      "seed": 13,
+      "direction": "RIGHT",
+      "node": "g5",
+      "native": "[[\"e52\"],[\"e30\"],[\"e72\"],[\"e42\",\"e27\"],[\"e38\"],[\"e53\"],[\"e39\"],[\"e71\"]]",
+      "elk": "[[\"e52\"],[\"e30\"],[\"e72\"],[\"e27\",\"e42\"],[\"e38\"],[\"e53\"],[\"e39\"],[\"e71\"]]"
+    },
+    {
+      "report": "docs/heuristics/elk-port-edge-lists/complex-report.json",
+      "seed": 14,
+      "direction": "RIGHT",
+      "node": "n3",
+      "native": "[[\"e11\",\"e19\"],[\"e3\"],[\"e23\"]]",
+      "elk": "[[\"e11\"],[\"e3\"],[\"e23\"]]"
+    },
+    {
+      "report": "docs/heuristics/elk-port-edge-lists/complex-report.json",
+      "seed": 14,
+      "direction": "RIGHT",
+      "node": "n5",
+      "native": "[[\"e5\",\"e15\",\"e21\"]]",
+      "elk": "[[\"e5\",\"e15\"]]"
+    },
+    {
+      "report": "docs/heuristics/elk-port-edge-lists/complex-report.json",
+      "seed": 14,
+      "direction": "RIGHT",
+      "node": "n6",
+      "native": "[[\"e6\",\"e13\",\"e17\",\"e22\",\"e24\"]]",
+      "elk": "[[\"e6\"]]"
+    },
+    {
+      "report": "docs/heuristics/elk-port-edge-lists/complex-report.json",
+      "seed": 14,
+      "direction": "RIGHT",
+      "node": "g1",
+      "native": "[[\"e3\"],[\"e25\"],[\"e15\",\"e21\"],[\"e14\",\"e11\",\"e19\"],[\"e13\",\"e24\",\"e6\",\"e17\",\"e22\"]]",
+      "elk": "[[\"e3\"],[\"e25\"],[\"e15\",\"e21\"],[\"e14\",\"e11\",\"e19\"],[\"e6\",\"e13\",\"e17\",\"e22\",\"e24\"]]"
+    },
+    {
+      "report": "docs/heuristics/elk-port-edge-lists/complex-report.json",
+      "seed": 15,
+      "direction": "RIGHT",
+      "node": "g1",
+      "native": "[[\"e17\"],[\"e31\"],[\"e8\"],[\"e26\"],[\"e23\"],[\"e29\"],[\"e32\"],[\"e34\"],[\"e4\"],[\"e22\"],[\"e40\"],[\"e20\"],[\"e24\"],[\"e25\"],[\"e38\"]]",
+      "elk": "[[\"e17\"],[\"e31\"],[\"e8\"],[\"e23\"],[\"e26\"],[\"e4\"],[\"e22\"],[\"e29\"],[\"e32\"],[\"e34\"],[\"e40\"],[\"e20\"],[\"e24\"],[\"e25\"],[\"e38\"]]"
+    },
+    {
+      "report": "docs/heuristics/elk-port-edge-lists/complex-report.json",
+      "seed": 17,
+      "direction": "RIGHT",
+      "node": "n5",
+      "native": "[[\"e5\",\"e21\"]]",
+      "elk": "[[\"e5\"]]"
+    },
+    {
+      "report": "docs/heuristics/elk-port-edge-lists/complex-report.json",
+      "seed": 17,
+      "direction": "RIGHT",
+      "node": "n1",
+      "native": "[[\"e0\"],[\"e19\"],[\"e24\",\"e15\",\"e20\"]]",
+      "elk": "[[\"e0\"],[\"e19\"],[\"e24\",\"e15\"]]"
+    },
+    {
+      "report": "docs/heuristics/elk-port-edge-lists/complex-report.json",
+      "seed": 17,
+      "direction": "RIGHT",
+      "node": "n2",
+      "native": "[[\"e2\",\"e12\",\"e23\",\"e22\",\"e26\",\"e1\"]]",
+      "elk": "[[\"e2\",\"e12\",\"e23\",\"e22\",\"e1\"]]"
+    },
+    {
+      "report": "docs/heuristics/elk-port-edge-lists/complex-report.json",
+      "seed": 17,
+      "direction": "RIGHT",
+      "node": "g1",
+      "native": "[[\"e14\"],[\"e5\",\"e21\"]]",
+      "elk": "[[\"e14\"],[\"e5\"]]"
+    },
+    {
+      "report": "docs/heuristics/elk-port-edge-lists/complex-report.json",
+      "seed": 17,
+      "direction": "RIGHT",
+      "node": "n7",
+      "native": "[[\"e7\",\"e11\"]]",
+      "elk": "[[\"e7\"]]"
+    },
+    {
+      "report": "docs/heuristics/elk-port-edge-lists/complex-report.json",
+      "seed": 18,
+      "direction": "RIGHT",
+      "node": "n0",
+      "native": "[[\"e0\"],[\"e27\",\"e45\"]]",
+      "elk": "[[\"e0\"],[\"e27\"]]"
+    },
+    {
+      "report": "docs/heuristics/elk-port-edge-lists/complex-report.json",
+      "seed": 18,
+      "direction": "RIGHT",
+      "node": "n11",
+      "native": "[[\"e11\",\"e39\",\"e52\",\"e30\",\"e51\",\"e54\",\"e43\",\"e60\"]]",
+      "elk": "[[\"e11\",\"e39\",\"e52\",\"e30\"]]"
+    },
+    {
+      "report": "docs/heuristics/elk-port-edge-lists/complex-report.json",
+      "seed": 18,
+      "direction": "RIGHT",
+      "node": "n13",
+      "native": "[[\"e28\"],[\"e13\"],[\"e26\",\"e42\"]]",
+      "elk": "[[\"e28\"],[\"e13\"],[\"e26\"]]"
+    },
+    {
+      "report": "docs/heuristics/elk-port-edge-lists/complex-report.json",
+      "seed": 18,
+      "direction": "RIGHT",
+      "node": "n10",
+      "native": "[[\"e36\",\"e46\"]]",
+      "elk": "[[\"e36\"]]"
+    },
+    {
+      "report": "docs/heuristics/elk-port-edge-lists/complex-report.json",
+      "seed": 18,
+      "direction": "RIGHT",
+      "node": "g3",
+      "native": "[[\"e30\",\"e51\",\"e54\",\"e43\",\"e60\"],[\"e10\"],[\"e55\"],[\"e28\"],[\"e13\"],[\"e26\",\"e42\"]]",
+      "elk": "[[\"e30\",\"e43\",\"e60\"],[\"e10\"],[\"e55\"],[\"e28\"],[\"e13\"],[\"e26\",\"e42\"]]"
+    },
+    {
+      "report": "docs/heuristics/elk-port-edge-lists/complex-report.json",
+      "seed": 18,
+      "direction": "RIGHT",
+      "node": "g2",
+      "native": "[[\"e30\",\"e51\",\"e54\"],[\"e55\"],[\"e28\"],[\"e13\"],[\"e26\"],[\"e35\"],[\"e6\"],[\"e36\",\"e46\"],[\"e34\"]]",
+      "elk": "[[\"e30\",\"e54\"],[\"e55\"],[\"e28\"],[\"e13\"],[\"e26\"],[\"e35\"],[\"e6\"],[\"e36\",\"e46\"],[\"e34\"]]"
+    },
+    {
+      "report": "docs/heuristics/elk-port-edge-lists/complex-report.json",
+      "seed": 18,
+      "direction": "RIGHT",
+      "node": "n21",
+      "native": "[[\"e21\",\"e41\",\"e62\",\"e38\"]]",
+      "elk": "[[\"e21\",\"e41\"]]"
+    },
+    {
+      "report": "docs/heuristics/elk-port-edge-lists/complex-report.json",
+      "seed": 18,
+      "direction": "RIGHT",
+      "node": "n17",
+      "native": "[[\"e17\",\"e37\",\"e50\",\"e57\",\"e58\",\"e61\"]]",
+      "elk": "[[\"e17\",\"e37\"]]"
+    },
+    {
+      "report": "docs/heuristics/elk-port-edge-lists/complex-report.json",
+      "seed": 18,
+      "direction": "RIGHT",
+      "node": "g6",
+      "native": "[[\"e41\",\"e62\"],[\"e22\"],[\"e29\"]]",
+      "elk": "[[\"e41\"],[\"e22\"],[\"e29\"]]"
+    },
+    {
+      "report": "docs/heuristics/elk-port-edge-lists/complex-report.json",
+      "seed": 18,
+      "direction": "RIGHT",
+      "node": "g5",
+      "native": "[[\"e41\",\"e62\"],[\"e22\"],[\"e29\"],[\"e37\",\"e50\",\"e57\",\"e58\",\"e61\"],[\"e16\"],[\"e47\"]]",
+      "elk": "[[\"e41\"],[\"e22\"],[\"e29\"],[\"e37\",\"e61\"],[\"e16\"],[\"e47\"]]"
+    },
+    {
+      "report": "docs/heuristics/elk-port-edge-lists/complex-report.json",
+      "seed": 19,
+      "direction": "RIGHT",
+      "node": "g0",
+      "native": "[[\"e20\"],[\"e35\"],[\"e37\"],[\"e28\"],[\"e11\"],[\"e26\"],[\"e36\"],[\"e41\"],[\"e32\"],[\"e22\"],[\"e19\"],[\"e34\"],[\"e43\"],[\"e40\"],[\"e25\"]]",
+      "elk": "[[\"e20\"],[\"e35\"],[\"e28\"],[\"e37\"],[\"e11\"],[\"e26\"],[\"e36\"],[\"e41\"],[\"e32\"],[\"e22\"],[\"e19\"],[\"e34\"],[\"e43\"],[\"e25\"],[\"e40\"]]"
+    },
+    {
+      "report": "docs/heuristics/elk-port-edge-lists/complex-report.json",
+      "seed": 21,
+      "direction": "RIGHT",
+      "node": "n9",
+      "native": "[[\"e29\",\"e37\"],[\"e23\"]]",
+      "elk": "[[\"e29\"],[\"e23\"]]"
+    },
+    {
+      "report": "docs/heuristics/elk-port-edge-lists/complex-report.json",
+      "seed": 21,
+      "direction": "RIGHT",
+      "node": "n11",
+      "native": "[[\"e11\",\"e35\"]]",
+      "elk": "[[\"e11\"]]"
+    },
+    {
+      "report": "docs/heuristics/elk-port-edge-lists/complex-report.json",
+      "seed": 21,
+      "direction": "RIGHT",
+      "node": "g2",
+      "native": "[[\"e21\"],[\"e29\",\"e37\"],[\"e23\"],[\"e32\"],[\"e19\"],[\"e11\",\"e35\"]]",
+      "elk": "[[\"e21\"],[\"e29\"],[\"e23\"],[\"e32\"],[\"e19\"],[\"e11\"]]"
+    },
+    {
+      "report": "docs/heuristics/elk-port-edge-lists/complex-report.json",
+      "seed": 21,
+      "direction": "RIGHT",
+      "node": "g1",
+      "native": "[[\"e21\"],[\"e29\",\"e37\"],[\"e23\"],[\"e32\"],[\"e11\",\"e35\"]]",
+      "elk": "[[\"e21\"],[\"e29\"],[\"e23\"],[\"e32\"],[\"e11\"]]"
+    },
+    {
+      "report": "docs/heuristics/elk-port-edge-lists/complex-report.json",
+      "seed": 21,
+      "direction": "RIGHT",
+      "node": "n12",
+      "native": "[[\"e24\",\"e27\",\"e28\"],[\"e12\"]]",
+      "elk": "[[\"e24\"],[\"e12\"]]"
+    },
+    {
+      "report": "docs/heuristics/elk-port-edge-lists/complex-report.json",
+      "seed": 21,
+      "direction": "RIGHT",
+      "node": "g3",
+      "native": "[[\"e28\",\"e24\",\"e27\"],[\"e11\"],[\"e14\"],[\"e17\"],[\"e26\"]]",
+      "elk": "[[\"e24\",\"e27\",\"e28\"],[\"e11\"],[\"e14\"],[\"e17\"],[\"e26\"]]"
+    },
+    {
+      "report": "docs/heuristics/elk-port-edge-lists/complex-report.json",
+      "seed": 22,
+      "direction": "RIGHT",
+      "node": "n1",
+      "native": "[[\"e1\",\"e25\",\"e32\",\"e42\"]]",
+      "elk": "[[\"e1\",\"e25\"]]"
+    },
+    {
+      "report": "docs/heuristics/elk-port-edge-lists/complex-report.json",
+      "seed": 22,
+      "direction": "RIGHT",
+      "node": "n13",
+      "native": "[[\"e24\"],[\"e33\"],[\"e34\",\"e29\"],[\"e13\"]]",
+      "elk": "[[\"e24\"],[\"e33\"],[\"e34\"],[\"e13\"]]"
+    },
+    {
+      "report": "docs/heuristics/elk-port-edge-lists/complex-report.json",
+      "seed": 22,
+      "direction": "RIGHT",
+      "node": "n5",
+      "native": "[[\"e35\"],[\"e5\",\"e41\",\"e44\"]]",
+      "elk": "[[\"e35\"],[\"e5\",\"e41\"]]"
+    },
+    {
+      "report": "docs/heuristics/elk-port-edge-lists/complex-report.json",
+      "seed": 22,
+      "direction": "RIGHT",
+      "node": "g2",
+      "native": "[[\"e45\"],[\"e49\"],[\"e14\"],[\"e35\"],[\"e41\",\"e44\"],[\"e50\"],[\"e30\"]]",
+      "elk": "[[\"e45\"],[\"e49\"],[\"e14\"],[\"e35\"],[\"e41\"],[\"e50\"],[\"e30\"]]"
+    },
+    {
+      "report": "docs/heuristics/elk-port-edge-lists/complex-report.json",
+      "seed": 22,
+      "direction": "RIGHT",
+      "node": "n16",
+      "native": "[[\"e16\",\"e22\",\"e36\",\"e52\"]]",
+      "elk": "[[\"e16\"]]"
+    },
+    {
+      "report": "docs/heuristics/elk-port-edge-lists/complex-report.json",
+      "seed": 22,
+      "direction": "RIGHT",
+      "node": "g4",
+      "native": "[[\"e45\"],[\"e53\"],[\"e14\"],[\"e52\",\"e22\",\"e36\",\"e16\"],[\"e25\",\"e49\"]]",
+      "elk": "[[\"e45\"],[\"e53\"],[\"e14\"],[\"e16\",\"e22\",\"e36\",\"e52\"],[\"e25\",\"e49\"]]"
+    },
+    {
+      "report": "docs/heuristics/elk-port-edge-lists/complex-report.json",
+      "seed": 23,
+      "direction": "RIGHT",
+      "node": "g2",
+      "native": "[[\"e14\"],[\"e11\"],[\"e16\"],[\"e18\"],[\"e21\"],[\"e26\"],[\"e17\"],[\"e22\"],[\"e25\"],[\"e3\"],[\"e23\"]]",
+      "elk": "[[\"e14\"],[\"e11\"],[\"e16\"],[\"e18\"],[\"e21\"],[\"e26\"],[\"e17\"],[\"e3\"],[\"e22\"],[\"e23\"],[\"e25\"]]"
+    },
+    {
+      "report": "docs/heuristics/elk-port-edge-lists/complex-report.json",
+      "seed": 25,
+      "direction": "RIGHT",
+      "node": "n21",
+      "native": "[[\"e21\",\"e37\",\"e45\",\"e52\",\"e53\",\"e54\",\"e57\"]]",
+      "elk": "[[\"e21\",\"e37\"]]"
+    },
+    {
+      "report": "docs/heuristics/elk-port-edge-lists/complex-report.json",
+      "seed": 25,
+      "direction": "RIGHT",
+      "node": "g5",
+      "native": "[[\"e37\",\"e45\",\"e52\",\"e53\"],[\"e67\"],[\"e34\"],[\"e27\"],[\"e62\"],[\"e55\"],[\"e24\"]]",
+      "elk": "[[\"e37\"],[\"e67\"],[\"e34\"],[\"e27\"],[\"e62\"],[\"e55\"],[\"e24\"]]"
+    },
+    {
+      "report": "docs/heuristics/elk-port-edge-lists/complex-report.json",
+      "seed": 25,
+      "direction": "RIGHT",
+      "node": "g4",
+      "native": "[[\"e37\",\"e45\",\"e52\",\"e53\"],[\"e67\"],[\"e34\"],[\"e27\"],[\"e62\"],[\"e55\"],[\"e24\"],[\"e58\"],[\"e17\"],[\"e40\"],[\"e63\"],[\"e38\"]]",
+      "elk": "[[\"e37\",\"e53\"],[\"e67\"],[\"e34\"],[\"e27\"],[\"e62\"],[\"e55\"],[\"e24\"],[\"e58\"],[\"e17\"],[\"e40\"],[\"e63\"],[\"e38\"]]"
+    },
+    {
+      "report": "docs/heuristics/elk-port-edge-lists/complex-report.json",
+      "seed": 25,
+      "direction": "RIGHT",
+      "node": "g3",
+      "native": "[[\"e52\",\"e37\",\"e45\"],[\"e30\"],[\"e34\"],[\"e39\"],[\"e27\"],[\"e24\"],[\"e64\"],[\"e44\"],[\"e40\"],[\"e63\"],[\"e42\"],[\"e12\"],[\"e60\"],[\"e47\"],[\"e46\"],[\"e50\"],[\"e48\"],[\"e29\"]]",
+      "elk": "[[\"e37\",\"e45\",\"e52\"],[\"e30\"],[\"e34\"],[\"e39\"],[\"e27\"],[\"e24\"],[\"e64\"],[\"e44\"],[\"e40\"],[\"e63\"],[\"e42\"],[\"e12\"],[\"e60\"],[\"e47\"],[\"e46\"],[\"e50\"],[\"e48\"],[\"e29\"]]"
+    },
+    {
+      "report": "docs/heuristics/elk-port-edge-lists/complex-report.json",
+      "seed": 1,
+      "direction": "LEFT",
+      "node": "n9",
+      "native": "[[\"e9\"],[\"e22\",\"e35\"]]",
+      "elk": "[[\"e9\"],[\"e22\"]]"
+    },
+    {
+      "report": "docs/heuristics/elk-port-edge-lists/complex-report.json",
+      "seed": 1,
+      "direction": "LEFT",
+      "node": "g2",
+      "native": "[[\"e39\"],[\"e9\"],[\"e22\",\"e35\"]]",
+      "elk": "[[\"e39\"],[\"e9\"],[\"e22\"]]"
+    },
+    {
+      "report": "docs/heuristics/elk-port-edge-lists/complex-report.json",
+      "seed": 1,
+      "direction": "LEFT",
+      "node": "g1",
+      "native": "[[\"e39\"],[\"e9\"],[\"e22\",\"e35\"],[\"e36\"],[\"e30\"]]",
+      "elk": "[[\"e39\"],[\"e9\"],[\"e22\"],[\"e36\"],[\"e30\"]]"
+    },
+    {
+      "report": "docs/heuristics/elk-port-edge-lists/complex-report.json",
+      "seed": 1,
+      "direction": "LEFT",
+      "node": "n12",
+      "native": "[[\"e12\"],[\"e38\",\"e43\",\"e45\"]]",
+      "elk": "[[\"e12\"],[\"e38\"]]"
+    },
+    {
+      "report": "docs/heuristics/elk-port-edge-lists/complex-report.json",
+      "seed": 1,
+      "direction": "LEFT",
+      "node": "n16",
+      "native": "[[\"e20\",\"e41\"],[\"e16\",\"e28\",\"e24\"]]",
+      "elk": "[[\"e20\"],[\"e16\",\"e28\"]]"
+    },
+    {
+      "report": "docs/heuristics/elk-port-edge-lists/complex-report.json",
+      "seed": 1,
+      "direction": "LEFT",
+      "node": "n17",
+      "native": "[[\"e17\",\"e25\",\"e27\"]]",
+      "elk": "[[\"e17\"]]"
+    },
+    {
+      "report": "docs/heuristics/elk-port-edge-lists/complex-report.json",
+      "seed": 1,
+      "direction": "LEFT",
+      "node": "g5",
+      "native": "[[\"e20\",\"e41\"],[\"e15\"],[\"e28\",\"e24\"],[\"e17\",\"e25\",\"e27\"]]",
+      "elk": "[[\"e20\"],[\"e15\"],[\"e28\",\"e24\"],[\"e17\"]]"
+    },
+    {
+      "report": "docs/heuristics/elk-port-edge-lists/complex-report.json",
+      "seed": 1,
+      "direction": "LEFT",
+      "node": "g4",
+      "native": "[[\"e20\",\"e41\"],[\"e28\"],[\"e22\"],[\"e25\",\"e27\",\"e17\"],[\"e43\"],[\"e32\"],[\"e39\",\"e12\",\"e40\"],[\"e35\"],[\"e46\"]]",
+      "elk": "[[\"e20\",\"e41\"],[\"e28\"],[\"e22\"],[\"e17\",\"e25\",\"e27\"],[\"e43\"],[\"e32\"],[\"e39\",\"e12\",\"e40\"],[\"e35\"],[\"e46\"]]"
+    },
+    {
+      "report": "docs/heuristics/elk-port-edge-lists/complex-report.json",
+      "seed": 2,
+      "direction": "LEFT",
+      "node": "n10",
+      "native": "[[\"e20\",\"e28\",\"e35\"],[\"e30\"],[\"e10\"],[\"e21\",\"e29\"]]",
+      "elk": "[[\"e20\",\"e28\",\"e35\"],[\"e30\"],[\"e10\"],[\"e21\"]]"
+    },
+    {
+      "report": "docs/heuristics/elk-port-edge-lists/complex-report.json",
+      "seed": 2,
+      "direction": "LEFT",
+      "node": "n11",
+      "native": "[[\"e32\"],[\"e11\",\"e19\",\"e33\"]]",
+      "elk": "[[\"e32\"],[\"e11\",\"e19\"]]"
+    },
+    {
+      "report": "docs/heuristics/elk-port-edge-lists/complex-report.json",
+      "seed": 2,
+      "direction": "LEFT",
+      "node": "g2",
+      "native": "[[\"e25\"],[\"e40\"],[\"e38\"],[\"e16\"],[\"e8\"],[\"e28\"],[\"e30\"],[\"e21\",\"e29\"],[\"e32\"],[\"e19\",\"e33\"]]",
+      "elk": "[[\"e25\"],[\"e40\"],[\"e38\"],[\"e16\"],[\"e8\"],[\"e28\"],[\"e30\"],[\"e21\"],[\"e32\"],[\"e19\"]]"
+    },
+    {
+      "report": "docs/heuristics/elk-port-edge-lists/complex-report.json",
+      "seed": 2,
+      "direction": "LEFT",
+      "node": "g1",
+      "native": "[[\"e25\"],[\"e31\"],[\"e36\"],[\"e28\"],[\"e39\"],[\"e21\",\"e29\"],[\"e33\",\"e19\"],[\"e3\"],[\"e41\"]]",
+      "elk": "[[\"e25\"],[\"e31\"],[\"e36\"],[\"e28\"],[\"e39\"],[\"e21\",\"e29\"],[\"e19\",\"e33\"],[\"e3\"],[\"e41\"]]"
+    },
+    {
+      "report": "docs/heuristics/elk-port-edge-lists/complex-report.json",
+      "seed": 3,
+      "direction": "LEFT",
+      "node": "g3",
+      "native": "[[\"e39\"],[\"e57\"],[\"e45\"],[\"e22\"],[\"e47\"],[\"e69\"],[\"e28\"],[\"e29\"],[\"e54\"],[\"e48\"],[\"e61\"],[\"e67\"],[\"e58\"],[\"e66\"],[\"e68\"],[\"e64\"],[\"e38\"],[\"e51\"],[\"e30\"],[\"e52\"],[\"e49\"],[\"e12\"],[\"e46\"],[\"e63\"]]",
+      "elk": "[[\"e39\"],[\"e57\"],[\"e45\"],[\"e22\"],[\"e28\"],[\"e47\"],[\"e69\"],[\"e29\"],[\"e54\"],[\"e48\"],[\"e61\"],[\"e67\"],[\"e58\"],[\"e64\"],[\"e66\"],[\"e68\"],[\"e30\"],[\"e38\"],[\"e51\"],[\"e52\"],[\"e12\"],[\"e49\"],[\"e46\"],[\"e63\"]]"
+    },
+    {
+      "report": "docs/heuristics/elk-port-edge-lists/complex-report.json",
+      "seed": 5,
+      "direction": "LEFT",
+      "node": "n7",
+      "native": "[[\"e53\",\"e29\"]]",
+      "elk": "[[\"e53\"]]"
+    },
+    {
+      "report": "docs/heuristics/elk-port-edge-lists/complex-report.json",
+      "seed": 5,
+      "direction": "LEFT",
+      "node": "n2",
+      "native": "[[\"e50\",\"e59\"]]",
+      "elk": "[[\"e50\"]]"
+    },
+    {
+      "report": "docs/heuristics/elk-port-edge-lists/complex-report.json",
+      "seed": 5,
+      "direction": "LEFT",
+      "node": "n15",
+      "native": "[[\"e28\",\"e45\"],[\"e15\"]]",
+      "elk": "[[\"e28\"],[\"e15\"]]"
+    },
+    {
+      "report": "docs/heuristics/elk-port-edge-lists/complex-report.json",
+      "seed": 5,
+      "direction": "LEFT",
+      "node": "n19",
+      "native": "[[\"e19\",\"e37\",\"e42\",\"e62\",\"e63\"]]",
+      "elk": "[[\"e19\",\"e37\"]]"
+    },
+    {
+      "report": "docs/heuristics/elk-port-edge-lists/complex-report.json",
+      "seed": 6,
+      "direction": "LEFT",
+      "node": "n6",
+      "native": "[[\"e6\",\"e16\",\"e32\"]]",
+      "elk": "[[\"e6\",\"e16\"]]"
+    },
+    {
+      "report": "docs/heuristics/elk-port-edge-lists/complex-report.json",
+      "seed": 6,
+      "direction": "LEFT",
+      "node": "g1",
+      "native": "[[\"e31\"],[\"e23\"],[\"e14\"],[\"e16\",\"e32\"],[\"e7\"]]",
+      "elk": "[[\"e31\"],[\"e23\"],[\"e14\"],[\"e16\"],[\"e7\"]]"
+    },
+    {
+      "report": "docs/heuristics/elk-port-edge-lists/complex-report.json",
+      "seed": 7,
+      "direction": "LEFT",
+      "node": "g2",
+      "native": "[[\"e18\"],[\"e20\"],[\"e30\"],[\"e34\"],[\"e22\"],[\"e15\"],[\"e27\"],[\"e8\"],[\"e21\"],[\"e23\"],[\"e25\"],[\"e31\"]]",
+      "elk": "[[\"e18\"],[\"e20\"],[\"e22\"],[\"e30\"],[\"e34\"],[\"e15\"],[\"e27\"],[\"e8\"],[\"e21\"],[\"e23\"],[\"e25\"],[\"e31\"]]"
+    },
+    {
+      "report": "docs/heuristics/elk-port-edge-lists/complex-report.json",
+      "seed": 9,
+      "direction": "LEFT",
+      "node": "n11",
+      "native": "[[\"e11\",\"e66\"],[\"e32\",\"e51\"]]",
+      "elk": "[[\"e11\"],[\"e32\"]]"
+    },
+    {
+      "report": "docs/heuristics/elk-port-edge-lists/complex-report.json",
+      "seed": 9,
+      "direction": "LEFT",
+      "node": "n3",
+      "native": "[[\"e59\",\"e62\"],[\"e3\",\"e27\"]]",
+      "elk": "[[\"e59\"],[\"e3\",\"e27\"]]"
+    },
+    {
+      "report": "docs/heuristics/elk-port-edge-lists/complex-report.json",
+      "seed": 9,
+      "direction": "LEFT",
+      "node": "g2",
+      "native": "[[\"e39\"],[\"e6\"],[\"e41\"],[\"e55\"],[\"e30\"],[\"e37\"],[\"e63\"],[\"e43\"],[\"e11\",\"e66\"],[\"e32\",\"e51\"]]",
+      "elk": "[[\"e39\"],[\"e6\"],[\"e41\"],[\"e55\"],[\"e30\"],[\"e37\"],[\"e63\"],[\"e43\"],[\"e11\",\"e66\"],[\"e32\"]]"
+    },
+    {
+      "report": "docs/heuristics/elk-port-edge-lists/complex-report.json",
+      "seed": 9,
+      "direction": "LEFT",
+      "node": "g1",
+      "native": "[[\"e39\"],[\"e41\"],[\"e55\"],[\"e30\"],[\"e63\"],[\"e43\"],[\"e11\"],[\"e32\",\"e51\"],[\"e59\",\"e62\"],[\"e27\"],[\"e28\"],[\"e47\"],[\"e38\"],[\"e52\"]]",
+      "elk": "[[\"e39\"],[\"e41\"],[\"e55\"],[\"e30\"],[\"e63\"],[\"e43\"],[\"e11\"],[\"e32\"],[\"e59\"],[\"e27\"],[\"e28\"],[\"e47\"],[\"e38\"],[\"e52\"]]"
+    },
+    {
+      "report": "docs/heuristics/elk-port-edge-lists/complex-report.json",
+      "seed": 9,
+      "direction": "LEFT",
+      "node": "n23",
+      "native": "[[\"e33\",\"e61\"],[\"e23\"]]",
+      "elk": "[[\"e33\"],[\"e23\"]]"
+    },
+    {
+      "report": "docs/heuristics/elk-port-edge-lists/complex-report.json",
+      "seed": 9,
+      "direction": "LEFT",
+      "node": "g5",
+      "native": "[[\"e33\",\"e61\"],[\"e24\"],[\"e65\"]]",
+      "elk": "[[\"e33\"],[\"e24\"],[\"e65\"]]"
+    },
+    {
+      "report": "docs/heuristics/elk-port-edge-lists/complex-report.json",
+      "seed": 10,
+      "direction": "LEFT",
+      "node": "n10",
+      "native": "[[\"e10\",\"e24\"]]",
+      "elk": "[[\"e10\"]]"
+    },
+    {
+      "report": "docs/heuristics/elk-port-edge-lists/complex-report.json",
+      "seed": 11,
+      "direction": "LEFT",
+      "node": "g3",
+      "native": "[[\"e28\"],[\"e48\"],[\"e81\"],[\"e9\"],[\"e33\"],[\"e71\"],[\"e72\"],[\"e80\"],[\"e41\"],[\"e57\"],[\"e77\"],[\"e69\"],[\"e75\"],[\"e35\"],[\"e44\"],[\"e49\"],[\"e59\"],[\"e60\"],[\"e39\"],[\"e56\"],[\"e78\"],[\"e14\"],[\"e32\"],[\"e40\"],[\"e79\"],[\"e54\"]]",
+      "elk": "[[\"e9\"],[\"e28\"],[\"e33\"],[\"e48\"],[\"e71\"],[\"e72\"],[\"e80\"],[\"e81\"],[\"e41\"],[\"e57\"],[\"e69\"],[\"e75\"],[\"e77\"],[\"e35\"],[\"e44\"],[\"e49\"],[\"e59\"],[\"e60\"],[\"e39\"],[\"e56\"],[\"e78\"],[\"e14\"],[\"e32\"],[\"e40\"],[\"e54\"],[\"e79\"]]"
+    },
+    {
+      "report": "docs/heuristics/elk-port-edge-lists/complex-report.json",
+      "seed": 11,
+      "direction": "LEFT",
+      "node": "g4",
+      "native": "[[\"e25\"],[\"e73\"],[\"e45\"],[\"e63\"],[\"e52\"],[\"e46\"],[\"e47\"],[\"e67\"],[\"e55\"],[\"e50\"],[\"e76\"],[\"e37\"],[\"e36\"],[\"e70\"],[\"e65\"],[\"e51\"]]",
+      "elk": "[[\"e25\"],[\"e73\"],[\"e45\"],[\"e63\"],[\"e46\"],[\"e52\"],[\"e47\"],[\"e67\"],[\"e50\"],[\"e55\"],[\"e76\"],[\"e37\"],[\"e36\"],[\"e65\"],[\"e70\"],[\"e51\"]]"
+    },
+    {
+      "report": "docs/heuristics/elk-port-edge-lists/complex-report.json",
+      "seed": 13,
+      "direction": "LEFT",
+      "node": "n24",
+      "native": "[[\"e24\",\"e57\",\"e46\",\"e63\"]]",
+      "elk": "[[\"e24\",\"e57\",\"e46\"]]"
+    },
+    {
+      "report": "docs/heuristics/elk-port-edge-lists/complex-report.json",
+      "seed": 13,
+      "direction": "LEFT",
+      "node": "n26",
+      "native": "[[\"e26\",\"e45\"],[\"e30\",\"e44\"]]",
+      "elk": "[[\"e26\",\"e45\"],[\"e30\"]]"
+    },
+    {
+      "report": "docs/heuristics/elk-port-edge-lists/complex-report.json",
+      "seed": 13,
+      "direction": "LEFT",
+      "node": "n27",
+      "native": "[[\"e27\",\"e42\"]]",
+      "elk": "[[\"e27\"]]"
+    },
+    {
+      "report": "docs/heuristics/elk-port-edge-lists/complex-report.json",
+      "seed": 13,
+      "direction": "LEFT",
+      "node": "g7",
+      "native": "[[\"e67\"],[\"e46\",\"e63\"],[\"e52\"],[\"e45\"],[\"e30\",\"e44\"],[\"e27\",\"e42\"]]",
+      "elk": "[[\"e67\"],[\"e46\"],[\"e52\"],[\"e45\"],[\"e30\",\"e44\"],[\"e27\"]]"
+    },
+    {
+      "report": "docs/heuristics/elk-port-edge-lists/complex-report.json",
+      "seed": 13,
+      "direction": "LEFT",
+      "node": "g6",
+      "native": "[[\"e46\",\"e63\"],[\"e52\"],[\"e45\"],[\"e30\"],[\"e27\",\"e42\"],[\"e38\"],[\"e48\"]]",
+      "elk": "[[\"e46\"],[\"e52\"],[\"e45\"],[\"e30\"],[\"e27\"],[\"e38\"],[\"e48\"]]"
+    },
+    {
+      "report": "docs/heuristics/elk-port-edge-lists/complex-report.json",
+      "seed": 13,
+      "direction": "LEFT",
+      "node": "g5",
+      "native": "[[\"e33\"],[\"e52\"],[\"e30\"],[\"e72\"],[\"e42\",\"e27\"],[\"e38\"],[\"e53\"],[\"e39\"],[\"e71\"]]",
+      "elk": "[[\"e33\"],[\"e52\"],[\"e30\"],[\"e72\"],[\"e27\",\"e42\"],[\"e38\"],[\"e53\"],[\"e39\"],[\"e71\"]]"
+    },
+    {
+      "report": "docs/heuristics/elk-port-edge-lists/complex-report.json",
+      "seed": 14,
+      "direction": "LEFT",
+      "node": "n3",
+      "native": "[[\"e11\",\"e19\"],[\"e3\"],[\"e23\"]]",
+      "elk": "[[\"e11\"],[\"e3\"],[\"e23\"]]"
+    },
+    {
+      "report": "docs/heuristics/elk-port-edge-lists/complex-report.json",
+      "seed": 14,
+      "direction": "LEFT",
+      "node": "n5",
+      "native": "[[\"e5\",\"e15\",\"e21\"]]",
+      "elk": "[[\"e5\",\"e15\"]]"
+    },
+    {
+      "report": "docs/heuristics/elk-port-edge-lists/complex-report.json",
+      "seed": 14,
+      "direction": "LEFT",
+      "node": "n6",
+      "native": "[[\"e6\",\"e13\",\"e17\",\"e22\",\"e24\"]]",
+      "elk": "[[\"e6\"]]"
+    },
+    {
+      "report": "docs/heuristics/elk-port-edge-lists/complex-report.json",
+      "seed": 14,
+      "direction": "LEFT",
+      "node": "g1",
+      "native": "[[\"e3\"],[\"e25\"],[\"e15\",\"e21\"],[\"e14\",\"e11\",\"e19\"],[\"e13\",\"e24\",\"e6\",\"e17\",\"e22\"]]",
+      "elk": "[[\"e3\"],[\"e25\"],[\"e15\",\"e21\"],[\"e14\",\"e11\",\"e19\"],[\"e6\",\"e13\",\"e17\",\"e22\",\"e24\"]]"
+    },
+    {
+      "report": "docs/heuristics/elk-port-edge-lists/complex-report.json",
+      "seed": 15,
+      "direction": "LEFT",
+      "node": "g1",
+      "native": "[[\"e17\"],[\"e31\"],[\"e8\"],[\"e26\"],[\"e23\"],[\"e29\"],[\"e32\"],[\"e34\"],[\"e4\"],[\"e22\"],[\"e40\"],[\"e20\"],[\"e24\"],[\"e25\"],[\"e38\"]]",
+      "elk": "[[\"e17\"],[\"e31\"],[\"e8\"],[\"e23\"],[\"e26\"],[\"e4\"],[\"e22\"],[\"e29\"],[\"e32\"],[\"e34\"],[\"e40\"],[\"e20\"],[\"e24\"],[\"e25\"],[\"e38\"]]"
+    },
+    {
+      "report": "docs/heuristics/elk-port-edge-lists/complex-report.json",
+      "seed": 17,
+      "direction": "LEFT",
+      "node": "n5",
+      "native": "[[\"e5\",\"e21\"]]",
+      "elk": "[[\"e5\"]]"
+    },
+    {
+      "report": "docs/heuristics/elk-port-edge-lists/complex-report.json",
+      "seed": 17,
+      "direction": "LEFT",
+      "node": "n1",
+      "native": "[[\"e0\"],[\"e19\"],[\"e24\",\"e15\",\"e20\"]]",
+      "elk": "[[\"e0\"],[\"e19\"],[\"e24\",\"e15\"]]"
+    },
+    {
+      "report": "docs/heuristics/elk-port-edge-lists/complex-report.json",
+      "seed": 17,
+      "direction": "LEFT",
+      "node": "n2",
+      "native": "[[\"e2\",\"e12\",\"e23\",\"e22\",\"e26\",\"e1\"]]",
+      "elk": "[[\"e2\",\"e12\",\"e23\",\"e22\",\"e1\"]]"
+    },
+    {
+      "report": "docs/heuristics/elk-port-edge-lists/complex-report.json",
+      "seed": 17,
+      "direction": "LEFT",
+      "node": "g1",
+      "native": "[[\"e14\"],[\"e5\",\"e21\"]]",
+      "elk": "[[\"e14\"],[\"e5\"]]"
+    },
+    {
+      "report": "docs/heuristics/elk-port-edge-lists/complex-report.json",
+      "seed": 17,
+      "direction": "LEFT",
+      "node": "n7",
+      "native": "[[\"e7\",\"e11\"]]",
+      "elk": "[[\"e7\"]]"
+    },
+    {
+      "report": "docs/heuristics/elk-port-edge-lists/complex-report.json",
+      "seed": 18,
+      "direction": "LEFT",
+      "node": "n0",
+      "native": "[[\"e0\"],[\"e27\",\"e45\"]]",
+      "elk": "[[\"e0\"],[\"e27\"]]"
+    },
+    {
+      "report": "docs/heuristics/elk-port-edge-lists/complex-report.json",
+      "seed": 18,
+      "direction": "LEFT",
+      "node": "n11",
+      "native": "[[\"e11\",\"e39\",\"e52\",\"e30\",\"e51\",\"e54\",\"e43\",\"e60\"]]",
+      "elk": "[[\"e11\",\"e39\",\"e52\",\"e30\"]]"
+    },
+    {
+      "report": "docs/heuristics/elk-port-edge-lists/complex-report.json",
+      "seed": 18,
+      "direction": "LEFT",
+      "node": "n13",
+      "native": "[[\"e28\"],[\"e13\"],[\"e26\",\"e42\"]]",
+      "elk": "[[\"e28\"],[\"e13\"],[\"e26\"]]"
+    },
+    {
+      "report": "docs/heuristics/elk-port-edge-lists/complex-report.json",
+      "seed": 18,
+      "direction": "LEFT",
+      "node": "n10",
+      "native": "[[\"e36\",\"e46\"]]",
+      "elk": "[[\"e36\"]]"
+    },
+    {
+      "report": "docs/heuristics/elk-port-edge-lists/complex-report.json",
+      "seed": 18,
+      "direction": "LEFT",
+      "node": "g3",
+      "native": "[[\"e30\",\"e51\",\"e54\",\"e43\",\"e60\"],[\"e10\"],[\"e55\"],[\"e28\"],[\"e13\"],[\"e26\",\"e42\"]]",
+      "elk": "[[\"e30\",\"e43\",\"e60\"],[\"e10\"],[\"e55\"],[\"e28\"],[\"e13\"],[\"e26\",\"e42\"]]"
+    },
+    {
+      "report": "docs/heuristics/elk-port-edge-lists/complex-report.json",
+      "seed": 18,
+      "direction": "LEFT",
+      "node": "g2",
+      "native": "[[\"e30\",\"e51\",\"e54\"],[\"e55\"],[\"e28\"],[\"e13\"],[\"e26\"],[\"e35\"],[\"e6\"],[\"e36\",\"e46\"],[\"e34\"]]",
+      "elk": "[[\"e30\",\"e54\"],[\"e55\"],[\"e28\"],[\"e13\"],[\"e26\"],[\"e35\"],[\"e6\"],[\"e36\",\"e46\"],[\"e34\"]]"
+    },
+    {
+      "report": "docs/heuristics/elk-port-edge-lists/complex-report.json",
+      "seed": 18,
+      "direction": "LEFT",
+      "node": "n21",
+      "native": "[[\"e21\",\"e41\",\"e62\",\"e38\"]]",
+      "elk": "[[\"e21\",\"e41\"]]"
+    },
+    {
+      "report": "docs/heuristics/elk-port-edge-lists/complex-report.json",
+      "seed": 18,
+      "direction": "LEFT",
+      "node": "n17",
+      "native": "[[\"e17\",\"e37\",\"e50\",\"e57\",\"e58\",\"e61\"]]",
+      "elk": "[[\"e17\",\"e37\"]]"
+    },
+    {
+      "report": "docs/heuristics/elk-port-edge-lists/complex-report.json",
+      "seed": 18,
+      "direction": "LEFT",
+      "node": "g6",
+      "native": "[[\"e41\",\"e62\"],[\"e22\"],[\"e29\"]]",
+      "elk": "[[\"e41\"],[\"e22\"],[\"e29\"]]"
+    },
+    {
+      "report": "docs/heuristics/elk-port-edge-lists/complex-report.json",
+      "seed": 18,
+      "direction": "LEFT",
+      "node": "g5",
+      "native": "[[\"e41\",\"e62\"],[\"e22\"],[\"e29\"],[\"e37\",\"e50\",\"e57\",\"e58\",\"e61\"],[\"e16\"],[\"e47\"]]",
+      "elk": "[[\"e41\"],[\"e22\"],[\"e29\"],[\"e37\",\"e61\"],[\"e16\"],[\"e47\"]]"
+    },
+    {
+      "report": "docs/heuristics/elk-port-edge-lists/complex-report.json",
+      "seed": 19,
+      "direction": "LEFT",
+      "node": "g0",
+      "native": "[[\"e20\"],[\"e35\"],[\"e37\"],[\"e28\"],[\"e11\"],[\"e26\"],[\"e36\"],[\"e41\"],[\"e32\"],[\"e22\"],[\"e19\"],[\"e34\"],[\"e43\"],[\"e40\"],[\"e25\"]]",
+      "elk": "[[\"e20\"],[\"e35\"],[\"e28\"],[\"e37\"],[\"e11\"],[\"e26\"],[\"e36\"],[\"e41\"],[\"e32\"],[\"e22\"],[\"e19\"],[\"e34\"],[\"e43\"],[\"e25\"],[\"e40\"]]"
+    },
+    {
+      "report": "docs/heuristics/elk-port-edge-lists/complex-report.json",
+      "seed": 21,
+      "direction": "LEFT",
+      "node": "n9",
+      "native": "[[\"e29\",\"e37\"],[\"e23\"]]",
+      "elk": "[[\"e29\"],[\"e23\"]]"
+    },
+    {
+      "report": "docs/heuristics/elk-port-edge-lists/complex-report.json",
+      "seed": 21,
+      "direction": "LEFT",
+      "node": "n11",
+      "native": "[[\"e11\",\"e35\"]]",
+      "elk": "[[\"e11\"]]"
+    },
+    {
+      "report": "docs/heuristics/elk-port-edge-lists/complex-report.json",
+      "seed": 21,
+      "direction": "LEFT",
+      "node": "g2",
+      "native": "[[\"e21\"],[\"e29\",\"e37\"],[\"e23\"],[\"e32\"],[\"e19\"],[\"e11\",\"e35\"]]",
+      "elk": "[[\"e21\"],[\"e29\"],[\"e23\"],[\"e32\"],[\"e19\"],[\"e11\"]]"
+    },
+    {
+      "report": "docs/heuristics/elk-port-edge-lists/complex-report.json",
+      "seed": 21,
+      "direction": "LEFT",
+      "node": "g1",
+      "native": "[[\"e21\"],[\"e29\",\"e37\"],[\"e23\"],[\"e32\"],[\"e11\",\"e35\"]]",
+      "elk": "[[\"e21\"],[\"e29\"],[\"e23\"],[\"e32\"],[\"e11\"]]"
+    },
+    {
+      "report": "docs/heuristics/elk-port-edge-lists/complex-report.json",
+      "seed": 21,
+      "direction": "LEFT",
+      "node": "n12",
+      "native": "[[\"e24\",\"e27\",\"e28\"],[\"e12\"]]",
+      "elk": "[[\"e24\"],[\"e12\"]]"
+    },
+    {
+      "report": "docs/heuristics/elk-port-edge-lists/complex-report.json",
+      "seed": 21,
+      "direction": "LEFT",
+      "node": "g3",
+      "native": "[[\"e28\",\"e24\",\"e27\"],[\"e11\"],[\"e14\"],[\"e17\"],[\"e26\"]]",
+      "elk": "[[\"e24\",\"e27\",\"e28\"],[\"e11\"],[\"e14\"],[\"e17\"],[\"e26\"]]"
+    },
+    {
+      "report": "docs/heuristics/elk-port-edge-lists/complex-report.json",
+      "seed": 22,
+      "direction": "LEFT",
+      "node": "n1",
+      "native": "[[\"e1\",\"e25\",\"e32\",\"e42\"]]",
+      "elk": "[[\"e1\",\"e25\"]]"
+    },
+    {
+      "report": "docs/heuristics/elk-port-edge-lists/complex-report.json",
+      "seed": 22,
+      "direction": "LEFT",
+      "node": "n13",
+      "native": "[[\"e24\"],[\"e33\"],[\"e34\",\"e29\"],[\"e13\"]]",
+      "elk": "[[\"e24\"],[\"e33\"],[\"e34\"],[\"e13\"]]"
+    },
+    {
+      "report": "docs/heuristics/elk-port-edge-lists/complex-report.json",
+      "seed": 22,
+      "direction": "LEFT",
+      "node": "n5",
+      "native": "[[\"e35\"],[\"e5\",\"e41\",\"e44\"]]",
+      "elk": "[[\"e35\"],[\"e5\",\"e41\"]]"
+    },
+    {
+      "report": "docs/heuristics/elk-port-edge-lists/complex-report.json",
+      "seed": 22,
+      "direction": "LEFT",
+      "node": "g2",
+      "native": "[[\"e45\"],[\"e49\"],[\"e14\"],[\"e35\"],[\"e41\",\"e44\"],[\"e50\"],[\"e30\"]]",
+      "elk": "[[\"e45\"],[\"e49\"],[\"e14\"],[\"e35\"],[\"e41\"],[\"e50\"],[\"e30\"]]"
+    },
+    {
+      "report": "docs/heuristics/elk-port-edge-lists/complex-report.json",
+      "seed": 22,
+      "direction": "LEFT",
+      "node": "n16",
+      "native": "[[\"e16\",\"e22\",\"e36\",\"e52\"]]",
+      "elk": "[[\"e16\"]]"
+    },
+    {
+      "report": "docs/heuristics/elk-port-edge-lists/complex-report.json",
+      "seed": 22,
+      "direction": "LEFT",
+      "node": "g4",
+      "native": "[[\"e45\"],[\"e53\"],[\"e14\"],[\"e52\",\"e22\",\"e36\",\"e16\"],[\"e25\",\"e49\"]]",
+      "elk": "[[\"e45\"],[\"e53\"],[\"e14\"],[\"e16\",\"e22\",\"e36\",\"e52\"],[\"e25\",\"e49\"]]"
+    },
+    {
+      "report": "docs/heuristics/elk-port-edge-lists/complex-report.json",
+      "seed": 23,
+      "direction": "LEFT",
+      "node": "g2",
+      "native": "[[\"e14\"],[\"e11\"],[\"e16\"],[\"e18\"],[\"e21\"],[\"e26\"],[\"e17\"],[\"e22\"],[\"e25\"],[\"e3\"],[\"e23\"]]",
+      "elk": "[[\"e14\"],[\"e11\"],[\"e16\"],[\"e18\"],[\"e21\"],[\"e26\"],[\"e17\"],[\"e3\"],[\"e22\"],[\"e23\"],[\"e25\"]]"
+    },
+    {
+      "report": "docs/heuristics/elk-port-edge-lists/complex-report.json",
+      "seed": 25,
+      "direction": "LEFT",
+      "node": "n21",
+      "native": "[[\"e21\",\"e37\",\"e45\",\"e52\",\"e53\",\"e54\",\"e57\"]]",
+      "elk": "[[\"e21\",\"e37\"]]"
+    },
+    {
+      "report": "docs/heuristics/elk-port-edge-lists/complex-report.json",
+      "seed": 25,
+      "direction": "LEFT",
+      "node": "g5",
+      "native": "[[\"e37\",\"e45\",\"e52\",\"e53\"],[\"e67\"],[\"e34\"],[\"e27\"],[\"e62\"],[\"e55\"],[\"e24\"]]",
+      "elk": "[[\"e37\"],[\"e67\"],[\"e34\"],[\"e27\"],[\"e62\"],[\"e55\"],[\"e24\"]]"
+    },
+    {
+      "report": "docs/heuristics/elk-port-edge-lists/complex-report.json",
+      "seed": 25,
+      "direction": "LEFT",
+      "node": "g4",
+      "native": "[[\"e37\",\"e45\",\"e52\",\"e53\"],[\"e67\"],[\"e34\"],[\"e27\"],[\"e62\"],[\"e55\"],[\"e24\"],[\"e58\"],[\"e17\"],[\"e40\"],[\"e63\"],[\"e38\"]]",
+      "elk": "[[\"e37\",\"e53\"],[\"e67\"],[\"e34\"],[\"e27\"],[\"e62\"],[\"e55\"],[\"e24\"],[\"e58\"],[\"e17\"],[\"e40\"],[\"e63\"],[\"e38\"]]"
+    },
+    {
+      "report": "docs/heuristics/elk-port-edge-lists/complex-report.json",
+      "seed": 25,
+      "direction": "LEFT",
+      "node": "g3",
+      "native": "[[\"e52\",\"e37\",\"e45\"],[\"e30\"],[\"e34\"],[\"e39\"],[\"e27\"],[\"e24\"],[\"e64\"],[\"e44\"],[\"e40\"],[\"e63\"],[\"e42\"],[\"e12\"],[\"e60\"],[\"e47\"],[\"e46\"],[\"e50\"],[\"e48\"],[\"e29\"]]",
+      "elk": "[[\"e37\",\"e45\",\"e52\"],[\"e30\"],[\"e34\"],[\"e39\"],[\"e27\"],[\"e24\"],[\"e64\"],[\"e44\"],[\"e40\"],[\"e63\"],[\"e42\"],[\"e12\"],[\"e60\"],[\"e47\"],[\"e46\"],[\"e50\"],[\"e48\"],[\"e29\"]]"
+    },
+    {
+      "report": "docs/heuristics/elk-port-edge-lists/complex-report.json",
+      "seed": 1,
+      "direction": "DOWN",
+      "node": "n9",
+      "native": "[[\"e9\"],[\"e22\",\"e35\"]]",
+      "elk": "[[\"e9\"],[\"e22\"]]"
+    },
+    {
+      "report": "docs/heuristics/elk-port-edge-lists/complex-report.json",
+      "seed": 1,
+      "direction": "DOWN",
+      "node": "g2",
+      "native": "[[\"e39\"],[\"e9\"],[\"e22\",\"e35\"]]",
+      "elk": "[[\"e39\"],[\"e9\"],[\"e22\"]]"
+    },
+    {
+      "report": "docs/heuristics/elk-port-edge-lists/complex-report.json",
+      "seed": 1,
+      "direction": "DOWN",
+      "node": "g1",
+      "native": "[[\"e39\"],[\"e9\"],[\"e22\",\"e35\"],[\"e36\"],[\"e30\"]]",
+      "elk": "[[\"e39\"],[\"e9\"],[\"e22\"],[\"e36\"],[\"e30\"]]"
+    },
+    {
+      "report": "docs/heuristics/elk-port-edge-lists/complex-report.json",
+      "seed": 1,
+      "direction": "DOWN",
+      "node": "n12",
+      "native": "[[\"e12\"],[\"e38\",\"e43\",\"e45\"]]",
+      "elk": "[[\"e12\"],[\"e38\"]]"
+    },
+    {
+      "report": "docs/heuristics/elk-port-edge-lists/complex-report.json",
+      "seed": 1,
+      "direction": "DOWN",
+      "node": "n16",
+      "native": "[[\"e20\",\"e41\"],[\"e16\",\"e28\",\"e24\"]]",
+      "elk": "[[\"e20\"],[\"e16\",\"e28\"]]"
+    },
+    {
+      "report": "docs/heuristics/elk-port-edge-lists/complex-report.json",
+      "seed": 1,
+      "direction": "DOWN",
+      "node": "n17",
+      "native": "[[\"e17\",\"e25\",\"e27\"]]",
+      "elk": "[[\"e17\"]]"
+    },
+    {
+      "report": "docs/heuristics/elk-port-edge-lists/complex-report.json",
+      "seed": 1,
+      "direction": "DOWN",
+      "node": "g5",
+      "native": "[[\"e20\",\"e41\"],[\"e15\"],[\"e28\",\"e24\"],[\"e17\",\"e25\",\"e27\"]]",
+      "elk": "[[\"e20\"],[\"e15\"],[\"e28\",\"e24\"],[\"e17\"]]"
+    },
+    {
+      "report": "docs/heuristics/elk-port-edge-lists/complex-report.json",
+      "seed": 1,
+      "direction": "DOWN",
+      "node": "g4",
+      "native": "[[\"e20\",\"e41\"],[\"e28\"],[\"e22\"],[\"e25\",\"e27\",\"e17\"],[\"e43\"],[\"e32\"],[\"e39\",\"e12\",\"e40\"],[\"e35\"],[\"e46\"]]",
+      "elk": "[[\"e20\",\"e41\"],[\"e28\"],[\"e22\"],[\"e17\",\"e25\",\"e27\"],[\"e43\"],[\"e32\"],[\"e39\",\"e12\",\"e40\"],[\"e35\"],[\"e46\"]]"
+    },
+    {
+      "report": "docs/heuristics/elk-port-edge-lists/complex-report.json",
+      "seed": 2,
+      "direction": "DOWN",
+      "node": "n10",
+      "native": "[[\"e20\",\"e28\",\"e35\"],[\"e30\"],[\"e10\"],[\"e21\",\"e29\"]]",
+      "elk": "[[\"e20\",\"e28\",\"e35\"],[\"e30\"],[\"e10\"],[\"e21\"]]"
+    },
+    {
+      "report": "docs/heuristics/elk-port-edge-lists/complex-report.json",
+      "seed": 2,
+      "direction": "DOWN",
+      "node": "n11",
+      "native": "[[\"e32\"],[\"e11\",\"e19\",\"e33\"]]",
+      "elk": "[[\"e32\"],[\"e11\",\"e19\"]]"
+    },
+    {
+      "report": "docs/heuristics/elk-port-edge-lists/complex-report.json",
+      "seed": 2,
+      "direction": "DOWN",
+      "node": "g2",
+      "native": "[[\"e25\"],[\"e40\"],[\"e38\"],[\"e16\"],[\"e8\"],[\"e28\"],[\"e30\"],[\"e21\",\"e29\"],[\"e32\"],[\"e19\",\"e33\"]]",
+      "elk": "[[\"e25\"],[\"e40\"],[\"e38\"],[\"e16\"],[\"e8\"],[\"e28\"],[\"e30\"],[\"e21\"],[\"e32\"],[\"e19\"]]"
+    },
+    {
+      "report": "docs/heuristics/elk-port-edge-lists/complex-report.json",
+      "seed": 2,
+      "direction": "DOWN",
+      "node": "g1",
+      "native": "[[\"e25\"],[\"e31\"],[\"e36\"],[\"e28\"],[\"e39\"],[\"e21\",\"e29\"],[\"e33\",\"e19\"],[\"e3\"],[\"e41\"]]",
+      "elk": "[[\"e25\"],[\"e31\"],[\"e36\"],[\"e28\"],[\"e39\"],[\"e21\",\"e29\"],[\"e19\",\"e33\"],[\"e3\"],[\"e41\"]]"
+    },
+    {
+      "report": "docs/heuristics/elk-port-edge-lists/complex-report.json",
+      "seed": 3,
+      "direction": "DOWN",
+      "node": "g3",
+      "native": "[[\"e39\"],[\"e57\"],[\"e45\"],[\"e22\"],[\"e47\"],[\"e69\"],[\"e28\"],[\"e29\"],[\"e54\"],[\"e48\"],[\"e61\"],[\"e67\"],[\"e58\"],[\"e66\"],[\"e68\"],[\"e64\"],[\"e38\"],[\"e51\"],[\"e30\"],[\"e52\"],[\"e49\"],[\"e12\"],[\"e46\"],[\"e63\"]]",
+      "elk": "[[\"e39\"],[\"e57\"],[\"e45\"],[\"e22\"],[\"e28\"],[\"e47\"],[\"e69\"],[\"e29\"],[\"e54\"],[\"e48\"],[\"e61\"],[\"e67\"],[\"e58\"],[\"e64\"],[\"e66\"],[\"e68\"],[\"e30\"],[\"e38\"],[\"e51\"],[\"e52\"],[\"e12\"],[\"e49\"],[\"e46\"],[\"e63\"]]"
+    },
+    {
+      "report": "docs/heuristics/elk-port-edge-lists/complex-report.json",
+      "seed": 5,
+      "direction": "DOWN",
+      "node": "n7",
+      "native": "[[\"e53\",\"e29\"]]",
+      "elk": "[[\"e53\"]]"
+    },
+    {
+      "report": "docs/heuristics/elk-port-edge-lists/complex-report.json",
+      "seed": 5,
+      "direction": "DOWN",
+      "node": "n2",
+      "native": "[[\"e50\",\"e59\"]]",
+      "elk": "[[\"e50\"]]"
+    },
+    {
+      "report": "docs/heuristics/elk-port-edge-lists/complex-report.json",
+      "seed": 5,
+      "direction": "DOWN",
+      "node": "n15",
+      "native": "[[\"e28\",\"e45\"],[\"e15\"]]",
+      "elk": "[[\"e28\"],[\"e15\"]]"
+    },
+    {
+      "report": "docs/heuristics/elk-port-edge-lists/complex-report.json",
+      "seed": 5,
+      "direction": "DOWN",
+      "node": "n19",
+      "native": "[[\"e19\",\"e37\",\"e42\",\"e62\",\"e63\"]]",
+      "elk": "[[\"e19\",\"e37\"]]"
+    },
+    {
+      "report": "docs/heuristics/elk-port-edge-lists/complex-report.json",
+      "seed": 6,
+      "direction": "DOWN",
+      "node": "n6",
+      "native": "[[\"e6\",\"e16\",\"e32\"]]",
+      "elk": "[[\"e6\",\"e16\"]]"
+    },
+    {
+      "report": "docs/heuristics/elk-port-edge-lists/complex-report.json",
+      "seed": 6,
+      "direction": "DOWN",
+      "node": "g1",
+      "native": "[[\"e31\"],[\"e23\"],[\"e14\"],[\"e16\",\"e32\"],[\"e7\"]]",
+      "elk": "[[\"e31\"],[\"e23\"],[\"e14\"],[\"e16\"],[\"e7\"]]"
+    },
+    {
+      "report": "docs/heuristics/elk-port-edge-lists/complex-report.json",
+      "seed": 7,
+      "direction": "DOWN",
+      "node": "g2",
+      "native": "[[\"e18\"],[\"e20\"],[\"e30\"],[\"e34\"],[\"e22\"],[\"e15\"],[\"e27\"],[\"e8\"],[\"e21\"],[\"e23\"],[\"e25\"],[\"e31\"]]",
+      "elk": "[[\"e18\"],[\"e20\"],[\"e22\"],[\"e30\"],[\"e34\"],[\"e15\"],[\"e27\"],[\"e8\"],[\"e21\"],[\"e23\"],[\"e25\"],[\"e31\"]]"
+    },
+    {
+      "report": "docs/heuristics/elk-port-edge-lists/complex-report.json",
+      "seed": 9,
+      "direction": "DOWN",
+      "node": "n11",
+      "native": "[[\"e11\",\"e66\"],[\"e32\",\"e51\"]]",
+      "elk": "[[\"e11\"],[\"e32\"]]"
+    },
+    {
+      "report": "docs/heuristics/elk-port-edge-lists/complex-report.json",
+      "seed": 9,
+      "direction": "DOWN",
+      "node": "n3",
+      "native": "[[\"e59\",\"e62\"],[\"e3\",\"e27\"]]",
+      "elk": "[[\"e59\"],[\"e3\",\"e27\"]]"
+    },
+    {
+      "report": "docs/heuristics/elk-port-edge-lists/complex-report.json",
+      "seed": 9,
+      "direction": "DOWN",
+      "node": "g2",
+      "native": "[[\"e39\"],[\"e6\"],[\"e41\"],[\"e55\"],[\"e30\"],[\"e37\"],[\"e63\"],[\"e43\"],[\"e11\",\"e66\"],[\"e32\",\"e51\"]]",
+      "elk": "[[\"e39\"],[\"e6\"],[\"e41\"],[\"e55\"],[\"e30\"],[\"e37\"],[\"e63\"],[\"e43\"],[\"e11\",\"e66\"],[\"e32\"]]"
+    },
+    {
+      "report": "docs/heuristics/elk-port-edge-lists/complex-report.json",
+      "seed": 9,
+      "direction": "DOWN",
+      "node": "g1",
+      "native": "[[\"e39\"],[\"e41\"],[\"e55\"],[\"e30\"],[\"e63\"],[\"e43\"],[\"e11\"],[\"e32\",\"e51\"],[\"e59\",\"e62\"],[\"e27\"],[\"e28\"],[\"e47\"],[\"e38\"],[\"e52\"]]",
+      "elk": "[[\"e39\"],[\"e41\"],[\"e55\"],[\"e30\"],[\"e63\"],[\"e43\"],[\"e11\"],[\"e32\"],[\"e59\"],[\"e27\"],[\"e28\"],[\"e47\"],[\"e38\"],[\"e52\"]]"
+    },
+    {
+      "report": "docs/heuristics/elk-port-edge-lists/complex-report.json",
+      "seed": 9,
+      "direction": "DOWN",
+      "node": "n23",
+      "native": "[[\"e33\",\"e61\"],[\"e23\"]]",
+      "elk": "[[\"e33\"],[\"e23\"]]"
+    },
+    {
+      "report": "docs/heuristics/elk-port-edge-lists/complex-report.json",
+      "seed": 9,
+      "direction": "DOWN",
+      "node": "g5",
+      "native": "[[\"e33\",\"e61\"],[\"e24\"],[\"e65\"]]",
+      "elk": "[[\"e33\"],[\"e24\"],[\"e65\"]]"
+    },
+    {
+      "report": "docs/heuristics/elk-port-edge-lists/complex-report.json",
+      "seed": 10,
+      "direction": "DOWN",
+      "node": "n10",
+      "native": "[[\"e10\",\"e24\"]]",
+      "elk": "[[\"e10\"]]"
+    },
+    {
+      "report": "docs/heuristics/elk-port-edge-lists/complex-report.json",
+      "seed": 11,
+      "direction": "DOWN",
+      "node": "g3",
+      "native": "[[\"e28\"],[\"e48\"],[\"e81\"],[\"e9\"],[\"e33\"],[\"e71\"],[\"e72\"],[\"e80\"],[\"e41\"],[\"e57\"],[\"e77\"],[\"e69\"],[\"e75\"],[\"e35\"],[\"e44\"],[\"e49\"],[\"e59\"],[\"e60\"],[\"e39\"],[\"e56\"],[\"e78\"],[\"e14\"],[\"e32\"],[\"e40\"],[\"e79\"],[\"e54\"]]",
+      "elk": "[[\"e9\"],[\"e28\"],[\"e33\"],[\"e48\"],[\"e71\"],[\"e72\"],[\"e80\"],[\"e81\"],[\"e41\"],[\"e57\"],[\"e69\"],[\"e75\"],[\"e77\"],[\"e35\"],[\"e44\"],[\"e49\"],[\"e59\"],[\"e60\"],[\"e39\"],[\"e56\"],[\"e78\"],[\"e14\"],[\"e32\"],[\"e40\"],[\"e54\"],[\"e79\"]]"
+    },
+    {
+      "report": "docs/heuristics/elk-port-edge-lists/complex-report.json",
+      "seed": 11,
+      "direction": "DOWN",
+      "node": "g4",
+      "native": "[[\"e25\"],[\"e73\"],[\"e45\"],[\"e63\"],[\"e52\"],[\"e46\"],[\"e47\"],[\"e67\"],[\"e55\"],[\"e50\"],[\"e76\"],[\"e37\"],[\"e36\"],[\"e70\"],[\"e65\"],[\"e51\"]]",
+      "elk": "[[\"e25\"],[\"e73\"],[\"e45\"],[\"e63\"],[\"e46\"],[\"e52\"],[\"e47\"],[\"e67\"],[\"e50\"],[\"e55\"],[\"e76\"],[\"e37\"],[\"e36\"],[\"e65\"],[\"e70\"],[\"e51\"]]"
+    },
+    {
+      "report": "docs/heuristics/elk-port-edge-lists/complex-report.json",
+      "seed": 13,
+      "direction": "DOWN",
+      "node": "n24",
+      "native": "[[\"e24\",\"e57\",\"e46\",\"e63\"]]",
+      "elk": "[[\"e24\",\"e57\",\"e46\"]]"
+    },
+    {
+      "report": "docs/heuristics/elk-port-edge-lists/complex-report.json",
+      "seed": 13,
+      "direction": "DOWN",
+      "node": "n26",
+      "native": "[[\"e26\",\"e45\"],[\"e30\",\"e44\"]]",
+      "elk": "[[\"e26\",\"e45\"],[\"e30\"]]"
+    },
+    {
+      "report": "docs/heuristics/elk-port-edge-lists/complex-report.json",
+      "seed": 13,
+      "direction": "DOWN",
+      "node": "n27",
+      "native": "[[\"e27\",\"e42\"]]",
+      "elk": "[[\"e27\"]]"
+    },
+    {
+      "report": "docs/heuristics/elk-port-edge-lists/complex-report.json",
+      "seed": 13,
+      "direction": "DOWN",
+      "node": "g7",
+      "native": "[[\"e67\"],[\"e46\",\"e63\"],[\"e52\"],[\"e45\"],[\"e30\",\"e44\"],[\"e27\",\"e42\"]]",
+      "elk": "[[\"e67\"],[\"e46\"],[\"e52\"],[\"e45\"],[\"e30\",\"e44\"],[\"e27\"]]"
+    },
+    {
+      "report": "docs/heuristics/elk-port-edge-lists/complex-report.json",
+      "seed": 13,
+      "direction": "DOWN",
+      "node": "g6",
+      "native": "[[\"e46\",\"e63\"],[\"e52\"],[\"e45\"],[\"e30\"],[\"e27\",\"e42\"],[\"e38\"],[\"e48\"]]",
+      "elk": "[[\"e46\"],[\"e52\"],[\"e45\"],[\"e30\"],[\"e27\"],[\"e38\"],[\"e48\"]]"
+    },
+    {
+      "report": "docs/heuristics/elk-port-edge-lists/complex-report.json",
+      "seed": 13,
+      "direction": "DOWN",
+      "node": "g5",
+      "native": "[[\"e52\"],[\"e30\"],[\"e72\"],[\"e42\",\"e27\"],[\"e38\"],[\"e53\"],[\"e39\"],[\"e71\"]]",
+      "elk": "[[\"e52\"],[\"e30\"],[\"e72\"],[\"e27\",\"e42\"],[\"e38\"],[\"e53\"],[\"e39\"],[\"e71\"]]"
+    },
+    {
+      "report": "docs/heuristics/elk-port-edge-lists/complex-report.json",
+      "seed": 14,
+      "direction": "DOWN",
+      "node": "n3",
+      "native": "[[\"e11\",\"e19\"],[\"e3\"],[\"e23\"]]",
+      "elk": "[[\"e11\"],[\"e3\"],[\"e23\"]]"
+    },
+    {
+      "report": "docs/heuristics/elk-port-edge-lists/complex-report.json",
+      "seed": 14,
+      "direction": "DOWN",
+      "node": "n5",
+      "native": "[[\"e5\",\"e15\",\"e21\"]]",
+      "elk": "[[\"e5\",\"e15\"]]"
+    },
+    {
+      "report": "docs/heuristics/elk-port-edge-lists/complex-report.json",
+      "seed": 14,
+      "direction": "DOWN",
+      "node": "n6",
+      "native": "[[\"e6\",\"e13\",\"e17\",\"e22\",\"e24\"]]",
+      "elk": "[[\"e6\"]]"
+    },
+    {
+      "report": "docs/heuristics/elk-port-edge-lists/complex-report.json",
+      "seed": 14,
+      "direction": "DOWN",
+      "node": "g1",
+      "native": "[[\"e3\"],[\"e25\"],[\"e15\",\"e21\"],[\"e14\",\"e11\",\"e19\"],[\"e13\",\"e24\",\"e6\",\"e17\",\"e22\"]]",
+      "elk": "[[\"e3\"],[\"e25\"],[\"e15\",\"e21\"],[\"e14\",\"e11\",\"e19\"],[\"e6\",\"e13\",\"e17\",\"e22\",\"e24\"]]"
+    },
+    {
+      "report": "docs/heuristics/elk-port-edge-lists/complex-report.json",
+      "seed": 15,
+      "direction": "DOWN",
+      "node": "g1",
+      "native": "[[\"e17\"],[\"e31\"],[\"e8\"],[\"e26\"],[\"e23\"],[\"e29\"],[\"e32\"],[\"e34\"],[\"e4\"],[\"e22\"],[\"e40\"],[\"e20\"],[\"e24\"],[\"e25\"],[\"e38\"]]",
+      "elk": "[[\"e17\"],[\"e31\"],[\"e8\"],[\"e23\"],[\"e26\"],[\"e4\"],[\"e22\"],[\"e29\"],[\"e32\"],[\"e34\"],[\"e40\"],[\"e20\"],[\"e24\"],[\"e25\"],[\"e38\"]]"
+    },
+    {
+      "report": "docs/heuristics/elk-port-edge-lists/complex-report.json",
+      "seed": 17,
+      "direction": "DOWN",
+      "node": "n5",
+      "native": "[[\"e5\",\"e21\"]]",
+      "elk": "[[\"e5\"]]"
+    },
+    {
+      "report": "docs/heuristics/elk-port-edge-lists/complex-report.json",
+      "seed": 17,
+      "direction": "DOWN",
+      "node": "n1",
+      "native": "[[\"e0\"],[\"e19\"],[\"e24\",\"e15\",\"e20\"]]",
+      "elk": "[[\"e0\"],[\"e19\"],[\"e24\",\"e15\"]]"
+    },
+    {
+      "report": "docs/heuristics/elk-port-edge-lists/complex-report.json",
+      "seed": 17,
+      "direction": "DOWN",
+      "node": "n2",
+      "native": "[[\"e2\",\"e12\",\"e23\",\"e22\",\"e26\",\"e1\"]]",
+      "elk": "[[\"e2\",\"e12\",\"e23\",\"e22\",\"e1\"]]"
+    },
+    {
+      "report": "docs/heuristics/elk-port-edge-lists/complex-report.json",
+      "seed": 17,
+      "direction": "DOWN",
+      "node": "g1",
+      "native": "[[\"e14\"],[\"e5\",\"e21\"]]",
+      "elk": "[[\"e14\"],[\"e5\"]]"
+    },
+    {
+      "report": "docs/heuristics/elk-port-edge-lists/complex-report.json",
+      "seed": 17,
+      "direction": "DOWN",
+      "node": "n7",
+      "native": "[[\"e7\",\"e11\"]]",
+      "elk": "[[\"e7\"]]"
+    },
+    {
+      "report": "docs/heuristics/elk-port-edge-lists/complex-report.json",
+      "seed": 18,
+      "direction": "DOWN",
+      "node": "n0",
+      "native": "[[\"e0\"],[\"e27\",\"e45\"]]",
+      "elk": "[[\"e0\"],[\"e27\"]]"
+    },
+    {
+      "report": "docs/heuristics/elk-port-edge-lists/complex-report.json",
+      "seed": 18,
+      "direction": "DOWN",
+      "node": "n11",
+      "native": "[[\"e11\",\"e39\",\"e52\",\"e30\",\"e51\",\"e54\",\"e43\",\"e60\"]]",
+      "elk": "[[\"e11\",\"e39\",\"e52\",\"e30\"]]"
+    },
+    {
+      "report": "docs/heuristics/elk-port-edge-lists/complex-report.json",
+      "seed": 18,
+      "direction": "DOWN",
+      "node": "n13",
+      "native": "[[\"e28\"],[\"e13\"],[\"e26\",\"e42\"]]",
+      "elk": "[[\"e28\"],[\"e13\"],[\"e26\"]]"
+    },
+    {
+      "report": "docs/heuristics/elk-port-edge-lists/complex-report.json",
+      "seed": 18,
+      "direction": "DOWN",
+      "node": "n10",
+      "native": "[[\"e36\",\"e46\"]]",
+      "elk": "[[\"e36\"]]"
+    },
+    {
+      "report": "docs/heuristics/elk-port-edge-lists/complex-report.json",
+      "seed": 18,
+      "direction": "DOWN",
+      "node": "g3",
+      "native": "[[\"e30\",\"e51\",\"e54\",\"e43\",\"e60\"],[\"e10\"],[\"e55\"],[\"e28\"],[\"e13\"],[\"e26\",\"e42\"]]",
+      "elk": "[[\"e30\",\"e43\",\"e60\"],[\"e10\"],[\"e55\"],[\"e28\"],[\"e13\"],[\"e26\",\"e42\"]]"
+    },
+    {
+      "report": "docs/heuristics/elk-port-edge-lists/complex-report.json",
+      "seed": 18,
+      "direction": "DOWN",
+      "node": "g2",
+      "native": "[[\"e30\",\"e51\",\"e54\"],[\"e55\"],[\"e28\"],[\"e13\"],[\"e26\"],[\"e35\"],[\"e6\"],[\"e36\",\"e46\"],[\"e34\"]]",
+      "elk": "[[\"e30\",\"e54\"],[\"e55\"],[\"e28\"],[\"e13\"],[\"e26\"],[\"e35\"],[\"e6\"],[\"e36\",\"e46\"],[\"e34\"]]"
+    },
+    {
+      "report": "docs/heuristics/elk-port-edge-lists/complex-report.json",
+      "seed": 18,
+      "direction": "DOWN",
+      "node": "n21",
+      "native": "[[\"e21\",\"e41\",\"e62\",\"e38\"]]",
+      "elk": "[[\"e21\",\"e41\"]]"
+    },
+    {
+      "report": "docs/heuristics/elk-port-edge-lists/complex-report.json",
+      "seed": 18,
+      "direction": "DOWN",
+      "node": "n17",
+      "native": "[[\"e17\",\"e37\",\"e50\",\"e57\",\"e58\",\"e61\"]]",
+      "elk": "[[\"e17\",\"e37\"]]"
+    },
+    {
+      "report": "docs/heuristics/elk-port-edge-lists/complex-report.json",
+      "seed": 18,
+      "direction": "DOWN",
+      "node": "g6",
+      "native": "[[\"e41\",\"e62\"],[\"e22\"],[\"e29\"]]",
+      "elk": "[[\"e41\"],[\"e22\"],[\"e29\"]]"
+    },
+    {
+      "report": "docs/heuristics/elk-port-edge-lists/complex-report.json",
+      "seed": 18,
+      "direction": "DOWN",
+      "node": "g5",
+      "native": "[[\"e41\",\"e62\"],[\"e22\"],[\"e29\"],[\"e37\",\"e50\",\"e57\",\"e58\",\"e61\"],[\"e16\"],[\"e47\"]]",
+      "elk": "[[\"e41\"],[\"e22\"],[\"e29\"],[\"e37\",\"e61\"],[\"e16\"],[\"e47\"]]"
+    },
+    {
+      "report": "docs/heuristics/elk-port-edge-lists/complex-report.json",
+      "seed": 19,
+      "direction": "DOWN",
+      "node": "g0",
+      "native": "[[\"e20\"],[\"e35\"],[\"e37\"],[\"e28\"],[\"e11\"],[\"e26\"],[\"e36\"],[\"e41\"],[\"e32\"],[\"e22\"],[\"e19\"],[\"e34\"],[\"e43\"],[\"e40\"],[\"e25\"]]",
+      "elk": "[[\"e20\"],[\"e35\"],[\"e28\"],[\"e37\"],[\"e11\"],[\"e26\"],[\"e36\"],[\"e41\"],[\"e32\"],[\"e22\"],[\"e19\"],[\"e34\"],[\"e43\"],[\"e25\"],[\"e40\"]]"
+    },
+    {
+      "report": "docs/heuristics/elk-port-edge-lists/complex-report.json",
+      "seed": 21,
+      "direction": "DOWN",
+      "node": "n9",
+      "native": "[[\"e29\",\"e37\"],[\"e23\"]]",
+      "elk": "[[\"e29\"],[\"e23\"]]"
+    },
+    {
+      "report": "docs/heuristics/elk-port-edge-lists/complex-report.json",
+      "seed": 21,
+      "direction": "DOWN",
+      "node": "n11",
+      "native": "[[\"e11\",\"e35\"]]",
+      "elk": "[[\"e11\"]]"
+    },
+    {
+      "report": "docs/heuristics/elk-port-edge-lists/complex-report.json",
+      "seed": 21,
+      "direction": "DOWN",
+      "node": "g2",
+      "native": "[[\"e21\"],[\"e29\",\"e37\"],[\"e23\"],[\"e32\"],[\"e19\"],[\"e11\",\"e35\"]]",
+      "elk": "[[\"e21\"],[\"e29\"],[\"e23\"],[\"e32\"],[\"e19\"],[\"e11\"]]"
+    },
+    {
+      "report": "docs/heuristics/elk-port-edge-lists/complex-report.json",
+      "seed": 21,
+      "direction": "DOWN",
+      "node": "g1",
+      "native": "[[\"e21\"],[\"e29\",\"e37\"],[\"e23\"],[\"e32\"],[\"e11\",\"e35\"]]",
+      "elk": "[[\"e21\"],[\"e29\"],[\"e23\"],[\"e32\"],[\"e11\"]]"
+    },
+    {
+      "report": "docs/heuristics/elk-port-edge-lists/complex-report.json",
+      "seed": 21,
+      "direction": "DOWN",
+      "node": "n12",
+      "native": "[[\"e24\",\"e27\",\"e28\"],[\"e12\"]]",
+      "elk": "[[\"e24\"],[\"e12\"]]"
+    },
+    {
+      "report": "docs/heuristics/elk-port-edge-lists/complex-report.json",
+      "seed": 22,
+      "direction": "DOWN",
+      "node": "n1",
+      "native": "[[\"e1\",\"e25\",\"e32\",\"e42\"]]",
+      "elk": "[[\"e1\",\"e25\"]]"
+    },
+    {
+      "report": "docs/heuristics/elk-port-edge-lists/complex-report.json",
+      "seed": 22,
+      "direction": "DOWN",
+      "node": "n13",
+      "native": "[[\"e24\"],[\"e33\"],[\"e34\",\"e29\"],[\"e13\"]]",
+      "elk": "[[\"e24\"],[\"e33\"],[\"e34\"],[\"e13\"]]"
+    },
+    {
+      "report": "docs/heuristics/elk-port-edge-lists/complex-report.json",
+      "seed": 22,
+      "direction": "DOWN",
+      "node": "n5",
+      "native": "[[\"e35\"],[\"e5\",\"e41\",\"e44\"]]",
+      "elk": "[[\"e35\"],[\"e5\",\"e41\"]]"
+    },
+    {
+      "report": "docs/heuristics/elk-port-edge-lists/complex-report.json",
+      "seed": 22,
+      "direction": "DOWN",
+      "node": "g2",
+      "native": "[[\"e45\"],[\"e49\"],[\"e14\"],[\"e35\"],[\"e41\",\"e44\"],[\"e50\"],[\"e30\"]]",
+      "elk": "[[\"e45\"],[\"e49\"],[\"e14\"],[\"e35\"],[\"e41\"],[\"e50\"],[\"e30\"]]"
+    },
+    {
+      "report": "docs/heuristics/elk-port-edge-lists/complex-report.json",
+      "seed": 22,
+      "direction": "DOWN",
+      "node": "n16",
+      "native": "[[\"e16\",\"e22\",\"e36\",\"e52\"]]",
+      "elk": "[[\"e16\"]]"
+    },
+    {
+      "report": "docs/heuristics/elk-port-edge-lists/complex-report.json",
+      "seed": 22,
+      "direction": "DOWN",
+      "node": "g4",
+      "native": "[[\"e45\"],[\"e53\"],[\"e14\"],[\"e52\",\"e22\",\"e36\",\"e16\"],[\"e25\",\"e49\"]]",
+      "elk": "[[\"e45\"],[\"e53\"],[\"e14\"],[\"e16\",\"e22\",\"e36\",\"e52\"],[\"e25\",\"e49\"]]"
+    },
+    {
+      "report": "docs/heuristics/elk-port-edge-lists/complex-report.json",
+      "seed": 23,
+      "direction": "DOWN",
+      "node": "g2",
+      "native": "[[\"e14\"],[\"e11\"],[\"e16\"],[\"e18\"],[\"e21\"],[\"e26\"],[\"e17\"],[\"e22\"],[\"e25\"],[\"e3\"],[\"e23\"]]",
+      "elk": "[[\"e14\"],[\"e11\"],[\"e16\"],[\"e18\"],[\"e21\"],[\"e26\"],[\"e17\"],[\"e3\"],[\"e22\"],[\"e23\"],[\"e25\"]]"
+    },
+    {
+      "report": "docs/heuristics/elk-port-edge-lists/complex-report.json",
+      "seed": 25,
+      "direction": "DOWN",
+      "node": "n21",
+      "native": "[[\"e21\",\"e37\",\"e45\",\"e52\",\"e53\",\"e54\",\"e57\"]]",
+      "elk": "[[\"e21\",\"e37\"]]"
+    },
+    {
+      "report": "docs/heuristics/elk-port-edge-lists/complex-report.json",
+      "seed": 25,
+      "direction": "DOWN",
+      "node": "g5",
+      "native": "[[\"e37\",\"e45\",\"e52\",\"e53\"],[\"e67\"],[\"e34\"],[\"e27\"],[\"e62\"],[\"e55\"],[\"e24\"]]",
+      "elk": "[[\"e37\"],[\"e67\"],[\"e34\"],[\"e27\"],[\"e62\"],[\"e55\"],[\"e24\"]]"
+    },
+    {
+      "report": "docs/heuristics/elk-port-edge-lists/complex-report.json",
+      "seed": 25,
+      "direction": "DOWN",
+      "node": "g4",
+      "native": "[[\"e37\",\"e45\",\"e52\",\"e53\"],[\"e67\"],[\"e34\"],[\"e27\"],[\"e62\"],[\"e55\"],[\"e24\"],[\"e58\"],[\"e17\"],[\"e40\"],[\"e63\"],[\"e38\"]]",
+      "elk": "[[\"e37\",\"e53\"],[\"e67\"],[\"e34\"],[\"e27\"],[\"e62\"],[\"e55\"],[\"e24\"],[\"e58\"],[\"e17\"],[\"e40\"],[\"e63\"],[\"e38\"]]"
+    },
+    {
+      "report": "docs/heuristics/elk-port-edge-lists/complex-report.json",
+      "seed": 25,
+      "direction": "DOWN",
+      "node": "g3",
+      "native": "[[\"e52\",\"e37\",\"e45\"],[\"e30\"],[\"e34\"],[\"e39\"],[\"e27\"],[\"e24\"],[\"e64\"],[\"e44\"],[\"e40\"],[\"e63\"],[\"e42\"],[\"e12\"],[\"e60\"],[\"e47\"],[\"e46\"],[\"e50\"],[\"e48\"],[\"e29\"]]",
+      "elk": "[[\"e37\",\"e45\",\"e52\"],[\"e30\"],[\"e34\"],[\"e39\"],[\"e27\"],[\"e24\"],[\"e64\"],[\"e44\"],[\"e40\"],[\"e63\"],[\"e42\"],[\"e12\"],[\"e60\"],[\"e47\"],[\"e46\"],[\"e50\"],[\"e48\"],[\"e29\"]]"
+    },
+    {
+      "report": "docs/heuristics/elk-port-edge-lists/complex-report.json",
+      "seed": 1,
+      "direction": "UP",
+      "node": "n9",
+      "native": "[[\"e9\"],[\"e22\",\"e35\"]]",
+      "elk": "[[\"e9\"],[\"e22\"]]"
+    },
+    {
+      "report": "docs/heuristics/elk-port-edge-lists/complex-report.json",
+      "seed": 1,
+      "direction": "UP",
+      "node": "g2",
+      "native": "[[\"e39\"],[\"e9\"],[\"e22\",\"e35\"]]",
+      "elk": "[[\"e39\"],[\"e9\"],[\"e22\"]]"
+    },
+    {
+      "report": "docs/heuristics/elk-port-edge-lists/complex-report.json",
+      "seed": 1,
+      "direction": "UP",
+      "node": "g1",
+      "native": "[[\"e39\"],[\"e9\"],[\"e22\",\"e35\"],[\"e36\"],[\"e30\"]]",
+      "elk": "[[\"e39\"],[\"e9\"],[\"e22\"],[\"e36\"],[\"e30\"]]"
+    },
+    {
+      "report": "docs/heuristics/elk-port-edge-lists/complex-report.json",
+      "seed": 1,
+      "direction": "UP",
+      "node": "n12",
+      "native": "[[\"e12\"],[\"e38\",\"e43\",\"e45\"]]",
+      "elk": "[[\"e12\"],[\"e38\"]]"
+    },
+    {
+      "report": "docs/heuristics/elk-port-edge-lists/complex-report.json",
+      "seed": 1,
+      "direction": "UP",
+      "node": "n16",
+      "native": "[[\"e20\",\"e41\"],[\"e16\",\"e28\",\"e24\"]]",
+      "elk": "[[\"e20\"],[\"e16\",\"e28\"]]"
+    },
+    {
+      "report": "docs/heuristics/elk-port-edge-lists/complex-report.json",
+      "seed": 1,
+      "direction": "UP",
+      "node": "n17",
+      "native": "[[\"e17\",\"e25\",\"e27\"]]",
+      "elk": "[[\"e17\"]]"
+    },
+    {
+      "report": "docs/heuristics/elk-port-edge-lists/complex-report.json",
+      "seed": 1,
+      "direction": "UP",
+      "node": "g5",
+      "native": "[[\"e20\",\"e41\"],[\"e15\"],[\"e28\",\"e24\"],[\"e17\",\"e25\",\"e27\"]]",
+      "elk": "[[\"e20\"],[\"e15\"],[\"e28\",\"e24\"],[\"e17\"]]"
+    },
+    {
+      "report": "docs/heuristics/elk-port-edge-lists/complex-report.json",
+      "seed": 1,
+      "direction": "UP",
+      "node": "g4",
+      "native": "[[\"e20\",\"e41\"],[\"e28\"],[\"e22\"],[\"e25\",\"e27\",\"e17\"],[\"e43\"],[\"e32\"],[\"e39\",\"e12\",\"e40\"],[\"e35\"],[\"e46\"]]",
+      "elk": "[[\"e20\",\"e41\"],[\"e28\"],[\"e22\"],[\"e17\",\"e25\",\"e27\"],[\"e43\"],[\"e32\"],[\"e39\",\"e12\",\"e40\"],[\"e35\"],[\"e46\"]]"
+    },
+    {
+      "report": "docs/heuristics/elk-port-edge-lists/complex-report.json",
+      "seed": 2,
+      "direction": "UP",
+      "node": "n10",
+      "native": "[[\"e20\",\"e28\",\"e35\"],[\"e30\"],[\"e10\"],[\"e21\",\"e29\"]]",
+      "elk": "[[\"e20\",\"e28\",\"e35\"],[\"e30\"],[\"e10\"],[\"e21\"]]"
+    },
+    {
+      "report": "docs/heuristics/elk-port-edge-lists/complex-report.json",
+      "seed": 2,
+      "direction": "UP",
+      "node": "n11",
+      "native": "[[\"e32\"],[\"e11\",\"e19\",\"e33\"]]",
+      "elk": "[[\"e32\"],[\"e11\",\"e19\"]]"
+    },
+    {
+      "report": "docs/heuristics/elk-port-edge-lists/complex-report.json",
+      "seed": 2,
+      "direction": "UP",
+      "node": "g2",
+      "native": "[[\"e25\"],[\"e40\"],[\"e38\"],[\"e16\"],[\"e8\"],[\"e28\"],[\"e30\"],[\"e21\",\"e29\"],[\"e32\"],[\"e19\",\"e33\"]]",
+      "elk": "[[\"e25\"],[\"e40\"],[\"e38\"],[\"e16\"],[\"e8\"],[\"e28\"],[\"e30\"],[\"e21\"],[\"e32\"],[\"e19\"]]"
+    },
+    {
+      "report": "docs/heuristics/elk-port-edge-lists/complex-report.json",
+      "seed": 2,
+      "direction": "UP",
+      "node": "g1",
+      "native": "[[\"e25\"],[\"e31\"],[\"e36\"],[\"e28\"],[\"e39\"],[\"e21\",\"e29\"],[\"e33\",\"e19\"],[\"e3\"],[\"e41\"]]",
+      "elk": "[[\"e25\"],[\"e31\"],[\"e36\"],[\"e28\"],[\"e39\"],[\"e21\",\"e29\"],[\"e19\",\"e33\"],[\"e3\"],[\"e41\"]]"
+    },
+    {
+      "report": "docs/heuristics/elk-port-edge-lists/complex-report.json",
+      "seed": 3,
+      "direction": "UP",
+      "node": "g3",
+      "native": "[[\"e39\"],[\"e57\"],[\"e45\"],[\"e22\"],[\"e47\"],[\"e69\"],[\"e28\"],[\"e29\"],[\"e54\"],[\"e48\"],[\"e61\"],[\"e67\"],[\"e58\"],[\"e66\"],[\"e68\"],[\"e64\"],[\"e38\"],[\"e51\"],[\"e30\"],[\"e52\"],[\"e49\"],[\"e12\"],[\"e46\"],[\"e63\"]]",
+      "elk": "[[\"e39\"],[\"e57\"],[\"e45\"],[\"e22\"],[\"e28\"],[\"e47\"],[\"e69\"],[\"e29\"],[\"e54\"],[\"e48\"],[\"e61\"],[\"e67\"],[\"e58\"],[\"e64\"],[\"e66\"],[\"e68\"],[\"e30\"],[\"e38\"],[\"e51\"],[\"e52\"],[\"e12\"],[\"e49\"],[\"e46\"],[\"e63\"]]"
+    },
+    {
+      "report": "docs/heuristics/elk-port-edge-lists/complex-report.json",
+      "seed": 5,
+      "direction": "UP",
+      "node": "n7",
+      "native": "[[\"e53\",\"e29\"]]",
+      "elk": "[[\"e53\"]]"
+    },
+    {
+      "report": "docs/heuristics/elk-port-edge-lists/complex-report.json",
+      "seed": 5,
+      "direction": "UP",
+      "node": "n2",
+      "native": "[[\"e50\",\"e59\"]]",
+      "elk": "[[\"e50\"]]"
+    },
+    {
+      "report": "docs/heuristics/elk-port-edge-lists/complex-report.json",
+      "seed": 5,
+      "direction": "UP",
+      "node": "n15",
+      "native": "[[\"e28\",\"e45\"],[\"e15\"]]",
+      "elk": "[[\"e28\"],[\"e15\"]]"
+    },
+    {
+      "report": "docs/heuristics/elk-port-edge-lists/complex-report.json",
+      "seed": 5,
+      "direction": "UP",
+      "node": "n19",
+      "native": "[[\"e19\",\"e37\",\"e42\",\"e62\",\"e63\"]]",
+      "elk": "[[\"e19\",\"e37\"]]"
+    },
+    {
+      "report": "docs/heuristics/elk-port-edge-lists/complex-report.json",
+      "seed": 6,
+      "direction": "UP",
+      "node": "n6",
+      "native": "[[\"e6\",\"e16\",\"e32\"]]",
+      "elk": "[[\"e6\",\"e16\"]]"
+    },
+    {
+      "report": "docs/heuristics/elk-port-edge-lists/complex-report.json",
+      "seed": 6,
+      "direction": "UP",
+      "node": "g1",
+      "native": "[[\"e31\"],[\"e23\"],[\"e14\"],[\"e16\",\"e32\"],[\"e7\"]]",
+      "elk": "[[\"e31\"],[\"e23\"],[\"e14\"],[\"e16\"],[\"e7\"]]"
+    },
+    {
+      "report": "docs/heuristics/elk-port-edge-lists/complex-report.json",
+      "seed": 7,
+      "direction": "UP",
+      "node": "g2",
+      "native": "[[\"e18\"],[\"e20\"],[\"e30\"],[\"e34\"],[\"e22\"],[\"e15\"],[\"e27\"],[\"e8\"],[\"e21\"],[\"e23\"],[\"e25\"],[\"e31\"]]",
+      "elk": "[[\"e18\"],[\"e20\"],[\"e22\"],[\"e30\"],[\"e34\"],[\"e15\"],[\"e27\"],[\"e8\"],[\"e21\"],[\"e23\"],[\"e25\"],[\"e31\"]]"
+    },
+    {
+      "report": "docs/heuristics/elk-port-edge-lists/complex-report.json",
+      "seed": 9,
+      "direction": "UP",
+      "node": "n11",
+      "native": "[[\"e11\",\"e66\"],[\"e32\",\"e51\"]]",
+      "elk": "[[\"e11\"],[\"e32\"]]"
+    },
+    {
+      "report": "docs/heuristics/elk-port-edge-lists/complex-report.json",
+      "seed": 9,
+      "direction": "UP",
+      "node": "n3",
+      "native": "[[\"e59\",\"e62\"],[\"e3\",\"e27\"]]",
+      "elk": "[[\"e59\"],[\"e3\",\"e27\"]]"
+    },
+    {
+      "report": "docs/heuristics/elk-port-edge-lists/complex-report.json",
+      "seed": 9,
+      "direction": "UP",
+      "node": "g2",
+      "native": "[[\"e39\"],[\"e6\"],[\"e41\"],[\"e55\"],[\"e30\"],[\"e37\"],[\"e63\"],[\"e43\"],[\"e11\",\"e66\"],[\"e32\",\"e51\"]]",
+      "elk": "[[\"e39\"],[\"e6\"],[\"e41\"],[\"e55\"],[\"e30\"],[\"e37\"],[\"e63\"],[\"e43\"],[\"e11\",\"e66\"],[\"e32\"]]"
+    },
+    {
+      "report": "docs/heuristics/elk-port-edge-lists/complex-report.json",
+      "seed": 9,
+      "direction": "UP",
+      "node": "g1",
+      "native": "[[\"e39\"],[\"e41\"],[\"e55\"],[\"e30\"],[\"e63\"],[\"e43\"],[\"e11\"],[\"e32\",\"e51\"],[\"e59\",\"e62\"],[\"e27\"],[\"e28\"],[\"e47\"],[\"e38\"],[\"e52\"]]",
+      "elk": "[[\"e39\"],[\"e41\"],[\"e55\"],[\"e30\"],[\"e63\"],[\"e43\"],[\"e11\"],[\"e32\"],[\"e59\"],[\"e27\"],[\"e28\"],[\"e47\"],[\"e38\"],[\"e52\"]]"
+    },
+    {
+      "report": "docs/heuristics/elk-port-edge-lists/complex-report.json",
+      "seed": 9,
+      "direction": "UP",
+      "node": "n23",
+      "native": "[[\"e33\",\"e61\"],[\"e23\"]]",
+      "elk": "[[\"e33\"],[\"e23\"]]"
+    },
+    {
+      "report": "docs/heuristics/elk-port-edge-lists/complex-report.json",
+      "seed": 9,
+      "direction": "UP",
+      "node": "g5",
+      "native": "[[\"e33\",\"e61\"],[\"e24\"],[\"e65\"]]",
+      "elk": "[[\"e33\"],[\"e24\"],[\"e65\"]]"
+    },
+    {
+      "report": "docs/heuristics/elk-port-edge-lists/complex-report.json",
+      "seed": 10,
+      "direction": "UP",
+      "node": "n10",
+      "native": "[[\"e10\",\"e24\"]]",
+      "elk": "[[\"e10\"]]"
+    },
+    {
+      "report": "docs/heuristics/elk-port-edge-lists/complex-report.json",
+      "seed": 11,
+      "direction": "UP",
+      "node": "g3",
+      "native": "[[\"e28\"],[\"e48\"],[\"e81\"],[\"e9\"],[\"e33\"],[\"e71\"],[\"e72\"],[\"e80\"],[\"e41\"],[\"e57\"],[\"e77\"],[\"e69\"],[\"e75\"],[\"e35\"],[\"e44\"],[\"e49\"],[\"e59\"],[\"e60\"],[\"e39\"],[\"e56\"],[\"e78\"],[\"e14\"],[\"e32\"],[\"e40\"],[\"e79\"],[\"e54\"]]",
+      "elk": "[[\"e9\"],[\"e28\"],[\"e33\"],[\"e48\"],[\"e71\"],[\"e72\"],[\"e80\"],[\"e81\"],[\"e41\"],[\"e57\"],[\"e69\"],[\"e75\"],[\"e77\"],[\"e35\"],[\"e44\"],[\"e49\"],[\"e59\"],[\"e60\"],[\"e39\"],[\"e56\"],[\"e78\"],[\"e14\"],[\"e32\"],[\"e40\"],[\"e54\"],[\"e79\"]]"
+    },
+    {
+      "report": "docs/heuristics/elk-port-edge-lists/complex-report.json",
+      "seed": 11,
+      "direction": "UP",
+      "node": "g4",
+      "native": "[[\"e25\"],[\"e73\"],[\"e45\"],[\"e63\"],[\"e52\"],[\"e46\"],[\"e47\"],[\"e67\"],[\"e55\"],[\"e50\"],[\"e76\"],[\"e37\"],[\"e36\"],[\"e70\"],[\"e65\"],[\"e51\"]]",
+      "elk": "[[\"e25\"],[\"e73\"],[\"e45\"],[\"e63\"],[\"e46\"],[\"e52\"],[\"e47\"],[\"e67\"],[\"e50\"],[\"e55\"],[\"e76\"],[\"e37\"],[\"e36\"],[\"e65\"],[\"e70\"],[\"e51\"]]"
+    },
+    {
+      "report": "docs/heuristics/elk-port-edge-lists/complex-report.json",
+      "seed": 13,
+      "direction": "UP",
+      "node": "n24",
+      "native": "[[\"e24\",\"e57\",\"e46\",\"e63\"]]",
+      "elk": "[[\"e24\",\"e57\",\"e46\"]]"
+    },
+    {
+      "report": "docs/heuristics/elk-port-edge-lists/complex-report.json",
+      "seed": 13,
+      "direction": "UP",
+      "node": "n26",
+      "native": "[[\"e26\",\"e45\"],[\"e30\",\"e44\"]]",
+      "elk": "[[\"e26\",\"e45\"],[\"e30\"]]"
+    },
+    {
+      "report": "docs/heuristics/elk-port-edge-lists/complex-report.json",
+      "seed": 13,
+      "direction": "UP",
+      "node": "n27",
+      "native": "[[\"e27\",\"e42\"]]",
+      "elk": "[[\"e27\"]]"
+    },
+    {
+      "report": "docs/heuristics/elk-port-edge-lists/complex-report.json",
+      "seed": 13,
+      "direction": "UP",
+      "node": "g7",
+      "native": "[[\"e67\"],[\"e46\",\"e63\"],[\"e52\"],[\"e45\"],[\"e30\",\"e44\"],[\"e27\",\"e42\"]]",
+      "elk": "[[\"e67\"],[\"e46\"],[\"e52\"],[\"e45\"],[\"e30\",\"e44\"],[\"e27\"]]"
+    },
+    {
+      "report": "docs/heuristics/elk-port-edge-lists/complex-report.json",
+      "seed": 13,
+      "direction": "UP",
+      "node": "g6",
+      "native": "[[\"e46\",\"e63\"],[\"e52\"],[\"e45\"],[\"e30\"],[\"e27\",\"e42\"],[\"e38\"],[\"e48\"]]",
+      "elk": "[[\"e46\"],[\"e52\"],[\"e45\"],[\"e30\"],[\"e27\"],[\"e38\"],[\"e48\"]]"
+    },
+    {
+      "report": "docs/heuristics/elk-port-edge-lists/complex-report.json",
+      "seed": 13,
+      "direction": "UP",
+      "node": "g5",
+      "native": "[[\"e52\"],[\"e30\"],[\"e72\"],[\"e42\",\"e27\"],[\"e38\"],[\"e53\"],[\"e39\"],[\"e71\"]]",
+      "elk": "[[\"e52\"],[\"e30\"],[\"e72\"],[\"e27\",\"e42\"],[\"e38\"],[\"e53\"],[\"e39\"],[\"e71\"]]"
+    },
+    {
+      "report": "docs/heuristics/elk-port-edge-lists/complex-report.json",
+      "seed": 14,
+      "direction": "UP",
+      "node": "n3",
+      "native": "[[\"e11\",\"e19\"],[\"e3\"],[\"e23\"]]",
+      "elk": "[[\"e11\"],[\"e3\"],[\"e23\"]]"
+    },
+    {
+      "report": "docs/heuristics/elk-port-edge-lists/complex-report.json",
+      "seed": 14,
+      "direction": "UP",
+      "node": "n5",
+      "native": "[[\"e5\",\"e15\",\"e21\"]]",
+      "elk": "[[\"e5\",\"e15\"]]"
+    },
+    {
+      "report": "docs/heuristics/elk-port-edge-lists/complex-report.json",
+      "seed": 14,
+      "direction": "UP",
+      "node": "n6",
+      "native": "[[\"e6\",\"e13\",\"e17\",\"e22\",\"e24\"]]",
+      "elk": "[[\"e6\"]]"
+    },
+    {
+      "report": "docs/heuristics/elk-port-edge-lists/complex-report.json",
+      "seed": 14,
+      "direction": "UP",
+      "node": "g1",
+      "native": "[[\"e3\"],[\"e25\"],[\"e15\",\"e21\"],[\"e14\",\"e11\",\"e19\"],[\"e13\",\"e24\",\"e6\",\"e17\",\"e22\"]]",
+      "elk": "[[\"e3\"],[\"e25\"],[\"e15\",\"e21\"],[\"e14\",\"e11\",\"e19\"],[\"e6\",\"e13\",\"e17\",\"e22\",\"e24\"]]"
+    },
+    {
+      "report": "docs/heuristics/elk-port-edge-lists/complex-report.json",
+      "seed": 15,
+      "direction": "UP",
+      "node": "g1",
+      "native": "[[\"e17\"],[\"e31\"],[\"e8\"],[\"e26\"],[\"e23\"],[\"e29\"],[\"e32\"],[\"e34\"],[\"e4\"],[\"e22\"],[\"e40\"],[\"e20\"],[\"e24\"],[\"e25\"],[\"e38\"]]",
+      "elk": "[[\"e17\"],[\"e31\"],[\"e8\"],[\"e23\"],[\"e26\"],[\"e4\"],[\"e22\"],[\"e29\"],[\"e32\"],[\"e34\"],[\"e40\"],[\"e20\"],[\"e24\"],[\"e25\"],[\"e38\"]]"
+    },
+    {
+      "report": "docs/heuristics/elk-port-edge-lists/complex-report.json",
+      "seed": 17,
+      "direction": "UP",
+      "node": "n5",
+      "native": "[[\"e5\",\"e21\"]]",
+      "elk": "[[\"e5\"]]"
+    },
+    {
+      "report": "docs/heuristics/elk-port-edge-lists/complex-report.json",
+      "seed": 17,
+      "direction": "UP",
+      "node": "n1",
+      "native": "[[\"e0\"],[\"e19\"],[\"e24\",\"e15\",\"e20\"]]",
+      "elk": "[[\"e0\"],[\"e19\"],[\"e24\",\"e15\"]]"
+    },
+    {
+      "report": "docs/heuristics/elk-port-edge-lists/complex-report.json",
+      "seed": 17,
+      "direction": "UP",
+      "node": "n2",
+      "native": "[[\"e2\",\"e12\",\"e23\",\"e22\",\"e26\",\"e1\"]]",
+      "elk": "[[\"e2\",\"e12\",\"e23\",\"e22\",\"e1\"]]"
+    },
+    {
+      "report": "docs/heuristics/elk-port-edge-lists/complex-report.json",
+      "seed": 17,
+      "direction": "UP",
+      "node": "g1",
+      "native": "[[\"e14\"],[\"e5\",\"e21\"]]",
+      "elk": "[[\"e14\"],[\"e5\"]]"
+    },
+    {
+      "report": "docs/heuristics/elk-port-edge-lists/complex-report.json",
+      "seed": 17,
+      "direction": "UP",
+      "node": "n7",
+      "native": "[[\"e7\",\"e11\"]]",
+      "elk": "[[\"e7\"]]"
+    },
+    {
+      "report": "docs/heuristics/elk-port-edge-lists/complex-report.json",
+      "seed": 18,
+      "direction": "UP",
+      "node": "n0",
+      "native": "[[\"e0\"],[\"e27\",\"e45\"]]",
+      "elk": "[[\"e0\"],[\"e27\"]]"
+    },
+    {
+      "report": "docs/heuristics/elk-port-edge-lists/complex-report.json",
+      "seed": 18,
+      "direction": "UP",
+      "node": "n11",
+      "native": "[[\"e11\",\"e39\",\"e52\",\"e30\",\"e51\",\"e54\",\"e43\",\"e60\"]]",
+      "elk": "[[\"e11\",\"e39\",\"e52\",\"e30\"]]"
+    },
+    {
+      "report": "docs/heuristics/elk-port-edge-lists/complex-report.json",
+      "seed": 18,
+      "direction": "UP",
+      "node": "n13",
+      "native": "[[\"e28\"],[\"e13\"],[\"e26\",\"e42\"]]",
+      "elk": "[[\"e28\"],[\"e13\"],[\"e26\"]]"
+    },
+    {
+      "report": "docs/heuristics/elk-port-edge-lists/complex-report.json",
+      "seed": 18,
+      "direction": "UP",
+      "node": "n10",
+      "native": "[[\"e36\",\"e46\"]]",
+      "elk": "[[\"e36\"]]"
+    },
+    {
+      "report": "docs/heuristics/elk-port-edge-lists/complex-report.json",
+      "seed": 18,
+      "direction": "UP",
+      "node": "g3",
+      "native": "[[\"e30\",\"e51\",\"e54\",\"e43\",\"e60\"],[\"e10\"],[\"e55\"],[\"e28\"],[\"e13\"],[\"e26\",\"e42\"]]",
+      "elk": "[[\"e30\",\"e43\",\"e60\"],[\"e10\"],[\"e55\"],[\"e28\"],[\"e13\"],[\"e26\",\"e42\"]]"
+    },
+    {
+      "report": "docs/heuristics/elk-port-edge-lists/complex-report.json",
+      "seed": 18,
+      "direction": "UP",
+      "node": "g2",
+      "native": "[[\"e30\",\"e51\",\"e54\"],[\"e55\"],[\"e28\"],[\"e13\"],[\"e26\"],[\"e35\"],[\"e6\"],[\"e36\",\"e46\"],[\"e34\"]]",
+      "elk": "[[\"e30\",\"e54\"],[\"e55\"],[\"e28\"],[\"e13\"],[\"e26\"],[\"e35\"],[\"e6\"],[\"e36\",\"e46\"],[\"e34\"]]"
+    },
+    {
+      "report": "docs/heuristics/elk-port-edge-lists/complex-report.json",
+      "seed": 18,
+      "direction": "UP",
+      "node": "n21",
+      "native": "[[\"e21\",\"e41\",\"e62\",\"e38\"]]",
+      "elk": "[[\"e21\",\"e41\"]]"
+    },
+    {
+      "report": "docs/heuristics/elk-port-edge-lists/complex-report.json",
+      "seed": 18,
+      "direction": "UP",
+      "node": "n17",
+      "native": "[[\"e17\",\"e37\",\"e50\",\"e57\",\"e58\",\"e61\"]]",
+      "elk": "[[\"e17\",\"e37\"]]"
+    },
+    {
+      "report": "docs/heuristics/elk-port-edge-lists/complex-report.json",
+      "seed": 18,
+      "direction": "UP",
+      "node": "g6",
+      "native": "[[\"e41\",\"e62\"],[\"e22\"],[\"e29\"]]",
+      "elk": "[[\"e41\"],[\"e22\"],[\"e29\"]]"
+    },
+    {
+      "report": "docs/heuristics/elk-port-edge-lists/complex-report.json",
+      "seed": 18,
+      "direction": "UP",
+      "node": "g5",
+      "native": "[[\"e41\",\"e62\"],[\"e22\"],[\"e29\"],[\"e37\",\"e50\",\"e57\",\"e58\",\"e61\"],[\"e16\"],[\"e47\"]]",
+      "elk": "[[\"e41\"],[\"e22\"],[\"e29\"],[\"e37\",\"e61\"],[\"e16\"],[\"e47\"]]"
+    },
+    {
+      "report": "docs/heuristics/elk-port-edge-lists/complex-report.json",
+      "seed": 19,
+      "direction": "UP",
+      "node": "g0",
+      "native": "[[\"e20\"],[\"e35\"],[\"e37\"],[\"e28\"],[\"e11\"],[\"e26\"],[\"e36\"],[\"e41\"],[\"e32\"],[\"e22\"],[\"e19\"],[\"e34\"],[\"e43\"],[\"e40\"],[\"e25\"]]",
+      "elk": "[[\"e20\"],[\"e35\"],[\"e28\"],[\"e37\"],[\"e11\"],[\"e26\"],[\"e36\"],[\"e41\"],[\"e32\"],[\"e22\"],[\"e19\"],[\"e34\"],[\"e43\"],[\"e25\"],[\"e40\"]]"
+    },
+    {
+      "report": "docs/heuristics/elk-port-edge-lists/complex-report.json",
+      "seed": 21,
+      "direction": "UP",
+      "node": "n9",
+      "native": "[[\"e29\",\"e37\"],[\"e23\"]]",
+      "elk": "[[\"e29\"],[\"e23\"]]"
+    },
+    {
+      "report": "docs/heuristics/elk-port-edge-lists/complex-report.json",
+      "seed": 21,
+      "direction": "UP",
+      "node": "n11",
+      "native": "[[\"e11\",\"e35\"]]",
+      "elk": "[[\"e11\"]]"
+    },
+    {
+      "report": "docs/heuristics/elk-port-edge-lists/complex-report.json",
+      "seed": 21,
+      "direction": "UP",
+      "node": "g2",
+      "native": "[[\"e21\"],[\"e29\",\"e37\"],[\"e23\"],[\"e32\"],[\"e19\"],[\"e11\",\"e35\"]]",
+      "elk": "[[\"e21\"],[\"e29\"],[\"e23\"],[\"e32\"],[\"e19\"],[\"e11\"]]"
+    },
+    {
+      "report": "docs/heuristics/elk-port-edge-lists/complex-report.json",
+      "seed": 21,
+      "direction": "UP",
+      "node": "g1",
+      "native": "[[\"e21\"],[\"e29\",\"e37\"],[\"e23\"],[\"e32\"],[\"e11\",\"e35\"]]",
+      "elk": "[[\"e21\"],[\"e29\"],[\"e23\"],[\"e32\"],[\"e11\"]]"
+    },
+    {
+      "report": "docs/heuristics/elk-port-edge-lists/complex-report.json",
+      "seed": 21,
+      "direction": "UP",
+      "node": "n12",
+      "native": "[[\"e24\",\"e27\",\"e28\"],[\"e12\"]]",
+      "elk": "[[\"e24\"],[\"e12\"]]"
+    },
+    {
+      "report": "docs/heuristics/elk-port-edge-lists/complex-report.json",
+      "seed": 21,
+      "direction": "UP",
+      "node": "g3",
+      "native": "[[\"e28\",\"e27\"],[\"e11\"],[\"e14\"],[\"e17\"],[\"e26\"]]",
+      "elk": "[[\"e27\",\"e28\"],[\"e11\"],[\"e14\"],[\"e17\"],[\"e26\"]]"
+    },
+    {
+      "report": "docs/heuristics/elk-port-edge-lists/complex-report.json",
+      "seed": 22,
+      "direction": "UP",
+      "node": "n1",
+      "native": "[[\"e1\",\"e25\",\"e32\",\"e42\"]]",
+      "elk": "[[\"e1\",\"e25\"]]"
+    },
+    {
+      "report": "docs/heuristics/elk-port-edge-lists/complex-report.json",
+      "seed": 22,
+      "direction": "UP",
+      "node": "n13",
+      "native": "[[\"e24\"],[\"e33\"],[\"e34\",\"e29\"],[\"e13\"]]",
+      "elk": "[[\"e24\"],[\"e33\"],[\"e34\"],[\"e13\"]]"
+    },
+    {
+      "report": "docs/heuristics/elk-port-edge-lists/complex-report.json",
+      "seed": 22,
+      "direction": "UP",
+      "node": "n5",
+      "native": "[[\"e35\"],[\"e5\",\"e41\",\"e44\"]]",
+      "elk": "[[\"e35\"],[\"e5\",\"e41\"]]"
+    },
+    {
+      "report": "docs/heuristics/elk-port-edge-lists/complex-report.json",
+      "seed": 22,
+      "direction": "UP",
+      "node": "g2",
+      "native": "[[\"e45\"],[\"e49\"],[\"e14\"],[\"e35\"],[\"e41\",\"e44\"],[\"e50\"],[\"e30\"]]",
+      "elk": "[[\"e45\"],[\"e49\"],[\"e14\"],[\"e35\"],[\"e41\"],[\"e50\"],[\"e30\"]]"
+    },
+    {
+      "report": "docs/heuristics/elk-port-edge-lists/complex-report.json",
+      "seed": 22,
+      "direction": "UP",
+      "node": "n16",
+      "native": "[[\"e16\",\"e22\",\"e36\",\"e52\"]]",
+      "elk": "[[\"e16\"]]"
+    },
+    {
+      "report": "docs/heuristics/elk-port-edge-lists/complex-report.json",
+      "seed": 22,
+      "direction": "UP",
+      "node": "g4",
+      "native": "[[\"e45\"],[\"e53\"],[\"e14\"],[\"e52\",\"e22\",\"e36\",\"e16\"],[\"e25\",\"e49\"]]",
+      "elk": "[[\"e45\"],[\"e53\"],[\"e14\"],[\"e16\",\"e22\",\"e36\",\"e52\"],[\"e25\",\"e49\"]]"
+    },
+    {
+      "report": "docs/heuristics/elk-port-edge-lists/complex-report.json",
+      "seed": 23,
+      "direction": "UP",
+      "node": "g2",
+      "native": "[[\"e14\"],[\"e11\"],[\"e16\"],[\"e18\"],[\"e21\"],[\"e26\"],[\"e17\"],[\"e22\"],[\"e25\"],[\"e3\"],[\"e23\"]]",
+      "elk": "[[\"e14\"],[\"e11\"],[\"e16\"],[\"e18\"],[\"e21\"],[\"e26\"],[\"e17\"],[\"e3\"],[\"e22\"],[\"e23\"],[\"e25\"]]"
+    },
+    {
+      "report": "docs/heuristics/elk-port-edge-lists/complex-report.json",
+      "seed": 25,
+      "direction": "UP",
+      "node": "n21",
+      "native": "[[\"e21\",\"e37\",\"e45\",\"e52\",\"e53\",\"e54\",\"e57\"]]",
+      "elk": "[[\"e21\",\"e37\"]]"
+    },
+    {
+      "report": "docs/heuristics/elk-port-edge-lists/complex-report.json",
+      "seed": 25,
+      "direction": "UP",
+      "node": "g5",
+      "native": "[[\"e37\",\"e45\",\"e52\",\"e53\"],[\"e67\"],[\"e34\"],[\"e27\"],[\"e62\"],[\"e55\"],[\"e24\"]]",
+      "elk": "[[\"e37\"],[\"e67\"],[\"e34\"],[\"e27\"],[\"e62\"],[\"e55\"],[\"e24\"]]"
+    },
+    {
+      "report": "docs/heuristics/elk-port-edge-lists/complex-report.json",
+      "seed": 25,
+      "direction": "UP",
+      "node": "g4",
+      "native": "[[\"e37\",\"e45\",\"e52\",\"e53\"],[\"e67\"],[\"e34\"],[\"e27\"],[\"e62\"],[\"e55\"],[\"e24\"],[\"e58\"],[\"e17\"],[\"e40\"],[\"e63\"],[\"e38\"]]",
+      "elk": "[[\"e37\",\"e53\"],[\"e67\"],[\"e34\"],[\"e27\"],[\"e62\"],[\"e55\"],[\"e24\"],[\"e58\"],[\"e17\"],[\"e40\"],[\"e63\"],[\"e38\"]]"
+    },
+    {
+      "report": "docs/heuristics/elk-port-edge-lists/complex-report.json",
+      "seed": 25,
+      "direction": "UP",
+      "node": "g3",
+      "native": "[[\"e52\",\"e37\",\"e45\"],[\"e30\"],[\"e34\"],[\"e39\"],[\"e27\"],[\"e24\"],[\"e64\"],[\"e44\"],[\"e40\"],[\"e63\"],[\"e42\"],[\"e12\"],[\"e60\"],[\"e47\"],[\"e46\"],[\"e50\"],[\"e48\"],[\"e29\"]]",
+      "elk": "[[\"e37\",\"e45\",\"e52\"],[\"e30\"],[\"e34\"],[\"e39\"],[\"e27\"],[\"e24\"],[\"e64\"],[\"e44\"],[\"e40\"],[\"e63\"],[\"e42\"],[\"e12\"],[\"e60\"],[\"e47\"],[\"e46\"],[\"e50\"],[\"e48\"],[\"e29\"]]"
+    },
+    {
+      "report": "docs/heuristics/elk-port-edge-lists/options-report.json",
+      "seed": 6,
+      "direction": "RIGHT",
+      "node": "n1",
+      "native": "[[\"e1\",\"e2\"],[\"e3\"]]",
+      "elk": "[[\"e1\"],[\"e3\"]]"
+    },
+    {
+      "report": "docs/heuristics/elk-port-edge-lists/options-report.json",
+      "seed": 7,
+      "direction": "RIGHT",
+      "node": "n1",
+      "native": "[[\"e1\",\"e8\",\"e9\"]]",
+      "elk": "[[\"e1\"]]"
+    },
+    {
+      "report": "docs/heuristics/elk-port-edge-lists/options-report.json",
+      "seed": 12,
+      "direction": "RIGHT",
+      "node": "n2",
+      "native": "[[\"e2\",\"e3\"],[\"e4\"]]",
+      "elk": "[[\"e2\"],[\"e4\"]]"
+    },
+    {
+      "report": "docs/heuristics/elk-port-edge-lists/options-report.json",
+      "seed": 16,
+      "direction": "RIGHT",
+      "node": "n6",
+      "native": "[[\"e6\",\"e11\"],[\"e7\"]]",
+      "elk": "[[\"e6\"],[\"e7\"]]"
+    },
+    {
+      "report": "docs/heuristics/elk-port-edge-lists/options-report.json",
+      "seed": 16,
+      "direction": "RIGHT",
+      "node": "g2",
+      "native": "[[\"e4\"],[\"e11\",\"e6\"],[\"e9\"],[\"e7\"]]",
+      "elk": "[[\"e4\"],[\"e6\",\"e11\"],[\"e9\"],[\"e7\"]]"
+    },
+    {
+      "report": "docs/heuristics/elk-port-edge-lists/options-report.json",
+      "seed": 11,
+      "direction": "LEFT",
+      "node": "n5",
+      "native": "[[\"e4\",\"e22\"],[\"e5\"]]",
+      "elk": "[[\"e4\"],[\"e5\"]]"
+    },
+    {
+      "report": "docs/heuristics/elk-port-edge-lists/options-report.json",
+      "seed": 12,
+      "direction": "LEFT",
+      "node": "n2",
+      "native": "[[\"e2\",\"e3\"],[\"e4\"]]",
+      "elk": "[[\"e2\"],[\"e4\"]]"
+    },
+    {
+      "report": "docs/heuristics/elk-port-edge-lists/options-report.json",
+      "seed": 16,
+      "direction": "LEFT",
+      "node": "n6",
+      "native": "[[\"e6\",\"e11\"],[\"e7\"]]",
+      "elk": "[[\"e6\"],[\"e7\"]]"
+    },
+    {
+      "report": "docs/heuristics/elk-port-edge-lists/options-report.json",
+      "seed": 17,
+      "direction": "LEFT",
+      "node": "n2",
+      "native": "[[\"e2\",\"e4\",\"e1\",\"e8\"]]",
+      "elk": "[[\"e2\",\"e4\"]]"
+    },
+    {
+      "report": "docs/heuristics/elk-port-edge-lists/options-report.json",
+      "seed": 18,
+      "direction": "LEFT",
+      "node": "n3",
+      "native": "[[\"e7\",\"e11\"]]",
+      "elk": "[[\"e7\"]]"
+    },
+    {
+      "report": "docs/heuristics/elk-port-edge-lists/options-report.json",
+      "seed": 1,
+      "direction": "DOWN",
+      "node": "n1",
+      "native": "[[\"e1\",\"e11\",\"e13\"]]",
+      "elk": "[[\"e1\"]]"
+    },
+    {
+      "report": "docs/heuristics/elk-port-edge-lists/options-report.json",
+      "seed": 6,
+      "direction": "DOWN",
+      "node": "n1",
+      "native": "[[\"e1\",\"e2\"],[\"e3\"]]",
+      "elk": "[[\"e1\"],[\"e3\"]]"
+    },
+    {
+      "report": "docs/heuristics/elk-port-edge-lists/options-report.json",
+      "seed": 7,
+      "direction": "DOWN",
+      "node": "n1",
+      "native": "[[\"e1\",\"e8\",\"e9\"]]",
+      "elk": "[[\"e1\"]]"
+    },
+    {
+      "report": "docs/heuristics/elk-port-edge-lists/options-report.json",
+      "seed": 12,
+      "direction": "DOWN",
+      "node": "n2",
+      "native": "[[\"e2\",\"e3\"],[\"e4\"]]",
+      "elk": "[[\"e2\"],[\"e4\"]]"
+    },
+    {
+      "report": "docs/heuristics/elk-port-edge-lists/options-report.json",
+      "seed": 16,
+      "direction": "DOWN",
+      "node": "n6",
+      "native": "[[\"e6\",\"e11\"],[\"e7\"]]",
+      "elk": "[[\"e6\"],[\"e7\"]]"
+    },
+    {
+      "report": "docs/heuristics/elk-port-edge-lists/options-report.json",
+      "seed": 16,
+      "direction": "DOWN",
+      "node": "g2",
+      "native": "[[\"e4\"],[\"e11\",\"e6\"],[\"e9\"],[\"e7\"]]",
+      "elk": "[[\"e4\"],[\"e6\",\"e11\"],[\"e9\"],[\"e7\"]]"
+    },
+    {
+      "report": "docs/heuristics/elk-port-edge-lists/options-report.json",
+      "seed": 17,
+      "direction": "DOWN",
+      "node": "n2",
+      "native": "[[\"e2\",\"e9\"]]",
+      "elk": "[[\"e4\"]]"
+    },
+    {
+      "report": "docs/heuristics/elk-port-edge-lists/options-report.json",
+      "seed": 17,
+      "direction": "DOWN",
+      "node": "n3",
+      "native": "[[\"e3\"]]",
+      "elk": "[[\"e3\",\"e2\"]]"
+    },
+    {
+      "report": "docs/heuristics/elk-port-edge-lists/options-report.json",
+      "seed": 1,
+      "direction": "UP",
+      "node": "n1",
+      "native": "[[\"e1\",\"e11\",\"e13\"]]",
+      "elk": "[[\"e1\"]]"
+    },
+    {
+      "report": "docs/heuristics/elk-port-edge-lists/options-report.json",
+      "seed": 1,
+      "direction": "UP",
+      "node": "n7",
+      "native": "[[\"e7\",\"e9\"]]",
+      "elk": "[[\"e7\"]]"
+    },
+    {
+      "report": "docs/heuristics/elk-port-edge-lists/options-report.json",
+      "seed": 6,
+      "direction": "UP",
+      "node": "n1",
+      "native": "[[\"e1\",\"e2\"],[\"e3\"]]",
+      "elk": "[[\"e1\"],[\"e3\"]]"
+    },
+    {
+      "report": "docs/heuristics/elk-port-edge-lists/options-report.json",
+      "seed": 7,
+      "direction": "UP",
+      "node": "n1",
+      "native": "[[\"e1\",\"e8\",\"e9\"]]",
+      "elk": "[[\"e1\"]]"
+    },
+    {
+      "report": "docs/heuristics/elk-port-edge-lists/options-report.json",
+      "seed": 12,
+      "direction": "UP",
+      "node": "n2",
+      "native": "[[\"e2\",\"e3\"],[\"e4\"]]",
+      "elk": "[[\"e2\"],[\"e4\"]]"
+    },
+    {
+      "report": "docs/heuristics/elk-port-edge-lists/options-report.json",
+      "seed": 16,
+      "direction": "UP",
+      "node": "n6",
+      "native": "[[\"e6\",\"e11\"],[\"e7\"]]",
+      "elk": "[[\"e6\"],[\"e7\"]]"
+    },
+    {
+      "report": "docs/heuristics/elk-port-edge-lists/options-report.json",
+      "seed": 16,
+      "direction": "UP",
+      "node": "g2",
+      "native": "[[\"e4\"],[\"e11\",\"e6\"],[\"e9\"],[\"e7\"]]",
+      "elk": "[[\"e4\"],[\"e6\",\"e11\"],[\"e9\"],[\"e7\"]]"
+    },
+    {
+      "report": "docs/heuristics/elk-port-edge-lists/options-report.json",
+      "seed": 17,
+      "direction": "UP",
+      "node": "n2",
+      "native": "[[\"e4\",\"e1\",\"e8\"]]",
+      "elk": "[[\"e2\",\"e9\"]]"
+    },
+    {
+      "report": "docs/heuristics/elk-port-edge-lists/options-report.json",
+      "seed": 17,
+      "direction": "UP",
+      "node": "n3",
+      "native": "[[\"e3\",\"e2\"]]",
+      "elk": "[[\"e3\"]]"
+    }
+  ]
+}

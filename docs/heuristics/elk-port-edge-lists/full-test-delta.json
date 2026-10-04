@@ -1,0 +1,20 @@
+{
+  "before": {
+    "total": 3392,
+    "passed": 3283,
+    "failed": 109
+  },
+  "after": {
+    "total": 3395,
+    "passed": 3286,
+    "failed": 109
+  },
+  "newFailures": [],
+  "newPasses": [],
+  "added": [
+    "test/oracle-port-edge-lists.test.ts > follows ELK port edge lists (flat seed 8 DOWN): passed",
+    "test/oracle-port-edge-lists.test.ts > follows ELK port edge lists (flat seed 12 UP): passed",
+    "test/oracle-port-edge-lists.test.ts > follows ELK port edge lists (complex seed 20 RIGHT): passed"
+  ],
+  "removed": []
+}
