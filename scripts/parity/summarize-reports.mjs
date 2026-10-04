@@ -14,10 +14,21 @@ const summaries = paths.map((path) => {
     differingValues: rows.reduce((sum, row) => sum + row.differences.length, 0),
     nativeErrors: rows.filter((row) => row.native?.error).length,
     elkErrors: rows.filter((row) => row.elk?.error).length,
+    // ELK can emit NaN coordinates (serialized as null); native cannot match those.
+    elkNonFinite: rows.filter(
+      (row) => !row.equal && row.elk?.graph && JSON.stringify(row.elk.graph).includes("null"),
+    ).length,
   };
 });
 const total = summaries.reduce((result, summary) => {
-  for (const key of ["cases", "matched", "differingValues", "nativeErrors", "elkErrors"])
+  for (const key of [
+    "cases",
+    "matched",
+    "differingValues",
+    "nativeErrors",
+    "elkErrors",
+    "elkNonFinite",
+  ])
     result[key] = (result[key] ?? 0) + summary[key];
   return result;
 }, {});

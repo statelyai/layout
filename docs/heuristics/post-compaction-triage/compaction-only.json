@@ -1,0 +1,848 @@
+[
+  {
+    "report": "directional-report",
+    "index": 1,
+    "seed": 2,
+    "direction": "RIGHT",
+    "strategy": "RIGHT",
+    "withCompaction": 126,
+    "withoutCompaction": 13
+  },
+  {
+    "report": "directional-report",
+    "index": 7,
+    "seed": 8,
+    "direction": "RIGHT",
+    "strategy": "LEFT_RIGHT_CONNECTION_LOCKING",
+    "withCompaction": 60,
+    "withoutCompaction": 11
+  },
+  {
+    "report": "directional-report",
+    "index": 11,
+    "seed": 12,
+    "direction": "RIGHT",
+    "strategy": "LEFT_RIGHT_CONNECTION_LOCKING",
+    "withCompaction": 96,
+    "withoutCompaction": 41
+  },
+  {
+    "report": "directional-report",
+    "index": 15,
+    "seed": 16,
+    "direction": "RIGHT",
+    "strategy": "LEFT_RIGHT_CONNECTION_LOCKING",
+    "withCompaction": 167,
+    "withoutCompaction": 0
+  },
+  {
+    "report": "directional-report",
+    "index": 17,
+    "seed": 18,
+    "direction": "RIGHT",
+    "strategy": "RIGHT",
+    "withCompaction": 80,
+    "withoutCompaction": 32
+  },
+  {
+    "report": "directional-report",
+    "index": 18,
+    "seed": 19,
+    "direction": "RIGHT",
+    "strategy": "LEFT_RIGHT_CONSTRAINT_LOCKING",
+    "withCompaction": 128,
+    "withoutCompaction": 90
+  },
+  {
+    "report": "directional-report",
+    "index": 26,
+    "seed": 2,
+    "direction": "LEFT",
+    "strategy": "RIGHT",
+    "withCompaction": 218,
+    "withoutCompaction": 223
+  },
+  {
+    "report": "directional-report",
+    "index": 31,
+    "seed": 7,
+    "direction": "LEFT",
+    "strategy": "LEFT_RIGHT_CONSTRAINT_LOCKING",
+    "withCompaction": 107,
+    "withoutCompaction": 39
+  },
+  {
+    "report": "directional-report",
+    "index": 32,
+    "seed": 8,
+    "direction": "LEFT",
+    "strategy": "LEFT_RIGHT_CONNECTION_LOCKING",
+    "withCompaction": 118,
+    "withoutCompaction": 36
+  },
+  {
+    "report": "directional-report",
+    "index": 36,
+    "seed": 12,
+    "direction": "LEFT",
+    "strategy": "LEFT_RIGHT_CONNECTION_LOCKING",
+    "withCompaction": 117,
+    "withoutCompaction": 108
+  },
+  {
+    "report": "directional-report",
+    "index": 37,
+    "seed": 13,
+    "direction": "LEFT",
+    "strategy": "LEFT",
+    "withCompaction": 27,
+    "withoutCompaction": 27
+  },
+  {
+    "report": "directional-report",
+    "index": 40,
+    "seed": 16,
+    "direction": "LEFT",
+    "strategy": "LEFT_RIGHT_CONNECTION_LOCKING",
+    "withCompaction": 167,
+    "withoutCompaction": 0
+  },
+  {
+    "report": "directional-report",
+    "index": 41,
+    "seed": 17,
+    "direction": "LEFT",
+    "strategy": "LEFT",
+    "withCompaction": 4,
+    "withoutCompaction": 4
+  },
+  {
+    "report": "directional-report",
+    "index": 42,
+    "seed": 18,
+    "direction": "LEFT",
+    "strategy": "RIGHT",
+    "withCompaction": 51,
+    "withoutCompaction": 36
+  },
+  {
+    "report": "directional-report",
+    "index": 43,
+    "seed": 19,
+    "direction": "LEFT",
+    "strategy": "LEFT_RIGHT_CONSTRAINT_LOCKING",
+    "withCompaction": 128,
+    "withoutCompaction": 48
+  },
+  {
+    "report": "directional-report",
+    "index": 46,
+    "seed": 22,
+    "direction": "LEFT",
+    "strategy": "RIGHT",
+    "withCompaction": 28,
+    "withoutCompaction": 0
+  },
+  {
+    "report": "directional-report",
+    "index": 58,
+    "seed": 9,
+    "direction": "DOWN",
+    "strategy": "LEFT",
+    "withCompaction": 84,
+    "withoutCompaction": 35
+  },
+  {
+    "report": "directional-report",
+    "index": 62,
+    "seed": 13,
+    "direction": "DOWN",
+    "strategy": "LEFT",
+    "withCompaction": 80,
+    "withoutCompaction": 67
+  },
+  {
+    "report": "directional-report",
+    "index": 65,
+    "seed": 16,
+    "direction": "DOWN",
+    "strategy": "LEFT_RIGHT_CONNECTION_LOCKING",
+    "withCompaction": 312,
+    "withoutCompaction": 0
+  },
+  {
+    "report": "directional-report",
+    "index": 66,
+    "seed": 17,
+    "direction": "DOWN",
+    "strategy": "LEFT",
+    "withCompaction": 76,
+    "withoutCompaction": 36
+  },
+  {
+    "report": "directional-report",
+    "index": 68,
+    "seed": 19,
+    "direction": "DOWN",
+    "strategy": "LEFT_RIGHT_CONSTRAINT_LOCKING",
+    "withCompaction": 125,
+    "withoutCompaction": 107
+  },
+  {
+    "report": "directional-report",
+    "index": 70,
+    "seed": 21,
+    "direction": "DOWN",
+    "strategy": "LEFT",
+    "withCompaction": 85,
+    "withoutCompaction": 0
+  },
+  {
+    "report": "directional-report",
+    "index": 73,
+    "seed": 24,
+    "direction": "DOWN",
+    "strategy": "LEFT_RIGHT_CONNECTION_LOCKING",
+    "withCompaction": 120,
+    "withoutCompaction": 0
+  },
+  {
+    "report": "directional-report",
+    "index": 83,
+    "seed": 9,
+    "direction": "UP",
+    "strategy": "LEFT",
+    "withCompaction": 84,
+    "withoutCompaction": 35
+  },
+  {
+    "report": "directional-report",
+    "index": 87,
+    "seed": 13,
+    "direction": "UP",
+    "strategy": "LEFT",
+    "withCompaction": 150,
+    "withoutCompaction": 9
+  },
+  {
+    "report": "directional-report",
+    "index": 90,
+    "seed": 16,
+    "direction": "UP",
+    "strategy": "LEFT_RIGHT_CONNECTION_LOCKING",
+    "withCompaction": 312,
+    "withoutCompaction": 0
+  },
+  {
+    "report": "directional-report",
+    "index": 91,
+    "seed": 17,
+    "direction": "UP",
+    "strategy": "LEFT",
+    "withCompaction": 10,
+    "withoutCompaction": 10
+  },
+  {
+    "report": "directional-report",
+    "index": 93,
+    "seed": 19,
+    "direction": "UP",
+    "strategy": "LEFT_RIGHT_CONSTRAINT_LOCKING",
+    "withCompaction": 125,
+    "withoutCompaction": 23
+  },
+  {
+    "report": "directional-report",
+    "index": 95,
+    "seed": 21,
+    "direction": "UP",
+    "strategy": "LEFT",
+    "withCompaction": 85,
+    "withoutCompaction": 0
+  },
+  {
+    "report": "directional-report",
+    "index": 98,
+    "seed": 24,
+    "direction": "UP",
+    "strategy": "LEFT_RIGHT_CONNECTION_LOCKING",
+    "withCompaction": 120,
+    "withoutCompaction": 0
+  },
+  {
+    "report": "expanded-report",
+    "index": 2,
+    "seed": 28,
+    "direction": "RIGHT",
+    "strategy": "LEFT_RIGHT_CONNECTION_LOCKING",
+    "withCompaction": 45,
+    "withoutCompaction": 32
+  },
+  {
+    "report": "expanded-report",
+    "index": 3,
+    "seed": 29,
+    "direction": "RIGHT",
+    "strategy": "LEFT",
+    "withCompaction": 410,
+    "withoutCompaction": 329
+  },
+  {
+    "report": "expanded-report",
+    "index": 6,
+    "seed": 32,
+    "direction": "RIGHT",
+    "strategy": "LEFT_RIGHT_CONNECTION_LOCKING",
+    "withCompaction": 128,
+    "withoutCompaction": 37
+  },
+  {
+    "report": "expanded-report",
+    "index": 8,
+    "seed": 34,
+    "direction": "RIGHT",
+    "strategy": "RIGHT",
+    "withCompaction": 16,
+    "withoutCompaction": 64
+  },
+  {
+    "report": "expanded-report",
+    "index": 13,
+    "seed": 39,
+    "direction": "RIGHT",
+    "strategy": "LEFT_RIGHT_CONSTRAINT_LOCKING",
+    "withCompaction": 236,
+    "withoutCompaction": 226
+  },
+  {
+    "report": "expanded-report",
+    "index": 16,
+    "seed": 42,
+    "direction": "RIGHT",
+    "strategy": "RIGHT",
+    "withCompaction": 2,
+    "withoutCompaction": 0
+  },
+  {
+    "report": "expanded-report",
+    "index": 22,
+    "seed": 48,
+    "direction": "RIGHT",
+    "strategy": "LEFT_RIGHT_CONNECTION_LOCKING",
+    "withCompaction": 49,
+    "withoutCompaction": 35
+  },
+  {
+    "report": "expanded-report",
+    "index": 23,
+    "seed": 49,
+    "direction": "RIGHT",
+    "strategy": "LEFT",
+    "withCompaction": 194,
+    "withoutCompaction": 176
+  },
+  {
+    "report": "expanded-report",
+    "index": 27,
+    "seed": 28,
+    "direction": "LEFT",
+    "strategy": "LEFT_RIGHT_CONNECTION_LOCKING",
+    "withCompaction": 95,
+    "withoutCompaction": 23
+  },
+  {
+    "report": "expanded-report",
+    "index": 28,
+    "seed": 29,
+    "direction": "LEFT",
+    "strategy": "LEFT",
+    "withCompaction": 410,
+    "withoutCompaction": 335
+  },
+  {
+    "report": "expanded-report",
+    "index": 31,
+    "seed": 32,
+    "direction": "LEFT",
+    "strategy": "LEFT_RIGHT_CONNECTION_LOCKING",
+    "withCompaction": 85,
+    "withoutCompaction": 10
+  },
+  {
+    "report": "expanded-report",
+    "index": 33,
+    "seed": 34,
+    "direction": "LEFT",
+    "strategy": "RIGHT",
+    "withCompaction": 16,
+    "withoutCompaction": 48
+  },
+  {
+    "report": "expanded-report",
+    "index": 36,
+    "seed": 37,
+    "direction": "LEFT",
+    "strategy": "LEFT",
+    "withCompaction": 54,
+    "withoutCompaction": 54
+  },
+  {
+    "report": "expanded-report",
+    "index": 37,
+    "seed": 38,
+    "direction": "LEFT",
+    "strategy": "RIGHT",
+    "withCompaction": 13,
+    "withoutCompaction": 7
+  },
+  {
+    "report": "expanded-report",
+    "index": 38,
+    "seed": 39,
+    "direction": "LEFT",
+    "strategy": "LEFT_RIGHT_CONSTRAINT_LOCKING",
+    "withCompaction": 236,
+    "withoutCompaction": 226
+  },
+  {
+    "report": "expanded-report",
+    "index": 41,
+    "seed": 42,
+    "direction": "LEFT",
+    "strategy": "RIGHT",
+    "withCompaction": 2,
+    "withoutCompaction": 0
+  },
+  {
+    "report": "expanded-report",
+    "index": 46,
+    "seed": 47,
+    "direction": "LEFT",
+    "strategy": "LEFT_RIGHT_CONSTRAINT_LOCKING",
+    "withCompaction": 171,
+    "withoutCompaction": 117
+  },
+  {
+    "report": "expanded-report",
+    "index": 47,
+    "seed": 48,
+    "direction": "LEFT",
+    "strategy": "LEFT_RIGHT_CONNECTION_LOCKING",
+    "withCompaction": 17,
+    "withoutCompaction": 15
+  },
+  {
+    "report": "expanded-report",
+    "index": 48,
+    "seed": 49,
+    "direction": "LEFT",
+    "strategy": "LEFT",
+    "withCompaction": 194,
+    "withoutCompaction": 176
+  },
+  {
+    "report": "expanded-report",
+    "index": 53,
+    "seed": 29,
+    "direction": "DOWN",
+    "strategy": "LEFT",
+    "withCompaction": 390,
+    "withoutCompaction": 3
+  },
+  {
+    "report": "expanded-report",
+    "index": 55,
+    "seed": 31,
+    "direction": "DOWN",
+    "strategy": "LEFT_RIGHT_CONSTRAINT_LOCKING",
+    "withCompaction": 144,
+    "withoutCompaction": 0
+  },
+  {
+    "report": "expanded-report",
+    "index": 58,
+    "seed": 34,
+    "direction": "DOWN",
+    "strategy": "RIGHT",
+    "withCompaction": 151,
+    "withoutCompaction": 144
+  },
+  {
+    "report": "expanded-report",
+    "index": 63,
+    "seed": 39,
+    "direction": "DOWN",
+    "strategy": "LEFT_RIGHT_CONSTRAINT_LOCKING",
+    "withCompaction": 118,
+    "withoutCompaction": 0
+  },
+  {
+    "report": "expanded-report",
+    "index": 73,
+    "seed": 49,
+    "direction": "DOWN",
+    "strategy": "LEFT",
+    "withCompaction": 104,
+    "withoutCompaction": 0
+  },
+  {
+    "report": "expanded-report",
+    "index": 78,
+    "seed": 29,
+    "direction": "UP",
+    "strategy": "LEFT",
+    "withCompaction": 390,
+    "withoutCompaction": 3
+  },
+  {
+    "report": "expanded-report",
+    "index": 80,
+    "seed": 31,
+    "direction": "UP",
+    "strategy": "LEFT_RIGHT_CONSTRAINT_LOCKING",
+    "withCompaction": 144,
+    "withoutCompaction": 0
+  },
+  {
+    "report": "expanded-report",
+    "index": 83,
+    "seed": 34,
+    "direction": "UP",
+    "strategy": "RIGHT",
+    "withCompaction": 104,
+    "withoutCompaction": 102
+  },
+  {
+    "report": "expanded-report",
+    "index": 86,
+    "seed": 37,
+    "direction": "UP",
+    "strategy": "LEFT",
+    "withCompaction": 164,
+    "withoutCompaction": 42
+  },
+  {
+    "report": "expanded-report",
+    "index": 88,
+    "seed": 39,
+    "direction": "UP",
+    "strategy": "LEFT_RIGHT_CONSTRAINT_LOCKING",
+    "withCompaction": 118,
+    "withoutCompaction": 0
+  },
+  {
+    "report": "expanded-report",
+    "index": 98,
+    "seed": 49,
+    "direction": "UP",
+    "strategy": "LEFT",
+    "withCompaction": 104,
+    "withoutCompaction": 0
+  },
+  {
+    "report": "directional-fresh-report",
+    "index": 1,
+    "seed": 52,
+    "direction": "RIGHT",
+    "strategy": "LEFT_RIGHT_CONNECTION_LOCKING",
+    "withCompaction": 155,
+    "withoutCompaction": 35
+  },
+  {
+    "report": "directional-fresh-report",
+    "index": 5,
+    "seed": 56,
+    "direction": "RIGHT",
+    "strategy": "LEFT_RIGHT_CONNECTION_LOCKING",
+    "withCompaction": 148,
+    "withoutCompaction": 0
+  },
+  {
+    "report": "directional-fresh-report",
+    "index": 7,
+    "seed": 58,
+    "direction": "RIGHT",
+    "strategy": "RIGHT",
+    "withCompaction": 13,
+    "withoutCompaction": 0
+  },
+  {
+    "report": "directional-fresh-report",
+    "index": 8,
+    "seed": 59,
+    "direction": "RIGHT",
+    "strategy": "LEFT_RIGHT_CONSTRAINT_LOCKING",
+    "withCompaction": 67,
+    "withoutCompaction": 0
+  },
+  {
+    "report": "directional-fresh-report",
+    "index": 13,
+    "seed": 64,
+    "direction": "RIGHT",
+    "strategy": "LEFT_RIGHT_CONNECTION_LOCKING",
+    "withCompaction": 136,
+    "withoutCompaction": 128
+  },
+  {
+    "report": "directional-fresh-report",
+    "index": 17,
+    "seed": 68,
+    "direction": "RIGHT",
+    "strategy": "LEFT_RIGHT_CONNECTION_LOCKING",
+    "withCompaction": 97,
+    "withoutCompaction": 44
+  },
+  {
+    "report": "directional-fresh-report",
+    "index": 18,
+    "seed": 69,
+    "direction": "RIGHT",
+    "strategy": "LEFT",
+    "withCompaction": 1,
+    "withoutCompaction": 0
+  },
+  {
+    "report": "directional-fresh-report",
+    "index": 20,
+    "seed": 71,
+    "direction": "RIGHT",
+    "strategy": "LEFT_RIGHT_CONSTRAINT_LOCKING",
+    "withCompaction": 412,
+    "withoutCompaction": 0
+  },
+  {
+    "report": "directional-fresh-report",
+    "index": 26,
+    "seed": 52,
+    "direction": "LEFT",
+    "strategy": "LEFT_RIGHT_CONNECTION_LOCKING",
+    "withCompaction": 119,
+    "withoutCompaction": 29
+  },
+  {
+    "report": "directional-fresh-report",
+    "index": 30,
+    "seed": 56,
+    "direction": "LEFT",
+    "strategy": "LEFT_RIGHT_CONNECTION_LOCKING",
+    "withCompaction": 148,
+    "withoutCompaction": 0
+  },
+  {
+    "report": "directional-fresh-report",
+    "index": 32,
+    "seed": 58,
+    "direction": "LEFT",
+    "strategy": "RIGHT",
+    "withCompaction": 160,
+    "withoutCompaction": 0
+  },
+  {
+    "report": "directional-fresh-report",
+    "index": 33,
+    "seed": 59,
+    "direction": "LEFT",
+    "strategy": "LEFT_RIGHT_CONSTRAINT_LOCKING",
+    "withCompaction": 67,
+    "withoutCompaction": 0
+  },
+  {
+    "report": "directional-fresh-report",
+    "index": 36,
+    "seed": 62,
+    "direction": "LEFT",
+    "strategy": "RIGHT",
+    "withCompaction": 150,
+    "withoutCompaction": 7
+  },
+  {
+    "report": "directional-fresh-report",
+    "index": 38,
+    "seed": 64,
+    "direction": "LEFT",
+    "strategy": "LEFT_RIGHT_CONNECTION_LOCKING",
+    "withCompaction": 113,
+    "withoutCompaction": 112
+  },
+  {
+    "report": "directional-fresh-report",
+    "index": 42,
+    "seed": 68,
+    "direction": "LEFT",
+    "strategy": "LEFT_RIGHT_CONNECTION_LOCKING",
+    "withCompaction": 236,
+    "withoutCompaction": 219
+  },
+  {
+    "report": "directional-fresh-report",
+    "index": 43,
+    "seed": 69,
+    "direction": "LEFT",
+    "strategy": "LEFT",
+    "withCompaction": 1,
+    "withoutCompaction": 0
+  },
+  {
+    "report": "directional-fresh-report",
+    "index": 45,
+    "seed": 71,
+    "direction": "LEFT",
+    "strategy": "LEFT_RIGHT_CONSTRAINT_LOCKING",
+    "withCompaction": 412,
+    "withoutCompaction": 0
+  },
+  {
+    "report": "directional-fresh-report",
+    "index": 46,
+    "seed": 72,
+    "direction": "LEFT",
+    "strategy": "LEFT_RIGHT_CONNECTION_LOCKING",
+    "withCompaction": 4,
+    "withoutCompaction": 0
+  },
+  {
+    "report": "directional-fresh-report",
+    "index": 47,
+    "seed": 73,
+    "direction": "LEFT",
+    "strategy": "LEFT",
+    "withCompaction": 257,
+    "withoutCompaction": 178
+  },
+  {
+    "report": "directional-fresh-report",
+    "index": 51,
+    "seed": 52,
+    "direction": "DOWN",
+    "strategy": "LEFT_RIGHT_CONNECTION_LOCKING",
+    "withCompaction": 6,
+    "withoutCompaction": 6
+  },
+  {
+    "report": "directional-fresh-report",
+    "index": 58,
+    "seed": 59,
+    "direction": "DOWN",
+    "strategy": "LEFT_RIGHT_CONSTRAINT_LOCKING",
+    "withCompaction": 69,
+    "withoutCompaction": 0
+  },
+  {
+    "report": "directional-fresh-report",
+    "index": 61,
+    "seed": 62,
+    "direction": "DOWN",
+    "strategy": "RIGHT",
+    "withCompaction": 2,
+    "withoutCompaction": 0
+  },
+  {
+    "report": "directional-fresh-report",
+    "index": 63,
+    "seed": 64,
+    "direction": "DOWN",
+    "strategy": "LEFT_RIGHT_CONNECTION_LOCKING",
+    "withCompaction": 47,
+    "withoutCompaction": 48
+  },
+  {
+    "report": "directional-fresh-report",
+    "index": 68,
+    "seed": 69,
+    "direction": "DOWN",
+    "strategy": "LEFT",
+    "withCompaction": 6,
+    "withoutCompaction": 31
+  },
+  {
+    "report": "directional-fresh-report",
+    "index": 70,
+    "seed": 71,
+    "direction": "DOWN",
+    "strategy": "LEFT_RIGHT_CONSTRAINT_LOCKING",
+    "withCompaction": 392,
+    "withoutCompaction": 0
+  },
+  {
+    "report": "directional-fresh-report",
+    "index": 72,
+    "seed": 73,
+    "direction": "DOWN",
+    "strategy": "LEFT",
+    "withCompaction": 32,
+    "withoutCompaction": 32
+  },
+  {
+    "report": "directional-fresh-report",
+    "index": 76,
+    "seed": 52,
+    "direction": "UP",
+    "strategy": "LEFT_RIGHT_CONNECTION_LOCKING",
+    "withCompaction": 6,
+    "withoutCompaction": 6
+  },
+  {
+    "report": "directional-fresh-report",
+    "index": 77,
+    "seed": 53,
+    "direction": "UP",
+    "strategy": "LEFT",
+    "withCompaction": 38,
+    "withoutCompaction": 11
+  },
+  {
+    "report": "directional-fresh-report",
+    "index": 83,
+    "seed": 59,
+    "direction": "UP",
+    "strategy": "LEFT_RIGHT_CONSTRAINT_LOCKING",
+    "withCompaction": 69,
+    "withoutCompaction": 0
+  },
+  {
+    "report": "directional-fresh-report",
+    "index": 86,
+    "seed": 62,
+    "direction": "UP",
+    "strategy": "RIGHT",
+    "withCompaction": 2,
+    "withoutCompaction": 0
+  },
+  {
+    "report": "directional-fresh-report",
+    "index": 88,
+    "seed": 64,
+    "direction": "UP",
+    "strategy": "LEFT_RIGHT_CONNECTION_LOCKING",
+    "withCompaction": 47,
+    "withoutCompaction": 48
+  },
+  {
+    "report": "directional-fresh-report",
+    "index": 93,
+    "seed": 69,
+    "direction": "UP",
+    "strategy": "LEFT",
+    "withCompaction": 6,
+    "withoutCompaction": 52
+  },
+  {
+    "report": "directional-fresh-report",
+    "index": 95,
+    "seed": 71,
+    "direction": "UP",
+    "strategy": "LEFT_RIGHT_CONSTRAINT_LOCKING",
+    "withCompaction": 392,
+    "withoutCompaction": 0
+  },
+  {
+    "report": "directional-fresh-report",
+    "index": 97,
+    "seed": 73,
+    "direction": "UP",
+    "strategy": "LEFT",
+    "withCompaction": 114,
+    "withoutCompaction": 6
+  }
+]
