@@ -10,6 +10,7 @@ import { hasMovableLoopPorts } from "./loop-envelopes";
 import { compactionBounds, placementCrossBounds } from "./compaction-bounds";
 import { setElkjs0111ResultPolicy } from "../internal/elkjs-compatibility";
 import { networkSimplexComponents } from "./network-simplex";
+import { withLongEdgeSplitterOrder } from "./splitter-order";
 import { mergeHyperedgeDummies } from "./hyperedge-dummy-merger";
 import { getCrossingUnits, recordCrossingUnits } from "./crossing-constraints";
 import { externalPortDummyOf } from "./external-port-dummy";
@@ -1570,7 +1571,16 @@ export function* createLayeredScopePipeline<N, E, G, P>(
   let expanded = measure("long-edge-splitting", () =>
     composeCenterLabelExpansion(
       labels,
-      insertInvertedPortDummies(splitLongEdges(phaseInput, phaseOrientation, assignment)),
+      insertInvertedPortDummies(
+        withLongEdgeSplitterOrder(
+          phaseInput,
+          splitLongEdges(phaseInput, phaseOrientation, assignment),
+          assignment.seedOrder ??
+            ((phaseInput.settings["layering.strategy"] ?? "NETWORK_SIMPLEX") === "NETWORK_SIMPLEX"
+              ? networkSimplexComponents(layeringInput).flat()
+              : phaseInput.graph.nodes.map((node) => node.id)),
+        ),
+      ),
     ),
   );
   // ELK sorts before north/south helpers exist. Carry both node and physical

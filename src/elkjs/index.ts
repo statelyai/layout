@@ -1024,6 +1024,8 @@ export default class ELK {
         const elkPort = child?.ports?.find((candidate) => String(candidate.id) === port.name);
         return {
           ...getElementLayeredSettings(elkPort?.layoutOptions ?? {}),
+          // ELK imports ports in authored order and sorts sides after dummy insertion.
+          "port.authoredIndex": elkPort && child?.ports?.indexOf(elkPort),
           "port.labelWidth": Math.max(
             0,
             ...(elkPort?.labels ?? []).map((label) => label.width ?? 0),

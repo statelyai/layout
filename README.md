@@ -415,3 +415,5 @@ Routing reuses self-loop envelopes already reserved by placement, keeping neighb
 Orthogonal junction ownership follows physical incident edge order after reversal. See the [junction ownership regression](docs/heuristics/physical-junction-order/README.md).
 
 Joining reversed edge chains retains physical routing order for junction points. See the [reversed chain regression](docs/heuristics/reversed-junction-chains/README.md).
+
+Crossing minimization starts from ELK's long-edge splitter order: component order, then dummies appended through authored port order. See the [splitter order replay](docs/heuristics/long-edge-splitter-order/README.md).
