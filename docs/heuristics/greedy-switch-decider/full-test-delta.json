@@ -1,0 +1,20 @@
+{
+  "before": {
+    "total": 3395,
+    "passed": 3286,
+    "failed": 109
+  },
+  "after": {
+    "total": 3398,
+    "passed": 3289,
+    "failed": 109
+  },
+  "newFailures": [],
+  "newPasses": [],
+  "added": [
+    "test/oracle-greedy-switch-decider.test.ts > decides greedy switches like ELK (flat seed 63 DOWN, LEFT_RIGHT_CONSTRAINT_LOCKING compaction): passed",
+    "test/oracle-greedy-switch-decider.test.ts > decides greedy switches like ELK (flat seed 58 UP, RIGHT compaction): passed",
+    "test/oracle-greedy-switch-decider.test.ts > decides greedy switches like ELK (flat seed 37 DOWN, LEFT compaction): passed"
+  ],
+  "removed": []
+}
