@@ -157,11 +157,25 @@ export default class ELK {
     arguments_?: PublicElkLayoutArguments,
   ): Promise<PublicElkNode & PublicLaidOutElkNode<T>>;
   layout<T extends ElkNode>(graph: T, arguments_?: ElkLayoutArguments): Promise<LaidOutElkNode<T>>;
-  layout<T extends ElkNode>(
+  async layout<T extends ElkNode>(
     graph: T,
     arguments_: ElkLayoutArguments = {},
   ): Promise<LaidOutElkNode<T>> {
-    return this.#layout(graph, arguments_);
+    const compacting = usesPostCompaction(
+      { ...this.#options.defaultLayoutOptions, ...arguments_.layoutOptions },
+      graph,
+    );
+    const pristine = compacting ? structuredClone(graph) : undefined;
+    const result = await this.#layout(graph, arguments_);
+    const hits = pristine ? countRouteNodeHits(result) : 0;
+    if (!pristine || hits === 0) return result;
+    // Post-compaction is an optimization; it must not route edges through nodes.
+    const strategy = { "elk.layered.compaction.postCompaction.strategy": "NONE" };
+    const uncompacted = await this.#layout(disablePostCompaction(pristine), {
+      ...arguments_,
+      layoutOptions: { ...arguments_.layoutOptions, ...strategy },
+    });
+    return countRouteNodeHits(uncompacted) < hits ? uncompacted : result;
   }
 
   async #layout<T extends ElkNode>(
@@ -2697,4 +2711,74 @@ function elkSegmentOrder(
       for (const edge of elkBoundaryEdgeOrder(child, scope, originals)) add(edge);
   if (ownBoundary) for (const edge of elkBoundaryEdgeOrder(group, scope, originals)) add(edge);
   return order;
+}
+
+const isPostCompactionKey = (key: string) =>
+  /(^|\.)compaction\.postCompaction\.strategy$/.test(key);
+function usesPostCompaction(options: Readonly<Record<string, unknown>>, node: ElkNode): boolean {
+  const active = (values: Readonly<Record<string, unknown>> | undefined) =>
+    Object.entries(values ?? {}).some(
+      ([key, value]) => isPostCompactionKey(key) && String(value) !== "NONE",
+    );
+  const visit = (current: ElkNode): boolean =>
+    active(current.layoutOptions) ||
+    active(current.properties as Record<string, unknown> | undefined) ||
+    (current.children ?? []).some(visit);
+  return active(options) || visit(node);
+}
+
+function disablePostCompaction<T extends ElkNode>(node: T): T {
+  for (const values of [node.layoutOptions, node.properties as Record<string, unknown> | undefined])
+    for (const key of Object.keys(values ?? {}))
+      if (isPostCompactionKey(key)) (values as Record<string, unknown>)[key] = "NONE";
+  for (const child of node.children ?? []) disablePostCompaction(child);
+  return node;
+}
+
+/** Route segments crossing the open interior of a leaf node, in absolute coordinates. */
+function countRouteNodeHits(root: ElkNode): number {
+  const frames = new Map<string, { x: number; y: number }>([[String(root.id), { x: 0, y: 0 }]]);
+  const leaves: Array<{ x: number; y: number; width: number; height: number }> = [];
+  const place = (parent: ElkNode, offset: { x: number; y: number }) => {
+    for (const child of parent.children ?? []) {
+      const at = { x: offset.x + (child.x ?? 0), y: offset.y + (child.y ?? 0) };
+      frames.set(String(child.id), at);
+      if (child.children?.length) place(child, at);
+      else leaves.push({ ...at, width: child.width ?? 0, height: child.height ?? 0 });
+    }
+  };
+  place(root, { x: 0, y: 0 });
+  const inside = (value: number, low: number, high: number) =>
+    value > low + 1e-6 && value < high - 1e-6;
+  const overlaps = (a: number, b: number, low: number, high: number) =>
+    Math.min(Math.max(a, b), high) - Math.max(Math.min(a, b), low) > 1e-6;
+  let hits = 0;
+  const visit = (parent: ElkNode) => {
+    for (const edge of parent.edges ?? []) {
+      const container = String((edge as { container?: string }).container ?? parent.id);
+      const offset = frames.get(container) ?? { x: 0, y: 0 };
+      for (const section of edge.sections ?? []) {
+        const points = [section.startPoint, ...(section.bendPoints ?? []), section.endPoint].map(
+          (point) => ({ x: point.x + offset.x, y: point.y + offset.y }),
+        );
+        for (let index = 0; index + 1 < points.length; index++) {
+          const a = points[index]!,
+            b = points[index + 1]!;
+          for (const rect of leaves)
+            if (
+              (Math.abs(a.y - b.y) < 1e-9 &&
+                inside(a.y, rect.y, rect.y + rect.height) &&
+                overlaps(a.x, b.x, rect.x, rect.x + rect.width)) ||
+              (Math.abs(a.x - b.x) < 1e-9 &&
+                inside(a.x, rect.x, rect.x + rect.width) &&
+                overlaps(a.y, b.y, rect.y, rect.y + rect.height))
+            )
+              hits++;
+        }
+      }
+    }
+    for (const child of parent.children ?? []) visit(child);
+  };
+  visit(root);
+  return hits;
 }
