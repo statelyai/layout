@@ -1,0 +1,142 @@
+{
+  "corpora": {
+    "report": {
+      "cases": 200,
+      "before": 77,
+      "after": 77,
+      "gained": 0,
+      "lost": 0,
+      "diffsBefore": 1849,
+      "diffsAfter": 1835,
+      "oracleErrors": 100,
+      "lostCases": []
+    },
+    "fresh-report": {
+      "cases": 200,
+      "before": 68,
+      "after": 70,
+      "gained": 2,
+      "lost": 0,
+      "diffsBefore": 1849,
+      "diffsAfter": 1827,
+      "oracleErrors": 100,
+      "lostCases": []
+    },
+    "flat-report": {
+      "cases": 100,
+      "before": 82,
+      "after": 82,
+      "gained": 0,
+      "lost": 0,
+      "diffsBefore": 874,
+      "diffsAfter": 857,
+      "oracleErrors": 0,
+      "lostCases": []
+    },
+    "directional-report": {
+      "cases": 200,
+      "before": 169,
+      "after": 169,
+      "gained": 0,
+      "lost": 0,
+      "diffsBefore": 2608,
+      "diffsAfter": 2591,
+      "oracleErrors": 6,
+      "lostCases": []
+    },
+    "expanded-report": {
+      "cases": 200,
+      "before": 170,
+      "after": 170,
+      "gained": 0,
+      "lost": 0,
+      "diffsBefore": 3769,
+      "diffsAfter": 3769,
+      "oracleErrors": 3,
+      "lostCases": []
+    },
+    "directional-fresh-report": {
+      "cases": 200,
+      "before": 166,
+      "after": 166,
+      "gained": 0,
+      "lost": 0,
+      "diffsBefore": 3234,
+      "diffsAfter": 3234,
+      "oracleErrors": 4,
+      "lostCases": []
+    },
+    "options-report": {
+      "cases": 80,
+      "before": 13,
+      "after": 14,
+      "gained": 1,
+      "lost": 0,
+      "diffsBefore": 8318,
+      "diffsAfter": 8301,
+      "oracleErrors": 4,
+      "lostCases": []
+    },
+    "complex-report": {
+      "cases": 100,
+      "before": 24,
+      "after": 24,
+      "gained": 0,
+      "lost": 0,
+      "diffsBefore": 57181,
+      "diffsAfter": 57159,
+      "oracleErrors": 0,
+      "lostCases": []
+    }
+  },
+  "total": {
+    "cases": 1280,
+    "before": 769,
+    "after": 772,
+    "gained": 3,
+    "lost": 0,
+    "diffsBefore": 79682,
+    "diffsAfter": 79573,
+    "oracleErrors": 217,
+    "nativeErrorsBefore": 0,
+    "nativeErrorsAfter": 0
+  },
+  "categories": {
+    "nodes/hierarchy": {
+      "before": 5601,
+      "after": 5595
+    },
+    "ports": {
+      "before": 416,
+      "after": 416
+    },
+    "routes": {
+      "before": 63626,
+      "after": 63527
+    },
+    "rootSize": {
+      "before": 372,
+      "after": 371
+    },
+    "junctions": {
+      "before": 8303,
+      "after": 8300
+    },
+    "labels": {
+      "before": 1147,
+      "after": 1147
+    },
+    "other": {
+      "before": 217,
+      "after": 217
+    }
+  },
+  "gainedCases": [
+    "fresh-report:flat43DOWN",
+    "fresh-report:flat38UP",
+    "options-report:compound-options-v15RIGHT"
+  ],
+  "worsened": 0,
+  "improved": 9,
+  "unchangedDiffCount": 0
+}

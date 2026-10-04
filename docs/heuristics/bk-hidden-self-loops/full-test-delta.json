@@ -1,0 +1,20 @@
+{
+ "before": {
+  "total": 3412,
+  "passed": 3303,
+  "failed": 109
+ },
+ "after": {
+  "total": 3415,
+  "passed": 3306,
+  "failed": 109
+ },
+ "newFailures": [],
+ "newPasses": [],
+ "added": [
+  "test/oracle-bk-hidden-self-loops.test.ts > straightens BK blocks without self loops (model-order flat seed 38 UP): passed",
+  "test/oracle-bk-hidden-self-loops.test.ts > straightens BK blocks without self loops (model-order flat seed 43 DOWN): passed",
+  "test/oracle-hyperedge-merger-gate.test.ts > keeps long-edge dummies apart without imported hyperedges (options seed 5 RIGHT): passed"
+ ],
+ "removed": []
+}

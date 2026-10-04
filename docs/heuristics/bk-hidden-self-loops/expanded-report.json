@@ -1,0 +1,11 @@
+{
+  "baseline": "../merged-inverted-routes/expanded-report.json",
+  "summary": {
+    "cases": 200,
+    "matched": 170,
+    "differingValues": 3769,
+    "nativeErrors": 0,
+    "elkErrors": 3
+  },
+  "updates": []
+}
