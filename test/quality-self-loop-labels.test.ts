@@ -23,3 +23,12 @@ it.each(["RIGHT", "LEFT", "DOWN", "UP"])(
   },
   30000,
 );
+
+// A same-port loop's square route moves its label into e0's path; the label
+// takes the first spot clear of nodes and routes instead.
+it("keeps self-loop labels off other routes (options seed 204 RIGHT)", async () => {
+  const input = compoundOptionsFixture(204, "RIGHT");
+  const native = score(await new NativeELK().layout(structuredClone(input)), input);
+  expect(native.edgeLabelHits).toBe(0);
+  expect(native.labelNodeOverlaps).toBe(0);
+}, 30000);

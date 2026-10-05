@@ -2993,9 +2993,31 @@ export function* createLayeredScopePipeline<N, E, G, P>(
       }
       return undefined;
     })();
-    // A self-loop label that would cover its own node sits beside one of the
-    // loop's segments instead, longest first, on the side away from the node,
-    // at the first spot clear of nodes and other routes.
+    // A self-loop label whose default spot covers a node or another route
+    // sits beside one of the loop's segments instead, longest first, on the
+    // side away from its node, at the first spot clear of both.
+    const clearLabelSpot = (box: { x: number; y: number }) =>
+      [...placement.rectByNodeId.values()].every(
+        (rect) =>
+          box.x >= rect.x + rect.width ||
+          box.x + width <= rect.x ||
+          box.y >= rect.y + rect.height ||
+          box.y + height <= rect.y,
+      ) &&
+      [...routes.pointsByEdgeId].every(
+        ([id, route]) =>
+          id === edge.id ||
+          route.every((a, index) => {
+            const b = route[index + 1];
+            if (!b) return true;
+            return (
+              Math.max(a.x, b.x) <= box.x ||
+              Math.min(a.x, b.x) >= box.x + width ||
+              Math.max(a.y, b.y) <= box.y ||
+              Math.min(a.y, b.y) >= box.y + height
+            );
+          }),
+      );
     const outerLoopLabelPosition = (() => {
       if (edge.sourceId !== edge.targetId || !sourceRect || points.length < 3) return undefined;
       const centerX = sourceRect.x + sourceRect.width / 2,
@@ -3006,28 +3028,6 @@ export function* createLayeredScopePipeline<N, E, G, P>(
         .sort(
           ([a, b], [c, d]) =>
             Math.abs(c.x - d.x) + Math.abs(c.y - d.y) - (Math.abs(a.x - b.x) + Math.abs(a.y - b.y)),
-        );
-      const clear = (box: { x: number; y: number }) =>
-        [...placement.rectByNodeId.values()].every(
-          (rect) =>
-            box.x >= rect.x + rect.width ||
-            box.x + width <= rect.x ||
-            box.y >= rect.y + rect.height ||
-            box.y + height <= rect.y,
-        ) &&
-        [...routes.pointsByEdgeId].every(
-          ([id, route]) =>
-            id === edge.id ||
-            route.every((a, index) => {
-              const b = route[index + 1];
-              if (!b) return true;
-              return (
-                Math.max(a.x, b.x) <= box.x ||
-                Math.min(a.x, b.x) >= box.x + width ||
-                Math.max(a.y, b.y) <= box.y ||
-                Math.min(a.y, b.y) >= box.y + height
-              );
-            }),
         );
       for (const [a, b] of segments) {
         const box =
@@ -3040,7 +3040,7 @@ export function* createLayeredScopePipeline<N, E, G, P>(
                 x: a.x < centerX ? a.x - labelSpacing - width : a.x + labelSpacing,
                 y: (a.y + b.y - height) / 2,
               };
-        if (clear(box)) return box;
+        if (clearLabelSpot(box)) return box;
       }
       return undefined;
     })();
@@ -3050,13 +3050,7 @@ export function* createLayeredScopePipeline<N, E, G, P>(
       outerAntiparallelLabelPosition ??
       antiparallelLabelPosition ??
       parallelLabelPositions.get(edge.id) ??
-      (width > 0 &&
-      height > 0 &&
-      sourceRect &&
-      routeX < sourceRect.x + sourceRect.width &&
-      routeX + width > sourceRect.x &&
-      routeY < sourceRect.y + sourceRect.height &&
-      routeY + height > sourceRect.y
+      (width > 0 && height > 0 && !clearLabelSpot({ x: routeX, y: routeY })
         ? outerLoopLabelPosition
         : undefined);
     const centerLabelDummyId = labels.labelDummyIdByEdgeId.get(edge.id);
