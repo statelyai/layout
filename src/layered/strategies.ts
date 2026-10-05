@@ -1050,18 +1050,48 @@ export function applyGreedySwitch(
     }
     return changed;
   };
-  let improved: boolean;
-  do {
-    improved = sweep(forward);
+  const trace = (crossings: number) =>
     traceLayeredPhase(() => ({
       kind: "sweep",
       scope: input.graph.id,
       attempt: -1,
       forward,
       firstSweep: false,
-      crossings: -1,
+      crossings,
       layers,
     }));
+  if (type === "ONE_SIDED") {
+    // ONE_SIDED does not always improve (opposite sweeps can undo each other),
+    // so ELK's minimizeCrossingsWithCounter alternates sweeps only while the
+    // total crossing count strictly drops, keeping the order before the last sweep.
+    const countAll = () => {
+      if (greedyGraph) return countForLayer(0);
+      let total = 0;
+      for (let boundary = 0; boundary + 1 < layers.length; boundary++)
+        total += countBoundary(boundary);
+      return total;
+    };
+    sweep(forward);
+    let crossings = countAll();
+    trace(crossings);
+    while (crossings > 0) {
+      const previous = layers.map((layer) => [...layer]);
+      forward = !forward;
+      sweep(forward);
+      const next = countAll();
+      trace(next);
+      if (next >= crossings) {
+        for (const [index, layer] of previous.entries()) layers[index] = layer;
+        break;
+      }
+      crossings = next;
+    }
+    return { ...order, layers };
+  }
+  let improved: boolean;
+  do {
+    improved = sweep(forward);
+    trace(-1);
     forward = !forward;
   } while (improved);
   return { ...order, layers };
