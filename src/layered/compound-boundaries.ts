@@ -77,5 +77,23 @@ export function joinCompoundRouteSegments(
     last = inner.at(-1) ?? source;
     end = target;
   }
-  return start && end ? [start, ...bends, end] : [];
+  if (!start || !end) return [];
+  // Child and parent boundary anchors can disagree on both axes. Join them
+  // with an elbow collinear with a neighboring segment instead of a diagonal.
+  const route = [start, ...bends, end];
+  const straight = (a: Point, b: Point) =>
+    Math.abs(a.x - b.x) <= 1e-6 || Math.abs(a.y - b.y) <= 1e-6;
+  for (let index = 0; index + 1 < route.length; index++) {
+    const a = route[index]!,
+      b = route[index + 1]!;
+    if (straight(a, b)) continue;
+    const next = route[index + 2],
+      previous = route[index - 1];
+    const verticalFirst =
+      next !== undefined
+        ? Math.abs(b.y - next.y) <= 1e-6
+        : previous !== undefined && Math.abs(previous.x - a.x) <= 1e-6;
+    route.splice(index + 1, 0, verticalFirst ? { x: a.x, y: b.y } : { x: b.x, y: a.y });
+  }
+  return route;
 }
