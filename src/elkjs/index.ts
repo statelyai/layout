@@ -167,15 +167,16 @@ export default class ELK {
     );
     const pristine = compacting ? structuredClone(graph) : undefined;
     const result = await this.#layout(graph, arguments_);
-    const hits = pristine ? countRouteNodeHits(result) : 0;
+    const hits = pristine ? countRouteDefects(result) : 0;
     if (!pristine || hits === 0) return result;
-    // Post-compaction is an optimization; it must not route edges through nodes.
+    // Post-compaction is an optimization; it must not route edges through nodes
+    // or fold a route back onto itself.
     const strategy = { "elk.layered.compaction.postCompaction.strategy": "NONE" };
     const uncompacted = await this.#layout(disablePostCompaction(pristine), {
       ...arguments_,
       layoutOptions: { ...arguments_.layoutOptions, ...strategy },
     });
-    return countRouteNodeHits(uncompacted) < hits ? uncompacted : result;
+    return countRouteDefects(uncompacted) < hits ? uncompacted : result;
   }
 
   async #layout<T extends ElkNode>(
@@ -2735,8 +2736,11 @@ function disablePostCompaction<T extends ElkNode>(node: T): T {
   return node;
 }
 
-/** Route segments crossing the open interior of a leaf node, in absolute coordinates. */
-function countRouteNodeHits(root: ElkNode): number {
+/**
+ * Route segments crossing the open interior of a leaf node, plus pairs of one
+ * route's segments that overlap along a line, in absolute coordinates.
+ */
+function countRouteDefects(root: ElkNode): number {
   const frames = new Map<string, { x: number; y: number }>([[String(root.id), { x: 0, y: 0 }]]);
   const leaves: Array<{ x: number; y: number; width: number; height: number }> = [];
   const place = (parent: ElkNode, offset: { x: number; y: number }) => {
@@ -2761,6 +2765,20 @@ function countRouteNodeHits(root: ElkNode): number {
         const points = [section.startPoint, ...(section.bendPoints ?? []), section.endPoint].map(
           (point) => ({ x: point.x + offset.x, y: point.y + offset.y }),
         );
+        const segments = points.slice(1).map((b, index) => [points[index]!, b] as const);
+        for (const [first, [a, b]] of segments.entries())
+          for (const [c, d] of segments.slice(first + 1))
+            if (
+              (Math.abs(a.y - b.y) < 1e-9 &&
+                Math.abs(c.y - d.y) < 1e-9 &&
+                Math.abs(a.y - c.y) < 1e-9 &&
+                overlaps(a.x, b.x, Math.min(c.x, d.x), Math.max(c.x, d.x))) ||
+              (Math.abs(a.x - b.x) < 1e-9 &&
+                Math.abs(c.x - d.x) < 1e-9 &&
+                Math.abs(a.x - c.x) < 1e-9 &&
+                overlaps(a.y, b.y, Math.min(c.y, d.y), Math.max(c.y, d.y)))
+            )
+              hits++;
         for (let index = 0; index + 1 < points.length; index++) {
           const a = points[index]!,
             b = points[index + 1]!;
