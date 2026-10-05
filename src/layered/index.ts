@@ -1744,6 +1744,20 @@ export function* createLayeredScopePipeline<N, E, G, P>(
     layerByNodeId: assignment.layerByNodeId,
     layers: order.layers,
   }));
+  // ELK's InLayerConstraintProcessor: northern hierarchical port helpers lead
+  // their layer and southern ones end it, keeping their relative order.
+  const inLayerSide = new Map(
+    [...hierarchicalPorts.replacements.values()].map((record) => [record.helper.id, record.side]),
+  );
+  if (inLayerSide.size)
+    order = {
+      ...order,
+      layers: order.layers.map((layer) => [
+        ...layer.filter((id) => inLayerSide.get(id) === "NORTH"),
+        ...layer.filter((id) => !inLayerSide.has(id)),
+        ...layer.filter((id) => inLayerSide.get(id) === "SOUTH"),
+      ]),
+    };
   // ELK's SweepCopy.assertCorrectPortSides: a north/south port whose dummy
   // ended on the other side of its node switches to that side.
   for (const layer of order.layers) {
