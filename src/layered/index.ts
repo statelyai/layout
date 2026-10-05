@@ -4,6 +4,7 @@ import {
   sizeHierarchicalPortDummies,
 } from "./hierarchical-port-phases";
 import { restoreHierarchicalPorts } from "./hierarchical-port-restoration";
+import { countAllCrossings } from "./crossing-counter";
 import { crossingGraph } from "./crossing-graph";
 import { sortInitialModelOrder, markInitialModelOrderPrepared } from "./initial-model-order";
 import { hasMovableLoopPorts } from "./loop-envelopes";
@@ -1758,6 +1759,72 @@ export function* createLayeredScopePipeline<N, E, G, P>(
         ...layer.filter((id) => inLayerSide.get(id) === "SOUTH"),
       ]),
     };
+  // Forced model order can move other nodes between a node and its
+  // north/south port dummies, whose edges would then cross those nodes.
+  // Rejoin them, moving either the dummies or the intervening nodes,
+  // whichever crosses fewer edges.
+  const dummiesByOwner = new Map<string, Set<string>>();
+  for (const [dummy, origin] of northSouth.originsByDummyId)
+    dummiesByOwner.set(
+      origin.node.id,
+      (dummiesByOwner.get(origin.node.id) ?? new Set()).add(dummy),
+    );
+  const separated = (layer: readonly string[], owner: string, own: ReadonlySet<string>) => {
+    const at = layer.indexOf(owner);
+    const span = layer.flatMap((id, index) => (own.has(id) ? [index] : []));
+    const [from, to] = [Math.min(at, ...span), Math.max(at, ...span)];
+    return {
+      at,
+      from,
+      to,
+      between: layer.slice(from, to + 1).filter((id) => id !== owner && !own.has(id)),
+    };
+  };
+  const intrudes = (between: readonly string[]) => between.some((id) => !id.startsWith("__"));
+  for (let layerIndex = 0; layerIndex < order.layers.length; layerIndex++)
+    for (const [owner, own] of dummiesByOwner) {
+      const current = order.layers[layerIndex]!;
+      if (!current.includes(owner)) continue;
+      const { at, from, to, between } = separated(current, owner, own);
+      if (!intrudes(between)) continue;
+      const before = current.slice(from, at).filter((id) => own.has(id)),
+        after = current.slice(at + 1, to + 1).filter((id) => own.has(id));
+      const near = between.filter((id) => current.indexOf(id) < at),
+        far = between.filter((id) => current.indexOf(id) > at);
+      const head = current.slice(0, from),
+        tail = current.slice(to + 1);
+      const unit = [...before, owner, ...after];
+      // Intervening nodes stay on their side of the owner, or pass it.
+      const candidates = [
+        [...head, ...near, ...unit, ...far, ...tail],
+        [...head, ...far, ...unit, ...near, ...tail],
+      ];
+      const score = (candidate: string[]) =>
+        countAllCrossings(
+          crossingGraph(
+            expanded.input,
+            expanded.orientation,
+            order.layers.map((members, index) => (index === layerIndex ? candidate : members)),
+          ),
+        ).total;
+      // Never separate another node from its own dummies.
+      const valid = candidates.filter((candidate) =>
+        [...dummiesByOwner].every(
+          ([other, dummies]) =>
+            other === owner ||
+            !candidate.includes(other) ||
+            intrudes(separated(candidate, other, dummies).between) ===
+              intrudes(separated(current, other, dummies).between),
+        ),
+      );
+      const best = (valid.length ? valid : candidates.slice(0, 1)).reduce((winner, candidate) =>
+        score(candidate) < score(winner) ? candidate : winner,
+      );
+      order = {
+        ...order,
+        layers: order.layers.map((members, index) => (index === layerIndex ? best : members)),
+      };
+    }
   // ELK's SweepCopy.assertCorrectPortSides: a north/south port whose dummy
   // ended on the other side of its node switches to that side.
   for (const layer of order.layers) {
