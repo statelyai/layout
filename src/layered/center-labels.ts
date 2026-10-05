@@ -188,13 +188,32 @@ export function selectCenterLabelSides(
     const info = labels.dummyById.get(id);
     if (info) sides.set(id, info.inline ? "INLINE" : side);
   };
+  // ELK pairs consecutive dummies of any kind whose long edges connect the
+  // same nodes (LONG_EDGE_SOURCE/TARGET), in their cycle-broken direction.
+  const edgeById = new Map(input.graph.edges.map((edge) => [edge.id, edge]));
+  const endpointsByDummy = new Map<string, string>();
+  for (const [original, ids] of expansion.segmentIdsByEdgeId) {
+    const chain = ids.flatMap((id) => edgeById.get(id) ?? []);
+    if (chain.length < 2) continue;
+    const reversed =
+      expansion.orientation.reversedEdgeIds.has(original) ||
+      expansion.orientation.reversedEdgeIds.has(chain[0]!.id);
+    const [source, target] = [chain[0]!.sourceId, chain.at(-1)!.targetId];
+    const key = reversed ? `${target}\0${source}` : `${source}\0${target}`;
+    for (const edge of chain)
+      for (const id of [edge.sourceId, edge.targetId])
+        if (id.startsWith("__layout_dummy:")) endpointsByDummy.set(id, key);
+  }
+  const endpoints = (id: string) => {
+    const info = labels.dummyById.get(id);
+    if (!info) return endpointsByDummy.get(id);
+    return info.reversed
+      ? `${info.edge.targetId}\0${info.edge.sourceId}`
+      : `${info.edge.sourceId}\0${info.edge.targetId}`;
+  };
   const sameEndpoints = (first: string, second: string) => {
-    const a = labels.dummyById.get(first),
-      b = labels.dummyById.get(second);
-    if (!a || !b) return false;
-    const source = (info: LabelDummy) => (info.reversed ? info.edge.targetId : info.edge.sourceId);
-    const target = (info: LabelDummy) => (info.reversed ? info.edge.sourceId : info.edge.targetId);
-    return source(a) === source(b) && target(a) === target(b);
+    const a = endpoints(first);
+    return a !== undefined && a === endpoints(second);
   };
   for (const layer of order.layers) {
     if (!mode.startsWith("SMART_")) {
