@@ -16,3 +16,15 @@ Gate elapsed: 220 s corpus, 514 s holdout. The conflicting exact-geometry oracle
 ```sh
 pnpm exec vitest run --dir test test/quality-self-loop-labels.test.ts --maxWorkers=1
 ```
+
+## Route clearance
+
+The first rule moved a label only when it covered its own node. Same-port loops now route as squares, so their midpoint labels can also land on another edge. Options seed 204 RIGHT is an example: the label of the loop `e2` sat on `e0`. A self-loop label now moves whenever its default spot covers any node or another route.
+
+|                                     | Corpus  | Holdout   |
+| ----------------------------------- | ------- | --------- |
+| Native hard-violation cases         | 1 → 1   | 30 → 27   |
+| LOSS                                | 72 → 72 | 275 → 274 |
+| WIN/TIE → LOSS, new hard violations | 0, 0    | 0, 0      |
+
+Gate elapsed: 218 s corpus, 414 s holdout ([gate](route-clearance/gate.json), [holdout](route-clearance/holdout-gate.json)). Two diagnostic label hits remain where a root-level edge shares the loop's port and its route changes when the facade joins hierarchy pieces after placement.
