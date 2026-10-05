@@ -2993,12 +2993,72 @@ export function* createLayeredScopePipeline<N, E, G, P>(
       }
       return undefined;
     })();
+    // A self-loop label that would cover its own node sits beside one of the
+    // loop's segments instead, longest first, on the side away from the node,
+    // at the first spot clear of nodes and other routes.
+    const outerLoopLabelPosition = (() => {
+      if (edge.sourceId !== edge.targetId || !sourceRect || points.length < 3) return undefined;
+      const centerX = sourceRect.x + sourceRect.width / 2,
+        centerY = sourceRect.y + sourceRect.height / 2;
+      const segments = points
+        .slice(1)
+        .map((b, index) => [points[index]!, b] as const)
+        .sort(
+          ([a, b], [c, d]) =>
+            Math.abs(c.x - d.x) + Math.abs(c.y - d.y) - (Math.abs(a.x - b.x) + Math.abs(a.y - b.y)),
+        );
+      const clear = (box: { x: number; y: number }) =>
+        [...placement.rectByNodeId.values()].every(
+          (rect) =>
+            box.x >= rect.x + rect.width ||
+            box.x + width <= rect.x ||
+            box.y >= rect.y + rect.height ||
+            box.y + height <= rect.y,
+        ) &&
+        [...routes.pointsByEdgeId].every(
+          ([id, route]) =>
+            id === edge.id ||
+            route.every((a, index) => {
+              const b = route[index + 1];
+              if (!b) return true;
+              return (
+                Math.max(a.x, b.x) <= box.x ||
+                Math.min(a.x, b.x) >= box.x + width ||
+                Math.max(a.y, b.y) <= box.y ||
+                Math.min(a.y, b.y) >= box.y + height
+              );
+            }),
+        );
+      for (const [a, b] of segments) {
+        const box =
+          a.y === b.y
+            ? {
+                x: (a.x + b.x - width) / 2,
+                y: a.y < centerY ? a.y - labelSpacing - height : a.y + labelSpacing,
+              }
+            : {
+                x: a.x < centerX ? a.x - labelSpacing - width : a.x + labelSpacing,
+                y: (a.y + b.y - height) / 2,
+              };
+        if (clear(box)) return box;
+      }
+      return undefined;
+    })();
     const explicitLabelPosition =
       movableExteriorLoopLabelPosition ??
       selfLoopLabelPosition ??
       outerAntiparallelLabelPosition ??
       antiparallelLabelPosition ??
-      parallelLabelPositions.get(edge.id);
+      parallelLabelPositions.get(edge.id) ??
+      (width > 0 &&
+      height > 0 &&
+      sourceRect &&
+      routeX < sourceRect.x + sourceRect.width &&
+      routeX + width > sourceRect.x &&
+      routeY < sourceRect.y + sourceRect.height &&
+      routeY + height > sourceRect.y
+        ? outerLoopLabelPosition
+        : undefined);
     const centerLabelDummyId = labels.labelDummyIdByEdgeId.get(edge.id);
     const centerLabelInfo = centerLabelDummyId
       ? labels.dummyById.get(centerLabelDummyId)
