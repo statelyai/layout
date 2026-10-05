@@ -1032,7 +1032,7 @@ export default class ELK {
                 getOption(
                   layoutOptions,
                   "layered.crossingMinimization.greedySwitchHierarchical.type",
-                ) ?? "OFF",
+                ) ?? "TWO_SIDED",
               ) as LayeredAdvancedOptions["crossingMinimization.greedySwitch.type"],
             }
           : {}),
