@@ -20,6 +20,7 @@ import {
   type ExternalPortConstraints,
   type ExternalPortSide,
 } from "../layered/external-port-dummy";
+import { isBetterLayout, measureLayout } from "./layout-quality";
 import { applyOrthogonalJunctions } from "./orthogonal-junctions";
 import { createGraph, type Graph, type VisualGraph } from "@statelyai/graph";
 import {
@@ -161,14 +162,40 @@ export default class ELK {
     graph: T,
     arguments_: ElkLayoutArguments = {},
   ): Promise<LaidOutElkNode<T>> {
+    const options = { ...this.#options.defaultLayoutOptions, ...arguments_.layoutOptions };
+    const variants = crossingVariants(options, graph);
+    const pristine = variants.length ? structuredClone(graph) : undefined;
+    let best = await this.#layoutWithoutDefectiveCompaction(graph, arguments_);
+    if (!pristine) return best;
+    // Crossing minimization heuristics win on different graphs. For compound
+    // layouts, lay out each variant and keep the best measured result.
+    let quality = measureLayout(best);
+    for (const variant of variants) {
+      const candidate = await this.#layoutWithoutDefectiveCompaction(structuredClone(pristine), {
+        ...arguments_,
+        layoutOptions: { ...arguments_.layoutOptions, ...variant },
+      });
+      const candidateQuality = measureLayout(candidate);
+      if (isBetterLayout(candidateQuality, quality)) {
+        best = candidate;
+        quality = candidateQuality;
+      }
+    }
+    return best;
+  }
+
+  async #layoutWithoutDefectiveCompaction<T extends ElkNode>(
+    graph: T,
+    arguments_: ElkLayoutArguments,
+  ): Promise<LaidOutElkNode<T>> {
     const compacting = usesPostCompaction(
       { ...this.#options.defaultLayoutOptions, ...arguments_.layoutOptions },
       graph,
     );
     const pristine = compacting ? structuredClone(graph) : undefined;
     const result = await this.#layout(graph, arguments_);
-    const hits = pristine ? countRouteDefects(result) : 0;
-    if (!pristine || hits === 0) return result;
+    const defects = pristine ? measureLayout(result).defects : 0;
+    if (!pristine || defects === 0) return result;
     // Post-compaction is an optimization; it must not route edges through nodes
     // or fold a route back onto itself.
     const strategy = { "elk.layered.compaction.postCompaction.strategy": "NONE" };
@@ -176,7 +203,7 @@ export default class ELK {
       ...arguments_,
       layoutOptions: { ...arguments_.layoutOptions, ...strategy },
     });
-    return countRouteDefects(uncompacted) < hits ? uncompacted : result;
+    return measureLayout(uncompacted).defects < defects ? uncompacted : result;
   }
 
   async #layout<T extends ElkNode>(
@@ -2739,66 +2766,24 @@ function disablePostCompaction<T extends ElkNode>(node: T): T {
 }
 
 /**
- * Route segments crossing the open interior of a leaf node, plus pairs of one
- * route's segments that overlap along a line, in absolute coordinates.
+ * Alternative settings worth trying for a compound layout: ELK's default of no
+ * hierarchical greedy switch, unless the graph chooses one explicitly.
  */
-function countRouteDefects(root: ElkNode): number {
-  const frames = new Map<string, { x: number; y: number }>([[String(root.id), { x: 0, y: 0 }]]);
-  const leaves: Array<{ x: number; y: number; width: number; height: number }> = [];
-  const place = (parent: ElkNode, offset: { x: number; y: number }) => {
-    for (const child of parent.children ?? []) {
-      const at = { x: offset.x + (child.x ?? 0), y: offset.y + (child.y ?? 0) };
-      frames.set(String(child.id), at);
-      if (child.children?.length) place(child, at);
-      else leaves.push({ ...at, width: child.width ?? 0, height: child.height ?? 0 });
-    }
-  };
-  place(root, { x: 0, y: 0 });
-  const inside = (value: number, low: number, high: number) =>
-    value > low + 1e-6 && value < high - 1e-6;
-  const overlaps = (a: number, b: number, low: number, high: number) =>
-    Math.min(Math.max(a, b), high) - Math.max(Math.min(a, b), low) > 1e-6;
-  let hits = 0;
-  const visit = (parent: ElkNode) => {
-    for (const edge of parent.edges ?? []) {
-      const container = String((edge as { container?: string }).container ?? parent.id);
-      const offset = frames.get(container) ?? { x: 0, y: 0 };
-      for (const section of edge.sections ?? []) {
-        const points = [section.startPoint, ...(section.bendPoints ?? []), section.endPoint].map(
-          (point) => ({ x: point.x + offset.x, y: point.y + offset.y }),
-        );
-        const segments = points.slice(1).map((b, index) => [points[index]!, b] as const);
-        for (const [first, [a, b]] of segments.entries())
-          for (const [c, d] of segments.slice(first + 1))
-            if (
-              (Math.abs(a.y - b.y) < 1e-9 &&
-                Math.abs(c.y - d.y) < 1e-9 &&
-                Math.abs(a.y - c.y) < 1e-9 &&
-                overlaps(a.x, b.x, Math.min(c.x, d.x), Math.max(c.x, d.x))) ||
-              (Math.abs(a.x - b.x) < 1e-9 &&
-                Math.abs(c.x - d.x) < 1e-9 &&
-                Math.abs(a.x - c.x) < 1e-9 &&
-                overlaps(a.y, b.y, Math.min(c.y, d.y), Math.max(c.y, d.y)))
-            )
-              hits++;
-        for (let index = 0; index + 1 < points.length; index++) {
-          const a = points[index]!,
-            b = points[index + 1]!;
-          for (const rect of leaves)
-            if (
-              (Math.abs(a.y - b.y) < 1e-9 &&
-                inside(a.y, rect.y, rect.y + rect.height) &&
-                overlaps(a.x, b.x, rect.x, rect.x + rect.width)) ||
-              (Math.abs(a.x - b.x) < 1e-9 &&
-                inside(a.x, rect.x, rect.x + rect.width) &&
-                overlaps(a.y, b.y, rect.y, rect.y + rect.height))
-            )
-              hits++;
-        }
-      }
-    }
-    for (const child of parent.children ?? []) visit(child);
-  };
-  visit(root);
-  return hits;
+function crossingVariants(
+  options: Readonly<Record<string, unknown>>,
+  graph: ElkNode,
+): Array<Record<string, string>> {
+  const own = { ...options, ...graph.properties, ...graph.layoutOptions };
+  const compound = (graph.children ?? []).some((child) => child.children?.length);
+  if (
+    !compound ||
+    getOption(own, "hierarchyHandling") !== "INCLUDE_CHILDREN" ||
+    getOption(own, "layered.crossingMinimization.greedySwitchHierarchical.type") !== undefined
+  )
+    return [];
+  return [
+    { "elk.layered.crossingMinimization.greedySwitchHierarchical.type": "OFF" },
+    { "elk.randomSeed": "2" },
+    { "elk.randomSeed": "3" },
+  ];
 }
