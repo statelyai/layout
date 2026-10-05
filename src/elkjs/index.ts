@@ -728,7 +728,9 @@ export default class ELK {
             );
             if (temporary?.sections) {
               internalEdge.sections = temporary.sections;
-              internalEdge.container = child.id;
+              // A nested scope may own the route (an edge from a compound's
+              // own port to its child); keep that coordinate frame.
+              internalEdge.container = (temporary as { container?: string }).container ?? child.id;
             }
           }
           const childDirection = getDirection({ ...layoutOptions, ...child.layoutOptions });
