@@ -27,7 +27,7 @@ the selected descendant port across a compound boundary.
 Initial model ordering and port-helper alignment have seven retained random
 full-geometry regressions across independent seed ranges. Mixed-port junction
 restoration has nineteen more, covering direct and joined routes in all directions.
-Nested helper bounds have twelve complete-geometry regressions, including parent placement/routing after child resizing. Hierarchy boundary-side preparation and canonical port sorting add a 48-case constraint matrix and fifteen retained direction regressions. Coincident cross-port restoration retains both physical endpoints. Preserving authored compound constraints and transforming boundary-helper placement raises the matrix to 36 matches, with twelve failures retained. A separate frozen random corpus covers compound constraints and authored compound ports; see [compound helper evidence](docs/heuristics/compound-helper-orientation/README.md). Authored and implicit ancestor endpoints have a further 320-case strict gate: 320 complete matches after perpendicular-port pipeline integration. See [compound endpoint evidence](docs/heuristics/authored-compound-port-scope/README.md). Internal perpendicular boundary processors pass 800 phase/direction checks against the real worker; public pipeline integration now passes the strict endpoint gate. See [phase evidence](docs/heuristics/hierarchical-port-phases/README.md) and [integration evidence](docs/heuristics/integrated-boundary-routing/README.md). Child-scope junction transfer adds two exact random compound matches; broader random parity remains incomplete. See [junction evidence](docs/heuristics/compound-junction-transfer/README.md).
+Nested helper bounds have twelve complete-geometry regressions, including parent placement/routing after child resizing. Hierarchy boundary-side preparation and canonical port sorting add a 48-case constraint matrix and fifteen retained direction regressions. Coincident cross-port restoration retains both physical endpoints. Preserving authored compound constraints and transforming boundary-helper placement raises the matrix to 36 matches, with twelve failures retained. A separate frozen random corpus covers compound constraints and authored compound ports; see [compound helper evidence](https://github.com/statelyai/layout/blob/heuristics-evidence/docs/heuristics/compound-helper-orientation/README.md). Authored and implicit ancestor endpoints have a further 320-case strict gate: 320 complete matches after perpendicular-port pipeline integration. See [compound endpoint evidence](https://github.com/statelyai/layout/blob/heuristics-evidence/docs/heuristics/authored-compound-port-scope/README.md). Internal perpendicular boundary processors pass 800 phase/direction checks against the real worker; public pipeline integration now passes the strict endpoint gate. See [phase evidence](https://github.com/statelyai/layout/blob/heuristics-evidence/docs/heuristics/hierarchical-port-phases/README.md) and [integration evidence](https://github.com/statelyai/layout/blob/heuristics-evidence/docs/heuristics/integrated-boundary-routing/README.md). Child-scope junction transfer adds two exact random compound matches; broader random parity remains incomplete. See [junction evidence](https://github.com/statelyai/layout/blob/heuristics-evidence/docs/heuristics/compound-junction-transfer/README.md).
 A deeper random corpus adds three levels of nesting, bounded ports, cycles, loops and cross-boundary edges. Physical hierarchy boundaries now survive feedback reversal; complete comparisons still expose substantial geometry differences.
 That coverage does not establish broad geometry or aesthetic parity: native
 hierarchy placement and routing still diverge materially from real ELK. The
@@ -418,7 +418,7 @@ API, supported controls, tradeoffs and reproducible visual comparison.
 
 For the strict seeded hierarchy comparison with real ELK, run
 `pnpm test:parity:compound`. See the
-[compound baseline](./docs/heuristics/compound-baseline/README.md) for preserved
+[compound baseline](https://github.com/statelyai/layout/blob/heuristics-evidence/docs/heuristics/compound-baseline/README.md) for preserved
 failures and side-by-side diagrams. This finite gate passes; broad native parity
 remains work in progress.
 
@@ -429,45 +429,45 @@ with real ELK; passing it does not establish broad hierarchy parity.
 For bounded random flat graphs with cycles, self-loops, fixed-side/fixed-position
 ports and labels, run `pnpm test:parity:flat`. This strict geometry gate preserves
 all mismatches and engine errors; it currently fails. See the
-[flat random proof](./docs/heuristics/bk-compaction-thresholds/README.md).
+[flat random proof](https://github.com/statelyai/layout/blob/heuristics-evidence/docs/heuristics/bk-compaction-thresholds/README.md).
 
 For directional compaction on the same bounded random flat/hierarchical families,
 run `pnpm exec tsx scripts/check-directional-compaction-parity.ts`. This additional
 200-case gate preserves all failures, including real ELK errors; it currently
-fails. See the [directional compaction proof](./docs/heuristics/directional-compaction/README.md).
+fails. See the [directional compaction proof](https://github.com/statelyai/layout/blob/heuristics-evidence/docs/heuristics/directional-compaction/README.md).
 
 For model-order settings on bounded random flat/hierarchical graphs, run
 `pnpm test:parity:model-order`. This strict 200-case gate alternates forced node
 ordering, preserves complete failures and reference exceptions, and currently
-fails. See the [inverted-port model-order proof](docs/heuristics/inverted-port-model-order/README.md). Remaining fixed-port route differences are traced in the
-[helper ordering investigation](docs/heuristics/fixed-port-helper-investigation/README.md).
+fails. See the [inverted-port model-order proof](https://github.com/statelyai/layout/blob/heuristics-evidence/docs/heuristics/inverted-port-model-order/README.md). Remaining fixed-port route differences are traced in the
+[helper ordering investigation](https://github.com/statelyai/layout/blob/heuristics-evidence/docs/heuristics/fixed-port-helper-investigation/README.md).
 
 <!-- implementation from src/layered/loop-envelopes.ts, src/layered/strategies.ts, src/layered/index.ts and src/elkjs/index.ts -->
 
-Movable self-loop labels reserve clearance before placement and retain directional alignment and stacked routing clearance. Compaction retains their complete label envelopes. See the [native loop label comparison](docs/heuristics/movable-loop-labels/README.md).
+Movable self-loop labels reserve clearance before placement and retain directional alignment and stacked routing clearance. Compaction retains their complete label envelopes. See the [native loop label comparison](https://github.com/statelyai/layout/blob/heuristics-evidence/docs/heuristics/movable-loop-labels/README.md).
 
-Routing reuses self-loop envelopes already reserved by placement, keeping neighboring hierarchy helpers in their chosen positions. See the [preplaced loop envelope regression](docs/heuristics/preplaced-loop-envelope/README.md).
+Routing reuses self-loop envelopes already reserved by placement, keeping neighboring hierarchy helpers in their chosen positions. See the [preplaced loop envelope regression](https://github.com/statelyai/layout/blob/heuristics-evidence/docs/heuristics/preplaced-loop-envelope/README.md).
 
-Orthogonal junction ownership follows physical incident edge order after reversal. See the [junction ownership regression](docs/heuristics/physical-junction-order/README.md).
+Orthogonal junction ownership follows physical incident edge order after reversal. See the [junction ownership regression](https://github.com/statelyai/layout/blob/heuristics-evidence/docs/heuristics/physical-junction-order/README.md).
 
-Joining reversed edge chains retains physical routing order for junction points. See the [reversed chain regression](docs/heuristics/reversed-junction-chains/README.md).
+Joining reversed edge chains retains physical routing order for junction points. See the [reversed chain regression](https://github.com/statelyai/layout/blob/heuristics-evidence/docs/heuristics/reversed-junction-chains/README.md).
 
-Crossing minimization starts from ELK's long-edge splitter order: component order, then dummies appended through authored port order. See the [splitter order replay](docs/heuristics/long-edge-splitter-order/README.md).
+Crossing minimization starts from ELK's long-edge splitter order: component order, then dummies appended through authored port order. See the [splitter order replay](https://github.com/statelyai/layout/blob/heuristics-evidence/docs/heuristics/long-edge-splitter-order/README.md).
 
-That order walks ELK's per-port edge lists, replayed through reversal history, label dummies and hierarchy segment creation. See the [port edge-list replay](docs/heuristics/elk-port-edge-lists/README.md).
+That order walks ELK's per-port edge lists, replayed through reversal history, label dummies and hierarchy segment creation. See the [port edge-list replay](https://github.com/statelyai/layout/blob/heuristics-evidence/docs/heuristics/elk-port-edge-lists/README.md).
 
-Greedy switching decides each swap from ELK's local two-node crossing estimates. See the [greedy switch decider](docs/heuristics/greedy-switch-decider/README.md).
+Greedy switching decides each swap from ELK's local two-node crossing estimates. See the [greedy switch decider](https://github.com/statelyai/layout/blob/heuristics-evidence/docs/heuristics/greedy-switch-decider/README.md).
 
-Barycenter sweeps visit each port's edges in ELK's list order. See the [port edge visit order](docs/heuristics/port-edge-visit-order/README.md).
+Barycenter sweeps visit each port's edges in ELK's list order. See the [port edge visit order](https://github.com/statelyai/layout/blob/heuristics-evidence/docs/heuristics/port-edge-visit-order/README.md).
 
-A north/south port whose dummy ends crossing minimization on the other side of its node moves to that side. See the [north/south port sides](docs/heuristics/north-south-port-sides/README.md).
+A north/south port whose dummy ends crossing minimization on the other side of its node moves to that side. See the [north/south port sides](https://github.com/statelyai/layout/blob/heuristics-evidence/docs/heuristics/north-south-port-sides/README.md).
 
-In-layer edges kept by merged hyperedge dummies join their routing hyperedge. See the [merged dummy port faces](docs/heuristics/merged-dummy-port-faces/README.md).
+In-layer edges kept by merged hyperedge dummies join their routing hyperedge. See the [merged dummy port faces](https://github.com/statelyai/layout/blob/heuristics-evidence/docs/heuristics/merged-dummy-port-faces/README.md).
 
-Self loops that share a port route on one track. See the [shared self-loop tracks](docs/heuristics/shared-self-loop-tracks/README.md).
+Self loops that share a port route on one track. See the [shared self-loop tracks](https://github.com/statelyai/layout/blob/heuristics-evidence/docs/heuristics/shared-self-loop-tracks/README.md).
 
-Orthogonal routing walks port edge lists in ELK order when building hyperedge segments and assigning junctions. See the [orthogonal edge lists](docs/heuristics/orthogonal-edge-lists/README.md).
+Orthogonal routing walks port edge lists in ELK order when building hyperedge segments and assigning junctions. See the [orthogonal edge lists](https://github.com/statelyai/layout/blob/heuristics-evidence/docs/heuristics/orthogonal-edge-lists/README.md).
 
-A merged hyperedge dummy that absorbed an inverted-port dummy keeps its in-layer route in the adjacent channel. See [merged inverted routes](docs/heuristics/merged-inverted-routes/README.md).
+A merged hyperedge dummy that absorbed an inverted-port dummy keeps its in-layer route in the adjacent channel. See [merged inverted routes](https://github.com/statelyai/layout/blob/heuristics-evidence/docs/heuristics/merged-inverted-routes/README.md).
 
-BK edge straightening ignores self loops, and hyperedge dummies merge only when ELK import detects a hyperedge. See [BK hidden self loops](docs/heuristics/bk-hidden-self-loops/README.md).
+BK edge straightening ignores self loops, and hyperedge dummies merge only when ELK import detects a hyperedge. See [BK hidden self loops](https://github.com/statelyai/layout/blob/heuristics-evidence/docs/heuristics/bk-hidden-self-loops/README.md).

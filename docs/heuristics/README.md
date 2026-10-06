@@ -1,11 +1,11 @@
 # Heuristic review corpus
 
-> Raw parity and gate evidence (per-round reports, renders, logs) lives on the
+> Per-round parity evidence (READMEs, reports, renders, logs) and the parity
+> proofs live on the
 > [`heuristics-evidence`](https://github.com/statelyai/layout/tree/heuristics-evidence/docs/heuristics)
-> branch; links in these READMEs to files that are missing here resolve there.
-> This directory keeps the READMEs, the quality corpora (`quality-corpus/`,
-> `quality-holdout/`), the latest gate rows (`quality-compound-candidates/*.json.gz`)
-> and the files tests read.
+> branch; links below point there. This directory keeps the quality corpora
+> (`quality-corpus/`, `quality-holdout/`), the quality-round READMEs and the
+> latest gate rows (`quality-compound-candidates/*.json.gz`).
 
 <!-- generator behavior and bounds from scripts/generate-heuristic-corpus.mjs -->
 
@@ -81,8 +81,8 @@ node scripts/benchmark-heuristic-layout.mjs .scratch/baseline 20261001 20261102 
 The generator also accepts an optional output directory after its seed.
 The benchmark writes `baseline.json`, `baseline.md`, and one comparison gallery
 per seed under `generated/baseline/`. Layout failures remain recorded and cause
-exit status 1. Frozen initial measurements are in [baseline.md](baseline.md)
-and [baseline.json](baseline.json); these are evidence, not passing targets.
+exit status 1. Frozen initial measurements are in [baseline.md](https://github.com/statelyai/layout/blob/heuristics-evidence/docs/heuristics/baseline.md)
+and [baseline.json](https://github.com/statelyai/layout/blob/heuristics-evidence/docs/heuristics/baseline.json); these are evidence, not passing targets.
 Fresh samples become observed evaluation cases after running; future acceptance
 requires additional unseen seeds and human review.
 
@@ -107,7 +107,7 @@ retain individual metrics,
 engine failures, source revision, working-tree state, elkjs version, and scorer
 and generator hashes. They do not measure runtime or establish aesthetic parity.
 
-The [routing repair report](after-routing-repair.md) and [raw results](after-routing-repair.json) preserve the same 30 inputs and scorer after the correctness fixes. The initial baseline remains unchanged. Matching visual proof is in [native routing repair](../proofs/native-routing/README.md).
+The [routing repair report](https://github.com/statelyai/layout/blob/heuristics-evidence/docs/heuristics/after-routing-repair.md) and [raw results](https://github.com/statelyai/layout/blob/heuristics-evidence/docs/heuristics/after-routing-repair.json) preserve the same 30 inputs and scorer after the correctness fixes. The initial baseline remains unchanged. Matching visual proof is in [native routing repair](https://github.com/statelyai/layout/blob/heuristics-evidence/docs/proofs/native-routing/README.md).
 
 <!-- random comparison gate from scripts/benchmark-heuristic-layout.mjs -->
 
@@ -121,43 +121,43 @@ Passing this finite gate is necessary evidence, not universal parity or a
 replacement for the authored aesthetic rubric. No tolerance was introduced to
 make existing failures pass.
 
-The [160-graph random evaluation](random-progress.md) records the current native
+The [160-graph random evaluation](https://github.com/statelyai/layout/blob/heuristics-evidence/docs/heuristics/random-progress.md) records the current native
 phase/routing corrections, a replay of observed counterexamples, and a fresh
 random draw against real ELK. The strict parity gate still fails on crossings
 and bends. Full per-graph results and matching visual proof remain available.
 
-The [constraint orientation probe](constraint-orientation-probe.md) retains ten further measurements, including larger-case quality regressions. It precedes the later fixed-endpoint repair; parity still fails.
+The [constraint orientation probe](https://github.com/statelyai/layout/blob/heuristics-evidence/docs/heuristics/constraint-orientation-probe.md) retains ten further measurements, including larger-case quality regressions. It precedes the later fixed-endpoint repair; parity still fails.
 
-The [compaction port-margin proof](compaction-port-margins/README.md) records 40 new full-geometry matches and 56 newly matching random hierarchy graphs. Broad parity remains incomplete.
+The [compaction port-margin proof](https://github.com/statelyai/layout/blob/heuristics-evidence/docs/heuristics/compaction-port-margins/README.md) records 40 new full-geometry matches and 56 newly matching random hierarchy graphs. Broad parity remains incomplete.
 
-The [long-edge joining proof](long-edge-compaction-joining/README.md) preserves ELK segment bends after compaction, including retraced sections. Directional full matches improve from 64 to 74/200; broad parity remains incomplete.
+The [long-edge joining proof](https://github.com/statelyai/layout/blob/heuristics-evidence/docs/heuristics/long-edge-compaction-joining/README.md) preserves ELK segment bends after compaction, including retraced sections. Directional full matches improve from 64 to 74/200; broad parity remains incomplete.
 
-The [compound boundary-spacing proof](compound-boundary-spacing/README.md) replaces blanket spacing and compensating child shifts with ELK routing-track reservations. Directional full matches improve from 74 to 80/200; broad parity remains incomplete.
+The [compound boundary-spacing proof](https://github.com/statelyai/layout/blob/heuristics-evidence/docs/heuristics/compound-boundary-spacing/README.md) replaces blanket spacing and compensating child shifts with ELK routing-track reservations. Directional full matches improve from 74 to 80/200; broad parity remains incomplete.
 
-The [fixed-port loop proof](fixed-port-loop-pairs/README.md) records 48 face-pair/direction regressions matching real ELK, with no new full-suite failure. Broad random parity remains incomplete.
+The [fixed-port loop proof](https://github.com/statelyai/layout/blob/heuristics-evidence/docs/heuristics/fixed-port-loop-pairs/README.md) records 48 face-pair/direction regressions matching real ELK, with no new full-suite failure. Broad random parity remains incomplete.
 
-The [loop-envelope compaction proof](compaction-loop-envelopes/README.md) improves directional full matches from 122 to 132/200, with zero native errors and five resolved suite failures. Broad parity remains incomplete.
+The [loop-envelope compaction proof](https://github.com/statelyai/layout/blob/heuristics-evidence/docs/heuristics/compaction-loop-envelopes/README.md) improves directional full matches from 122 to 132/200, with zero native errors and five resolved suite failures. Broad parity remains incomplete.
 
-The [label routing clearance proof](label-routing-clearance/README.md) improves directional full matches from 132 to 134/200 and original flat matches from 32 to 34/100. Seeds 26–50 add 200 preserved random comparisons; combined exact matches are 266/400, with zero native errors. Broad parity remains incomplete.
+The [label routing clearance proof](https://github.com/statelyai/layout/blob/heuristics-evidence/docs/heuristics/label-routing-clearance/README.md) improves directional full matches from 132 to 134/200 and original flat matches from 32 to 34/100. Seeds 26–50 add 200 preserved random comparisons; combined exact matches are 266/400, with zero native errors. Broad parity remains incomplete.
 
-The [shared cross-port adjacency proof](shared-cross-port-adjacency/README.md) corrects BK straightening on detached port rows through physical edge append order. Combined exact matches remain 266/400; differing values improve by ten, with no matches lost. Broad parity remains incomplete.
+The [shared cross-port adjacency proof](https://github.com/statelyai/layout/blob/heuristics-evidence/docs/heuristics/shared-cross-port-adjacency/README.md) corrects BK straightening on detached port rows through physical edge append order. Combined exact matches remain 266/400; differing values improve by ten, with no matches lost. Broad parity remains incomplete.
 
-The [loop track clearance proof](loop-track-clearance/README.md) reserves fixed-loop flow envelopes during routing and preserves endpoint clearance through reversed edges and trailing bends. Combined matches remain 266/400; differing values improve by 579. Seed 22 now matches all node positions and route sections; junction metadata remains different.
+The [loop track clearance proof](https://github.com/statelyai/layout/blob/heuristics-evidence/docs/heuristics/loop-track-clearance/README.md) reserves fixed-loop flow envelopes during routing and preserves endpoint clearance through reversed edges and trailing bends. Combined matches remain 266/400; differing values improve by 579. Seed 22 now matches all node positions and route sections; junction metadata remains different.
 
-The [native junction proof](native-junctions/README.md) moves branch generation into physical routing and retains junctions through joining and compaction. Seeds 22 and 33 RIGHT become complete matches; combined coverage improves to 268/400, with no complete matches lost.
+The [native junction proof](https://github.com/statelyai/layout/blob/heuristics-evidence/docs/heuristics/native-junctions/README.md) moves branch generation into physical routing and retains junctions through joining and compaction. Seeds 22 and 33 RIGHT become complete matches; combined coverage improves to 268/400, with no complete matches lost.
 
-The [movable loop label proof](movable-loop-labels/README.md) reserves exterior labels before placement and preserves directional alignment and stacked routing clearance. Combined strict matches improve to **270/400**, zero native errors and no complete matches lost. All 38 new regressions fail before and pass now; no existing suite failures change. Broad parity remains incomplete.
+The [movable loop label proof](https://github.com/statelyai/layout/blob/heuristics-evidence/docs/heuristics/movable-loop-labels/README.md) reserves exterior labels before placement and preserves directional alignment and stacked routing clearance. Combined strict matches improve to **270/400**, zero native errors and no complete matches lost. All 38 new regressions fail before and pass now; no existing suite failures change. Broad parity remains incomplete.
 
-The [loop label compaction proof](loop-label-compaction/README.md) retains label envelopes in visibility hitboxes. Combined strict matches improve to **272/400**, with no lost complete matches or changed existing suite failures. Expanded seed 44 DOWN/UP worsens and remains preserved for the next BK diagnosis. Broad parity remains incomplete.
+The [loop label compaction proof](https://github.com/statelyai/layout/blob/heuristics-evidence/docs/heuristics/loop-label-compaction/README.md) retains label envelopes in visibility hitboxes. Combined strict matches improve to **272/400**, with no lost complete matches or changed existing suite failures. Expanded seed 44 DOWN/UP worsens and remains preserved for the next BK diagnosis. Broad parity remains incomplete.
 
-The [smart vertical label proof](smart-vertical-labels/README.md) fixes a second transposition of smart label anchors. Combined strict matches improve to **274/400**. Seed 44 cross-axis geometry now matches; 20 flow-axis differences remain in each vertical direction. Expanded seed 34 UP gains five differences; all failures remain recorded.
+The [smart vertical label proof](https://github.com/statelyai/layout/blob/heuristics-evidence/docs/heuristics/smart-vertical-labels/README.md) fixes a second transposition of smart label anchors. Combined strict matches improve to **274/400**. Seed 44 cross-axis geometry now matches; 20 flow-axis differences remain in each vertical direction. Expanded seed 34 UP gains five differences; all failures remain recorded.
 
-The [cycle-aware compaction proof](cycle-connection-locking/README.md) corrects connection locks to use physical cycle-broken adjacency. Combined strict matches improve to **278/400**, with no lost complete matches or increased differences. Seed 44 now matches all directions. Its scoped vertical tests now assert complete geometry.
+The [cycle-aware compaction proof](https://github.com/statelyai/layout/blob/heuristics-evidence/docs/heuristics/cycle-connection-locking/README.md) corrects connection locks to use physical cycle-broken adjacency. Combined strict matches improve to **278/400**, with no lost complete matches or increased differences. Seed 44 now matches all directions. Its scoped vertical tests now assert complete geometry.
 
-The [mixed loop bounds proof](mixed-loop-bounds/README.md) restores ordinary long-edge cross-axis bounds even when an unrelated self-loop is present. Default flat exact matches improve to **42/100**; all 600 directional results remain byte-identical to their retained evidence.
+The [mixed loop bounds proof](https://github.com/statelyai/layout/blob/heuristics-evidence/docs/heuristics/mixed-loop-bounds/README.md) restores ordinary long-edge cross-axis bounds even when an unrelated self-loop is present. Default flat exact matches improve to **42/100**; all 600 directional results remain byte-identical to their retained evidence.
 
-The [port-aware track proof](port-aware-tracks/README.md) fixes seed 22 RIGHT routing and junctions. Default flat matches improve to **43/100**; directional exact matches remain **412/600**. Two incomplete compaction cases worsen and remain preserved.
+The [port-aware track proof](https://github.com/statelyai/layout/blob/heuristics-evidence/docs/heuristics/port-aware-tracks/README.md) fixes seed 22 RIGHT routing and junctions. Default flat matches improve to **43/100**; directional exact matches remain **412/600**. Two incomplete compaction cases worsen and remain preserved.
 
-The [initial model and port-helper alignment proof](prepared-model-order/README.md) sorts before north/south helper insertion, preserves physical order and excludes port helpers from BK inner segments. Across 1,100 retained inputs, strict matches rise **566 → 573**, no complete matches are lost and 16 worsened rows remain recorded. Seed 2 RIGHT now matches nodes and routes; eight junction differences remain. Broad parity remains incomplete.
+The [initial model and port-helper alignment proof](https://github.com/statelyai/layout/blob/heuristics-evidence/docs/heuristics/prepared-model-order/README.md) sorts before north/south helper insertion, preserves physical order and excludes port helpers from BK inner segments. Across 1,100 retained inputs, strict matches rise **566 → 573**, no complete matches are lost and 16 worsened rows remain recorded. Seed 2 RIGHT now matches nodes and routes; eight junction differences remain. Broad parity remains incomplete.
 
-The [physical junction ownership proof](mixed-port-junction-order/README.md) preserves merged incident-edge order and mixed-port restoration after joining. Strict matches rise **573 → 601** across the same 1,100 inputs, with no matches lost. Nineteen new complete-geometry regressions cover all four directions; 58 worsened incomplete rows remain recorded. Broad parity remains incomplete.
+The [physical junction ownership proof](https://github.com/statelyai/layout/blob/heuristics-evidence/docs/heuristics/mixed-port-junction-order/README.md) preserves merged incident-edge order and mixed-port restoration after joining. Strict matches rise **573 → 601** across the same 1,100 inputs, with no matches lost. Nineteen new complete-geometry regressions cover all four directions; 58 worsened incomplete rows remain recorded. Broad parity remains incomplete.

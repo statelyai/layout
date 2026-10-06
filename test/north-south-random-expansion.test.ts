@@ -1,19 +1,12 @@
-import { readFileSync } from "node:fs";
 import { createGraph } from "@statelyai/graph";
 import { expect, it } from "vitest";
 import { insertNorthSouthPortDummies } from "../src/layered/north-south-ports";
 import { splitLongEdges } from "../src/layered/long-edges";
 import { assignLayersByLongestPath, breakCyclesGreedily } from "../src/layered/strategies";
 import type { LayeredPhaseInput } from "../src/layered/types";
-const corpus = JSON.parse(
-  readFileSync(
-    new URL(
-      "../docs/heuristics/vertical-center-fresh-parity/seed-3468112780/corpus.json",
-      import.meta.url,
-    ),
-    "utf8",
-  ),
-);
+import { readFixture } from "./helpers/fixture";
+// Seed 3468112780 of the vertical-center fresh parity corpus.
+const corpus = readFixture("vertical-center-fresh-corpus");
 for (const c of corpus.cases) {
   it(`preserves randomized graph ${c.id}, seed ${c.seed}, through cross-port expansion`, () => {
     const graph = createGraph(c.input);

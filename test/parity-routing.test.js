@@ -2,7 +2,8 @@ import { createGraph } from "@statelyai/graph";
 import { expect, it } from "vitest";
 import { getLayeredLayout, getLayoutRoutes } from "../src";
 import { measureQuality } from "../scripts/heuristic-quality.mjs";
-import fixtures from "./fixtures/parity-routing.json";
+import { readFixture } from "./helpers/fixture";
+const fixtures = readFixture("parity-routing");
 
 for (const f of fixtures)
   it(`repairs routing defects from random seed ${f.seed}, graph ${f.id}`, () => {

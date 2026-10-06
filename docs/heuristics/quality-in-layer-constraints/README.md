@@ -17,7 +17,7 @@ Accepted under the net-gain tolerance (decided 2026-10-04): holdout regressions 
 - compound-options 1068 UP: WIN → LOSS on bends.
 - compound-options 1071 UP: WIN → LOSS on edge crossings.
 
-Gate elapsed: 262 s corpus, 679 s holdout. Conflicting exact-geometry oracle tests (cumulative, 53): [conflicting-oracle-tests.txt](conflicting-oracle-tests.txt).
+Gate elapsed: 262 s corpus, 679 s holdout. Conflicting exact-geometry oracle tests (cumulative, 53): [conflicting-oracle-tests.txt](https://github.com/statelyai/layout/blob/heuristics-evidence/docs/heuristics/quality-in-layer-constraints/conflicting-oracle-tests.txt).
 
 ```sh
 pnpm exec vitest run --dir test test/quality-in-layer-constraints.test.ts --maxWorkers=1

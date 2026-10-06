@@ -1,5 +1,7 @@
 import { expect, it } from "vitest";
-import fixtures from "../fixtures/port-distribution-oracle.json";
+import { readFixture } from "../helpers/fixture";
+
+const fixtures = readFixture("port-distribution-oracle");
 import type { CrossingGraph } from "../../src/layered/crossing-counter";
 import {
   type PortDistributionState,

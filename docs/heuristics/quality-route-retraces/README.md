@@ -19,7 +19,7 @@ Soft totals versus ELK (corpus, native/ELK): crossings 14,780/14,110, overlap 3,
 
 A third change, keeping north/south port dummies next to their owner after forced model order, removed node hits in the corpus but turned one holdout TIE into a LOSS. It was not kept.
 
-Exact-geometry oracle tests that now conflict with these quality wins are listed in [conflicting-oracle-tests.txt](conflicting-oracle-tests.txt) (35). They are kept as diagnostics.
+Exact-geometry oracle tests that now conflict with these quality wins are listed in [conflicting-oracle-tests.txt](https://github.com/statelyai/layout/blob/heuristics-evidence/docs/heuristics/quality-route-retraces/conflicting-oracle-tests.txt) (35). They are kept as diagnostics.
 
 ```sh
 pnpm exec vitest run --dir test test/quality-route-retraces.test.ts --maxWorkers=1

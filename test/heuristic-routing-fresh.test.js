@@ -2,7 +2,8 @@ import { createGraph } from "@statelyai/graph";
 import { expect, it } from "vitest";
 import { getLayeredLayout, getLayoutRoutes } from "../src";
 import { measureQuality } from "../scripts/heuristic-quality.mjs";
-import fixtures from "./fixtures/heuristic-routing-fresh.json";
+import { readFixture } from "./helpers/fixture";
+const fixtures = readFixture("heuristic-routing-fresh");
 for (const f of fixtures)
   it(`routes fresh seed ${f.baseSeed} graph ${f.id} without collisions or retracing`, () => {
     const l = getLayeredLayout(createGraph(f.input), {

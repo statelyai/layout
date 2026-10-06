@@ -27,4 +27,4 @@ The first rule moved a label only when it covered its own node. Same-port loops 
 | LOSS                                | 72 → 72 | 275 → 274 |
 | WIN/TIE → LOSS, new hard violations | 0, 0    | 0, 0      |
 
-Gate elapsed: 218 s corpus, 414 s holdout ([gate](route-clearance/gate.json), [holdout](route-clearance/holdout-gate.json)). Two diagnostic label hits remain where a root-level edge shares the loop's port and its route changes when the facade joins hierarchy pieces after placement.
+Gate elapsed: 218 s corpus, 414 s holdout ([gate](https://github.com/statelyai/layout/blob/heuristics-evidence/docs/heuristics/quality-self-loop-labels/route-clearance/gate.json), [holdout](https://github.com/statelyai/layout/blob/heuristics-evidence/docs/heuristics/quality-self-loop-labels/route-clearance/holdout-gate.json)). Two diagnostic label hits remain where a root-level edge shares the loop's port and its route changes when the facade joins hierarchy pieces after placement.

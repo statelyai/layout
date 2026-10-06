@@ -13,7 +13,7 @@ After crossing minimization, native now rejoins each such unit. The intervening 
 
 Two more diagnostic ranges, model-order 201–230 and 301–400, also had zero regressions. Accepted under the net-gain tolerance, counting removed hard violations as fixes (decided 2026-10-04). Regressed holdout seed, to revisit: model-order 1037 RIGHT, TIE → LOSS on edge crossings (7 → 10).
 
-Gate elapsed: 260 s corpus, 506 s holdout. Conflicting exact-geometry oracle tests (cumulative, 53): [conflicting-oracle-tests.txt](conflicting-oracle-tests.txt).
+Gate elapsed: 260 s corpus, 506 s holdout. Conflicting exact-geometry oracle tests (cumulative, 53): [conflicting-oracle-tests.txt](https://github.com/statelyai/layout/blob/heuristics-evidence/docs/heuristics/quality-north-south-units/conflicting-oracle-tests.txt).
 
 ```sh
 pnpm exec vitest run --dir test test/quality-north-south-units.test.ts --maxWorkers=1

@@ -1,16 +1,18 @@
 import { createGraph } from "@statelyai/graph";
 import { expect, it } from "vitest";
-import fixtures from "./fixtures/heuristic-routing.json";
 import { getLayeredLayout, getLayoutRoutes, routeToPolylines, type LayoutDirection } from "../src";
 import { crossesRect } from "../src/authoring/routing";
 import { outsideTerminal, pathReservations } from "../src/routing/coordination";
+import { readFixture } from "./helpers/fixture";
+
+const fixtures = readFixture("heuristic-routing");
 
 for (const fixture of fixtures) {
   it(`routes seeded graph ${fixture.id} orthogonally without crossing leaf interiors`, () => {
     const layout = getLayeredLayout(
       createGraph({
         ...fixture.input,
-        nodes: fixture.input.nodes.map((n) => ({
+        nodes: fixture.input.nodes.map((n: { ports?: object[] }) => ({
           ...n,
           ports: n.ports?.map((p) => ({ ...p, direction: "inout" as const })),
         })),

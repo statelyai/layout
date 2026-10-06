@@ -1,4 +1,3 @@
-import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 import {
   compoundFixture,
@@ -6,13 +5,9 @@ import {
   geometryDifferences,
 } from "../scripts/parity/compound-corpus";
 import type { ElkNode } from "../src/elkjs/types";
+import { readFixture } from "./helpers/fixture";
 
-const baseline = JSON.parse(
-  readFileSync(
-    new URL("../docs/heuristics/compound-baseline/report.json", import.meta.url),
-    "utf8",
-  ),
-) as {
+const baseline = readFixture("compound-baseline-report") as {
   rows: { seed: number; direction: string; input: ElkNode; elk: { graph: ElkNode } }[];
 };
 

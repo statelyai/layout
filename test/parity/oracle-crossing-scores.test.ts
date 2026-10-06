@@ -1,5 +1,7 @@
 import { expect, it } from "vitest";
-import fixtures from "../fixtures/crossing-score-oracle.json";
+import { readFixture } from "../helpers/fixture";
+
+const fixtures = readFixture("crossing-score-oracle");
 import { countAllCrossings, type CrossingGraph } from "../../src/layered/crossing-counter";
 
 for (const [index, sample] of fixtures.samples.entries()) {

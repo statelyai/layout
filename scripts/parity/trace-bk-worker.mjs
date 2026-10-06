@@ -1,5 +1,6 @@
 // Observes installed real ELK only. No worker algorithm is replaced.
 import fs from "node:fs";
+import { readReport } from "./read-report.mjs";
 import vm from "node:vm";
 import { createRequire } from "node:module";
 const require = createRequire(import.meta.url);
@@ -151,9 +152,7 @@ const elk = new Elk({
     return worker;
   },
 });
-const report = JSON.parse(
-  fs.readFileSync(process.argv[2] ?? "docs/heuristics/compound-baseline/report.json", "utf8"),
-);
+const report = readReport(process.argv[2] ?? "test/fixtures/compound-baseline-report.json.gz");
 const input = report.rows[Number(process.argv[4] ?? 0)]?.input;
 if (!input) throw new Error("Requested compound report row does not exist");
 const output = await elk.layout(structuredClone(input));

@@ -1,17 +1,12 @@
-import { readFileSync } from "node:fs";
 import { expect, it } from "vitest";
 import { createGraph } from "@statelyai/graph";
 import type { EntityRect, Point } from "@statelyai/graph";
 import { applyGroupedEdgeLengthCompaction } from "../src/layered/grouped-compaction";
 import type { LayeredPhaseInput } from "../src/layered/types";
+import { readFixture } from "./helpers/fixture";
 for (const seed of [3468128618, 3468144456]) {
   it(`compacts saved random seed ${seed} without dummy constraint cycles`, () => {
-    const fixture = JSON.parse(
-      readFileSync(
-        new URL(`./fixtures/compaction-dummy-cycle-${seed}.json`, import.meta.url),
-        "utf8",
-      ),
-    );
+    const fixture = readFixture(`compaction-dummy-cycle-${seed}`);
     const graph = createGraph(fixture.graph);
     const nodeSettings = new Map<
       string,

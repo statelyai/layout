@@ -16,7 +16,7 @@ Gate elapsed: 237 s corpus, 517 s holdout. The holdout now includes complex-comp
 
 A pipeline-internal version of the check, counting hits on routes before long-edge joining, gave false positives (helper dummies sit inside nodes before joining) and turned 29 corpus TIEs into LOSSes. It was not kept.
 
-Exact-geometry oracle tests that conflict with the quality changes so far: [conflicting-oracle-tests.txt](conflicting-oracle-tests.txt) (53, cumulative).
+Exact-geometry oracle tests that conflict with the quality changes so far: [conflicting-oracle-tests.txt](https://github.com/statelyai/layout/blob/heuristics-evidence/docs/heuristics/quality-compaction-node-hits/conflicting-oracle-tests.txt) (53, cumulative).
 
 ```sh
 pnpm exec vitest run --dir test test/quality-compaction-node-hits.test.ts --maxWorkers=1

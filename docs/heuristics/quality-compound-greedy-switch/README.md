@@ -24,7 +24,7 @@ Accepted after a decision with David (2026-10-05): hold until no new hard violat
 
 `ONE_SIDED` hangs on some compound graphs (options seed 3 RIGHT). That bug is tracked separately.
 
-Gate elapsed: 216 s corpus, 410 s holdout. This changes compound crossing orders, so 16 more exact-geometry oracle tests now conflict (69 cumulative): [conflicting-oracle-tests.txt](conflicting-oracle-tests.txt).
+Gate elapsed: 216 s corpus, 410 s holdout. This changes compound crossing orders, so 16 more exact-geometry oracle tests now conflict (69 cumulative): [conflicting-oracle-tests.txt](https://github.com/statelyai/layout/blob/heuristics-evidence/docs/heuristics/quality-compound-greedy-switch/conflicting-oracle-tests.txt).
 
 ```sh
 pnpm exec vitest run --dir test test/quality-compound-greedy-switch.test.ts --maxWorkers=1
