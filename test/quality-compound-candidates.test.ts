@@ -4,8 +4,8 @@ import { isBetterLayout, measureLayout } from "../src/elkjs/layout-quality";
 import { compoundOptionsFixture } from "../scripts/parity/compound-options-corpus";
 import { HARD, score } from "../scripts/parity/quality-gate";
 
-// Compound layouts try ELK's default crossing settings and two more random
-// seeds, and keep the best measured layout. The result is never worse than
+// Above ELK's default thoroughness, compound layouts try two more random
+// seeds and keep the best measured layout. The result is never worse than
 // the plain default.
 it.each([
   [12, "RIGHT"],
@@ -15,7 +15,9 @@ it.each([
   "keeps the best compound candidate (options seed %i %s)",
   async (seed, direction) => {
     const input = compoundOptionsFixture(seed, direction);
-    const chosen = await new NativeELK().layout(structuredClone(input));
+    const chosen = await new NativeELK().layout(structuredClone(input), {
+      layoutOptions: { "elk.layered.thoroughness": "10" },
+    });
     const plain = await new NativeELK().layout(structuredClone(input), {
       layoutOptions: {
         "elk.layered.crossingMinimization.greedySwitchHierarchical.type": "TWO_SIDED",
@@ -30,3 +32,16 @@ it.each([
   },
   60000,
 );
+
+// At the default thoroughness a defect-free compound layout is laid out once.
+it("lays out a defect-free compound graph once by default (options seed 12 RIGHT)", async () => {
+  const input = compoundOptionsFixture(12, "RIGHT");
+  const chosen = await new NativeELK().layout(structuredClone(input));
+  const plain = await new NativeELK().layout(structuredClone(input), {
+    layoutOptions: {
+      "elk.layered.crossingMinimization.greedySwitchHierarchical.type": "TWO_SIDED",
+    },
+  });
+  expect(measureLayout(chosen).defects).toBe(0);
+  expect(chosen).toEqual(plain);
+}, 60000);

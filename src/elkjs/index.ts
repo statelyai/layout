@@ -171,9 +171,11 @@ export default class ELK {
     const pristine = variants.length ? structuredClone(graph) : undefined;
     let best = await this.#layoutWithoutDefectiveCompaction(graph, arguments_);
     if (!pristine) return best;
-    // Crossing minimization heuristics win on different graphs. For compound
-    // layouts, lay out each variant and keep the best measured result.
+    // A compound layout with defects tries other random seeds and keeps the
+    // best measured result. Above ELK's default thoroughness, every compound
+    // layout does, trading time for fewer crossings and bends.
     let quality = measureLayout(best);
+    if (quality.defects === 0 && !thorough(options, graph)) return best;
     for (const variant of variants) {
       const candidate = await this.#layoutWithoutDefectiveCompaction(structuredClone(pristine), {
         ...arguments_,
@@ -2815,8 +2817,8 @@ function disablePostCompaction<T extends ElkNode>(node: T): T {
 }
 
 /**
- * Alternative settings worth trying for a compound layout: ELK's default of no
- * hierarchical greedy switch, unless the graph chooses one explicitly.
+ * Alternative random seeds worth trying for a compound layout, unless the
+ * graph chooses its hierarchical greedy switch explicitly.
  */
 function crossingVariants(
   options: Readonly<Record<string, unknown>>,
@@ -2830,9 +2832,11 @@ function crossingVariants(
     getOption(own, "layered.crossingMinimization.greedySwitchHierarchical.type") !== undefined
   )
     return [];
-  return [
-    { "elk.layered.crossingMinimization.greedySwitchHierarchical.type": "OFF" },
-    { "elk.randomSeed": "2" },
-    { "elk.randomSeed": "3" },
-  ];
+  return [{ "elk.randomSeed": "2" }, { "elk.randomSeed": "3" }];
+}
+
+/** Whether the graph asks for more than ELK's default layered thoroughness (7). */
+function thorough(options: Readonly<Record<string, unknown>>, graph: ElkNode): boolean {
+  const own = { ...options, ...graph.properties, ...graph.layoutOptions };
+  return Number(getOption(own, "layered.thoroughness") ?? 7) > 7;
 }

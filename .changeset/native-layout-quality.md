@@ -25,7 +25,7 @@ Native layered layout reaches layout quality at or above real ELK (elkjs 0.11.1)
 - Fall back to the uncompacted layout when post-compaction would route edges through nodes.
 - Fall back from post-compaction that folds a route back onto itself.
 - Treat sub-tolerance floating-point offsets along rectangle boundaries as boundary travel during routing. Prevent ancestor-to-child routes from falling back to diagonals when content normalization differs from child coordinates by a few ulps.
-- Lay out compound graphs with several crossing-minimization candidates and keep the best measured result.
+- Lay out a compound graph once; only when that layout has defects, or `elk.layered.thoroughness` is above 7, try two more random seeds and keep the best measured result.
 - Run the two-sided greedy switch by default for INCLUDE_CHILDREN layouts, reducing compound edge crossings.
 - Preserve authored compound port constraints when preparing hierarchy boundary helpers, and transform their layer placement with the layout direction.
 - Join compound route pieces with an elbow instead of a diagonal when boundary anchors disagree.
