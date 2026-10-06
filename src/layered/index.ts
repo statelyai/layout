@@ -21,6 +21,12 @@ import {
   type PortEdgeList,
 } from "./elk-port-lists";
 import { importsHyperedges, mergeHyperedgeDummies } from "./hyperedge-dummy-merger";
+import {
+  applyOrderHints,
+  applyPlacementHints,
+  hintLayerConstraint,
+  layoutWithHints,
+} from "./hints";
 import { getCrossingUnits, recordCrossingUnits } from "./crossing-constraints";
 import { externalPortDummyOf } from "./external-port-dummy";
 import type { EntityRect } from "@statelyai/graph";
@@ -1294,6 +1300,19 @@ export function* createLayeredScopePipeline<N, E, G, P>(
   if ((options.settings?.["spacing.edgeEdge"] ?? 10) < 2) {
     options = { ...options, settings: { ...options.settings, "spacing.edgeEdge": 2 } };
   }
+  if (options.hints?.length) {
+    const { hints, nodeSettings } = options;
+    options = {
+      ...options,
+      nodeSettings: (node) => {
+        const base = nodeSettings?.(node);
+        const constraint = hintLayerConstraint(hints, node);
+        return constraint && base?.["layering.layerConstraint"] === undefined
+          ? { ...base, "layering.layerConstraint": constraint }
+          : base;
+      },
+    };
+  }
   if (options.settings?.noLayout) {
     return {
       ...graph,
@@ -1825,6 +1844,14 @@ export function* createLayeredScopePipeline<N, E, G, P>(
         layers: order.layers.map((members, index) => (index === layerIndex ? best : members)),
       };
     }
+  order = applyOrderHints(
+    options.hints,
+    order,
+    (id) => [...(dummiesByOwner.get(id) ?? [])],
+    (layers) =>
+      countAllCrossings(crossingGraph(expanded.input, expanded.orientation, layers)).total,
+    context?.diagnostics,
+  );
   // ELK's SweepCopy.assertCorrectPortSides: a north/south port whose dummy
   // ended on the other side of its node switches to that side.
   for (const layer of order.layers) {
@@ -1892,6 +1919,7 @@ export function* createLayeredScopePipeline<N, E, G, P>(
     setPlacementOrientation(expanded.input, expanded.orientation);
     return nodePlacer(expanded.input, order);
   });
+  applyPlacementHints(options.hints, expanded.input, order, placement, context?.diagnostics);
   const mutableRects = placement.rectByNodeId as Map<
     string,
     { x: number; y: number; width: number; height: number }
@@ -3147,9 +3175,8 @@ export function getLayeredLayout<N, E, G, P>(
   graph: Graph<N, E, G, P> | VisualGraph<N, E, G, P>,
   options: LayeredLayoutOptions = {},
 ): CompoundVisualGraph<N, E, G, P> {
-  const result = repairFlatRouting(
-    runLayeredPipeline(graph, options),
-    options,
+  const result = layoutWithHints(options.hints, (hints) =>
+    repairFlatRouting(runLayeredPipeline(graph, { ...options, hints }), options),
   ) as CompoundVisualGraph<N, E, G, P>;
   return replaceLayoutRouting(
     {
@@ -3182,9 +3209,14 @@ export const layeredAlgorithm: LayoutAlgorithm<LayeredLayoutOptions> = {
         runPartialLayout(graph, options ?? {}, context, getLayeredLayout),
       );
     }
-    const result = repairFlatRouting(
-      runLayeredPipeline(graph, options ?? {}, context),
-      options ?? {},
+    const result = layoutWithHints(
+      options?.hints,
+      (hints, diagnostics) =>
+        repairFlatRouting(
+          runLayeredPipeline(graph, { ...options, hints }, { ...context, diagnostics }),
+          options ?? {},
+        ),
+      context.diagnostics,
     );
     if (!context.constraints?.length) {
       if (!options?.routing) return result;

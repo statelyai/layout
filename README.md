@@ -203,9 +203,45 @@ and topology remain fixed. Results include field-specific graph patches and
 repair/conflict diagnostics. Constraints support alignment, distribution, pins,
 linear equalities/inequalities, and route waypoints.
 
+Full layouts accept the same constraints on graphs with containers. A moved
+container carries its children; a container grows to keep a moved child
+inside; siblings never overlap. Only edges touching moved geometry are
+re-routed. A required constraint that would need an overlap fails with
+`UNSATISFIED_CONSTRAINT`; weaker strengths are relaxed and reported.
+
 See [authoring layout](docs/authoring-layout.md) for baseline requirements,
 selection semantics, routing limits, and examples. Existing ELK compatibility
 behavior is unchanged.
+
+## Layout hints
+
+<!-- hint constructors and statechartHints from src/layered/hints.ts -->
+
+Hints describe what a reader expects; the layered phases apply them during
+layering, ordering and placement:
+
+```ts
+import { getLayeredLayout, hint, statechartHints } from "@statelyai/layout";
+
+getLayeredLayout(graph, {
+  hints: [
+    hint.anchor({ id: "initial", nodeId: "idle", corner: "start" }), // top-left
+    hint.chain({ id: "happy-path", nodeIds: ["form", "checking", "done"] }), // one center line
+  ],
+});
+
+// Statecharts: initial states anchor at the start of their container, and
+// runs of states joined one-to-one form chains.
+getLayeredLayout(graph, { hints: statechartHints(graph) });
+```
+
+Hints never create defects (overlaps, routes through nodes, diagonal
+segments). A hint is `prefer` by default: it is kept only when the layout is no
+worse than one without it in crossings, bends, route length and area, and a
+dropped hint is reported as `HINT_RELAXED`. `strength: "require"` keeps the
+hint even at that cost. `statechartHints` requires initial-state anchors and
+prefers chains. Hints apply to the native API; the elkjs compatibility entry
+point is unchanged.
 
 ## elkjs compatibility
 

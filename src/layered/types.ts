@@ -1,6 +1,7 @@
 import type { NativeRoutingStrategy, RoutingSettings } from "../routing/types";
 import type { EntityRect, Graph, GraphEdge, GraphNode, GraphPort, Point } from "@statelyai/graph";
 import type { LayoutConstraints } from "@statelyai/graph/layout";
+import type { LayoutHint } from "./hints";
 import type { LayoutDirection } from "../types";
 import type { ElkLayeredOptionValueByName, LayeredAdvancedOptions } from "./elk-options";
 
@@ -128,6 +129,8 @@ export interface LayeredLayoutOptions {
   spacing?: Partial<LayeredSpacing>;
   padding?: number | Partial<LayoutPadding>;
   constraints?: LayoutConstraints;
+  /** Reader-facing preferences applied during layering, ordering and placement. */
+  hints?: readonly LayoutHint[];
   measure?: (node: GraphNode) => NodeSize;
   crossingSweeps?: number;
   strategies?: LayeredStrategies;
