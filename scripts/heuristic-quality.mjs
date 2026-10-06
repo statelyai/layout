@@ -176,7 +176,8 @@ export function measureQuality(layout, input) {
       selfRetraceLength += sharedLength([self[i]], self.slice(i + 1));
   }
   let edgeCrossings = 0,
-    edgeOverlapLength = 0;
+    edgeOverlapLength = 0,
+    opposingOverlapLength = 0;
   const ids = [...segments.keys()];
   for (let i = 0; i < ids.length; i++)
     for (let j = i + 1; j < ids.length; j++) {
@@ -194,6 +195,11 @@ export function measureQuality(layout, input) {
         bs = clip(segments.get(ids[j]), shared, true);
       edgeCrossings += crossings(as, bs);
       edgeOverlapLength += sharedLength(as, bs);
+      // Two edges on one track heading opposite ways read as one path; never acceptable.
+      for (const s of as)
+        for (const t of bs)
+          if ((s.b.x - s.a.x) * (t.b.x - t.a.x) + (s.b.y - s.a.y) * (t.b.y - t.a.y) < 0)
+            opposingOverlapLength += sharedLength([s], [t]);
     }
   let nodeOverlaps = 0,
     labelNodeOverlaps = 0,
@@ -238,6 +244,7 @@ export function measureQuality(layout, input) {
     selfRetraceLength,
     edgeCrossings,
     edgeOverlapLength,
+    opposingOverlapLength,
     bends,
     routeLength: [...segments.values()].flat().reduce((n, s) => n + length(s), 0),
     area: width * height,

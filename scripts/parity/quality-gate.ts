@@ -21,6 +21,7 @@ export const HARD = [
   "labelNodeOverlaps",
   "edgeLabelHits",
   "selfRetraceLength",
+  "opposingOverlapLength",
 ] as const;
 /** Compared in order; the first metric that differs decides the seed. */
 export const SOFT = ["edgeCrossings", "edgeOverlapLength", "bends", "routeLength", "area"] as const;

@@ -114,6 +114,7 @@ import { placeNodesWithLinearSegments } from "./linear-segments-node-placement";
 import { placeNodesWithNetworkSimplex } from "./network-simplex-node-placement";
 import { applyHighDegreeNodeTreatment } from "./high-degree";
 import { applyNodePromotion } from "./node-promotion";
+import { straightenFeedbackChains } from "./feedback-chains";
 import {
   foldMultiEdgeBreakingPoints,
   insertMultiEdgeBreakingPoints,
@@ -2516,6 +2517,27 @@ export function* createLayeredScopePipeline<N, E, G, P>(
       expanded.orientation.reversedEdgeIds,
     ),
   );
+  if (options.settings?.feedbackEdges === true && edgeRouting === "ORTHOGONAL") {
+    const horizontal = direction === "right" || direction === "left";
+    const reversed = expanded.orientation.reversedEdgeIds;
+    straightenFeedbackChains(
+      [...expanded.segmentIdsByEdgeId].flatMap(([edgeId, ids]) => {
+        if (ids.length < 2 || !ids.every((id) => reversed.has(id))) return [];
+        if (routes.junctionPointsByEdgeId?.get(edgeId)?.length) return [];
+        const labelId = labels.labelDummyIdByEdgeId.get(edgeId);
+        if (labelId === undefined) return [{ edgeId }];
+        const into = expanded.input.graph.edges.find(
+          (edge) => ids.includes(edge.id) && edge.targetId === labelId,
+        );
+        const anchor = into && expandedRoutes.pointsByEdgeId.get(into.id)?.at(-1);
+        if (!anchor) return [];
+        return [{ edgeId, label: { id: labelId, cross: horizontal ? anchor.y : anchor.x } }];
+      }),
+      routes.pointsByEdgeId as Map<string, readonly Point[]>,
+      placement.rectByNodeId as Map<string, EntityRect>,
+      horizontal,
+    );
+  }
   if (options.settings?.["layering.nodePromotion.strategy"] === "MODEL_ORDER_LEFT_TO_RIGHT") {
     const horizontal = direction === "right" || direction === "left";
     const pointsByEdgeId = new Map(routes.pointsByEdgeId);

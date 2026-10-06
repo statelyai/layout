@@ -1014,6 +1014,11 @@ export default class ELK {
     }
     applyNodeMicroLayout(graph, layoutOptions);
     const graph_ = toGraph(graph, layoutOptions);
+    const hierarchyProxyIds = new Set(
+      (graph.children ?? [])
+        .filter((node) => String(node.id).startsWith("__native_hierarchy_"))
+        .map((node) => String(node.id)),
+    );
     const layerConstraintByNodeId = new Map(
       (graph.children ?? []).map((node) => [
         String(node.id),
@@ -1028,6 +1033,10 @@ export default class ELK {
       algorithm === "layered" &&
       graph_.edges.some((edge) => {
         if (edge.sourceId === edge.targetId) return false;
+        // A boundary proxy for an edge from the enclosing compound sits in its own
+        // separate layer ahead of the scope, so it never conflicts with a first node.
+        if (hierarchyProxyIds.has(edge.sourceId) || hierarchyProxyIds.has(edge.targetId))
+          return false;
         const sourceConstraint = layerConstraintByNodeId.get(edge.sourceId);
         const targetConstraint = layerConstraintByNodeId.get(edge.targetId);
         return (
