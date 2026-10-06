@@ -54,7 +54,9 @@ describe("statechart policy layout", () => {
     ]);
     expect(plan.commonExits.babyfood).toEqual(["babyfood.allergyCheck"]);
     const result = await layoutStatechart(babyfood as ElkNode, { scopes });
-    expect(result.score.overlaps).toBeLessThan(result.attempts[0].score.overlaps);
+    // The native baseline no longer overlaps; the policy attempt wins on initial-path order.
+    expect(result.score.overlaps).toBe(0);
+    expect(result.attempts[0].score.pathOrder).toBeGreaterThan(result.score.pathOrder);
     const intro = result.graph.children!.find((node) => node.id === "babyfood.intro")!;
     expect([...intro.children!].sort((a, b) => a.y! - b.y!).map((node) => node.id)).toEqual(
       plan.paths["babyfood.intro"],
@@ -160,14 +162,10 @@ describe("statechart policy layout", () => {
     const result = await layoutStatechart(graph, { scopes: { r: { initialNodeId: "a" } } });
     expect(result.paths.r).toEqual(["a", "b"]);
     expect(result.graph.edges).toHaveLength(3);
-    expect(result.attempt).toBe(2);
-    expect(result.attempts[2].score.overlaps).toBeLessThan(result.attempts[1].score.overlaps);
-    expect(result.graph.edges?.[1].labels?.[0].layoutOptions).toMatchObject({
-      "elk.edgeLabels.placement": "HEAD",
-    });
-    expect(result.graph.edges?.[2].labels?.[0].layoutOptions).toMatchObject({
-      "elk.edgeLabels.placement": "TAIL",
-    });
+    // Center-label dummies separate the parallel labels in the baseline (as real ELK does),
+    // so the wider spacing attempt cannot improve on it.
+    expect(result.attempt).toBe(0);
+    expect(result.attempts.map((attempt) => attempt.score.overlaps)).toEqual([0, 0, 0]);
     expect(graph.edges?.[1].layoutOptions).toBeUndefined();
   });
 

@@ -653,7 +653,12 @@ export default class ELK {
             ...arguments_,
             layoutOptions: {
               ...arguments_.layoutOptions,
-              direction: getDirection(layoutOptions).toUpperCase(),
+              // The compound's own direction wins over the inherited one.
+              direction: getDirection(
+                getOption(child.layoutOptions ?? {}, "direction") === undefined
+                  ? layoutOptions
+                  : child.layoutOptions!,
+              ).toUpperCase(),
               hierarchyHandling: "INCLUDE_CHILDREN",
             },
             logging: false,
@@ -2167,6 +2172,8 @@ function applyLayout(
     const midpointX = (laidOutEdge.x ?? 0) + (laidOutEdge.width ?? 0) / 2;
     const edgeLabelSpacing = getNumberOption(layoutOptions, "spacing.edgeLabel") ?? 2;
     const labelLabelSpacing = getNumberOption(layoutOptions, "spacing.labelLabel") ?? 0;
+    // A lone label keeps the native position, which already avoids collisions.
+    const loneLabel = (edge.labels ?? []).filter(isLayoutEdgeLabel).length === 1;
     for (const label of edge.labels ?? []) {
       if (getBooleanOption(label.layoutOptions ?? {}, "noLayout") === true) {
         label.x ??= 0;
@@ -2183,11 +2190,13 @@ function applyLayout(
       );
       const width = label.width ?? 0;
       label.x =
-        placement === "TAIL"
-          ? firstPoint.x + edgeLabelSpacing
-          : placement === "HEAD"
-            ? lastPoint.x - width - edgeLabelSpacing
-            : midpointX - width / 2;
+        loneLabel && placement !== "CENTER" && laidOutEdge.x !== undefined
+          ? laidOutEdge.x
+          : placement === "TAIL"
+            ? firstPoint.x + edgeLabelSpacing
+            : placement === "HEAD"
+              ? lastPoint.x - width - edgeLabelSpacing
+              : midpointX - width / 2;
       label.y = labelY;
       labelY += (label.height ?? 0) + labelLabelSpacing;
     }

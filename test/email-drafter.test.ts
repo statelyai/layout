@@ -138,23 +138,44 @@ it.each(["label", "edge"])(
       node.children?.forEach((child) => collectHeaders(child, x, y));
     };
     collectHeaders(result);
+    // Edge geometry is relative to the edge's container.
+    const frame = (edge: { container?: unknown }) =>
+      edge.container === "parent" ? { x: owner.x!, y: owner.y! } : { x: 0, y: 0 };
+    const routes = result.edges!.map((edge) => {
+      const { x, y } = frame(edge);
+      const { startPoint, bendPoints = [], endPoint } = edge.sections![0]!;
+      return {
+        id: edge.id,
+        points: [startPoint, ...bendPoints, endPoint].map((p) => ({ x: p.x + x, y: p.y + y })),
+      };
+    });
     for (const edge of result.edges!)
-      for (const label of edge.labels ?? []) {
+      for (const local of edge.labels ?? []) {
+        const label = { ...local, x: local.x! + frame(edge).x, y: local.y! + frame(edge).y };
         for (const header of headers)
           expect(
-            label.x! >= header.x + header.width ||
-              label.x! + label.width! <= header.x ||
-              label.y! >= header.y + header.height ||
-              label.y! + label.height! <= header.y,
+            label.x >= header.x + header.width ||
+              label.x + label.width! <= header.x ||
+              label.y >= header.y + header.height ||
+              label.y + label.height! <= header.y,
             `${edge.id} / ${header.id}`,
           ).toBe(true);
+        for (const route of routes)
+          if (route.id !== edge.id)
+            for (let i = 1; i < route.points.length; i++) {
+              const a = route.points[i - 1]!,
+                b = route.points[i]!;
+              expect(
+                Math.max(a.x, b.x) <= label.x ||
+                  Math.min(a.x, b.x) >= label.x + label.width! ||
+                  Math.max(a.y, b.y) <= label.y ||
+                  Math.min(a.y, b.y) >= label.y + label.height!,
+                `${route.id} crosses ${edge.id} label`,
+              ).toBe(true);
+            }
       }
-    for (const id of ["parent-child", "child-parent"]) {
-      const edge = result.edges!.find((edge) => edge.id === id)!;
-      const label = edge.labels![0]!;
-      expect(label.y! + label.height!).toBeLessThan(owner.y!);
-      expect(edge.sections![0]!.bendPoints).toHaveLength(2);
-    }
+    for (const id of ["parent-child", "child-parent"])
+      expect(result.edges!.find((edge) => edge.id === id)!.container).toBe("parent");
   },
 );
 

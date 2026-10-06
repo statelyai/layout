@@ -259,7 +259,7 @@ describe.each(directions)("inline label constraints (%s)", (direction) => {
   );
 
   it.each(["edge", "label", "override"])(
-    "preserves ancestor loop routing with %s-level inline options",
+    "routes compound-to-descendant edges inside the compound with %s-level inline options",
     async (level) => {
       const options = { "elk.edgeLabels.inline": true, "elk.edgeLabels.placement": "CENTER" };
       const result = await new ELK().layout({
@@ -283,9 +283,19 @@ describe.each(directions)("inline label constraints (%s)", (direction) => {
           },
         ],
       });
+      // Like ELK, the edge is routed in its compound endpoint's coordinate frame.
       const edge = result.edges![0]!;
-      expect(separate(edge.labels![0]! as ElkNode, result.children![0]!)).toBe(true);
-      expect(edge.sections![0]!.bendPoints!.length).toBeGreaterThanOrEqual(2);
+      const parent = result.children![0]!;
+      const label = edge.labels![0]! as ElkNode;
+      expect(edge.container).toBe("p");
+      expect(separate(label, parent.children![0]!)).toBe(true);
+      expect(label.x! >= 0 && label.y! >= 0).toBe(true);
+      expect(label.x! + label.width! <= parent.width!).toBe(true);
+      expect(label.y! + label.height! <= parent.height!).toBe(true);
+      const { startPoint, bendPoints = [], endPoint } = edge.sections![0]!;
+      const points = [startPoint, ...bendPoints, endPoint];
+      for (let i = 1; i < points.length; i++)
+        expect(points[i - 1]!.x === points[i]!.x || points[i - 1]!.y === points[i]!.y).toBe(true);
     },
   );
 });

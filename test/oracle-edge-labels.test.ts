@@ -321,26 +321,8 @@ it("matches ELK geometry with a compact fixed-port label corridor", async () => 
     ]),
   });
 
-  const corridorCompaction = 2 * (30 - 10);
-  const actualGeometry = geometry(actual);
-  const expectedGeometry = geometry(expected);
-  expect(actualGeometry).toEqual({
-    ...expectedGeometry,
-    size: [
-      expectedGeometry.size[0],
-      rounded(Number(expectedGeometry.size[1]) - corridorCompaction),
-    ],
-    nodes: expectedGeometry.nodes?.map((node) =>
-      node[0] === "target"
-        ? [node[0], node[1], rounded(Number(node[2]) - corridorCompaction), node[3]]
-        : node,
-    ),
-    labels: expectedGeometry.labels?.map((label) => [
-      label[0],
-      label[1],
-      rounded(Number(label[2]) - corridorCompaction / 2),
-    ]),
-  });
+  // ELK keeps the full between-layer label corridor; native matches it exactly.
+  expect(geometry(actual)).toEqual(geometry(expected));
   for (const edge of actual.edges ?? []) {
     const section = edge.sections?.[0];
     expect(section).toBeDefined();

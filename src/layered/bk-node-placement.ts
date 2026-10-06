@@ -255,6 +255,20 @@ function buildNeighbors(input: LayeredPhaseInput, order: LayerOrder) {
     !customPortAnchors
       ? (anchorCrossSize(input, id) * (index + 1)) / (count + 1)
       : (explicitPortAnchor(id, edgeId) ?? portAnchor(id, index, count, side));
+  // Routing distributes fixed-side self-loop terminals with the side's other
+  // edges (after them here), so anchors must reserve their slots.
+  const loopTerminals = (id: string, side: string): number => {
+    const node = nodeById.get(id);
+    const constraints = node ? input.nodeSettings?.(node)?.portConstraints : undefined;
+    if (!node || !["FIXED_SIDE", "FIXED_ORDER"].includes(String(constraints))) return 0;
+    return input.graph.edges
+      .filter((edge) => edge.sourceId === id && edge.targetId === id)
+      .flatMap((edge) => [edge.sourcePort, edge.targetPort])
+      .filter((name) => {
+        const port = node.ports?.find((candidate) => candidate.name === name);
+        return port && input.portSettings?.(port, node)?.["port.side"] === side.toUpperCase();
+      }).length;
+  };
   for (const [id, entries] of right) {
     const sweptOrder = order.outputPortOrderByNodeId?.get(id);
     const interactiveForwardLongEdgeSource =
@@ -294,7 +308,13 @@ function buildNeighbors(input: LayeredPhaseInput, order: LayerOrder) {
     portOrder.forEach((entry, index) => {
       anchor.set(
         `${entry.edgeId}:${id}`,
-        neighborAnchor(id, entry.edgeId, index, entries.length, afterSide),
+        neighborAnchor(
+          id,
+          entry.edgeId,
+          index,
+          entries.length + loopTerminals(id, afterSide),
+          afterSide,
+        ),
       );
     });
   }
@@ -337,7 +357,13 @@ function buildNeighbors(input: LayeredPhaseInput, order: LayerOrder) {
     portOrder.forEach((entry, index) => {
       anchor.set(
         `${entry.edgeId}:${id}`,
-        neighborAnchor(id, entry.edgeId, index, entries.length, beforeSide),
+        neighborAnchor(
+          id,
+          entry.edgeId,
+          index,
+          entries.length + loopTerminals(id, beforeSide),
+          beforeSide,
+        ),
       );
     });
   }

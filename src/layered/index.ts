@@ -39,6 +39,8 @@ import { labelReferences, runPartialLayout } from "../authoring/partial";
 import { UnsupportedLayoutError } from "../errors";
 import type { LayoutAlgorithm, LayoutExecutionContext } from "../types";
 import { separateExteriorLabels } from "./separate-exterior-labels";
+import { placeEndLabels } from "./end-labels";
+
 import {
   assignLayersByLongestPath,
   assignLayersByLongestPathToSink,
@@ -2405,9 +2407,20 @@ export function* createLayeredScopePipeline<N, E, G, P>(
       }
 
       const forwardLabel = antiparallelLabelPositions.get(forward.id)!;
-      const forwardCross = horizontal
-        ? Math.round(forwardLabel.y + (forward.height ?? 0) / 2)
-        : Math.round(forwardLabel.x + (forward.width ?? 0) / 2);
+      // BK keeps the forward chain straight through its center label dummy.
+      const forwardDummy = expanded.input.graph.nodes.find(
+        (node) => node.id === expanded.labelDummyIdByEdgeId.get(forward.id),
+      );
+      const forwardDummyRect = forwardDummy && placement.rectByNodeId.get(forwardDummy.id);
+      const forwardDummyPort = forwardDummy?.ports?.[0];
+      const forwardCross =
+        forwardDummyRect && forwardDummyPort
+          ? horizontal
+            ? forwardDummyRect.y + (forwardDummyPort.y ?? 0)
+            : forwardDummyRect.x + (forwardDummyPort.x ?? 0)
+          : horizontal
+            ? Math.round(forwardLabel.y + (forward.height ?? 0) / 2)
+            : Math.round(forwardLabel.x + (forward.width ?? 0) / 2);
       const alignPort = (node: GraphNode, portName: string): void => {
         const rect = placement.rectByNodeId.get(node.id);
         const port = node.ports?.find((candidate) => candidate.name === portName);
@@ -2444,7 +2457,8 @@ export function* createLayeredScopePipeline<N, E, G, P>(
   }
   if (postCompactionNodeCrossDeltas.size > 0) {
     const pointsByEdgeId = new Map(expandedRoutes.pointsByEdgeId);
-    for (const edge of graph.edges) {
+    // Routes are keyed by long-edge and label-dummy segments, not by original edges.
+    for (const edge of expanded.input.graph.edges) {
       const points = [...(pointsByEdgeId.get(edge.id) ?? [])];
       if (points.length === 0) continue;
       const sourceDelta = postCompactionNodeCrossDeltas.get(edge.sourceId) ?? 0;
@@ -2466,7 +2480,21 @@ export function* createLayeredScopePipeline<N, E, G, P>(
       };
       shiftEndpoint(0, 1, sourceDelta);
       shiftEndpoint(points.length - 1, points.length - 2, targetDelta);
-      pointsByEdgeId.set(edge.id, points);
+      // A shift that straightens the jog leaves collinear bends behind.
+      pointsByEdgeId.set(
+        edge.id,
+        sourceDelta === 0 && targetDelta === 0
+          ? points
+          : points.filter(
+              (point, index) =>
+                index === 0 ||
+                index === points.length - 1 ||
+                !(
+                  (point.x === points[index - 1]!.x && point.x === points[index + 1]!.x) ||
+                  (point.y === points[index - 1]!.y && point.y === points[index + 1]!.y)
+                ),
+            ),
+      );
     }
     expandedRoutes = { ...expandedRoutes, pointsByEdgeId };
   }
@@ -3137,6 +3165,12 @@ export function* createLayeredScopePipeline<N, E, G, P>(
     };
   });
 
+  placeEndLabels({
+    edges,
+    nodeRects: feedbackNodeRects,
+    spacing: Number(options.settings?.["spacing.edgeLabel"] ?? 2),
+    placement: (edge) => options.edgeSettings?.(edge)?.["edgeLabels.placement"] ?? "CENTER",
+  });
   if (edgeRouting === "ORTHOGONAL") {
     separateExteriorLabels({
       edges,

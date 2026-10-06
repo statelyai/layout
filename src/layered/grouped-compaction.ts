@@ -169,7 +169,7 @@ function compactJoinedGeometryUnchecked(
       height: vertical ? rect.width : rect.height,
     };
   };
-  preparePortMargins(input, placement.rectByNodeId);
+  preparePortMargins(input, placement.rectByNodeId, orientation);
   const contentRects = new Map<string, EntityRect>();
   const items: Compactable[] = [];
   const nodes = new Map<string, Compactable>();

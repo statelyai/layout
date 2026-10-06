@@ -140,9 +140,15 @@ describe("elkjs compatibility: node labels", () => {
     if (!first || !second || !back) throw new Error("Expected laid-out feedback graph");
     expect(back.y).toBeGreaterThanOrEqual((first.y ?? 0) + (first.height ?? 0));
     expect((back.y ?? 0) + (back.height ?? 0)).toBeLessThanOrEqual(second.y ?? 0);
-    expect(back.x).toBeGreaterThanOrEqual(
-      Math.max((first.x ?? 0) + (first.width ?? 0), (second.x ?? 0) + (second.width ?? 0)),
-    );
+    // The label sits in the corridor, on either side, clear of every state.
+    for (const node of result.children ?? [])
+      expect(
+        (back.x ?? 0) >= (node.x ?? 0) + (node.width ?? 0) ||
+          (back.x ?? 0) + (back.width ?? 0) <= (node.x ?? 0) ||
+          (back.y ?? 0) >= (node.y ?? 0) + (node.height ?? 0) ||
+          (back.y ?? 0) + (back.height ?? 0) <= (node.y ?? 0),
+        String(node.id),
+      ).toBe(true);
   });
 
   it.each(["DOWN", "RIGHT"] as const)(
@@ -359,13 +365,15 @@ describe("elkjs compatibility: node labels", () => {
     const restartPoints = restartSection
       ? [restartSection.startPoint, ...(restartSection.bendPoints ?? []), restartSection.endPoint]
       : [];
-    const maximumNodeRight = Math.max(
-      ...(result.children ?? []).map((node) => (node.x ?? 0) + (node.width ?? 0)),
-    );
-    const exteriorTrack = restartPoints.find((point, index) => {
-      const next = restartPoints[index + 1];
-      return next && point.x === next.x && point.y !== next.y && point.x > maximumNodeRight;
-    });
+    // The label spans the route's long vertical feedback track.
+    const exteriorTrack = restartPoints
+      .flatMap((point, index) => {
+        const next = restartPoints[index + 1];
+        return next && point.x === next.x
+          ? [{ x: point.x, length: Math.abs(next.y - point.y) }]
+          : [];
+      })
+      .sort((a, b) => b.length - a.length)[0];
     expect(exteriorTrack?.x).toBeGreaterThanOrEqual(restart.x ?? 0);
     expect(exteriorTrack?.x).toBeLessThanOrEqual((restart.x ?? 0) + (restart.width ?? 0));
   });

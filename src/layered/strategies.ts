@@ -294,9 +294,16 @@ export const breakCyclesGreedily: CycleBreaker = (input) =>
 export const breakCyclesGreedilyByModelOrder: CycleBreaker = (input) =>
   breakCyclesWithGreedyHeuristic(input, "model-order");
 
-/** ELK MODEL_ORDER for flat graphs without FIRST/LAST layer constraints. */
+/** ELK MODEL_ORDER: layer-constrained nodes (e.g. external port dummies) order before/after the rest. */
 export const breakCyclesByModelOrder: CycleBreaker = (input) => {
   const order = cycleModelOrder(input);
+  const offset = Math.max(1, input.graph.nodes.length);
+  const shift = { FIRST_SEPARATE: -2, FIRST: -1, LAST: 1, LAST_SEPARATE: 2 } as const;
+  for (const node of input.graph.nodes) {
+    const constraint = input.nodeSettings?.(node)?.["layering.layerConstraint"];
+    const factor = shift[constraint as keyof typeof shift];
+    if (factor) order.set(node.id, factor * offset + order.get(node.id)!);
+  }
   return {
     reversedEdgeIds: new Set(
       input.graph.edges
@@ -5219,22 +5226,36 @@ function routeEdges(style: "ORTHOGONAL" | "POLYLINE" | "SPLINES"): EdgeRouter {
           ((edge.width ?? 0) === 0 && (edge.height ?? 0) === 0))
       ) {
         const endpoints = implicitEndpoints.get(edge.id)!;
-        const start = getPortPoint(
-          source,
-          edge.sourcePort,
-          sourceRect,
-          endpoints.source,
-          input.direction,
-          input,
-        );
-        const end = getPortPoint(
-          target,
-          edge.targetPort,
-          targetRect,
-          endpoints.target,
-          input.direction,
-          input,
-        );
+        // Like other edges, a single-edge zero-size fixed-side port takes its
+        // slot in the side's shared endpoint order, so it cannot coincide
+        // with a sibling port that already uses that order.
+        const terminal = (endpoint: "source" | "target"): Point => {
+          const portName = endpoint === "source" ? edge.sourcePort : edge.targetPort;
+          const fallback = endpoints[endpoint];
+          const port = source.ports?.find((candidate) => candidate.name === portName);
+          const side = port ? input.portSettings?.(port, source)?.["port.side"] : undefined;
+          const onSide =
+            (side === "EAST" && Math.abs(fallback.x - sourceRect.x - sourceRect.width) < 1e-9) ||
+            (side === "WEST" && Math.abs(fallback.x - sourceRect.x) < 1e-9) ||
+            (side === "SOUTH" && Math.abs(fallback.y - sourceRect.y - sourceRect.height) < 1e-9) ||
+            (side === "NORTH" && Math.abs(fallback.y - sourceRect.y) < 1e-9);
+          const shared =
+            port !== undefined &&
+            onSide &&
+            (port.width ?? 8) === 0 &&
+            (port.height ?? 8) === 0 &&
+            input.nodeSettings?.(source)?.portConstraints === "FIXED_SIDE" &&
+            input.graph.edges.filter(
+              (candidate) =>
+                (candidate.sourceId === source.id && candidate.sourcePort === portName) ||
+                (candidate.targetId === source.id && candidate.targetPort === portName),
+            ).length === 1;
+          return shared
+            ? fallback
+            : getPortPoint(source, portName, sourceRect, fallback, input.direction, input);
+        };
+        const start = terminal("source");
+        const end = terminal("target");
         const outputSide = ({ right: "EAST", left: "WEST", down: "SOUTH", up: "NORTH" } as const)[
           input.direction
         ];

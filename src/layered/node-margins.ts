@@ -1,5 +1,5 @@
-import { placePorts } from "./strategies";
-import type { LayeredPhaseInput } from "./types";
+import { getOrientedPortDirection, placePorts } from "./strategies";
+import type { AcyclicOrientation, LayeredPhaseInput } from "./types";
 
 interface CrossMargins {
   before: number;
@@ -10,7 +10,11 @@ interface CrossMargins {
 const preparedMargins = new WeakMap<LayeredPhaseInput, ReadonlyMap<string, CrossMargins>>();
 
 /** Physical port boxes contribute to node margins before BK alignment and compaction. */
-export function preparePortMargins(input: LayeredPhaseInput, sizes = input.sizes): void {
+export function preparePortMargins(
+  input: LayeredPhaseInput,
+  sizes = input.sizes,
+  orientation?: AcyclicOrientation,
+): void {
   const horizontal = input.direction === "right" || input.direction === "left";
   const margins = new Map<string, CrossMargins>();
   for (const node of input.graph.nodes) {
@@ -21,6 +25,8 @@ export function preparePortMargins(input: LayeredPhaseInput, sizes = input.sizes
       input.direction,
       (port) => input.portSettings?.(port, node),
       { ...input.settings, ...input.nodeSettings?.(node) },
+      // Free ports take their side from the acyclic edge direction, as in final placement.
+      orientation ? (port) => getOrientedPortDirection(input, orientation, node, port) : undefined,
     );
     let before = 0,
       after = 0,
