@@ -8,6 +8,7 @@ import { countAllCrossings } from "./crossing-counter";
 import { crossingGraph } from "./crossing-graph";
 import { sortInitialModelOrder, markInitialModelOrderPrepared } from "./initial-model-order";
 import { hasMovableLoopPorts } from "./loop-envelopes";
+import { fixedSelfLoopLabels, fixedSelfLoopSide } from "./fixed-self-loop";
 import { compactionBounds, placementCrossBounds } from "./compaction-bounds";
 import { setElkjs0111ResultPolicy } from "../internal/elkjs-compatibility";
 import { traceLayeredPhase } from "../internal/layered-trace";
@@ -3100,7 +3101,27 @@ export function* createLayeredScopePipeline<N, E, G, P>(
       }
       return undefined;
     })();
+    // A fixed same-side loop is a small square beside its port; its label
+    // sits beyond that square, inside the space the loop envelope reserved.
+    const fixedLoopSide = fixedSelfLoopSide(sourcePortSide);
+    const fixedLoopConstraints = sourceNode && options.nodeSettings?.(sourceNode)?.portConstraints;
+    const fixedLoopLabelPosition =
+      edgeRouting === "ORTHOGONAL" &&
+      labelPlacement === "CENTER" &&
+      !inlineLabel &&
+      edge.sourceId === edge.targetId &&
+      fixedLoopSide &&
+      targetPortSide === sourcePortSide &&
+      fixedLoopConstraints &&
+      fixedLoopConstraints !== "FREE" &&
+      fixedLoopConstraints !== "UNDEFINED"
+        ? (() => {
+            const spots = fixedSelfLoopLabels(points, fixedLoopSide, width, height, labelSpacing);
+            return spots.find(clearLabelSpot) ?? spots[0];
+          })()
+        : undefined;
     const explicitLabelPosition =
+      fixedLoopLabelPosition ??
       movableExteriorLoopLabelPosition ??
       selfLoopLabelPosition ??
       outerAntiparallelLabelPosition ??
@@ -3170,6 +3191,7 @@ export function* createLayeredScopePipeline<N, E, G, P>(
     nodeRects: feedbackNodeRects,
     spacing: Number(options.settings?.["spacing.edgeLabel"] ?? 2),
     placement: (edge) => options.edgeSettings?.(edge)?.["edgeLabels.placement"] ?? "CENTER",
+    inline: (edge) => options.edgeSettings?.(edge)?.["edgeLabels.inline"] === true,
   });
   if (edgeRouting === "ORTHOGONAL") {
     separateExteriorLabels({

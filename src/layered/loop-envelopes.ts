@@ -1,7 +1,12 @@
 import type { GraphEdge } from "@statelyai/graph";
 import type { LayeredPhaseInput, NodePlacement } from "./types";
 import { getPortPoint } from "./strategies";
-import { fixedSelfLoopSide, routeFixedSelfLoop, selfLoopTracks } from "./fixed-self-loop";
+import {
+  fixedSelfLoopLabels,
+  fixedSelfLoopSide,
+  routeFixedSelfLoop,
+  selfLoopTracks,
+} from "./fixed-self-loop";
 
 export interface LoopEnvelope {
   before: number;
@@ -41,8 +46,8 @@ export function loopEnvelopes(input: LayeredPhaseInput): ReadonlyMap<string, Loo
           edge.sourcePort !== undefined &&
           edge.targetPort !== undefined &&
           input.edgeSettings?.(edge)?.["edgeLabels.inline"] !== true &&
-          (edge.width ?? 0) === 0 &&
-          (edge.height ?? 0) === 0,
+          (((edge.width ?? 0) === 0 && (edge.height ?? 0) === 0) ||
+            (input.edgeSettings?.(edge)?.["edgeLabels.placement"] ?? "CENTER") === "CENTER"),
       )
     ) {
       const size = input.sizes.get(node.id) ?? { width: 0, height: 0 };
@@ -59,7 +64,8 @@ export function loopEnvelopes(input: LayeredPhaseInput): ReadonlyMap<string, Loo
         const sourceSide =
           from && fixedSelfLoopSide(input.portSettings?.(from, node)?.["port.side"]);
         const targetSide = to && fixedSelfLoopSide(input.portSettings?.(to, node)?.["port.side"]);
-        if (!sourceSide || !targetSide) {
+        const labeled = (edge.width ?? 0) > 0 || (edge.height ?? 0) > 0;
+        if (!sourceSide || !targetSide || (labeled && sourceSide !== targetSide)) {
           supported = false;
           break;
         }
@@ -79,7 +85,7 @@ export function loopEnvelopes(input: LayeredPhaseInput): ReadonlyMap<string, Loo
           input.direction,
           input,
         );
-        for (const point of routeFixedSelfLoop(
+        const route = routeFixedSelfLoop(
           rect,
           start,
           end,
@@ -87,7 +93,14 @@ export function loopEnvelopes(input: LayeredPhaseInput): ReadonlyMap<string, Loo
           targetSide,
           spacing * (tracks.get(edge.id)! + 1),
           input.direction,
-        )) {
+        );
+        if (labeled) {
+          const labelSpacing = Number(input.settings["spacing.edgeLabel"] ?? 2);
+          const { width = 0, height = 0 } = edge;
+          for (const label of fixedSelfLoopLabels(route, sourceSide, width, height, labelSpacing))
+            route.push(label, { x: label.x + width, y: label.y + height });
+        }
+        for (const point of route) {
           const cross = horizontal ? point.y : point.x;
           const flow = horizontal ? point.x : point.y;
           const flowSize = horizontal ? size.width : size.height;

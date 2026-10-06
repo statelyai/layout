@@ -90,6 +90,40 @@ export function routeFixedSelfLoop(
 }
 
 /**
+ * Spots for a same-side loop's label beyond its outer segment: centered on
+ * the loop, then flush with either end of it so the label clears edges that
+ * meet the loop's ports along their port lines.
+ */
+export function fixedSelfLoopLabels(
+  points: readonly Point[],
+  side: Side,
+  width: number,
+  height: number,
+  spacing: number,
+): Point[] {
+  const xs = points.map((p) => p.x),
+    ys = points.map((p) => p.y);
+  const [left, right, top, bottom] = [
+    Math.min(...xs),
+    Math.max(...xs),
+    Math.min(...ys),
+    Math.max(...ys),
+  ];
+  if (side === "EAST" || side === "WEST") {
+    const x = side === "EAST" ? right + spacing : left - spacing - width;
+    return [(top + bottom - height) / 2, top + spacing, bottom - spacing - height].map((y) => ({
+      x,
+      y,
+    }));
+  }
+  const y = side === "SOUTH" ? bottom + spacing : top - spacing - height;
+  return [(left + right - width) / 2, left + spacing, right - spacing - width].map((x) => ({
+    x,
+    y,
+  }));
+}
+
+/**
  * ELK combines self loops that share a port into one self hyperloop routed on
  * a single track. Returns each loop's track index, in order of first loop.
  */

@@ -6,6 +6,7 @@ interface PlaceEndLabelsInput<E extends ExteriorLabelEdge> {
   nodeRects: readonly EntityRect[];
   spacing: number;
   placement: (edge: E) => string;
+  inline: (edge: E) => boolean;
 }
 
 const overlaps = (left: EntityRect, right: EntityRect): boolean =>
@@ -54,6 +55,7 @@ export function placeEndLabels<E extends ExteriorLabelEdge>({
   nodeRects,
   spacing,
   placement,
+  inline,
 }: PlaceEndLabelsInput<E>): void {
   const labelled = edges.filter((edge) => edge.width > 0 && edge.height > 0);
   // Covering a node or another label hides content; a route through a label hides less.
@@ -63,10 +65,14 @@ export function placeEndLabels<E extends ExteriorLabelEdge>({
     edges.filter((other) => crosses(other.points, box)).length;
   for (const edge of labelled) {
     const end = placement(edge);
-    if (end !== "HEAD" && end !== "TAIL") continue;
+    // A CENTER label moves only off a node, another label or another route,
+    // to the clear spot nearest its own.
+    const center = end === "CENTER" && !inline(edge);
+    if (end !== "HEAD" && end !== "TAIL" && !center) continue;
     const { width, height } = edge;
-    let best = { x: edge.x, y: edge.y, conflicts: conflicts(edge, edge) };
+    let best = { x: edge.x, y: edge.y, conflicts: conflicts(edge, edge), distance: 0 };
     if (best.conflicts === 0) continue;
+    if (center && best.conflicts === Number(crosses(edge.points, edge))) continue;
     const route = end === "HEAD" ? edge.points.toReversed() : edge.points;
     // Beside each segment from the endpoint on, hugging the route before stepping away from it.
     search: for (let lateral = spacing; lateral <= spacing + 64; lateral += 8)
@@ -101,8 +107,13 @@ export function placeEndLabels<E extends ExteriorLabelEdge>({
               }));
           for (const box of boxes) {
             const count = conflicts(edge, box);
-            if (count < best.conflicts) best = { x: box.x, y: box.y, conflicts: count };
-            if (count === 0) break search;
+            const distance = Math.abs(box.x - edge.x) + Math.abs(box.y - edge.y);
+            if (
+              count < best.conflicts ||
+              (center && count === best.conflicts && distance < best.distance)
+            )
+              best = { x: box.x, y: box.y, conflicts: count, distance };
+            if (count === 0 && !center) break search;
           }
         }
       }

@@ -134,3 +134,4 @@ Native layered layout reaches layout quality at or above real ELK (elkjs 0.11.1)
 - Preserve incoming physical-port adjacency through long-edge splitting and source-port inversion. Use that order for BK straightening of detached cross-port rows, retaining phase metadata through label preparation.
 - Route self loops that share a port on one track, as ELK hyperloops do.
 - Correct smart center-label port anchors during vertical layered layout by transposing the default selection before choosing sides in canonical coordinates.
+- Route labeled same-side self-loops as a small square beside their port, with their label in reserved space beyond it, and slide non-inline center labels off other routes, nodes and labels.

@@ -32,3 +32,37 @@ it("keeps self-loop labels off other routes (options seed 204 RIGHT)", async () 
   expect(native.edgeLabelHits).toBe(0);
   expect(native.labelNodeOverlaps).toBe(0);
 }, 30000);
+
+// e11 loops on a single labeled EAST port. It took the outer feedback route
+// around the whole graph, through other edges' labels; it is now a fixed
+// square beside its port, its label in the reserved space beyond it.
+it.each([
+  [1074, "RIGHT"],
+  [1074, "DOWN"],
+  [1074, "UP"],
+] as const)(
+  "routes labeled same-port loops beside their port (options seed %i %s)",
+  async (seed, direction) => {
+    const input = compoundOptionsFixture(seed, direction);
+    const native = score(await new NativeELK().layout(structuredClone(input)), input);
+    expect(Object.fromEntries(HARD.map((key) => [key, native[key]]))).toEqual(
+      Object.fromEntries(HARD.map((key) => [key, 0])),
+    );
+  },
+  30000,
+);
+
+// n4's WEST-port hyperedge crosses its layer through e5's center label, as in
+// ELK; the label slides along its own route to the nearest clear spot.
+it("moves center labels off other routes (options seed 1065 UP)", async () => {
+  const input = compoundOptionsFixture(1065, "UP");
+  const native = score(await new NativeELK().layout(structuredClone(input)), input);
+  const elk = score(
+    (await new OracleELK().layout(structuredClone(input) as never)) as ElkNode,
+    input,
+  );
+  expect(elk.edgeLabelHits).toBe(3);
+  expect(Object.fromEntries(HARD.map((key) => [key, native[key]]))).toEqual(
+    Object.fromEntries(HARD.map((key) => [key, 0])),
+  );
+}, 30000);

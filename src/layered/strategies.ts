@@ -5246,7 +5246,7 @@ function routeEdges(style: "ORTHOGONAL" | "POLYLINE" | "SPLINES"): EdgeRouter {
         (edge.sourcePort === undefined ||
           edge.targetPort === undefined ||
           !sameSideSelfLoop ||
-          ((edge.width ?? 0) === 0 && (edge.height ?? 0) === 0))
+          input.edgeSettings?.(edge)?.["edgeLabels.inline"] !== true)
       ) {
         const endpoints = implicitEndpoints.get(edge.id)!;
         // Like other edges, a single-edge zero-size fixed-side port takes its
