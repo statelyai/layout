@@ -7,7 +7,7 @@ import { preparePortMargins, portCrossMargins } from "./node-margins";
 
 import { getCrossingUnits } from "./crossing-constraints";
 import type { EntityRect, GraphEdge } from "@statelyai/graph";
-import { placeNodesInLayers, placePorts } from "./strategies";
+import { placeNodesInLayers, placePorts, usesSharedSideSlot } from "./strategies";
 import type { LayerOrder, LayeredPhaseInput, NodePlacement } from "./types";
 import { nodeNodeSpacing } from "./spacing";
 import { prepareLoopEnvelopes, preparedLoopEnvelopes, recordLoopEnvelopes } from "./loop-envelopes";
@@ -255,18 +255,21 @@ function buildNeighbors(input: LayeredPhaseInput, order: LayerOrder) {
     !customPortAnchors
       ? (anchorCrossSize(input, id) * (index + 1)) / (count + 1)
       : (explicitPortAnchor(id, edgeId) ?? portAnchor(id, index, count, side));
-  // Routing distributes fixed-side self-loop terminals with the side's other
-  // edges (after them here), so anchors must reserve their slots.
+  // Routing gives fixed-side self-loop terminals on shared-slot ports a slot
+  // among the side's other edges (after them here), so anchors reserve it.
   const loopTerminals = (id: string, side: string): number => {
     const node = nodeById.get(id);
-    const constraints = node ? input.nodeSettings?.(node)?.portConstraints : undefined;
-    if (!node || !["FIXED_SIDE", "FIXED_ORDER"].includes(String(constraints))) return 0;
+    if (!node) return 0;
     return input.graph.edges
       .filter((edge) => edge.sourceId === id && edge.targetId === id)
       .flatMap((edge) => [edge.sourcePort, edge.targetPort])
       .filter((name) => {
         const port = node.ports?.find((candidate) => candidate.name === name);
-        return port && input.portSettings?.(port, node)?.["port.side"] === side.toUpperCase();
+        return (
+          port !== undefined &&
+          input.portSettings?.(port, node)?.["port.side"] === side.toUpperCase() &&
+          usesSharedSideSlot(input, node, name)
+        );
       }).length;
   };
   for (const [id, entries] of right) {

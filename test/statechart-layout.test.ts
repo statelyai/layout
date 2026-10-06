@@ -1,4 +1,5 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
+import ELK from "../src/elkjs";
 import {
   compileStatechartLayout,
   layoutStatechart,
@@ -167,6 +168,36 @@ describe("statechart policy layout", () => {
     expect(result.attempt).toBe(0);
     expect(result.attempts.map((attempt) => attempt.score.overlaps)).toEqual([0, 0, 0]);
     expect(graph.edges?.[1].layoutOptions).toBeUndefined();
+  });
+
+  it("spreads parallel labels over HEAD and TAIL in the spacing attempt", async () => {
+    const graph: ElkNode = {
+      id: "r",
+      children: [
+        { id: "a", width: 100, height: 50 },
+        { id: "b", width: 100, height: 50 },
+      ],
+      edges: ["first", "second", "third", "fourth"].map((id) => ({
+        id,
+        sources: ["a"],
+        targets: ["b"],
+        labels: [{ text: id, width: 40, height: 30 }],
+      })),
+    };
+    const layout = vi.spyOn(ELK.prototype, "layout");
+    try {
+      await layoutStatechart(graph, { scopes: { r: { initialNodeId: "a" } } });
+      const spacing = layout.mock.calls[2]![0] as ElkNode;
+      const placements = spacing.edges!.map(
+        (edge) => edge.labels![0]!.layoutOptions?.["elk.edgeLabels.placement"],
+      );
+      // At most three parallel labels spread: the first stays centered.
+      expect(placements).toEqual([undefined, "HEAD", "TAIL", undefined]);
+      expect(spacing.edges![1]!.layoutOptions?.["elk.edgeLabels.placement"]).toBe("HEAD");
+      expect(spacing.layoutOptions?.["spacing.nodeNode"]).toBe(40);
+    } finally {
+      layout.mockRestore();
+    }
   });
 
   it("scores inherited direction while retaining backwards-path and explicit-override failures", () => {

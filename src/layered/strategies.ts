@@ -294,6 +294,29 @@ export const breakCyclesGreedily: CycleBreaker = (input) =>
 export const breakCyclesGreedilyByModelOrder: CycleBreaker = (input) =>
   breakCyclesWithGreedyHeuristic(input, "model-order");
 
+/**
+ * A zero-size port on a FIXED_SIDE node used by exactly one edge has no
+ * physical extent, so its terminal takes a slot in its side's shared endpoint order.
+ */
+export function usesSharedSideSlot(
+  input: LayeredPhaseInput,
+  node: GraphNode,
+  portName: string | undefined,
+): boolean {
+  const port = node.ports?.find((candidate) => candidate.name === portName);
+  return (
+    port !== undefined &&
+    (port.width ?? 8) === 0 &&
+    (port.height ?? 8) === 0 &&
+    input.nodeSettings?.(node)?.portConstraints === "FIXED_SIDE" &&
+    input.graph.edges.filter(
+      (edge) =>
+        (edge.sourceId === node.id && edge.sourcePort === portName) ||
+        (edge.targetId === node.id && edge.targetPort === portName),
+    ).length === 1
+  );
+}
+
 /** ELK MODEL_ORDER: layer-constrained nodes (e.g. external port dummies) order before/after the rest. */
 export const breakCyclesByModelOrder: CycleBreaker = (input) => {
   const order = cycleModelOrder(input);
@@ -5239,18 +5262,7 @@ function routeEdges(style: "ORTHOGONAL" | "POLYLINE" | "SPLINES"): EdgeRouter {
             (side === "WEST" && Math.abs(fallback.x - sourceRect.x) < 1e-9) ||
             (side === "SOUTH" && Math.abs(fallback.y - sourceRect.y - sourceRect.height) < 1e-9) ||
             (side === "NORTH" && Math.abs(fallback.y - sourceRect.y) < 1e-9);
-          const shared =
-            port !== undefined &&
-            onSide &&
-            (port.width ?? 8) === 0 &&
-            (port.height ?? 8) === 0 &&
-            input.nodeSettings?.(source)?.portConstraints === "FIXED_SIDE" &&
-            input.graph.edges.filter(
-              (candidate) =>
-                (candidate.sourceId === source.id && candidate.sourcePort === portName) ||
-                (candidate.targetId === source.id && candidate.targetPort === portName),
-            ).length === 1;
-          return shared
+          return onSide && usesSharedSideSlot(input, source, portName)
             ? fallback
             : getPortPoint(source, portName, sourceRect, fallback, input.direction, input);
         };
