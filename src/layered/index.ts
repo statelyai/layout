@@ -3182,10 +3182,6 @@ export const layeredAlgorithm: LayoutAlgorithm<LayeredLayoutOptions> = {
         runPartialLayout(graph, options ?? {}, context, getLayeredLayout),
       );
     }
-    if (context.constraints?.length && graph.nodes.some((node) => node.parentId != null))
-      throw new UnsupportedLayoutError(
-        "Full layout with geometry constraints does not support containers; use partial leaf constraints or full layout without geometry constraints",
-      );
     const result = repairFlatRouting(
       runLayeredPipeline(graph, options ?? {}, context),
       options ?? {},

@@ -72,7 +72,10 @@ export function worldGeometry<N, E, G, P>(graph: VisualGraph<N, E, G, P>): Visua
   };
 }
 
-/** Ancestor frames stay fixed during authoring. Preserve untouched coordinates exactly. */
+/**
+ * Convert solved world geometry back to parent-relative coordinates, using
+ * each parent's solved position. Untouched coordinates stay exactly as authored.
+ */
 export function nativeGeometry<N, E, G, P>(
   graph: VisualGraph<N, E, G, P>,
   original: VisualGraph<N, E, G, P>,
@@ -83,30 +86,47 @@ export function nativeGeometry<N, E, G, P>(
   const originalEdges = new Map(original.edges.map((e) => [e.id, e]));
   const worldNodes = new Map(world.nodes.map((n) => [n.id, n]));
   const worldEdges = new Map(world.edges.map((e) => [e.id, e]));
+  const solved = new Map(graph.nodes.map((n) => [n.id, n]));
+  const frame = (id: string): Point => {
+    const parentId = originalNodes.get(id)?.parentId;
+    const parent = parentId == null ? undefined : solved.get(parentId);
+    return parent ? { x: parent.x, y: parent.y } : { x: 0, y: 0 };
+  };
+  const same = (a: Point, b: Point) => a.x === b.x && a.y === b.y;
   return {
     ...graph,
     nodes: graph.nodes.map((n) => {
-      const p = offsets.nodes.get(n.id)!,
+      const p = frame(n.id),
         before = originalNodes.get(n.id)!,
         prior = worldNodes.get(n.id)!;
+      const kept = same(p, offsets.nodes.get(n.id)!);
       return {
         ...n,
-        x: n.x === prior.x ? before.x : n.x - p.x,
-        y: n.y === prior.y ? before.y : n.y - p.y,
+        x: kept && n.x === prior.x ? before.x : n.x - p.x,
+        y: kept && n.y === prior.y ? before.y : n.y - p.y,
       };
     }),
     edges: graph.edges.map((e) => {
-      const p = offsets.edges.get(e.id)!,
+      const old = offsets.edges.get(e.id)!,
         before = originalEdges.get(e.id)!,
         prior = worldEdges.get(e.id)!;
+      const source = originalNodes.get(e.sourceId)!,
+        target = originalNodes.get(e.targetId)!;
+      // Same rule as frames(): sibling edges in legacy space use their parent's frame.
+      const p =
+        (original as VisualGraph & { edgeCoordinateSpace?: string }).edgeCoordinateSpace !==
+          "world" && (source.parentId ?? null) === (target.parentId ?? null)
+          ? frame(source.id)
+          : { x: 0, y: 0 };
+      const kept = same(p, old);
       const points =
-        JSON.stringify(e.points) === JSON.stringify(prior.points)
+        kept && JSON.stringify(e.points) === JSON.stringify(prior.points)
           ? before.points
           : e.points?.map((v) => ({ x: v.x - p.x, y: v.y - p.y }));
       return {
         ...e,
-        x: e.x === prior.x ? before.x : e.x - p.x,
-        y: e.y === prior.y ? before.y : e.y - p.y,
+        x: kept && e.x === prior.x ? before.x : e.x - p.x,
+        y: kept && e.y === prior.y ? before.y : e.y - p.y,
         ...(points === undefined ? {} : { points }),
       };
     }),
