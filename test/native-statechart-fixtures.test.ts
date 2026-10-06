@@ -47,6 +47,16 @@ for (const fixture of [editor, espresso])
       for (const label of result.edges) {
         for (const card of cards) expect(intersects(label, card), label.id).toBe(false);
       }
+      // Routes stay orthogonal through label gaps between route sections.
+      for (const edge of result.edges)
+        for (const [index, point] of (edge.points ?? []).entries()) {
+          const previous = edge.points![index - 1];
+          if (previous)
+            expect(
+              Math.abs(previous.x - point.x) < 1e-6 || Math.abs(previous.y - point.y) < 1e-6,
+              edge.id,
+            ).toBe(true);
+        }
       for (let i = 0; i < result.edges.length; i++)
         for (let j = i + 1; j < result.edges.length; j++)
           expect(

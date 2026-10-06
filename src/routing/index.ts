@@ -65,4 +65,5 @@ export {
   pathFromSplinePoints,
   routeToGraphPatch,
   routeToPolylines,
+  routeToPoints,
 } from "./adapters";

@@ -1,5 +1,5 @@
 import { worldGeometry } from "../authoring/coordinates";
-import { routeToPolylines } from "../routing/adapters";
+import { routeToPoints } from "../routing/adapters";
 import { recordRouteGeometry } from "../routing/layout-cache";
 import type { CompoundVisualGraph } from "./compound";
 import type { LayeredLayoutOptions } from "./types";
@@ -35,7 +35,7 @@ export function replaceLayoutRouting<N, E, G, P>(
     edgeCoordinateSpace: "world" as const,
     edges: graph.edges.map((edge) => ({
       ...edge,
-      points: routeToPolylines(snapshot.routes.get(edge.id)!).flat(),
+      points: routeToPoints(snapshot.routes.get(edge.id)!),
       routing: "polyline" as const,
     })),
     compoundRoutes: snapshot.routes,

@@ -1,4 +1,4 @@
-import { orthogonalRouting, routeToPolylines } from "../routing";
+import { orthogonalRouting, routeToPoints } from "../routing";
 import { recordRouteGeometry } from "../routing/layout-cache";
 import type { EdgeRoutingSettings, Route } from "../routing/types";
 import type {
@@ -424,9 +424,8 @@ export function layoutCompounds<N, E, G, P>(
     { coordinateSpace: "world", edges: attachmentSettings, maxSearchNodes: 40000 },
   );
   for (const [id, route] of snapshot.routes) {
-    const polylines = routeToPolylines(route);
     Object.assign(edges.get(id)!, {
-      points: polylines.flatMap((p) => p.map((point) => ({ ...point }))),
+      points: routeToPoints(route),
       routing: "orthogonal",
     });
   }

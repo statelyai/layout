@@ -3,7 +3,7 @@ import type { LayeredLayoutOptions } from "./types";
 import { routeCrosses } from "../authoring/routing";
 import {
   orthogonalRouting,
-  routeToPolylines,
+  routeToPoints,
   type EdgeRoutingSettings,
   type RouteSide,
   type RouteEndpoint,
@@ -266,9 +266,7 @@ export function repairFlatRouting<N, E, G, P>(
     ...graph,
     edges: edges.map((edge) => ({
       ...edge,
-      points: routeToPolylines(routes.get(edge.id)!).flatMap((points) =>
-        points.map((p) => ({ ...p })),
-      ),
+      points: routeToPoints(routes.get(edge.id)!),
     })),
     compoundRoutes: routes,
   };

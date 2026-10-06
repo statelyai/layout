@@ -88,6 +88,38 @@ export function routeToPolylines(
 ): readonly (readonly RoutePoint[])[] {
   return route.sections.map((s) => flattenPath(s.path, options));
 }
+/**
+ * One point list for consumers of `GraphEdge.points`. Sections are joined
+ * through their gaps (an edge label, for example); between orthogonal
+ * sections the join is orthogonal too, so it never adds a diagonal.
+ */
+export function routeToPoints(
+  route: Route,
+  options?: { readonly tolerance?: number },
+): RoutePoint[] {
+  const points: RoutePoint[] = [];
+  const axis = (a: RoutePoint, b: RoutePoint) =>
+    Math.abs(a.y - b.y) < 1e-9 ? "horizontal" : Math.abs(a.x - b.x) < 1e-9 ? "vertical" : undefined;
+  for (const polyline of routeToPolylines(route, options)) {
+    const a = points.at(-1),
+      b = polyline[0];
+    if (a && b && axis(a, b) === undefined) {
+      const before = points.length > 1 ? axis(points.at(-2)!, a) : undefined;
+      const after = polyline.length > 1 ? axis(b, polyline[1]!) : undefined;
+      if (before && after) {
+        if (before === "horizontal" && after === "horizontal") {
+          const x = (a.x + b.x) / 2;
+          points.push({ x, y: a.y }, { x, y: b.y });
+        } else if (before === "vertical" && after === "vertical") {
+          const y = (a.y + b.y) / 2;
+          points.push({ x: a.x, y }, { x: b.x, y });
+        } else points.push(before === "horizontal" ? { x: b.x, y: a.y } : { x: a.x, y: b.y });
+      }
+    }
+    points.push(...polyline.map((point) => ({ ...point })));
+  }
+  return points;
+}
 /** Compatibility for single-section native consumers. Refuses to erase gaps or topology. */
 export function routeToGraphPatch(
   route: Route,
