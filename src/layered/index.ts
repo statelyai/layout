@@ -1163,6 +1163,17 @@ function runSeparatedComponents<N, E, G, P>(
   if ((options.settings?.["considerModelOrder.components"] ?? "NONE") === "NONE") {
     components.sort((left, right) => left.area - right.area || left.modelOrder - right.modelOrder);
   }
+  // The component holding the flow's start (a first-layer node, else the largest)
+  // packs first, so no other component precedes that start along the flow.
+  const constrainedFirst = (component: (typeof components)[number]) =>
+    component.result.nodes.some((node) => {
+      const constraint = options.nodeSettings?.(node)?.["layering.layerConstraint"];
+      return constraint === "FIRST" || constraint === "FIRST_SEPARATE";
+    });
+  const start =
+    components.find(constrainedFirst) ??
+    components.toSorted((left, right) => right.result.nodes.length - left.result.nodes.length)[0];
+  if (start) components.unshift(...components.splice(components.indexOf(start), 1));
   const componentSpacing = Number(
     options.settings?.["spacing.componentComponent"] ??
       options.settings?.["spacing.baseValue"] ??
@@ -1195,6 +1206,7 @@ function runSeparatedComponents<N, E, G, P>(
   const placedShapes: Array<{ left: number; right: number; top: number; bottom: number }> = [];
   const nodeResults = new Map<string, VisualNode<N, P>>();
   const edgeResults = new Map<string, (typeof components)[number]["result"]["edges"][number]>();
+  const placements: Array<{ component: (typeof components)[number]; x: number; y: number }> = [];
   for (const component of components) {
     if (x > 0 && x + component.bounds.width > maxRowWidth) {
       x = 0;
@@ -1215,17 +1227,30 @@ function runSeparatedComponents<N, E, G, P>(
       }
       compactedY = Math.min(y, requiredY);
     }
-    const dx = padding.left + x - component.bounds.left;
-    const dy = padding.top + compactedY - component.bounds.top;
-    for (const node of component.result.nodes) {
-      nodeResults.set(node.id, { ...node, x: (node.x ?? 0) + dx, y: (node.y ?? 0) + dy });
+    for (const node of component.result.nodes)
       placedShapes.push({
         left: x + (node.x ?? 0) - component.bounds.left,
         right: x + (node.x ?? 0) - component.bounds.left + (node.width ?? 0),
         top: compactedY + (node.y ?? 0) - component.bounds.top,
         bottom: compactedY + (node.y ?? 0) - component.bounds.top + (node.height ?? 0),
       });
-    }
+    placements.push({ component, x, y: compactedY });
+    x += component.bounds.width + componentSpacing;
+    rowHeight = Math.max(rowHeight, component.bounds.height);
+  }
+  // Components are packed in reading order. For UP and LEFT layouts, mirror the
+  // packing along the flow so later components follow the first one's flow
+  // instead of preceding it (e.g. an isolated state below an UP statechart's start).
+  const direction = options.direction ?? graph.direction ?? "right";
+  const packedWidth = Math.max(0, ...placements.map((p) => p.x + p.component.bounds.width));
+  const packedHeight = Math.max(0, ...placements.map((p) => p.y + p.component.bounds.height));
+  for (const { component, x: packedX, y: packedY } of placements) {
+    const left = direction === "left" ? packedWidth - packedX - component.bounds.width : packedX;
+    const top = direction === "up" ? packedHeight - packedY - component.bounds.height : packedY;
+    const dx = padding.left + left - component.bounds.left;
+    const dy = padding.top + top - component.bounds.top;
+    for (const node of component.result.nodes)
+      nodeResults.set(node.id, { ...node, x: (node.x ?? 0) + dx, y: (node.y ?? 0) + dy });
     for (const edge of component.result.edges) {
       edgeResults.set(edge.id, {
         ...edge,
@@ -1234,8 +1259,6 @@ function runSeparatedComponents<N, E, G, P>(
         points: edge.points?.map((point) => ({ x: point.x + dx, y: point.y + dy })),
       });
     }
-    x += component.bounds.width + componentSpacing;
-    rowHeight = Math.max(rowHeight, component.bounds.height);
   }
 
   return {

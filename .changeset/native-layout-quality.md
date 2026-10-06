@@ -140,3 +140,4 @@ Native layered layout reaches layout quality at or above real ELK (elkjs 0.11.1)
 - Lay out compounds whose initial state is constrained to the first layer and that have transitions to that state, which used to throw a layer-constraint conflict.
 - Space Brandes-Koepf port anchors by port size, as ELK does, so sized ports no longer cause small jogs.
 - Never route two different edges along one track in opposite directions: ports with incoming and outgoing edges get separate attachment points and hypersegments, opposite-direction dummies no longer merge, and a final pass moves any remaining shared segment to a free parallel track.
+- Pack the component holding the flow's start first, and mirror component packing for UP and LEFT layouts, so no component precedes that start along the flow.
