@@ -58,7 +58,28 @@ function anchorCrossSize(input: LayeredPhaseInput, id: string): number {
   return id.startsWith("__layout_dummy:wrap:") ? 0 : actualCrossSize(input, id);
 }
 
+/** Per-run memo: one placement reads a fixed input. */
+let placementMemo:
+  | { input: LayeredPhaseInput; crossSize: Map<string, number>; spacing: Map<string, number> }
+  | undefined;
+
 function crossSize(input: LayeredPhaseInput, id: string): number {
+  if (placementMemo?.input !== input) return uncachedCrossSize(input, id);
+  let value = placementMemo.crossSize.get(id);
+  if (value === undefined) placementMemo.crossSize.set(id, (value = uncachedCrossSize(input, id)));
+  return value;
+}
+
+function spacingBetween(input: LayeredPhaseInput, firstId: string, secondId: string): number {
+  if (placementMemo?.input !== input) return nodeNodeSpacing(input, firstId, secondId);
+  const key = `${firstId}\0${secondId}`;
+  let value = placementMemo.spacing.get(key);
+  if (value === undefined)
+    placementMemo.spacing.set(key, (value = nodeNodeSpacing(input, firstId, secondId)));
+  return value;
+}
+
+function uncachedCrossSize(input: LayeredPhaseInput, id: string): number {
   const value = actualCrossSize(input, id);
   if (
     id.startsWith("__layout_breaking:") ||
@@ -572,7 +593,7 @@ function compact(
           bal.sink.set(root, bal.sink.get(neighborRoot) ?? neighborRoot);
         const rootSink = bal.sink.get(root) ?? root;
         const neighborSink = bal.sink.get(neighborRoot) ?? neighborRoot;
-        const spacing = nodeNodeSpacing(input, current, neighbor);
+        const spacing = spacingBetween(input, current, neighbor);
         if (rootSink === neighborSink) {
           const candidate =
             bal.vdir === "UP"
@@ -724,6 +745,23 @@ function createStraighteningThreshold(
   const queue: Pending[] = [],
     stack: Pending[] = [];
   const rootOf = (id: string) => bal.root.get(id) ?? id;
+  // Feedback segments retain model direction; BK traverses their layer direction.
+  // SelfLoopPreProcessor hides self loops until after node placement.
+  const edgesByFree = new Map<boolean, Map<string, GraphEdge[]>>();
+  for (const incoming of [true, false]) {
+    const byFree = new Map<string, GraphEdge[]>();
+    for (const edge of input.graph.edges) {
+      if (edge.sourceId === edge.targetId) continue;
+      const reversed =
+        (neighbors.layerIndex.get(edge.sourceId) ?? 0) >
+        (neighbors.layerIndex.get(edge.targetId) ?? 0);
+      const free = incoming !== reversed ? edge.targetId : edge.sourceId;
+      const edges = byFree.get(free);
+      if (edges) edges.push(edge);
+      else byFree.set(free, [edge]);
+    }
+    edgesByFree.set(incoming, byFree);
+  }
   const pick = (pending: Pending): Pending => {
     const incoming = pending.isRoot ? bal.hdir === "RIGHT" : bal.hdir === "LEFT";
     const ports =
@@ -731,16 +769,7 @@ function createStraighteningThreshold(
         ? getCrossingUnits(input)?.incomingEdgeOrderByDummyId?.get(pending.free)
         : undefined) ??
       (incoming ? order.inputPortOrderByNodeId : order.outputPortOrderByNodeId)?.get(pending.free);
-    // Feedback segments retain model direction; BK traverses their layer direction.
-    // SelfLoopPreProcessor hides self loops until after node placement.
-    const edges = input.graph.edges
-      .filter((edge) => {
-        if (edge.sourceId === edge.targetId) return false;
-        const reversed =
-          (neighbors.layerIndex.get(edge.sourceId) ?? 0) >
-          (neighbors.layerIndex.get(edge.targetId) ?? 0);
-        return (incoming !== reversed ? edge.targetId : edge.sourceId) === pending.free;
-      })
+    const edges = [...(edgesByFree.get(incoming)!.get(pending.free) ?? [])]
       // Edges missing from the port order (a merged dummy's in-layer parts)
       // follow the listed edges.
       .sort((a, b) => {
@@ -820,7 +849,7 @@ function createStraighteningThreshold(
         delta < 0
           ? beforeMargin(input, id) + afterMargin(input, adjacent)
           : afterMargin(input, id) + beforeMargin(input, adjacent);
-      available = Math.min(available, gap - margins - nodeNodeSpacing(input, id, adjacent));
+      available = Math.min(available, gap - margins - spacingBetween(input, id, adjacent));
     }
     for (const id of blocks.get(rootOf(free)) ?? [])
       bal.y.set(id, (bal.y.get(id) ?? 0) + (delta < 0 ? -available : available));
@@ -846,6 +875,16 @@ export function placeNodesWithBrandesKoepf(
   input: LayeredPhaseInput,
   order: LayerOrder,
 ): NodePlacement {
+  const previous = placementMemo;
+  placementMemo = { input, crossSize: new Map(), spacing: new Map() };
+  try {
+    return placeNodes(input, order);
+  } finally {
+    placementMemo = previous;
+  }
+}
+
+function placeNodes(input: LayeredPhaseInput, order: LayerOrder): NodePlacement {
   preparePortMargins(input);
   const envelopes = prepareLoopEnvelopes(input);
   const base = placeNodesInLayers(input, order);

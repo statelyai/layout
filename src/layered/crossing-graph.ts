@@ -88,31 +88,59 @@ export function createCrossingGraphBuilder(input: LayeredPhaseInput) {
     }
     return degrees;
   };
+  // Port identities, sides and fallback ranks depend only on the orientation;
+  // each build replays them against the current port orders.
+  const plans = new WeakMap<AcyclicOrientation, CrossingGraphPlan>();
   return (
     orientation: AcyclicOrientation,
     layers: readonly (readonly string[])[],
     incoming?: ReadonlyMap<string, readonly string[]>,
     outgoing?: ReadonlyMap<string, readonly string[]>,
-  ): CrossingGraph =>
-    buildCrossingGraph(
-      input,
-      orientation,
-      layers,
-      incoming,
-      outgoing,
-      key,
-      infoOf,
-      authoredPort,
-      degreesOf,
-    );
+  ): CrossingGraph => {
+    let plan = plans.get(orientation);
+    if (
+      !plan ||
+      plan.units !== getCrossingUnits(input) ||
+      plan.nodes !== input.graph.nodes ||
+      plan.edgeList !== input.graph.edges
+    ) {
+      plan = planCrossingGraph(input, orientation, key, infoOf, authoredPort, degreesOf);
+      plans.set(orientation, plan);
+    }
+    return buildCrossingGraph(plan, layers, incoming, outgoing);
+  };
 }
 
-function buildCrossingGraph(
+/** One `add` of the original builder with its build-independent values resolved. */
+interface PortOperation {
+  nodeId: string;
+  id: string;
+  side: CrossingPort["side"];
+  /** Incident edge whose position in the selected port order ranks the port. */
+  edgeId?: string;
+  source: boolean;
+  /** Rank when the edge is absent from the selected port order. */
+  fallback: number;
+  /** FIXED_POS/FIXED_RATIO geometric rank, overriding the order rank. */
+  fixedRank?: number;
+  /** FIXED_POS/FIXED_RATIO shared ports keep their first rank. */
+  keepRank: boolean;
+  /** North/south dummy detached from this port, linked after the add. */
+  northSouthDummy?: string;
+}
+
+interface CrossingGraphPlan {
+  units: ReturnType<typeof getCrossingUnits>;
+  nodes: LayeredPhaseInput["graph"]["nodes"];
+  edgeList: LayeredPhaseInput["graph"]["edges"];
+  operations: PortOperation[];
+  edges: Array<{ source: string; target: string }>;
+  nodeKinds: Map<string, { type: CrossingNode["type"]; unit?: string }>;
+}
+
+function planCrossingGraph(
   input: LayeredPhaseInput,
   orientation: AcyclicOrientation,
-  layers: readonly (readonly string[])[],
-  incoming: ReadonlyMap<string, readonly string[]> | undefined,
-  outgoing: ReadonlyMap<string, readonly string[]> | undefined,
   key: (id: string, name: string) => string,
   infoOf: (node: GraphNode) => { constraints: unknown; hypernode: boolean },
   authoredPort: (
@@ -122,7 +150,7 @@ function buildCrossingGraph(
   degreesOf: (
     orientation: AcyclicOrientation,
   ) => ReadonlyMap<string, { incoming: number; outgoing: number }>,
-): CrossingGraph {
+): CrossingGraphPlan {
   const units = getCrossingUnits(input);
   const nodes = new Map(input.graph.nodes.map((node) => [node.id, node]));
   const canonicalSide = (side: string): CrossingPort["side"] => {
@@ -137,22 +165,12 @@ function buildCrossingGraph(
     return sides[side]!;
   };
   const degrees = degreesOf(orientation);
-  // First index of each edge id, like `indexOf`, per selected port order.
-  const ranks = new Map<readonly string[], Map<string, number>>();
-  const rankIn = (selected: readonly string[]) => {
-    let rank = ranks.get(selected);
-    if (!rank) {
-      rank = new Map();
-      for (let index = 0; index < selected.length; index++)
-        if (!rank.has(selected[index]!)) rank.set(selected[index]!, index);
-      ranks.set(selected, rank);
-    }
-    return rank;
-  };
-  const ports = new Map<string, Map<string, { port: CrossingPort; rank: number }>>();
+  const operations: PortOperation[] = [];
+  // Distinct port ids per node, in first-add order, as the build's members map.
+  const ports = new Map<string, Set<string>>();
   const add = (node: GraphNode, name: string, source: boolean, edge?: GraphEdge): string => {
     let members = ports.get(node.id);
-    if (!members) ports.set(node.id, (members = new Map()));
+    if (!members) ports.set(node.id, (members = new Set()));
     const id = key(node.id, name);
     const { authored, index: authoredIndex, side: configuredSide } = authoredPort(node, name);
     const { constraints } = infoOf(node);
@@ -176,10 +194,9 @@ function buildCrossingGraph(
           : source
             ? "EAST"
             : "WEST";
-    const selected = (source ? outgoing : incoming)?.get(node.id);
-    let rank = edge && selected ? (rankIn(selected).get(edge.id) ?? -1) : -1;
-    if (rank < 0) rank = authored ? authoredIndex : members.size;
-    if (authored && (constraints === "FIXED_POS" || constraints === "FIXED_RATIO")) {
+    const keepRank = constraints === "FIXED_POS" || constraints === "FIXED_RATIO";
+    let fixedRank: number | undefined;
+    if (authored && keepRank) {
       const vertical = input.direction === "down" || input.direction === "up";
       const reverse = input.direction === "left" || input.direction === "up";
       const size = input.sizes.get(node.id)!;
@@ -190,7 +207,7 @@ function buildCrossingGraph(
         ? (authored.y ?? 0) + (authored.height ?? 0) / 2
         : (authored.x ?? 0) + (authored.width ?? 0) / 2;
       const canonicalFlow = reverse ? (vertical ? size.height : size.width) - flow : flow;
-      rank =
+      fixedRank =
         side === "NORTH"
           ? canonicalFlow
           : side === "SOUTH"
@@ -199,15 +216,17 @@ function buildCrossingGraph(
               ? cross
               : -cross;
     }
-    const existing = members.get(id);
-    if (existing) {
-      // A shared port occupies its first position in the selected port order;
-      // later incident edges must not move that one physical port.
-      if (constraints !== "FIXED_POS" && constraints !== "FIXED_RATIO")
-        existing.rank = Math.min(existing.rank, rank);
-      return id;
-    }
-    members.set(id, { port: { id, side }, rank });
+    operations.push({
+      nodeId: node.id,
+      id,
+      side,
+      edgeId: edge?.id,
+      source,
+      fallback: authored ? authoredIndex : members.size,
+      fixedRank,
+      keepRank,
+    });
+    members.add(id);
     return id;
   };
   const endpoint = (edge: GraphEdge, source: boolean) => {
@@ -233,31 +252,99 @@ function buildCrossingGraph(
     }
   for (const [dummy, origin] of units?.northSouthOrigins ?? []) {
     const owner = nodes.get(origin.node.id)!;
-    const original = add(owner, origin.port.name, false);
-    ports.get(owner.id)!.get(original)!.port.dummy = dummy;
-    for (const member of ports.get(dummy)?.values() ?? []) member.port.origin = original;
+    add(owner, origin.port.name, false);
+    operations.at(-1)!.northSouthDummy = dummy;
+  }
+  const nodeKinds = new Map<string, { type: CrossingNode["type"]; unit?: string }>();
+  for (const node of input.graph.nodes) {
+    const id = node.id;
+    nodeKinds.set(id, {
+      type: id.startsWith("__layout_dummy:north-south:")
+        ? "NORTH_SOUTH_PORT"
+        : units?.longEdgeNodes?.has(id)
+          ? "LONG_EDGE"
+          : id.startsWith("__layout_dummy:label:")
+            ? "LABEL"
+            : "NORMAL",
+      unit: units?.units.get(id),
+    });
+  }
+  return {
+    units,
+    nodes: input.graph.nodes,
+    edgeList: input.graph.edges,
+    operations,
+    edges,
+    nodeKinds,
+  };
+}
+
+function buildCrossingGraph(
+  plan: CrossingGraphPlan,
+  layers: readonly (readonly string[])[],
+  incoming: ReadonlyMap<string, readonly string[]> | undefined,
+  outgoing: ReadonlyMap<string, readonly string[]> | undefined,
+): CrossingGraph {
+  // First index of each edge id, like `indexOf`, per selected port order.
+  const ranks = new Map<readonly string[], Map<string, number>>();
+  const rankIn = (selected: readonly string[]) => {
+    let rank = ranks.get(selected);
+    if (!rank) {
+      rank = new Map();
+      for (let index = 0; index < selected.length; index++)
+        if (!rank.has(selected[index]!)) rank.set(selected[index]!, index);
+      ranks.set(selected, rank);
+    }
+    return rank;
+  };
+  const ports = new Map<string, Map<string, { port: CrossingPort; rank: number }>>();
+  for (const operation of plan.operations) {
+    let members = ports.get(operation.nodeId);
+    if (!members) ports.set(operation.nodeId, (members = new Map()));
+    const selected =
+      operation.edgeId === undefined
+        ? undefined
+        : (operation.source ? outgoing : incoming)?.get(operation.nodeId);
+    let rank = selected ? (rankIn(selected).get(operation.edgeId!) ?? -1) : -1;
+    if (rank < 0) rank = operation.fallback;
+    if (operation.fixedRank !== undefined) rank = operation.fixedRank;
+    const existing = members.get(operation.id);
+    if (existing) {
+      // A shared port occupies its first position in the selected port order;
+      // later incident edges must not move that one physical port.
+      if (!operation.keepRank) existing.rank = Math.min(existing.rank, rank);
+    } else members.set(operation.id, { port: { id: operation.id, side: operation.side }, rank });
+    if (operation.northSouthDummy !== undefined) {
+      members.get(operation.id)!.port.dummy = operation.northSouthDummy;
+      for (const member of ports.get(operation.northSouthDummy)?.values() ?? [])
+        member.port.origin = operation.id;
+    }
   }
   const sideRank = { NORTH: 0, EAST: 1, SOUTH: 2, WEST: 3 };
   return {
     layers: layers.map((layer) =>
       layer.map((id) => {
-        const type: CrossingNode["type"] = id.startsWith("__layout_dummy:north-south:")
-          ? "NORTH_SOUTH_PORT"
-          : units?.longEdgeNodes?.has(id)
-            ? "LONG_EDGE"
-            : id.startsWith("__layout_dummy:label:")
-              ? "LABEL"
-              : "NORMAL";
+        const kind = plan.nodeKinds.get(id);
         return {
           id,
-          type,
-          unit: units?.units.get(id),
+          type: kind?.type ?? kindOf(id, plan.units),
+          unit: kind ? kind.unit : plan.units?.units.get(id),
           ports: [...(ports.get(id)?.values() ?? [])]
             .sort((a, b) => sideRank[a.port.side] - sideRank[b.port.side] || a.rank - b.rank)
             .map((member) => member.port),
         };
       }),
     ),
-    edges,
+    edges: plan.edges.map((edge) => ({ source: edge.source, target: edge.target })),
   };
+}
+
+function kindOf(id: string, units: ReturnType<typeof getCrossingUnits>): CrossingNode["type"] {
+  return id.startsWith("__layout_dummy:north-south:")
+    ? "NORTH_SOUTH_PORT"
+    : units?.longEdgeNodes?.has(id)
+      ? "LONG_EDGE"
+      : id.startsWith("__layout_dummy:label:")
+        ? "LABEL"
+        : "NORMAL";
 }

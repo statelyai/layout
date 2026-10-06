@@ -1433,14 +1433,13 @@ function coordinatePreparedScopes(
           },
         ),
         alignBoundary: (forward) => {
-          const childOrder = childSession.snapshot();
-          const layerIndex = forward ? 0 : childOrder.layers.length - 1;
-          const layer = childOrder.layers[layerIndex]!;
+          const childLayers = childSession.currentLayers();
+          const layerIndex = forward ? 0 : childLayers.length - 1;
+          const layer = childLayers[layerIndex]!;
           if (!layer.every((id) => externalPortDummyOf(childNodeById.get(id)!))) return false;
-          const parentOrder = parentScope.session.snapshot();
           // Parent port positions are physical; feedback reversal changes
           // edge direction without changing the boundary port's identity.
-          const physical = parentOrder.physicalPortOrderByNodeId?.get(id) ?? [];
+          const physical = parentScope.session.physicalPortOrder(id);
           const dummyByParentPort = new Map(
             childPhase.input.graph.nodes
               .filter((n) => externalPortDummyOf(n))
@@ -1455,15 +1454,12 @@ function coordinatePreparedScopes(
           const unique = [...new Set(ordered)];
           if (unique.length !== layer.length)
             throw new Error(`Incomplete hierarchical port order for ${id}`);
-          const layers = childOrder.layers.map((layer, i) =>
-            i === layerIndex ? unique : [...layer],
-          );
-          childSession.restore({ ...childOrder, layers });
+          childSession.replaceLayer(layerIndex, unique);
           return true;
         },
         publishBoundary: (forward) => {
-          const childOrder = childSession.snapshot();
-          const layer = childOrder.layers[forward ? childOrder.layers.length - 1 : 0]!;
+          const childLayers = childSession.currentLayers();
+          const layer = childLayers[forward ? childLayers.length - 1 : 0]!;
           if (!layer.every((id) => externalPortDummyOf(childNodeById.get(id)!))) return;
           const rank = new Map(
             layer.map((dummy, index) => [
@@ -1471,8 +1467,7 @@ function coordinatePreparedScopes(
               index,
             ]),
           );
-          const parentOrder = parentScope.session.snapshot();
-          const physical = parentOrder.physicalPortOrderByNodeId?.get(id) ?? [];
+          const physical = parentScope.session.physicalPortOrder(id);
           const boundarySlots = physical.flatMap((portId, index) => {
             const [nodeId, portName] = JSON.parse(portId) as [string, string];
             return nodeId === id && rank.has(portName) ? [index] : [];
@@ -1489,28 +1484,20 @@ function coordinatePreparedScopes(
           boundarySlots.forEach((slot, index) => {
             updatedPhysical[slot] = boundaryPorts[index]!;
           });
-          const physicalOrders = new Map(parentOrder.physicalPortOrderByNodeId);
-          physicalOrders.set(id, updatedPhysical);
           const edgePortRank = (edgeId: string): number => {
             const edge = parentEdgeById.get(edgeId)!;
             const portName = edge.sourceId === id ? edge.sourcePort : edge.targetPort;
             return updatedPhysical.indexOf(JSON.stringify([id, portName]));
           };
-          const incoming = new Map(parentOrder.inputPortOrderByNodeId);
-          const outgoing = new Map(parentOrder.outputPortOrderByNodeId);
-          for (const orders of [incoming, outgoing]) {
-            const current = orders.get(id) ?? [];
-            orders.set(
-              id,
-              [...current].sort((a, b) => edgePortRank(a) - edgePortRank(b)),
-            );
-          }
-          parentScope.session.restore({
-            ...parentOrder,
-            physicalPortOrderByNodeId: physicalOrders,
-            inputPortOrderByNodeId: incoming,
-            outputPortOrderByNodeId: outgoing,
-          });
+          const { incoming, outgoing } = parentScope.session.edgeOrders(id);
+          const byPort = (current: readonly string[]) =>
+            [...current].sort((a, b) => edgePortRank(a) - edgePortRank(b));
+          parentScope.session.reorderNodePorts(
+            id,
+            updatedPhysical,
+            byPort(incoming),
+            byPort(outgoing),
+          );
         },
       };
       childScope.publishBottomUp = () => {

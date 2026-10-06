@@ -63,6 +63,7 @@ export function minimizeHierarchyCrossings(
     const subtree = coupled(scope);
     const snapshot = () => new Map(subtree.map((scope) => [scope, scope.session.snapshot()]));
     const count = () => subtree.reduce((total, scope) => total + scope.session.countCrossings(), 0);
+    const rollback = subtree.some((scope) => scope.session.restoreRejectedSweep);
     let bestCount = Number.POSITIVE_INFINITY,
       best = snapshot();
     for (let attempt = 0; attempt < scope.session.attempts; attempt++) {
@@ -94,13 +95,13 @@ export function minimizeHierarchyCrossings(
       trace(true, crossings);
       while (crossings > 0) {
         forward = !forward;
-        const previous = snapshot();
+        const previous = rollback ? snapshot() : undefined;
         sweep(scope, forward, false);
         const next = count();
         trace(false, next);
         if (next >= crossings) {
           // Preserve the legacy wrapped/unzipped standalone rollback policy.
-          for (const [scope, order] of previous)
+          for (const [scope, order] of previous ?? [])
             if (scope.session.restoreRejectedSweep) scope.session.restore(order);
           break;
         }

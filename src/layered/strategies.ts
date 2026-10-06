@@ -1889,6 +1889,21 @@ export interface LayerSweepSession {
   snapshot(): LayerOrder;
   restore(order: LayerOrder): void;
   finish(order: LayerOrder): LayerOrder;
+  /** Live current layers; callers must not mutate them. */
+  currentLayers(): readonly (readonly string[])[];
+  /** Current canonical port ids of one node, as {@link snapshot} records them. */
+  physicalPortOrder(nodeId: string): string[];
+  /** Live incident edge orders of one node; callers must not mutate them. */
+  edgeOrders(nodeId: string): { incoming: readonly string[]; outgoing: readonly string[] };
+  /** Same as restoring a snapshot that differs only in one layer. */
+  replaceLayer(index: number, nodeIds: readonly string[]): void;
+  /** Same as restoring a snapshot that differs only in one node's port and edge orders. */
+  reorderNodePorts(
+    nodeId: string,
+    physical: readonly string[],
+    incoming: readonly string[],
+    outgoing: readonly string[],
+  ): void;
 }
 
 function clonePortOrders(orders?: ReadonlyMap<string, readonly string[]>): Map<string, string[]> {
@@ -1930,7 +1945,15 @@ export function createLayerSweepSession(
     layers[assignment.layerByNodeId.get(nodeId) ?? 0]?.push(nodeId);
   }
   const units = getCrossingUnits(input);
+  // Edges, orientation and layer assignment stay fixed for the session.
+  const sameLayerNeighborsByDirection = new Map<boolean, Map<string, string[]>>();
   const sameLayerNeighbors = (forward: boolean) => {
+    let cached = sameLayerNeighborsByDirection.get(forward);
+    if (!cached)
+      sameLayerNeighborsByDirection.set(forward, (cached = findSameLayerNeighbors(forward)));
+    return cached;
+  };
+  const findSameLayerNeighbors = (forward: boolean) => {
     const neighbors = new Map<string, string[]>();
     for (const edge of input.graph.edges) {
       const [source, target] = getOrientedEndpoints(edge, orientation);
@@ -1958,7 +1981,6 @@ export function createLayerSweepSession(
   const nodeById = new Map(input.graph.nodes.map((node) => [node.id, node]));
   const edgeById = new Map(input.graph.edges.map((edge) => [edge.id, edge]));
   const edgeModelOrder = new Map(input.graph.edges.map((edge, index) => [edge.id, index]));
-  const lockedPortOrders = new Set<string>();
   const hierarchicalNodes = new Set<string>();
   const fixedOrderNodes = new Set(
     input.graph.nodes
@@ -2085,6 +2107,13 @@ export function createLayerSweepSession(
       : undefined;
   const usePortRanks = true;
   const medianWeights = new Map<string, number>();
+  const listedEdgeIds = new Map<string, string>();
+  const listedEdgeId = (edgeId: string) => {
+    let listed = listedEdgeIds.get(edgeId);
+    if (listed === undefined)
+      listedEdgeIds.set(edgeId, (listed = edgeId.replace(/(::(segment|inverted):\d+:*)+$/, "")));
+    return listed;
+  };
 
   const adjacentRanks = (
     fixedLayer: readonly string[],
@@ -2119,8 +2148,9 @@ export function createLayerSweepSession(
           nodeRelativePortRanks,
         );
         const fixedIds = new Set(fixedLayer);
-        for (const edge of canonicalEdges) {
-          const [source, target] = getOrientedEndpoints(edge, orientation);
+        for (let index = 0; index < canonicalEdges.length; index++) {
+          const edge = canonicalEdges[index]!;
+          const [source, target] = canonicalOrientedEndpoints[index]!;
           if (!fixedIds.has(forward ? source : target) || !freeIds.has(forward ? target : source))
             continue;
           const endpoint = canonicalEndpoints.get(edge.id)!;
@@ -2195,14 +2225,15 @@ export function createLayerSweepSession(
         const reversed = orientation.reversedEdgeIds.has(edge.id);
         const name = forward !== reversed ? edge.targetPort : edge.sourcePort;
         const key = name ?? `__implicit:${edgeId}`;
-        groups.set(key, [...(groups.get(key) ?? []), edgeId]);
+        const group = groups.get(key);
+        if (group) group.push(edgeId);
+        else groups.set(key, [edgeId]);
       }
       for (const group of groups.values()) {
         // Port sorting reorders ports, not the edges on one port; those keep
         // ELK's edge list order. Expanded segments keep their listed edge id.
         const listed = units?.edgeListRanks?.[forward ? "incoming" : "outgoing"].get(id);
-        const rank = (edgeId: string) =>
-          listed?.get(edgeId.replace(/(::(segment|inverted):\d+:*)+$/, ""));
+        const rank = (edgeId: string) => listed?.get(listedEdgeId(edgeId));
         group.sort(
           (a, b) =>
             (rank(a) !== undefined && rank(b) !== undefined ? rank(a)! - rank(b)! : 0) ||
@@ -2249,6 +2280,9 @@ export function createLayerSweepSession(
   let canonicalNodes = new Map(canonicalGraph.layers.flat().map((node) => [node.id, node]));
   const canonicalDistributor = new CanonicalPortDistributor(canonicalGraph);
   const canonicalEdges = input.graph.edges.filter((edge) => edge.sourceId !== edge.targetId);
+  const canonicalOrientedEndpoints = canonicalEdges.map((edge) =>
+    getOrientedEndpoints(edge, orientation),
+  );
   const canonicalEndpoints = new Map(
     canonicalEdges.map((edge, index) => [edge.id, canonicalGraph.edges[index]!]),
   );
@@ -2262,6 +2296,8 @@ export function createLayerSweepSession(
       })
       .map((node) => node.id),
   );
+  // Every canonically fixed node plus each port order locked by a child scope.
+  const fixedPortOrders = new Set(canonicalFixedOrder);
   const distributePorts = (layerIndex: number, forward: boolean) => {
     const touched = [layerIndex, layerIndex + (forward ? -1 : 1)].filter(
       (index) => index >= 0 && index < working.length,
@@ -2270,7 +2306,7 @@ export function createLayerSweepSession(
       canonicalGraph.layers[index] = working[index]!.map((id) => canonicalNodes.get(id)!);
     canonicalDistributor.distribute(canonicalGraph, layerIndex, forward, {
       nodeRelative: nodeRelativePortRanks,
-      fixedOrder: new Set([...canonicalFixedOrder, ...lockedPortOrders]),
+      fixedOrder: fixedPortOrders,
       hierarchical: hierarchicalNodes,
     });
     for (const index of touched)
@@ -2501,7 +2537,7 @@ export function createLayerSweepSession(
     },
     restoreRejectedSweep: !exactPortSweep,
     lockPortOrder: (id) => {
-      lockedPortOrders.add(id);
+      fixedPortOrders.add(id);
     },
     markHierarchicalNode: (id) => {
       hierarchicalNodes.add(id);
@@ -2526,6 +2562,25 @@ export function createLayerSweepSession(
     }),
     restore,
     finish,
+    currentLayers: () => working,
+    physicalPortOrder: (id) => canonicalNodes.get(id)?.ports.map((port) => port.id) ?? [],
+    edgeOrders: (id) => ({
+      incoming: inputPortOrder.get(id) ?? [],
+      outgoing: outputPortOrder.get(id) ?? [],
+    }),
+    // A full restore would rebuild an equivalent canonical graph: ports keep
+    // their recorded physical order and layers are re-read before distribution.
+    replaceLayer: (index, ids) => {
+      working[index] = [...ids];
+    },
+    reorderNodePorts: (id, physical, incoming, outgoing) => {
+      inputPortOrder.set(id, [...incoming]);
+      outputPortOrder.set(id, [...outgoing]);
+      const node = canonicalNodes.get(id);
+      if (!node) return;
+      const slot = new Map(physical.map((port, index) => [port, index]));
+      node.ports.sort((a, b) => (slot.get(a.id) ?? -1) - (slot.get(b.id) ?? -1));
+    },
   };
   return session;
 }
