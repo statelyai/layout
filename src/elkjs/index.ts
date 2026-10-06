@@ -52,7 +52,11 @@ import type {
 } from "./public-types";
 
 function isLayoutEdgeLabel(label: ElkLabel): boolean {
-  return getBooleanOption(label.layoutOptions ?? {}, "noLayout") !== true && Boolean(label.text);
+  // Unlike ELK, a dimensioned label without text still reserves space: apps often render the text themselves.
+  return (
+    getBooleanOption(label.layoutOptions ?? {}, "noLayout") !== true &&
+    (Boolean(label.text) || label.width !== undefined || label.height !== undefined)
+  );
 }
 
 export type {
@@ -1767,12 +1771,16 @@ function getElementLayeredSettings(
   options: Readonly<Record<string, unknown>>,
 ): ElkLayeredOptionValueByName {
   const settings: ElkLayeredOptionValueByName = {};
-  const chosen = new Map<(typeof elkLayeredOptionDefinitions)[number], { rank: number; value: unknown }>();
+  const chosen = new Map<
+    (typeof elkLayeredOptionDefinitions)[number],
+    { rank: number; value: unknown }
+  >();
   for (const [key, value] of Object.entries(options)) {
     const alias = layeredOptionAliases.get(key);
     if (!alias || value === undefined) continue;
     const current = chosen.get(alias.definition);
-    if (!current || alias.rank < current.rank) chosen.set(alias.definition, { rank: alias.rank, value });
+    if (!current || alias.rank < current.rank)
+      chosen.set(alias.definition, { rank: alias.rank, value });
   }
   for (const [definition, { value }] of chosen) {
     const vectorMatch =
