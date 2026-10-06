@@ -149,6 +149,7 @@ function buildNeighbors(input: LayeredPhaseInput, order: LayerOrder) {
     index: number,
     count: number,
     side: "north" | "south" | "west" | "east",
+    widths: readonly number[] = [],
   ): number => {
     const size = anchorCrossSize(input, id);
     if (hasCenteredPorts(id)) return size / 2;
@@ -173,13 +174,27 @@ function buildNeighbors(input: LayeredPhaseInput, order: LayerOrder) {
     const start = Math.max(0, Number(startValue ?? 0) - (Number(startValue ?? 0) > 0 ? 1 : 0));
     const end = Math.max(0, Number(endValue ?? 0) - (Number(endValue ?? 0) > 0 ? 1 : 0));
     const available = Math.max(0, size - start - end);
-    if (alignment === "BEGIN") return start + index * spacing;
-    if (alignment === "END") return start + available - (count - index - 1) * spacing;
+    // ELK spaces the side's ports by their cross-axis sizes and anchors at their centers.
+    const width = (at: number) => widths[at] ?? 0;
+    let before = 0,
+      total = 0;
+    for (let at = 0; at < count; at++) {
+      if (at < index) before += width(at);
+      total += width(at);
+    }
+    const own = width(index) / 2;
+    if (alignment === "BEGIN") return start + before + own + index * spacing;
+    if (alignment === "END")
+      return start + available - (total - before - own) - (count - index - 1) * spacing;
     if (alignment === "CENTER")
-      return start + (available - (count - 1) * spacing) / 2 + index * spacing;
+      return (
+        start + (available - total - (count - 1) * spacing) / 2 + before + own + index * spacing
+      );
     if (alignment === "JUSTIFIED")
-      return count === 1 ? start + available / 2 : start + (index * available) / (count - 1);
-    return start + (available * (index + 1)) / (count + 1);
+      return count === 1
+        ? start + available / 2
+        : start + before + own + (index * (available - total)) / (count - 1);
+    return start + before + own + ((available - total) * (index + 1)) / (count + 1);
   };
   // Settings and sizes are fixed during placement: place each node's ports once.
   const placedPortsByNode = new Map<GraphNode, ReturnType<typeof placePorts>>();
@@ -291,10 +306,26 @@ function buildNeighbors(input: LayeredPhaseInput, order: LayerOrder) {
     index: number,
     count: number,
     side: "north" | "south" | "west" | "east",
+    widths?: readonly number[],
   ): number =>
     !customPortAnchors
       ? (anchorCrossSize(input, id) * (index + 1)) / (count + 1)
-      : (explicitPortAnchor(id, edgeId) ?? portAnchor(id, index, count, side));
+      : (explicitPortAnchor(id, edgeId) ?? portAnchor(id, index, count, side, widths));
+  /** Cross-axis sizes of a side's ports in order, when each edge there has its own port. */
+  const portWidths = (id: string, entries: readonly Neighbor[], count: number) => {
+    const node = nodeById.get(id);
+    if (!node?.ports || count !== entries.length) return undefined;
+    const names = entries.map(({ edgeId }) => {
+      const edge = edgeById.get(edgeId)!;
+      return edge.sourceId === id ? edge.sourcePort : edge.targetPort;
+    });
+    if (names.includes(undefined) || new Set(names).size !== names.length) return undefined;
+    const horizontal = input.direction === "left" || input.direction === "right";
+    return names.map((name) => {
+      const port = node.ports!.find((candidate) => candidate.name === name);
+      return (horizontal ? port?.height : port?.width) ?? 0;
+    });
+  };
   // Routing gives fixed-side self-loop terminals on shared-slot ports a slot
   // among the side's other edges (after them here), so anchors reserve it.
   const loopTerminals = (id: string, side: string): number => {
@@ -348,16 +379,12 @@ function buildNeighbors(input: LayeredPhaseInput, order: LayerOrder) {
       firstByNeighbor.add(entry.id);
       edgeIdByNodePair.set(`${id}\0${entry.id}`, entry.edgeId);
     }
+    const count = entries.length + loopTerminals(id, afterSide);
+    const widths = portWidths(id, portOrder, count);
     portOrder.forEach((entry, index) => {
       anchor.set(
         `${entry.edgeId}:${id}`,
-        neighborAnchor(
-          id,
-          entry.edgeId,
-          index,
-          entries.length + loopTerminals(id, afterSide),
-          afterSide,
-        ),
+        neighborAnchor(id, entry.edgeId, index, count, afterSide, widths),
       );
     });
   }
@@ -397,16 +424,12 @@ function buildNeighbors(input: LayeredPhaseInput, order: LayerOrder) {
       firstByNeighbor.add(entry.id);
       edgeIdByNodePair.set(`${id}\0${entry.id}`, entry.edgeId);
     }
+    const count = entries.length + loopTerminals(id, beforeSide);
+    const widths = portWidths(id, portOrder, count);
     portOrder.forEach((entry, index) => {
       anchor.set(
         `${entry.edgeId}:${id}`,
-        neighborAnchor(
-          id,
-          entry.edgeId,
-          index,
-          entries.length + loopTerminals(id, beforeSide),
-          beforeSide,
-        ),
+        neighborAnchor(id, entry.edgeId, index, count, beforeSide, widths),
       );
     });
   }
