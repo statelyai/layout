@@ -4,7 +4,10 @@ import {
   resolveCrossingConstraints,
   type CrossingUnits,
 } from "../../src/layered/crossing-constraints";
-import { elkResolveConstraints, type ConstraintOracleInput } from "../helpers/elk-constraint-oracle";
+import {
+  elkResolveConstraints,
+  type ConstraintOracleInput,
+} from "../helpers/elk-constraint-oracle";
 it("matches real elkjs constrained group order and every barycenter on 512 seeded unit graphs", () => {
   const random = new JavaRandom(3468112780);
   for (let index = 0; index < 512; index++) {

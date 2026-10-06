@@ -8,14 +8,14 @@ Native Brandes-Koepf placement now retains that measured cross-axis maximum befo
 
 Across **1,100 retained random inputs**, exact matches rise **601 → 608** and differing values fall **40,992 → 40,983**. No complete matches lost, no rows worsen, no native exceptions. All 213 retained oracle exceptions remain failures. [Complete deltas](./delta.json) and sparse reports retain every input, output and failure through baseline references.
 
-| Corpus | Exact matches | Differing values |
-| --- | ---: | ---: |
-| Model seeds 1–25 | 59/200 | 4,374 |
-| Model seeds 26–50 | 56/200 | 5,075 |
-| Default flat | 54/100 | 7,169 |
-| Directional flat/hierarchy | 146/200 | 8,513 |
-| Expanded flat/hierarchy | 150/200 | 9,087 |
-| Fresh directional flat/hierarchy | 143/200 | 6,765 |
+| Corpus                           | Exact matches | Differing values |
+| -------------------------------- | ------------: | ---------------: |
+| Model seeds 1–25                 |        59/200 |            4,374 |
+| Model seeds 26–50                |        56/200 |            5,075 |
+| Default flat                     |        54/100 |            7,169 |
+| Directional flat/hierarchy       |       146/200 |            8,513 |
+| Expanded flat/hierarchy          |       150/200 |            9,087 |
+| Fresh directional flat/hierarchy |       143/200 |            6,765 |
 
 Seven complete-geometry regressions rerun both native and real elkjs 0.11.1: model-order seeds 22 DOWN, 36 RIGHT/LEFT, 38 DOWN; default seed 22 DOWN; and hierarchical seed 62 RIGHT/LEFT with RIGHT compaction. All seven fail before and pass after. [Red](./regression-red.json), [green including 19 junction regressions](./regression-green.json). The broad replay reruns native against pinned saved real outputs/errors.
 

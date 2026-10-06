@@ -1,7 +1,0 @@
-{
-  "calls": 51,
-  "callSequenceMatches": true,
-  "comparedResults": 50,
-  "skippedLongResults": 1,
-  "reason": "GWT long is an object; call kind compared, not long value."
-}

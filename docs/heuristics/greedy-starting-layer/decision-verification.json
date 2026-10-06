@@ -1,9 +1,0 @@
-{
-  "observedPairs": 169,
-  "matchingPairSequence": true,
-  "matchingDecisions": 169,
-  "helperIdentityNormalization": "__layout_dummy:eN:layer maps to original edge eN within the recorded layer.",
-  "beforeNativePairs": 166,
-  "beforeFirstDivergence": 4,
-  "beforeFirstDivergenceDetail": "Native immediately rescans layer 0; ELK enters layer 1."
-}

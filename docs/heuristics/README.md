@@ -1,5 +1,12 @@
 # Heuristic review corpus
 
+> Raw parity and gate evidence (per-round reports, renders, logs) lives on the
+> [`heuristics-evidence`](https://github.com/statelyai/layout/tree/heuristics-evidence/docs/heuristics)
+> branch; links in these READMEs to files that are missing here resolve there.
+> This directory keeps the READMEs, the quality corpora (`quality-corpus/`,
+> `quality-holdout/`), the latest gate rows (`quality-compound-candidates/*.json.gz`)
+> and the files tests read.
+
 <!-- generator behavior and bounds from scripts/generate-heuristic-corpus.mjs -->
 
 Generate ten seeded graphs with native Stately layered layout and real elkjs

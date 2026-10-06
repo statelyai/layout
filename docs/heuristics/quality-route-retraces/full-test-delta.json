@@ -1,55 +1,55 @@
 {
- "before": {
-  "total": 3415,
-  "passed": 3306,
-  "failed": 109
- },
- "after": {
-  "total": 3417,
-  "passed": 3273,
-  "failed": 144
- },
- "newFailures": [
-  "test/oracle-fixed-port-loop-pairs.test.ts > routes fixed loop NORTH to NORTH in RIGHT",
-  "test/oracle-fixed-port-loop-pairs.test.ts > routes fixed loop EAST to EAST in RIGHT",
-  "test/oracle-fixed-port-loop-pairs.test.ts > routes fixed loop SOUTH to SOUTH in RIGHT",
-  "test/oracle-fixed-port-loop-pairs.test.ts > routes fixed loop WEST to WEST in RIGHT",
-  "test/oracle-fixed-port-loop-pairs.test.ts > routes fixed loop NORTH to NORTH in LEFT",
-  "test/oracle-fixed-port-loop-pairs.test.ts > routes fixed loop EAST to EAST in LEFT",
-  "test/oracle-fixed-port-loop-pairs.test.ts > routes fixed loop SOUTH to SOUTH in LEFT",
-  "test/oracle-fixed-port-loop-pairs.test.ts > routes fixed loop WEST to WEST in LEFT",
-  "test/oracle-fixed-port-loop-pairs.test.ts > routes fixed loop NORTH to NORTH in DOWN",
-  "test/oracle-fixed-port-loop-pairs.test.ts > routes fixed loop EAST to EAST in DOWN",
-  "test/oracle-fixed-port-loop-pairs.test.ts > routes fixed loop SOUTH to SOUTH in DOWN",
-  "test/oracle-fixed-port-loop-pairs.test.ts > routes fixed loop WEST to WEST in DOWN",
-  "test/oracle-fixed-port-loop-pairs.test.ts > routes fixed loop NORTH to NORTH in UP",
-  "test/oracle-fixed-port-loop-pairs.test.ts > routes fixed loop EAST to EAST in UP",
-  "test/oracle-fixed-port-loop-pairs.test.ts > routes fixed loop SOUTH to SOUTH in UP",
-  "test/oracle-fixed-port-loop-pairs.test.ts > routes fixed loop WEST to WEST in UP",
-  "test/oracle-greedy-switch-decider.test.ts > decides greedy switches like ELK (flat seed 58 UP, RIGHT compaction)",
-  "test/oracle-label-routing-clearance.test.ts > reserves both terminal clearances beside label layers (seed 9, RIGHT, LEFT)",
-  "test/oracle-label-routing-clearance.test.ts > reserves both terminal clearances beside label layers (seed 9, LEFT, LEFT)",
-  "test/oracle-long-edge-compaction-joining.test.ts > retains joined long-edge bends after compaction (10, RIGHT, RIGHT)",
-  "test/oracle-long-edge-compaction-joining.test.ts > retains joined long-edge bends after compaction (10, LEFT, RIGHT)",
-  "test/oracle-long-edge-compaction-joining.test.ts > retains joined long-edge bends after compaction (10, DOWN, RIGHT)",
-  "test/oracle-long-edge-compaction-joining.test.ts > retains joined long-edge bends after compaction (10, UP, RIGHT)",
-  "test/oracle-long-edge-compaction-joining.test.ts > retains joined long-edge bends after compaction (19, DOWN, LEFT_RIGHT_CONSTRAINT_LOCKING)",
-  "test/oracle-long-edge-compaction-joining.test.ts > retains joined long-edge bends after compaction (19, UP, LEFT_RIGHT_CONSTRAINT_LOCKING)",
-  "test/oracle-long-edge-compaction-joining.test.ts > retains compacted segment bends (flat seed 5, RIGHT)",
-  "test/oracle-long-edge-compaction-joining.test.ts > retains compacted segment bends (flat seed 5, LEFT)",
-  "test/oracle-long-edge-compaction-joining.test.ts > retains compacted segment bends (flat seed 5, DOWN)",
-  "test/oracle-long-edge-compaction-joining.test.ts > retains compacted segment bends (flat seed 5, UP)",
-  "test/oracle-mixed-port-junction-order.test.ts > retains physical helper and restored junction order, seed 32 DOWN",
-  "test/oracle-mixed-port-junction-order.test.ts > retains physical helper and restored junction order, seed 32 UP",
-  "test/oracle-port-edge-lists.test.ts > follows ELK port edge lists (flat seed 8 DOWN)",
-  "test/oracle-port-edge-lists.test.ts > follows ELK port edge lists (flat seed 12 UP)",
-  "test/oracle-preplaced-loop-envelope.test.ts > does not reserve an east self-loop twice after placing a boundary helper (seed 2 DOWN)",
-  "test/oracle-shared-self-loop-tracks.test.ts > shares self-loop tracks across shared ports (options seed 10 DOWN)"
- ],
- "newPasses": [],
- "added": [
-  "test/quality-route-retraces.test.ts > routes without retracing: same-port self loop (flat seed 8 RIGHT): passed",
-  "test/quality-route-retraces.test.ts > routes without retracing: post-compaction spur (flat seed 42 UP, RIGHT compaction): passed"
- ],
- "removed": []
+  "before": {
+    "total": 3415,
+    "passed": 3306,
+    "failed": 109
+  },
+  "after": {
+    "total": 3417,
+    "passed": 3273,
+    "failed": 144
+  },
+  "newFailures": [
+    "test/oracle-fixed-port-loop-pairs.test.ts > routes fixed loop NORTH to NORTH in RIGHT",
+    "test/oracle-fixed-port-loop-pairs.test.ts > routes fixed loop EAST to EAST in RIGHT",
+    "test/oracle-fixed-port-loop-pairs.test.ts > routes fixed loop SOUTH to SOUTH in RIGHT",
+    "test/oracle-fixed-port-loop-pairs.test.ts > routes fixed loop WEST to WEST in RIGHT",
+    "test/oracle-fixed-port-loop-pairs.test.ts > routes fixed loop NORTH to NORTH in LEFT",
+    "test/oracle-fixed-port-loop-pairs.test.ts > routes fixed loop EAST to EAST in LEFT",
+    "test/oracle-fixed-port-loop-pairs.test.ts > routes fixed loop SOUTH to SOUTH in LEFT",
+    "test/oracle-fixed-port-loop-pairs.test.ts > routes fixed loop WEST to WEST in LEFT",
+    "test/oracle-fixed-port-loop-pairs.test.ts > routes fixed loop NORTH to NORTH in DOWN",
+    "test/oracle-fixed-port-loop-pairs.test.ts > routes fixed loop EAST to EAST in DOWN",
+    "test/oracle-fixed-port-loop-pairs.test.ts > routes fixed loop SOUTH to SOUTH in DOWN",
+    "test/oracle-fixed-port-loop-pairs.test.ts > routes fixed loop WEST to WEST in DOWN",
+    "test/oracle-fixed-port-loop-pairs.test.ts > routes fixed loop NORTH to NORTH in UP",
+    "test/oracle-fixed-port-loop-pairs.test.ts > routes fixed loop EAST to EAST in UP",
+    "test/oracle-fixed-port-loop-pairs.test.ts > routes fixed loop SOUTH to SOUTH in UP",
+    "test/oracle-fixed-port-loop-pairs.test.ts > routes fixed loop WEST to WEST in UP",
+    "test/oracle-greedy-switch-decider.test.ts > decides greedy switches like ELK (flat seed 58 UP, RIGHT compaction)",
+    "test/oracle-label-routing-clearance.test.ts > reserves both terminal clearances beside label layers (seed 9, RIGHT, LEFT)",
+    "test/oracle-label-routing-clearance.test.ts > reserves both terminal clearances beside label layers (seed 9, LEFT, LEFT)",
+    "test/oracle-long-edge-compaction-joining.test.ts > retains joined long-edge bends after compaction (10, RIGHT, RIGHT)",
+    "test/oracle-long-edge-compaction-joining.test.ts > retains joined long-edge bends after compaction (10, LEFT, RIGHT)",
+    "test/oracle-long-edge-compaction-joining.test.ts > retains joined long-edge bends after compaction (10, DOWN, RIGHT)",
+    "test/oracle-long-edge-compaction-joining.test.ts > retains joined long-edge bends after compaction (10, UP, RIGHT)",
+    "test/oracle-long-edge-compaction-joining.test.ts > retains joined long-edge bends after compaction (19, DOWN, LEFT_RIGHT_CONSTRAINT_LOCKING)",
+    "test/oracle-long-edge-compaction-joining.test.ts > retains joined long-edge bends after compaction (19, UP, LEFT_RIGHT_CONSTRAINT_LOCKING)",
+    "test/oracle-long-edge-compaction-joining.test.ts > retains compacted segment bends (flat seed 5, RIGHT)",
+    "test/oracle-long-edge-compaction-joining.test.ts > retains compacted segment bends (flat seed 5, LEFT)",
+    "test/oracle-long-edge-compaction-joining.test.ts > retains compacted segment bends (flat seed 5, DOWN)",
+    "test/oracle-long-edge-compaction-joining.test.ts > retains compacted segment bends (flat seed 5, UP)",
+    "test/oracle-mixed-port-junction-order.test.ts > retains physical helper and restored junction order, seed 32 DOWN",
+    "test/oracle-mixed-port-junction-order.test.ts > retains physical helper and restored junction order, seed 32 UP",
+    "test/oracle-port-edge-lists.test.ts > follows ELK port edge lists (flat seed 8 DOWN)",
+    "test/oracle-port-edge-lists.test.ts > follows ELK port edge lists (flat seed 12 UP)",
+    "test/oracle-preplaced-loop-envelope.test.ts > does not reserve an east self-loop twice after placing a boundary helper (seed 2 DOWN)",
+    "test/oracle-shared-self-loop-tracks.test.ts > shares self-loop tracks across shared ports (options seed 10 DOWN)"
+  ],
+  "newPasses": [],
+  "added": [
+    "test/quality-route-retraces.test.ts > routes without retracing: same-port self loop (flat seed 8 RIGHT): passed",
+    "test/quality-route-retraces.test.ts > routes without retracing: post-compaction spur (flat seed 42 UP, RIGHT compaction): passed"
+  ],
+  "removed": []
 }

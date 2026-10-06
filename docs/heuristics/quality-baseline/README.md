@@ -20,6 +20,6 @@ Native hard violations in the corpus: same-port self-loop spikes (124 cases), ro
 Holdout seeds come from the same generators (`check-*-parity.ts`, seeds 1001–1100) and are never used for diagnosis. The complex-compound holdout is still pending.
 
 ```sh
-pnpm exec tsx scripts/parity/quality-gate.ts out.json docs/heuristics/bk-hidden-self-loops/*-report.json docs/heuristics/bk-hidden-self-loops/report.json
+pnpm exec tsx scripts/parity/quality-gate.ts out.json docs/heuristics/quality-corpus/*.json.gz
 pnpm exec tsx scripts/parity/quality-gate.ts holdout.json docs/heuristics/quality-holdout/*.json.gz
 ```

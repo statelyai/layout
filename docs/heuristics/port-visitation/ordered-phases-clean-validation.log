@@ -1,9 +1,0 @@
-
- RUN  v4.1.10 /Users/davidkpiano/.codex/worktrees/layout/heuristic-graph-corpus/.scratch/ordered-phases-clean-validation
-
-
- Test Files  6 passed (6)
-      Tests  33 passed (33)
-   Start at  17:11:50
-   Duration  1.17s (transform 533ms, setup 0ms, import 1.17s, tests 1.12s, environment 1ms)
-
