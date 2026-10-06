@@ -11,6 +11,118 @@ export function crossingGraph(
   incoming?: ReadonlyMap<string, readonly string[]>,
   outgoing?: ReadonlyMap<string, readonly string[]>,
 ): CrossingGraph {
+  return createCrossingGraphBuilder(input)(orientation, layers, incoming, outgoing);
+}
+
+/**
+ * Reusable {@link crossingGraph} for repeated counts over one phase input.
+ * Port keys and node/port settings are memoized, so the input's settings must
+ * not change while the builder is in use.
+ */
+export function createCrossingGraphBuilder(input: LayeredPhaseInput) {
+  const keys = new Map<string, Map<string, string>>();
+  const key = (id: string, name: string) => {
+    let byName = keys.get(id);
+    if (!byName) keys.set(id, (byName = new Map()));
+    let value = byName.get(name);
+    if (value === undefined) byName.set(name, (value = JSON.stringify([id, name])));
+    return value;
+  };
+  const nodeInfo = new Map<GraphNode, { constraints: unknown; hypernode: boolean }>();
+  const infoOf = (node: GraphNode) => {
+    let info = nodeInfo.get(node);
+    if (!info) {
+      const settings = input.nodeSettings?.(node);
+      info = { constraints: settings?.portConstraints, hypernode: settings?.hypernode === true };
+      nodeInfo.set(node, info);
+    }
+    return info;
+  };
+  const portInfo = new Map<
+    GraphNode,
+    Map<
+      string,
+      { authored?: NonNullable<GraphNode["ports"]>[number]; index: number; side?: string }
+    >
+  >();
+  const authoredPort = (node: GraphNode, name: string) => {
+    let byName = portInfo.get(node);
+    if (!byName) portInfo.set(node, (byName = new Map()));
+    let info = byName.get(name);
+    if (!info) {
+      const index = node.ports?.findIndex((port) => port.name === name) ?? -1;
+      const authored = index < 0 ? undefined : node.ports![index];
+      info = {
+        authored,
+        index,
+        side: authored && input.portSettings?.(authored, node)?.["port.side"],
+      };
+      byName.set(name, info);
+    }
+    return info;
+  };
+  const degreesByOrientation = new WeakMap<
+    AcyclicOrientation,
+    ReadonlyMap<string, { incoming: number; outgoing: number }>
+  >();
+  const degreesOf = (orientation: AcyclicOrientation) => {
+    let degrees = degreesByOrientation.get(orientation);
+    if (!degrees) {
+      const counted = new Map<string, { incoming: number; outgoing: number }>();
+      for (const edge of input.graph.edges) {
+        if (edge.sourceId === edge.targetId) continue;
+        const reversed = orientation.reversedEdgeIds.has(edge.id);
+        for (const [nodeId, name, source] of [
+          [edge.sourceId, edge.sourcePort, !reversed],
+          [edge.targetId, edge.targetPort, reversed],
+        ] as const) {
+          if (name === undefined) continue;
+          const id = key(nodeId, name),
+            degree = counted.get(id) ?? { incoming: 0, outgoing: 0 };
+          if (source) degree.outgoing++;
+          else degree.incoming++;
+          counted.set(id, degree);
+        }
+      }
+      degreesByOrientation.set(orientation, (degrees = counted));
+    }
+    return degrees;
+  };
+  return (
+    orientation: AcyclicOrientation,
+    layers: readonly (readonly string[])[],
+    incoming?: ReadonlyMap<string, readonly string[]>,
+    outgoing?: ReadonlyMap<string, readonly string[]>,
+  ): CrossingGraph =>
+    buildCrossingGraph(
+      input,
+      orientation,
+      layers,
+      incoming,
+      outgoing,
+      key,
+      infoOf,
+      authoredPort,
+      degreesOf,
+    );
+}
+
+function buildCrossingGraph(
+  input: LayeredPhaseInput,
+  orientation: AcyclicOrientation,
+  layers: readonly (readonly string[])[],
+  incoming: ReadonlyMap<string, readonly string[]> | undefined,
+  outgoing: ReadonlyMap<string, readonly string[]> | undefined,
+  key: (id: string, name: string) => string,
+  infoOf: (node: GraphNode) => { constraints: unknown; hypernode: boolean },
+  authoredPort: (
+    node: GraphNode,
+    name: string,
+  ) => { authored?: NonNullable<GraphNode["ports"]>[number]; index: number; side?: string },
+  degreesOf: (
+    orientation: AcyclicOrientation,
+  ) => ReadonlyMap<string, { incoming: number; outgoing: number }>,
+): CrossingGraph {
   const units = getCrossingUnits(input);
   const nodes = new Map(input.graph.nodes.map((node) => [node.id, node]));
   const canonicalSide = (side: string): CrossingPort["side"] => {
@@ -24,31 +136,26 @@ export function crossingGraph(
             : { NORTH: "EAST", EAST: "SOUTH", SOUTH: "WEST", WEST: "NORTH" };
     return sides[side]!;
   };
-  const key = (id: string, name: string) => JSON.stringify([id, name]);
-  const degrees = new Map<string, { incoming: number; outgoing: number }>();
-  for (const edge of input.graph.edges) {
-    if (edge.sourceId === edge.targetId) continue;
-    const reversed = orientation.reversedEdgeIds.has(edge.id);
-    for (const [nodeId, name, source] of [
-      [edge.sourceId, edge.sourcePort, !reversed],
-      [edge.targetId, edge.targetPort, reversed],
-    ] as const) {
-      if (name === undefined) continue;
-      const id = key(nodeId, name),
-        degree = degrees.get(id) ?? { incoming: 0, outgoing: 0 };
-      if (source) degree.outgoing++;
-      else degree.incoming++;
-      degrees.set(id, degree);
+  const degrees = degreesOf(orientation);
+  // First index of each edge id, like `indexOf`, per selected port order.
+  const ranks = new Map<readonly string[], Map<string, number>>();
+  const rankIn = (selected: readonly string[]) => {
+    let rank = ranks.get(selected);
+    if (!rank) {
+      rank = new Map();
+      for (let index = 0; index < selected.length; index++)
+        if (!rank.has(selected[index]!)) rank.set(selected[index]!, index);
+      ranks.set(selected, rank);
     }
-  }
+    return rank;
+  };
   const ports = new Map<string, Map<string, { port: CrossingPort; rank: number }>>();
   const add = (node: GraphNode, name: string, source: boolean, edge?: GraphEdge): string => {
     let members = ports.get(node.id);
     if (!members) ports.set(node.id, (members = new Map()));
     const id = key(node.id, name);
-    const authored = node.ports?.find((port) => port.name === name);
-    const configuredSide = authored && input.portSettings?.(authored, node)?.["port.side"];
-    const constraints = input.nodeSettings?.(node)?.portConstraints;
+    const { authored, index: authoredIndex, side: configuredSide } = authoredPort(node, name);
+    const { constraints } = infoOf(node);
     const flexible =
       constraints === undefined || constraints === "UNDEFINED" || constraints === "FREE";
     const degree = degrees.get(id);
@@ -70,8 +177,8 @@ export function crossingGraph(
             ? "EAST"
             : "WEST";
     const selected = (source ? outgoing : incoming)?.get(node.id);
-    let rank = edge ? (selected?.indexOf(edge.id) ?? -1) : -1;
-    if (rank < 0) rank = authored ? node.ports!.indexOf(authored) : members.size;
+    let rank = edge && selected ? (rankIn(selected).get(edge.id) ?? -1) : -1;
+    if (rank < 0) rank = authored ? authoredIndex : members.size;
     if (authored && (constraints === "FIXED_POS" || constraints === "FIXED_RATIO")) {
       const vertical = input.direction === "down" || input.direction === "up";
       const reverse = input.direction === "left" || input.direction === "up";
@@ -107,8 +214,7 @@ export function crossingGraph(
     const authoredSource = source !== orientation.reversedEdgeIds.has(edge.id);
     const node = nodes.get(authoredSource ? edge.sourceId : edge.targetId)!;
     const name = authoredSource ? edge.sourcePort : edge.targetPort;
-    const merged =
-      input.settings.mergeEdges === true || input.nodeSettings?.(node)?.hypernode === true;
+    const merged = input.settings.mergeEdges === true || infoOf(node).hypernode;
     return add(
       node,
       name ?? (merged ? `__implicit:${source}` : `__implicit:${edge.id}:${source}`),

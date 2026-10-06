@@ -8,7 +8,7 @@ import {
 import { insertionSort } from "./gwt-sort";
 import { CanonicalPortDistributor } from "./port-distributor";
 import { countAllCrossings } from "./crossing-counter";
-import { crossingGraph } from "./crossing-graph";
+import { createCrossingGraphBuilder, crossingGraph } from "./crossing-graph";
 import { isMergedHyperedgeDummy } from "./hyperedge-dummy-merger";
 import { externalPortDummyOf } from "./external-port-dummy";
 import { routingCoordinates } from "./routing-coordinates";
@@ -2010,10 +2010,10 @@ export function createLayerSweepSession(
       }
     }
   }
+  const buildCrossingGraph = createCrossingGraphBuilder(input);
   const countCrossings = (candidateLayers: readonly (readonly string[])[]): number => {
     if (exactPortSweep) {
-      const graph = crossingGraph(
-        input,
+      const graph = buildCrossingGraph(
         orientation,
         candidateLayers,
         inputPortOrder,
@@ -2222,7 +2222,7 @@ export function createLayerSweepSession(
     return { ranks, visits };
   };
 
-  let canonicalGraph = crossingGraph(input, orientation, working, inputPortOrder, outputPortOrder);
+  let canonicalGraph = buildCrossingGraph(orientation, working, inputPortOrder, outputPortOrder);
   if (usesInitialModelOrder) {
     if (!restoreInitialModelOrder(input, canonicalGraph))
       sortInitialModelOrder(input, orientation, canonicalGraph);
@@ -2477,7 +2477,7 @@ export function createLayerSweepSession(
       inputPortOrder.set(id, edges);
     for (const [id, edges] of clonePortOrders(order.outputPortOrderByNodeId))
       outputPortOrder.set(id, edges);
-    canonicalGraph = crossingGraph(input, orientation, working, inputPortOrder, outputPortOrder);
+    canonicalGraph = buildCrossingGraph(orientation, working, inputPortOrder, outputPortOrder);
     canonicalNodes = new Map(canonicalGraph.layers.flat().map((node) => [node.id, node]));
     for (const [id, ports] of order.physicalPortOrderByNodeId ?? []) {
       const node = canonicalNodes.get(id);
@@ -3469,19 +3469,35 @@ export function getPortPoint(
   fallback: Point,
   direction: LayeredPhaseInput["direction"],
   input: LayeredPhaseInput,
+  /** Reuses each node's placed ports across calls while settings stay fixed. */
+  placedPorts?: Map<GraphNode, { rect: EntityRect; ports: GraphPort[] | undefined }>,
 ): Point {
   if (portName === undefined) return fallback;
-  const orientation = getPlacementOrientation(input);
-  const port = placePorts(
-    node.ports,
-    rect,
-    direction,
-    (candidate) => input.portSettings?.(candidate, node),
-    { ...input.settings, ...input.nodeSettings?.(node) },
-    orientation
-      ? (candidate) => getOrientedPortDirection(input, orientation, node, candidate)
-      : undefined,
-  )?.find((candidate) => candidate.name === portName);
+  const cached = placedPorts?.get(node);
+  let ports: GraphPort[] | undefined;
+  if (
+    cached &&
+    cached.rect.x === rect.x &&
+    cached.rect.y === rect.y &&
+    cached.rect.width === rect.width &&
+    cached.rect.height === rect.height
+  )
+    ports = cached.ports;
+  else {
+    const orientation = getPlacementOrientation(input);
+    ports = placePorts(
+      node.ports,
+      rect,
+      direction,
+      (candidate) => input.portSettings?.(candidate, node),
+      { ...input.settings, ...input.nodeSettings?.(node) },
+      orientation
+        ? (candidate) => getOrientedPortDirection(input, orientation, node, candidate)
+        : undefined,
+    );
+    placedPorts?.set(node, { rect: { ...rect }, ports });
+  }
+  const port = ports?.find((candidate) => candidate.name === portName);
   if (port?.x === undefined || port.y === undefined) return fallback;
   const settings = input.portSettings?.(port, node);
   const configuredAnchor = settings?.["port.anchor"] as { x?: number; y?: number } | undefined;
@@ -3626,6 +3642,20 @@ function implicitEdgeEndpoints(
 
   const result = new Map<string, { source: Point; target: Point }>();
   const edgeModelOrder = new Map(input.graph.edges.map((edge, index) => [edge.id, index]));
+  const placedPorts = new Map<GraphNode, { rect: EntityRect; ports: GraphPort[] | undefined }>();
+  const portSideCounts = new Map<GraphNode, Map<unknown, number>>();
+  const portSideCount = (node: GraphNode, side: unknown): number => {
+    let counts = portSideCounts.get(node);
+    if (!counts) {
+      counts = new Map();
+      for (const port of node.ports ?? []) {
+        const portSide = input.portSettings?.(port, node)?.["port.side"];
+        counts.set(portSide, (counts.get(portSide) ?? 0) + 1);
+      }
+      portSideCounts.set(node, counts);
+    }
+    return counts.get(side) ?? 0;
+  };
   for (const [key, entries] of groups) {
     const split = key.lastIndexOf(":");
     const nodeId = key.slice(0, split);
@@ -3839,9 +3869,8 @@ function implicitEdgeEndpoints(
       const singleFixedSidePort =
         constraints === "FIXED_SIDE" &&
         physicalSide !== undefined &&
-        node?.ports?.filter(
-          (port) => input.portSettings?.(port, node)?.["port.side"] === physicalSide,
-        ).length === 1;
+        node?.ports !== undefined &&
+        portSideCount(node, physicalSide) === 1;
       // Movable port ordering comes from the layer sweep above. Fixed coordinates
       // and authored anchors must replace the synthesized node-origin fallback.
       const authoredAnchor =
@@ -3857,7 +3886,7 @@ function implicitEdgeEndpoints(
           singleFixedSidePort ||
           authoredAnchor !== undefined)
       ) {
-        point = getPortPoint(node, portName, rect, point, input.direction, input);
+        point = getPortPoint(node, portName, rect, point, input.direction, input, placedPorts);
       }
       const pair = result.get(edge.id) ?? { source: point, target: point };
       pair[endpoint] = point;

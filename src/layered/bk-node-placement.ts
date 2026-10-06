@@ -6,7 +6,7 @@ import { preparePortMargins, portCrossMargins } from "./node-margins";
  *******************************************************************************/
 
 import { getCrossingUnits } from "./crossing-constraints";
-import type { EntityRect, GraphEdge } from "@statelyai/graph";
+import type { EntityRect, GraphEdge, GraphNode } from "@statelyai/graph";
 import { placeNodesInLayers, placePorts, usesSharedSideSlot } from "./strategies";
 import type { LayerOrder, LayeredPhaseInput, NodePlacement } from "./types";
 import { nodeNodeSpacing } from "./spacing";
@@ -160,6 +160,21 @@ function buildNeighbors(input: LayeredPhaseInput, order: LayerOrder) {
       return count === 1 ? start + available / 2 : start + (index * available) / (count - 1);
     return start + (available * (index + 1)) / (count + 1);
   };
+  // Settings and sizes are fixed during placement: place each node's ports once.
+  const placedPortsByNode = new Map<GraphNode, ReturnType<typeof placePorts>>();
+  const portSideCounts = new Map<GraphNode, Map<unknown, number>>();
+  const portSideCount = (node: GraphNode, side: unknown): number => {
+    let counts = portSideCounts.get(node);
+    if (!counts) {
+      counts = new Map();
+      for (const port of node.ports ?? []) {
+        const portSide = input.portSettings?.(port, node)?.["port.side"];
+        counts.set(portSide, (counts.get(portSide) ?? 0) + 1);
+      }
+      portSideCounts.set(node, counts);
+    }
+    return counts.get(side) ?? 0;
+  };
   const explicitPortAnchor = (id: string, edgeId: string): number | undefined => {
     const node = nodeById.get(id);
     const edge = edgeById.get(edgeId);
@@ -169,13 +184,18 @@ function buildNeighbors(input: LayeredPhaseInput, order: LayerOrder) {
     const port = node.ports?.find((candidate) => candidate.name === portName);
     if (!port) return undefined;
     const size = input.sizes.get(id) ?? { width: 0, height: 0 };
-    const placed = placePorts(
-      node.ports,
-      { x: 0, y: 0, ...size },
-      input.direction,
-      (candidate) => input.portSettings?.(candidate, node),
-      { ...input.settings, ...input.nodeSettings?.(node) },
-    )?.find((candidate) => candidate.name === portName);
+    if (!placedPortsByNode.has(node))
+      placedPortsByNode.set(
+        node,
+        placePorts(
+          node.ports,
+          { x: 0, y: 0, ...size },
+          input.direction,
+          (candidate) => input.portSettings?.(candidate, node),
+          { ...input.settings, ...input.nodeSettings?.(node) },
+        ),
+      );
+    const placed = placedPortsByNode.get(node)?.find((candidate) => candidate.name === portName);
     if (!placed) return undefined;
     const anchor = input.portSettings?.(port, node)?.["port.anchor"] as
       | { x?: number; y?: number }
@@ -197,9 +217,8 @@ function buildNeighbors(input: LayeredPhaseInput, order: LayerOrder) {
       constraints === "FIXED_SIDE" &&
       physicalSide !== undefined &&
       physicalSide !== "UNDEFINED" &&
-      node.ports?.filter(
-        (candidate) => input.portSettings?.(candidate, node)?.["port.side"] === physicalSide,
-      ).length === 1;
+      node.ports !== undefined &&
+      portSideCount(node, physicalSide) === 1;
     // A fan-out on one physical port has one anchor, irrespective of edge count.
     // Multiple FIXED_SIDE ports still follow the crossing sweep's selected order.
     if (

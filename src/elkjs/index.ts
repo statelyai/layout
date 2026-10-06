@@ -1074,11 +1074,11 @@ export default class ELK {
           : {}),
       },
       nodeSettings: (node) => {
-        const child = graph.children?.find((candidate) => String(candidate.id) === node.id);
+        const child = findById(graph.children, node.id)?.item;
         return getElementLayeredSettings(child?.layoutOptions ?? {});
       },
       edgeSettings: (edge) => {
-        const elkEdge = graph.edges?.find((candidate) => String(candidate.id) === edge.id);
+        const elkEdge = findById(graph.edges, edge.id)?.item;
         return {
           ...getElementLayeredSettings(elkEdge?.layoutOptions ?? {}),
           ...getElementLayeredSettings(elkEdge?.labels?.[0]?.layoutOptions ?? {}),
@@ -1087,12 +1087,13 @@ export default class ELK {
         };
       },
       portSettings: (port, node) => {
-        const child = graph.children?.find((candidate) => String(candidate.id) === node.id);
-        const elkPort = child?.ports?.find((candidate) => String(candidate.id) === port.name);
+        const child = findById(graph.children, node.id)?.item;
+        const found = findById(child?.ports, port.name);
+        const elkPort = found?.item;
         return {
           ...getElementLayeredSettings(elkPort?.layoutOptions ?? {}),
           // ELK imports ports in authored order and sorts sides after dummy insertion.
-          "port.authoredIndex": elkPort && child?.ports?.indexOf(elkPort),
+          "port.authoredIndex": found?.position,
           "port.labelWidth": Math.max(
             0,
             ...(elkPort?.labels ?? []).map((label) => label.width ?? 0),
@@ -1390,6 +1391,12 @@ function coordinatePreparedScopes(
       const ports = nativeParent.ports ?? [];
       const childPhase = child.phase!;
       const childSession = scopes.get(child)!.session;
+      const childNodeById = new Map<string, (typeof childPhase.input.graph.nodes)[number]>();
+      for (const node of childPhase.input.graph.nodes)
+        if (!childNodeById.has(node.id)) childNodeById.set(node.id, node);
+      const parentEdgeById = new Map<string, (typeof childPhase.input.graph.edges)[number]>();
+      for (const edge of parent.phase!.input.graph.edges)
+        if (!parentEdgeById.has(edge.id)) parentEdgeById.set(edge.id, edge);
       const flowSides = hierarchicalPortSides(parent.phase!.input);
       const inputPorts = ports.filter(
         (port) =>
@@ -1418,12 +1425,7 @@ function coordinatePreparedScopes(
           const childOrder = childSession.snapshot();
           const layerIndex = forward ? 0 : childOrder.layers.length - 1;
           const layer = childOrder.layers[layerIndex]!;
-          if (
-            !layer.every((id) =>
-              externalPortDummyOf(childPhase.input.graph.nodes.find((node) => node.id === id)!),
-            )
-          )
-            return false;
+          if (!layer.every((id) => externalPortDummyOf(childNodeById.get(id)!))) return false;
           const parentOrder = parentScope.session.snapshot();
           // Parent port positions are physical; feedback reversal changes
           // edge direction without changing the boundary port's identity.
@@ -1451,16 +1453,10 @@ function coordinatePreparedScopes(
         publishBoundary: (forward) => {
           const childOrder = childSession.snapshot();
           const layer = childOrder.layers[forward ? childOrder.layers.length - 1 : 0]!;
-          if (
-            !layer.every((id) =>
-              externalPortDummyOf(childPhase.input.graph.nodes.find((node) => node.id === id)!),
-            )
-          )
-            return;
+          if (!layer.every((id) => externalPortDummyOf(childNodeById.get(id)!))) return;
           const rank = new Map(
             layer.map((dummy, index) => [
-              externalPortDummyOf(childPhase.input.graph.nodes.find((n) => n.id === dummy)!)!
-                .parentPortId ?? `${dummy}:parent`,
+              externalPortDummyOf(childNodeById.get(dummy)!)!.parentPortId ?? `${dummy}:parent`,
               index,
             ]),
           );
@@ -1485,9 +1481,7 @@ function coordinatePreparedScopes(
           const physicalOrders = new Map(parentOrder.physicalPortOrderByNodeId);
           physicalOrders.set(id, updatedPhysical);
           const edgePortRank = (edgeId: string): number => {
-            const edge = parent.phase!.input.graph.edges.find(
-              (candidate) => candidate.id === edgeId,
-            )!;
+            const edge = parentEdgeById.get(edgeId)!;
             const portName = edge.sourceId === id ? edge.sourcePort : edge.targetPort;
             return updatedPhysical.indexOf(JSON.stringify([id, portName]));
           };
@@ -1770,6 +1764,27 @@ for (const definition of elkLayeredOptionDefinitions) {
     const current = layeredOptionAliases.get(key);
     if (!current || rank < current.rank) layeredOptionAliases.set(key, { definition, rank });
   });
+}
+
+const indexByIdCache = new WeakMap<
+  readonly { id?: ElkId }[],
+  { length: number; index: Map<string, number> }
+>();
+
+/** First element whose stringified id matches, like `find`, via a per-array index. */
+function findById<T extends { id?: ElkId }>(items: readonly T[] | undefined, id: string) {
+  if (!items) return undefined;
+  let cached = indexByIdCache.get(items);
+  if (!cached || cached.length !== items.length) {
+    const index = new Map<string, number>();
+    items.forEach((item, position) => {
+      const key = String(item.id);
+      if (!index.has(key)) index.set(key, position);
+    });
+    indexByIdCache.set(items, (cached = { length: items.length, index }));
+  }
+  const position = cached.index.get(id);
+  return position === undefined ? undefined : { item: items[position]!, position };
 }
 
 function getElementLayeredSettings(

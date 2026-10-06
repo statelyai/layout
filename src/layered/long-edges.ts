@@ -239,6 +239,12 @@ export function splitLongEdges(
       ),
   ];
   const graph = { ...input.graph, nodes: orderedNodes, edges } as LayeredPhaseInput["graph"];
+  const edgeIdByLabelDummyId = new Map<string, string>();
+  for (const [edgeId, id] of labelDummyIdByEdgeId)
+    if (!edgeIdByLabelDummyId.has(id)) edgeIdByLabelDummyId.set(id, edgeId);
+  const inputEdgeById = new Map<string, (typeof input.graph.edges)[number]>();
+  for (const edge of input.graph.edges)
+    if (!inputEdgeById.has(edge.id)) inputEdgeById.set(edge.id, edge);
   return {
     input: inheritCycleRandom(input, {
       ...input,
@@ -259,9 +265,9 @@ export function splitLongEdges(
       },
       nodeSettings: (node) => {
         const original = input.nodeSettings?.(node);
-        const edgeId = [...labelDummyIdByEdgeId].find(([, id]) => id === node.id)?.[0];
+        const edgeId = edgeIdByLabelDummyId.get(node.id);
         if (!edgeId) return original;
-        const edge = input.graph.edges.find((candidate) => candidate.id === edgeId);
+        const edge = inputEdgeById.get(edgeId);
         const strategy = String(
           (edge && input.edgeSettings?.(edge)?.["edgeLabels.centerLabelPlacementStrategy"]) ??
             input.settings["edgeLabels.centerLabelPlacementStrategy"] ??

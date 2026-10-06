@@ -135,3 +135,4 @@ Native layered layout reaches layout quality at or above real ELK (elkjs 0.11.1)
 - Route self loops that share a port on one track, as ELK hyperloops do.
 - Correct smart center-label port anchors during vertical layered layout by transposing the default selection before choosing sides in canonical coordinates.
 - Route labeled same-side self-loops as a small square beside their port, with their label in reserved space beyond it, and slide non-inline center labels off other routes, nodes and labels.
+- Speed up compound layouts about 1.4–1.9× by reusing crossing-graph data across counts, placing each node's ports once per pass, and indexing facade lookups.
