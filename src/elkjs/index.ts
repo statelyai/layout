@@ -1750,16 +1750,31 @@ function parseMargin(value: unknown): unknown {
   return parsePadding(value, 0);
 }
 
+// Every accepted spelling of a layered option, with its precedence (lower wins).
+const layeredOptionAliases = new Map<
+  string,
+  { definition: (typeof elkLayeredOptionDefinitions)[number]; rank: number }
+>();
+for (const definition of elkLayeredOptionDefinitions) {
+  const suffix = definition.elkId.replace(/^org\.eclipse\.elk\./, "");
+  [definition.name, suffix, `elk.${suffix}`, definition.elkId].forEach((key, rank) => {
+    const current = layeredOptionAliases.get(key);
+    if (!current || rank < current.rank) layeredOptionAliases.set(key, { definition, rank });
+  });
+}
+
 function getElementLayeredSettings(
   options: Readonly<Record<string, unknown>>,
 ): ElkLayeredOptionValueByName {
   const settings: ElkLayeredOptionValueByName = {};
-  for (const definition of elkLayeredOptionDefinitions) {
-    const suffix = definition.elkId.replace(/^org\.eclipse\.elk\./, "");
-    const value = [definition.name, suffix, `elk.${suffix}`, definition.elkId]
-      .map((key) => options[key])
-      .find((candidate) => candidate !== undefined);
-    if (value === undefined) continue;
+  const chosen = new Map<(typeof elkLayeredOptionDefinitions)[number], { rank: number; value: unknown }>();
+  for (const [key, value] of Object.entries(options)) {
+    const alias = layeredOptionAliases.get(key);
+    if (!alias || value === undefined) continue;
+    const current = chosen.get(alias.definition);
+    if (!current || alias.rank < current.rank) chosen.set(alias.definition, { rank: alias.rank, value });
+  }
+  for (const [definition, { value }] of chosen) {
     const vectorMatch =
       definition.name === "port.anchor" && typeof value === "string"
         ? value.match(/^\s*\(\s*(-?\d+(?:\.\d+)?)\s*,\s*(-?\d+(?:\.\d+)?)\s*\)\s*$/)
