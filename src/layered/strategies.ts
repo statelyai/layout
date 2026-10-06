@@ -4404,6 +4404,57 @@ function routeEdges(style: "ORTHOGONAL" | "POLYLINE" | "SPLINES"): EdgeRouter {
     if (labelShift !== 0) implicitEndpoints = implicitEdgeEndpoints(input, placement, orientation);
 
     const orthogonalTrackByEdgeId = new Map<string, number>();
+    // Tracks given to edges that routing saw as straight, by cross extent.
+    const fallbackTracks: Array<{ track: number; lo: number; hi: number; sign: number }> = [];
+    /**
+     * The gap's middle for an edge routing saw as straight. When its ends
+     * moved apart since, the middle can be the track of an edge heading the
+     * other way: take the nearest track free of those instead.
+     */
+    const freeGapTrack = (edgeId: string, from: number, to: number, a: Point, b: Point) => {
+      const middle = (from + to) / 2;
+      if (style !== "ORTHOGONAL") return middle;
+      const cross = (p: Point) => (horizontal ? p.y : p.x);
+      const lo = Math.min(cross(a), cross(b)),
+        hi = Math.max(cross(a), cross(b)),
+        sign = Math.sign(cross(b) - cross(a));
+      if (hi - lo < 1e-6) return middle;
+      const spans = [
+        ...fallbackTracks,
+        ...[...orthogonalTrackByEdgeId].flatMap(([id, track]) => {
+          const ends = implicitEndpoints.get(id);
+          if (id === edgeId || !ends) return [];
+          const values = [cross(ends.source), cross(ends.target)];
+          return [
+            {
+              track,
+              lo: Math.min(...values),
+              hi: Math.max(...values),
+              sign: Math.sign(values[1]! - values[0]!),
+            },
+          ];
+        }),
+      ];
+      const spacing = Number(input.settings["spacing.edgeEdgeBetweenLayers"] ?? 10) / 2;
+      const free = (track: number) =>
+        !spans.some(
+          (span) =>
+            span.sign === -sign &&
+            Math.abs(span.track - track) < 1e-6 &&
+            Math.min(span.hi, hi) - Math.max(span.lo, lo) > 1e-6,
+        );
+      let chosen = middle;
+      for (
+        let step = 1;
+        !free(chosen) && step <= 2 * Math.floor((to - from) / 2 / spacing);
+        step++
+      ) {
+        const candidate = middle + (step % 2 ? -1 : 1) * Math.ceil(step / 2) * spacing;
+        if (candidate > from && candidate < to && free(candidate)) chosen = candidate;
+      }
+      fallbackTracks.push({ track: chosen, lo, hi, sign });
+      return chosen;
+    };
     const orthogonalDetourByEdgeId = new Map<
       string,
       { firstTrack: number; secondTrack: number; crossover: number }
@@ -4524,7 +4575,10 @@ function routeEdges(style: "ORTHOGONAL" | "POLYLINE" | "SPLINES"): EdgeRouter {
           (typeof candidates)[number],
           { source: string; target: string }
         >();
-        const portKey = (candidate: (typeof candidates)[number], side: "source" | "target") => {
+        const physicalPort = (
+          candidate: (typeof candidates)[number],
+          side: "source" | "target",
+        ) => {
           const edge = candidate.edge;
           const sourceIsBefore =
             flowLayerByNodeId.get(edge.sourceId)! < flowLayerByNodeId.get(edge.targetId)!;
@@ -4533,10 +4587,30 @@ function routeEdges(style: "ORTHOGONAL" | "POLYLINE" | "SPLINES"): EdgeRouter {
             : (side === "source") === (sourceIsBefore === increasing);
           const nodeId = graphSource ? edge.sourceId : edge.targetId;
           const name = graphSource ? edge.sourcePort : edge.targetPort;
+          return { graphSource, nodeId, name };
+        };
+        // A port whose edges leave and enter it in this gap gives each
+        // direction its own hypersegment: opposite directions never share a track.
+        const directionsByPort = new Map<string, Set<boolean>>();
+        for (const candidate of candidates)
+          for (const side of ["source", "target"] as const) {
+            const { graphSource, nodeId, name } = physicalPort(candidate, side);
+            if (name === undefined || isMergedHyperedgeDummy(input, nodeId)) continue;
+            const key = JSON.stringify([nodeId, name]);
+            let directions = directionsByPort.get(key);
+            if (!directions) directionsByPort.set(key, (directions = new Set()));
+            directions.add(graphSource);
+          }
+        const portKey = (candidate: (typeof candidates)[number], side: "source" | "target") => {
+          const edge = candidate.edge;
+          const { graphSource, nodeId, name } = physicalPort(candidate, side);
           const node = nodeById.get(nodeId)!;
           if (isMergedHyperedgeDummy(input, nodeId))
             return JSON.stringify(["hyperedge", nodeId, candidate.sameLayerPortSide ?? side]);
-          if (name !== undefined) return JSON.stringify(["port", nodeId, name]);
+          if (name !== undefined)
+            return directionsByPort.get(JSON.stringify([nodeId, name]))!.size > 1
+              ? JSON.stringify(["port", nodeId, name, graphSource])
+              : JSON.stringify(["port", nodeId, name]);
           if (input.settings.mergeEdges === true || input.nodeSettings?.(node)?.hypernode === true)
             return JSON.stringify(["implicit", nodeId, candidate.sameLayerPortSide ?? side]);
           return JSON.stringify(["edge", edge.id, side]);
@@ -5928,7 +6002,7 @@ function routeEdges(style: "ORTHOGONAL" | "POLYLINE" | "SPLINES"): EdgeRouter {
         splineTrackByEdgeId.get(edge.id) ??
         sameLayerTrack ??
         (earlier && later && earlierLayer !== laterLayer
-          ? (earlier.end + later.start) / 2
+          ? freeGapTrack(edge.id, earlier.end, later.start, start, end)
           : horizontal
             ? (start.x + end.x) / 2
             : (start.y + end.y) / 2);

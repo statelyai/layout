@@ -34,6 +34,7 @@ import type { EntityRect } from "@statelyai/graph";
 import { setPlacementOrientation, setPlacementOrder } from "./placement-orientation";
 import { replaceLayoutRouting } from "./replace-routing";
 import { layoutCompounds, type CompoundVisualGraph } from "./compound";
+import { separateLayoutOpposingTracks } from "./opposing-tracks";
 import { repairFlatRouting } from "./native-routing";
 import type { Graph, GraphEdge, GraphNode, Point, VisualGraph, VisualNode } from "@statelyai/graph";
 import { labelReferences, runPartialLayout } from "../authoring/partial";
@@ -3256,14 +3257,15 @@ export function getLayeredLayout<N, E, G, P>(
   const result = layoutWithHints(options.hints, (hints) =>
     repairFlatRouting(runLayeredPipeline(graph, { ...options, hints }), options),
   ) as CompoundVisualGraph<N, E, G, P>;
-  return replaceLayoutRouting(
-    {
-      ...result,
-      compoundGeometry: result.compoundGeometry ?? new Map(),
-      compoundRoutes: result.compoundRoutes ?? new Map(),
-    },
-    options,
-  );
+  const complete = {
+    ...result,
+    compoundGeometry: result.compoundGeometry ?? new Map(),
+    compoundRoutes: result.compoundRoutes ?? new Map(),
+  };
+  // A replacement router owns its routes; otherwise opposite directions never share a track.
+  return options.routing
+    ? replaceLayoutRouting(complete, options)
+    : separateLayoutOpposingTracks(complete, options);
 }
 
 export const layeredAlgorithm: LayoutAlgorithm<LayeredLayoutOptions> = {
@@ -3297,7 +3299,15 @@ export const layeredAlgorithm: LayoutAlgorithm<LayeredLayoutOptions> = {
       context.diagnostics,
     );
     if (!context.constraints?.length) {
-      if (!options?.routing) return result;
+      if (!options?.routing)
+        return separateLayoutOpposingTracks(
+          {
+            ...result,
+            compoundGeometry: (result as CompoundVisualGraph).compoundGeometry ?? new Map(),
+            compoundRoutes: (result as CompoundVisualGraph).compoundRoutes ?? new Map(),
+          },
+          options ?? {},
+        );
       return replaceLayoutRouting(
         {
           ...result,

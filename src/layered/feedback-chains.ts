@@ -6,6 +6,27 @@ export interface FeedbackChain {
   label?: { id: string; cross: number };
 }
 
+/** Whether two orthogonal polylines run along one line in opposite directions. */
+function opposed(a: readonly Point[], b: readonly Point[]): boolean {
+  for (let i = 1; i < a.length; i++)
+    for (let j = 1; j < b.length; j++) {
+      const s = { a: a[i - 1]!, b: a[i]! },
+        t = { a: b[j - 1]!, b: b[j]! };
+      const dx = s.b.x - s.a.x,
+        dy = s.b.y - s.a.y;
+      if (dx * (t.b.x - t.a.x) + dy * (t.b.y - t.a.y) >= 0) continue;
+      const along = dx !== 0 ? "x" : "y",
+        across = along === "x" ? "y" : "x";
+      if (dx !== 0 && dy !== 0) continue;
+      if (s.a[across] !== s.b[across] || t.a[across] !== t.b[across]) continue;
+      if (Math.abs(s.a[across] - t.a[across]) > 1e-6) continue;
+      const lo = Math.max(Math.min(s.a[along], s.b[along]), Math.min(t.a[along], t.b[along]));
+      const hi = Math.min(Math.max(s.a[along], s.b[along]), Math.max(t.a[along], t.b[along]));
+      if (hi - lo > 1e-6) return true;
+    }
+  return false;
+}
+
 /**
  * A reversed feedback edge split by label or inverted-port dummies is routed
  * one segment at a time, so each segment detours to the outer feedback track
@@ -82,6 +103,9 @@ export function straightenFeedbackChains(
       }
       if (simple.at(-1) !== end) continue;
       if (simple.length >= points.length) break;
+      // Never share a track with another route heading the opposite way.
+      if ([...pointsByEdgeId].some(([id, other]) => id !== edgeId && opposed(simple, other)))
+        continue;
       pointsByEdgeId.set(edgeId, simple);
       if (moved) rectByNodeId.set(label!.id, moved);
       break;

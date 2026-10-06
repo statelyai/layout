@@ -81,7 +81,13 @@ export function mergeHyperedgeDummies(expansion: LongEdgeExpansion, order: Layer
     parent.set(root(source), root(target));
   }
   // Label-bearing chains merge only before a shared source or after a shared target.
-  type Metadata = { source?: string; target?: string; label?: boolean; before?: boolean };
+  type Metadata = {
+    source?: string;
+    target?: string;
+    label?: boolean;
+    before?: boolean;
+    reversed?: boolean;
+  };
   const metadata = new Map<string, Metadata>();
   const edges = new Map(input.graph.edges.map((edge) => [edge.id, edge]));
   for (const [edgeId, ids] of expansion.segmentIdsByEdgeId) {
@@ -114,6 +120,7 @@ export function mergeHyperedgeDummies(expansion: LongEdgeExpansion, order: Layer
           source,
           target,
           label: labelId !== undefined,
+          reversed,
           before:
             labelLayer !== undefined &&
             (expansion.assignment.layerByNodeId.get(id) ?? 0) < labelLayer,
@@ -133,15 +140,17 @@ export function mergeHyperedgeDummies(expansion: LongEdgeExpansion, order: Layer
           currentInfo.source !== undefined && currentInfo.source === priorInfo.source;
         const sameTarget =
           currentInfo.target !== undefined && currentInfo.target === priorInfo.target;
+        // Opposite-direction chains never share a track.
         const allowed =
-          !currentInfo.label && !priorInfo.label
+          currentInfo.reversed === priorInfo.reversed &&
+          (!currentInfo.label && !priorInfo.label
             ? root(JSON.stringify(["dummy", id])) === root(JSON.stringify(["dummy", previous]))
             : (sameSource &&
                 (!currentInfo.label || currentInfo.before) &&
                 (!priorInfo.label || priorInfo.before)) ||
               (sameTarget &&
                 (!currentInfo.label || !currentInfo.before) &&
-                (!priorInfo.label || !priorInfo.before));
+                (!priorInfo.label || !priorInfo.before)));
         if (allowed) {
           aliases.set(id, previous);
           merged.add(previous);

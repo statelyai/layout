@@ -22,6 +22,7 @@ import {
 } from "../layered/external-port-dummy";
 import { isBetterLayout, measureLayout } from "./layout-quality";
 import { applyOrthogonalJunctions } from "./orthogonal-junctions";
+import { separateElkOpposingTracks } from "./opposing-tracks";
 import { createGraph, type Graph, type VisualGraph } from "@statelyai/graph";
 import {
   elkLayeredOptionDefinitions,
@@ -169,7 +170,7 @@ export default class ELK {
     const options = { ...this.#options.defaultLayoutOptions, ...arguments_.layoutOptions };
     const variants = crossingVariants(options, graph);
     const pristine = variants.length ? structuredClone(graph) : undefined;
-    let best = await this.#layoutWithoutDefectiveCompaction(graph, arguments_);
+    let best = separated(await this.#layoutWithoutDefectiveCompaction(graph, arguments_), options);
     if (!pristine) return best;
     // A compound layout with defects tries other random seeds and keeps the
     // best measured result. Above ELK's default thoroughness, every compound
@@ -177,10 +178,13 @@ export default class ELK {
     let quality = measureLayout(best);
     if (quality.defects === 0 && !thorough(options, graph)) return best;
     for (const variant of variants) {
-      const candidate = await this.#layoutWithoutDefectiveCompaction(structuredClone(pristine), {
-        ...arguments_,
-        layoutOptions: { ...arguments_.layoutOptions, ...variant },
-      });
+      const candidate = separated(
+        await this.#layoutWithoutDefectiveCompaction(structuredClone(pristine), {
+          ...arguments_,
+          layoutOptions: { ...arguments_.layoutOptions, ...variant },
+        }),
+        options,
+      );
       const candidateQuality = measureLayout(candidate);
       if (isBetterLayout(candidateQuality, quality)) {
         best = candidate;
@@ -1355,6 +1359,12 @@ export default class ELK {
     };
     return prepared;
   }
+}
+
+/** Move opposite-direction track sharing apart on the finished layout. */
+function separated<T extends ElkNode>(graph: T, options: Readonly<Record<string, unknown>>): T {
+  separateElkOpposingTracks(graph, { ...options, ...graph.layoutOptions });
+  return graph;
 }
 
 function coordinatePreparedScopes(
