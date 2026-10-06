@@ -72,6 +72,7 @@
   "scripts": {
     "build": "tsdown --config tsdown.config.mjs",
     "bench": "vitest bench --run",
+    "bench:statecharts": "tsx scripts/bench-statecharts.ts",
     "demo": "portless --name layout vite --config demo/vite.config.ts",
     "demo:build": "vite build --config demo/vite.config.ts",
     "demo:check": "tsx scripts/generate-demo-corpus.ts --check",
