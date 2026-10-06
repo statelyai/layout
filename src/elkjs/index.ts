@@ -1991,10 +1991,12 @@ function toGraph(root: ElkNode, globalOptions: Readonly<Record<string, unknown>>
       const usePortModelOrder =
         getBooleanOption(globalOptions, "layered.considerModelOrder.portModelOrder") === true;
       if (modelOrderStrategy !== "NONE" && !usePortModelOrder) {
-        const edgeOrderDifference =
-          (edgeModelOrderByPortId.get(String(left.id)) ?? Infinity) -
-          (edgeModelOrderByPortId.get(String(right.id)) ?? Infinity);
-        if (edgeOrderDifference !== 0) return edgeOrderDifference;
+        const leftOrder = edgeModelOrderByPortId.get(String(left.id));
+        const rightOrder = edgeModelOrderByPortId.get(String(right.id));
+        // Ports without edges order last and keep their order among themselves,
+        // unreversed even on the WEST side, as ELK does.
+        if (leftOrder === undefined && rightOrder === undefined) return 0;
+        if (leftOrder !== rightOrder) return (leftOrder ?? Infinity) - (rightOrder ?? Infinity);
       }
       const direction = leftSide === "WEST" ? -1 : 1;
       return direction * ((child.ports?.indexOf(left) ?? 0) - (child.ports?.indexOf(right) ?? 0));

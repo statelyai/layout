@@ -4,50 +4,8 @@
  * SPDX-License-Identifier: EPL-2.0
  */
 import type { CrossingGraph, CrossingNode, CrossingPort } from "./crossing-counter";
+import { gwtSort, insertionSort } from "./gwt-sort";
 import type { AcyclicOrientation, LayeredPhaseInput } from "./types";
-
-/** ELK's insertion sort preserves comparator decisions even when model and edge priorities conflict. */
-export function insertionSort<T>(items: T[], compare: (left: T, right: T) => number): void {
-  for (let i = 1; i < items.length; i++) {
-    const value = items[i]!;
-    let j = i;
-    while (j > 0 && compare(items[j - 1]!, value) > 0) {
-      items[j] = items[j - 1]!;
-      j--;
-    }
-    items[j] = value;
-  }
-}
-
-/**
- * GWT's `Collections.sort` (elkjs): top-down merge sort over insertion-sorted runs
- * shorter than 7. Stateful comparators depend on this exact call sequence.
- */
-function gwtSort<T>(items: T[], compare: (left: T, right: T) => number): void {
-  const sort = (temp: T[], array: T[], low: number, high: number, ofs: number): void => {
-    if (high - low < 7) {
-      for (let i = low + 1; i < high; i++)
-        for (let j = i; j > low && compare(array[j - 1]!, array[j]!) > 0; j--)
-          [array[j - 1], array[j]] = [array[j]!, array[j - 1]!];
-      return;
-    }
-    const tempLow = low + ofs,
-      tempHigh = high + ofs,
-      tempMid = tempLow + ((tempHigh - tempLow) >> 1);
-    sort(array, temp, tempLow, tempMid, -ofs);
-    sort(array, temp, tempMid, tempHigh, -ofs);
-    if (compare(temp[tempMid - 1]!, temp[tempMid]!) <= 0) {
-      for (let i = tempLow; low < high;) array[low++] = temp[i++]!;
-      return;
-    }
-    for (let left = tempLow, right = tempMid; low < high;)
-      array[low++] =
-        right >= tempHigh || (left < tempMid && compare(temp[left]!, temp[right]!) <= 0)
-          ? temp[left++]!
-          : temp[right++]!;
-  };
-  sort(items.slice(), items, 0, items.length, 0);
-}
 
 /** Retain transitive decisions from earlier comparisons for this one sort. */
 export function transitiveComparator<T>(

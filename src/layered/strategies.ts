@@ -3,9 +3,9 @@ import {
   restoreInitialModelOrder,
   countModelOrderChanges,
   normalModelComparator,
-  insertionSort,
   transitiveComparator,
 } from "./initial-model-order";
+import { insertionSort } from "./gwt-sort";
 import { CanonicalPortDistributor } from "./port-distributor";
 import { countAllCrossings } from "./crossing-counter";
 import { crossingGraph } from "./crossing-graph";
