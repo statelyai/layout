@@ -7,7 +7,11 @@ import {
   type LayeredLayoutOptions,
   type LayerOrder,
 } from "../layered";
-import { createLayerSweepSession } from "../layered/strategies";
+import {
+  createLayerSweepSession,
+  MIXED_PORT_MODEL,
+  type MixedPortModel,
+} from "../layered/strategies";
 import {
   minimizeHierarchyCrossings,
   type HierarchyCrossingScope,
@@ -82,6 +86,10 @@ export type {
   LaidOutElkNode,
 } from "./public-types";
 export type { ElkId, ElkLogging } from "./types";
+
+/** The mixed-port model setting a layout passes to crossing minimization. */
+const mixedPortModel = Symbol("mixedPortModel");
+type MixedPortArguments = ElkLayoutArguments & { [mixedPortModel]?: MixedPortModel };
 
 interface PreparedElkScope {
   graph: ElkNode;
@@ -168,21 +176,35 @@ export default class ELK {
     arguments_: ElkLayoutArguments = {},
   ): Promise<LaidOutElkNode<T>> {
     const options = { ...this.#options.defaultLayoutOptions, ...arguments_.layoutOptions };
-    const variants = crossingVariants(options, graph);
-    const pristine = variants.length ? structuredClone(graph) : undefined;
-    let best = separated(await this.#layoutWithoutDefectiveCompaction(graph, arguments_), options);
+    const seeds = crossingVariants(options, graph);
+    const probe = hasSharedPort(graph) ? { applied: false } : undefined;
+    const pristine = seeds.length || probe ? structuredClone(graph) : undefined;
+    let best = separated(
+      await this.#layoutWithoutDefectiveCompaction(
+        graph,
+        probe ? { ...arguments_, [mixedPortModel]: probe } : arguments_,
+      ),
+      options,
+    );
     if (!pristine) return best;
-    // A compound layout with defects tries other random seeds and keeps the
-    // best measured result. Above ELK's default thoroughness, every compound
-    // layout does, trading time for fewer crossings and bends.
+    // Crossing minimization models a port carrying both directions as two
+    // ports with grouped neighbours. That helps on average but steers the
+    // sweeps into worse orders on some graphs, so a graph where the model
+    // applied is also laid out without it, and keeps the better result.
+    // A compound layout with defects tries other random seeds too. Above
+    // ELK's default thoroughness, every compound layout does, trading time
+    // for fewer crossings and bends.
     let quality = measureLayout(best);
-    if (quality.defects === 0 && !thorough(options, graph)) return best;
+    const variants: MixedPortArguments[] = [
+      ...(probe?.applied ? [{ ...arguments_, [mixedPortModel]: false as const }] : []),
+      ...(quality.defects === 0 && !thorough(options, graph) ? [] : seeds).map((variant) => ({
+        ...arguments_,
+        layoutOptions: { ...arguments_.layoutOptions, ...variant },
+      })),
+    ];
     for (const variant of variants) {
       const candidate = separated(
-        await this.#layoutWithoutDefectiveCompaction(structuredClone(pristine), {
-          ...arguments_,
-          layoutOptions: { ...arguments_.layoutOptions, ...variant },
-        }),
+        await this.#layoutWithoutDefectiveCompaction(structuredClone(pristine), variant),
         options,
       );
       const candidateQuality = measureLayout(candidate);
@@ -196,7 +218,7 @@ export default class ELK {
 
   async #layoutWithoutDefectiveCompaction<T extends ElkNode>(
     graph: T,
-    arguments_: ElkLayoutArguments,
+    arguments_: MixedPortArguments,
   ): Promise<LaidOutElkNode<T>> {
     const compacting = usesPostCompaction(
       { ...this.#options.defaultLayoutOptions, ...arguments_.layoutOptions },
@@ -1074,6 +1096,9 @@ export default class ELK {
       },
       settings: {
         ...getLayeredSettings(layoutOptions),
+        ...((arguments_ as MixedPortArguments)[mixedPortModel] !== undefined
+          ? { [MIXED_PORT_MODEL]: (arguments_ as MixedPortArguments)[mixedPortModel] }
+          : {}),
         ...(compoundLayout || (hasHierarchy && !separateHierarchy && !topdownLayout)
           ? { separateConnectedComponents: false }
           : {}),
@@ -2839,6 +2864,32 @@ function crossingVariants(
   )
     return [];
   return [{ "elk.randomSeed": "2" }, { "elk.randomSeed": "3" }];
+}
+
+/** Whether some explicit port carries two or more edges between different ends. */
+function hasSharedPort(graph: ElkNode): boolean {
+  const ports = new Set<string>();
+  const collectPorts = (node: ElkNode) => {
+    for (const port of node.ports ?? []) ports.add(String(port.id));
+    for (const child of node.children ?? []) collectPorts(child);
+  };
+  collectPorts(graph);
+  if (!ports.size) return false;
+  const seen = new Set<string>();
+  const visit = (node: ElkNode): boolean => {
+    for (const edge of node.edges ?? []) {
+      const source = String(edge.sources?.[0] ?? edge.source),
+        target = String(edge.targets?.[0] ?? edge.target);
+      if (source === target) continue;
+      for (const end of [source, target]) {
+        if (!ports.has(end)) continue;
+        if (seen.has(end)) return true;
+        seen.add(end);
+      }
+    }
+    return (node.children ?? []).some(visit);
+  };
+  return visit(graph);
 }
 
 /** Whether the graph asks for more than ELK's default layered thoroughness (7). */
