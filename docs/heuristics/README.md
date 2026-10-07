@@ -4,8 +4,9 @@
 > proofs live on the
 > [`heuristics-evidence`](https://github.com/statelyai/layout/tree/heuristics-evidence/docs/heuristics)
 > branch; links below point there. This directory keeps the quality corpora
-> (`quality-corpus/`, `quality-holdout/`), the quality-round READMEs and the
-> latest gate rows (`quality-compound-candidates/*.json.gz`).
+> (`quality-corpus/`, the holdout `quality-holdout-2/`, and `quality-holdout/`,
+> now a regression corpus), the quality-round READMEs and the latest gate rows
+> (`quality-compound-candidates/*.json.gz`).
 
 <!-- generator behavior and bounds from scripts/generate-heuristic-corpus.mjs -->
 
