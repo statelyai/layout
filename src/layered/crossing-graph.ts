@@ -339,6 +339,57 @@ function buildCrossingGraph(
   };
 }
 
+/**
+ * A port carrying edges of both directions attaches each direction separately
+ * once routed, so a crossing between them is real. Count it: give each
+ * east or west mixed port a twin for its reversed edges, after it on the
+ * east side and before it on the west (so forward edges sit above), and move
+ * those edges to the twin. `reversed` is index-aligned with `graph.edges`.
+ */
+export function splitMixedCrossingPorts(
+  graph: CrossingGraph,
+  reversed: readonly boolean[],
+): CrossingGraph {
+  const directions = new Map<string, number>();
+  graph.edges.forEach((edge, index) => {
+    const bit = reversed[index] ? 2 : 1;
+    for (const port of [edge.source, edge.target])
+      directions.set(port, (directions.get(port) ?? 0) | bit);
+  });
+  const mixed = new Set<string>();
+  for (const layer of graph.layers)
+    for (const node of layer)
+      for (const port of node.ports)
+        if (directions.get(port.id) === 3 && (port.side === "EAST" || port.side === "WEST"))
+          mixed.add(port.id);
+  if (!mixed.size) return graph;
+  const twin = (id: string) => `${id}\0reversed`;
+  return {
+    layers: graph.layers.map((layer) =>
+      layer.map((node) =>
+        node.ports.some((port) => mixed.has(port.id))
+          ? {
+              ...node,
+              ports: node.ports.flatMap((port) => {
+                if (!mixed.has(port.id)) return [port];
+                const other = { ...port, id: twin(port.id) };
+                return port.side === "EAST" ? [port, other] : [other, port];
+              }),
+            }
+          : node,
+      ),
+    ),
+    edges: graph.edges.map((edge, index) =>
+      reversed[index] && (mixed.has(edge.source) || mixed.has(edge.target))
+        ? {
+            source: mixed.has(edge.source) ? twin(edge.source) : edge.source,
+            target: mixed.has(edge.target) ? twin(edge.target) : edge.target,
+          }
+        : edge,
+    ),
+  };
+}
+
 function kindOf(id: string, units: ReturnType<typeof getCrossingUnits>): CrossingNode["type"] {
   return id.startsWith("__layout_dummy:north-south:")
     ? "NORTH_SOUTH_PORT"

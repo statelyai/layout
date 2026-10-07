@@ -8,7 +8,11 @@ import {
 import { insertionSort } from "./gwt-sort";
 import { CanonicalPortDistributor } from "./port-distributor";
 import { countAllCrossings } from "./crossing-counter";
-import { createCrossingGraphBuilder, crossingGraph } from "./crossing-graph";
+import {
+  createCrossingGraphBuilder,
+  crossingGraph,
+  splitMixedCrossingPorts,
+} from "./crossing-graph";
 import { isMergedHyperedgeDummy } from "./hyperedge-dummy-merger";
 import { externalPortDummyOf } from "./external-port-dummy";
 import { routingCoordinates } from "./routing-coordinates";
@@ -2041,7 +2045,7 @@ export function createLayerSweepSession(
         inputPortOrder,
         outputPortOrder,
       );
-      let total = countAllCrossings(graph).total;
+      let total = countAllCrossings(splitMixedCrossingPorts(graph, canonicalReversed)).total;
       const nodeInfluence = Number(
         input.settings["considerModelOrder.crossingCounterNodeInfluence"] ?? 0,
       );
@@ -2280,6 +2284,7 @@ export function createLayerSweepSession(
   let canonicalNodes = new Map(canonicalGraph.layers.flat().map((node) => [node.id, node]));
   const canonicalDistributor = new CanonicalPortDistributor(canonicalGraph);
   const canonicalEdges = input.graph.edges.filter((edge) => edge.sourceId !== edge.targetId);
+  const canonicalReversed = canonicalEdges.map((edge) => orientation.reversedEdgeIds.has(edge.id));
   const canonicalOrientedEndpoints = canonicalEdges.map((edge) =>
     getOrientedEndpoints(edge, orientation),
   );
@@ -2353,6 +2358,85 @@ export function createLayerSweepSession(
       working[firstLayerIndex]?.forEach((id, index) => medianWeights.set(id, index + 1));
     }
   };
+  // Non-loop edges by endpoint, for grouping a mixed port's neighbours.
+  const edgesByNode = new Map<string, GraphEdge[]>();
+  for (const edge of input.graph.edges) {
+    if (edge.sourceId === edge.targetId) continue;
+    for (const id of [edge.sourceId, edge.targetId]) {
+      const list = edgesByNode.get(id);
+      if (list) list.push(edge);
+      else edgesByNode.set(id, [edge]);
+    }
+  }
+  /**
+   * A port carrying both directions gives each direction its own track and
+   * attachment, so its edges are no longer interchangeable: neighbours of one
+   * direction must not interleave with the other's, or the separated routes
+   * cross. Barycenters tie (up to noise) for nodes reached only through one
+   * port; within the slots those nodes occupy, put forward edges before
+   * reversed ones. Both ends of a chain see the same reversal, so the order
+   * holds along it.
+   */
+  const constrained = new Set([
+    ...(units?.units.keys() ?? []),
+    ...[...(units?.successors ?? [])].flatMap(([id, after]) => [id, ...after]),
+  ]);
+  const groupMixedPortDirections = (
+    free: string[],
+    fixed: readonly string[],
+    beyond: readonly string[] = [],
+  ) => {
+    const fixedIds = new Set(fixed);
+    const groups = new Map<string, Array<{ id: string; reversed: boolean }>>();
+    for (const id of free) {
+      if (constrained.has(id)) continue;
+      let only: GraphEdge | undefined,
+        count = 0;
+      for (const edge of edgesByNode.get(id) ?? [])
+        if (fixedIds.has(edge.sourceId === id ? edge.targetId : edge.sourceId)) {
+          only = edge;
+          count++;
+        }
+      if (count !== 1) continue;
+      const atSource = only!.sourceId !== id;
+      const name = atSource ? only!.sourcePort : only!.targetPort;
+      if (name === undefined) continue;
+      const key = JSON.stringify([atSource ? only!.sourceId : only!.targetId, name]);
+      const group = groups.get(key) ?? [];
+      group.push({ id, reversed: orientation.reversedEdgeIds.has(only!.id) });
+      groups.set(key, group);
+    }
+    if (![...groups.values()].some((g) => g.some((m) => m.reversed) && g.some((m) => !m.reversed)))
+      return;
+    const index = new Map(free.map((id, i) => [id, i]));
+    // The direction whose nodes lead further toward the start of the layer
+    // beyond (from the previous sweep) goes first; forward edges by default.
+    const far = new Map(beyond.map((id, i) => [id, i]));
+    const reach = (members: ReadonlyArray<{ id: string }>) => {
+      let sum = 0,
+        count = 0;
+      for (const { id } of members)
+        for (const edge of edgesByNode.get(id) ?? []) {
+          const at = far.get(edge.sourceId === id ? edge.targetId : edge.sourceId);
+          if (at === undefined) continue;
+          sum += at;
+          count++;
+        }
+      return count ? sum / count : undefined;
+    };
+    for (const group of groups.values()) {
+      if (!group.some((m) => m.reversed) || group.every((m) => m.reversed)) continue;
+      const forward = reach(group.filter((m) => !m.reversed)),
+        backward = reach(group.filter((m) => m.reversed));
+      const reversedFirst =
+        forward === undefined || backward === undefined ? false : backward < forward;
+      const slots = group.map((m) => index.get(m.id)!).sort((a, b) => a - b);
+      const members = group
+        .sort((a, b) => index.get(a.id)! - index.get(b.id)!)
+        .sort((a, b) => (reversedFirst ? -1 : 1) * (Number(a.reversed) - Number(b.reversed)));
+      for (const [i, slot] of slots.entries()) free[slot] = members[i]!.id;
+    }
+  };
   const sweep = (isForward: boolean, firstSweep: boolean, visitLayer?: LayerSweepVisitor) => {
     const firstLayer = isForward ? 0 : Math.max(0, working.length - 1);
     if (exactPortSweep) distributePorts(firstLayer, isForward);
@@ -2409,6 +2493,7 @@ export function createLayerSweepSession(
               forcedCompare,
             );
           }
+          groupMixedPortDirections(current, previous, working[layer + 1]);
           if (exactPortSweep) distributePorts(layer, true);
           visitLayer?.(layer, [...current], isForward, firstSweep);
         }
@@ -2437,6 +2522,7 @@ export function createLayerSweepSession(
               forcedCompare,
             );
           }
+          groupMixedPortDirections(current, next, working[layer - 1]);
           if (exactPortSweep) distributePorts(layer, false);
           visitLayer?.(layer, [...current], isForward, firstSweep);
         }
@@ -4404,6 +4490,13 @@ function routeEdges(style: "ORTHOGONAL" | "POLYLINE" | "SPLINES"): EdgeRouter {
     if (labelShift !== 0) implicitEndpoints = implicitEdgeEndpoints(input, placement, orientation);
 
     const orthogonalTrackByEdgeId = new Map<string, number>();
+    // Cross-axis shift of an edge's attachment at a port carrying both directions.
+    const attachmentShiftByEdgeId = new Map<string, { source?: number; target?: number }>();
+    const attached = (edge: GraphEdge, end: "source" | "target", point: Point): Point => {
+      const shift = attachmentShiftByEdgeId.get(edge.id)?.[end];
+      if (shift === undefined) return point;
+      return horizontal ? { x: point.x, y: point.y + shift } : { x: point.x + shift, y: point.y };
+    };
     // Tracks given to edges that routing saw as straight, by cross extent.
     const fallbackTracks: Array<{ track: number; lo: number; hi: number; sign: number }> = [];
     /**
@@ -4601,12 +4694,118 @@ function routeEdges(style: "ORTHOGONAL" | "POLYLINE" | "SPLINES"): EdgeRouter {
             if (!directions) directionsByPort.set(key, (directions = new Set()));
             directions.add(graphSource);
           }
+        // The cross coordinate where a candidate meets this gap on `side`.
+        const endPosition = (candidate: (typeof candidates)[number], side: "source" | "target") => {
+          const position = candidate.sameLayerPortSide
+            ? side === "source"
+              ? candidate.sourceCross
+              : candidate.targetCross
+            : (side === "source") === increasing
+              ? candidate.sourceCross
+              : candidate.targetCross;
+          const endpoints = rawEndpoints.get(candidate.edge.id);
+          const sourceBefore =
+            flowLayerByNodeId.get(candidate.edge.sourceId)! <
+            flowLayerByNodeId.get(candidate.edge.targetId)!;
+          const rawPoint =
+            endpoints &&
+            ((
+              candidate.sameLayerPortSide
+                ? (side === "source") !== orientation.reversedEdgeIds.has(candidate.edge.id)
+                : (side === "source") === (sourceBefore === increasing)
+            )
+              ? endpoints.source
+              : endpoints.target);
+          return rawPoint ? (horizontal ? rawPoint.y : rawPoint.x) : position;
+        };
+        /**
+         * At a port carrying both directions, the edges fan out from separate
+         * attachments. Ordered by where their far ends lie (back along the
+         * port's own boundary on its near side first, then across the gap,
+         * then back along the boundary on its far side), the edges nest
+         * without crossing; consecutive edges of one direction share an
+         * attachment and a hypersegment. Routing sees each attachment where
+         * it will be, so the track order respects the split.
+         */
+        const runByEnd = new Map<string, number>();
+        const runShift = new Map<string, number>();
+        if (style === "ORTHOGONAL")
+          for (const [key, directions] of directionsByPort) {
+            if (directions.size < 2) continue;
+            const [nodeId, name] = JSON.parse(key) as [string, string];
+            const ends = candidates.flatMap((candidate, index) =>
+              (["source", "target"] as const).flatMap((side) => {
+                const port = physicalPort(candidate, side);
+                if (port.nodeId !== nodeId || port.name !== name) return [];
+                const other = side === "source" ? "target" : "source";
+                return [
+                  {
+                    end: `${index}:${side}`,
+                    graphSource: port.graphSource,
+                    at: endPosition(candidate, side),
+                    far: endPosition(candidate, other),
+                    near: candidate.sameLayerPortSide !== undefined,
+                  },
+                ];
+              }),
+            );
+            const at = ends[0]!.at;
+            if (ends.some((end) => Math.abs(end.at - at) > 1e-6)) continue;
+            const group = (end: (typeof ends)[number]) => (!end.near ? 1 : end.far < at ? 0 : 2);
+            const sorted = [...ends].sort(
+              (a, b) =>
+                group(a) - group(b) ||
+                (group(a) === 1 ? a.far - b.far : b.far - a.far) ||
+                Number(a.graphSource) - Number(b.graphSource),
+            );
+            let runs = 0;
+            for (const [index, end] of sorted.entries()) {
+              if (index && end.graphSource !== sorted[index - 1]!.graphSource) runs++;
+              runByEnd.set(end.end, runs);
+            }
+            const count = runs + 1;
+            // A run holding an edge straight across the gap stays in place.
+            const straight = new Set(
+              sorted
+                .filter((end) => !end.near && Math.abs(end.far - at) < 1e-3)
+                .map((end) => runByEnd.get(end.end)!),
+            );
+            const anchor = straight.size === 1 ? [...straight][0]! : (count - 1) / 2;
+            const rect = routingPlacement.rectByNodeId.get(nodeId);
+            const low = rect ? (horizontal ? rect.y : rect.x) : -Infinity,
+              high = rect ? low + (horizontal ? rect.height : rect.width) : Infinity;
+            // Attachments stay on the node's side, closer together when it is short.
+            let step = edgeEdgeSpacing;
+            for (const run of [0, count - 1]) {
+              const offset = run - anchor;
+              if (offset < 0) step = Math.min(step, (at - low) / -offset);
+              if (offset > 0) step = Math.min(step, (high - at) / offset);
+            }
+            if (!(step >= 2)) {
+              for (const end of ends) runByEnd.delete(end.end);
+              continue;
+            }
+            for (let run = 0; run < count; run++)
+              runShift.set(JSON.stringify(["port", nodeId, name, run]), (run - anchor) * step);
+            for (const end of ends) {
+              const index = end.end.split(":")[0]!;
+              const shift = (runByEnd.get(end.end)! - anchor) * step;
+              if (Math.abs(shift) < 1e-9) continue;
+              const id = candidates[Number(index)]!.edge.id;
+              const record = attachmentShiftByEdgeId.get(id) ?? {};
+              record[end.graphSource ? "source" : "target"] = shift;
+              attachmentShiftByEdgeId.set(id, record);
+            }
+          }
         const portKey = (candidate: (typeof candidates)[number], side: "source" | "target") => {
           const edge = candidate.edge;
           const { graphSource, nodeId, name } = physicalPort(candidate, side);
           const node = nodeById.get(nodeId)!;
           if (isMergedHyperedgeDummy(input, nodeId))
             return JSON.stringify(["hyperedge", nodeId, candidate.sameLayerPortSide ?? side]);
+          const run = runByEnd.get(`${candidates.indexOf(candidate)}:${side}`);
+          if (name !== undefined && run !== undefined)
+            return JSON.stringify(["port", nodeId, name, run]);
           if (name !== undefined)
             return directionsByPort.get(JSON.stringify([nodeId, name]))!.size > 1
               ? JSON.stringify(["port", nodeId, name, graphSource])
@@ -4619,30 +4818,10 @@ function routeEdges(style: "ORTHOGONAL" | "POLYLINE" | "SPLINES"): EdgeRouter {
           for (const candidate of candidates) {
             const key = portKey(candidate, side);
             if (!byPort.has(key)) {
-              const position = candidate.sameLayerPortSide
-                ? side === "source"
-                  ? candidate.sourceCross
-                  : candidate.targetCross
-                : (side === "source") === increasing
-                  ? candidate.sourceCross
-                  : candidate.targetCross;
-              const endpoints = rawEndpoints.get(candidate.edge.id);
-              const sourceBefore =
-                flowLayerByNodeId.get(candidate.edge.sourceId)! <
-                flowLayerByNodeId.get(candidate.edge.targetId)!;
-              const rawPoint =
-                endpoints &&
-                ((
-                  candidate.sameLayerPortSide
-                    ? (side === "source") !== orientation.reversedEdgeIds.has(candidate.edge.id)
-                    : (side === "source") === (sourceBefore === increasing)
-                )
-                  ? endpoints.source
-                  : endpoints.target);
               const port = {
                 id: key,
                 side: candidate.sameLayerPortSide ?? side,
-                position: rawPoint ? (horizontal ? rawPoint.y : rawPoint.x) : position,
+                position: endPosition(candidate, side) + (runShift.get(key) ?? 0),
               };
               byPort.set(key, port);
               ports.push(port);
@@ -4758,7 +4937,8 @@ function routeEdges(style: "ORTHOGONAL" | "POLYLINE" | "SPLINES"): EdgeRouter {
             const sourcePort = portByCandidate.get(candidate)!.source;
             const offset =
               (increasing ? candidate.sourceCross : candidate.targetCross) -
-              byPort.get(sourcePort)!.position;
+              byPort.get(sourcePort)!.position +
+              (runShift.get(sourcePort) ?? 0);
             candidate.crossover = segment.outgoing[0]! + offset;
           }
         }
@@ -5319,21 +5499,15 @@ function routeEdges(style: "ORTHOGONAL" | "POLYLINE" | "SPLINES"): EdgeRouter {
           x: targetRect.x,
           y: targetRect.y,
         };
-        const start = getPortPoint(
-          source,
-          edge.sourcePort,
-          sourceRect,
-          sourceFallback,
-          input.direction,
-          input,
+        const start = attached(
+          edge,
+          "source",
+          getPortPoint(source, edge.sourcePort, sourceRect, sourceFallback, input.direction, input),
         );
-        const end = getPortPoint(
-          target,
-          edge.targetPort,
-          targetRect,
-          targetFallback,
-          input.direction,
-          input,
+        const end = attached(
+          edge,
+          "target",
+          getPortPoint(target, edge.targetPort, targetRect, targetFallback, input.direction, input),
         );
         if (reversedEdge) outsideFeedbackEdgeIds.add(edge.id);
         const side = inLayerSourceSide;
@@ -5956,7 +6130,7 @@ function routeEdges(style: "ORTHOGONAL" | "POLYLINE" | "SPLINES"): EdgeRouter {
         ).length === 1;
       const flexibleFeedback =
         reversedEdge && !hasFixedPortSide(source) && !hasFixedPortSide(target);
-      const start = flexibleFeedback
+      const unshiftedStart = flexibleFeedback
         ? sourceFallback
         : sourceFixedSide
           ? sourceFallback
@@ -5968,7 +6142,7 @@ function routeEdges(style: "ORTHOGONAL" | "POLYLINE" | "SPLINES"): EdgeRouter {
               input.direction,
               input,
             );
-      const end = flexibleFeedback
+      const unshiftedEnd = flexibleFeedback
         ? targetFallback
         : targetFixedSide
           ? targetFallback
@@ -5980,6 +6154,8 @@ function routeEdges(style: "ORTHOGONAL" | "POLYLINE" | "SPLINES"): EdgeRouter {
               input.direction,
               input,
             );
+      const start = attached(edge, "source", unshiftedStart);
+      const end = attached(edge, "target", unshiftedEnd);
       const sourceLayer = flowLayerByNodeId.get(edge.sourceId) ?? 0;
       const targetLayer = flowLayerByNodeId.get(edge.targetId) ?? 0;
       const earlierLayer = Math.min(sourceLayer, targetLayer);

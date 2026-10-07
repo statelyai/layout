@@ -49,6 +49,7 @@ export interface TrackScene {
 const EPS = 1e-6;
 /** The quality metric's clearance around endpoints two edges share. */
 const TERMINAL_MARGIN = 12;
+const MINSTUB = 0.5;
 type Segment = { a: TrackPoint; b: TrackPoint };
 const horizontal = (s: Segment) => Math.abs(s.a.y - s.b.y) < EPS;
 const vertical = (s: Segment) => Math.abs(s.a.x - s.b.x) < EPS;
@@ -140,7 +141,10 @@ export function separateOpposingTracks(scene: TrackScene): Map<string, TrackPoin
   const allLabels = scene.routes.flatMap((route) => route.labels.map((rect) => ({ route, rect })));
   const states: State[] = scene.routes.map((route) => ({
     route,
-    points: route.points.map((p) => ({ ...p })),
+    // Repeated points carry no segment; dropping them lets every segment move.
+    points: route.points
+      .filter((p, i) => i === 0 || size({ a: route.points[i - 1]!, b: p }) > EPS)
+      .map((p) => ({ ...p })),
     measured: clip(segmentsOf(route.points), route.labels),
   }));
   const terminals = (a: TrackRoute, b: TrackRoute) =>
@@ -246,10 +250,76 @@ export function separateOpposingTracks(scene: TrackScene): Map<string, TrackPoin
   // but only where no crossing-neutral move remains, and then the fewest.
   splitLanes(false);
   separateRoutes(false);
+  reshapeLoops(false);
   separateCheapestFirst();
   // A shared port whose split must cross something takes the cheapest split.
   splitSharedPorts(true);
+  reshapeLoops(true);
   return new Map([...changed].map((state) => [state.route.id, state.points]));
+
+  /**
+   * A self-loop on a port that other edges also use leaves along their line.
+   * Redraw it as a plain rectangle on the same side, its two attachments
+   * slid along the side and the loop turning either way, keeping its depth.
+   */
+  function reshapeLoops(tolerant: boolean) {
+    for (const state of states) {
+      const { route } = state;
+      const node = route.ends[0] === route.ends[1] ? nodes.get(route.ends[0]!) : undefined;
+      if (!node || !route.movable || route.labels.length || state.points.length < 4) continue;
+      const current = measure(state, state.measured);
+      if (current.opposing <= EPS) continue;
+      const [p, q] = state.points as [TrackPoint, TrackPoint];
+      const first = { a: p, b: q };
+      if (size(first) <= EPS || (!horizontal(first) && !vertical(first))) continue;
+      const normal = { x: Math.sign(q.x - p.x), y: Math.sign(q.y - p.y) };
+      const lateral = normal.x !== 0 ? "y" : "x",
+        across = normal.x !== 0 ? "x" : "y";
+      const lo = node[lateral],
+        hi = lo + (lateral === "x" ? node.width : node.height);
+      // The loop leaves from its port's face, at most a spacing off the node border.
+      const side =
+        normal[across] > 0
+          ? node[across] + (across === "x" ? node.width : node.height)
+          : node[across];
+      if ((p[across] - side) * normal[across] < -EPS || Math.abs(p[across] - side) > spacing)
+        continue;
+      const border = p[across];
+      const depth = Math.max(
+        spacing / 2,
+        ...state.points.map((point) => Math.abs(point[across] - border)),
+      );
+      const width = Math.max(
+        spacing / 2,
+        ...state.points.map((point) => Math.abs(point[lateral] - p[lateral])),
+      );
+      let best: { next: Map<State, TrackPoint[]>; key: number[] } | undefined;
+      for (const slide of [0, 1, -1, 2, -2].map((k) => (k * spacing) / 2))
+        for (const turn of [1, -1]) {
+          const start = p[lateral] + slide,
+            end = start + turn * width;
+          if (Math.min(start, end) < lo - EPS || Math.max(start, end) > hi + EPS) continue;
+          const at = (lateralValue: number, out: number) =>
+            ({
+              [lateral]: lateralValue,
+              [across]: border + normal[across] * out,
+            }) as unknown as TrackPoint;
+          const points = [at(start, 0), at(start, depth), at(end, depth), at(end, 0)];
+          const next = new Map([[state, points]]);
+          const result = evaluate(next);
+          if (!result || result.opposing >= -current.opposing + EPS) continue;
+          if (!tolerant && result.crossings > 0) continue;
+          const key = [
+            Math.max(0, result.crossings),
+            result.opposing,
+            result.overlap,
+            Math.abs(slide),
+          ];
+          if (!best || better(key, best.key)) best = { next, key };
+        }
+      if (best) commit(best.next);
+    }
+  }
 
   /** Move one segment of a route at a time to a free parallel track. */
   function separateRoutes(tolerant: boolean) {
@@ -331,7 +401,7 @@ export function separateOpposingTracks(scene: TrackScene): Map<string, TrackPoin
         const keeps = (old: Segment, next: Segment) =>
           (old.b.x - old.a.x) * (next.b.x - next.a.x) +
             (old.b.y - old.a.y) * (next.b.y - next.a.y) >
-            0 && size(next) >= Math.min(size(old), spacing) - EPS;
+            0 && size(next) >= Math.min(size(old), MINSTUB * spacing) - EPS;
         const offsets = Array.from(
           { length: 16 },
           (_, i) => ((i % 2 ? 1 : -1) * (1 + (i >> 1)) * spacing) / 2,
@@ -703,7 +773,7 @@ export function separateOpposingTracks(scene: TrackScene): Map<string, TrackPoin
             b = { a: points[index + 1]!, b: points[index + 2]! };
           const keeps = (old: Segment, now: Segment) =>
             (old.b.x - old.a.x) * (now.b.x - now.a.x) + (old.b.y - old.a.y) * (now.b.y - now.a.y) >
-              0 && size(now) >= Math.min(size(old), spacing) - EPS;
+              0 && size(now) >= Math.min(size(old), MINSTUB * spacing) - EPS;
           if (!keeps(before, a) || !keeps(after, b)) {
             feasible = false;
             break;
