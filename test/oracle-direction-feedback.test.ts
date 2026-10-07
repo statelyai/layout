@@ -402,8 +402,10 @@ describe("ELK feedback-edge parity", () => {
       ...(actual.children ?? []).map((child) => (child.x ?? 0) + (child.width ?? 0)),
     );
     expect(Math.max(...points.map((point) => point.x))).toBeGreaterThan(maximumNodeX);
+    // Inline labels sit on their route; elkjs places this one identically once compaction is off.
     const label = required(feedback.labels?.[0], "feedback label");
-    expect(label.x).toBeGreaterThan(Math.max(...points.map((point) => point.x)));
+    expect(label.x).toBeGreaterThan(maximumNodeX);
+    expect(label.x! + label.width! / 2).toBe(Math.max(...points.map((point) => point.x)));
   });
 
   it("keeps a targetless sink after a node that also has a fixed-side self loop", async () => {
@@ -529,8 +531,9 @@ describe("ELK feedback-edge parity", () => {
     expect(Math.min(...retryPoints.map((point) => point.y))).toBeLessThan(
       Math.min(...nodeRects.map((node) => node.y ?? 0)),
     );
+    // Like elkjs, the loop clears its own node's south side without wrapping the sink.
     expect(Math.max(...retryPoints.map((point) => point.y))).toBeGreaterThan(
-      Math.max(...nodeRects.map((node) => (node.y ?? 0) + (node.height ?? 0))),
+      (idle.y ?? 0) + (idle.height ?? 0),
     );
     expect(Math.max(...retryPoints.map((point) => point.x))).toBeGreaterThan(
       Math.max(...nodeRects.map((node) => (node.x ?? 0) + (node.width ?? 0))),

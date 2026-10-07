@@ -1,0 +1,207 @@
+/*
+ * Copyright (c) 2011, 2019 Kiel University and others.
+ * Native adaptation of ELK InvertedPortProcessor (v0.11.0).
+ * SPDX-License-Identifier: EPL-2.0
+ */
+import type { GraphNode, GraphEdge } from "@statelyai/graph";
+import type { LongEdgeExpansion } from "./long-edges";
+import { inheritCycleRandom } from "./cycle-random";
+import type { PortEdgeList } from "./elk-port-lists";
+
+/** Insert same-layer long-edge dummies before crossing minimization. */
+export function insertInvertedPortDummies(
+  expansion: LongEdgeExpansion,
+  portLists?: ReadonlyMap<string, readonly PortEdgeList[]>,
+): LongEdgeExpansion {
+  const { input } = expansion;
+  const forward =
+    input.direction === "right"
+      ? "EAST"
+      : input.direction === "left"
+        ? "WEST"
+        : input.direction === "down"
+          ? "SOUTH"
+          : "NORTH";
+  const backward = ({ EAST: "WEST", WEST: "EAST", NORTH: "SOUTH", SOUTH: "NORTH" } as const)[
+    forward
+  ];
+  const nodes: GraphNode[] = [...input.graph.nodes];
+  const nodeById = new Map(nodes.map((n) => [n.id, n]));
+  const edges: GraphEdge[] = [];
+  const sizes = new Map(input.sizes);
+  const layers = new Map(expansion.assignment.layerByNodeId);
+  const reversed = new Set<string>();
+  const replacements = new Map<string, string[]>();
+  const originals = new Map<string, GraphEdge>();
+  const dummyIds = new Set<string>();
+  const creationOrder = new Map<string, number[]>();
+  const ownerOrder = new Map(
+    (expansion.assignment.seedOrder ?? input.graph.nodes.map((n) => n.id)).map((id, i) => [id, i]),
+  );
+  const usedEdges = new Set(input.graph.edges.map((e) => e.id));
+  const fixedSide = (
+    node: GraphNode | undefined,
+    portName: string | undefined,
+    source: boolean,
+  ) => {
+    if (!node || node.id.startsWith("__layout_dummy:")) return undefined;
+    const constraints = String(input.nodeSettings?.(node)?.portConstraints ?? "UNDEFINED");
+    if (constraints === "UNDEFINED" || constraints === "FREE") return undefined;
+    const port = node.ports?.find((p) => p.name === portName);
+    if (!port) return source ? forward : backward;
+    return input.portSettings?.(port, node)?.["port.side"];
+  };
+  const dummy = (edge: GraphEdge, at: string, end: string) => {
+    let id = `__layout_dummy:inverted:${edge.id}:${end}`;
+    while (nodeById.has(id)) id += ":";
+    const node: GraphNode = {
+      type: "node",
+      id,
+      data: undefined,
+      width: 0,
+      height: 0,
+      ports: [
+        { name: "input", direction: "in", x: 0, y: 0, width: 0, height: 0, data: undefined },
+        { name: "output", direction: "out", x: 0, y: 0, width: 0, height: 0, data: undefined },
+      ],
+    };
+    nodes.push(node);
+    nodeById.set(id, node);
+    dummyIds.add(id);
+    const reverse = expansion.orientation.reversedEdgeIds.has(edge.id);
+    const incoming = (end === "target") !== reverse;
+    const owner = nodeById.get(at)!;
+    const name = end === "source" ? edge.sourcePort : edge.targetPort;
+    // ELK visits the owner's ports in list order and each port's edges in the
+    // order reversal history left them.
+    const listed = edge.id.replace(/::segment:\d+$/, "");
+    const lists = portLists?.get(at);
+    const port = lists?.findIndex((p) => (incoming ? p.incoming : p.outgoing).includes(listed));
+    creationOrder.set(id, [
+      layers.get(at) ?? 0,
+      ownerOrder.get(at) ?? 0,
+      incoming ? 0 : 1,
+      ...(lists && port !== undefined && port >= 0
+        ? [port, 0, (incoming ? lists[port]!.incoming : lists[port]!.outgoing).indexOf(listed)]
+        : [
+            owner.ports?.findIndex((p) => p.name === name) ?? -1,
+            Number(reverse),
+            input.graph.edges.indexOf(edge),
+          ]),
+    ]);
+    sizes.set(id, { width: 0, height: 0 });
+    layers.set(id, layers.get(at) ?? 0);
+    return id;
+  };
+  for (const edge of input.graph.edges) {
+    const rev = expansion.orientation.reversedEdgeIds.has(edge.id);
+    const source = nodeById.get(edge.sourceId),
+      target = nodeById.get(edge.targetId);
+    const sourceSide = fixedSide(source, edge.sourcePort, true),
+      targetSide = fixedSide(target, edge.targetPort, false);
+    const invertSource =
+      edge.sourceId !== edge.targetId && sourceSide === (rev ? forward : backward);
+    const invertTarget =
+      edge.sourceId !== edge.targetId && targetSide === (rev ? backward : forward);
+    if (!invertSource && !invertTarget) {
+      edges.push(edge);
+      if (rev) reversed.add(edge.id);
+      replacements.set(edge.id, [edge.id]);
+      continue;
+    }
+    const chain = [edge.sourceId];
+    if (invertSource) chain.push(dummy(edge, edge.sourceId, "source"));
+    if (invertTarget) chain.push(dummy(edge, edge.targetId, "target"));
+    chain.push(edge.targetId);
+    const segments: string[] = [];
+    for (let i = 0; i < chain.length - 1; i++) {
+      let id = `${edge.id}::inverted:${i}`;
+      while (usedEdges.has(id)) id += ":";
+      usedEdges.add(id);
+      segments.push(id);
+      originals.set(id, edge);
+      edges.push({
+        ...edge,
+        id,
+        sourceId: chain[i]!,
+        targetId: chain[i + 1]!,
+        sourcePort: i === 0 ? edge.sourcePort : rev ? "input" : "output",
+        targetPort: i === chain.length - 2 ? edge.targetPort : rev ? "output" : "input",
+        // Existing center-label metadata stays on the inter-layer segment.
+        ...(i === (invertSource ? 1 : 0) ? {} : { width: 0, height: 0 }),
+        points: undefined,
+      });
+      if (rev) reversed.add(id);
+    }
+    replacements.set(edge.id, segments);
+  }
+  const incomingEdgeOrderByNodeId = new Map(
+    [...(expansion.incomingEdgeOrderByNodeId ?? [])].map(([id, order]) => [id, [...order]]),
+  );
+  // A source-side inversion retargets the original segment and appends a new
+  // continuation to its target port. Interior chain targets are temporary;
+  // only terminal segments change an authored node's incoming adjacency.
+  for (const node of [...input.graph.nodes].sort(
+    (a, b) => (layers.get(a.id) ?? 0) - (layers.get(b.id) ?? 0),
+  )) {
+    for (const edge of input.graph.edges) {
+      const rev = expansion.orientation.reversedEdgeIds.has(edge.id);
+      const source = rev ? edge.targetId : edge.sourceId;
+      const target = rev ? edge.sourceId : edge.targetId;
+      const sourcePort = rev ? edge.targetPort : edge.sourcePort;
+      if (source !== node.id || fixedSide(node, sourcePort, true) !== backward) continue;
+      const order = incomingEdgeOrderByNodeId.get(target);
+      if (!order || (replacements.get(edge.id)?.length ?? 0) < 2) continue;
+      const original = [...expansion.segmentIdsByEdgeId].find(([, ids]) =>
+        ids.includes(edge.id),
+      )?.[0];
+      if (original && order.includes(original))
+        incomingEdgeOrderByNodeId.set(target, [...order.filter((id) => id !== original), original]);
+    }
+  }
+  if (!dummyIds.size) return expansion;
+  // InvertedPortProcessor visits owners and their ports, rather than the
+  // root edge list. Cycle-reversed incident edges are appended afterward.
+  const orderedDummies = nodes
+    .filter((n) => dummyIds.has(n.id))
+    .sort((a, b) => {
+      const aa = creationOrder.get(a.id)!,
+        bb = creationOrder.get(b.id)!;
+      for (let i = 0; i < aa.length; i++) if (aa[i] !== bb[i]) return aa[i]! - bb[i]!;
+      return 0;
+    });
+  nodes.splice(0, nodes.length, ...input.graph.nodes, ...orderedDummies);
+  return {
+    ...expansion,
+    incomingEdgeOrderByNodeId,
+    input: inheritCycleRandom(input, {
+      ...input,
+      graph: { ...input.graph, nodes, edges },
+      sizes,
+      modelOrderByEdgeId: new Map(
+        edges.map((edge) => {
+          const original = originals.get(edge.id) ?? edge;
+          return [
+            edge.id,
+            input.modelOrderByEdgeId?.get(original.id) ?? input.graph.edges.indexOf(original),
+          ];
+        }),
+      ),
+      nodeSettings: (n) =>
+        dummyIds.has(n.id) ? { portConstraints: "FIXED_POS" } : input.nodeSettings?.(n),
+      portSettings: (p, n) =>
+        dummyIds.has(n.id)
+          ? { "port.side": p.name === "input" ? backward : forward }
+          : input.portSettings?.(p, n),
+      edgeSettings: (e) => input.edgeSettings?.(originals.get(e.id) ?? e),
+    }),
+    orientation: { reversedEdgeIds: reversed },
+    assignment: { ...expansion.assignment, layerByNodeId: layers },
+    segmentIdsByEdgeId: new Map(
+      [...expansion.segmentIdsByEdgeId].map(([id, segs]) => [
+        id,
+        segs.flatMap((s) => replacements.get(s) ?? [s]),
+      ]),
+    ),
+  };
+}

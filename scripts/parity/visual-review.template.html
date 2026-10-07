@@ -1,0 +1,338 @@
+<title>Layout Proof Sheet</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link
+  rel="stylesheet"
+  href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;700&family=Source+Sans+3:wght@400;600&family=IBM+Plex+Mono:wght@400;500&display=swap"
+/>
+<style>
+  /* Layout: a proof sheet. Each case is one row of two drawings, native left and ELK right, with its scores underneath. */
+  :root {
+    --bg: #f3f5f2;
+    --surface: #ffffff;
+    --ink: #1c2422;
+    --muted: #5b6662;
+    --rule: #d9dfdb;
+    --accent: #2c5f8f;
+    --win: #2d7a4c;
+    --loss: #b03f2c;
+    --tie: #6d7672;
+    --node: #e8eef3;
+    --node-stroke: #577a96;
+    --compound: rgba(44, 95, 143, 0.06);
+    --route: #2a3533;
+    --label: #fff6d8;
+    --label-stroke: #b39a4a;
+    --font-display: "Archivo", "Helvetica Neue", Arial, sans-serif;
+    --font-body: "Source Sans 3", "Segoe UI", system-ui, sans-serif;
+    --font-data: "IBM Plex Mono", ui-monospace, "SF Mono", Menlo, monospace;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #141918;
+      --surface: #1c2321;
+      --ink: #e5ebe8;
+      --muted: #9aa6a1;
+      --rule: #2f3936;
+      --accent: #7fb0dd;
+      --win: #6cc28e;
+      --loss: #ef8a74;
+      --tie: #9aa6a1;
+      --node: #233340;
+      --node-stroke: #7fa3c1;
+      --compound: rgba(127, 176, 221, 0.08);
+      --route: #d2dad6;
+      --label: #3a3420;
+      --label-stroke: #c9b064;
+      color-scheme: dark;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #141918;
+    --surface: #1c2321;
+    --ink: #e5ebe8;
+    --muted: #9aa6a1;
+    --rule: #2f3936;
+    --accent: #7fb0dd;
+    --win: #6cc28e;
+    --loss: #ef8a74;
+    --tie: #9aa6a1;
+    --node: #233340;
+    --node-stroke: #7fa3c1;
+    --compound: rgba(127, 176, 221, 0.08);
+    --route: #d2dad6;
+    --label: #3a3420;
+    --label-stroke: #c9b064;
+    color-scheme: dark;
+  }
+  body {
+    background: var(--bg);
+    color: var(--ink);
+    font-family: var(--font-body);
+    font-size: 15px;
+    line-height: 1.5;
+  }
+  main {
+    max-width: 1240px;
+    margin: 0 auto;
+    padding-inline: 20px;
+    padding-block: 32px 64px;
+    display: grid;
+    gap: 40px;
+  }
+  h1,
+  h2,
+  h3 {
+    font-family: var(--font-display);
+    text-wrap: balance;
+    margin: 0;
+  }
+  h1 {
+    font-size: 2rem;
+    letter-spacing: -0.01em;
+  }
+  h2 {
+    font-size: 1.25rem;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 4px 12px;
+  }
+  h2 small {
+    font-family: var(--font-data);
+    font-size: 0.8rem;
+    color: var(--muted);
+    font-weight: 400;
+  }
+  h3 {
+    font-size: 1rem;
+  }
+  .intro {
+    display: grid;
+    gap: 12px;
+    max-width: 70ch;
+  }
+  .intro p {
+    margin: 0;
+    color: var(--muted);
+  }
+  .summary {
+    font-family: var(--font-data);
+    font-size: 0.9rem;
+    color: var(--ink);
+  }
+  .legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px 20px;
+    font-size: 0.85rem;
+    color: var(--muted);
+  }
+  .legend span {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .swatch {
+    width: 14px;
+    height: 10px;
+    border: 1px solid var(--node-stroke);
+    background: var(--node);
+    border-radius: 2px;
+  }
+  .swatch.compound {
+    background: var(--compound);
+    border-style: dashed;
+  }
+  .swatch.label {
+    background: var(--label);
+    border-color: var(--label-stroke);
+  }
+  section {
+    display: grid;
+    gap: 20px;
+  }
+  .case {
+    background: var(--surface);
+    border: 1px solid var(--rule);
+    border-radius: 8px;
+    padding: 16px;
+    display: grid;
+    gap: 14px;
+    min-width: 0;
+  }
+  .case header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+  .case header p {
+    margin: 2px 0 0;
+    color: var(--muted);
+    font-size: 0.85rem;
+  }
+  .pill {
+    font-family: var(--font-data);
+    font-size: 0.75rem;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    padding: 3px 10px;
+    border-radius: 999px;
+    border: 1px solid currentColor;
+    white-space: nowrap;
+  }
+  .pill.win {
+    color: var(--win);
+  }
+  .pill.loss {
+    color: var(--loss);
+  }
+  .pill.tie,
+  .pill.oracle-error {
+    color: var(--tie);
+  }
+  .pair {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 16px;
+  }
+  @media (max-width: 760px) {
+    .pair {
+      grid-template-columns: minmax(0, 1fr);
+    }
+  }
+  figure {
+    margin: 0;
+    display: grid;
+    gap: 6px;
+    min-width: 0;
+  }
+  figcaption {
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--muted);
+    font-weight: 600;
+  }
+  .canvas {
+    border: 1px solid var(--rule);
+    border-radius: 6px;
+    background: var(--bg);
+    padding: 8px;
+    overflow: auto;
+    max-height: 560px;
+  }
+  .canvas svg {
+    display: block;
+    width: 100%;
+    height: auto;
+    min-height: 120px;
+  }
+  .error {
+    color: var(--loss);
+    font-family: var(--font-data);
+    font-size: 0.8rem;
+  }
+  svg .node {
+    fill: var(--node);
+    stroke: var(--node-stroke);
+    stroke-width: 1;
+  }
+  svg .compound {
+    fill: var(--compound);
+    stroke: var(--node-stroke);
+    stroke-width: 1;
+    stroke-dasharray: 4 3;
+  }
+  svg .port {
+    fill: var(--node-stroke);
+  }
+  svg .route {
+    fill: none;
+    stroke: var(--route);
+    stroke-width: 1.2;
+  }
+  svg .arrow {
+    fill: var(--route);
+  }
+  svg .label {
+    fill: var(--label);
+    stroke: var(--label-stroke);
+    stroke-width: 0.6;
+  }
+  svg .label-text,
+  svg .node-name,
+  svg .compound-name {
+    font-family: var(--font-data);
+    font-size: 9px;
+    fill: var(--ink);
+  }
+  svg .compound-name {
+    fill: var(--muted);
+  }
+  .metrics {
+    overflow-x: auto;
+  }
+  table {
+    border-collapse: collapse;
+    font-family: var(--font-data);
+    font-size: 0.8rem;
+    font-variant-numeric: tabular-nums;
+    width: 100%;
+    min-width: 560px;
+  }
+  th,
+  td {
+    text-align: right;
+    padding: 4px 10px;
+    border-bottom: 1px solid var(--rule);
+  }
+  th:first-child,
+  td:nth-child(2) {
+    text-align: left;
+  }
+  thead th {
+    color: var(--muted);
+    font-weight: 500;
+  }
+  tbody th {
+    font-weight: 500;
+  }
+  td.better {
+    color: var(--win);
+    font-weight: 500;
+  }
+  td.worse {
+    color: var(--loss);
+    font-weight: 500;
+  }
+  .defect {
+    color: var(--loss);
+  }
+</style>
+<main>
+  <div class="intro">
+    <h1>Layout Proof Sheet</h1>
+    <p>
+      Native layered layouts beside real ELK 0.11.1 on the same input. Defects (routes through
+      nodes, routes folding back, diagonals, label collisions) must be zero. Crossings, overlap,
+      bends, route length and area are compared in that order; green marks the better engine, red
+      the worse, with a 2% tolerance on lengths and area.
+    </p>
+    <p class="summary">{{summary}} · sampling seed {{seed}}</p>
+    <div class="legend">
+      <span><i class="swatch"></i>Node</span
+      ><span><i class="swatch compound"></i>Compound state</span
+      ><span><i class="swatch label"></i>Edge label</span>
+    </div>
+  </div>
+  <section aria-labelledby="sample-heading">
+    <h2 id="sample-heading">Random sample <small>20 seeds from the retained corpora</small></h2>
+    {{sample}}
+  </section>
+  <section aria-labelledby="statechart-heading">
+    <h2 id="statechart-heading">Stately statecharts <small>test fixtures</small></h2>
+    {{statecharts}}
+  </section>
+</main>

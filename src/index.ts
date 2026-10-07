@@ -96,6 +96,8 @@ export type {
 } from "./layered";
 
 export { c } from "./constraints";
+export { hint, statechartHints } from "./layered/hints";
+export type { AnchorHint, ChainHint, HintStrength, LayoutHint } from "./layered/hints";
 export type {
   LayoutConstraint,
   GeometryReference,

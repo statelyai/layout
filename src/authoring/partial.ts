@@ -92,7 +92,9 @@ export function runPartialLayout<N, E, G, P>(
         throw new LayoutError(`Unknown selected entity: ${id}`, "INVALID_SELECTION");
   }
   const containers = new Set(input.nodes.flatMap((n) => (n.parentId == null ? [] : [n.parentId])));
-  if ([...selectedNodes].some((id) => containers.has(id)))
+  // Only the full-layout constraint phase may move containers: the solver
+  // keeps their children inside and resizes them to fit.
+  if (phase === "selection" && [...selectedNodes].some((id) => containers.has(id)))
     throw new UnsupportedLayoutError(
       "Authoring layout cannot move containers; select leaf nodes or use full layout without geometry constraints",
     );
@@ -288,7 +290,10 @@ export function runPartialLayout<N, E, G, P>(
     geometry === "routes" ? new Set() : selectedEdges,
     context.diagnostics,
   );
-  const moved = graph.nodes.filter((n) => !samePosition(n, byId.get(n.id)!));
+  const moved = graph.nodes.filter((n) => {
+    const before = byId.get(n.id)!;
+    return !samePosition(n, before) || n.width !== before.width || n.height !== before.height;
+  });
   const movedIds = new Set(moved.map((n) => n.id));
   const resultNodes = new Map(graph.nodes.map((n) => [n.id, n]));
   const automatic = new Set<string>();

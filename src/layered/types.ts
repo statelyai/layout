@@ -1,5 +1,7 @@
+import type { NativeRoutingStrategy, RoutingSettings } from "../routing/types";
 import type { EntityRect, Graph, GraphEdge, GraphNode, GraphPort, Point } from "@statelyai/graph";
 import type { LayoutConstraints } from "@statelyai/graph/layout";
+import type { LayoutHint } from "./hints";
 import type { LayoutDirection } from "../types";
 import type { ElkLayeredOptionValueByName, LayeredAdvancedOptions } from "./elk-options";
 
@@ -21,6 +23,8 @@ export interface LayoutPadding {
 }
 
 export interface LayeredPhaseInput {
+  /** Authored edge order retained through label and long-edge expansion. */
+  modelOrderByEdgeId?: ReadonlyMap<string, number>;
   graph: Graph<unknown, unknown, unknown, unknown>;
   sizes: ReadonlyMap<string, NodeSize>;
   direction: LayoutDirection;
@@ -38,12 +42,15 @@ export interface AcyclicOrientation {
 }
 
 export interface LayerAssignment {
+  layerCount?: number;
   layerByNodeId: ReadonlyMap<string, number>;
   /** Layer-internal seed order produced by layerers whose insertion order is observable. */
   seedOrder?: readonly string[];
 }
 
 export interface LayerOrder {
+  /** Canonical clockwise physical port identities, independent of edge reversal. */
+  physicalPortOrderByNodeId?: ReadonlyMap<string, readonly string[]>;
   layers: readonly (readonly string[])[];
   /** Internal ELK sweep state retained for exact port-aware placement. */
   inputPortOrderByNodeId?: ReadonlyMap<string, readonly string[]>;
@@ -57,6 +64,8 @@ export interface NodePlacement {
 
 export interface EdgeRoutes {
   pointsByEdgeId: ReadonlyMap<string, readonly Point[]>;
+  /** Branch points generated on physical orthogonal hypersegments before restoration. */
+  junctionPointsByEdgeId?: ReadonlyMap<string, readonly Point[]>;
   /** ELK spline segment NUB controls retained until long-edge joining. */
   splineNubControlsByEdgeId?: ReadonlyMap<string, readonly Point[]>;
   /** Reversed fixed-side routes that must stay outside the node envelope during compaction. */
@@ -112,12 +121,16 @@ export interface CompoundEdgeAttachment {
 }
 
 export interface LayeredLayoutOptions {
+  /** Replace initial routes after initial placement and routing, without moving geometry. */
+  routing?: { strategy: Pick<NativeRoutingStrategy, "route">; settings?: RoutingSettings };
   direction?: LayoutDirection;
   compound?: (node: GraphNode) => CompoundLayoutOptions | undefined;
   edgeAttachment?: (edge: GraphEdge) => CompoundEdgeAttachment | undefined;
   spacing?: Partial<LayeredSpacing>;
   padding?: number | Partial<LayoutPadding>;
   constraints?: LayoutConstraints;
+  /** Reader-facing preferences applied during layering, ordering and placement. */
+  hints?: readonly LayoutHint[];
   measure?: (node: GraphNode) => NodeSize;
   crossingSweeps?: number;
   strategies?: LayeredStrategies;

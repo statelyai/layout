@@ -108,10 +108,31 @@ export function separateExteriorLabels<E extends ExteriorLabelEdge>({
             right.length - left.length,
         )[0];
     if (!routeTrack) return [];
+    // Long-edge joining can retain several collinear points through a label
+    // dummy. They form one track; moving only one fragment creates diagonals
+    // at the retained junctions.
+    const pointCross = (point: Point) => (horizontalFlow ? point.y : point.x);
+    const pointFlow = (point: Point) => (horizontalFlow ? point.x : point.y);
+    let startIndex = routeTrack.startIndex;
+    let endIndex = startIndex + 1;
+    while (startIndex > 0 && pointCross(edge.points[startIndex - 1]!) === routeTrack.cross)
+      startIndex--;
+    while (
+      endIndex + 1 < edge.points.length &&
+      pointCross(edge.points[endIndex + 1]!) === routeTrack.cross
+    )
+      endIndex++;
+    const trackPoints = edge.points.slice(startIndex, endIndex + 1);
     return [
       {
         edge,
-        exteriorTrack: routeTrack,
+        exteriorTrack: {
+          ...routeTrack,
+          startIndex,
+          endIndex,
+          flowStart: Math.min(...trackPoints.map(pointFlow)),
+          flowEnd: Math.max(...trackPoints.map(pointFlow)),
+        },
         preserveAnchors: exteriorTrack === undefined,
         labelRect,
         lowSide:
@@ -222,17 +243,14 @@ export function separateExteriorLabels<E extends ExteriorLabelEdge>({
     else edge.x += totalDelta;
     if (!exteriorTrack) continue;
     edge.points = edge.points.flatMap((point, index) => {
-      if (index !== exteriorTrack.startIndex && index !== exteriorTrack.startIndex + 1)
-        return [point];
+      if (index < exteriorTrack.startIndex || index > exteriorTrack.endIndex) return [point];
       const shifted = horizontalFlow
         ? { ...point, y: point.y + totalDelta }
         : { ...point, x: point.x + totalDelta };
       // Keep authored endpoint anchors attached when the chosen track ends there.
       return preserveAnchors && index === exteriorTrack.startIndex && index === 0
         ? [point, shifted]
-        : preserveAnchors &&
-            index === exteriorTrack.startIndex + 1 &&
-            index === edge.points.length - 1
+        : preserveAnchors && index === exteriorTrack.endIndex && index === edge.points.length - 1
           ? [shifted, point]
           : [shifted];
     });

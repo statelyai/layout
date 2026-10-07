@@ -8,6 +8,7 @@ export interface SearchContext {
   edgeCost?(a: RoutePoint, b: RoutePoint): number;
   guides?(bounds: RouteBounds): readonly RouteBounds[];
   readonly maxSearchNodes: number;
+  readonly maxGridNodes?: number;
   readonly bendPenalty: number;
   visited: number;
   budgetExceeded: boolean;
@@ -82,6 +83,18 @@ export function findPath(
   context: SearchContext,
   terminals: { incoming?: RoutePoint; outgoing?: RoutePoint } = {},
 ): RoutePoint[] | undefined {
+  const maxGridNodes = context.maxGridNodes ?? context.maxSearchNodes;
+  // Match the admissible lower bound to the route geometry. Euclidean distance
+  // badly underestimates long orthogonal paths and exhausts the search budget.
+  const remainingDistance = (point: RoutePoint) => {
+    const dx = Math.abs(point.x - end.x),
+      dy = Math.abs(point.y - end.y);
+    return style === "orthogonal"
+      ? dx + dy
+      : style === "octilinear"
+        ? Math.max(dx, dy) + (Math.SQRT2 - 1) * Math.min(dx, dy)
+        : distance(point, end);
+  };
   const turnCost = (a: RoutePoint | undefined, b: RoutePoint | undefined) => {
     if (!a || !b || !Math.hypot(a.x, a.y) || !Math.hypot(b.x, b.y)) return 0;
     const dot = a.x * b.x + a.y * b.y,
@@ -134,13 +147,34 @@ export function findPath(
       points = [start, end, ...corners];
       neighbors = () => points.map((_, i) => i);
     } else {
-      const xs = [
-        ...new Set([start.x, end.x, area.x, area.x + area.width, ...corners.map((p) => p.x)]),
-      ].sort((a, b) => a - b);
-      const ys = [
-        ...new Set([start.y, end.y, area.y, area.y + area.height, ...corners.map((p) => p.y)]),
-      ].sort((a, b) => a - b);
-      if (xs.length * ys.length > context.maxSearchNodes) {
+      // Fractional compound offsets can produce almost-identical grid tracks.
+      // Zero-length steps between them bypass terminal direction constraints.
+      const coordinates = (values: number[]) => {
+        const endpoints = values.slice(0, 2);
+        const sorted = [...values].sort((a, b) => a - b);
+        const unique: number[] = [];
+        for (const value of sorted) {
+          if (unique.length && Math.abs(value - unique.at(-1)!) < 1e-8) continue;
+          unique.push(value);
+        }
+        // Preserve exact terminal values so reconstructed leads stay aligned.
+        return unique.map((value) => endpoints.find((p) => Math.abs(p - value) < 1e-8) ?? value);
+      };
+      const xs = coordinates([
+        start.x,
+        end.x,
+        area.x,
+        area.x + area.width,
+        ...corners.map((p) => p.x),
+      ]);
+      const ys = coordinates([
+        start.y,
+        end.y,
+        area.y,
+        area.y + area.height,
+        ...corners.map((p) => p.y),
+      ]);
+      if (xs.length * ys.length > maxGridNodes) {
         context.budgetExceeded = true;
         return undefined;
       }
@@ -164,7 +198,7 @@ export function findPath(
         const unique = new Map(points.map((p) => [`${p.x}:${p.y}`, p]));
         for (const p of extra) unique.set(`${p.x}:${p.y}`, p);
         points = [...unique.values()];
-        if (points.length > context.maxSearchNodes) {
+        if (points.length > maxGridNodes) {
           context.budgetExceeded = true;
           return undefined;
         }
@@ -200,7 +234,7 @@ export function findPath(
             i + width < points.length ? i + width : -1,
           ].filter((v) => v >= 0);
     }
-    if (points.length > context.maxSearchNodes) {
+    if (points.length > maxGridNodes) {
       context.budgetExceeded = true;
       return undefined;
     }
@@ -224,7 +258,7 @@ export function findPath(
     const first = `${from}:-1`;
     costs.set(first, 0);
     vertices.set(first, from);
-    queue.push({ index: from, previous: -1, key: first, cost: 0 }, distance(start, end));
+    queue.push({ index: from, previous: -1, key: first, cost: 0 }, remainingDistance(start));
     while (queue.items.length && context.visited < context.maxSearchNodes) {
       const current = queue.pop();
       if (costs.get(current.key) !== current.cost) continue;
@@ -246,6 +280,14 @@ export function findPath(
         const before =
           current.previous < 0 ? terminals.incoming : delta(points[current.previous]!, a);
         const step = delta(a, b);
+        const reverses = (incoming: RoutePoint | undefined, outgoing: RoutePoint | undefined) =>
+          incoming &&
+          outgoing &&
+          Math.abs(incoming.x * outgoing.y - incoming.y * outgoing.x) < 1e-8 &&
+          incoming.x * outgoing.x + incoming.y * outgoing.y < -1e-8;
+        // Immediate reversal retraces the preceding segment. It is never a
+        // valid bend, including inside the grid or at a terminal lead.
+        if (reverses(before, step) || (next === to && reverses(step, terminals.outgoing))) continue;
         const bend =
           turnCost(before, step) + (next === to ? turnCost(step, terminals.outgoing) : 0);
         const pair = Math.min(current.index, next) * points.length + Math.max(current.index, next);
@@ -260,7 +302,10 @@ export function findPath(
         costs.set(key, cost);
         parents.set(key, current.key);
         vertices.set(key, next);
-        queue.push({ index: next, previous: current.index, key, cost }, cost + distance(b, end));
+        queue.push(
+          { index: next, previous: current.index, key, cost },
+          cost + remainingDistance(b),
+        );
       }
     }
   }
@@ -274,3 +319,40 @@ export function pointsBounds(points: readonly RoutePoint[]): RouteBounds {
     height: 0,
   });
 }
+
+// Search must not consume the terminal leads that are appended afterwards.
+// A distant excursion can retrace a lead even without an immediate reversal.
+export const findPathBetweenLeads = (
+  start: RoutePoint,
+  end: RoutePoint,
+  style: "orthogonal" | "polyline" | "octilinear",
+  ctx: SearchContext,
+  leads: readonly [RoutePoint, RoutePoint][],
+  directions: { incoming?: RoutePoint; outgoing?: RoutePoint } = {},
+) => {
+  const protectedContext = {
+    ...ctx,
+    edgeCost: (p: RoutePoint, q: RoutePoint) => {
+      for (const [from, to] of leads) {
+        const dx = q.x - p.x,
+          dy = q.y - p.y;
+        const length = Math.hypot(dx, dy);
+        if (length < 1e-8) continue;
+        if (
+          Math.abs(dx * (to.y - from.y) - dy * (to.x - from.x)) > 1e-8 * length ||
+          Math.abs(dx * (from.y - p.y) - dy * (from.x - p.x)) > 1e-8 * length
+        )
+          continue;
+        const lo = ((from.x - p.x) * dx + (from.y - p.y) * dy) / length;
+        const hi = ((to.x - p.x) * dx + (to.y - p.y) * dy) / length;
+        if (Math.min(length, Math.max(lo, hi)) - Math.max(0, Math.min(lo, hi)) > 1e-8)
+          return Infinity;
+      }
+      return ctx.edgeCost?.(p, q) ?? 0;
+    },
+  };
+  const result = findPath(start, end, style, protectedContext, directions);
+  ctx.visited = protectedContext.visited;
+  ctx.budgetExceeded = protectedContext.budgetExceeded;
+  return result;
+};

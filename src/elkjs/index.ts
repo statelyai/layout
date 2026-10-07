@@ -1,3 +1,28 @@
+import { hierarchicalPortSides } from "../layered/hierarchical-port-phases";
+import { isPerpendicularPortRestored } from "../layered/hierarchical-port-restoration";
+import { useBottomUpHierarchySweep } from "../layered/hierarchy-sweepiness";
+import {
+  createLayeredScopePipeline,
+  type LayeredCrossingPhase,
+  type LayeredLayoutOptions,
+  type LayerOrder,
+} from "../layered";
+import { createLayerSweepSession } from "../layered/strategies";
+import {
+  minimizeHierarchyCrossings,
+  type HierarchyCrossingScope,
+} from "../layered/hierarchy-crossing";
+import { transferExternalPort, joinCompoundRouteSegments } from "../layered/compound-boundaries";
+import {
+  attachExternalPortDummy,
+  createExternalPortDummy,
+  externalPortDummyOf,
+  type ExternalPortConstraints,
+  type ExternalPortSide,
+} from "../layered/external-port-dummy";
+import { isBetterLayout, measureLayout } from "./layout-quality";
+import { applyOrthogonalJunctions } from "./orthogonal-junctions";
+import { separateElkOpposingTracks } from "./opposing-tracks";
 import { createGraph, type Graph, type VisualGraph } from "@statelyai/graph";
 import {
   elkLayeredOptionDefinitions,
@@ -28,6 +53,7 @@ import type {
 } from "./public-types";
 
 function isLayoutEdgeLabel(label: ElkLabel): boolean {
+  // Unlike ELK, a dimensioned label without text still reserves space: apps often render the text themselves.
   return (
     getBooleanOption(label.layoutOptions ?? {}, "noLayout") !== true &&
     (Boolean(label.text) || label.width !== undefined || label.height !== undefined)
@@ -56,6 +82,15 @@ export type {
   LaidOutElkNode,
 } from "./public-types";
 export type { ElkId, ElkLogging } from "./types";
+
+interface PreparedElkScope {
+  graph: ElkNode;
+  native: Graph;
+  phase?: LayeredCrossingPhase;
+  options?: LayeredLayoutOptions;
+  children: ReadonlyMap<string, PreparedElkScope>;
+  finish(orders?: ReadonlyMap<PreparedElkScope, LayerOrder>): Promise<ElkNode>;
+}
 
 export default class ELK {
   readonly #options: ElkConstructorArguments;
@@ -128,17 +163,74 @@ export default class ELK {
     arguments_?: PublicElkLayoutArguments,
   ): Promise<PublicElkNode & PublicLaidOutElkNode<T>>;
   layout<T extends ElkNode>(graph: T, arguments_?: ElkLayoutArguments): Promise<LaidOutElkNode<T>>;
-  layout<T extends ElkNode>(
+  async layout<T extends ElkNode>(
     graph: T,
     arguments_: ElkLayoutArguments = {},
   ): Promise<LaidOutElkNode<T>> {
-    return this.#layout(graph, arguments_);
+    const options = { ...this.#options.defaultLayoutOptions, ...arguments_.layoutOptions };
+    const variants = crossingVariants(options, graph);
+    const pristine = variants.length ? structuredClone(graph) : undefined;
+    let best = separated(await this.#layoutWithoutDefectiveCompaction(graph, arguments_), options);
+    if (!pristine) return best;
+    // A compound layout with defects tries other random seeds and keeps the
+    // best measured result. Above ELK's default thoroughness, every compound
+    // layout does, trading time for fewer crossings and bends.
+    let quality = measureLayout(best);
+    if (quality.defects === 0 && !thorough(options, graph)) return best;
+    for (const variant of variants) {
+      const candidate = separated(
+        await this.#layoutWithoutDefectiveCompaction(structuredClone(pristine), {
+          ...arguments_,
+          layoutOptions: { ...arguments_.layoutOptions, ...variant },
+        }),
+        options,
+      );
+      const candidateQuality = measureLayout(candidate);
+      if (isBetterLayout(candidateQuality, quality)) {
+        best = candidate;
+        quality = candidateQuality;
+      }
+    }
+    return best;
+  }
+
+  async #layoutWithoutDefectiveCompaction<T extends ElkNode>(
+    graph: T,
+    arguments_: ElkLayoutArguments,
+  ): Promise<LaidOutElkNode<T>> {
+    const compacting = usesPostCompaction(
+      { ...this.#options.defaultLayoutOptions, ...arguments_.layoutOptions },
+      graph,
+    );
+    const pristine = compacting ? structuredClone(graph) : undefined;
+    const result = await this.#layout(graph, arguments_);
+    const defects = pristine ? measureLayout(result).defects : 0;
+    if (!pristine || defects === 0) return result;
+    // Post-compaction is an optimization; it must not route edges through nodes
+    // or fold a route back onto itself.
+    const strategy = { "elk.layered.compaction.postCompaction.strategy": "NONE" };
+    const uncompacted = await this.#layout(disablePostCompaction(pristine), {
+      ...arguments_,
+      layoutOptions: { ...arguments_.layoutOptions, ...strategy },
+    });
+    return measureLayout(uncompacted).defects < defects ? uncompacted : result;
   }
 
   async #layout<T extends ElkNode>(
     graph: T,
     arguments_: ElkLayoutArguments = {},
+    compoundLayout = false,
   ): Promise<LaidOutElkNode<T>> {
+    const prepared = await this.#prepareLayout(graph, arguments_, compoundLayout);
+    const orders = coordinatePreparedScopes(prepared);
+    return (await prepared.finish(orders)) as LaidOutElkNode<T>;
+  }
+
+  async #prepareLayout<T extends ElkNode>(
+    graph: T,
+    arguments_: ElkLayoutArguments = {},
+    compoundLayout = false,
+  ): Promise<PreparedElkScope> {
     const startedAt = performance.now();
     if (graph === undefined || graph === null) {
       throw new TypeError("Missing mandatory parameter: graph");
@@ -201,6 +293,8 @@ export default class ELK {
         `org.eclipse.elk.core.UnsupportedConfigurationException: Layout algorithm '${requestedAlgorithm}' not found`,
       );
     }
+    const preparedChildren = new Map<string, PreparedElkScope>();
+    const finishChildren: Array<() => Promise<void>> = [];
     const hasHierarchy = (graph.children ?? []).some((child) => (child.children?.length ?? 0) > 0);
     const insideSelfLoopBaseHeightByNodeId = new Map<string, number>();
     const hierarchyRestorations: Array<{
@@ -210,10 +304,16 @@ export default class ELK {
       source?: ElkId;
       target?: ElkId;
     }> = [];
+    const boundaryRoutes = new Map<
+      ElkEdge,
+      {
+        source?: { owner: ElkNode; points: ElkPoint[]; junctionPoints?: ElkPoint[] };
+        target?: { owner: ElkNode; points: ElkPoint[]; junctionPoints?: ElkPoint[] };
+      }
+    >();
     const syntheticPortIds = new Set<string>();
     const authoredPortsByCompound = new Map<ElkNode, ElkPort[] | undefined>();
     const authoredOptionsByCompound = new Map<ElkNode, Record<string, unknown> | undefined>();
-    const hierarchyBoundaryCountByEdge = new Map<ElkEdge, number>();
     const originalHierarchyEndpoints = new Map(
       (graph.edges ?? []).map((edge) => [
         edge,
@@ -227,7 +327,6 @@ export default class ELK {
         },
       ]),
     );
-    let hasHierarchyCrossingEdges = false;
     const hierarchyHandling = getOption(layoutOptions, "hierarchyHandling");
     const topdownLayout = getBooleanOption(layoutOptions, "topdownLayout") === true;
     const separateHierarchy =
@@ -296,17 +395,15 @@ export default class ELK {
         );
       }
     } else if (hasHierarchy && !separateHierarchy) {
-      // The probability only chooses between equivalent top-down and bottom-up
-      // sweep schedules. The deterministic proxy decomposition below preserves
-      // the resulting exported order for either schedule.
-      void getNumberOption(layoutOptions, "layered.crossingMinimization.hierarchicalSweepiness");
+      // Prepare boundary identities before coordinating parent and child crossing sweeps.
+      const scopeSegmentOrder =
+        segmentOrderByScope.get(graph) ??
+        elkSegmentOrder(graph, graph, originalHierarchyEndpoints, false);
       for (const child of graph.children ?? []) {
         if ((child.children?.length ?? 0) === 0) continue;
-        const descendantById = new Map<string, ElkNode>();
         const descendantOwnerByEndpointId = new Map<string, ElkNode>();
         const collectDescendants = (node: ElkNode): void => {
           for (const descendant of node.children ?? []) {
-            descendantById.set(String(descendant.id), descendant);
             descendantOwnerByEndpointId.set(String(descendant.id), descendant);
             for (const port of descendant.ports ?? []) {
               descendantOwnerByEndpointId.set(String(port.id), descendant);
@@ -321,198 +418,611 @@ export default class ELK {
             descendantOwnerByEndpointId.has(sourceId) && descendantOwnerByEndpointId.has(targetId)
           );
         });
-        const crossingEdges = (graph.edges ?? []).filter((edge) => {
+        for (const edge of child.edges ?? [])
+          if (!originalHierarchyEndpoints.has(edge))
+            originalHierarchyEndpoints.set(edge, {
+              sourceId: String(edge.sources?.[0] ?? edge.source),
+              targetId: String(edge.targets?.[0] ?? edge.target),
+              sources: edge.sources,
+              targets: edge.targets,
+              source: edge.source,
+              target: edge.target,
+            });
+        const crossingEdges = [...(graph.edges ?? []), ...(child.edges ?? [])].filter((edge) => {
           const { sourceId, targetId } = originalHierarchyEndpoints.get(edge)!;
           const sourceInside = descendantOwnerByEndpointId.has(sourceId);
           const targetInside = descendantOwnerByEndpointId.has(targetId);
           return sourceInside !== targetInside;
         });
-        for (const edge of crossingEdges) {
-          hierarchyBoundaryCountByEdge.set(edge, (hierarchyBoundaryCountByEdge.get(edge) ?? 0) + 1);
-        }
-        hasHierarchyCrossingEdges ||= crossingEdges.length > 0;
+        // CompoundGraphPreprocessor creates boundary ports bottom-up: ports
+        // exported by nested groups first, then direct children's ports in
+        // port order, outgoing edges before incoming edges.
+        const boundaryRank = new Map(
+          elkBoundaryEdgeOrder(child, graph, originalHierarchyEndpoints).map((edge, index) => [
+            edge,
+            index,
+          ]),
+        );
+        crossingEdges.sort(
+          (a, b) =>
+            (boundaryRank.get(a) ?? Number.MAX_SAFE_INTEGER) -
+            (boundaryRank.get(b) ?? Number.MAX_SAFE_INTEGER),
+        );
         const mergeHierarchyEdges =
           getBooleanOption(layoutOptions, "layered.mergeHierarchyEdges") !== false;
-        // The option changes the number of internal external-port dummies. They
-        // are removed before elkjs serialization and do not alter the exported
-        // geometry for a shared hierarchy boundary.
-        void mergeHierarchyEdges;
+        // ELK merges only edges incident to the same descendant port.
         const proxyByKind = new Map<string, ElkNode>();
-        const proxyFor = (kind: "input" | "output"): ElkNode => {
-          const key = kind;
+        const implicitOwnPorts = new Map<ElkEdge, ElkPort>();
+        const ownPortFor = (edge: ElkEdge): ElkPort | undefined => {
+          const e = originalHierarchyEndpoints.get(edge)!;
+          const outside = descendantOwnerByEndpointId.has(e.sourceId) ? e.targetId : e.sourceId;
+          if (e.sourceId === String(child.id) || e.targetId === String(child.id)) {
+            let port = implicitOwnPorts.get(edge);
+            if (!port) {
+              const direction = getDirection(layoutOptions);
+              const sourceInside = e.sourceId === String(child.id);
+              const side = sourceInside
+                ? ({ right: "EAST", left: "WEST", down: "SOUTH", up: "NORTH" } as const)[direction]
+                : ({ right: "WEST", left: "EAST", down: "NORTH", up: "SOUTH" } as const)[direction];
+              port = {
+                id: `__native_hierarchy_own_${String(child.id)}_${implicitOwnPorts.size}`,
+                width: 0,
+                height: 0,
+                layoutOptions: { "elk.port.side": side },
+              };
+              implicitOwnPorts.set(edge, port);
+              syntheticPortIds.add(String(port.id));
+            }
+            return child.ports?.find((p) => p.id === port!.id) ?? port;
+          }
+          return child.ports?.find((p) => String(p.id) === outside);
+        };
+
+        const proxyKey = (kind: "input" | "output", edge: ElkEdge): string => {
+          const own = ownPortFor(edge);
+          if (own) return JSON.stringify(["authored", own.id]);
+          const endpoints = originalHierarchyEndpoints.get(edge)!;
+          const endpoint = kind === "output" ? endpoints.sourceId : endpoints.targetId;
+          const owner = descendantOwnerByEndpointId.get(endpoint);
+          const explicitPort = owner?.ports?.some((port) => String(port.id) === endpoint);
+          return JSON.stringify([
+            kind,
+            mergeHierarchyEdges && explicitPort ? endpoint : String(edge.id),
+          ]);
+        };
+        const createBoundaryProxy = (
+          key: string,
+          kind: "input" | "output",
+          own: ElkPort | undefined,
+          netFlow: number,
+        ): ElkNode => {
           let proxy = proxyByKind.get(key);
           if (!proxy) {
-            proxy = {
-              id: `__native_hierarchy_${String(child.id)}_${key.replace(/[^a-zA-Z0-9]/g, "_")}`,
-              width: 0,
-              height: 0,
-            };
+            const direction = getDirection({ ...layoutOptions, ...child.layoutOptions });
+            const authoredAnchor = own
+              ? (getElementLayeredSettings(own.layoutOptions ?? {})["port.anchor"] as
+                  | ElkPoint
+                  | undefined)
+              : undefined;
+            const origin = createExternalPortDummy({
+              constraints: (getOption(child.layoutOptions ?? {}, "portConstraints") ??
+                "FREE") as ExternalPortConstraints,
+              side: own
+                ? ((getOption(own.layoutOptions ?? {}, "port.side") ??
+                    (kind === "output" ? "EAST" : "WEST")) as ExternalPortSide)
+                : kind === "output"
+                  ? "EAST"
+                  : "WEST",
+              position: { x: own?.x ?? 0, y: own?.y ?? 0 },
+              anchor: authoredAnchor,
+              index: own ? getNumberOption(own.layoutOptions ?? {}, "port.index") : undefined,
+              direction: direction.toUpperCase() as "RIGHT" | "LEFT" | "DOWN" | "UP",
+              netFlow,
+              borderOffset: own
+                ? (getNumberOption(own.layoutOptions ?? {}, "port.borderOffset") ?? 0)
+                : (getNumberOption(layoutOptions, "spacing.edgeEdge") ?? 10) / 2,
+              size: { width: own?.width ?? 0, height: own?.height ?? 0 },
+            });
+            if (own) origin.parentPortId = String(own.id);
+            const id = `__native_hierarchy_${String(child.id)}_${proxyByKind.size}`;
+            proxy = attachExternalPortDummy(
+              {
+                id,
+                width: origin.width,
+                height: origin.height,
+                layoutOptions: {
+                  "elk.portConstraints": origin.constraints,
+                  "elk.layered.layering.layerConstraint":
+                    origin.side ===
+                    ({ right: "EAST", left: "WEST", down: "SOUTH", up: "NORTH" } as const)[
+                      direction
+                    ]
+                      ? "LAST_SEPARATE"
+                      : origin.side ===
+                          ({ right: "WEST", left: "EAST", down: "NORTH", up: "SOUTH" } as const)[
+                            direction
+                          ]
+                        ? "FIRST_SEPARATE"
+                        : undefined,
+                },
+                ports: [
+                  {
+                    id: `${id}:boundary`,
+                    x: origin.port.x,
+                    y: origin.port.y,
+                    width: 0,
+                    height: 0,
+                    layoutOptions: { "elk.port.side": origin.port.side },
+                  },
+                ],
+              },
+              origin,
+            );
             proxyByKind.set(key, proxy);
           }
           return proxy;
         };
+        const ownedPortNetFlow = (id: string): number => {
+          let votes = 0;
+          for (const edge of originalHierarchyEndpoints.values()) {
+            if (edge.sourceId === id)
+              votes += descendantOwnerByEndpointId.has(edge.targetId) ? -1 : 1;
+            if (edge.targetId === id)
+              votes += descendantOwnerByEndpointId.has(edge.sourceId) ? 1 : -1;
+          }
+          return votes;
+        };
+        const proxyFor = (kind: "input" | "output", edge: ElkEdge): ElkNode => {
+          const own = ownPortFor(edge);
+          const flow = implicitOwnPorts.has(edge)
+            ? kind === "output"
+              ? 1
+              : -1
+            : own
+              ? ownedPortNetFlow(String(own.id))
+              : kind === "output"
+                ? 1
+                : -1;
+          return createBoundaryProxy(proxyKey(kind, edge), kind, own, flow);
+        };
+        // ELK imports ancestor edges before descendant-local edges. Preserve
+        // that implicit port creation order through child phase preparation.
         const temporaryEdges: ElkEdge[] = [
-          ...(child.edges ?? []),
-          ...internalEdges.filter(
-            (edge) =>
-              !(child.edges ?? []).some((candidate) => String(candidate.id) === String(edge.id)),
-          ),
           ...crossingEdges.map((edge) => {
             const { sourceId, targetId } = originalHierarchyEndpoints.get(edge)!;
             const sourceInside = descendantOwnerByEndpointId.has(sourceId);
-            const proxy = proxyFor(sourceInside ? "output" : "input");
-            return {
+            const proxy = proxyFor(sourceInside ? "output" : "input", edge);
+            const segment: ElkEdge = {
               ...edge,
               id: `__native_hierarchy_edge_${String(child.id)}_${String(edge.id)}`,
-              sources: [sourceInside ? sourceId : proxy.id!],
-              targets: [sourceInside ? proxy.id! : targetId],
+              sources: [sourceInside ? sourceId : proxy.ports![0]!.id!],
+              targets: [sourceInside ? proxy.ports![0]!.id! : targetId],
               source: undefined,
               target: undefined,
               sections: undefined,
             };
+            originalEdgeId.set(segment, originalEdgeId.get(edge) ?? String(edge.id));
+            return segment;
           }),
+          ...(child.edges ?? []).filter((edge) => !crossingEdges.includes(edge)),
+          ...internalEdges.filter(
+            (edge) =>
+              !(child.edges ?? []).some((candidate) => String(candidate.id) === String(edge.id)),
+          ),
         ];
+        const hasExternalPorts = proxyByKind.size > 0;
+        const inactiveAuthoredPorts: Array<{ port: ElkPort; proxy: ElkNode }> = [];
+        if (hasExternalPorts) {
+          for (const port of child.ports ?? []) {
+            const key = JSON.stringify(["authored", port.id]);
+            if (proxyByKind.has(key)) continue;
+            const flow = ownedPortNetFlow(String(port.id));
+            inactiveAuthoredPorts.push({
+              port,
+              proxy: createBoundaryProxy(key, flow >= 0 ? "output" : "input", port, flow),
+            });
+          }
+        }
+        const outsideNodeEdges = !hasExternalPorts
+          ? []
+          : (graph.edges ?? []).filter((edge) => {
+              const e = originalHierarchyEndpoints.get(edge)!;
+              return (
+                (e.sourceId === String(child.id) || e.targetId === String(child.id)) &&
+                !descendantOwnerByEndpointId.has(e.sourceId) &&
+                !descendantOwnerByEndpointId.has(e.targetId)
+              );
+            });
+        for (const edge of outsideNodeEdges) {
+          const e = originalHierarchyEndpoints.get(edge)!;
+          proxyFor(e.sourceId === String(child.id) ? "output" : "input", edge);
+        }
         const temporaryChild: ElkNode = {
           ...child,
+          layoutOptions: proxyByKind.size
+            ? { ...child.layoutOptions, "elk.portConstraints": "FIXED_SIDE" }
+            : child.layoutOptions,
           children: [...(child.children ?? []), ...proxyByKind.values()],
           edges: temporaryEdges,
         };
-        await this.#layout(temporaryChild, {
-          ...arguments_,
-          layoutOptions: {
-            ...arguments_.layoutOptions,
-            hierarchyHandling: "INCLUDE_CHILDREN",
+        const childSegmentOrder = elkSegmentOrder(child, graph, originalHierarchyEndpoints, true);
+        segmentOrderByScope.set(temporaryChild, childSegmentOrder);
+        // Boundary segments copied into the child scope keep their original identity.
+        for (const edge of temporaryEdges) {
+          const id = originalEdgeId.get(edge);
+          const rank = id === undefined ? undefined : childSegmentOrder.get(id);
+          if (rank !== undefined) hierarchySegmentRank.set(edge, rank);
+        }
+        const preparedChild = await this.#prepareLayout(
+          temporaryChild,
+          {
+            ...arguments_,
+            layoutOptions: {
+              ...arguments_.layoutOptions,
+              // The compound's own direction wins over the inherited one.
+              direction: getDirection(
+                getOption(child.layoutOptions ?? {}, "direction") === undefined
+                  ? layoutOptions
+                  : child.layoutOptions!,
+              ).toUpperCase(),
+              hierarchyHandling: "INCLUDE_CHILDREN",
+            },
+            logging: false,
+            measureExecutionTime: false,
           },
-          logging: false,
-          measureExecutionTime: false,
-        });
-        const childPadding = parsePadding(
-          getOption({ ...layoutOptions, ...child.layoutOptions }, "padding"),
-          12,
+          true,
         );
-        if (proxyByKind.has("input")) {
-          const direction = getDirection(layoutOptions);
-          const horizontal = direction === "right" || direction === "left";
-          const increasing = direction === "right" || direction === "down";
-          if (increasing) {
-            const minimumFlow = Math.min(
-              ...(child.children ?? []).map((node) => (horizontal ? (node.x ?? 0) : (node.y ?? 0))),
-            );
-            const desiredFlow = horizontal ? childPadding.left : childPadding.top;
-            const delta = desiredFlow - minimumFlow;
-            for (const node of child.children ?? []) {
-              if (horizontal) node.x = (node.x ?? 0) + delta;
-              else node.y = (node.y ?? 0) + delta;
-            }
-            for (const edge of temporaryEdges) {
-              for (const section of edge.sections ?? []) {
-                for (const point of [
-                  section.startPoint,
-                  ...(section.bendPoints ?? []),
-                  section.endPoint,
-                ]) {
-                  if (horizontal) point.x += delta;
-                  else point.y += delta;
-                }
-              }
-            }
-          }
-        }
-        for (const internalEdge of internalEdges) {
-          const temporary = temporaryEdges.find(
-            (candidate) => String(candidate.id) === String(internalEdge.id),
-          );
-          if (temporary?.sections) internalEdge.sections = temporary.sections;
-        }
-        child.width =
-          Math.max(0, ...(child.children ?? []).map((node) => (node.x ?? 0) + (node.width ?? 0))) +
-          childPadding.right;
-        child.height =
-          Math.max(0, ...(child.children ?? []).map((node) => (node.y ?? 0) + (node.height ?? 0))) +
-          childPadding.bottom;
-
-        const relativeRect = (id: string): ElkShape | undefined => {
-          const owner = descendantOwnerByEndpointId.get(id);
-          if (!owner) return undefined;
-          const path: ElkNode[] = [];
-          const visit = (parent: ElkNode): boolean => {
-            for (const candidate of parent.children ?? []) {
-              path.push(candidate);
-              if (candidate === owner || visit(candidate)) return true;
-              path.pop();
-            }
-            return false;
-          };
-          if (!visit(child)) return undefined;
-          const port = owner.ports?.find((candidate) => String(candidate.id) === id);
-          const ownerX = path.reduce((sum, node) => sum + (node.x ?? 0), 0);
-          const ownerY = path.reduce((sum, node) => sum + (node.y ?? 0), 0);
-          if (port) {
-            return {
-              x: ownerX + (port.x ?? 0) + (port.width ?? 0) / 2,
-              y: ownerY + (port.y ?? 0) + (port.height ?? 0) / 2,
-              width: 0,
-              height: 0,
-            };
-          }
-          return {
-            x: ownerX,
-            y: ownerY,
-            width: path.at(-1)?.width ?? 0,
-            height: path.at(-1)?.height ?? 0,
-          };
-        };
+        preparedChildren.set(String(child.id), preparedChild);
         authoredPortsByCompound.set(child, child.ports);
         authoredOptionsByCompound.set(child, child.layoutOptions);
-        const ports = [...(child.ports ?? [])];
+        const initialPorts = (child.ports ?? []).map((port) => ({
+          ...port,
+          layoutOptions: port.layoutOptions ? { ...port.layoutOptions } : undefined,
+        }));
         for (const edge of crossingEdges) {
-          const original = originalHierarchyEndpoints.get(edge)!;
-          const { sourceId, targetId } = original;
-          const sourceInside = descendantOwnerByEndpointId.has(sourceId);
-          const descendantId = sourceInside ? sourceId : targetId;
-          const rect = relativeRect(descendantId);
-          if (!rect) continue;
-          const portId = `__native_hierarchy_port_${String(child.id)}_${String(edge.id)}`;
-          syntheticPortIds.add(portId);
-          const direction = getDirection(layoutOptions);
-          const outgoing = sourceInside;
-          const flowForward = direction === "right" || direction === "down";
-          const useFarSide = outgoing === flowForward;
-          ports.push({
-            id: portId,
-            width: 0,
-            height: 0,
-            x:
-              direction === "right" || direction === "left"
-                ? (rect.x ?? 0) + (useFarSide ? (rect.width ?? 0) : 0)
-                : (rect.x ?? 0) + (rect.width ?? 0) / 2,
-            y:
-              direction === "down" || direction === "up"
-                ? (rect.y ?? 0) + (useFarSide ? (rect.height ?? 0) : 0)
-                : (rect.y ?? 0) + (rect.height ?? 0) / 2,
-          });
-          if (!hierarchyRestorations.some((restoration) => restoration.edge === edge)) {
-            hierarchyRestorations.push({ edge, ...original });
+          const own = ownPortFor(edge);
+          if (own) {
+            const original = originalHierarchyEndpoints.get(edge)!;
+            const sourceInside = descendantOwnerByEndpointId.has(original.sourceId);
+            const origin = externalPortDummyOf(
+              proxyByKind.get(proxyKey(sourceInside ? "output" : "input", edge))!,
+            )!;
+            let port = initialPorts.find((p) => p.id === own.id);
+            if (!port) {
+              port = { ...own, layoutOptions: { ...own.layoutOptions } };
+              initialPorts.push(port);
+            }
+            port.layoutOptions = { ...port.layoutOptions, "elk.port.side": origin.side };
+            continue;
           }
+          const original = originalHierarchyEndpoints.get(edge)!;
+          const sourceInside = descendantOwnerByEndpointId.has(original.sourceId);
+          const proxy = proxyByKind.get(proxyKey(sourceInside ? "output" : "input", edge))!;
+          const origin = externalPortDummyOf(proxy)!;
+          const portId = `${String(proxy.id)}:parent`;
+          syntheticPortIds.add(portId);
+          if (!initialPorts.some((port) => port.id === portId))
+            initialPorts.push({
+              id: portId,
+              width: origin.externalSize.width,
+              height: origin.externalSize.height,
+              x: 0,
+              y: 0,
+              layoutOptions: {
+                "elk.port.side": origin.side,
+                "elk.port.borderOffset": origin.borderOffset,
+              },
+            });
+          if (!hierarchyRestorations.some((restoration) => restoration.edge === edge))
+            hierarchyRestorations.push({ edge, ...original });
           if (sourceInside) edge.sources = [portId];
           else edge.targets = [portId];
+          const rank = scopeSegmentOrder.get(originalEdgeId.get(edge) ?? String(edge.id));
+          if (rank !== undefined) hierarchySegmentRank.set(edge, rank);
           edge.source = undefined;
           edge.target = undefined;
         }
-        child.ports = ports;
-        child.layoutOptions = { ...child.layoutOptions, "elk.portConstraints": "FIXED_POS" };
-        const insideLoopCount = (graph.edges ?? []).filter((edge) =>
-          isInsideSelfLoop(graph, edge, String(child.id)),
-        ).length;
-        if (insideLoopCount > 0) {
-          const baseHeight = child.height ?? 0;
-          insideSelfLoopBaseHeightByNodeId.set(String(child.id), baseHeight);
-          child.height = baseHeight + insideLoopCount * 11;
+        for (const { port, proxy } of inactiveAuthoredPorts) {
+          const actual = initialPorts.find((p) => p.id === port.id)!;
+          actual.layoutOptions = {
+            ...actual.layoutOptions,
+            "elk.port.side": externalPortDummyOf(proxy)!.side,
+          };
         }
+        for (const edge of outsideNodeEdges) {
+          const original = originalHierarchyEndpoints.get(edge)!;
+          const source = original.sourceId === String(child.id);
+          const proxy = proxyFor(source ? "output" : "input", edge),
+            own = ownPortFor(edge)!;
+          const origin = externalPortDummyOf(proxy)!;
+          if (!initialPorts.some((p) => p.id === own.id))
+            initialPorts.push({
+              ...own,
+              layoutOptions: { ...own.layoutOptions, "elk.port.side": origin.side },
+            });
+          if (!hierarchyRestorations.some((r) => r.edge === edge))
+            hierarchyRestorations.push({ edge, ...original });
+          if (source) edge.sources = [own.id!];
+          else edge.targets = [own.id!];
+          edge.source = undefined;
+          edge.target = undefined;
+        }
+        child.ports = initialPorts;
+        child.layoutOptions = {
+          ...child.layoutOptions,
+          "elk.portConstraints":
+            // ELK fixes physical boundary sides after introducing hierarchy dummies.
+            // Authored constraints are restored when finishing the public graph.
+            crossingEdges.length > 0 || outsideNodeEdges.length > 0
+              ? "FIXED_SIDE"
+              : (getOption(authoredOptionsByCompound.get(child) ?? {}, "portConstraints") ??
+                "FREE"),
+        };
+        finishChildren.push(async () => {
+          await preparedChild.finish(activeOrders);
+          const childPadding = parsePadding(
+            getOption({ ...layoutOptions, ...child.layoutOptions }, "padding"),
+            12,
+          );
+          for (const internalEdge of internalEdges) {
+            const temporary = temporaryEdges.find(
+              (candidate) => String(candidate.id) === String(internalEdge.id),
+            );
+            if (temporary?.sections) {
+              internalEdge.sections = temporary.sections;
+              // A nested scope may own the route (an edge from a compound's
+              // own port to its child); keep that coordinate frame.
+              internalEdge.container = (temporary as { container?: string }).container ?? child.id;
+            }
+          }
+          const childDirection = getDirection({ ...layoutOptions, ...child.layoutOptions });
+          const horizontalChild = childDirection === "right" || childDirection === "left";
+          // External dummy positions retain any routing corridor at the boundary.
+          const restoredPerpendicular = [...proxyByKind.values()].some(isPerpendicularPortRestored);
+          child.width = restoredPerpendicular
+            ? temporaryChild.width
+            : horizontalChild
+              ? Math.max(
+                  0,
+                  ...(temporaryChild.children ?? []).map(
+                    (node) => (node.x ?? 0) + (node.width ?? 0),
+                  ),
+                ) + childPadding.right
+              : temporaryChild.width;
+          child.height = restoredPerpendicular
+            ? temporaryChild.height
+            : horizontalChild
+              ? temporaryChild.height
+              : Math.max(
+                  0,
+                  ...(temporaryChild.children ?? []).map(
+                    (node) => (node.y ?? 0) + (node.height ?? 0),
+                  ),
+                ) + childPadding.bottom;
+
+          const relativeRect = (id: string): ElkShape | undefined => {
+            const owner = descendantOwnerByEndpointId.get(id);
+            if (!owner) return undefined;
+            const path: ElkNode[] = [];
+            const visit = (parent: ElkNode): boolean => {
+              for (const candidate of parent.children ?? []) {
+                path.push(candidate);
+                if (candidate === owner || visit(candidate)) return true;
+                path.pop();
+              }
+              return false;
+            };
+            if (!visit(child)) return undefined;
+            const port = owner.ports?.find((candidate) => String(candidate.id) === id);
+            const ownerX = path.reduce((sum, node) => sum + (node.x ?? 0), 0);
+            const ownerY = path.reduce((sum, node) => sum + (node.y ?? 0), 0);
+            if (port) {
+              return {
+                x: ownerX + (port.x ?? 0) + (port.width ?? 0) / 2,
+                y: ownerY + (port.y ?? 0) + (port.height ?? 0) / 2,
+                width: 0,
+                height: 0,
+              };
+            }
+            return {
+              x: ownerX,
+              y: ownerY,
+              width: path.at(-1)?.width ?? 0,
+              height: path.at(-1)?.height ?? 0,
+            };
+          };
+          const ports = (authoredPortsByCompound.get(child) ?? []).map(
+            (original) => child.ports?.find((port) => port.id === original.id) ?? original,
+          );
+          for (const edge of crossingEdges) {
+            const original = originalHierarchyEndpoints.get(edge)!;
+            const { sourceId, targetId } = original;
+            const sourceInside = descendantOwnerByEndpointId.has(sourceId);
+            const descendantId = sourceInside ? sourceId : targetId;
+            const rect = relativeRect(descendantId);
+            if (!rect) continue;
+            const internalEdge = temporaryEdges.find(
+              (candidate) =>
+                String(candidate.id) ===
+                `__native_hierarchy_edge_${String(child.id)}_${String(edge.id)}`,
+            );
+            const internalRoute = internalEdge?.sections;
+            const kind = sourceInside ? "output" : "input";
+            const proxy = proxyByKind.get(proxyKey(kind, edge))!;
+            const origin = externalPortDummyOf(proxy)!;
+            const endpoint = sourceInside
+              ? internalRoute?.at(-1)?.endPoint
+              : internalRoute?.[0]?.startPoint;
+            if (!endpoint)
+              throw new Error(`Missing compound boundary route for ${String(edge.id)}`);
+            const transferred = transferExternalPort({
+              contentSize: {
+                width: child.width! - childPadding.left - childPadding.right,
+                height: child.height! - childPadding.top - childPadding.bottom,
+              },
+              padding: childPadding,
+              offset: { x: 0, y: 0 },
+              dummy: {
+                x: endpoint.x - childPadding.left - (ownPortFor(edge) ? origin.port.x : 0),
+                y: endpoint.y - childPadding.top - (ownPortFor(edge) ? origin.port.y : 0),
+                width: origin.width,
+                height: origin.height,
+              },
+              side: origin.side,
+              borderOffset: origin.borderOffset,
+              portSize: origin.externalSize,
+            });
+            const points = internalRoute!
+              .flatMap((section, index) => [
+                ...(index === 0 ? [section.startPoint] : []),
+                ...(section.bendPoints ?? []),
+                section.endPoint,
+              ])
+              .map((point) => ({ ...point }));
+            const boundary = sourceInside ? points.at(-1)! : points[0]!;
+            boundary.x = transferred.dummy.x + childPadding.left;
+            boundary.y = transferred.dummy.y + childPadding.top;
+            const own = ownPortFor(edge);
+            if (own) {
+              if (implicitOwnPorts.has(edge) && !ports.some((p) => p.id === own.id))
+                ports.push(own);
+              own.x = transferred.port.x;
+              own.y = transferred.port.y;
+              const anchor = (getElementLayeredSettings(own.layoutOptions ?? {})["port.anchor"] as
+                | ElkPoint
+                | undefined) ?? {
+                x:
+                  origin.side === "EAST"
+                    ? (own.width ?? 0)
+                    : origin.side === "WEST"
+                      ? 0
+                      : (own.width ?? 0) / 2,
+                y:
+                  origin.side === "SOUTH"
+                    ? (own.height ?? 0)
+                    : origin.side === "NORTH"
+                      ? 0
+                      : (own.height ?? 0) / 2,
+              };
+              boundary.x = own.x + anchor.x;
+              boundary.y = own.y + anchor.y;
+              edge.sections = [
+                {
+                  id: `${String(edge.id)}_s0`,
+                  startPoint: points[0]!,
+                  endPoint: points.at(-1)!,
+                  ...(points.length > 2 ? { bendPoints: points.slice(1, -1) } : {}),
+                  incomingShape: sourceId,
+                  outgoingShape: targetId,
+                },
+              ];
+              if (internalEdge?.junctionPoints?.length)
+                edge.junctionPoints = internalEdge.junctionPoints.map((point) => ({ ...point }));
+              else delete edge.junctionPoints;
+              edge.container = child.id;
+              continue;
+            }
+            const routes = boundaryRoutes.get(edge) ?? {};
+            routes[sourceInside ? "source" : "target"] = {
+              owner: child,
+              points,
+              junctionPoints: internalEdge?.junctionPoints,
+            };
+            boundaryRoutes.set(edge, routes);
+            const portId = `${String(proxy.id)}:parent`;
+            syntheticPortIds.add(portId);
+            if (!ports.some((port) => port.id === portId))
+              ports.push({
+                id: portId,
+                width: origin.externalSize.width,
+                height: origin.externalSize.height,
+                x: transferred.port.x,
+                y: transferred.port.y,
+                layoutOptions: {
+                  "elk.port.side": origin.side,
+                  "elk.port.borderOffset": origin.borderOffset,
+                },
+              });
+            if (!hierarchyRestorations.some((restoration) => restoration.edge === edge)) {
+              hierarchyRestorations.push({ edge, ...original });
+            }
+            if (sourceInside) edge.sources = [portId];
+            else edge.targets = [portId];
+            edge.source = undefined;
+            edge.target = undefined;
+          }
+          for (const { port, proxy } of inactiveAuthoredPorts) {
+            const origin = externalPortDummyOf(proxy)!;
+            const actual = ports.find((p) => p.id === port.id)!;
+            const transferred = transferExternalPort({
+              contentSize: {
+                width: child.width! - childPadding.left - childPadding.right,
+                height: child.height! - childPadding.top - childPadding.bottom,
+              },
+              padding: childPadding,
+              offset: { x: 0, y: 0 },
+              dummy: {
+                x: (proxy.x ?? 0) - childPadding.left,
+                y: (proxy.y ?? 0) - childPadding.top,
+                width: origin.width,
+                height: origin.height,
+              },
+              side: origin.side,
+              borderOffset: origin.borderOffset,
+              portSize: origin.externalSize,
+            });
+            actual.x = transferred.port.x;
+            actual.y = transferred.port.y;
+          }
+          for (const edge of outsideNodeEdges) {
+            const original = originalHierarchyEndpoints.get(edge)!;
+            const proxy = proxyFor(
+                original.sourceId === String(child.id) ? "output" : "input",
+                edge,
+              ),
+              origin = externalPortDummyOf(proxy)!,
+              own = ownPortFor(edge)!;
+            const transferred = transferExternalPort({
+              contentSize: {
+                width: child.width! - childPadding.left - childPadding.right,
+                height: child.height! - childPadding.top - childPadding.bottom,
+              },
+              padding: childPadding,
+              offset: { x: 0, y: 0 },
+              dummy: {
+                x: (proxy.x ?? 0) - childPadding.left,
+                y: (proxy.y ?? 0) - childPadding.top,
+                width: origin.width,
+                height: origin.height,
+              },
+              side: origin.side,
+              borderOffset: origin.borderOffset,
+              portSize: origin.externalSize,
+            });
+            own.x = transferred.port.x;
+            own.y = transferred.port.y;
+            if (!ports.some((p) => p.id === own.id)) ports.push(own);
+          }
+          child.ports = ports;
+          child.layoutOptions = { ...child.layoutOptions, "elk.portConstraints": "FIXED_POS" };
+          const insideLoopCount = (graph.edges ?? []).filter((edge) =>
+            isInsideSelfLoop(graph, edge, String(child.id)),
+          ).length;
+          if (insideLoopCount > 0) {
+            const baseHeight = child.height ?? 0;
+            insideSelfLoopBaseHeightByNodeId.set(String(child.id), baseHeight);
+            child.height = baseHeight + insideLoopCount * 11;
+          }
+        });
       }
     }
     applyNodeMicroLayout(graph, layoutOptions);
     const graph_ = toGraph(graph, layoutOptions);
+    const hierarchyProxyIds = new Set(
+      (graph.children ?? [])
+        .filter((node) => String(node.id).startsWith("__native_hierarchy_"))
+        .map((node) => String(node.id)),
+    );
     const layerConstraintByNodeId = new Map(
       (graph.children ?? []).map((node) => [
         String(node.id),
@@ -527,6 +1037,10 @@ export default class ELK {
       algorithm === "layered" &&
       graph_.edges.some((edge) => {
         if (edge.sourceId === edge.targetId) return false;
+        // A boundary proxy for an edge from the enclosing compound sits in its own
+        // separate layer ahead of the scope, so it never conflicts with a first node.
+        if (hierarchyProxyIds.has(edge.sourceId) || hierarchyProxyIds.has(edge.targetId))
+          return false;
         const sourceConstraint = layerConstraintByNodeId.get(edge.sourceId);
         const targetConstraint = layerConstraintByNodeId.get(edge.targetId);
         return (
@@ -543,307 +1057,471 @@ export default class ELK {
       getOption(layoutOptions, "padding"),
       algorithm === "layered" ? 12 : 0,
     );
-    const laidOut = await (algorithm === "sporeCompaction"
-      ? executeElkjs0111Layout({
-          algorithm: "sporeCompaction",
-          graph: graph_,
-          options: {
-            padding,
-            spacing: getNumberOption(layoutOptions, "spacing.nodeNode"),
-          },
-        })
-      : algorithm === "sporeOverlap"
+    const options: LayeredLayoutOptions = {
+      direction: getDirection(layoutOptions),
+      spacing: {
+        node:
+          getNumberOption(layoutOptions, "spacing.nodeNode") ??
+          getNumberOption(layoutOptions, "layered.spacing.baseValue"),
+        layer:
+          getNumberOption(layoutOptions, "layered.spacing.nodeNodeBetweenLayers") ??
+          getNumberOption(layoutOptions, "layered.spacing.baseValue") ??
+          20,
+      },
+      padding,
+      constraints: {
+        layer: () => undefined,
+      },
+      settings: {
+        ...getLayeredSettings(layoutOptions),
+        ...(compoundLayout || (hasHierarchy && !separateHierarchy && !topdownLayout)
+          ? { separateConnectedComponents: false }
+          : {}),
+        ...(hierarchyHandling === "INCLUDE_CHILDREN"
+          ? {
+              "crossingMinimization.greedySwitch.type": String(
+                getOption(
+                  layoutOptions,
+                  "layered.crossingMinimization.greedySwitchHierarchical.type",
+                ) ?? "TWO_SIDED",
+              ) as LayeredAdvancedOptions["crossingMinimization.greedySwitch.type"],
+            }
+          : {}),
+      },
+      nodeSettings: (node) => {
+        const child = findById(graph.children, node.id)?.item;
+        return getElementLayeredSettings(child?.layoutOptions ?? {});
+      },
+      edgeSettings: (edge) => {
+        const elkEdge = findById(graph.edges, edge.id)?.item;
+        return {
+          ...getElementLayeredSettings(elkEdge?.layoutOptions ?? {}),
+          ...getElementLayeredSettings(elkEdge?.labels?.[0]?.layoutOptions ?? {}),
+          // ELK appends hierarchy segments to port edge lists in creation order.
+          "edge.hierarchyRank": elkEdge && hierarchySegmentRank.get(elkEdge),
+        };
+      },
+      portSettings: (port, node) => {
+        const child = findById(graph.children, node.id)?.item;
+        const found = findById(child?.ports, port.name);
+        const elkPort = found?.item;
+        return {
+          ...getElementLayeredSettings(elkPort?.layoutOptions ?? {}),
+          // ELK imports ports in authored order and sorts sides after dummy insertion.
+          "port.authoredIndex": found?.position,
+          "port.labelWidth": Math.max(
+            0,
+            ...(elkPort?.labels ?? []).map((label) => label.width ?? 0),
+          ),
+          "port.labelHeight": Math.max(
+            0,
+            ...(elkPort?.labels ?? []).map((label) => label.height ?? 0),
+          ),
+        } as ElkLayeredOptionValueByName;
+      },
+    };
+    const pipeline =
+      algorithm === "layered" ? createLayeredScopePipeline(graph_, options) : undefined;
+    const initial = pipeline?.next();
+    const phase = initial && !initial.done ? initial.value : undefined;
+    let activeOrders: ReadonlyMap<PreparedElkScope, LayerOrder> | undefined;
+    let finished: Promise<ElkNode> | undefined;
+    const prepared: PreparedElkScope = {
+      graph,
+      native: graph_,
+      phase,
+      options,
+      children: preparedChildren,
+      finish: (orders) => {
+        if (finished) return finished;
+        activeOrders = orders;
+        finished = finish();
+        return finished;
+      },
+    };
+    const finishLayered = (): VisualGraph => {
+      if (!pipeline || !initial) throw new Error("Missing layered pipeline");
+      if (initial.done) return initial.value;
+      const completed = pipeline.next(
+        activeOrders?.has(prepared)
+          ? initial.value.finishOrder(activeOrders.get(prepared)!)
+          : initial.value.minimize(),
+      );
+      if (!completed.done) throw new Error("Layered scope yielded more than one crossing phase");
+      return completed.value;
+    };
+    const finish = async (): Promise<ElkNode> => {
+      for (const complete of finishChildren) await complete();
+      for (const nativeGraph of new Set(
+        [graph_, phase?.input.graph].filter((value) => value !== undefined),
+      )) {
+        for (const child of graph.children ?? []) {
+          const native = nativeGraph.nodes.find((node) => node.id === String(child.id));
+          if (!native || !preparedChildren.has(String(child.id))) continue;
+          phase?.updateNodeSize(native.id, { width: child.width ?? 0, height: child.height ?? 0 });
+          Object.assign(native, { width: child.width, height: child.height });
+          for (const port of native.ports ?? []) {
+            const actual = child.ports?.find((candidate) => String(candidate.id) === port.name);
+            if (actual)
+              Object.assign(port, {
+                x: actual.x,
+                y: actual.y,
+                width: actual.width,
+                height: actual.height,
+              });
+          }
+        }
+      }
+      const laidOut = await (algorithm === "sporeCompaction"
         ? executeElkjs0111Layout({
-            algorithm: "sporeOverlap",
+            algorithm: "sporeCompaction",
             graph: graph_,
             options: {
               padding,
               spacing: getNumberOption(layoutOptions, "spacing.nodeNode"),
             },
           })
-        : algorithm === "rectpacking"
+        : algorithm === "sporeOverlap"
           ? executeElkjs0111Layout({
-              algorithm: "rectpacking",
+              algorithm: "sporeOverlap",
               graph: graph_,
               options: {
-                padding: getOption(layoutOptions, "padding") === undefined ? 15 : padding,
-                spacing: getNumberOption(layoutOptions, "spacing.nodeNode") ?? 15,
+                padding,
+                spacing: getNumberOption(layoutOptions, "spacing.nodeNode"),
               },
             })
-          : algorithm === "random"
+          : algorithm === "rectpacking"
             ? executeElkjs0111Layout({
-                algorithm: "random",
+                algorithm: "rectpacking",
                 graph: graph_,
                 options: {
                   padding: getOption(layoutOptions, "padding") === undefined ? 15 : padding,
-                  spacing: getNumberOption(layoutOptions, "spacing.nodeNode"),
-                  aspectRatio: getNumberOption(layoutOptions, "aspectRatio"),
-                  seed: getNumberOption(layoutOptions, "randomSeed"),
+                  spacing: getNumberOption(layoutOptions, "spacing.nodeNode") ?? 15,
                 },
               })
-            : algorithm === "box"
+            : algorithm === "random"
               ? executeElkjs0111Layout({
-                  algorithm: "box",
+                  algorithm: "random",
                   graph: graph_,
                   options: {
                     padding: getOption(layoutOptions, "padding") === undefined ? 15 : padding,
                     spacing: getNumberOption(layoutOptions, "spacing.nodeNode"),
                     aspectRatio: getNumberOption(layoutOptions, "aspectRatio"),
-                    interactive: getBooleanOption(layoutOptions, "interactive"),
-                    expandNodes: getBooleanOption(layoutOptions, "expandNodes"),
-                    priority: (node) => {
-                      const child = graph.children?.find(
-                        (candidate) => String(candidate.id) === node.id,
-                      );
-                      return getNumberOption(child?.layoutOptions ?? {}, "priority");
-                    },
+                    seed: getNumberOption(layoutOptions, "randomSeed"),
                   },
                 })
-              : algorithm === "fixed"
+              : algorithm === "box"
                 ? executeElkjs0111Layout({
-                    algorithm: "fixed",
-                    graph: graph_,
-                    options: { direction: getDirection(layoutOptions) },
-                  })
-                : executeElkjs0111Layout({
-                    algorithm: "layered",
+                    algorithm: "box",
                     graph: graph_,
                     options: {
-                      direction: getDirection(layoutOptions),
-                      spacing: {
-                        node:
-                          getNumberOption(layoutOptions, "spacing.nodeNode") ??
-                          getNumberOption(layoutOptions, "layered.spacing.baseValue"),
-                        layer:
-                          (getNumberOption(
-                            layoutOptions,
-                            "layered.spacing.nodeNodeBetweenLayers",
-                          ) ??
-                            getNumberOption(layoutOptions, "layered.spacing.baseValue") ??
-                            20) +
-                          (hasHierarchyCrossingEdges
-                            ? 5 * Math.max(...hierarchyBoundaryCountByEdge.values())
-                            : 0),
-                      },
-                      padding,
-                      constraints: {
-                        layer: () => undefined,
-                      },
-                      settings: {
-                        ...getLayeredSettings(layoutOptions),
-                        ...(hierarchyHandling === "INCLUDE_CHILDREN" &&
-                        getOption(
-                          layoutOptions,
-                          "layered.crossingMinimization.greedySwitchHierarchical.type",
-                        ) !== undefined
-                          ? {
-                              "crossingMinimization.greedySwitch.type": String(
-                                getOption(
-                                  layoutOptions,
-                                  "layered.crossingMinimization.greedySwitchHierarchical.type",
-                                ),
-                              ) as LayeredAdvancedOptions["crossingMinimization.greedySwitch.type"],
-                            }
-                          : {}),
-                      },
-                      nodeSettings: (node) => {
+                      padding: getOption(layoutOptions, "padding") === undefined ? 15 : padding,
+                      spacing: getNumberOption(layoutOptions, "spacing.nodeNode"),
+                      aspectRatio: getNumberOption(layoutOptions, "aspectRatio"),
+                      interactive: getBooleanOption(layoutOptions, "interactive"),
+                      expandNodes: getBooleanOption(layoutOptions, "expandNodes"),
+                      priority: (node) => {
                         const child = graph.children?.find(
                           (candidate) => String(candidate.id) === node.id,
                         );
-                        return getElementLayeredSettings(child?.layoutOptions ?? {});
-                      },
-                      edgeSettings: (edge) => {
-                        const elkEdge = graph.edges?.find(
-                          (candidate) => String(candidate.id) === edge.id,
-                        );
-                        return {
-                          ...getElementLayeredSettings(elkEdge?.layoutOptions ?? {}),
-                          ...getElementLayeredSettings(elkEdge?.labels?.[0]?.layoutOptions ?? {}),
-                        };
-                      },
-                      portSettings: (port, node) => {
-                        const child = graph.children?.find(
-                          (candidate) => String(candidate.id) === node.id,
-                        );
-                        const elkPort = child?.ports?.find(
-                          (candidate) => String(candidate.id) === port.name,
-                        );
-                        return {
-                          ...getElementLayeredSettings(elkPort?.layoutOptions ?? {}),
-                          "port.labelWidth": Math.max(
-                            0,
-                            ...(elkPort?.labels ?? []).map((label) => label.width ?? 0),
-                          ),
-                          "port.labelHeight": Math.max(
-                            0,
-                            ...(elkPort?.labels ?? []).map((label) => label.height ?? 0),
-                          ),
-                        } as ElkLayeredOptionValueByName;
+                        return getNumberOption(child?.layoutOptions ?? {}, "priority");
                       },
                     },
-                  }));
-    if (hierarchyRestorations.length > 0) {
-      const direction = getDirection(layoutOptions);
-      const horizontal = direction === "right" || direction === "left";
-      const cross = (point: ElkPoint): number => (horizontal ? point.y : point.x);
-      const nodeSpacing = getNumberOption(layoutOptions, "spacing.nodeNode") ?? 20;
-      const shiftsByOutsideId = new Map<string, number[]>();
-      for (const restoration of hierarchyRestorations) {
-        const route = laidOut.edges.find((edge) => edge.id === String(restoration.edge.id))?.points;
-        if (!route || route.length < 2) continue;
-        const originalSourceId = String(restoration.sources?.[0] ?? restoration.source);
-        const originalTargetId = String(restoration.targets?.[0] ?? restoration.target);
-        const sourceInside = !laidOut.nodes.some((node) => node.id === originalSourceId);
-        const outsideId = sourceInside ? originalTargetId : originalSourceId;
-        const delta = sourceInside
-          ? cross(route[0]!) - cross(route.at(-1)!)
-          : cross(route.at(-1)!) - cross(route[0]!);
-        const candidates = shiftsByOutsideId.get(outsideId) ?? [];
-        candidates.push(delta);
-        shiftsByOutsideId.set(outsideId, candidates);
-      }
-      for (const [outsideId, candidates] of shiftsByOutsideId) {
-        const delta = [...candidates].sort((left, right) => Math.abs(left) - Math.abs(right))[0]!;
-        const node = laidOut.nodes.find((candidate) => candidate.id === outsideId);
-        if (!node || Math.abs(delta) < 1e-9 || Math.abs(delta) > nodeSpacing) continue;
-        if (horizontal) node.y = (node.y ?? 0) + delta;
-        else node.x = (node.x ?? 0) + delta;
-        for (const edge of laidOut.edges) {
-          const points = edge.points;
-          if (!points || points.length === 0) continue;
-          if (edge.sourceId === outsideId) {
-            if (horizontal) points[0]!.y += delta;
-            else points[0]!.x += delta;
-          }
-          if (edge.targetId === outsideId) {
-            if (horizontal) points.at(-1)!.y += delta;
-            else points.at(-1)!.x += delta;
-          }
+                  })
+                : algorithm === "fixed"
+                  ? executeElkjs0111Layout({
+                      algorithm: "fixed",
+                      graph: graph_,
+                      options: { direction: getDirection(layoutOptions) },
+                    })
+                  : finishLayered());
+      const resultPolicy = (
+        laidOut as typeof laidOut & {
+          [elkjs0111ResultPolicy]?: Elkjs0111ResultPolicy;
         }
+      )[elkjs0111ResultPolicy];
+      applyLayout(graph, laidOut, padding, layoutOptions, resultPolicy);
+      if (resultPolicy?.providerBounds) {
+        graph.width = resultPolicy.providerBounds.width;
+        graph.height = resultPolicy.providerBounds.height;
       }
-      const modelOrder = new Map(
-        (graph.children ?? []).map((node, index) => [String(node.id), index]),
-      );
-      const flowLayers = new Map<number, (typeof laidOut.nodes)[number][]>();
-      for (const node of laidOut.nodes) {
-        const flow = horizontal ? (node.x ?? 0) : (node.y ?? 0);
-        const layer = flowLayers.get(flow) ?? [];
-        layer.push(node);
-        flowLayers.set(flow, layer);
-      }
-      for (const layer of flowLayers.values()) {
-        layer.sort(
-          (left, right) =>
-            (modelOrder.get(left.id) ?? Number.MAX_SAFE_INTEGER) -
-            (modelOrder.get(right.id) ?? Number.MAX_SAFE_INTEGER),
-        );
-        let crossEnd = Number.NEGATIVE_INFINITY;
-        for (const node of layer) {
-          const authoredCross = horizontal ? (node.y ?? 0) : (node.x ?? 0);
-          const compactedCross = Math.max(
-            authoredCross,
-            crossEnd === Number.NEGATIVE_INFINITY ? authoredCross : crossEnd + nodeSpacing,
+      for (const restoration of hierarchyRestorations) {
+        const splits = boundaryRoutes.get(restoration.edge);
+        const sections = restoration.edge.sections;
+        if (splits && sections?.length) {
+          const parentPoints = sections.flatMap((section, index) => [
+            ...(index === 0 ? [section.startPoint] : []),
+            ...(section.bendPoints ?? []),
+            section.endPoint,
+          ]);
+          const segments = [
+            ...(splits.source
+              ? [
+                  {
+                    points: splits.source.points,
+                    offset: { x: splits.source.owner.x ?? 0, y: splits.source.owner.y ?? 0 },
+                  },
+                ]
+              : []),
+            { points: parentPoints, offset: { x: 0, y: 0 } },
+            ...(splits.target
+              ? [
+                  {
+                    points: splits.target.points,
+                    offset: { x: splits.target.owner.x ?? 0, y: splits.target.owner.y ?? 0 },
+                  },
+                ]
+              : []),
+          ];
+          const points = joinCompoundRouteSegments(
+            segments,
+            getBooleanOption(layoutOptions, "unnecessaryBendpoints") === true,
           );
-          const delta = compactedCross - authoredCross;
-          if (horizontal) node.y = compactedCross;
-          else node.x = compactedCross;
-          if (Math.abs(delta) > 1e-9) {
-            for (const edge of laidOut.edges) {
-              const points = edge.points;
-              if (!points || points.length === 0) continue;
-              if (edge.sourceId === node.id) {
-                if (horizontal) points[0]!.y += delta;
-                else points[0]!.x += delta;
-              }
-              if (edge.targetId === node.id) {
-                if (horizontal) points.at(-1)!.y += delta;
-                else points.at(-1)!.x += delta;
-              }
-            }
+          const childJunctions = (split: typeof splits.source) =>
+            (split?.junctionPoints ?? []).map((point) => ({
+              x: point.x + (split?.owner.x ?? 0),
+              y: point.y + (split?.owner.y ?? 0),
+            }));
+          const junctions = [
+            ...childJunctions(splits.source),
+            ...(restoration.edge.junctionPoints ?? []),
+            ...childJunctions(splits.target),
+          ];
+          if (junctions.length) restoration.edge.junctionPoints = junctions;
+          else delete restoration.edge.junctionPoints;
+          restoration.edge.sections = [
+            {
+              ...sections[0]!,
+              startPoint: points[0]!,
+              endPoint: points.at(-1)!,
+              bendPoints: points.slice(1, -1),
+            },
+          ];
+        }
+        restoration.edge.sources = restoration.sources;
+        restoration.edge.targets = restoration.targets;
+        restoration.edge.source = restoration.source;
+        restoration.edge.target = restoration.target;
+        for (const section of restoration.edge.sections ?? []) {
+          if (
+            section.incomingShape != null &&
+            syntheticPortIds.has(String(section.incomingShape))
+          ) {
+            section.incomingShape = restoration.sources?.[0] ?? restoration.source;
           }
-          crossEnd = compactedCross + (horizontal ? node.height : node.width);
+          if (
+            section.outgoingShape != null &&
+            syntheticPortIds.has(String(section.outgoingShape))
+          ) {
+            section.outgoingShape = restoration.targets?.[0] ?? restoration.target;
+          }
         }
       }
-      const edgeNodeSpacing = getNumberOption(layoutOptions, "spacing.edgeNodeBetweenLayers") ?? 10;
-      for (const restoration of hierarchyRestorations) {
-        const nativeEdge = laidOut.edges.find((edge) => edge.id === String(restoration.edge.id));
-        const route = nativeEdge?.points;
-        if (!route || route.length < 2) continue;
-        const start = route[0]!;
-        const end = route.at(-1)!;
-        // Decomposed ancestor/descendant edges are native self-loops. Preserve
-        // their reserved exterior route and label placement instead of treating
-        // equal endpoint coordinates as a straight inter-node connection.
-        if (nativeEdge.sourceId === nativeEdge.targetId) continue;
-        if (Math.abs(cross(start) - cross(end)) < 1e-9) {
-          route.splice(1, route.length - 2);
-          continue;
+      for (const [compound, ports] of authoredPortsByCompound) {
+        for (const port of ports ?? []) {
+          const actual = compound.ports?.find((p) => p.id === port.id);
+          if (actual)
+            Object.assign(port, {
+              x: actual.x,
+              y: actual.y,
+              width: actual.width,
+              height: actual.height,
+            });
         }
-        const originalSourceId = String(restoration.sources?.[0] ?? restoration.source);
-        const sourceInside = !laidOut.nodes.some((node) => node.id === originalSourceId);
-        const flowForward = direction === "right" || direction === "down";
-        const track = sourceInside
-          ? (horizontal ? end.x : end.y) - (flowForward ? edgeNodeSpacing : -edgeNodeSpacing)
-          : (horizontal ? start.x : start.y) + (flowForward ? edgeNodeSpacing : -edgeNodeSpacing);
-        route.splice(
-          1,
-          route.length - 2,
-          horizontal ? { x: track, y: start.y } : { x: start.x, y: track },
-          horizontal ? { x: track, y: end.y } : { x: end.x, y: track },
-        );
+        compound.ports = ports;
       }
-    }
-    const resultPolicy = (
-      laidOut as typeof laidOut & {
-        [elkjs0111ResultPolicy]?: Elkjs0111ResultPolicy;
-      }
-    )[elkjs0111ResultPolicy];
-    applyLayout(graph, laidOut, padding, layoutOptions, resultPolicy);
-    if (resultPolicy?.providerBounds) {
-      graph.width = resultPolicy.providerBounds.width;
-      graph.height = resultPolicy.providerBounds.height;
-    }
-    for (const restoration of hierarchyRestorations) {
-      restoration.edge.sources = restoration.sources;
-      restoration.edge.targets = restoration.targets;
-      restoration.edge.source = restoration.source;
-      restoration.edge.target = restoration.target;
-      for (const section of restoration.edge.sections ?? []) {
-        if (section.incomingShape != null && syntheticPortIds.has(String(section.incomingShape))) {
-          section.incomingShape = restoration.sources?.[0] ?? restoration.source;
-        }
-        if (section.outgoingShape != null && syntheticPortIds.has(String(section.outgoingShape))) {
-          section.outgoingShape = restoration.targets?.[0] ?? restoration.target;
+      for (const [compound, options_] of authoredOptionsByCompound)
+        compound.layoutOptions = options_;
+      if (hasHierarchy && topdownLayout) {
+        for (const child of graph.children ?? []) {
+          if ((child.children?.length ?? 0) === 0) continue;
+          const position = { x: child.x, y: child.y };
+          await this.#layout(child, {
+            ...arguments_,
+            logging: false,
+            measureExecutionTime: false,
+          });
+          child.x = position.x;
+          child.y = position.y;
         }
       }
-    }
-    for (const [compound, ports] of authoredPortsByCompound) compound.ports = ports;
-    for (const [compound, options_] of authoredOptionsByCompound) compound.layoutOptions = options_;
-    if (hasHierarchy && topdownLayout) {
-      for (const child of graph.children ?? []) {
-        if ((child.children?.length ?? 0) === 0) continue;
-        const position = { x: child.x, y: child.y };
-        await this.#layout(child, {
-          ...arguments_,
-          logging: false,
-          measureExecutionTime: false,
-        });
-        child.x = position.x;
-        child.y = position.y;
+      applyInsideSelfLoops(graph, insideSelfLoopBaseHeightByNodeId);
+      if (arguments_.logging || arguments_.measureExecutionTime) {
+        graph.logging = {
+          name: "Native TypeScript layout",
+          children: [{ name: String(algorithm) }],
+          ...(arguments_.measureExecutionTime
+            ? { executionTime: (performance.now() - startedAt) / 1_000 }
+            : {}),
+        };
       }
-    }
-    applyInsideSelfLoops(graph, insideSelfLoopBaseHeightByNodeId);
-    if (arguments_.logging || arguments_.measureExecutionTime) {
-      graph.logging = {
-        name: "Native TypeScript layout",
-        children: [{ name: String(algorithm) }],
-        ...(arguments_.measureExecutionTime
-          ? { executionTime: (performance.now() - startedAt) / 1_000 }
-          : {}),
-      };
-    }
-    return graph as LaidOutElkNode<T>;
+      return graph;
+    };
+    return prepared;
   }
+}
+
+/** Move opposite-direction track sharing apart on the finished layout. */
+function separated<T extends ElkNode>(graph: T, options: Readonly<Record<string, unknown>>): T {
+  separateElkOpposingTracks(graph, { ...options, ...graph.layoutOptions });
+  return graph;
+}
+
+function coordinatePreparedScopes(
+  root: PreparedElkScope,
+): ReadonlyMap<PreparedElkScope, LayerOrder> | undefined {
+  if (!root.phase || root.children.size === 0) return undefined;
+  const prepared = [root];
+  for (let i = 0; i < prepared.length; i++) prepared.push(...prepared[i]!.children.values());
+  if (
+    prepared.some(
+      (scope) =>
+        !scope.phase ||
+        !["LAYER_SWEEP", "MEDIAN_LAYER_SWEEP"].includes(
+          scope.options?.settings?.["crossingMinimization.strategy"] ?? "LAYER_SWEEP",
+        ),
+    )
+  )
+    return undefined;
+  const scopes = new Map<PreparedElkScope, HierarchyCrossingScope>();
+  for (const scope of prepared) {
+    const phase = scope.phase!;
+    scopes.set(scope, {
+      session: createLayerSweepSession(
+        phase.input,
+        phase.orientation,
+        phase.assignment,
+        scope.options?.settings?.["crossingMinimization.strategy"] === "MEDIAN_LAYER_SWEEP"
+          ? "median"
+          : "mean",
+        7,
+        { resetSeed: scope === root },
+      ),
+      childrenByNodeId: new Map(),
+      useBottomUp: true,
+      independentRandom: scope !== root,
+    });
+  }
+  for (const parent of prepared) {
+    const parentScope = scopes.get(parent)!;
+    for (const [id, child] of parent.children) {
+      const nativeParent = parent.phase!.input.graph.nodes.find((node) => node.id === id)!;
+      const parentPortOrderFixed = ["FIXED_ORDER", "FIXED_POS", "FIXED_RATIO"].includes(
+        parent.phase!.input.nodeSettings?.(nativeParent)?.portConstraints ?? "FREE",
+      );
+      const ports = nativeParent.ports ?? [];
+      const childPhase = child.phase!;
+      const childSession = scopes.get(child)!.session;
+      const childNodeById = new Map<string, (typeof childPhase.input.graph.nodes)[number]>();
+      for (const node of childPhase.input.graph.nodes)
+        if (!childNodeById.has(node.id)) childNodeById.set(node.id, node);
+      const parentEdgeById = new Map<string, (typeof childPhase.input.graph.edges)[number]>();
+      for (const edge of parent.phase!.input.graph.edges)
+        if (!parentEdgeById.has(edge.id)) parentEdgeById.set(edge.id, edge);
+      const flowSides = hierarchicalPortSides(parent.phase!.input);
+      const inputPorts = ports.filter(
+        (port) =>
+          parent.phase!.input.portSettings?.(port, nativeParent)?.["port.side"] ===
+          flowSides.before,
+      ).length;
+      const outputPorts = ports.filter(
+        (port) =>
+          parent.phase!.input.portSettings?.(port, nativeParent)?.["port.side"] === flowSides.after,
+      ).length;
+      const childScope: HierarchyCrossingScope = {
+        ...scopes.get(child)!,
+        useBottomUp: useBottomUpHierarchySweep(
+          childPhase.input,
+          childPhase.orientation,
+          childSession.snapshot().layers,
+          {
+            portOrderFixed: parentPortOrderFixed,
+            inputPorts,
+            outputPorts,
+            deterministic:
+              child.options?.settings?.["crossingMinimization.strategy"] === "MEDIAN_LAYER_SWEEP",
+          },
+        ),
+        alignBoundary: (forward) => {
+          const childLayers = childSession.currentLayers();
+          const layerIndex = forward ? 0 : childLayers.length - 1;
+          const layer = childLayers[layerIndex]!;
+          if (!layer.every((id) => externalPortDummyOf(childNodeById.get(id)!))) return false;
+          // Parent port positions are physical; feedback reversal changes
+          // edge direction without changing the boundary port's identity.
+          const physical = parentScope.session.physicalPortOrder(id);
+          const dummyByParentPort = new Map(
+            childPhase.input.graph.nodes
+              .filter((n) => externalPortDummyOf(n))
+              .map((n) => [externalPortDummyOf(n)!.parentPortId ?? `${n.id}:parent`, n.id]),
+          );
+          const ordered = physical.flatMap((portId) => {
+            const [nodeId, portName] = JSON.parse(portId) as [string, string];
+            const dummy = nodeId === id ? dummyByParentPort.get(portName) : undefined;
+            return dummy && layer.includes(dummy) ? [dummy] : [];
+          });
+          if (forward) ordered.reverse();
+          const unique = [...new Set(ordered)];
+          if (unique.length !== layer.length)
+            throw new Error(`Incomplete hierarchical port order for ${id}`);
+          childSession.replaceLayer(layerIndex, unique);
+          return true;
+        },
+        publishBoundary: (forward) => {
+          const childLayers = childSession.currentLayers();
+          const layer = childLayers[forward ? childLayers.length - 1 : 0]!;
+          if (!layer.every((id) => externalPortDummyOf(childNodeById.get(id)!))) return;
+          const rank = new Map(
+            layer.map((dummy, index) => [
+              externalPortDummyOf(childNodeById.get(dummy)!)!.parentPortId ?? `${dummy}:parent`,
+              index,
+            ]),
+          );
+          const physical = parentScope.session.physicalPortOrder(id);
+          const boundarySlots = physical.flatMap((portId, index) => {
+            const [nodeId, portName] = JSON.parse(portId) as [string, string];
+            return nodeId === id && rank.has(portName) ? [index] : [];
+          });
+          const boundaryPorts = boundarySlots
+            .map((index) => physical[index]!)
+            .sort((a, b) => {
+              const portA = (JSON.parse(a) as [string, string])[1];
+              const portB = (JSON.parse(b) as [string, string])[1];
+              const result = rank.get(portA)! - rank.get(portB)!;
+              return forward ? result : -result;
+            });
+          const updatedPhysical = [...physical];
+          boundarySlots.forEach((slot, index) => {
+            updatedPhysical[slot] = boundaryPorts[index]!;
+          });
+          const edgePortRank = (edgeId: string): number => {
+            const edge = parentEdgeById.get(edgeId)!;
+            const portName = edge.sourceId === id ? edge.sourcePort : edge.targetPort;
+            return updatedPhysical.indexOf(JSON.stringify([id, portName]));
+          };
+          const { incoming, outgoing } = parentScope.session.edgeOrders(id);
+          const byPort = (current: readonly string[]) =>
+            [...current].sort((a, b) => edgePortRank(a) - edgePortRank(b));
+          parentScope.session.reorderNodePorts(
+            id,
+            updatedPhysical,
+            byPort(incoming),
+            byPort(outgoing),
+          );
+        },
+      };
+      childScope.publishBottomUp = () => {
+        childScope.publishBoundary!(true);
+        childScope.publishBoundary!(false);
+        parentScope.session.lockPortOrder(id);
+      };
+      scopes.set(child, childScope);
+      (parentScope.childrenByNodeId as Map<string, HierarchyCrossingScope>).set(id, childScope);
+    }
+  }
+  const orders = minimizeHierarchyCrossings(scopes.get(root)!);
+
+  return new Map(prepared.map((scope) => [scope, orders.get(scopes.get(scope)!)!]));
 }
 
 function parsePadding(value: unknown, fallback = 0) {
@@ -1083,16 +1761,56 @@ function parseMargin(value: unknown): unknown {
   return parsePadding(value, 0);
 }
 
+// Every accepted spelling of a layered option, with its precedence (lower wins).
+const layeredOptionAliases = new Map<
+  string,
+  { definition: (typeof elkLayeredOptionDefinitions)[number]; rank: number }
+>();
+for (const definition of elkLayeredOptionDefinitions) {
+  const suffix = definition.elkId.replace(/^org\.eclipse\.elk\./, "");
+  [definition.name, suffix, `elk.${suffix}`, definition.elkId].forEach((key, rank) => {
+    const current = layeredOptionAliases.get(key);
+    if (!current || rank < current.rank) layeredOptionAliases.set(key, { definition, rank });
+  });
+}
+
+const indexByIdCache = new WeakMap<
+  readonly { id?: ElkId }[],
+  { length: number; index: Map<string, number> }
+>();
+
+/** First element whose stringified id matches, like `find`, via a per-array index. */
+function findById<T extends { id?: ElkId }>(items: readonly T[] | undefined, id: string) {
+  if (!items) return undefined;
+  let cached = indexByIdCache.get(items);
+  if (!cached || cached.length !== items.length) {
+    const index = new Map<string, number>();
+    items.forEach((item, position) => {
+      const key = String(item.id);
+      if (!index.has(key)) index.set(key, position);
+    });
+    indexByIdCache.set(items, (cached = { length: items.length, index }));
+  }
+  const position = cached.index.get(id);
+  return position === undefined ? undefined : { item: items[position]!, position };
+}
+
 function getElementLayeredSettings(
   options: Readonly<Record<string, unknown>>,
 ): ElkLayeredOptionValueByName {
   const settings: ElkLayeredOptionValueByName = {};
-  for (const definition of elkLayeredOptionDefinitions) {
-    const suffix = definition.elkId.replace(/^org\.eclipse\.elk\./, "");
-    const value = [definition.name, suffix, `elk.${suffix}`, definition.elkId]
-      .map((key) => options[key])
-      .find((candidate) => candidate !== undefined);
-    if (value === undefined) continue;
+  const chosen = new Map<
+    (typeof elkLayeredOptionDefinitions)[number],
+    { rank: number; value: unknown }
+  >();
+  for (const [key, value] of Object.entries(options)) {
+    const alias = layeredOptionAliases.get(key);
+    if (!alias || value === undefined) continue;
+    const current = chosen.get(alias.definition);
+    if (!current || alias.rank < current.rank)
+      chosen.set(alias.definition, { rank: alias.rank, value });
+  }
+  for (const [definition, { value }] of chosen) {
     const vectorMatch =
       definition.name === "port.anchor" && typeof value === "string"
         ? value.match(/^\s*\(\s*(-?\d+(?:\.\d+)?)\s*,\s*(-?\d+(?:\.\d+)?)\s*\)\s*$/)
@@ -1260,7 +1978,16 @@ function toGraph(root: ElkNode, globalOptions: Readonly<Record<string, unknown>>
     if (String(getOption(child.layoutOptions ?? {}, "portConstraints")) !== "FIXED_SIDE") {
       return ports;
     }
-    const side = (port: ElkPort) => String(getOption(port.layoutOptions ?? {}, "port.side"));
+    const canonicalSides: Record<string, string> =
+      getDirection(globalOptions) === "left"
+        ? { NORTH: "NORTH", EAST: "WEST", SOUTH: "SOUTH", WEST: "EAST" }
+        : getDirection(globalOptions) === "down"
+          ? { NORTH: "WEST", EAST: "SOUTH", SOUTH: "EAST", WEST: "NORTH" }
+          : getDirection(globalOptions) === "up"
+            ? { NORTH: "EAST", EAST: "SOUTH", SOUTH: "WEST", WEST: "NORTH" }
+            : { NORTH: "NORTH", EAST: "EAST", SOUTH: "SOUTH", WEST: "WEST" };
+    const side = (port: ElkPort) =>
+      canonicalSides[String(getOption(port.layoutOptions ?? {}, "port.side"))] ?? "UNDEFINED";
     const sideOrder = ["NORTH", "EAST", "SOUTH", "WEST"];
     ports.sort((left, right) => {
       const leftSide = side(left);
@@ -1287,10 +2014,12 @@ function toGraph(root: ElkNode, globalOptions: Readonly<Record<string, unknown>>
       const usePortModelOrder =
         getBooleanOption(globalOptions, "layered.considerModelOrder.portModelOrder") === true;
       if (modelOrderStrategy !== "NONE" && !usePortModelOrder) {
-        const edgeOrderDifference =
-          (edgeModelOrderByPortId.get(String(left.id)) ?? Infinity) -
-          (edgeModelOrderByPortId.get(String(right.id)) ?? Infinity);
-        if (edgeOrderDifference !== 0) return edgeOrderDifference;
+        const leftOrder = edgeModelOrderByPortId.get(String(left.id));
+        const rightOrder = edgeModelOrderByPortId.get(String(right.id));
+        // Ports without edges order last and keep their order among themselves,
+        // unreversed even on the WEST side, as ELK does.
+        if (leftOrder === undefined && rightOrder === undefined) return 0;
+        if (leftOrder !== rightOrder) return (leftOrder ?? Infinity) - (rightOrder ?? Infinity);
       }
       const direction = leftSide === "WEST" ? -1 : 1;
       return direction * ((child.ports?.indexOf(left) ?? 0) - (child.ports?.indexOf(right) ?? 0));
@@ -1298,7 +2027,7 @@ function toGraph(root: ElkNode, globalOptions: Readonly<Record<string, unknown>>
     return ports;
   };
 
-  return createGraph({
+  const native = createGraph({
     id: String(root.id),
     nodes: children.map((child) => ({
       id: String(child.id),
@@ -1353,6 +2082,12 @@ function toGraph(root: ElkNode, globalOptions: Readonly<Record<string, unknown>>
         : [];
     }),
   });
+  for (const node of native.nodes) {
+    const child = children.find((candidate) => String(candidate.id) === node.id);
+    const origin = child && externalPortDummyOf(child);
+    if (origin) attachExternalPortDummy(node, origin);
+  }
+  return native;
 }
 
 function parsePoints(value: unknown): ElkPoint[] | undefined {
@@ -1431,11 +2166,21 @@ function applyLayout(
         continue;
       }
       const section = getParentEdgeSection(root, edge);
-      if (section) edge.sections = [section];
+      if (section) {
+        edge.sections = [section];
+        edge.container = root.id;
+      }
       continue;
+    }
+    const nativeJunctions = resultPolicy?.junctionPointsByEdgeId?.get(String(edge.id));
+    if (nativeJunctions) {
+      if (nativeJunctions.length)
+        edge.junctionPoints = nativeJunctions.map((point) => ({ ...point }));
+      else delete edge.junctionPoints;
     }
     const section = toSection(edge, laidOutEdge.points ?? []);
     edge.sections = section ? [section] : [];
+    if (section) edge.container = root.id;
     const target = root.children?.find(
       (child) => String(child.id) === String(edge.targets?.[0] ?? edge.target),
     );
@@ -1452,6 +2197,8 @@ function applyLayout(
     const midpointX = (laidOutEdge.x ?? 0) + (laidOutEdge.width ?? 0) / 2;
     const edgeLabelSpacing = getNumberOption(layoutOptions, "spacing.edgeLabel") ?? 2;
     const labelLabelSpacing = getNumberOption(layoutOptions, "spacing.labelLabel") ?? 0;
+    // A lone label keeps the native position, which already avoids collisions.
+    const loneLabel = (edge.labels ?? []).filter(isLayoutEdgeLabel).length === 1;
     for (const label of edge.labels ?? []) {
       if (getBooleanOption(label.layoutOptions ?? {}, "noLayout") === true) {
         label.x ??= 0;
@@ -1468,17 +2215,51 @@ function applyLayout(
       );
       const width = label.width ?? 0;
       label.x =
-        placement === "TAIL"
-          ? firstPoint.x + edgeLabelSpacing
-          : placement === "HEAD"
-            ? lastPoint.x - width - edgeLabelSpacing
-            : midpointX - width / 2;
+        loneLabel && placement !== "CENTER" && laidOutEdge.x !== undefined
+          ? laidOutEdge.x
+          : placement === "TAIL"
+            ? firstPoint.x + edgeLabelSpacing
+            : placement === "HEAD"
+              ? lastPoint.x - width - edgeLabelSpacing
+              : midpointX - width / 2;
       label.y = labelY;
       labelY += (label.height ?? 0) + labelLabelSpacing;
     }
   }
   if (!resultPolicy?.skipBoundsNormalization) {
-    normalizeElkGraphBounds(root, padding, layoutOptions);
+    normalizeElkGraphBounds(
+      root,
+      padding,
+      layoutOptions,
+      resultPolicy?.normalizationBounds,
+      resultPolicy?.placementCrossBounds,
+    );
+  }
+  if (
+    !resultPolicy?.preserveEdgeSections &&
+    String(getOption(layoutOptions, "edgeRouting") ?? "ORTHOGONAL") === "ORTHOGONAL"
+  ) {
+    const direction = getDirection(layoutOptions);
+    applyOrthogonalJunctions(
+      root,
+      direction === "right" || direction === "left",
+      direction === "right" || direction === "down",
+      getBooleanOption(layoutOptions, "layered.mergeEdges") === true,
+      new Set(
+        (root.children ?? [])
+          .filter((n) => getBooleanOption(n.layoutOptions ?? {}, "hypernode") === true)
+          .map((n) => String(n.id)),
+      ),
+      new Set(
+        (root.edges ?? [])
+          .filter(
+            (e) =>
+              getBooleanOption(e.layoutOptions ?? {}, "noLayout") === true ||
+              resultPolicy?.junctionPointsByEdgeId?.has(String(e.id)) === true,
+          )
+          .map((e) => String(e.id)),
+      ),
+    );
   }
 }
 
@@ -1486,15 +2267,21 @@ function normalizeElkGraphBounds(
   root: ElkNode,
   padding: { top: number; right: number; bottom: number; left: number },
   layoutOptions: Readonly<Record<string, unknown>> = {},
+  compactionBounds?: Elkjs0111ResultPolicy["normalizationBounds"],
+  placementCrossBounds?: Elkjs0111ResultPolicy["placementCrossBounds"],
 ): void {
+  // Edge coordinates belong to their layout container, not their JSON storage owner.
+  const layoutEdges = (root.edges ?? []).filter(
+    (edge) => edge.container == null || String(edge.container) === String(root.id),
+  );
   const authoredWidth = root.width;
   const authoredHeight = root.height;
   const fixedGraphSize = getBooleanOption(layoutOptions, "nodeSize.fixedGraphSize") === true;
   const layoutChildren = (root.children ?? []).filter(
     (node) => getBooleanOption(node.layoutOptions ?? {}, "noLayout") !== true,
   );
-  let minimumX = Number.POSITIVE_INFINITY;
-  let minimumY = Number.POSITIVE_INFINITY;
+  let minimumX = compactionBounds?.left ?? Number.POSITIVE_INFINITY;
+  let minimumY = compactionBounds?.top ?? Number.POSITIVE_INFINITY;
   for (const node of layoutChildren) {
     minimumX = Math.min(
       minimumX,
@@ -1515,7 +2302,7 @@ function normalizeElkGraphBounds(
       ),
     );
   }
-  for (const edge of root.edges ?? []) {
+  for (const edge of layoutEdges) {
     const laidOutLabels = (edge.labels ?? []).filter(isLayoutEdgeLabel);
     minimumX = Math.min(minimumX, ...laidOutLabels.map((label) => label.x ?? 0));
     minimumY = Math.min(minimumY, ...laidOutLabels.map((label) => label.y ?? 0));
@@ -1536,12 +2323,16 @@ function normalizeElkGraphBounds(
       node.x = (node.x ?? 0) + shiftX;
       node.y = (node.y ?? 0) + shiftY;
     }
-    for (const edge of root.edges ?? []) {
+    for (const edge of layoutEdges) {
       for (const section of edge.sections ?? []) {
         for (const point of [section.startPoint, ...(section.bendPoints ?? []), section.endPoint]) {
           point.x += shiftX;
           point.y += shiftY;
         }
+      }
+      for (const point of edge.junctionPoints ?? []) {
+        point.x += shiftX;
+        point.y += shiftY;
       }
       for (const label of (edge.labels ?? []).filter(isLayoutEdgeLabel)) {
         label.x = (label.x ?? 0) + shiftX;
@@ -1557,7 +2348,7 @@ function normalizeElkGraphBounds(
     0,
     ...layoutChildren.map((node) => (node.y ?? 0) + (node.height ?? 0)),
   );
-  const layoutEdgePoints = (root.edges ?? []).flatMap((edge) =>
+  const layoutEdgePoints = layoutEdges.flatMap((edge) =>
     getBooleanOption(edge.layoutOptions ?? {}, "noLayout") === true
       ? []
       : (edge.sections ?? []).flatMap((section) => [
@@ -1573,7 +2364,7 @@ function normalizeElkGraphBounds(
   for (const child of root.children ?? []) {
     for (const port of child.ports ?? []) childByEndpointId.set(String(port.id), child);
   }
-  const wrappedEdgeCount = (root.edges ?? []).filter((edge) => {
+  const wrappedEdgeCount = layoutEdges.filter((edge) => {
     const source = childByEndpointId.get(String(edge.sources?.[0] ?? edge.source));
     const target = childByEndpointId.get(String(edge.targets?.[0] ?? edge.target));
     if (!source || !target) return false;
@@ -1586,24 +2377,44 @@ function normalizeElkGraphBounds(
           : (source.y ?? 0) < (target.y ?? 0);
   }).length;
   const hasWrappedEdge = wrappedEdgeCount > 0;
-  const addBoundaryPixel =
+  const retainPlacementBounds =
     wrappingStrategy !== "MULTI_EDGE" &&
     !(wrappingStrategy === "SINGLE_EDGE" && hasWrappedEdge) &&
     String(getOption(layoutOptions, "layered.compaction.postCompaction.strategy") ?? "NONE") ===
       "NONE" &&
     getBooleanOption(layoutOptions, "layered.feedbackEdges") !== true &&
     String(getOption(layoutOptions, "layered.layering.nodePromotion.strategy") ?? "NONE") !==
-      "MODEL_ORDER_LEFT_TO_RIGHT" &&
-    !(root.edges ?? []).some((edge) => edge.sources?.[0] === edge.targets?.[0]) &&
+      "MODEL_ORDER_LEFT_TO_RIGHT";
+  // Actual helper extents survive nested scopes. The legacy route-pixel
+  // allowance still excludes compound scopes.
+  const addBoundaryPixel =
+    retainPlacementBounds &&
     !(root.children ?? []).some((child) => (child.children?.length ?? 0) > 0);
+  // Prefer the retained placement extent on the cross axis. Other placers
+  // retain the legacy route-bound allowance until they expose phase bounds.
+  // Loop envelopes own their bounds. Ordinary long-edge dummies still have
+  // a one-pixel cross-axis extent when another edge in the graph is a loop.
+  // Apply that allowance to route points, before unioning labels and margins.
+  const isSelfLoop = (edge: ElkEdge) => {
+    const source = childByEndpointId.get(String(edge.sources?.[0] ?? edge.source));
+    return (
+      source !== undefined &&
+      source === childByEndpointId.get(String(edge.targets?.[0] ?? edge.target))
+    );
+  };
+  const hasSelfLoops = layoutEdges.some(isSelfLoop);
   const edgeBoundsExtraX =
     addBoundaryPixel &&
+    placementCrossBounds?.axis !== "x" &&
+    !(hasSelfLoops && (direction === "right" || direction === "left")) &&
     layoutEdgePoints.length > 0 &&
     Math.max(...layoutEdgePoints.map((point) => point.x)) >= maximumNodeX - 1e-9
       ? 1
       : 0;
   const edgeBoundsExtraY =
     addBoundaryPixel &&
+    placementCrossBounds?.axis !== "y" &&
+    !(hasSelfLoops && (direction === "down" || direction === "up")) &&
     layoutEdgePoints.length > 0 &&
     Math.max(...layoutEdgePoints.map((point) => point.y)) >= maximumNodeY - 1e-9
       ? 1
@@ -1616,6 +2427,7 @@ function normalizeElkGraphBounds(
       ? 1
       : 0;
   const postCompactionBoundsExtraX =
+    !compactionBounds &&
     !addBoundaryPixel &&
     !hasWrappedEdge &&
     String(getOption(layoutOptions, "layered.compaction.postCompaction.strategy") ?? "NONE") !==
@@ -1625,6 +2437,7 @@ function normalizeElkGraphBounds(
       ? 0.04
       : 0;
   const postCompactionBoundsExtraY =
+    !compactionBounds &&
     !addBoundaryPixel &&
     !hasWrappedEdge &&
     String(getOption(layoutOptions, "layered.compaction.postCompaction.strategy") ?? "NONE") !==
@@ -1635,7 +2448,10 @@ function normalizeElkGraphBounds(
       : 0;
   const calculatedWidth =
     Math.max(
-      0,
+      compactionBounds ? compactionBounds.right + shiftX : 0,
+      retainPlacementBounds && placementCrossBounds?.axis === "x"
+        ? placementCrossBounds.maximum + shiftX
+        : 0,
       ...layoutChildren.flatMap((node) => [
         (node.x ?? 0) + (node.width ?? 0),
         ...(node.labels ?? []).map((label) => (node.x ?? 0) + (label.x ?? 0) + (label.width ?? 0)),
@@ -1646,23 +2462,24 @@ function normalizeElkGraphBounds(
           ),
         ),
       ]),
-      ...(root.edges ?? []).flatMap((edge) =>
+      ...layoutEdges.flatMap((edge) =>
         (edge.labels ?? [])
           .filter(isLayoutEdgeLabel)
           .map((label) => (label.x ?? 0) + (label.width ?? 0)),
       ),
-      ...(root.edges ?? []).flatMap((edge) =>
+      ...layoutEdges.flatMap((edge) =>
         getBooleanOption(edge.layoutOptions ?? {}, "noLayout") === true
           ? []
           : (edge.sections ?? []).flatMap((section) => [
-              section.startPoint.x,
-              ...(section.bendPoints ?? []).map((point) => point.x),
-              section.endPoint.x,
+              section.startPoint.x + (isSelfLoop(edge) ? 0 : edgeBoundsExtraX),
+              ...(section.bendPoints ?? []).map(
+                (point) => point.x + (isSelfLoop(edge) ? 0 : edgeBoundsExtraX),
+              ),
+              section.endPoint.x + (isSelfLoop(edge) ? 0 : edgeBoundsExtraX),
             ]),
       ),
     ) +
     padding.right +
-    edgeBoundsExtraX +
     postCompactionBoundsExtraX +
     (getBooleanOption(layoutOptions, "layered.feedbackEdges") === true &&
     (getDirection(layoutOptions) === "down" || getDirection(layoutOptions) === "up")
@@ -1670,7 +2487,10 @@ function normalizeElkGraphBounds(
       : 0);
   const calculatedHeight =
     Math.max(
-      0,
+      compactionBounds ? compactionBounds.bottom + shiftY : 0,
+      retainPlacementBounds && placementCrossBounds?.axis === "y"
+        ? placementCrossBounds.maximum + shiftY
+        : 0,
       ...layoutChildren.flatMap((node) => [
         (node.y ?? 0) + (node.height ?? 0),
         ...(node.labels ?? []).map((label) => (node.y ?? 0) + (label.y ?? 0) + (label.height ?? 0)),
@@ -1681,7 +2501,7 @@ function normalizeElkGraphBounds(
           ),
         ),
       ]),
-      ...(root.edges ?? []).flatMap((edge) =>
+      ...layoutEdges.flatMap((edge) =>
         (edge.labels ?? [])
           .filter(isLayoutEdgeLabel)
           .map(
@@ -1689,23 +2509,26 @@ function normalizeElkGraphBounds(
               (label.y ?? 0) +
               (label.height ?? 0) +
               (String(getOption(label.layoutOptions ?? {}, "edgeLabels.placement") ?? "CENTER") ===
-              "CENTER"
+                "CENTER" &&
+              childByEndpointId.get(String(edge.sources?.[0] ?? edge.source)) !==
+                childByEndpointId.get(String(edge.targets?.[0] ?? edge.target))
                 ? 1
                 : 0),
           ),
       ),
-      ...(root.edges ?? []).flatMap((edge) =>
+      ...layoutEdges.flatMap((edge) =>
         getBooleanOption(edge.layoutOptions ?? {}, "noLayout") === true
           ? []
           : (edge.sections ?? []).flatMap((section) => [
-              section.startPoint.y,
-              ...(section.bendPoints ?? []).map((point) => point.y),
-              section.endPoint.y,
+              section.startPoint.y + (isSelfLoop(edge) ? 0 : edgeBoundsExtraY),
+              ...(section.bendPoints ?? []).map(
+                (point) => point.y + (isSelfLoop(edge) ? 0 : edgeBoundsExtraY),
+              ),
+              section.endPoint.y + (isSelfLoop(edge) ? 0 : edgeBoundsExtraY),
             ]),
       ),
     ) +
     padding.bottom +
-    edgeBoundsExtraY +
     singleMultiEdgeCutBoundsExtraY +
     postCompactionBoundsExtraY +
     (getBooleanOption(layoutOptions, "layered.feedbackEdges") === true &&
@@ -1903,3 +2726,123 @@ export type {
 
 export { getElkRoutes } from "./routes";
 export type { ElkRouteOptions } from "./routes";
+
+/** Edges crossing `group`, in the order ELK's CompoundGraphPreprocessor creates its boundary ports. */
+function elkBoundaryEdgeOrder(
+  group: ElkNode,
+  scope: ElkNode,
+  originals: ReadonlyMap<ElkEdge, { sourceId: string; targetId: string }>,
+): ElkEdge[] {
+  const edges: ElkEdge[] = [];
+  const collect = (node: ElkNode) => {
+    edges.push(...(node.edges ?? []));
+    for (const child of node.children ?? []) collect(child);
+  };
+  collect(scope);
+  const endpoints = (edge: ElkEdge) =>
+    originals.get(edge) ?? {
+      sourceId: String(edge.sources?.[0] ?? edge.source),
+      targetId: String(edge.targets?.[0] ?? edge.target),
+    };
+  const order = (node: ElkNode): ElkEdge[] => {
+    const inside = new Set<string>();
+    const mark = (parent: ElkNode) => {
+      for (const child of parent.children ?? []) {
+        inside.add(String(child.id));
+        for (const port of child.ports ?? []) inside.add(String(port.id));
+        mark(child);
+      }
+    };
+    mark(node);
+    const leaves = (edge: ElkEdge) =>
+      inside.has(endpoints(edge).sourceId) !== inside.has(endpoints(edge).targetId);
+    const result = new Set<ElkEdge>();
+    for (const child of node.children ?? [])
+      if (child.children?.length)
+        for (const edge of order(child)) if (leaves(edge)) result.add(edge);
+    for (const child of node.children ?? []) {
+      for (const port of [...(child.ports ?? []).map((p) => String(p.id)), String(child.id)]) {
+        for (const edge of edges)
+          if (endpoints(edge).sourceId === port && leaves(edge)) result.add(edge);
+        for (const edge of edges)
+          if (endpoints(edge).targetId === port && leaves(edge)) result.add(edge);
+      }
+    }
+    return [...result];
+  };
+  return order(group);
+}
+
+/** Creation order of hierarchy segments in ELK's CompoundGraphPreprocessor. */
+const hierarchySegmentRank = new WeakMap<ElkEdge, number>();
+const segmentOrderByScope = new WeakMap<ElkNode, ReadonlyMap<string, number>>();
+const originalEdgeId = new WeakMap<ElkEdge, string>();
+
+/**
+ * Segments inside `group`, in creation order: the inner pass connects child
+ * groups' exported ports first, then the outer pass leaves `group` itself.
+ */
+function elkSegmentOrder(
+  group: ElkNode,
+  scope: ElkNode,
+  originals: ReadonlyMap<ElkEdge, { sourceId: string; targetId: string }>,
+  ownBoundary: boolean,
+): Map<string, number> {
+  const order = new Map<string, number>();
+  const add = (edge: ElkEdge) => {
+    const id = originalEdgeId.get(edge) ?? String(edge.id);
+    if (!order.has(id)) order.set(id, order.size);
+  };
+  for (const child of group.children ?? [])
+    if (child.children?.length)
+      for (const edge of elkBoundaryEdgeOrder(child, scope, originals)) add(edge);
+  if (ownBoundary) for (const edge of elkBoundaryEdgeOrder(group, scope, originals)) add(edge);
+  return order;
+}
+
+const isPostCompactionKey = (key: string) =>
+  /(^|\.)compaction\.postCompaction\.strategy$/.test(key);
+function usesPostCompaction(options: Readonly<Record<string, unknown>>, node: ElkNode): boolean {
+  const active = (values: Readonly<Record<string, unknown>> | undefined) =>
+    Object.entries(values ?? {}).some(
+      ([key, value]) => isPostCompactionKey(key) && String(value) !== "NONE",
+    );
+  const visit = (current: ElkNode): boolean =>
+    active(current.layoutOptions) ||
+    active(current.properties as Record<string, unknown> | undefined) ||
+    (current.children ?? []).some(visit);
+  return active(options) || visit(node);
+}
+
+function disablePostCompaction<T extends ElkNode>(node: T): T {
+  for (const values of [node.layoutOptions, node.properties as Record<string, unknown> | undefined])
+    for (const key of Object.keys(values ?? {}))
+      if (isPostCompactionKey(key)) (values as Record<string, unknown>)[key] = "NONE";
+  for (const child of node.children ?? []) disablePostCompaction(child);
+  return node;
+}
+
+/**
+ * Alternative random seeds worth trying for a compound layout, unless the
+ * graph chooses its hierarchical greedy switch explicitly.
+ */
+function crossingVariants(
+  options: Readonly<Record<string, unknown>>,
+  graph: ElkNode,
+): Array<Record<string, string>> {
+  const own = { ...options, ...graph.properties, ...graph.layoutOptions };
+  const compound = (graph.children ?? []).some((child) => child.children?.length);
+  if (
+    !compound ||
+    getOption(own, "hierarchyHandling") !== "INCLUDE_CHILDREN" ||
+    getOption(own, "layered.crossingMinimization.greedySwitchHierarchical.type") !== undefined
+  )
+    return [];
+  return [{ "elk.randomSeed": "2" }, { "elk.randomSeed": "3" }];
+}
+
+/** Whether the graph asks for more than ELK's default layered thoroughness (7). */
+function thorough(options: Readonly<Record<string, unknown>>, graph: ElkNode): boolean {
+  const own = { ...options, ...graph.properties, ...graph.layoutOptions };
+  return Number(getOption(own, "layered.thoroughness") ?? 7) > 7;
+}

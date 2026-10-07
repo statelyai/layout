@@ -149,6 +149,7 @@ describe("getLayeredLayout", () => {
         ],
       ],
     ]);
+    const expectedRoutes = structuredClone(routes);
     const result = getLayeredLayout(graph, {
       direction: "down",
       settings: {
@@ -166,9 +167,10 @@ describe("getLayeredLayout", () => {
     });
 
     expect(result.edges.map(({ id, points }) => [id, points])).toEqual([
-      ["a-b", routes.get("a-b")],
-      ["b-a", routes.get("b-a")],
+      ["a-b", expectedRoutes.get("a-b")],
+      ["b-a", expectedRoutes.get("b-a")],
     ]);
+    expect(routes).toEqual(expectedRoutes);
   });
 
   it("splits long edges for ordering and joins their routes", () => {
@@ -294,6 +296,7 @@ describe("getLayout", () => {
     expect(result.diagnostics).toEqual([]);
     expect(result.metrics.phases.map((phase) => phase.id)).toEqual([
       "cycle-breaking",
+      "center-label-preprocessing",
       "layer-assignment",
       "long-edge-splitting",
       "crossing-minimization",

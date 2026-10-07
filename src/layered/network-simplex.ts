@@ -5,6 +5,7 @@
  * Source commit: 54123e884b1ae743b453260f713b20c9bf5787f2
  * SPDX-License-Identifier: EPL-2.0
  *******************************************************************************/
+import { connectedEdgesInPortOrder } from "./port-edge-order";
 import type { GraphEdge } from "@statelyai/graph";
 import type { AcyclicOrientation, LayerAssigner, LayeredPhaseInput } from "./types";
 
@@ -44,13 +45,13 @@ function getOrientedEndpoints(
     : [edge.sourceId, edge.targetId];
 }
 
-function getComponents(input: LayeredPhaseInput, orientation: AcyclicOrientation): string[][] {
+export function networkSimplexComponents(input: LayeredPhaseInput): string[][] {
   const adjacent = new Map(input.graph.nodes.map((node) => [node.id, [] as string[]]));
-  for (const edge of input.graph.edges) {
-    const [sourceId, targetId] = getOrientedEndpoints(edge, orientation);
-    if (sourceId === targetId) continue;
-    adjacent.get(sourceId)?.push(targetId);
-    adjacent.get(targetId)?.push(sourceId);
+  for (const node of input.graph.nodes) {
+    for (const edge of connectedEdgesInPortOrder(input, node.id)) {
+      if (edge.sourceId === edge.targetId) continue;
+      adjacent.get(node.id)?.push(edge.sourceId === node.id ? edge.targetId : edge.sourceId);
+    }
   }
   const visited = new Set<string>();
   const components: string[][] = [];
@@ -96,17 +97,12 @@ function createSimplexGraph(
     treeNode: false,
   }));
   const nodeById = new Map(nodes.map((node) => [node.id, node]));
-  const edgeBySource = new Map(component.map((id) => [id, [] as GraphEdge[]]));
-  for (const edge of input.graph.edges) {
-    const [sourceId, targetId] = getOrientedEndpoints(edge, orientation);
-    if (sourceId !== targetId && memberIds.has(sourceId) && memberIds.has(targetId)) {
-      edgeBySource.get(sourceId)?.push(edge);
-    }
-  }
   const edges: SimplexEdge[] = [];
   for (const sourceId of component) {
-    for (const graphEdge of edgeBySource.get(sourceId) ?? []) {
+    for (const graphEdge of connectedEdgesInPortOrder(input, sourceId)) {
       const [orientedSourceId, targetId] = getOrientedEndpoints(graphEdge, orientation);
+      if (orientedSourceId !== sourceId || sourceId === targetId || !memberIds.has(targetId))
+        continue;
       const source = nodeById.get(orientedSourceId);
       const target = nodeById.get(targetId);
       if (!source || !target) continue;
@@ -328,7 +324,7 @@ export function runNetworkSimplex(
 }
 
 export const assignLayersWithNetworkSimplex: LayerAssigner = (input, orientation) => {
-  const components = getComponents(input, orientation);
+  const components = networkSimplexComponents(input);
   const layerByNodeId = new Map<string, number>();
   let previousLayerCounts: number[] | undefined;
   const thoroughness = input.settings.thoroughness ?? 7;

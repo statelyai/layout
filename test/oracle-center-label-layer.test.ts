@@ -52,7 +52,12 @@ describe("ELK center-label layer selection parity", () => {
       const expected = (await new OracleELK().layout(structuredClone(graph) as never)) as ElkNode;
       const actual = await new NativeELK().layout(structuredClone(graph));
       expect(actual.width).toBeCloseTo(expected.width ?? Number.NaN, 12);
+      expect(actual.height).toBeCloseTo(expected.height ?? Number.NaN, 12);
       for (const expectedNode of expected.children ?? []) {
+        expect(actual.children?.find((node) => node.id === expectedNode.id)?.y).toBeCloseTo(
+          expectedNode.y ?? Number.NaN,
+          12,
+        );
         expect(actual.children?.find((node) => node.id === expectedNode.id)?.x).toBeCloseTo(
           expectedNode.x ?? Number.NaN,
           12,
@@ -62,6 +67,33 @@ describe("ELK center-label layer selection parity", () => {
         expected.edges?.find((edge) => edge.id === "long")?.labels?.[0]?.x ?? Number.NaN,
         12,
       );
+      expect(actual.edges?.find((edge) => edge.id === "long")?.labels?.[0]?.y).toBeCloseTo(
+        expected.edges?.find((edge) => edge.id === "long")?.labels?.[0]?.y ?? Number.NaN,
+        12,
+      );
+      for (const edge of expected.edges ?? []) {
+        const actualSections =
+          actual.edges?.find((candidate) => candidate.id === edge.id)?.sections ?? [];
+        expect(actualSections.length).toBe(edge.sections?.length ?? 0);
+        for (const [index, section] of (edge.sections ?? []).entries()) {
+          const nativeSection = actualSections[index]!;
+          const nativePoints = [
+            nativeSection.startPoint,
+            ...(nativeSection.bendPoints ?? []),
+            nativeSection.endPoint,
+          ];
+          const oraclePoints = [
+            section.startPoint,
+            ...(section.bendPoints ?? []),
+            section.endPoint,
+          ];
+          expect(nativePoints.length).toBe(oraclePoints.length);
+          for (const [pointIndex, point] of oraclePoints.entries()) {
+            expect(nativePoints[pointIndex]!.x).toBeCloseTo(point.x, 12);
+            expect(nativePoints[pointIndex]!.y).toBeCloseTo(point.y, 12);
+          }
+        }
+      }
     });
   }
 });

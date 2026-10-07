@@ -9,6 +9,12 @@ export class JavaRandom {
     this.#seed = (BigInt(seed) ^ JavaRandom.#multiplier) & JavaRandom.#mask;
   }
 
+  clone(): JavaRandom {
+    const copy = new JavaRandom(0);
+    copy.#seed = this.#seed;
+    return copy;
+  }
+
   #next(bits: number): number {
     this.#seed = (this.#seed * JavaRandom.#multiplier + JavaRandom.#addend) & JavaRandom.#mask;
     return Number(this.#seed >> BigInt(48 - bits));

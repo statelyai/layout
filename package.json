@@ -72,6 +72,7 @@
   "scripts": {
     "build": "tsdown --config tsdown.config.mjs",
     "bench": "vitest bench --run",
+    "bench:statecharts": "tsx scripts/bench-statecharts.ts",
     "demo": "portless --name layout vite --config demo/vite.config.ts",
     "demo:build": "vite build --config demo/vite.config.ts",
     "demo:check": "tsx scripts/generate-demo-corpus.ts --check",
@@ -95,7 +96,12 @@
     "validate:package": "publint --pack npm && tsx scripts/smoke-package.ts",
     "storybook": "storybook dev -p 6018 --host 127.0.0.1 --no-open",
     "storybook:build": "storybook build -o dist-storybook",
-    "storybook:typecheck": "tsc --project stories/tsconfig.json"
+    "storybook:typecheck": "tsc --project stories/tsconfig.json",
+    "test:parity:compound": "tsx scripts/check-compound-parity.ts",
+    "test:parity:self-loops": "tsx scripts/check-mixed-self-loop-parity.ts",
+    "test:parity:flat": "tsx scripts/check-flat-parity.ts",
+    "test:parity:model-order": "tsx scripts/check-model-order-parity.ts",
+    "test:parity:oracle": "vitest run --config vitest.parity.config.ts"
   },
   "dependencies": {
     "@lume/kiwi": "^0.4.4",

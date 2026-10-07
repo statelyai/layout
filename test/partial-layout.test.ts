@@ -610,14 +610,20 @@ describe("review regressions", () => {
     expect(result.graph.edges[0]!.points).toEqual(baseline.graph.edges[0]!.points);
     expect(result.graph.edges[0]).toMatchObject({ x: 500, y: 500 });
   });
-  it("explicitly rejects constrained full compound layout", async () => {
+  it("constrains full compound layout, keeping children inside their parent", async () => {
     const graph = createGraph({
       nodes: [{ id: "parent" }, { id: "child", parentId: "parent" }],
       edges: [],
     });
-    await expect(
-      getLayout({ graph, constraints: [c.pin({ id: "pin", entity: { nodeId: "child" }, x: 20 })] }),
-    ).rejects.toMatchObject({ code: "UNSUPPORTED_LAYOUT" });
+    const result = await getLayout({
+      graph,
+      constraints: [c.pin({ id: "pin", entity: { nodeId: "child" }, x: 20 })],
+    });
+    const parent = result.graph.nodes.find((n) => n.id === "parent")!;
+    const child = result.graph.nodes.find((n) => n.id === "child")!;
+    expect(parent.x + child.x).toBeCloseTo(20);
+    expect(child.x).toBeGreaterThanOrEqual(0);
+    expect(child.x + child.width).toBeLessThanOrEqual(parent.width);
   });
 });
 

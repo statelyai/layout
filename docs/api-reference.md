@@ -69,28 +69,28 @@ Import these exports from `@statelyai/layout`.
 
 ### Layered types
 
-| Type                     | Description                                                                |
-| ------------------------ | -------------------------------------------------------------------------- |
-| `AcyclicOrientation`     | Reversed edge IDs selected during cycle breaking.                          |
-| `CrossingMinimizer`      | Crossing minimization function.                                            |
-| `CycleBreaker`           | Cycle-breaking function.                                                   |
-| `EdgeRouter`             | Edge-routing function.                                                     |
-| `EdgeRoutes`             | Route points keyed by edge ID.                                             |
-| `LayerAssigner`          | Layer-assignment function.                                                 |
-| `LayerAssignment`        | Layer numbers keyed by node ID.                                            |
-| `LayeredLayoutOptions`   | Options for layered layout.                                                |
-| `LayeredPhaseInput`      | Common input supplied to layered phases.                                   |
-| `LayeredSpacing`         | Node and layer spacing.                                                    |
-| `LayeredStrategies`      | Optional phase replacements.                                               |
-| `CompoundLayoutOptions`  | Per-compound header, content padding, direction, and minimum content size. |
-| `CompoundLayoutGeometry` | Parent-relative outer bounds and local header/content rectangles.          |
-| `CompoundEdgeAttachment` | Content or outer endpoint boundary intent.                                 |
-| `CompoundVisualGraph`    | Native output with compound geometry and world-space route sections.       |
-| `LayoutPadding`          | Top, right, bottom, and left padding.                                      |
-| `LayerOrder`             | Ordered node IDs grouped by layer.                                         |
-| `NodePlacement`          | Node rectangles keyed by node ID.                                          |
-| `NodePlacer`             | Node-placement function.                                                   |
-| `NodeSize`               | Node width and height.                                                     |
+| Type                     | Description                                                                              |
+| ------------------------ | ---------------------------------------------------------------------------------------- |
+| `AcyclicOrientation`     | Reversed edge IDs selected during cycle breaking.                                        |
+| `CrossingMinimizer`      | Crossing minimization function.                                                          |
+| `CycleBreaker`           | Cycle-breaking function.                                                                 |
+| `EdgeRouter`             | Edge-routing function.                                                                   |
+| `EdgeRoutes`             | Route points keyed by edge ID.                                                           |
+| `LayerAssigner`          | Layer-assignment function.                                                               |
+| `LayerAssignment`        | Layer numbers keyed by node ID.                                                          |
+| `LayeredLayoutOptions`   | Options for layered layout.                                                              |
+| `LayeredPhaseInput`      | Common input supplied to layered phases.                                                 |
+| `LayeredSpacing`         | Node and layer spacing.                                                                  |
+| `LayeredStrategies`      | Optional phase replacements.                                                             |
+| `CompoundLayoutOptions`  | Per-compound header, content padding, direction, and minimum content size.               |
+| `CompoundLayoutGeometry` | Parent-relative outer bounds and local header/content rectangles.                        |
+| `CompoundEdgeAttachment` | Content or outer endpoint boundary intent.                                               |
+| `CompoundVisualGraph`    | Native output with compound geometry and world-space route sections.                     |
+| `LayoutPadding`          | Top, right, bottom, and left padding.                                                    |
+| `LayerOrder`             | Ordered node IDs grouped by layer; optional physical port state retained between sweeps. |
+| `NodePlacement`          | Node rectangles keyed by node ID.                                                        |
+| `NodePlacer`             | Node-placement function.                                                                 |
+| `NodeSize`               | Node width and height.                                                                   |
 
 ### Layered option types
 
@@ -148,6 +148,12 @@ The error code is `UNSUPPORTED_LAYOUT`.
 
 <!-- public exports from src/layered/index.ts -->
 
+`createLayeredScopePipeline` and `LayeredCrossingPhase` are internal coordination
+exports. The generator yields the prepared input, orientation, assignment and
+standalone minimizer before placement/routing; resume with a `LayerOrder` to
+complete the scope. Some compound, component and no-layout paths finish without
+yielding. This seam does not yet coordinate the adapter's hierarchy sweeps.
+
 `@statelyai/layout/layered` exports the layered layout function, algorithm,
 strategy functions, and layered types listed above. It does not export the
 general registry or the other built-in algorithms.
@@ -163,6 +169,14 @@ and route caches; `getLayoutRoutes` also checks cached sections against current
 geometry before using them. Ancestor/descendant labels are always reserved
 beside the child boundary; this is structural rather than a label option. See [native compound geometry](../README.md#native-compound-geometry)
 and the [matched visual proof](images/native-compound/README.md).
+
+`LayeredLayoutOptions.routing` accepts `{ strategy, settings }` for a synchronous
+post-layout replacement. Initial routes are discarded before the strategy receives
+finalized world-space geometry. The result preserves all node/port/label/compound
+placement and caches the replacement's structured routes. `getLayout` currently
+supports this option for unconstrained full layout only. Async or scoped replacements
+can use standalone routing after layout. `strategies.routeEdges` remains an initial
+phase override.
 
 ## elkjs entry point
 
@@ -190,6 +204,11 @@ exports:
 - `ElkShape`
 - `LayoutOptions`
 - `LaidOutElkNode`
+
+Edge labels with `noLayout: true`, or with no `text`, `width` or `height`, are
+preserved in compatibility output but do not reserve layout space. Unlike ELK, a
+label with only `width` and `height` does reserve space, so apps that render
+label text themselves get clear labels.
 
 The compatibility package also exposes the elkjs 0.11.1 migration subpaths
 `lib/main.js`, `lib/elk-api.js`, `lib/elk.bundled.js`, `lib/elk-worker.js`, and

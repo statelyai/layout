@@ -1,4 +1,5 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
+import ELK from "../src/elkjs";
 import {
   compileStatechartLayout,
   layoutStatechart,
@@ -54,7 +55,9 @@ describe("statechart policy layout", () => {
     ]);
     expect(plan.commonExits.babyfood).toEqual(["babyfood.allergyCheck"]);
     const result = await layoutStatechart(babyfood as ElkNode, { scopes });
-    expect(result.score.overlaps).toBeLessThan(result.attempts[0].score.overlaps);
+    // The native baseline no longer overlaps; the policy attempt wins on initial-path order.
+    expect(result.score.overlaps).toBe(0);
+    expect(result.attempts[0].score.pathOrder).toBeGreaterThan(result.score.pathOrder);
     const intro = result.graph.children!.find((node) => node.id === "babyfood.intro")!;
     expect([...intro.children!].sort((a, b) => a.y! - b.y!).map((node) => node.id)).toEqual(
       plan.paths["babyfood.intro"],
@@ -160,15 +163,73 @@ describe("statechart policy layout", () => {
     const result = await layoutStatechart(graph, { scopes: { r: { initialNodeId: "a" } } });
     expect(result.paths.r).toEqual(["a", "b"]);
     expect(result.graph.edges).toHaveLength(3);
-    expect(result.attempt).toBe(2);
-    expect(result.attempts[2].score.overlaps).toBeLessThan(result.attempts[1].score.overlaps);
-    expect(result.graph.edges?.[1].labels?.[0].layoutOptions).toMatchObject({
-      "elk.edgeLabels.placement": "HEAD",
-    });
-    expect(result.graph.edges?.[2].labels?.[0].layoutOptions).toMatchObject({
-      "elk.edgeLabels.placement": "TAIL",
-    });
+    // Center-label dummies separate the parallel labels in the baseline (as real ELK does),
+    // so the wider spacing attempt cannot improve on it.
+    expect(result.attempt).toBe(0);
+    expect(result.attempts.map((attempt) => attempt.score.overlaps)).toEqual([0, 0, 0]);
     expect(graph.edges?.[1].layoutOptions).toBeUndefined();
+  });
+
+  it("spreads parallel labels over HEAD and TAIL in the spacing attempt", async () => {
+    const graph: ElkNode = {
+      id: "r",
+      children: [
+        { id: "a", width: 100, height: 50 },
+        { id: "b", width: 100, height: 50 },
+      ],
+      edges: ["first", "second", "third", "fourth"].map((id) => ({
+        id,
+        sources: ["a"],
+        targets: ["b"],
+        labels: [{ text: id, width: 40, height: 30 }],
+      })),
+    };
+    const layout = vi.spyOn(ELK.prototype, "layout");
+    try {
+      await layoutStatechart(graph, { scopes: { r: { initialNodeId: "a" } } });
+      const spacing = layout.mock.calls[2]![0] as ElkNode;
+      const placements = spacing.edges!.map(
+        (edge) => edge.labels![0]!.layoutOptions?.["elk.edgeLabels.placement"],
+      );
+      // At most three parallel labels spread: the first stays centered.
+      expect(placements).toEqual([undefined, "HEAD", "TAIL", undefined]);
+      expect(spacing.edges![1]!.layoutOptions?.["elk.edgeLabels.placement"]).toBe("HEAD");
+      expect(spacing.layoutOptions?.["spacing.nodeNode"]).toBe(40);
+    } finally {
+      layout.mockRestore();
+    }
+  });
+
+  it("scores inherited direction while retaining backwards-path and explicit-override failures", () => {
+    const graph: ElkNode = {
+      id: "outer",
+      x: 0,
+      y: 0,
+      width: 100,
+      height: 100,
+      layoutOptions: { "elk.direction": "DOWN", "elk.hierarchyHandling": "INCLUDE_CHILDREN" },
+      children: [
+        {
+          id: "nested",
+          x: 0,
+          y: 0,
+          width: 100,
+          height: 100,
+          children: [
+            { id: "a", x: 10, y: 10, width: 10, height: 10 },
+            { id: "b", x: 10, y: 30, width: 10, height: 10 },
+          ],
+        },
+      ],
+    };
+    const paths = { nested: ["a", "b"] };
+    expect(scoreStatechartLayout(graph, paths).pathOrder).toBe(0);
+    const backwards = structuredClone(graph);
+    backwards.children![0]!.children![1]!.y = 0;
+    expect(scoreStatechartLayout(backwards, paths).pathOrder).toBe(1);
+    const overridden = structuredClone(graph);
+    overridden.children![0]!.layoutOptions = { "elk.direction": "RIGHT" };
+    expect(scoreStatechartLayout(overridden, paths).pathOrder).toBe(1);
   });
 
   it("scores an unspecified compound direction using the adapter default", async () => {

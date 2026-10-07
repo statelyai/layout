@@ -26,6 +26,15 @@ for (const route of snapshot.routes.values()) {
 }
 ```
 
+Layered layout accepts `routing: { strategy, settings }` for a synchronous replacement
+router. Initial layout completes first. The replacement receives finalized world-space
+geometry with `coordinateSpace: "world"`; initial points, routing styles, and derived
+route caches are absent. All edge routes are replaced, and placement/label geometry
+is preserved. A missing or extra edge route is rejected. This differs from the
+`strategies.routeEdges` phase override, which participates in initial layout.
+
+Post-layout replacement currently requires unconstrained full layout through `getLayout`. For scoped or constrained geometry, run standalone routing after applying the layout result.
+
 All built-in strategies are synchronous. `RoutingStrategy` also accepts promise
 results, allowing worker-backed/custom implementations without changing the
 value-based contract. Retain the snapshot in editor-local derived state. No
@@ -114,6 +123,27 @@ Unnamed attachments on a shared node side are distributed deterministically;
 named ports remain fixed. Duplicate connections use separate obstacle-clearance
 lanes. Spacing compresses when the node side cannot fit the requested distance.
 Unrelated groups are routed in stable ID order with soft crossing and parallel-overlap costs. Requested `edgeSpacing` guides candidate corridors; it is not a hard separation constraint.
+
+Label sections reserve their already drawn leg. Collinear retracing by the return
+leg is forbidden outside shared attachment regions. If both endpoints face the
+same label side, the exit uses the opposite side.
+Terminal leads cannot reverse immediately back over themselves. Near-identical
+fractional visibility-grid tracks are merged so tiny steps cannot bypass that
+constraint. Facing leads in a short aligned gap are shortened to avoid overlap.
+Coincident-port loops follow the port's outward normal, trying smaller corridors
+when neighboring geometry blocks the larger loop. When preferred
+clearance or soft reservations prevent routing, orthogonal-family strategies
+retry against actual obstacle bounds within the remaining search budget, then
+attempt bounded conflict reduction without discarding the feasible path.
+
+Native layered layout repairs flat tracks that cross node interiors, as well as
+label-only collisions. Label clearance accounts for positioned port centers and
+their exit leads before rerouting. Compound ports
+use actual node dimensions rather than boundary-label envelopes. Parent/child
+connections use inward content attachments in both directions, choosing a clear
+content side when a child blocks the preferred lead. Layered completion uses a
+40,000-node routing budget; standalone routing retains the default below.
+The pinned elkjs adapter retains its established flat track geometry.
 
 Shared-source groups try an interior stem toward target nodes or labels first;
 exterior candidates on all four sides are ranked by estimated total connection
@@ -230,3 +260,13 @@ attachment boundary from the node's outer obstacle. Routes with an explicit atta
 may traverse that endpoint's interior; other node and label obstacles remain
 active. Compound layout supplies header obstacles so inward routes cannot
 cut through the header. Named port positions remain relative to the outer node.
+
+Orthogonal A* uses Manhattan distance; octilinear search uses octile distance.
+Path comparisons retain bend costs instead of selecting solely by length and
+conflicts. Retry leads shrink to fit positive subpixel gaps. Flat native repair
+also detects unrelated label penetrations, diagonal segments, and retraced tracks,
+even when node placement and label rectangles do not overlap.
+
+Port-side alignment preserves node spacing around unrelated nodes. Rectangle-only
+collision checks could leave a port inside a neighbor despite disjoint node bounds;
+seeded random regressions cover these placement failures before routing.
