@@ -194,14 +194,17 @@ export default class ELK {
     // A compound layout with defects tries other random seeds too. Above
     // ELK's default thoroughness, every compound layout does, trading time
     // for fewer crossings and bends.
-    let quality = measureLayout(best);
+    const reseed =
+      seeds.length > 0 && (thorough(options, graph) || measureLayout(best, true).defects > 0);
     const variants: MixedPortArguments[] = [
       ...(probe?.applied ? [{ ...arguments_, [mixedPortModel]: false as const }] : []),
-      ...(quality.defects === 0 && !thorough(options, graph) ? [] : seeds).map((variant) => ({
+      ...(reseed ? seeds : []).map((variant) => ({
         ...arguments_,
         layoutOptions: { ...arguments_.layoutOptions, ...variant },
       })),
     ];
+    if (!variants.length) return best;
+    let quality = measureLayout(best);
     for (const variant of variants) {
       const candidate = separated(
         await this.#layoutWithoutDefectiveCompaction(structuredClone(pristine), variant),
@@ -226,7 +229,7 @@ export default class ELK {
     );
     const pristine = compacting ? structuredClone(graph) : undefined;
     const result = await this.#layout(graph, arguments_);
-    const defects = pristine ? measureLayout(result).defects : 0;
+    const defects = pristine ? measureLayout(result, true).defects : 0;
     if (!pristine || defects === 0) return result;
     // Post-compaction is an optimization; it must not route edges through nodes
     // or fold a route back onto itself.
@@ -235,7 +238,7 @@ export default class ELK {
       ...arguments_,
       layoutOptions: { ...arguments_.layoutOptions, ...strategy },
     });
-    return measureLayout(uncompacted).defects < defects ? uncompacted : result;
+    return measureLayout(uncompacted, true).defects < defects ? uncompacted : result;
   }
 
   async #layout<T extends ElkNode>(

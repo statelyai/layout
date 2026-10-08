@@ -2168,12 +2168,13 @@ export function createLayerSweepSession(
           !forward,
           nodeRelativePortRanks,
         );
-        const fixedIds = new Set(fixedLayer);
-        for (let index = 0; index < canonicalEdges.length; index++) {
+        // The fixed layer's edges toward the free layer, in edge order.
+        const byEnd = forward ? canonicalEdgesBySource : canonicalEdgesByTarget;
+        const indices = fixedLayer.flatMap((id) => byEnd.get(id) ?? []).sort((a, b) => a - b);
+        for (const index of indices) {
           const edge = canonicalEdges[index]!;
           const [source, target] = canonicalOrientedEndpoints[index]!;
-          if (!fixedIds.has(forward ? source : target) || !freeIds.has(forward ? target : source))
-            continue;
+          if (!freeIds.has(forward ? target : source)) continue;
           const endpoint = canonicalEndpoints.get(edge.id)!;
           const rank =
             canonicalDistributor.state.ranks[forward ? endpoint.source : endpoint.target]!;
@@ -2305,6 +2306,18 @@ export function createLayerSweepSession(
   const canonicalOrientedEndpoints = canonicalEdges.map((edge) =>
     getOrientedEndpoints(edge, orientation),
   );
+  const canonicalEdgesBySource = new Map<string, number[]>(),
+    canonicalEdgesByTarget = new Map<string, number[]>();
+  canonicalOrientedEndpoints.forEach(([source, target], index) => {
+    for (const [byEnd, id] of [
+      [canonicalEdgesBySource, source],
+      [canonicalEdgesByTarget, target],
+    ] as const) {
+      const list = byEnd.get(id);
+      if (list) list.push(index);
+      else byEnd.set(id, [index]);
+    }
+  });
   const canonicalEndpoints = new Map(
     canonicalEdges.map((edge, index) => [edge.id, canonicalGraph.edges[index]!]),
   );
@@ -3802,6 +3815,18 @@ function implicitEdgeEndpoints(
 
   const result = new Map<string, { source: Point; target: Point }>();
   const edgeModelOrder = new Map(input.graph.edges.map((edge, index) => [edge.id, index]));
+  // First positions in swept port orders, as `indexOf` finds them.
+  const orderIndexes = new Map<readonly string[], Map<string, number>>();
+  const orderIndex = (list: readonly string[], id: string) => {
+    let positions = orderIndexes.get(list);
+    if (!positions) {
+      positions = new Map();
+      for (const [index, item] of list.entries())
+        if (!positions.has(item)) positions.set(item, index);
+      orderIndexes.set(list, positions);
+    }
+    return positions.get(id) ?? -1;
+  };
   const placedPorts = new Map<GraphNode, { rect: EntityRect; ports: GraphPort[] | undefined }>();
   const portSideCounts = new Map<GraphNode, Map<unknown, number>>();
   const portSideCount = (node: GraphNode, side: unknown): number => {
@@ -3879,8 +3904,8 @@ function implicitEdgeEndpoints(
         const selected = (
           leftIncoming ? sweptOrder?.inputPortOrderByNodeId : sweptOrder?.outputPortOrderByNodeId
         )?.get(nodeId);
-        const a = selected?.indexOf(left.edge.id) ?? -1,
-          b = selected?.indexOf(right.edge.id) ?? -1;
+        const a = selected ? orderIndex(selected, left.edge.id) : -1,
+          b = selected ? orderIndex(selected, right.edge.id) : -1;
         if (a >= 0 && b >= 0 && a !== b) return (leftIncoming ? -1 : 1) * (a - b);
       }
       if (interactiveLeftSourceOrder) {

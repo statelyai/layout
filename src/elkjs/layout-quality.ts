@@ -42,8 +42,11 @@ const inRect = (point: Point, rect: Rect, margin: number) =>
   point.y >= rect.y - margin - EPS &&
   point.y <= rect.y + rect.height + margin + EPS;
 
-/** Measure an ELK JSON result in absolute coordinates. */
-export function measureLayout(root: ElkNode): LayoutQuality {
+/**
+ * Measure an ELK JSON result in absolute coordinates. `defectsOnly` skips the
+ * pairwise route measures (crossings and overlap stay 0).
+ */
+export function measureLayout(root: ElkNode, defectsOnly = false): LayoutQuality {
   const frames = new Map<string, Point>([[String(root.id), { x: 0, y: 0 }]]);
   const rects = new Map<string, Rect>();
   const owner = new Map<string, string>();
@@ -132,7 +135,7 @@ export function measureLayout(root: ElkNode): LayoutQuality {
       routes.push({
         ends,
         segments,
-        visible: segments.flatMap((s) => outsideAll(s, labels)),
+        visible: labels.length ? segments.flatMap((s) => outsideAll(s, labels)) : segments,
         labels,
       });
     }
@@ -171,22 +174,23 @@ export function measureLayout(root: ElkNode): LayoutQuality {
 
   let crossings = 0,
     overlap = 0;
-  for (const [index, first] of routes.entries())
-    for (const second of routes.slice(index + 1)) {
-      const shared = first.ends
-        .filter((id) => second.ends.includes(id))
-        .flatMap((id) => {
-          const rect = rects.get(id);
-          return rect ? [rect] : [];
-        });
-      const clear = (point: Point) => shared.every((rect) => !inRect(point, rect, TERMINAL_MARGIN));
-      // A crossing under an edge's own label is not seen; two routes crossing
-      // at one point cross once.
-      const points = new Set<string>();
-      for (const s of first.visible)
-        for (const t of second.visible) {
+  if (!defectsOnly)
+    for (const [index, first] of routes.entries())
+      for (const second of routes.slice(index + 1)) {
+        const shared = first.ends
+          .filter((id) => second.ends.includes(id))
+          .flatMap((id) => {
+            const rect = rects.get(id);
+            return rect ? [rect] : [];
+          });
+        const clear = (point: Point) =>
+          shared.every((rect) => !inRect(point, rect, TERMINAL_MARGIN));
+        // A crossing under an edge's own label is not seen; two routes crossing
+        // at one point cross once.
+        let points: Set<string> | undefined;
+        const cross = (s: Segment, t: Segment) => {
           const h = horizontal(s) && vertical(t) ? s : horizontal(t) && vertical(s) ? t : undefined;
-          if (!h) continue;
+          if (!h) return;
           const v = h === s ? t : s;
           const point = { x: v.a.x, y: h.a.y };
           if (
@@ -194,15 +198,18 @@ export function measureLayout(root: ElkNode): LayoutQuality {
             strictlyInside(point.y, ...span(v, "y")) &&
             clear(point)
           )
-            points.add(`${point.x}:${point.y}`);
-        }
-      crossings += points.size;
-      for (const s of first.segments)
-        for (const t of second.segments) {
-          const shared = sharedLength(s, t);
-          if (shared > EPS && clear(s.a) && clear(s.b)) overlap += shared;
-        }
-    }
+            (points ??= new Set()).add(`${point.x}:${point.y}`);
+        };
+        const unlabeled = first.visible === first.segments && second.visible === second.segments;
+        for (const s of first.segments)
+          for (const t of second.segments) {
+            if (unlabeled) cross(s, t);
+            const shared = sharedLength(s, t);
+            if (shared > EPS && clear(s.a) && clear(s.b)) overlap += shared;
+          }
+        if (!unlabeled) for (const s of first.visible) for (const t of second.visible) cross(s, t);
+        crossings += points?.size ?? 0;
+      }
   const xs = bounds.map((point) => point.x).filter(Number.isFinite),
     ys = bounds.map((point) => point.y).filter(Number.isFinite);
   const area = xs.length
