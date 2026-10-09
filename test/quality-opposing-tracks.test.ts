@@ -104,7 +104,8 @@ it("separates opposite directions in native layouts", () => {
 // Merged portless edges attach at one point per node side, so an edge and a
 // reversed edge between the same nodes run on one straight line. That point
 // is an implicit shared port: each direction gets its own attachment.
-it("splits portless ends that share one attachment point", () => {
+// Ends less than EPS apart count as one point.
+it.each([0, 1e-7])("splits portless ends that share one attachment point (off by %s)", (off) => {
   const nodes = new Map([
     ["a", { x: 0, y: 0, width: 60, height: 40 }],
     ["b", { x: 200, y: 0, width: 60, height: 40 }],
@@ -126,8 +127,8 @@ it("splits portless ends that share one attachment point", () => {
         id: "ba",
         ends: ["b", "a"],
         points: [
-          { x: 200, y: 20 },
-          { x: 60, y: 20 },
+          { x: 200, y: 20 + off },
+          { x: 60, y: 20 + off },
         ],
       },
     ].map((route) => ({ ...route, labels: [], movable: true })),
@@ -139,7 +140,7 @@ it("splits portless ends that share one attachment point", () => {
   expect(ba.map((p) => p.x)).toEqual([200, 60]);
   expect(ab[0]!.y).toBe(ab[1]!.y);
   expect(ba[0]!.y).toBe(ba[1]!.y);
-  expect(Math.abs(ab[0]!.y - ba[0]!.y)).toBe(10);
+  expect(Math.abs(ab[0]!.y - ba[0]!.y)).toBeCloseTo(10);
 });
 
 it("never shares a track in opposite directions with merged edges", async () => {

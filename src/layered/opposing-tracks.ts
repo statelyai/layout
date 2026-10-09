@@ -521,6 +521,8 @@ export function separateOpposingTracks(scene: TrackScene): Map<string, TrackPoin
   function splitSharedPorts(tolerant: boolean) {
     type End = { state: State; end: 0 | 1 };
     const groups = new Map<string, { port: TrackPort; normal: TrackPoint; ends: End[] }>();
+    // Implicit attachment points per node; points within EPS are one point.
+    const implicit = new Map<string, TrackPoint[]>();
     for (const state of states)
       for (const end of [0, 1] as const) {
         if (state.points.length < 2) continue;
@@ -533,8 +535,12 @@ export function separateOpposingTracks(scene: TrackScene): Map<string, TrackPoin
         const node = state.route.ends.length === 2 ? state.route.ends[end]! : undefined;
         const rect = node === undefined ? undefined : nodes.get(node);
         if (id === undefined && rect && onBorder(p, rect)) {
-          id = `${node}\0${p.x}\0${p.y}`;
-          port = { node: node!, rect: { ...p, width: 0, height: 0 } };
+          const points = implicit.get(node!) ?? [];
+          implicit.set(node!, points);
+          let at = points.find((o) => Math.abs(o.x - p.x) <= EPS && Math.abs(o.y - p.y) <= EPS);
+          if (!at) points.push((at = { x: p.x, y: p.y }));
+          id = `${node}\0${points.indexOf(at)}`;
+          port = { node: node!, rect: { ...at, width: 0, height: 0 } };
         }
         if (!port) continue;
         const s = { a: p, b: q };
