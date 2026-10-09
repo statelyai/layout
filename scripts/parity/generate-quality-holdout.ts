@@ -29,6 +29,7 @@ const run = (generator: string, report: string) =>
       ["exec", "tsx", `scripts/check-${generator}-parity.ts`, report, String(first), String(last)],
       { stdio: ["ignore", "ignore", "inherit"] },
     );
+    child.on("error", fail);
     // The parity checks exit 1 when native and ELK geometry differ; only the report matters.
     child.on("exit", () =>
       fs.existsSync(report) ? done() : fail(new Error(`${generator} wrote no report`)),

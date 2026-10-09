@@ -135,7 +135,8 @@ export function measureLayout(root: ElkNode, defectsOnly = false): LayoutQuality
       routes.push({
         ends,
         segments,
-        visible: labels.length ? segments.flatMap((s) => outsideAll(s, labels)) : segments,
+        visible:
+          labels.length && !defectsOnly ? segments.flatMap((s) => outsideAll(s, labels)) : segments,
         labels,
       });
     }
@@ -198,7 +199,7 @@ export function measureLayout(root: ElkNode, defectsOnly = false): LayoutQuality
             strictlyInside(point.y, ...span(v, "y")) &&
             clear(point)
           )
-            (points ??= new Set()).add(`${point.x}:${point.y}`);
+            (points ??= new Set()).add(`${Math.round(point.x / EPS)}:${Math.round(point.y / EPS)}`);
         };
         const unlabeled = first.visible === first.segments && second.visible === second.segments;
         for (const s of first.segments)
