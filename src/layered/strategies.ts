@@ -125,15 +125,22 @@ function cycleModelOrder(input: LayeredPhaseInput): Map<string, number> {
 }
 
 /**
- * Internal setting for the mixed-port model of crossing minimization: a port
- * carrying both directions counts as two ports, and its neighbours are
- * grouped by direction. False lays out without the model; a probe object
- * records whether the model applied to any port. The elkjs facade lays out
- * such graphs both ways and keeps the better result: the model helps on
- * average but steers the sweeps into worse orders on some graphs.
+ * Internal setting: how crossing minimization models ports and tracks.
+ * `mixedPorts` (default true) counts a port carrying both directions as two
+ * ports and groups its neighbours by direction. `separateSharedTracks`
+ * (default false) counts a hyperedge joining two or more ports on each side
+ * of its gap edge by edge, since routing never lets edges run opposite ways
+ * along one track. A `probe` records whether either choice can change the
+ * order. Each helps on average but steers the sweeps into worse orders on
+ * some graphs, so the elkjs facade also lays such graphs out with the
+ * alternatives and keeps the best result.
  */
-export const MIXED_PORT_MODEL = "internal.mixedPortModel";
-export type MixedPortModel = false | { applied: boolean };
+export const CROSSING_MODEL = "internal.crossingModel";
+export interface CrossingModel {
+  mixedPorts?: boolean;
+  separateSharedTracks?: boolean;
+  probe?: { mixedPorts: boolean; sharedTracks: boolean };
+}
 
 export const breakCyclesWithDepthFirstSearch: CycleBreaker = (input) => {
   const outgoing = new Map<string, GraphEdge[]>();
@@ -2048,9 +2055,10 @@ export function createLayerSweepSession(
     }
   }
   const buildCrossingGraph = createCrossingGraphBuilder(input);
-  const mixedPortModel = (input.settings as { [MIXED_PORT_MODEL]?: MixedPortModel })[
-    MIXED_PORT_MODEL
-  ];
+  const crossingModel: CrossingModel =
+    (input.settings as { [CROSSING_MODEL]?: CrossingModel })[CROSSING_MODEL] ?? {};
+  const mixedPorts = crossingModel.mixedPorts !== false,
+    probe = crossingModel.probe;
   const countCrossings = (candidateLayers: readonly (readonly string[])[]): number => {
     if (exactPortSweep) {
       const graph = buildCrossingGraph(
@@ -2059,10 +2067,16 @@ export function createLayerSweepSession(
         inputPortOrder,
         outputPortOrder,
       );
-      const split =
-        mixedPortModel === false ? graph : splitMixedCrossingPorts(graph, canonicalReversed);
-      if (mixedPortModel && split !== graph) mixedPortModel.applied = true;
-      let total = countAllCrossings(split).total;
+      const split = mixedPorts ? splitMixedCrossingPorts(graph, canonicalReversed) : graph;
+      const score = countAllCrossings(
+        split,
+        crossingModel.separateSharedTracks ? "separated" : "hyperedges",
+      );
+      if (probe) {
+        if (split !== graph) probe.mixedPorts = true;
+        if (score.sharedTracks) probe.sharedTracks = true;
+      }
+      let total = score.total;
       const nodeInfluence = Number(
         input.settings["considerModelOrder.crossingCounterNodeInfluence"] ?? 0,
       );
@@ -2416,7 +2430,7 @@ export function createLayerSweepSession(
     fixed: readonly string[],
     beyond: readonly string[] = [],
   ) => {
-    if (mixedPortModel === false) return;
+    if (!mixedPorts) return;
     const fixedIds = new Set(fixed);
     const groups = new Map<string, Array<{ id: string; reversed: boolean }>>();
     for (const id of free) {
@@ -2439,7 +2453,7 @@ export function createLayerSweepSession(
     }
     if (![...groups.values()].some((g) => g.some((m) => m.reversed) && g.some((m) => !m.reversed)))
       return;
-    if (mixedPortModel) mixedPortModel.applied = true;
+    if (probe) probe.mixedPorts = true;
     const index = new Map(free.map((id, i) => [id, i]));
     // The direction whose nodes lead further toward the start of the layer
     // beyond (from the previous sweep) goes first; forward edges by default.

@@ -72,7 +72,35 @@ export function countOrthogonalHypersegmentCrossings(
   ports: readonly OrthogonalPort[],
   connections: readonly OrthogonalConnection[],
 ): number {
-  const { segments } = createOrthogonalHypersegments(ports, connections);
+  return scoreOrthogonalHypersegments(ports, connections).count;
+}
+
+/**
+ * {@link countOrthogonalHypersegmentCrossings}, optionally separating shared
+ * tracks. ELK routes a hyperedge on one shared track. When it joins two or
+ * more ports on each side, its edges would run opposite ways along that
+ * track, which routing never allows; `separateShared` counts such a
+ * hyperedge's edges one by one instead. `shared` reports whether one exists.
+ */
+export function scoreOrthogonalHypersegments(
+  ports: readonly OrthogonalPort[],
+  connections: readonly OrthogonalConnection[],
+  separateShared = false,
+): { count: number; shared: boolean } {
+  const { segments: merged, segmentByPort } = createOrthogonalHypersegments(ports, connections);
+  const sharedSegments = new Set(
+    merged.flatMap((s, i) => (s.incoming.length > 1 && s.outgoing.length > 1 ? [i] : [])),
+  );
+  let segments: ReadonlyArray<{ incoming: number[]; outgoing: number[] }> = merged;
+  if (separateShared && sharedSegments.size) {
+    const position = new Map(ports.map((p) => [p.id, p.position]));
+    segments = [
+      ...merged.filter((_, i) => !sharedSegments.has(i)),
+      ...connections
+        .filter((c) => sharedSegments.has(segmentByPort.get(c.source)!))
+        .map((c) => ({ incoming: [position.get(c.source)!], outgoing: [position.get(c.target)!] })),
+    ];
+  }
   const spans = segments.map((s) => ({
     leftStart: Math.min(...s.incoming),
     leftEnd: Math.max(...s.incoming),
@@ -88,5 +116,5 @@ export function countOrthogonalHypersegmentCrossings(
       if (a.leftStart < b.leftEnd && b.leftStart < a.leftEnd) count++;
       if (a.rightStart < b.rightEnd && b.rightStart < a.rightEnd) count++;
     }
-  return count;
+  return { count, shared: sharedSegments.size > 0 };
 }

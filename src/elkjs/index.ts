@@ -7,11 +7,7 @@ import {
   type LayeredLayoutOptions,
   type LayerOrder,
 } from "../layered";
-import {
-  createLayerSweepSession,
-  MIXED_PORT_MODEL,
-  type MixedPortModel,
-} from "../layered/strategies";
+import { createLayerSweepSession, CROSSING_MODEL, type CrossingModel } from "../layered/strategies";
 import {
   minimizeHierarchyCrossings,
   type HierarchyCrossingScope,
@@ -87,9 +83,9 @@ export type {
 } from "./public-types";
 export type { ElkId, ElkLogging } from "./types";
 
-/** The mixed-port model setting a layout passes to crossing minimization. */
-const mixedPortModel = Symbol("mixedPortModel");
-type MixedPortArguments = ElkLayoutArguments & { [mixedPortModel]?: MixedPortModel };
+/** The crossing-model setting a layout passes to crossing minimization. */
+const crossingModel = Symbol("crossingModel");
+type ModelArguments = ElkLayoutArguments & { [crossingModel]?: CrossingModel };
 
 interface PreparedElkScope {
   graph: ElkNode;
@@ -177,27 +173,32 @@ export default class ELK {
   ): Promise<LaidOutElkNode<T>> {
     const options = { ...this.#options.defaultLayoutOptions, ...arguments_.layoutOptions };
     const seeds = crossingVariants(options, graph);
-    const probe = hasSharedPort(graph) ? { applied: false } : undefined;
+    const probe = hasSharedPort(graph) ? { mixedPorts: false, sharedTracks: false } : undefined;
     const pristine = seeds.length || probe ? structuredClone(graph) : undefined;
     let best = separated(
       await this.#layoutWithoutDefectiveCompaction(
         graph,
-        probe ? { ...arguments_, [mixedPortModel]: probe } : arguments_,
+        probe ? { ...arguments_, [crossingModel]: { probe } } : arguments_,
       ),
       options,
     );
     if (!pristine) return best;
     // Crossing minimization models a port carrying both directions as two
-    // ports with grouped neighbours. That helps on average but steers the
-    // sweeps into worse orders on some graphs, so a graph where the model
-    // applied is also laid out without it, and keeps the better result.
+    // ports with grouped neighbours, and counts hyperedges as ELK routes
+    // them. Each choice steers the sweeps into worse orders on some graphs,
+    // so a graph where the mixed-port model applied is also laid out without
+    // it, and one with a hyperedge that routing must split is also laid out
+    // counting that hyperedge edge by edge. The best result wins.
     // A compound layout with defects tries other random seeds too. Above
     // ELK's default thoroughness, every compound layout does, trading time
     // for fewer crossings and bends.
     const reseed =
       seeds.length > 0 && (thorough(options, graph) || measureLayout(best, true).defects > 0);
-    const variants: MixedPortArguments[] = [
-      ...(probe?.applied ? [{ ...arguments_, [mixedPortModel]: false as const }] : []),
+    const variants: ModelArguments[] = [
+      ...(probe?.mixedPorts ? [{ ...arguments_, [crossingModel]: { mixedPorts: false } }] : []),
+      ...(probe?.sharedTracks
+        ? [{ ...arguments_, [crossingModel]: { mixedPorts: false, separateSharedTracks: true } }]
+        : []),
       ...(reseed ? seeds : []).map((variant) => ({
         ...arguments_,
         layoutOptions: { ...arguments_.layoutOptions, ...variant },
@@ -221,7 +222,7 @@ export default class ELK {
 
   async #layoutWithoutDefectiveCompaction<T extends ElkNode>(
     graph: T,
-    arguments_: MixedPortArguments,
+    arguments_: ModelArguments,
   ): Promise<LaidOutElkNode<T>> {
     const compacting = usesPostCompaction(
       { ...this.#options.defaultLayoutOptions, ...arguments_.layoutOptions },
@@ -1099,8 +1100,8 @@ export default class ELK {
       },
       settings: {
         ...getLayeredSettings(layoutOptions),
-        ...((arguments_ as MixedPortArguments)[mixedPortModel] !== undefined
-          ? { [MIXED_PORT_MODEL]: (arguments_ as MixedPortArguments)[mixedPortModel] }
+        ...((arguments_ as ModelArguments)[crossingModel]
+          ? { [CROSSING_MODEL]: (arguments_ as ModelArguments)[crossingModel] }
           : {}),
         ...(compoundLayout || (hasHierarchy && !separateHierarchy && !topdownLayout)
           ? { separateConnectedComponents: false }
