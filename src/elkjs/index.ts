@@ -173,7 +173,9 @@ export default class ELK {
   ): Promise<LaidOutElkNode<T>> {
     const options = { ...this.#options.defaultLayoutOptions, ...arguments_.layoutOptions };
     const seeds = crossingVariants(options, graph);
-    const probe = hasSharedPort(graph) ? { mixedPorts: false, sharedTracks: false } : undefined;
+    const probe = mayShareTracks(graph, options)
+      ? { mixedPorts: false, sharedTracks: false }
+      : undefined;
     const pristine = seeds.length || probe ? structuredClone(graph) : undefined;
     let best = separated(
       await this.#layoutWithoutDefectiveCompaction(
@@ -2870,8 +2872,23 @@ function crossingVariants(
   return [{ "elk.randomSeed": "2" }, { "elk.randomSeed": "3" }];
 }
 
-/** Whether some explicit port carries two or more edges between different ends. */
-function hasSharedPort(graph: ElkNode): boolean {
+/**
+ * Whether two edges between different ends can share a port: an explicit port
+ * carrying two or more of them, or implicit ports that merge because some
+ * scope merges edges or a node is a hypernode.
+ */
+function mayShareTracks(graph: ElkNode, options: Readonly<Record<string, unknown>>): boolean {
+  const merging = (node: ElkNode, inherited: Readonly<Record<string, unknown>> = {}) => {
+    const settings = getElementLayeredSettings({
+      ...inherited,
+      ...node.properties,
+      ...node.layoutOptions,
+    });
+    return settings.mergeEdges === true || settings.hypernode === true;
+  };
+  const anyMerging = (node: ElkNode): boolean =>
+    merging(node) || (node.children ?? []).some(anyMerging);
+  if (merging(graph, options) || (graph.children ?? []).some(anyMerging)) return true;
   const ports = new Set<string>();
   const collectPorts = (node: ElkNode) => {
     for (const port of node.ports ?? []) ports.add(String(port.id));
