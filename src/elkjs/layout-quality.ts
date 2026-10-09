@@ -35,14 +35,18 @@ const strictlyInside = (value: number, low: number, high: number) =>
   value > low + EPS && value < high - EPS;
 const overlapLength = (a: readonly [number, number], b: readonly [number, number]) =>
   Math.max(0, Math.min(a[1], b[1]) - Math.max(a[0], b[0]));
+/** Within `margin` of the rectangle, its border included. */
 const inRect = (point: Point, rect: Rect, margin: number) =>
-  point.x > rect.x - margin &&
-  point.x < rect.x + rect.width + margin &&
-  point.y > rect.y - margin &&
-  point.y < rect.y + rect.height + margin;
+  point.x >= rect.x - margin - EPS &&
+  point.x <= rect.x + rect.width + margin + EPS &&
+  point.y >= rect.y - margin - EPS &&
+  point.y <= rect.y + rect.height + margin + EPS;
 
-/** Measure an ELK JSON result in absolute coordinates. */
-export function measureLayout(root: ElkNode): LayoutQuality {
+/**
+ * Measure an ELK JSON result in absolute coordinates. `defectsOnly` skips the
+ * pairwise route measures (crossings and overlap stay 0).
+ */
+export function measureLayout(root: ElkNode, defectsOnly = false): LayoutQuality {
   const frames = new Map<string, Point>([[String(root.id), { x: 0, y: 0 }]]);
   const rects = new Map<string, Rect>();
   const owner = new Map<string, string>();
@@ -64,7 +68,8 @@ export function measureLayout(root: ElkNode): LayoutQuality {
   };
   place(root, { x: 0, y: 0 });
 
-  const routes: Array<{ ends: string[]; segments: Segment[]; labels: Rect[] }> = [];
+  const routes: Array<{ ends: string[]; segments: Segment[]; visible: Segment[]; labels: Rect[] }> =
+    [];
   let defects = 0,
     bends = 0,
     length = 0;
@@ -127,7 +132,13 @@ export function measureLayout(root: ElkNode): LayoutQuality {
       for (const [index, first] of segments.entries())
         for (const second of segments.slice(index + 1))
           if (sharedLength(first, second) > EPS) defects++;
-      routes.push({ ends, segments, labels });
+      routes.push({
+        ends,
+        segments,
+        visible:
+          labels.length && !defectsOnly ? segments.flatMap((s) => outsideAll(s, labels)) : segments,
+        labels,
+      });
     }
     for (const child of parent.children ?? []) collect(child);
   };
@@ -164,39 +175,76 @@ export function measureLayout(root: ElkNode): LayoutQuality {
 
   let crossings = 0,
     overlap = 0;
-  for (const [index, first] of routes.entries())
-    for (const second of routes.slice(index + 1)) {
-      const shared = first.ends
-        .filter((id) => second.ends.includes(id))
-        .flatMap((id) => {
-          const rect = rects.get(id);
-          return rect ? [rect] : [];
-        });
-      const clear = (point: Point) => shared.every((rect) => !inRect(point, rect, TERMINAL_MARGIN));
-      for (const s of first.segments)
-        for (const t of second.segments) {
+  if (!defectsOnly)
+    for (const [index, first] of routes.entries())
+      for (const second of routes.slice(index + 1)) {
+        const shared = first.ends
+          .filter((id) => second.ends.includes(id))
+          .flatMap((id) => {
+            const rect = rects.get(id);
+            return rect ? [rect] : [];
+          });
+        const clear = (point: Point) =>
+          shared.every((rect) => !inRect(point, rect, TERMINAL_MARGIN));
+        // A crossing under an edge's own label is not seen; two routes crossing
+        // at one point cross once.
+        let points: Set<string> | undefined;
+        const cross = (s: Segment, t: Segment) => {
           const h = horizontal(s) && vertical(t) ? s : horizontal(t) && vertical(s) ? t : undefined;
-          if (h) {
-            const v = h === s ? t : s;
-            const point = { x: v.a.x, y: h.a.y };
-            if (
-              strictlyInside(point.x, ...span(h, "x")) &&
-              strictlyInside(point.y, ...span(v, "y")) &&
-              clear(point)
-            )
-              crossings++;
-            continue;
+          if (!h) return;
+          const v = h === s ? t : s;
+          const point = { x: v.a.x, y: h.a.y };
+          if (
+            strictlyInside(point.x, ...span(h, "x")) &&
+            strictlyInside(point.y, ...span(v, "y")) &&
+            clear(point)
+          )
+            (points ??= new Set()).add(`${Math.round(point.x / EPS)}:${Math.round(point.y / EPS)}`);
+        };
+        const unlabeled = first.visible === first.segments && second.visible === second.segments;
+        for (const s of first.segments)
+          for (const t of second.segments) {
+            if (unlabeled) cross(s, t);
+            const shared = sharedLength(s, t);
+            if (shared > EPS && clear(s.a) && clear(s.b)) overlap += shared;
           }
-          const shared = sharedLength(s, t);
-          if (shared > EPS && clear(s.a) && clear(s.b)) overlap += shared;
-        }
-    }
+        if (!unlabeled) for (const s of first.visible) for (const t of second.visible) cross(s, t);
+        crossings += points?.size ?? 0;
+      }
   const xs = bounds.map((point) => point.x).filter(Number.isFinite),
     ys = bounds.map((point) => point.y).filter(Number.isFinite);
   const area = xs.length
     ? (Math.max(...xs) - Math.min(...xs)) * (Math.max(...ys) - Math.min(...ys))
     : 0;
   return { defects, crossings, overlap, bends, length, area };
+}
+
+/** The parts of an axis-parallel segment outside the open interiors of `rects`. */
+function outsideAll(segment: Segment, rects: readonly Rect[]): Segment[] {
+  let parts = [segment];
+  for (const rect of rects)
+    parts = parts.flatMap((part) => {
+      const axis = horizontal(part) ? "x" : vertical(part) ? "y" : undefined;
+      if (!axis) return [part];
+      const cross = axis === "x" ? "y" : "x";
+      const [low, high] =
+        axis === "x" ? [rect.x, rect.x + rect.width] : [rect.y, rect.y + rect.height];
+      const [crossLow, crossHigh] =
+        cross === "x" ? [rect.x, rect.x + rect.width] : [rect.y, rect.y + rect.height];
+      if (!strictlyInside(part.a[cross], crossLow, crossHigh)) return [part];
+      const [from, to] = span(part, axis);
+      if (overlapLength([from, to], [low, high]) <= EPS) return [part];
+      const at = (value: number) => ({ ...part.a, [axis]: value }) as Point;
+      return (
+        [
+          [from, Math.max(from, low)],
+          [Math.min(to, high), to],
+        ] as const
+      )
+        .filter(([a, b]) => b - a > EPS)
+        .map(([a, b]) => ({ a: at(a), b: at(b) }));
+    });
+  return parts;
 }
 
 function sharedLength(s: Segment, t: Segment): number {

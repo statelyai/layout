@@ -124,6 +124,17 @@ function cycleModelOrder(input: LayeredPhaseInput): Map<string, number> {
   );
 }
 
+/**
+ * Internal setting for the mixed-port model of crossing minimization: a port
+ * carrying both directions counts as two ports, and its neighbours are
+ * grouped by direction. False lays out without the model; a probe object
+ * records whether the model applied to any port. The elkjs facade lays out
+ * such graphs both ways and keeps the better result: the model helps on
+ * average but steers the sweeps into worse orders on some graphs.
+ */
+export const MIXED_PORT_MODEL = "internal.mixedPortModel";
+export type MixedPortModel = false | { applied: boolean };
+
 export const breakCyclesWithDepthFirstSearch: CycleBreaker = (input) => {
   const outgoing = new Map<string, GraphEdge[]>();
   for (const node of input.graph.nodes) outgoing.set(node.id, []);
@@ -2037,6 +2048,9 @@ export function createLayerSweepSession(
     }
   }
   const buildCrossingGraph = createCrossingGraphBuilder(input);
+  const mixedPortModel = (input.settings as { [MIXED_PORT_MODEL]?: MixedPortModel })[
+    MIXED_PORT_MODEL
+  ];
   const countCrossings = (candidateLayers: readonly (readonly string[])[]): number => {
     if (exactPortSweep) {
       const graph = buildCrossingGraph(
@@ -2045,7 +2059,10 @@ export function createLayerSweepSession(
         inputPortOrder,
         outputPortOrder,
       );
-      let total = countAllCrossings(splitMixedCrossingPorts(graph, canonicalReversed)).total;
+      const split =
+        mixedPortModel === false ? graph : splitMixedCrossingPorts(graph, canonicalReversed);
+      if (mixedPortModel && split !== graph) mixedPortModel.applied = true;
+      let total = countAllCrossings(split).total;
       const nodeInfluence = Number(
         input.settings["considerModelOrder.crossingCounterNodeInfluence"] ?? 0,
       );
@@ -2151,12 +2168,13 @@ export function createLayerSweepSession(
           !forward,
           nodeRelativePortRanks,
         );
-        const fixedIds = new Set(fixedLayer);
-        for (let index = 0; index < canonicalEdges.length; index++) {
+        // The fixed layer's edges toward the free layer, in edge order.
+        const byEnd = forward ? canonicalEdgesBySource : canonicalEdgesByTarget;
+        const indices = fixedLayer.flatMap((id) => byEnd.get(id) ?? []).sort((a, b) => a - b);
+        for (const index of indices) {
           const edge = canonicalEdges[index]!;
           const [source, target] = canonicalOrientedEndpoints[index]!;
-          if (!fixedIds.has(forward ? source : target) || !freeIds.has(forward ? target : source))
-            continue;
+          if (!freeIds.has(forward ? target : source)) continue;
           const endpoint = canonicalEndpoints.get(edge.id)!;
           const rank =
             canonicalDistributor.state.ranks[forward ? endpoint.source : endpoint.target]!;
@@ -2288,6 +2306,18 @@ export function createLayerSweepSession(
   const canonicalOrientedEndpoints = canonicalEdges.map((edge) =>
     getOrientedEndpoints(edge, orientation),
   );
+  const canonicalEdgesBySource = new Map<string, number[]>(),
+    canonicalEdgesByTarget = new Map<string, number[]>();
+  canonicalOrientedEndpoints.forEach(([source, target], index) => {
+    for (const [byEnd, id] of [
+      [canonicalEdgesBySource, source],
+      [canonicalEdgesByTarget, target],
+    ] as const) {
+      const list = byEnd.get(id);
+      if (list) list.push(index);
+      else byEnd.set(id, [index]);
+    }
+  });
   const canonicalEndpoints = new Map(
     canonicalEdges.map((edge, index) => [edge.id, canonicalGraph.edges[index]!]),
   );
@@ -2386,6 +2416,7 @@ export function createLayerSweepSession(
     fixed: readonly string[],
     beyond: readonly string[] = [],
   ) => {
+    if (mixedPortModel === false) return;
     const fixedIds = new Set(fixed);
     const groups = new Map<string, Array<{ id: string; reversed: boolean }>>();
     for (const id of free) {
@@ -2408,6 +2439,7 @@ export function createLayerSweepSession(
     }
     if (![...groups.values()].some((g) => g.some((m) => m.reversed) && g.some((m) => !m.reversed)))
       return;
+    if (mixedPortModel) mixedPortModel.applied = true;
     const index = new Map(free.map((id, i) => [id, i]));
     // The direction whose nodes lead further toward the start of the layer
     // beyond (from the previous sweep) goes first; forward edges by default.
@@ -3783,6 +3815,18 @@ function implicitEdgeEndpoints(
 
   const result = new Map<string, { source: Point; target: Point }>();
   const edgeModelOrder = new Map(input.graph.edges.map((edge, index) => [edge.id, index]));
+  // First positions in swept port orders, as `indexOf` finds them.
+  const orderIndexes = new Map<readonly string[], Map<string, number>>();
+  const orderIndex = (list: readonly string[], id: string) => {
+    let positions = orderIndexes.get(list);
+    if (!positions) {
+      positions = new Map();
+      for (const [index, item] of list.entries())
+        if (!positions.has(item)) positions.set(item, index);
+      orderIndexes.set(list, positions);
+    }
+    return positions.get(id) ?? -1;
+  };
   const placedPorts = new Map<GraphNode, { rect: EntityRect; ports: GraphPort[] | undefined }>();
   const portSideCounts = new Map<GraphNode, Map<unknown, number>>();
   const portSideCount = (node: GraphNode, side: unknown): number => {
@@ -3860,8 +3904,8 @@ function implicitEdgeEndpoints(
         const selected = (
           leftIncoming ? sweptOrder?.inputPortOrderByNodeId : sweptOrder?.outputPortOrderByNodeId
         )?.get(nodeId);
-        const a = selected?.indexOf(left.edge.id) ?? -1,
-          b = selected?.indexOf(right.edge.id) ?? -1;
+        const a = selected ? orderIndex(selected, left.edge.id) : -1,
+          b = selected ? orderIndex(selected, right.edge.id) : -1;
         if (a >= 0 && b >= 0 && a !== b) return (leftIncoming ? -1 : 1) * (a - b);
       }
       if (interactiveLeftSourceOrder) {

@@ -159,8 +159,28 @@ export function separateOpposingTracks(scene: TrackScene): Map<string, TrackPoin
     if (!rects) terminalCache.set(key, (rects = terminals(a.route, b.route)));
     return rects;
   };
+  const boxes = new WeakMap<Segment[], [number, number, number, number]>();
+  const boxOf = (segments: Segment[]) => {
+    let box = boxes.get(segments);
+    if (!box) {
+      box = [Infinity, Infinity, -Infinity, -Infinity];
+      for (const { a, b } of segments) {
+        box[0] = Math.min(box[0], a.x, b.x);
+        box[1] = Math.min(box[1], a.y, b.y);
+        box[2] = Math.max(box[2], a.x, b.x);
+        box[3] = Math.max(box[3], a.y, b.y);
+      }
+      boxes.set(segments, box);
+    }
+    return box;
+  };
+  const none = { opposing: 0, overlap: 0, crossings: 0 };
   // The metric's pair measures: opposite-direction and same-direction shared length, crossings.
   const pair = (mine: Segment[], self: State, other: State) => {
+    // Routes with disjoint bounds neither share a track nor cross.
+    const [ax0, ay0, ax1, ay1] = boxOf(mine),
+      [bx0, by0, bx1, by1] = boxOf(other.measured);
+    if (ax1 < bx0 - EPS || bx1 < ax0 - EPS || ay1 < by0 - EPS || by1 < ay0 - EPS) return none;
     const rects = terminalsOf(self, other);
     const as = rects.length ? clip(mine, rects, true) : mine,
       bs = rects.length ? clip(other.measured, rects, true) : other.measured;
