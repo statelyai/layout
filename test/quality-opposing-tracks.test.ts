@@ -5,6 +5,7 @@ import NativeELK from "../src/elkjs";
 import type { ElkNode } from "../src/elkjs/types";
 import { HARD, score } from "../scripts/parity/quality-gate";
 import { measureQuality } from "../scripts/heuristic-quality.mjs";
+import { separateOpposingTracks } from "../src/layered/opposing-tracks";
 import vizFeedbackForm from "./fixtures/viz-feedback-form.json";
 import vizTwoStateCycle from "./fixtures/viz-two-state-cycle.json";
 
@@ -98,4 +99,82 @@ it("separates opposite directions in native layouts", () => {
     { nodes: layout.nodes, edges: graph.edges },
   ) as Record<string, number>;
   expect(hard(metrics)).toEqual(clean);
+});
+
+// Merged portless edges attach at one point per node side, so an edge and a
+// reversed edge between the same nodes run on one straight line. That point
+// is an implicit shared port: each direction gets its own attachment.
+it("splits portless ends that share one attachment point", () => {
+  const nodes = new Map([
+    ["a", { x: 0, y: 0, width: 60, height: 40 }],
+    ["b", { x: 200, y: 0, width: 60, height: 40 }],
+  ]);
+  const changed = separateOpposingTracks({
+    nodes,
+    leaves: new Set(nodes.keys()),
+    spacing: 10,
+    routes: [
+      {
+        id: "ab",
+        ends: ["a", "b"],
+        points: [
+          { x: 60, y: 20 },
+          { x: 200, y: 20 },
+        ],
+      },
+      {
+        id: "ba",
+        ends: ["b", "a"],
+        points: [
+          { x: 200, y: 20 },
+          { x: 60, y: 20 },
+        ],
+      },
+    ].map((route) => ({ ...route, labels: [], movable: true })),
+  });
+  const ab = changed.get("ab")!,
+    ba = changed.get("ba")!;
+  // Both stay straight, on the node sides, a spacing apart.
+  expect(ab.map((p) => p.x)).toEqual([60, 200]);
+  expect(ba.map((p) => p.x)).toEqual([200, 60]);
+  expect(ab[0]!.y).toBe(ab[1]!.y);
+  expect(ba[0]!.y).toBe(ba[1]!.y);
+  expect(Math.abs(ab[0]!.y - ba[0]!.y)).toBe(10);
+});
+
+it("never shares a track in opposite directions with merged edges", async () => {
+  const sizes = [
+    [72, 54],
+    [60, 42],
+    [84, 42],
+    [60, 46],
+    [96, 50],
+  ];
+  const ends = [
+    [4, 0],
+    [2, 3],
+    [0, 4],
+    [0, 4],
+    [2, 4],
+    [3, 1],
+    [1, 4],
+    [4, 0],
+    [4, 1],
+  ];
+  const input: ElkNode = {
+    id: "root",
+    layoutOptions: {
+      "elk.algorithm": "layered",
+      "elk.direction": "LEFT",
+      "elk.layered.mergeEdges": "true",
+    },
+    children: sizes.map(([width, height], i) => ({ id: `n${i}`, width, height })),
+    edges: ends.map(([source, target], i) => ({
+      id: `e${i}`,
+      sources: [`n${source}`],
+      targets: [`n${target}`],
+    })),
+  };
+  const layout = await new NativeELK().layout(structuredClone(input));
+  expect(hard(score(layout, input))).toEqual(clean);
 });

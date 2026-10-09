@@ -120,6 +120,14 @@ function crossing(s: Segment, t: Segment): boolean {
     h.a.y < Math.max(v.a.y, v.b.y) - EPS
   );
 }
+const onBorder = (p: TrackPoint, r: TrackRect) => {
+  const inX = p.x >= r.x - EPS && p.x <= r.x + r.width + EPS,
+    inY = p.y >= r.y - EPS && p.y <= r.y + r.height + EPS;
+  return (
+    (inY && (Math.abs(p.x - r.x) <= EPS || Math.abs(p.x - r.x - r.width) <= EPS)) ||
+    (inX && (Math.abs(p.y - r.y) <= EPS || Math.abs(p.y - r.y - r.height) <= EPS))
+  );
+};
 const segmentsOf = (points: readonly TrackPoint[]): Segment[] =>
   points.slice(1).flatMap((b, i) => {
     const s = { a: points[i]!, b };
@@ -511,17 +519,24 @@ export function separateOpposingTracks(scene: TrackScene): Map<string, TrackPoin
    * half a spacing either side of the port's centre.
    */
   function splitSharedPorts(tolerant: boolean) {
-    const ports = scene.ports;
-    if (!ports?.size) return;
     type End = { state: State; end: 0 | 1 };
     const groups = new Map<string, { port: TrackPort; normal: TrackPoint; ends: End[] }>();
     for (const state of states)
       for (const end of [0, 1] as const) {
-        const id = state.route.ports?.[end];
-        const port = id === undefined ? undefined : ports.get(id);
-        if (!port || state.points.length < 2) continue;
+        if (state.points.length < 2) continue;
         const path = end ? [...state.points].reverse() : state.points;
         const [p, q] = path as [TrackPoint, TrackPoint];
+        let id = state.route.ports?.[end];
+        let port = id === undefined ? undefined : scene.ports?.get(id);
+        // Portless ends meeting at one point of a node border (merged edges)
+        // share an implicit port there.
+        const node = state.route.ends.length === 2 ? state.route.ends[end]! : undefined;
+        const rect = node === undefined ? undefined : nodes.get(node);
+        if (id === undefined && rect && onBorder(p, rect)) {
+          id = `${node}\0${p.x}\0${p.y}`;
+          port = { node: node!, rect: { ...p, width: 0, height: 0 } };
+        }
+        if (!port) continue;
         const s = { a: p, b: q };
         if (size(s) <= EPS || (!horizontal(s) && !vertical(s))) continue;
         const normal = { x: Math.sign(q.x - p.x), y: Math.sign(q.y - p.y) };
@@ -530,7 +545,14 @@ export function separateOpposingTracks(scene: TrackScene): Map<string, TrackPoin
         if (!group) groups.set(key, (group = { port, normal, ends: [] }));
         group.ends.push({ state, end });
       }
-    for (const { port, normal, ends } of groups.values()) {
+    for (const group of groups.values()) {
+      const { port, normal } = group;
+      // An earlier split may have slid a straight route off an implicit port.
+      const ends = group.ends.filter(({ state, end }) => {
+        if (state.route.ports?.[end] !== undefined) return true;
+        const p = end ? state.points.at(-1)! : state.points[0]!;
+        return Math.abs(p.x - port.rect.x) <= EPS && Math.abs(p.y - port.rect.y) <= EPS;
+      });
       const incoming = ends.filter((e) => e.end === 1),
         outgoing = ends.filter((e) => e.end === 0);
       if (!incoming.length || !outgoing.length) continue;
@@ -550,10 +572,27 @@ export function separateOpposingTracks(scene: TrackScene): Map<string, TrackPoin
         sideHi = node[lateral] + (lateral === "x" ? node.width : node.height);
       const wide = extent >= spacing - EPS;
       const half = spacing / 2;
+      // A straight portless two-point route slides sideways whole, both ends
+      // staying on their node sides.
+      const slid = (state: State, points: TrackPoint[], end: 0 | 1, offset: number) => {
+        if (state.route.ports?.some((id) => id !== undefined)) return undefined;
+        if (Math.abs(points[0]![across] - points[1]![across]) <= EPS) return undefined;
+        const far = nodes.get(state.route.ends[1 - end] ?? "");
+        const moved = points.map((p) => ({ ...p, [lateral]: p[lateral] + offset }));
+        const within = (value: number, rect: TrackRect) => {
+          const lo = rect[lateral];
+          return (
+            value >= lo - EPS && value <= lo + (lateral === "x" ? rect.width : rect.height) + EPS
+          );
+        };
+        const value = moved[0]![lateral];
+        return within(value, node) && far && within(value, far) ? moved : undefined;
+      };
       // Move one end of a route sideways by `offset`, keeping it orthogonal.
-      const shifted = (points: TrackPoint[], end: 0 | 1, offset: number) => {
+      const shifted = (state: State, points: TrackPoint[], end: 0 | 1, offset: number) => {
         if (Math.abs(offset) <= EPS) return points;
         const path = end ? [...points].reverse() : [...points];
+        if (path.length === 2) return slid(state, points, end, offset);
         if (path.length < 3) return undefined;
         const [p, q, r] = path as [TrackPoint, TrackPoint, TrackPoint];
         const along = r[lateral] - q[lateral];
@@ -614,7 +653,7 @@ export function separateOpposingTracks(scene: TrackScene): Map<string, TrackPoin
         const next = new Map<State, TrackPoint[]>();
         let feasible = true;
         for (const e of ends) {
-          const points = shifted(next.get(e.state) ?? e.state.points, e.end, offsetOf(e));
+          const points = shifted(e.state, next.get(e.state) ?? e.state.points, e.end, offsetOf(e));
           if (!points) {
             feasible = false;
             break;

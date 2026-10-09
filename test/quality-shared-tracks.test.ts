@@ -63,8 +63,6 @@ it.each([
 
 // Merged edges share implicit ports, so they can form shared tracks without
 // any explicit port; such graphs try the separated count too (32 -> 19).
-// Merged edges still leave a sub-pixel opposite-direction stub here (4.3px
-// before this change, 0.5px now); that is tracked separately.
 it("separates shared tracks of merged implicit ports", async () => {
   const sizes = [
     [96, 44],
@@ -121,9 +119,8 @@ it("separates shared tracks of merged implicit ports", async () => {
     })),
   };
   const native = score(await new NativeELK().layout(structuredClone(input)), input);
-  const others = HARD.filter((key) => key !== "opposingOverlapLength");
-  expect(Object.fromEntries(others.map((key) => [key, native[key]]))).toEqual(
-    Object.fromEntries(others.map((key) => [key, 0])),
+  expect(Object.fromEntries(HARD.map((key) => [key, native[key]]))).toEqual(
+    Object.fromEntries(HARD.map((key) => [key, 0])),
   );
   expect(native.edgeCrossings).toBeLessThanOrEqual(19);
 }, 60000);
