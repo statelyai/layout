@@ -72,13 +72,34 @@ export function countOrthogonalHypersegmentCrossings(
   ports: readonly OrthogonalPort[],
   connections: readonly OrthogonalConnection[],
 ): number {
-  const { segments } = createOrthogonalHypersegments(ports, connections);
-  const spans = segments.map((s) => ({
-    leftStart: Math.min(...s.incoming),
-    leftEnd: Math.max(...s.incoming),
-    rightStart: Math.min(...s.outgoing),
-    rightEnd: Math.max(...s.outgoing),
-  }));
+  return scoreOrthogonalHypersegments(ports, connections).count;
+}
+
+/**
+ * {@link countOrthogonalHypersegmentCrossings}, optionally separating shared
+ * tracks. ELK routes a hyperedge on one shared track. When it joins two or
+ * more ports on each side, its edges would run opposite ways along that
+ * track, which routing never allows; `separateShared` counts such a
+ * hyperedge's edges one by one instead. `shared` reports whether one exists.
+ */
+export function scoreOrthogonalHypersegments(
+  ports: readonly OrthogonalPort[],
+  connections: readonly OrthogonalConnection[],
+  separateShared = false,
+): { count: number; shared: boolean } {
+  const { segments: merged, segmentByPort } = createOrthogonalHypersegments(ports, connections);
+  const sharedSegments = new Set(
+    merged.flatMap((s, i) => (s.incoming.length > 1 && s.outgoing.length > 1 ? [i] : [])),
+  );
+  const separating = separateShared && sharedSegments.size > 0;
+  const spans = merged
+    .filter((_, i) => !separating || !sharedSegments.has(i))
+    .map((s) => ({
+      leftStart: Math.min(...s.incoming),
+      leftEnd: Math.max(...s.incoming),
+      rightStart: Math.min(...s.outgoing),
+      rightEnd: Math.max(...s.outgoing),
+    }));
   let count = 0;
   for (let i = 0; i < spans.length; i++)
     for (let j = i + 1; j < spans.length; j++) {
@@ -88,5 +109,46 @@ export function countOrthogonalHypersegmentCrossings(
       if (a.leftStart < b.leftEnd && b.leftStart < a.leftEnd) count++;
       if (a.rightStart < b.rightEnd && b.rightStart < a.rightEnd) count++;
     }
+  if (separating) {
+    // A separated edge is a one-point span on each side.
+    const position = new Map(ports.map((p) => [p.id, p.position]));
+    const edges = connections
+      .filter((c) => sharedSegments.has(segmentByPort.get(c.source)!))
+      .map((c) => [position.get(c.source)!, position.get(c.target)!] as const);
+    for (const [left, right] of edges)
+      for (const b of spans) {
+        if ((left - b.leftStart) * (right - b.rightStart) < 0) count++;
+        if (left < b.leftEnd && b.leftStart < left) count++;
+        if (right < b.rightEnd && b.rightStart < right) count++;
+      }
+    count += strictInversions(edges);
+  }
+  return { count, shared: sharedSegments.size > 0 };
+}
+
+/** Pairs whose ends are strictly inverted: two separated edges that cross, in O(n log n). */
+function strictInversions(pairs: ReadonlyArray<readonly [number, number]>): number {
+  const ranks = [...new Set(pairs.map(([, right]) => right))].sort((a, b) => a - b);
+  const rankOf = new Map(ranks.map((value, index) => [value, index + 1]));
+  const tree = new Array<number>(ranks.length + 1).fill(0);
+  const atMost = (rank: number) => {
+    let sum = 0;
+    for (let i = rank; i > 0; i -= i & -i) sum += tree[i]!;
+    return sum;
+  };
+  const sorted = [...pairs].sort((a, b) => a[0] - b[0]);
+  let inserted = 0,
+    count = 0;
+  for (let start = 0; start < sorted.length;) {
+    let end = start;
+    while (end < sorted.length && sorted[end]![0] === sorted[start]![0]) end++;
+    // Edges with an equal left end never cross; compare against earlier ones only.
+    for (let i = start; i < end; i++) count += inserted - atMost(rankOf.get(sorted[i]![1])!);
+    for (let i = start; i < end; i++) {
+      for (let r = rankOf.get(sorted[i]![1])!; r <= ranks.length; r += r & -r) tree[r]!++;
+      inserted++;
+    }
+    start = end;
+  }
   return count;
 }

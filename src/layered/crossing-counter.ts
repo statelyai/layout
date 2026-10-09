@@ -3,7 +3,7 @@
  * Native adaptation of ELK AllCrossingsCounter and CrossingsCounter.
  * SPDX-License-Identifier: EPL-2.0
  */
-import { countOrthogonalHypersegmentCrossings } from "./orthogonal-hypersegments";
+import { scoreOrthogonalHypersegments } from "./orthogonal-hypersegments";
 
 export interface CrossingPort {
   id: string;
@@ -29,6 +29,8 @@ export interface CrossingScore {
   inLayer: number;
   northSouth: number;
   total: number;
+  /** Some hyperedge joins two or more ports on each side of its gap. */
+  sharedTracks: boolean;
 }
 
 class IndexTree {
@@ -61,7 +63,8 @@ class IndexTree {
 /** Score a canonical candidate without changing its node or port orders. */
 export function countAllCrossings(
   graph: CrossingGraph,
-  boundaryMode: "hyperedges" | "edges" = "hyperedges",
+  /** "separated" counts hyperedges like ELK unless they would share a track (see scoreOrthogonalHypersegments). */
+  boundaryMode: "hyperedges" | "separated" | "edges" = "hyperedges",
 ): CrossingScore {
   const nodes = new Map(graph.layers.flat().map((node) => [node.id, node]));
   const layerByPort = new Map<string, number>();
@@ -162,7 +165,13 @@ export function countAllCrossings(
     }
     return crossings;
   };
-  const score: CrossingScore = { betweenLayers: 0, inLayer: 0, northSouth: 0, total: 0 };
+  const score: CrossingScore = {
+    betweenLayers: 0,
+    inLayer: 0,
+    northSouth: 0,
+    total: 0,
+    sharedTracks: false,
+  };
   if (!graph.layers.length) return score;
   score.inLayer += countPorts(face(graph.layers[0]!, "WEST"), true);
   score.inLayer += countPorts(face(graph.layers.at(-1)!, "EAST"), true);
@@ -174,7 +183,7 @@ export function countAllCrossings(
           node.ports.some((port) => port.side === "EAST" && degree(port.id) > 1),
         ) ||
         next.some((node) => node.ports.some((port) => port.side === "WEST" && degree(port.id) > 1));
-      if (hyper && boundaryMode === "hyperedges") {
+      if (hyper && boundaryMode !== "edges") {
         const sourcePorts = layer
           .flatMap((node) => node.ports)
           .filter((port) => outgoing.get(port.id)!.some((peer) => layerByPort.get(peer) !== index));
@@ -189,7 +198,7 @@ export function countAllCrossings(
         });
         const sources = new Set(sourcePorts.map((port) => port.id)),
           targets = new Set(targetPorts.map((port) => port.id));
-        score.betweenLayers += countOrthogonalHypersegmentCrossings(
+        const hyperedges = scoreOrthogonalHypersegments(
           [
             ...sourcePorts.map((port, position) => ({
               id: port.id,
@@ -203,7 +212,10 @@ export function countAllCrossings(
             })),
           ],
           graph.edges.filter((edge) => sources.has(edge.source) && targets.has(edge.target)),
+          boundaryMode === "separated",
         );
+        score.betweenLayers += hyperedges.count;
+        score.sharedTracks ||= hyperedges.shared;
         score.inLayer +=
           countPorts(face(layer, "EAST"), true) + countPorts(face(next, "WEST"), true);
       } else {
