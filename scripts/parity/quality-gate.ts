@@ -198,13 +198,20 @@ async function worker(report: string, start: number, end: number, output: string
 function summarize(results: Array<Record<string, any>>) {
   const count = (status: Status) => results.filter((row) => row.status === status).length;
   const both = results.filter((row) => row.native && row.elk);
-  const totals = Object.fromEntries(
-    SOFT.map((metric) => {
-      const native = both.reduce((sum, row) => sum + row.native[metric], 0),
-        elk = both.reduce((sum, row) => sum + row.elk[metric], 0);
-      return [metric, { native, elk, ok: native <= elk }];
-    }),
-  );
+  const sum = (rows: typeof both) =>
+    Object.fromEntries(
+      SOFT.map((metric) => {
+        const native = rows.reduce((total, row) => total + row.native[metric], 0),
+          elk = rows.reduce((total, row) => total + row.elk[metric], 0);
+        return [metric, { native, elk, ok: native <= elk }];
+      }),
+    );
+  const totals = sum(both);
+  // A defective ELK layout can score well on soft metrics (edges collapsed
+  // onto one line cross nothing), so soft totals are also given over the
+  // rows where ELK has no hard violations.
+  const elkCleanRows = both.filter((row) => !Object.keys(row.elkHard).length);
+  const elkCleanTotals = sum(elkCleanRows);
   const hardTotals = Object.fromEntries(
     HARD.map((metric) => [
       metric,
@@ -235,6 +242,8 @@ function summarize(results: Array<Record<string, any>>) {
     hardTotals,
     totals,
     totalsOk: Object.values(totals).every((total) => total.ok),
+    elkCleanCases: elkCleanRows.length,
+    elkCleanTotals,
     decidedBy,
   };
 }
@@ -309,16 +318,13 @@ async function main(argv: string[]) {
       1,
     ) + "\n",
   );
-  const { totals, hardTotals: _, decidedBy: __, ...headline } = total;
+  const { totals, elkCleanTotals, hardTotals: _, decidedBy: __, ...headline } = total;
   console.log(JSON.stringify({ ...headline, elapsedSeconds }));
+  const column = (value: { native: number; elk: number; ok: boolean }) =>
+    `${Math.round(value.native)} vs ELK ${Math.round(value.elk)} ${value.ok ? "ok" : "OVER"}`;
+  console.log("".padEnd(18), "all rows".padEnd(36), `ELK-clean rows (${total.elkCleanCases})`);
   for (const [metric, value] of Object.entries(totals))
-    console.log(
-      metric.padEnd(18),
-      Math.round(value.native),
-      "vs ELK",
-      Math.round(value.elk),
-      value.ok ? "ok" : "OVER",
-    );
+    console.log(metric.padEnd(18), column(value).padEnd(36), column(elkCleanTotals[metric]!));
 }
 
 const argv = process.argv.slice(2);
