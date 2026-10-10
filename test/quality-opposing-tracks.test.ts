@@ -179,3 +179,55 @@ it("never shares a track in opposite directions with merged edges", async () => 
   const layout = await new NativeELK().layout(structuredClone(input));
   expect(hard(score(layout, input))).toEqual(clean);
 });
+
+// Two end segments on facing nodes run against each other at one height, too
+// short to jog past the terminal clearance: one end slides along its node
+// side instead, adding no bend.
+it("slides a portless end along its node side", () => {
+  const nodes = new Map([
+    ["a", { x: 0, y: 100, width: 100, height: 40 }],
+    ["b", { x: 140, y: 100, width: 100, height: 40 }],
+    ["c", { x: 140, y: 200, width: 60, height: 40 }],
+    ["d", { x: 20, y: 40, width: 80, height: 30 }],
+  ]);
+  const routes = [
+    {
+      id: "ca",
+      ends: ["c", "a"],
+      points: [
+        { x: 140, y: 220 },
+        { x: 132, y: 220 },
+        { x: 132, y: 120 },
+        { x: 100, y: 120 },
+      ],
+    },
+    {
+      id: "db",
+      ends: ["d", "b"],
+      points: [
+        { x: 100, y: 55 },
+        { x: 108, y: 55 },
+        { x: 108, y: 120 },
+        { x: 140, y: 120 },
+      ],
+    },
+  ].map((route) => ({ ...route, labels: [], movable: true }));
+  const changed = separateOpposingTracks({
+    nodes,
+    leaves: new Set(nodes.keys()),
+    spacing: 10,
+    routes,
+  });
+  expect(changed.size).toBe(1);
+  const [[id, points]] = [...changed];
+  const before = routes.find((route) => route.id === id)!.points;
+  expect(points).toHaveLength(before.length);
+  // Only the end and its corner moved, along the node side, off the shared height.
+  expect(points.slice(0, 2)).toEqual(before.slice(0, 2));
+  expect(points[2]!.x).toBe(before[2]!.x);
+  expect(points[3]!.x).toBe(before[3]!.x);
+  expect(points[2]!.y).toBe(points[3]!.y);
+  expect(Math.abs(points[3]!.y - 120)).toBeGreaterThanOrEqual(5);
+  expect(points[3]!.y).toBeGreaterThanOrEqual(100);
+  expect(points[3]!.y).toBeLessThanOrEqual(140);
+});
