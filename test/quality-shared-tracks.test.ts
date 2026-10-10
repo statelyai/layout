@@ -39,9 +39,11 @@ it("counts a hyperedge that would share a track edge by edge", () => {
 });
 
 // Graphs with such hyperedges are also laid out counting them edge by edge,
-// and keep the better result: 99 -> 65 crossings.
+// and keep the better result: 99 -> 65 crossings. Complex #50 is bounded at
+// 112: ELK's own crossing order there makes both counts agree.
 it.each([
   ["fresh", 36, 65],
+  ["complex", 50, 112],
   ["flat", 87, 25],
 ] as const)(
   "lays out graphs with shared tracks with fewer crossings (%s #%i)",
