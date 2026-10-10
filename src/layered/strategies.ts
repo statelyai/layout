@@ -2412,8 +2412,13 @@ export function createLayerSweepSession(
     });
     for (const index of touched)
       for (const node of canonicalGraph.layers[index]!) {
-        // One port leaves every edge order tied, so the stable sort keeps it.
-        if (node.ports.length < 2) continue;
+        // One port leaves every edge order tied, and one edge has no order.
+        if (
+          node.ports.length < 2 ||
+          ((outputPortOrder.get(node.id)?.length ?? 0) < 2 &&
+            (inputPortOrder.get(node.id)?.length ?? 0) < 2)
+        )
+          continue;
         const ordinal = new Map(node.ports.map((port, index) => [port.id, index]));
         for (const [orders, source] of [
           [outputPortOrder, true],
