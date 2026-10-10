@@ -7,7 +7,7 @@ import {
 } from "./initial-model-order";
 import { insertionSort } from "./gwt-sort";
 import { CanonicalPortDistributor } from "./port-distributor";
-import { countAllCrossings } from "./crossing-counter";
+import { countAllCrossings, type CrossingGraph } from "./crossing-counter";
 import {
   createCrossingGraphBuilder,
   crossingGraph,
@@ -1908,6 +1908,8 @@ export interface LayerSweepSession {
   currentLayers(): readonly (readonly string[])[];
   /** Current canonical port ids of one node, as {@link snapshot} records them. */
   physicalPortOrder(nodeId: string): string[];
+  /** Canonical crossing graph in the current order; callers must not mutate it. */
+  crossingGraph(): CrossingGraph;
   /** Live incident edge orders of one node; callers must not mutate them. */
   edgeOrders(nodeId: string): { incoming: readonly string[]; outgoing: readonly string[] };
   /** Same as restoring a snapshot that differs only in one layer. */
@@ -1995,6 +1997,32 @@ export function createLayerSweepSession(
   }
   const nodeById = new Map(input.graph.nodes.map((node) => [node.id, node]));
   const edgeById = new Map(input.graph.edges.map((edge) => [edge.id, edge]));
+  // ELK lists a compound's boundary ports in creation order: edges on them
+  // take their slots in that order, in model order within a port. Authored
+  // ports already arrive in ELK's sorted order and keep their edge order.
+  const boundaryPortIndex = (nodeId: string, edgeId: string, incoming: boolean) => {
+    const edge = edgeById.get(edgeId)!;
+    const name =
+      incoming !== orientation.reversedEdgeIds.has(edgeId) ? edge.targetPort : edge.sourcePort;
+    if (!name?.startsWith("__native_hierarchy")) return -1;
+    return nodeById.get(nodeId)!.ports?.findIndex((port) => port.name === name) ?? -1;
+  };
+  for (const [orders, incoming] of [
+    [outputPortOrder, false],
+    [inputPortOrder, true],
+  ] as const)
+    for (const [nodeId, edgeIds] of orders) {
+      if (edgeIds.length < 2) continue;
+      const slots = edgeIds.flatMap((id, slot) =>
+        boundaryPortIndex(nodeId, id, incoming) < 0 ? [] : [slot],
+      );
+      const sorted = slots
+        .map((slot) => edgeIds[slot]!)
+        .sort(
+          (a, b) => boundaryPortIndex(nodeId, a, incoming) - boundaryPortIndex(nodeId, b, incoming),
+        );
+      slots.forEach((slot, index) => (edgeIds[slot] = sorted[index]!));
+    }
   const edgeModelOrder = new Map(input.graph.edges.map((edge, index) => [edge.id, index]));
   const hierarchicalNodes = new Set<string>();
   const fixedOrderNodes = new Set(
@@ -2698,6 +2726,10 @@ export function createLayerSweepSession(
     restore,
     finish,
     currentLayers: () => working,
+    crossingGraph: () => ({
+      layers: working.map((layer) => layer.map((id) => canonicalNodes.get(id)!)),
+      edges: canonicalGraph.edges,
+    }),
     physicalPortOrder: (id) => canonicalNodes.get(id)?.ports.map((port) => port.id) ?? [],
     edgeOrders: (id) => ({
       incoming: inputPortOrder.get(id) ?? [],
