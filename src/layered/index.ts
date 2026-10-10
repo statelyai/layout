@@ -1436,15 +1436,16 @@ export function* createLayeredScopePipeline<N, E, G, P>(
     settings: options.settings ?? {},
     ...(options.nodeSettings === undefined ? {} : { nodeSettings: options.nodeSettings }),
     ...(options.edgeSettings === undefined ? {} : { edgeSettings: options.edgeSettings }),
-    portSettings: (port, node) => ({
-      ...options.portSettings?.(port, node),
-      ...(parallelPortIndexByKey.has(`${node.id}\0${port.name}`)
-        ? { "port.index": parallelPortIndexByKey.get(`${node.id}\0${port.name}`) }
-        : {}),
-      ...(switchedSideByPort.has(`${node.id}\0${port.name}`)
-        ? { "port.side": switchedSideByPort.get(`${node.id}\0${port.name}`) }
-        : {}),
-    }),
+    portSettings: (port, node) => {
+      const key = `${node.id}\0${port.name}`;
+      return {
+        ...options.portSettings?.(port, node),
+        ...(parallelPortIndexByKey.has(key)
+          ? { "port.index": parallelPortIndexByKey.get(key) }
+          : {}),
+        ...(switchedSideByPort.has(key) ? { "port.side": switchedSideByPort.get(key) } : {}),
+      };
+    },
   };
   const measure = <T>(id: string, run: () => T): T => {
     context?.throwIfAborted();
