@@ -28,15 +28,18 @@ const originId = (value) => {
 };
 const incidentEdges = (node) =>
   node.ports.array.flatMap((port) => [...port.incomingEdges.array, ...port.outgoingEdges.array]);
-/** Comparable token: real node id, `L:<edge>` for edge dummies, otherwise the dummy type. */
+/**
+ * Comparable token: real node id, `L:<edge>` for edge dummies, `X:<edge>` for
+ * hierarchy boundary dummies, otherwise the dummy type.
+ */
 const token = (node) => {
   const type = node.type_0?.name_0;
   if (type === "NORMAL") return String(originId(node));
-  if (type === "LONG_EDGE" || type === "LABEL") {
+  if (type === "LONG_EDGE" || type === "LABEL" || type === "EXTERNAL_PORT") {
     const edge = incidentEdges(node)
       .map(originId)
       .find((id) => id != null);
-    return edge == null ? type : `L:${edge}`;
+    return edge == null ? type : `${type === "EXTERNAL_PORT" ? "X" : "L"}:${edge}`;
   }
   return type === "NORTH_SOUTH_PORT" ? "NS" : String(type);
 };
@@ -151,7 +154,9 @@ export async function traceElkPhases(input) {
         portLists: (at(/CycleBreaker$/) ?? stages[0])?.portLists ?? {},
         layering: (splitter > 0 ? stages[splitter - 1] : last(/Layerer$|Postprocessor$/))?.layers,
         initialOrder: initialOrders.get(scope),
-        crossingOrder: last(/CrossingMinimizer$/)?.layers,
+        // A hierarchical layout minimizes crossings once, at the root; child
+        // scopes record their order at the next processor.
+        crossingOrder: (last(/CrossingMinimizer$/) ?? at(/InLayerConstraintProcessor$/))?.layers,
         sweeps: sweepEvents.filter((event) => event.scope === scope),
       };
     }),

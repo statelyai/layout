@@ -9,6 +9,7 @@ import { readReport } from "./read-report.mjs";
 import { traceElkPhases } from "./trace-phase-worker.mjs";
 
 type Layers = readonly (readonly string[])[];
+type PortList = { name?: string; outgoing: readonly string[]; incoming: readonly string[] }[];
 interface ElkScope {
   scope: number;
   edgeIds: string[];
@@ -33,17 +34,33 @@ const PHASES = [
 ] as const;
 const isReal = (token: string) =>
   !token.includes(":") && token !== "NS" && !/^[A-Z_]+$/.test(token);
+/** Compound ids of the current row, to strip segment prefixes; reset per row. */
+let compounds: readonly string[] = [];
+/** The authored edge of a hierarchy segment `__native_hierarchy_edge_<compound>_<edge>`. */
+const originalEdge = (id: string): string => {
+  const compound = compounds.find((c) => id.startsWith(`__native_hierarchy_edge_${c}_`));
+  return compound === undefined
+    ? id.replace(/^(__native_hierarchy_edge_[^_]+_)+/, "")
+    : originalEdge(id.slice(`__native_hierarchy_edge_${compound}_`.length));
+};
+/** Boundary dummy id -> its edge, from the dummy's own port list; reset per row. */
+let boundaryEdges = new Map<string, string>();
 /** Native ids use the same tokens as the ELK observer. */
 const nativeToken = (id: string) => {
   if (!id.startsWith("__")) return id;
   if (id.startsWith("__layout_dummy:north-south:")) return "NS";
-  if (/^__native_hierarchy_(?!edge_)/.test(id)) return "EXTERNAL_PORT";
-  const edge = id
-    .replace(/^__layout_dummy:(label:|inverted:)?/, "")
-    .split("::")[0]!
-    .replace(/:(source|target|\d+)(:\d+)?$/, "")
-    .replace(/:+$/, "")
-    .replace(/^(__native_hierarchy_edge_[^_]+_)+/, "");
+  if (/^__native_hierarchy_(?!edge_)/.test(id)) {
+    // Split boundary dummies (`:flow:<n>`) keep their port's base id.
+    const edge = boundaryEdges.get(id.split(":")[0]!);
+    return edge === undefined ? "EXTERNAL_PORT" : `X:${edge}`;
+  }
+  const edge = originalEdge(
+    id
+      .replace(/^__layout_dummy:(label:|inverted:)?/, "")
+      .split("::")[0]!
+      .replace(/:(source|target|\d+)(:\d+)?$/, "")
+      .replace(/:+$/, ""),
+  );
   return id.startsWith("__layout_dummy:") ? `L:${edge}` : "?";
 };
 const realOrder = (layers: Layers) => layers.map((layer) => layer.filter(isReal));
@@ -108,6 +125,17 @@ for (const report of reports) {
       setLayeredTraceObserver(previous);
     }
     const elk = await traceElkPhases(row.input);
+    compounds = [...new Set(events.map((event) => event.scope))]
+      .filter((scope) => scope !== "root")
+      .sort((a, b) => b.length - a.length);
+    boundaryEdges = new Map();
+    for (const event of events)
+      if (event.kind === "port-lists")
+        for (const [id, ports] of event.ports as unknown as [string, PortList][]) {
+          const [edge] = ports.flatMap((port) => [...port.outgoing, ...port.incoming]);
+          if (/^__native_hierarchy_(?!edge_)/.test(id) && edge !== undefined)
+            boundaryEdges.set(id.split(":")[0]!, originalEdge(edge));
+        }
     let phase: (typeof PHASES)[number] | "nativeError";
     const scopes: { scope: string; phase: string }[] = [];
     if (!native) phase = "nativeError";
