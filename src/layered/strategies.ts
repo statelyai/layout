@@ -2291,6 +2291,20 @@ export function createLayerSweepSession(
     // and same-layer recursion must not be separated into independent sums.
     for (const id of freeLayer) {
       const order = (forward ? inputPortOrder : outputPortOrder).get(id) ?? [];
+      const visit = (edgeId: string) => {
+        const edge = edgeById.get(edgeId)!;
+        const [source, target] = getOrientedEndpoints(edge, orientation);
+        const neighbor = forward ? source : target;
+        const rank = edgeRanks.get(edgeId);
+        if (assignment.layerByNodeId.get(neighbor) === assignment.layerByNodeId.get(id))
+          visits.get(id)!.push(neighbor);
+        else if (rank !== undefined) visits.get(id)!.push(rank);
+      };
+      // One edge forms one group; nothing to sort.
+      if (order.length < 2) {
+        for (const edgeId of order) visit(edgeId);
+        continue;
+      }
       const groups = new Map<string, string[]>();
       for (const edgeId of order) {
         const edge = edgeById.get(edgeId)!;
@@ -2301,25 +2315,18 @@ export function createLayerSweepSession(
         if (group) group.push(edgeId);
         else groups.set(key, [edgeId]);
       }
+      // Port sorting reorders ports, not the edges on one port; those keep
+      // ELK's edge list order. Expanded segments keep their listed edge id.
+      const listed = units?.edgeListRanks?.[forward ? "incoming" : "outgoing"].get(id);
+      const rank = (edgeId: string) => listed?.get(listedEdgeId(edgeId));
       for (const group of groups.values()) {
-        // Port sorting reorders ports, not the edges on one port; those keep
-        // ELK's edge list order. Expanded segments keep their listed edge id.
-        const listed = units?.edgeListRanks?.[forward ? "incoming" : "outgoing"].get(id);
-        const rank = (edgeId: string) => listed?.get(listedEdgeId(edgeId));
-        group.sort(
-          (a, b) =>
-            (rank(a) !== undefined && rank(b) !== undefined ? rank(a)! - rank(b)! : 0) ||
-            edgeModelOrder.get(a)! - edgeModelOrder.get(b)!,
-        );
-        for (const edgeId of group) {
-          const edge = edgeById.get(edgeId)!;
-          const [source, target] = getOrientedEndpoints(edge, orientation);
-          const neighbor = forward ? source : target;
-          const rank = edgeRanks.get(edgeId);
-          if (assignment.layerByNodeId.get(neighbor) === assignment.layerByNodeId.get(id))
-            visits.get(id)!.push(neighbor);
-          else if (rank !== undefined) visits.get(id)!.push(rank);
-        }
+        if (group.length > 1)
+          group.sort(
+            (a, b) =>
+              (rank(a) !== undefined && rank(b) !== undefined ? rank(a)! - rank(b)! : 0) ||
+              edgeModelOrder.get(a)! - edgeModelOrder.get(b)!,
+          );
+        for (const edgeId of group) visit(edgeId);
       }
     }
     return { ranks, visits };
