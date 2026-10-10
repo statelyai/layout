@@ -8,6 +8,15 @@
 > now a regression corpus), the quality-round READMEs and the latest gate rows
 > (`quality-compound-candidates/*.json.gz`).
 
+`quality-corpus/merge-edges.json.gz` holds the flat parity fixtures with
+`elk.layered.mergeEdges`, seeds 3001–3050 in all four directions. Real elkjs
+output depends on earlier layouts in the process, so regenerate the whole
+range:
+
+```sh
+pnpm exec tsx scripts/parity/generate-merge-edges-corpus.ts docs/heuristics/quality-corpus/merge-edges.json.gz 3001 3050
+```
+
 <!-- generator behavior and bounds from scripts/generate-heuristic-corpus.mjs -->
 
 Generate ten seeded graphs with native Stately layered layout and real elkjs
