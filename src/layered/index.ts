@@ -1894,17 +1894,6 @@ export function* createLayeredScopePipeline<N, E, G, P>(
       switchedSideByPort.set(`${origin.node.id}\0${origin.port.name}`, opposite);
     }
   }
-  // Preserve the existing merged-edge dummy policy without moving FIRST/LAST
-  // nodes after crossing minimization.
-  if (expanded.input.settings.mergeEdges === true) {
-    order = {
-      ...order,
-      layers: order.layers.map((layer) => [
-        ...layer.filter((id) => id.startsWith("__layout_dummy:")),
-        ...layer.filter((id) => !id.startsWith("__layout_dummy:")),
-      ]),
-    };
-  }
   const unzippingFanIn =
     graph.edges.length === graph.nodes.length - 1 &&
     graph.nodes.some(
