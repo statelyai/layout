@@ -1746,8 +1746,16 @@ function applyNodeMicroLayout(
   }
 }
 
+// Accepted spellings per option suffix, built once.
+const exactKeysBySuffix = new Map<string, readonly string[]>();
+
 function getOption(options: Readonly<Record<string, unknown>>, suffix: string): unknown {
-  const exactKeys = [suffix, `elk.${suffix}`, `org.eclipse.elk.${suffix}`];
+  let exactKeys = exactKeysBySuffix.get(suffix);
+  if (!exactKeys)
+    exactKeysBySuffix.set(
+      suffix,
+      (exactKeys = [suffix, `elk.${suffix}`, `org.eclipse.elk.${suffix}`]),
+    );
   for (const key of exactKeys) {
     if (options[key] !== undefined) return options[key];
   }
