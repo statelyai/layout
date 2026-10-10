@@ -1,5 +1,25 @@
 # @statelyai/layout
 
+## 0.4.1
+
+### Patch Changes
+
+- fd8bfe1: Nested compound graphs with labeled edges get fewer crossings and match ELK's node orders more often:
+  
+  - A center label on an edge that crosses into compounds stays on the edge's shallowest segment, as in ELK. Nested scopes no longer add label nodes of their own.
+  - Each edge on a portless child gets its own boundary slot, in import order. Previously all outgoing edges came before all incoming ones.
+  - Crossing counts follow the port order the sweep actually uses. Fixed-side ports with reversed edges were misplaced.
+  
+  On the holdout, losses to real ELK drop from 87 to 17 with no new losses.
+- 8a562c5: Nested compound graphs choose between sweeping a child on its own (bottom-up) and inside its parent (top-down) as ELK does. A node now counts as a path start or end by which of its port sides carry edges, not by edge direction. Edges on a compound node's boundary ports also start in port creation order, as ELK lists them, rather than in edge declaration order; authored ports keep their order. More compound graphs now match ELK's crossing order, and some get fewer crossings.
+- fdadff2: Graphs with `elk.layered.mergeEdges` keep the crossing-minimized order of long edges. Every long-edge dummy used to move ahead of the real nodes in its layer after crossing minimization, which crossed long edges over the rest of the graph. On the new mergeEdges quality corpus this cuts crossings from 10,682 to 1,946 (real ELK: 1,508), and removes all 56 cases with node hits or opposite-direction tracks. Opposite-direction separation can also slide a portless edge end along its node side when the end segment is too short for a jog.
+- cf65e02: With `elk.layered.mergeEdges`, edges in opposite directions no longer share a track where they meet at one node. Portless edges that attach at the same point of a node side now give each direction its own attachment, so an edge and a reversed edge between the same two nodes run on parallel lines instead of one.
+- d48411d: - Graphs with ports that carry edges in both directions are also laid out without the mixed-port crossing model (two ports per mixed port, neighbours grouped by direction), and the elkjs facade keeps the better result. The model helps on average but steered some graphs into far worse orders (for example 57 → 115 crossings); those return to their earlier counts while opposite-direction edges still never share a track. Such graphs take about one more layout.
+  - Candidate layouts are compared with crossings counted as the quality gate counts them: crossings on a shared endpoint's clearance border or under an edge's own label do not count, and two routes crossing at one point cross once.
+  - Faster layouts with identical output: the default compound layout measures only defects, and sweep edges, swept port positions and route bounds are indexed.
+- 1dae7eb: - Count crossings closer to how edges are routed. Crossing minimization counts a hyperedge between layers as one shared track, as ELK does. When a hyperedge joins two or more ports on each side, its edges would run opposite ways along that track, which routing never allows, so they take separate tracks and cross where the count saw none. The elkjs facade now also lays out graphs with such hyperedges counting them edge by edge, and keeps the better result. Corpus crossings drop below real ELK (13,924 vs 14,110) with no graph getting more crossings. Such graphs take one more layout.
+- 426cae1: Orthogonal routes split to break a critical segment cycle now start on the half holding their source end, as in ELK. Upward and leftward layouts used the halves in the wrong order, so a split route turned back and ran along the edge it was split around.
+
 ## 0.4.0
 
 ### Minor Changes
