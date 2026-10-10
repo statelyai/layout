@@ -4982,9 +4982,13 @@ function routeEdges(style: "ORTHOGONAL" | "POLYLINE" | "SPLINES"): EdgeRouter {
           candidate.straight = Math.abs(segment.start - segment.end) < 1e-3;
           candidate.slot = increasing ? segment.slot : maximumSlot - segment.slot;
           if (segment.partner !== undefined) {
+            // The route leaves the graph source on the half holding that end.
             const partner = result.segments[segment.partner]!;
-            candidate.secondSlot = increasing ? partner.slot : maximumSlot - segment.slot;
-            if (!increasing) candidate.slot = maximumSlot - partner.slot;
+            const [first, second] = physicalPort(candidate, "source").graphSource
+              ? [segment, partner]
+              : [partner, segment];
+            candidate.slot = increasing ? first.slot : maximumSlot - first.slot;
+            candidate.secondSlot = increasing ? second.slot : maximumSlot - second.slot;
             const sourcePort = portByCandidate.get(candidate)!.source;
             const offset =
               (increasing ? candidate.sourceCross : candidate.targetCross) -
