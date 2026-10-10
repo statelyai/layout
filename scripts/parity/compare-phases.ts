@@ -9,6 +9,7 @@ import { readReport } from "./read-report.mjs";
 import { traceElkPhases } from "./trace-phase-worker.mjs";
 
 type Layers = readonly (readonly string[])[];
+type PortList = { name?: string; outgoing: readonly string[]; incoming: readonly string[] }[];
 interface ElkScope {
   scope: number;
   edgeIds: string[];
@@ -33,17 +34,25 @@ const PHASES = [
 ] as const;
 const isReal = (token: string) =>
   !token.includes(":") && token !== "NS" && !/^[A-Z_]+$/.test(token);
+const originalEdge = (id: string) => id.replace(/^(__native_hierarchy_edge_[^_]+_)+/, "");
+/** Boundary dummy id -> its edge, from the parent's port lists; reset per row. */
+let boundaryEdges = new Map<string, string>();
 /** Native ids use the same tokens as the ELK observer. */
 const nativeToken = (id: string) => {
   if (!id.startsWith("__")) return id;
   if (id.startsWith("__layout_dummy:north-south:")) return "NS";
-  if (/^__native_hierarchy_(?!edge_)/.test(id)) return "EXTERNAL_PORT";
-  const edge = id
-    .replace(/^__layout_dummy:(label:|inverted:)?/, "")
-    .split("::")[0]!
-    .replace(/:(source|target|\d+)(:\d+)?$/, "")
-    .replace(/:+$/, "")
-    .replace(/^(__native_hierarchy_edge_[^_]+_)+/, "");
+  if (/^__native_hierarchy_(?!edge_)/.test(id)) {
+    // Split boundary dummies (`:flow:<n>`) keep their port's base id.
+    const edge = boundaryEdges.get(id.split(":")[0]!);
+    return edge === undefined ? "EXTERNAL_PORT" : `X:${edge}`;
+  }
+  const edge = originalEdge(
+    id
+      .replace(/^__layout_dummy:(label:|inverted:)?/, "")
+      .split("::")[0]!
+      .replace(/:(source|target|\d+)(:\d+)?$/, "")
+      .replace(/:+$/, ""),
+  );
   return id.startsWith("__layout_dummy:") ? `L:${edge}` : "?";
 };
 const realOrder = (layers: Layers) => layers.map((layer) => layer.filter(isReal));
@@ -108,6 +117,15 @@ for (const report of reports) {
       setLayeredTraceObserver(previous);
     }
     const elk = await traceElkPhases(row.input);
+    boundaryEdges = new Map();
+    for (const event of events)
+      if (event.kind === "port-lists")
+        for (const [, ports] of event.ports as unknown as [string, PortList][])
+          for (const port of ports) {
+            const [edge] = [...port.outgoing, ...port.incoming];
+            if (port.name?.endsWith(":parent") && edge !== undefined)
+              boundaryEdges.set(port.name.slice(0, -":parent".length), originalEdge(edge));
+          }
     let phase: (typeof PHASES)[number] | "nativeError";
     const scopes: { scope: string; phase: string }[] = [];
     if (!native) phase = "nativeError";
