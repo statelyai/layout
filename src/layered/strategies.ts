@@ -2743,14 +2743,20 @@ export function createLayerSweepSession(
     shuffleFirstLayer,
     sweep,
     countCrossings: () => countCrossings(working),
-    snapshot: () => ({
-      physicalPortOrderByNodeId: new Map(
-        [...canonicalNodes].map(([id, node]) => [id, node.ports.map((port) => port.id)]),
-      ),
-      layers: working.map((layer) => [...layer]),
-      inputPortOrderByNodeId: clonePortOrders(inputPortOrder),
-      outputPortOrderByNodeId: clonePortOrders(outputPortOrder),
-    }),
+    snapshot: () => {
+      const physicalPortOrderByNodeId = new Map<string, string[]>();
+      for (const [id, node] of canonicalNodes)
+        physicalPortOrderByNodeId.set(
+          id,
+          node.ports.map((port) => port.id),
+        );
+      return {
+        physicalPortOrderByNodeId,
+        layers: working.map((layer) => [...layer]),
+        inputPortOrderByNodeId: clonePortOrders(inputPortOrder),
+        outputPortOrderByNodeId: clonePortOrders(outputPortOrder),
+      };
+    },
     restore,
     finish,
     currentLayers: () => working,
