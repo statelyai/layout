@@ -2060,6 +2060,16 @@ export function createLayerSweepSession(
         inputPortOrder,
         outputPortOrder,
       );
+      // Edge orders rank a side's ports per direction; a fixed-side port with
+      // a reversed edge mixes both, so count the sweep's physical port order.
+      for (const layer of graph.layers)
+        for (const node of layer) {
+          const physical = node.ports.length > 1 ? canonicalNodes.get(node.id)?.ports : undefined;
+          if (physical?.length !== node.ports.length) continue;
+          const slot = new Map(physical.map((port, index) => [port.id, index]));
+          if (node.ports.every((port) => slot.has(port.id)))
+            node.ports.sort((a, b) => slot.get(a.id)! - slot.get(b.id)!);
+        }
       const split = mixedPorts ? splitMixedCrossingPorts(graph, canonicalReversed) : graph;
       const score = countAllCrossings(
         split,

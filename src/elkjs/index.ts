@@ -620,8 +620,19 @@ export default class ELK {
             const { sourceId, targetId } = originalHierarchyEndpoints.get(edge)!;
             const sourceInside = descendantOwnerByEndpointId.has(sourceId);
             const proxy = proxyFor(sourceInside ? "output" : "input", edge);
+            // ELK keeps center labels on the shallowest segment: the parent's,
+            // unless the edge enters through the child's own port.
+            const labels =
+              (graph.edges ?? []).includes(edge) && !ownPortFor(edge)
+                ? edge.labels?.filter(
+                    (label) =>
+                      (getOption(label.layoutOptions ?? {}, "edgeLabels.placement") ?? "CENTER") !==
+                      "CENTER",
+                  )
+                : edge.labels;
             const segment: ElkEdge = {
               ...edge,
+              labels,
               id: `__native_hierarchy_edge_${String(child.id)}_${String(edge.id)}`,
               sources: [sourceInside ? sourceId : proxy.ports![0]!.id!],
               targets: [sourceInside ? proxy.ports![0]!.id! : targetId],
@@ -2792,11 +2803,17 @@ function elkBoundaryEdgeOrder(
       if (child.children?.length)
         for (const edge of order(child)) if (leaves(edge)) result.add(edge);
     for (const child of node.children ?? []) {
-      for (const port of [...(child.ports ?? []).map((p) => String(p.id)), String(child.id)]) {
+      for (const port of (child.ports ?? []).map((p) => String(p.id))) {
         for (const edge of edges)
           if (endpoints(edge).sourceId === port && leaves(edge)) result.add(edge);
         for (const edge of edges)
           if (endpoints(edge).targetId === port && leaves(edge)) result.add(edge);
+      }
+      // Each edge on the node itself gets its own implicit port, in import order.
+      const id = String(child.id);
+      for (const edge of edges) {
+        const { sourceId, targetId } = endpoints(edge);
+        if ((sourceId === id || targetId === id) && leaves(edge)) result.add(edge);
       }
     }
     return [...result];
