@@ -75,27 +75,36 @@ export class CanonicalPortDistributor {
   ): void {
     this.prepareTopology(graph);
     let consumed = 0;
+    // Only ports with edges toward the free layer take ranks.
+    const ends = input ? this.incoming : this.outgoing;
+    const ranked = (port: CrossingPort) => ends.get(port.id)!.length > 0;
     for (const node of layer) {
-      const ports = node.ports.filter(
-        (port) => (input ? this.incoming : this.outgoing).get(port.id)!.length > 0,
-      );
-      const increment = nodeRelative ? 1 / (ports.length + 1) : 1;
+      let count = 0,
+        northCount = 0;
+      for (const port of node.ports)
+        if (ranked(port)) {
+          count++;
+          if (port.side === "NORTH") northCount++;
+        }
+      const increment = nodeRelative ? 1 / (count + 1) : 1;
       if (input) {
-        let north = consumed + ports.filter((port) => port.side === "NORTH").length * increment;
-        let rest = nodeRelative ? consumed + 1 - increment : consumed + ports.length;
-        for (const port of ports) {
+        let north = consumed + northCount * increment;
+        let rest = nodeRelative ? consumed + 1 - increment : consumed + count;
+        for (const port of node.ports) {
+          if (!ranked(port)) continue;
           this.state.ranks[port.id] = port.side === "NORTH" ? north : rest;
           if (port.side === "NORTH") north -= increment;
           else rest -= increment;
         }
       } else {
         let position = consumed + increment;
-        for (const port of ports) {
+        for (const port of node.ports) {
+          if (!ranked(port)) continue;
           this.state.ranks[port.id] = position;
           position += increment;
         }
       }
-      consumed += nodeRelative ? 1 : ports.length;
+      consumed += nodeRelative ? 1 : count;
     }
   }
 

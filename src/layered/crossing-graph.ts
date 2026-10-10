@@ -353,8 +353,8 @@ export function splitMixedCrossingPorts(
   const directions = new Map<string, number>();
   graph.edges.forEach((edge, index) => {
     const bit = reversed[index] ? 2 : 1;
-    for (const port of [edge.source, edge.target])
-      directions.set(port, (directions.get(port) ?? 0) | bit);
+    directions.set(edge.source, (directions.get(edge.source) ?? 0) | bit);
+    directions.set(edge.target, (directions.get(edge.target) ?? 0) | bit);
   });
   const mixed = new Set<string>();
   for (const layer of graph.layers)
