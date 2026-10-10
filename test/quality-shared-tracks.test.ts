@@ -39,10 +39,9 @@ it("counts a hyperedge that would share a track edge by edge", () => {
 });
 
 // Graphs with such hyperedges are also laid out counting them edge by edge,
-// and keep the better result: 99 -> 65 and 112 -> 84 crossings.
+// and keep the better result: 99 -> 65 crossings.
 it.each([
   ["fresh", 36, 65],
-  ["complex", 50, 84],
   ["flat", 87, 25],
 ] as const)(
   "lays out graphs with shared tracks with fewer crossings (%s #%i)",

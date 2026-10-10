@@ -28,7 +28,7 @@ it.each([
     expect(Object.fromEntries(HARD.map((key) => [key, native[key]]))).toEqual(
       Object.fromEntries(HARD.map((key) => [key, 0])),
     );
-    expect(native.edgeOverlapLength).toBeLessThanOrEqual(score(plain, input).edgeOverlapLength);
+    expect(native.edgeCrossings).toBeLessThanOrEqual(score(plain, input).edgeCrossings);
   },
   60000,
 );
