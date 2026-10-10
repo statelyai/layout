@@ -521,11 +521,8 @@ function alignBlocks(
       const adjacent = (bal.hdir === "LEFT" ? neighbors.right : neighbors.left).get(id) ?? [];
       const low = Math.floor((adjacent.length + 1) / 2) - 1;
       const high = Math.ceil((adjacent.length + 1) / 2) - 1;
-      const indices =
-        bal.vdir === "UP"
-          ? Array.from({ length: Math.max(0, high - low + 1) }, (_, i) => high - i)
-          : Array.from({ length: Math.max(0, high - low + 1) }, (_, i) => low + i);
-      for (const median of indices) {
+      for (let i = 0; i < high - low + 1; i++) {
+        const median = bal.vdir === "UP" ? high - i : low + i;
         if (bal.align.get(id) !== id) break;
         const neighbor = adjacent[median];
         if (neighbor === undefined) continue;
