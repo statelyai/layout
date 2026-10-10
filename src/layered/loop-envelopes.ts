@@ -7,6 +7,7 @@ import {
   routeFixedSelfLoop,
   selfLoopTracks,
 } from "./fixed-self-loop";
+import { findNode } from "./node-lookup";
 
 export interface LoopEnvelope {
   before: number;
@@ -23,7 +24,7 @@ export function hasMovableLoopPorts(input: LayeredPhaseInput, edge: GraphEdge): 
     edge.targetPort !== undefined
   )
     return false;
-  const node = input.graph.nodes.find((candidate) => candidate.id === edge.sourceId);
+  const node = findNode(input.graph.nodes, edge.sourceId);
   const constraints = node && input.nodeSettings?.(node)?.portConstraints;
   return constraints === undefined || constraints === "FREE" || constraints === "UNDEFINED";
 }
@@ -31,10 +32,15 @@ export function hasMovableLoopPorts(input: LayeredPhaseInput, edge: GraphEdge): 
 export function loopEnvelopes(input: LayeredPhaseInput): ReadonlyMap<string, LoopEnvelope> {
   const envelopes = new Map<string, LoopEnvelope>();
   if ((input.settings.edgeRouting ?? "ORTHOGONAL") !== "ORTHOGONAL") return envelopes;
+  const loopsByNodeId = new Map<string, GraphEdge[]>();
+  for (const edge of input.graph.edges)
+    if (edge.sourceId === edge.targetId) {
+      const loops = loopsByNodeId.get(edge.sourceId);
+      if (loops) loops.push(edge);
+      else loopsByNodeId.set(edge.sourceId, [edge]);
+    }
   for (const node of input.graph.nodes) {
-    const allLoops = input.graph.edges.filter(
-      (edge) => edge.sourceId === node.id && edge.targetId === node.id,
-    );
+    const allLoops = loopsByNodeId.get(node.id)?.slice() ?? [];
     const constraints = input.nodeSettings?.(node)?.portConstraints;
     if (
       allLoops.length &&

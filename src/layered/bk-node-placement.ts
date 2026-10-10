@@ -328,11 +328,17 @@ function buildNeighbors(input: LayeredPhaseInput, order: LayerOrder) {
   };
   // Routing gives fixed-side self-loop terminals on shared-slot ports a slot
   // among the side's other edges (after them here), so anchors reserve it.
+  const loopsByNodeId = new Map<string, GraphEdge[]>();
+  for (const edge of input.graph.edges)
+    if (edge.sourceId === edge.targetId) {
+      const loops = loopsByNodeId.get(edge.sourceId);
+      if (loops) loops.push(edge);
+      else loopsByNodeId.set(edge.sourceId, [edge]);
+    }
   const loopTerminals = (id: string, side: string): number => {
     const node = nodeById.get(id);
     if (!node) return 0;
-    return input.graph.edges
-      .filter((edge) => edge.sourceId === id && edge.targetId === id)
+    return (loopsByNodeId.get(id) ?? [])
       .flatMap((edge) => [edge.sourcePort, edge.targetPort])
       .filter((name) => {
         const port = node.ports?.find((candidate) => candidate.name === name);

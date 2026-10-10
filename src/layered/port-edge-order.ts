@@ -1,9 +1,10 @@
 import type { GraphEdge } from "@statelyai/graph";
 import type { LayeredPhaseInput } from "./types";
+import { findNode } from "./node-lookup";
 
 /** ELK traverses connected edges through the node's port list, preserving each port's edge order. */
 export function connectedEdgesInPortOrder(input: LayeredPhaseInput, nodeId: string): GraphEdge[] {
-  const node = input.graph.nodes.find((candidate) => candidate.id === nodeId);
+  const node = findNode(input.graph.nodes, nodeId);
   const portRank = new Map(node?.ports?.map((port, index) => [port.name, index]));
   const explicitCount = portRank.size;
   return input.graph.edges

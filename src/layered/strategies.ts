@@ -61,6 +61,7 @@ import { conservativeSpline } from "./spline-bezier";
 import { getFlexiblePortPosition } from "./flexible-ports";
 import { traceLayeredPhase } from "../internal/layered-trace";
 import { assertNorthSouthPortSides, GreedySwitchDecider } from "./greedy-switch-decider";
+import { findNode } from "./node-lookup";
 
 const modelSweepInputs = new WeakSet<LayeredPhaseInput>();
 
@@ -3436,7 +3437,7 @@ function nodeFlowOffset(
   layerByNodeId: ReadonlyMap<string, number>,
   margins?: { leading: number; trailing: number; maxLeading: number; maxTrailing: number },
 ): number {
-  const node = input.graph.nodes.find((candidate) => candidate.id === id);
+  const node = findNode(input.graph.nodes, id);
   const alignment = node
     ? (input.nodeSettings?.(node)?.alignment ?? input.settings.alignment)
     : input.settings.alignment;
@@ -6817,7 +6818,7 @@ export function normalizePlacementForPortExtents(
       [nextLayer, false],
     ] as const) {
       for (const id of ids) {
-        const node = input.graph.nodes.find((candidate) => candidate.id === id);
+        const node = findNode(input.graph.nodes, id);
         const rect = placement.rectByNodeId.get(id);
         if (!node || !rect) continue;
         const bodyStart = horizontal ? rect.x : rect.y;

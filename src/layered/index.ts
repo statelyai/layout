@@ -1697,12 +1697,16 @@ export function* createLayeredScopePipeline<N, E, G, P>(
     southEdges = new Set<string>();
   const upper = direction === "right" || direction === "left" ? "NORTH" : "WEST";
   const lower = direction === "right" || direction === "left" ? "SOUTH" : "EAST";
+  // First node per id, as `find` returns.
+  const endpointNodes = new Map<string, GraphNode>();
+  for (const node of expanded.input.graph.nodes)
+    if (!endpointNodes.has(node.id)) endpointNodes.set(node.id, node);
   for (const edge of expanded.input.graph.edges)
     for (const [id, name] of [
       [edge.sourceId, edge.sourcePort],
       [edge.targetId, edge.targetPort],
     ]) {
-      const node = expanded.input.graph.nodes.find((n) => n.id === id),
+      const node = endpointNodes.get(id!),
         port = node?.ports?.find((p) => p.name === name);
       const side =
         node && port ? expanded.input.portSettings?.(port, node)?.["port.side"] : undefined;
