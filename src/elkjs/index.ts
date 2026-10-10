@@ -1472,18 +1472,13 @@ function coordinatePreparedScopes(
       ).length;
       const childScope: HierarchyCrossingScope = {
         ...scopes.get(child)!,
-        useBottomUp: useBottomUpHierarchySweep(
-          childPhase.input,
-          childPhase.orientation,
-          childSession.snapshot().layers,
-          {
-            portOrderFixed: parentPortOrderFixed,
-            inputPorts,
-            outputPorts,
-            deterministic:
-              child.options?.settings?.["crossingMinimization.strategy"] === "MEDIAN_LAYER_SWEEP",
-          },
-        ),
+        useBottomUp: useBottomUpHierarchySweep(childPhase.input, childSession.crossingGraph(), {
+          portOrderFixed: parentPortOrderFixed,
+          inputPorts,
+          outputPorts,
+          deterministic:
+            child.options?.settings?.["crossingMinimization.strategy"] === "MEDIAN_LAYER_SWEEP",
+        }),
         alignBoundary: (forward) => {
           const childLayers = childSession.currentLayers();
           const layerIndex = forward ? 0 : childLayers.length - 1;
