@@ -1,5 +1,11 @@
 # @statelyai/layout
 
+## 0.4.2
+
+### Patch Changes
+
+- 8e30d54: Layouts run 11–15% faster on Stately statecharts with identical output. Option parsing, node and port lookups, crossing counts and port distribution now do less repeated work and allocate fewer temporary arrays.
+
 ## 0.4.1
 
 ### Patch Changes
