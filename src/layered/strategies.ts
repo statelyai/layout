@@ -3795,7 +3795,83 @@ function implicitEdgeEndpoints(
 ): ReadonlyMap<string, { source: Point; target: Point }> {
   const horizontal = input.direction === "left" || input.direction === "right";
   const nodeById = new Map(input.graph.nodes.map((node) => [node.id, node]));
-  const groups = new Map<string, Array<{ edge: GraphEdge; endpoint: "source" | "target" }>>();
+  // Settings stay fixed for the call; resolve each node's and port's once.
+  const nodeSettingsByNode = new Map<
+    GraphNode,
+    ReturnType<NonNullable<typeof input.nodeSettings>>
+  >();
+  const nodeSettingsOf = (node: GraphNode) => {
+    if (!nodeSettingsByNode.has(node)) nodeSettingsByNode.set(node, input.nodeSettings?.(node));
+    return nodeSettingsByNode.get(node);
+  };
+  const portSettingsByPort = new Map<
+    GraphPort,
+    ReturnType<NonNullable<typeof input.portSettings>>
+  >();
+  const portSettingsOf = (port: GraphPort, node: GraphNode) => {
+    if (!portSettingsByPort.has(port))
+      portSettingsByPort.set(port, input.portSettings?.(port, node));
+    return portSettingsByPort.get(port);
+  };
+  // Endpoint groups by side and node, in first-entry order.
+  type EndpointGroup = {
+    nodeId: string;
+    side: string;
+    entries: Array<{ edge: GraphEdge; endpoint: "source" | "target" }>;
+  };
+  const groups: EndpointGroup[] = [];
+  const groupsBySide = new Map<string, Map<string, EndpointGroup>>();
+  const modelOrderPromotion =
+    input.settings["layering.nodePromotion.strategy"] === "MODEL_ORDER_LEFT_TO_RIGHT";
+  const directionReversed = input.direction === "left" || input.direction === "up";
+  const endpointSide = (nodeId: string, portName: string | undefined): string | undefined => {
+    const node = nodeById.get(nodeId);
+    const port = node?.ports?.find((candidate) => candidate.name === portName);
+    const constraints = node ? nodeSettingsOf(node)?.portConstraints : undefined;
+    if (
+      !node ||
+      !port ||
+      (constraints !== "FIXED_SIDE" &&
+        constraints !== "FIXED_ORDER" &&
+        constraints !== "FIXED_RATIO" &&
+        constraints !== "FIXED_POS")
+    ) {
+      return undefined;
+    }
+    const configured = portSettingsOf(port, node)?.["port.side"];
+    return configured === "WEST" || configured === "NORTH"
+      ? "before"
+      : configured === "EAST" || configured === "SOUTH"
+        ? "after"
+        : undefined;
+  };
+  const fixedImplicitSide = (nodeId: string, portName: string | undefined, source: boolean) => {
+    const node = nodeById.get(nodeId);
+    const constraints = node && nodeSettingsOf(node)?.portConstraints;
+    if (
+      portName !== undefined ||
+      !["FIXED_SIDE", "FIXED_ORDER", "FIXED_RATIO", "FIXED_POS"].includes(String(constraints))
+    )
+      return undefined;
+    // ELK assigns implicit port sides before cycle breaking. Fixed sides
+    // survive edge reversal; a feedback edge cannot move its endpoint.
+    return source !== directionReversed ? "after" : "before";
+  };
+  const addEntry = (
+    nodeId: string,
+    side: string,
+    entry: { edge: GraphEdge; endpoint: "source" | "target" },
+  ) => {
+    let byNode = groupsBySide.get(side);
+    if (!byNode) groupsBySide.set(side, (byNode = new Map()));
+    const group = byNode.get(nodeId);
+    if (group) group.entries.push(entry);
+    else {
+      const created = { nodeId, side, entries: [entry] };
+      byNode.set(nodeId, created);
+      groups.push(created);
+    }
+  };
   for (const edge of input.graph.edges) {
     if (hasMovableLoopPorts(input, edge)) continue;
     const sourceRect = placement.rectByNodeId.get(edge.sourceId);
@@ -3803,8 +3879,6 @@ function implicitEdgeEndpoints(
     if (!sourceRect || !targetRect) continue;
     const sourceFlow = horizontal ? sourceRect.x : sourceRect.y;
     const targetFlow = horizontal ? targetRect.x : targetRect.y;
-    const modelOrderPromotion =
-      input.settings["layering.nodePromotion.strategy"] === "MODEL_ORDER_LEFT_TO_RIGHT";
     const sourceBoundary = externalPortDummyOf(nodeById.get(edge.sourceId) ?? {});
     const targetBoundary = externalPortDummyOf(nodeById.get(edge.targetId) ?? {});
     // A zero-gap boundary can coincide with the node's flow origin.
@@ -3817,40 +3891,6 @@ function implicitEdgeEndpoints(
         : sourceFlow <= targetFlow);
     const feedback =
       input.settings.feedbackEdges === true && orientation?.reversedEdgeIds.has(edge.id) === true;
-    const directionReversed = input.direction === "left" || input.direction === "up";
-    const endpointSide = (nodeId: string, portName: string | undefined): string | undefined => {
-      const node = nodeById.get(nodeId);
-      const port = node?.ports?.find((candidate) => candidate.name === portName);
-      const constraints = node ? input.nodeSettings?.(node)?.portConstraints : undefined;
-      if (
-        !node ||
-        !port ||
-        (constraints !== "FIXED_SIDE" &&
-          constraints !== "FIXED_ORDER" &&
-          constraints !== "FIXED_RATIO" &&
-          constraints !== "FIXED_POS")
-      ) {
-        return undefined;
-      }
-      const configured = input.portSettings?.(port, node)?.["port.side"];
-      return configured === "WEST" || configured === "NORTH"
-        ? "before"
-        : configured === "EAST" || configured === "SOUTH"
-          ? "after"
-          : undefined;
-    };
-    const fixedImplicitSide = (nodeId: string, portName: string | undefined, source: boolean) => {
-      const node = nodeById.get(nodeId);
-      const constraints = node && input.nodeSettings?.(node)?.portConstraints;
-      if (
-        portName !== undefined ||
-        !["FIXED_SIDE", "FIXED_ORDER", "FIXED_RATIO", "FIXED_POS"].includes(String(constraints))
-      )
-        return undefined;
-      // ELK assigns implicit port sides before cycle breaking. Fixed sides
-      // survive edge reversal; a feedback edge cannot move its endpoint.
-      return source !== directionReversed ? "after" : "before";
-    };
     const sourceSide =
       endpointSide(edge.sourceId, edge.sourcePort) ??
       fixedImplicitSide(edge.sourceId, edge.sourcePort, true) ??
@@ -3859,14 +3899,8 @@ function implicitEdgeEndpoints(
       endpointSide(edge.targetId, edge.targetPort) ??
       fixedImplicitSide(edge.targetId, edge.targetPort, false) ??
       (feedback ? (directionReversed ? "after" : "before") : forward ? "before" : "after");
-    const sourceKey = `${edge.sourceId}:${sourceSide}`;
-    const targetKey = `${edge.targetId}:${targetSide}`;
-    const sourceGroup = groups.get(sourceKey) ?? [];
-    sourceGroup.push({ edge, endpoint: "source" });
-    groups.set(sourceKey, sourceGroup);
-    const targetGroup = groups.get(targetKey) ?? [];
-    targetGroup.push({ edge, endpoint: "target" });
-    groups.set(targetKey, targetGroup);
+    addEntry(edge.sourceId, sourceSide, { edge, endpoint: "source" });
+    addEntry(edge.targetId, targetSide, { edge, endpoint: "target" });
   }
 
   const result = new Map<string, { source: Point; target: Point }>();
@@ -3890,22 +3924,19 @@ function implicitEdgeEndpoints(
     if (!counts) {
       counts = new Map();
       for (const port of node.ports ?? []) {
-        const portSide = input.portSettings?.(port, node)?.["port.side"];
+        const portSide = portSettingsOf(port, node)?.["port.side"];
         counts.set(portSide, (counts.get(portSide) ?? 0) + 1);
       }
       portSideCounts.set(node, counts);
     }
     return counts.get(side) ?? 0;
   };
-  for (const [key, entries] of groups) {
-    const split = key.lastIndexOf(":");
-    const nodeId = key.slice(0, split);
-    const side = key.slice(split + 1);
+  for (const { nodeId, side, entries } of groups) {
     const rect = placement.rectByNodeId.get(nodeId);
     if (!rect) continue;
     const mergeEdges = input.settings.mergeEdges === true;
     const node = nodeById.get(nodeId);
-    const nodeSettings = node ? input.nodeSettings?.(node) : undefined;
+    const nodeSettings = node ? nodeSettingsOf(node) : undefined;
     const hypernode = nodeSettings?.hypernode;
     const unzipping = (input.settings["layerUnzipping.strategy"] ?? "NONE") === "ALTERNATING";
     const crossingStrategy = input.settings["crossingMinimization.strategy"] ?? "LAYER_SWEEP";
@@ -4106,7 +4137,7 @@ function implicitEdgeEndpoints(
       const portName = endpoint === "source" ? edge.sourcePort : edge.targetPort;
       const explicitPort = node?.ports?.find((port) => port.name === portName);
       const physicalSide =
-        node && explicitPort ? input.portSettings?.(explicitPort, node)?.["port.side"] : undefined;
+        node && explicitPort ? portSettingsOf(explicitPort, node)?.["port.side"] : undefined;
       const singleFixedSidePort =
         constraints === "FIXED_SIDE" &&
         physicalSide !== undefined &&
@@ -4115,9 +4146,7 @@ function implicitEdgeEndpoints(
       // Movable port ordering comes from the layer sweep above. Fixed coordinates
       // and authored anchors must replace the synthesized node-origin fallback.
       const authoredAnchor =
-        node && explicitPort
-          ? input.portSettings?.(explicitPort, node)?.["port.anchor"]
-          : undefined;
+        node && explicitPort ? portSettingsOf(explicitPort, node)?.["port.anchor"] : undefined;
       if (
         portName !== undefined &&
         node &&
