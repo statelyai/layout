@@ -1924,7 +1924,9 @@ export interface LayerSweepSession {
 }
 
 function clonePortOrders(orders?: ReadonlyMap<string, readonly string[]>): Map<string, string[]> {
-  return new Map([...(orders ?? [])].map(([id, edges]) => [id, [...edges]]));
+  const clone = new Map<string, string[]>();
+  if (orders) for (const [id, edges] of orders) clone.set(id, edges.slice());
+  return clone;
 }
 
 function minimizeCrossingsWithLayerSweep(
@@ -2080,6 +2082,8 @@ export function createLayerSweepSession(
     (input.settings as { [CROSSING_MODEL]?: CrossingModel })[CROSSING_MODEL] ?? {};
   const mixedPorts = crossingModel.mixedPorts !== false,
     probe = crossingModel.probe;
+  // Reused per count: physical port positions of one node.
+  const physicalSlot = new Map<string, number>();
   const countCrossings = (candidateLayers: readonly (readonly string[])[]): number => {
     if (exactPortSweep) {
       const graph = buildCrossingGraph(
@@ -2094,9 +2098,10 @@ export function createLayerSweepSession(
         for (const node of layer) {
           const physical = node.ports.length > 1 ? canonicalNodes.get(node.id)?.ports : undefined;
           if (physical?.length !== node.ports.length) continue;
-          const slot = new Map(physical.map((port, index) => [port.id, index]));
-          if (node.ports.every((port) => slot.has(port.id)))
-            node.ports.sort((a, b) => slot.get(a.id)! - slot.get(b.id)!);
+          physicalSlot.clear();
+          for (const [index, port] of physical.entries()) physicalSlot.set(port.id, index);
+          if (node.ports.every((port) => physicalSlot.has(port.id)))
+            node.ports.sort((a, b) => physicalSlot.get(a.id)! - physicalSlot.get(b.id)!);
         }
       const split = mixedPorts ? splitMixedCrossingPorts(graph, canonicalReversed) : graph;
       const score = countAllCrossings(
@@ -2391,6 +2396,8 @@ export function createLayerSweepSession(
     });
     for (const index of touched)
       for (const node of canonicalGraph.layers[index]!) {
+        // One port leaves every edge order tied, so the stable sort keeps it.
+        if (node.ports.length < 2) continue;
         const ordinal = new Map(node.ports.map((port, index) => [port.id, index]));
         for (const [orders, source] of [
           [outputPortOrder, true],
