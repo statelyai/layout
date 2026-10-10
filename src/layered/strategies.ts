@@ -3831,14 +3831,16 @@ function implicitEdgeEndpoints(
     if (!nodeSettingsByNode.has(node)) nodeSettingsByNode.set(node, input.nodeSettings?.(node));
     return nodeSettingsByNode.get(node);
   };
-  const portSettingsByPort = new Map<
-    GraphPort,
-    ReturnType<NonNullable<typeof input.portSettings>>
+  // Port settings depend on the owning node too, so cache them per node.
+  const portSettingsByNode = new Map<
+    GraphNode,
+    Map<GraphPort, ReturnType<NonNullable<typeof input.portSettings>>>
   >();
   const portSettingsOf = (port: GraphPort, node: GraphNode) => {
-    if (!portSettingsByPort.has(port))
-      portSettingsByPort.set(port, input.portSettings?.(port, node));
-    return portSettingsByPort.get(port);
+    let byPort = portSettingsByNode.get(node);
+    if (!byPort) portSettingsByNode.set(node, (byPort = new Map()));
+    if (!byPort.has(port)) byPort.set(port, input.portSettings?.(port, node));
+    return byPort.get(port);
   };
   // Endpoint groups by side and node, in first-entry order.
   type EndpointGroup = {
