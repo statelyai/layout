@@ -477,6 +477,41 @@ export function separateOpposingTracks(scene: TrackScene): Map<string, TrackPoin
                 0,
               )
             : along;
+          // A portless end may instead slide along its node side; its
+          // perpendicular neighbour stretches.
+          const after = { a: corner, b: beyond };
+          const against = (s: Segment) =>
+            states.reduce(
+              (sum, other) =>
+                other === state
+                  ? sum
+                  : other.measured.reduce((n, t) => n + (opposite(s, t) ? shared(s, t) : 0), sum),
+              0,
+            );
+          if (
+            state.route.ends.length === 2 &&
+            state.route.ports?.[reversed ? 1 : 0] === undefined &&
+            rect &&
+            onBorder(port, rect) &&
+            (h ? vertical(after) : horizontal(after))
+          ) {
+            const lo = h ? rect.y : rect.x,
+              hi = lo + (h ? rect.height : rect.width);
+            for (const delta of offsets) {
+              const moved = shift(port, delta);
+              if ((h ? moved.y : moved.x) < lo - EPS || (h ? moved.y : moved.x) > hi + EPS)
+                continue;
+              const next = [
+                { a: moved, b: shift(corner, delta) },
+                { a: shift(corner, delta), b: beyond },
+              ];
+              // The stretched neighbour may not run against another route more than before.
+              if (!keeps(after, next[1]!) || against(next[1]!) > against(after) + EPS) continue;
+              const replaced = [moved, shift(corner, delta), ...path.slice(2)];
+              const points = reversed ? replaced.reverse() : replaced;
+              consider(points, [segment, after], next, next[0]!, 0, delta);
+            }
+          }
           for (const stub of new Set([along - clearance, spacing]))
             for (const delta of offsets) {
               if (stub < 1 || along - stub < spacing) continue;

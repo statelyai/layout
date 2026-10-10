@@ -836,14 +836,7 @@ export function applyLayerConstraintOrder(input: LayeredPhaseInput, order: Layer
     ...order,
     layers: order.layers.map((layer) => {
       const unconstrained = layer.filter((id) => !constrained.has(id));
-      const mergedOrder =
-        input.settings.mergeEdges === true
-          ? [
-              ...unconstrained.filter((id) => id.startsWith("__layout_dummy:")),
-              ...unconstrained.filter((id) => !id.startsWith("__layout_dummy:")),
-            ]
-          : unconstrained;
-      return [...mergedOrder, ...layer.filter((id) => constrained.has(id))];
+      return [...unconstrained, ...layer.filter((id) => constrained.has(id))];
     }),
   };
 }

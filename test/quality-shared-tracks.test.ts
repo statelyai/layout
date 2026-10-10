@@ -62,7 +62,8 @@ it.each([
 );
 
 // Merged edges share implicit ports, so they can form shared tracks without
-// any explicit port; such graphs try the separated count too (32 -> 19).
+// any explicit port; such graphs try the separated count too (32 -> 19), and
+// keep the crossing-minimized dummy order (19 -> 9).
 it("separates shared tracks of merged implicit ports", async () => {
   const sizes = [
     [96, 44],
@@ -122,7 +123,7 @@ it("separates shared tracks of merged implicit ports", async () => {
   expect(Object.fromEntries(HARD.map((key) => [key, native[key]]))).toEqual(
     Object.fromEntries(HARD.map((key) => [key, 0])),
   );
-  expect(native.edgeCrossings).toBeLessThanOrEqual(19);
+  expect(native.edgeCrossings).toBeLessThanOrEqual(9);
 }, 60000);
 
 // Separated edges are counted by inversions, not pairwise.
