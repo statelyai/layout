@@ -1998,29 +1998,30 @@ export function createLayerSweepSession(
   const nodeById = new Map(input.graph.nodes.map((node) => [node.id, node]));
   const edgeById = new Map(input.graph.edges.map((edge) => [edge.id, edge]));
   // ELK lists a compound's boundary ports in creation order: edges on them
-  // start in their port's order, in model order within a port. (Authored
-  // ports already arrive in ELK's sorted order and keep their edge order.)
+  // take their slots in that order, in model order within a port. Authored
+  // ports already arrive in ELK's sorted order and keep their edge order.
   const boundaryPortIndex = (nodeId: string, edgeId: string, incoming: boolean) => {
     const edge = edgeById.get(edgeId)!;
     const name =
       incoming !== orientation.reversedEdgeIds.has(edgeId) ? edge.targetPort : edge.sourcePort;
-    const index = nodeById.get(nodeId)!.ports?.findIndex((port) => port.name === name) ?? -1;
-    return index < 0 ? Number.MAX_SAFE_INTEGER : index;
+    if (!name?.startsWith("__native_hierarchy")) return -1;
+    return nodeById.get(nodeId)!.ports?.findIndex((port) => port.name === name) ?? -1;
   };
   for (const [orders, incoming] of [
     [outputPortOrder, false],
     [inputPortOrder, true],
   ] as const)
     for (const [nodeId, edgeIds] of orders) {
-      const ports = nodeById.get(nodeId)!.ports;
-      if (
-        ports?.length &&
-        edgeIds.length > 1 &&
-        ports.every((port) => port.name.startsWith("__native_hierarchy"))
-      )
-        edgeIds.sort(
+      if (edgeIds.length < 2) continue;
+      const slots = edgeIds.flatMap((id, slot) =>
+        boundaryPortIndex(nodeId, id, incoming) < 0 ? [] : [slot],
+      );
+      const sorted = slots
+        .map((slot) => edgeIds[slot]!)
+        .sort(
           (a, b) => boundaryPortIndex(nodeId, a, incoming) - boundaryPortIndex(nodeId, b, incoming),
         );
+      slots.forEach((slot, index) => (edgeIds[slot] = sorted[index]!));
     }
   const edgeModelOrder = new Map(input.graph.edges.map((edge, index) => [edge.id, index]));
   const hierarchicalNodes = new Set<string>();
