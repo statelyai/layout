@@ -18,6 +18,8 @@ export interface PortDistributionOptions {
 }
 
 /** Stateful clockwise port distribution across successive layer sweeps. */
+const sideRank = { NORTH: 0, EAST: 1, SOUTH: 2, WEST: 3 };
+
 export class CanonicalPortDistributor {
   readonly state: PortDistributionState;
   private topologyGraph?: CrossingGraph;
@@ -73,27 +75,36 @@ export class CanonicalPortDistributor {
   ): void {
     this.prepareTopology(graph);
     let consumed = 0;
+    // Only ports with edges toward the free layer take ranks.
+    const ends = input ? this.incoming : this.outgoing;
+    const ranked = (port: CrossingPort) => ends.get(port.id)!.length > 0;
     for (const node of layer) {
-      const ports = node.ports.filter(
-        (port) => (input ? this.incoming : this.outgoing).get(port.id)!.length > 0,
-      );
-      const increment = nodeRelative ? 1 / (ports.length + 1) : 1;
+      let count = 0,
+        northCount = 0;
+      for (const port of node.ports)
+        if (ranked(port)) {
+          count++;
+          if (port.side === "NORTH") northCount++;
+        }
+      const increment = nodeRelative ? 1 / (count + 1) : 1;
       if (input) {
-        let north = consumed + ports.filter((port) => port.side === "NORTH").length * increment;
-        let rest = nodeRelative ? consumed + 1 - increment : consumed + ports.length;
-        for (const port of ports) {
+        let north = consumed + northCount * increment;
+        let rest = nodeRelative ? consumed + 1 - increment : consumed + count;
+        for (const port of node.ports) {
+          if (!ranked(port)) continue;
           this.state.ranks[port.id] = port.side === "NORTH" ? north : rest;
           if (port.side === "NORTH") north -= increment;
           else rest -= increment;
         }
       } else {
         let position = consumed + increment;
-        for (const port of ports) {
+        for (const port of node.ports) {
+          if (!ranked(port)) continue;
           this.state.ranks[port.id] = position;
           position += increment;
         }
       }
-      consumed += nodeRelative ? 1 : ports.length;
+      consumed += nodeRelative ? 1 : count;
     }
   }
 
@@ -109,14 +120,15 @@ export class CanonicalPortDistributor {
     const ranks = (layer: CrossingNode[], input: boolean) =>
       this.calculatePortRanks(graph, layer, input, options.nodeRelative);
     const distributeNode = (node: CrossingNode, side: "EAST" | "WEST") => {
-      if (options.fixedOrder.has(node.id)) return;
+      if (options.fixedOrder.has(node.id) || !node.ports.length) return;
       const layerIndex = node.ports.length ? layerByPort.get(node.ports[0]!.id)! : index;
       const size = graph.layers[layerIndex]!.length;
       for (const face of [side, "SOUTH", "NORTH"] as const) {
         let minimum = 0,
           maximum = 0;
         const inLayer: CrossingPort[] = [];
-        for (const port of node.ports.filter((port) => port.side === face)) {
+        for (const port of node.ports) {
+          if (port.side !== face) continue;
           let sum = 0;
           const cross = port.side === "NORTH" || port.side === "SOUTH";
           if (cross) {
@@ -135,8 +147,8 @@ export class CanonicalPortDistributor {
             else if (output && !input) sum += position + 1;
             else if (input && output) sum += port.side === "NORTH" ? 0 : large / 2;
           } else {
-            const peers = [...outgoing.get(port.id)!, ...incoming.get(port.id)!];
-            if (peers.some((peer) => layerByPort.get(peer) === layerIndex)) {
+            const sameLayer = (peer: string) => layerByPort.get(peer) === layerIndex;
+            if (outgoing.get(port.id)!.some(sameLayer) || incoming.get(port.id)!.some(sameLayer)) {
               inLayer.push(port);
               continue;
             }
@@ -168,7 +180,7 @@ export class CanonicalPortDistributor {
                 : minimum - (size + 1 - value);
         }
       }
-      const sideRank = { NORTH: 0, EAST: 1, SOUTH: 2, WEST: 3 };
+      if (node.ports.length < 2) return;
       node.ports.sort((a, b) => {
         const side = sideRank[a.side] - sideRank[b.side];
         if (side) return side;

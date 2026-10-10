@@ -1096,6 +1096,14 @@ export default class ELK {
       getOption(layoutOptions, "padding"),
       algorithm === "layered" ? 12 : 0,
     );
+    // Element options are replaced, never mutated, while a scope lays out; parse each once.
+    const parsedSettings = new WeakMap<object, ElkLayeredOptionValueByName>();
+    const elementSettings = (elementOptions: Readonly<Record<string, unknown>> | undefined) => {
+      const key = elementOptions ?? noElementOptions;
+      let settings = parsedSettings.get(key);
+      if (!settings) parsedSettings.set(key, (settings = getElementLayeredSettings(key)));
+      return settings;
+    };
     const options: LayeredLayoutOptions = {
       direction: getDirection(layoutOptions),
       spacing: {
@@ -1132,13 +1140,13 @@ export default class ELK {
       },
       nodeSettings: (node) => {
         const child = findById(graph.children, node.id)?.item;
-        return getElementLayeredSettings(child?.layoutOptions ?? {});
+        return elementSettings(child?.layoutOptions);
       },
       edgeSettings: (edge) => {
         const elkEdge = findById(graph.edges, edge.id)?.item;
         return {
-          ...getElementLayeredSettings(elkEdge?.layoutOptions ?? {}),
-          ...getElementLayeredSettings(elkEdge?.labels?.[0]?.layoutOptions ?? {}),
+          ...elementSettings(elkEdge?.layoutOptions),
+          ...elementSettings(elkEdge?.labels?.[0]?.layoutOptions),
           // ELK appends hierarchy segments to port edge lists in creation order.
           "edge.hierarchyRank": elkEdge && hierarchySegmentRank.get(elkEdge),
         };
@@ -1148,7 +1156,7 @@ export default class ELK {
         const found = findById(child?.ports, port.name);
         const elkPort = found?.item;
         return {
-          ...getElementLayeredSettings(elkPort?.layoutOptions ?? {}),
+          ...elementSettings(elkPort?.layoutOptions),
           // ELK imports ports in authored order and sorts sides after dummy insertion.
           "port.authoredIndex": found?.position,
           "port.labelWidth": Math.max(
@@ -1746,8 +1754,16 @@ function applyNodeMicroLayout(
   }
 }
 
+// Accepted spellings per option suffix, built once.
+const exactKeysBySuffix = new Map<string, readonly string[]>();
+
 function getOption(options: Readonly<Record<string, unknown>>, suffix: string): unknown {
-  const exactKeys = [suffix, `elk.${suffix}`, `org.eclipse.elk.${suffix}`];
+  let exactKeys = exactKeysBySuffix.get(suffix);
+  if (!exactKeys)
+    exactKeysBySuffix.set(
+      suffix,
+      (exactKeys = [suffix, `elk.${suffix}`, `org.eclipse.elk.${suffix}`]),
+    );
   for (const key of exactKeys) {
     if (options[key] !== undefined) return options[key];
   }
@@ -1831,6 +1847,8 @@ function findById<T extends { id?: ElkId }>(items: readonly T[] | undefined, id:
   const position = cached.index.get(id);
   return position === undefined ? undefined : { item: items[position]!, position };
 }
+
+const noElementOptions: Readonly<Record<string, unknown>> = {};
 
 function getElementLayeredSettings(
   options: Readonly<Record<string, unknown>>,

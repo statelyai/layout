@@ -66,7 +66,8 @@ export function countAllCrossings(
   /** "separated" counts hyperedges like ELK unless they would share a track (see scoreOrthogonalHypersegments). */
   boundaryMode: "hyperedges" | "separated" | "edges" = "hyperedges",
 ): CrossingScore {
-  const nodes = new Map(graph.layers.flat().map((node) => [node.id, node]));
+  // Only north/south counting resolves nodes by id.
+  let nodes: Map<string, CrossingNode> | undefined;
   const layerByPort = new Map<string, number>();
   const incoming = new Map<string, string[]>(),
     outgoing = new Map<string, string[]>();
@@ -81,7 +82,6 @@ export function countAllCrossings(
     outgoing.get(edge.source)!.push(edge.target);
     incoming.get(edge.target)!.push(edge.source);
   }
-  const connected = (id: string) => [...incoming.get(id)!, ...outgoing.get(id)!];
   const degree = (id: string) => incoming.get(id)!.length + outgoing.get(id)!.length;
   const face = (layer: readonly CrossingNode[], side: "EAST" | "WEST", topDown = true) =>
     (topDown ? layer : [...layer].reverse()).flatMap((node) => {
@@ -95,7 +95,11 @@ export function countAllCrossings(
     for (const [position, port] of ports.entries()) {
       tree.remove(position);
       const pending: number[] = [];
-      for (const peer of connected(port.id)) {
+      // Incoming then outgoing peers, without concatenating them.
+      const before = incoming.get(port.id)!,
+        after = outgoing.get(port.id)!;
+      for (let index = 0; index < before.length + after.length; index++) {
+        const peer = index < before.length ? before[index]! : after[index - before.length]!;
         if (inLayerOnly && layerByPort.get(peer) !== layerByPort.get(port.id)) {
           crossings += tree.size;
           continue;
@@ -144,7 +148,9 @@ export function countAllCrossings(
       const node = ownerByPort.get(port.id)!;
       const targets =
         node.type === "NORMAL"
-          ? nodes.get(port.dummy!)!.ports.map((peer) => ({ id: peer.id, degree: degree(peer.id) }))
+          ? (nodes ??= new Map(graph.layers.flat().map((node) => [node.id, node])))
+              .get(port.dummy!)!
+              .ports.map((peer) => ({ id: peer.id, degree: degree(peer.id) }))
           : node.type === "LONG_EDGE"
             ? node.ports
                 .filter((peer) => peer.id !== port.id)

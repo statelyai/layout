@@ -60,7 +60,13 @@ import type { ElkLayeredOptionValueByName } from "./elk-options";
 import { conservativeSpline } from "./spline-bezier";
 import { getFlexiblePortPosition } from "./flexible-ports";
 import { traceLayeredPhase } from "../internal/layered-trace";
-import { assertNorthSouthPortSides, GreedySwitchDecider } from "./greedy-switch-decider";
+import {
+  assertNorthSouthPortSides,
+  GreedySwitchDecider,
+  greedySwitchTopology,
+  type GreedySwitchTopology,
+} from "./greedy-switch-decider";
+import { findNode } from "./node-lookup";
 
 const modelSweepInputs = new WeakSet<LayeredPhaseInput>();
 
@@ -1033,6 +1039,8 @@ export function applyGreedySwitch(
       (layerIndex + 1 < layers.length ? countBoundary(layerIndex) : 0)
     );
   };
+  // Switches stay within layers, so port connectivity and layers are fixed.
+  let greedyTopology: GreedySwitchTopology | undefined;
   const sweep = (forward: boolean): boolean => {
     let changed = false;
     const indices = forward
@@ -1049,6 +1057,7 @@ export function applyGreedySwitch(
           greedyGraph,
           layerIndex,
           type === "ONE_SIDED" ? (forward ? "WEST" : "EAST") : undefined,
+          (greedyTopology ??= greedySwitchTopology(greedyGraph)),
         );
         do {
           improved = false;
@@ -1924,7 +1933,9 @@ export interface LayerSweepSession {
 }
 
 function clonePortOrders(orders?: ReadonlyMap<string, readonly string[]>): Map<string, string[]> {
-  return new Map([...(orders ?? [])].map(([id, edges]) => [id, [...edges]]));
+  const clone = new Map<string, string[]>();
+  if (orders) for (const [id, edges] of orders) clone.set(id, edges.slice());
+  return clone;
 }
 
 function minimizeCrossingsWithLayerSweep(
@@ -2080,6 +2091,8 @@ export function createLayerSweepSession(
     (input.settings as { [CROSSING_MODEL]?: CrossingModel })[CROSSING_MODEL] ?? {};
   const mixedPorts = crossingModel.mixedPorts !== false,
     probe = crossingModel.probe;
+  // Reused per count: physical port positions of one node.
+  const physicalSlot = new Map<string, number>();
   const countCrossings = (candidateLayers: readonly (readonly string[])[]): number => {
     if (exactPortSweep) {
       const graph = buildCrossingGraph(
@@ -2094,9 +2107,10 @@ export function createLayerSweepSession(
         for (const node of layer) {
           const physical = node.ports.length > 1 ? canonicalNodes.get(node.id)?.ports : undefined;
           if (physical?.length !== node.ports.length) continue;
-          const slot = new Map(physical.map((port, index) => [port.id, index]));
-          if (node.ports.every((port) => slot.has(port.id)))
-            node.ports.sort((a, b) => slot.get(a.id)! - slot.get(b.id)!);
+          physicalSlot.clear();
+          for (const [index, port] of physical.entries()) physicalSlot.set(port.id, index);
+          if (node.ports.every((port) => physicalSlot.has(port.id)))
+            node.ports.sort((a, b) => physicalSlot.get(a.id)! - physicalSlot.get(b.id)!);
         }
       const split = mixedPorts ? splitMixedCrossingPorts(graph, canonicalReversed) : graph;
       const score = countAllCrossings(
@@ -2286,6 +2300,20 @@ export function createLayerSweepSession(
     // and same-layer recursion must not be separated into independent sums.
     for (const id of freeLayer) {
       const order = (forward ? inputPortOrder : outputPortOrder).get(id) ?? [];
+      const visit = (edgeId: string) => {
+        const edge = edgeById.get(edgeId)!;
+        const [source, target] = getOrientedEndpoints(edge, orientation);
+        const neighbor = forward ? source : target;
+        const rank = edgeRanks.get(edgeId);
+        if (assignment.layerByNodeId.get(neighbor) === assignment.layerByNodeId.get(id))
+          visits.get(id)!.push(neighbor);
+        else if (rank !== undefined) visits.get(id)!.push(rank);
+      };
+      // One edge forms one group; nothing to sort.
+      if (order.length < 2) {
+        for (const edgeId of order) visit(edgeId);
+        continue;
+      }
       const groups = new Map<string, string[]>();
       for (const edgeId of order) {
         const edge = edgeById.get(edgeId)!;
@@ -2296,25 +2324,18 @@ export function createLayerSweepSession(
         if (group) group.push(edgeId);
         else groups.set(key, [edgeId]);
       }
+      // Port sorting reorders ports, not the edges on one port; those keep
+      // ELK's edge list order. Expanded segments keep their listed edge id.
+      const listed = units?.edgeListRanks?.[forward ? "incoming" : "outgoing"].get(id);
+      const rank = (edgeId: string) => listed?.get(listedEdgeId(edgeId));
       for (const group of groups.values()) {
-        // Port sorting reorders ports, not the edges on one port; those keep
-        // ELK's edge list order. Expanded segments keep their listed edge id.
-        const listed = units?.edgeListRanks?.[forward ? "incoming" : "outgoing"].get(id);
-        const rank = (edgeId: string) => listed?.get(listedEdgeId(edgeId));
-        group.sort(
-          (a, b) =>
-            (rank(a) !== undefined && rank(b) !== undefined ? rank(a)! - rank(b)! : 0) ||
-            edgeModelOrder.get(a)! - edgeModelOrder.get(b)!,
-        );
-        for (const edgeId of group) {
-          const edge = edgeById.get(edgeId)!;
-          const [source, target] = getOrientedEndpoints(edge, orientation);
-          const neighbor = forward ? source : target;
-          const rank = edgeRanks.get(edgeId);
-          if (assignment.layerByNodeId.get(neighbor) === assignment.layerByNodeId.get(id))
-            visits.get(id)!.push(neighbor);
-          else if (rank !== undefined) visits.get(id)!.push(rank);
-        }
+        if (group.length > 1)
+          group.sort(
+            (a, b) =>
+              (rank(a) !== undefined && rank(b) !== undefined ? rank(a)! - rank(b)! : 0) ||
+              edgeModelOrder.get(a)! - edgeModelOrder.get(b)!,
+          );
+        for (const edgeId of group) visit(edgeId);
       }
     }
     return { ranks, visits };
@@ -2391,6 +2412,13 @@ export function createLayerSweepSession(
     });
     for (const index of touched)
       for (const node of canonicalGraph.layers[index]!) {
+        // One port leaves every edge order tied, and one edge has no order.
+        if (
+          node.ports.length < 2 ||
+          ((outputPortOrder.get(node.id)?.length ?? 0) < 2 &&
+            (inputPortOrder.get(node.id)?.length ?? 0) < 2)
+        )
+          continue;
         const ordinal = new Map(node.ports.map((port, index) => [port.id, index]));
         for (const [orders, source] of [
           [outputPortOrder, true],
@@ -2715,14 +2743,20 @@ export function createLayerSweepSession(
     shuffleFirstLayer,
     sweep,
     countCrossings: () => countCrossings(working),
-    snapshot: () => ({
-      physicalPortOrderByNodeId: new Map(
-        [...canonicalNodes].map(([id, node]) => [id, node.ports.map((port) => port.id)]),
-      ),
-      layers: working.map((layer) => [...layer]),
-      inputPortOrderByNodeId: clonePortOrders(inputPortOrder),
-      outputPortOrderByNodeId: clonePortOrders(outputPortOrder),
-    }),
+    snapshot: () => {
+      const physicalPortOrderByNodeId = new Map<string, string[]>();
+      for (const [id, node] of canonicalNodes)
+        physicalPortOrderByNodeId.set(
+          id,
+          node.ports.map((port) => port.id),
+        );
+      return {
+        physicalPortOrderByNodeId,
+        layers: working.map((layer) => [...layer]),
+        inputPortOrderByNodeId: clonePortOrders(inputPortOrder),
+        outputPortOrderByNodeId: clonePortOrders(outputPortOrder),
+      };
+    },
     restore,
     finish,
     currentLayers: () => working,
@@ -3422,7 +3456,7 @@ function nodeFlowOffset(
   layerByNodeId: ReadonlyMap<string, number>,
   margins?: { leading: number; trailing: number; maxLeading: number; maxTrailing: number },
 ): number {
-  const node = input.graph.nodes.find((candidate) => candidate.id === id);
+  const node = findNode(input.graph.nodes, id);
   const alignment = node
     ? (input.nodeSettings?.(node)?.alignment ?? input.settings.alignment)
     : input.settings.alignment;
@@ -3788,7 +3822,85 @@ function implicitEdgeEndpoints(
 ): ReadonlyMap<string, { source: Point; target: Point }> {
   const horizontal = input.direction === "left" || input.direction === "right";
   const nodeById = new Map(input.graph.nodes.map((node) => [node.id, node]));
-  const groups = new Map<string, Array<{ edge: GraphEdge; endpoint: "source" | "target" }>>();
+  // Settings stay fixed for the call; resolve each node's and port's once.
+  const nodeSettingsByNode = new Map<
+    GraphNode,
+    ReturnType<NonNullable<typeof input.nodeSettings>>
+  >();
+  const nodeSettingsOf = (node: GraphNode) => {
+    if (!nodeSettingsByNode.has(node)) nodeSettingsByNode.set(node, input.nodeSettings?.(node));
+    return nodeSettingsByNode.get(node);
+  };
+  // Port settings depend on the owning node too, so cache them per node.
+  const portSettingsByNode = new Map<
+    GraphNode,
+    Map<GraphPort, ReturnType<NonNullable<typeof input.portSettings>>>
+  >();
+  const portSettingsOf = (port: GraphPort, node: GraphNode) => {
+    let byPort = portSettingsByNode.get(node);
+    if (!byPort) portSettingsByNode.set(node, (byPort = new Map()));
+    if (!byPort.has(port)) byPort.set(port, input.portSettings?.(port, node));
+    return byPort.get(port);
+  };
+  // Endpoint groups by side and node, in first-entry order.
+  type EndpointGroup = {
+    nodeId: string;
+    side: string;
+    entries: Array<{ edge: GraphEdge; endpoint: "source" | "target" }>;
+  };
+  const groups: EndpointGroup[] = [];
+  const groupsBySide = new Map<string, Map<string, EndpointGroup>>();
+  const modelOrderPromotion =
+    input.settings["layering.nodePromotion.strategy"] === "MODEL_ORDER_LEFT_TO_RIGHT";
+  const directionReversed = input.direction === "left" || input.direction === "up";
+  const endpointSide = (nodeId: string, portName: string | undefined): string | undefined => {
+    const node = nodeById.get(nodeId);
+    const port = node?.ports?.find((candidate) => candidate.name === portName);
+    const constraints = node ? nodeSettingsOf(node)?.portConstraints : undefined;
+    if (
+      !node ||
+      !port ||
+      (constraints !== "FIXED_SIDE" &&
+        constraints !== "FIXED_ORDER" &&
+        constraints !== "FIXED_RATIO" &&
+        constraints !== "FIXED_POS")
+    ) {
+      return undefined;
+    }
+    const configured = portSettingsOf(port, node)?.["port.side"];
+    return configured === "WEST" || configured === "NORTH"
+      ? "before"
+      : configured === "EAST" || configured === "SOUTH"
+        ? "after"
+        : undefined;
+  };
+  const fixedImplicitSide = (nodeId: string, portName: string | undefined, source: boolean) => {
+    const node = nodeById.get(nodeId);
+    const constraints = node && nodeSettingsOf(node)?.portConstraints;
+    if (
+      portName !== undefined ||
+      !["FIXED_SIDE", "FIXED_ORDER", "FIXED_RATIO", "FIXED_POS"].includes(String(constraints))
+    )
+      return undefined;
+    // ELK assigns implicit port sides before cycle breaking. Fixed sides
+    // survive edge reversal; a feedback edge cannot move its endpoint.
+    return source !== directionReversed ? "after" : "before";
+  };
+  const addEntry = (
+    nodeId: string,
+    side: string,
+    entry: { edge: GraphEdge; endpoint: "source" | "target" },
+  ) => {
+    let byNode = groupsBySide.get(side);
+    if (!byNode) groupsBySide.set(side, (byNode = new Map()));
+    const group = byNode.get(nodeId);
+    if (group) group.entries.push(entry);
+    else {
+      const created = { nodeId, side, entries: [entry] };
+      byNode.set(nodeId, created);
+      groups.push(created);
+    }
+  };
   for (const edge of input.graph.edges) {
     if (hasMovableLoopPorts(input, edge)) continue;
     const sourceRect = placement.rectByNodeId.get(edge.sourceId);
@@ -3796,8 +3908,6 @@ function implicitEdgeEndpoints(
     if (!sourceRect || !targetRect) continue;
     const sourceFlow = horizontal ? sourceRect.x : sourceRect.y;
     const targetFlow = horizontal ? targetRect.x : targetRect.y;
-    const modelOrderPromotion =
-      input.settings["layering.nodePromotion.strategy"] === "MODEL_ORDER_LEFT_TO_RIGHT";
     const sourceBoundary = externalPortDummyOf(nodeById.get(edge.sourceId) ?? {});
     const targetBoundary = externalPortDummyOf(nodeById.get(edge.targetId) ?? {});
     // A zero-gap boundary can coincide with the node's flow origin.
@@ -3810,40 +3920,6 @@ function implicitEdgeEndpoints(
         : sourceFlow <= targetFlow);
     const feedback =
       input.settings.feedbackEdges === true && orientation?.reversedEdgeIds.has(edge.id) === true;
-    const directionReversed = input.direction === "left" || input.direction === "up";
-    const endpointSide = (nodeId: string, portName: string | undefined): string | undefined => {
-      const node = nodeById.get(nodeId);
-      const port = node?.ports?.find((candidate) => candidate.name === portName);
-      const constraints = node ? input.nodeSettings?.(node)?.portConstraints : undefined;
-      if (
-        !node ||
-        !port ||
-        (constraints !== "FIXED_SIDE" &&
-          constraints !== "FIXED_ORDER" &&
-          constraints !== "FIXED_RATIO" &&
-          constraints !== "FIXED_POS")
-      ) {
-        return undefined;
-      }
-      const configured = input.portSettings?.(port, node)?.["port.side"];
-      return configured === "WEST" || configured === "NORTH"
-        ? "before"
-        : configured === "EAST" || configured === "SOUTH"
-          ? "after"
-          : undefined;
-    };
-    const fixedImplicitSide = (nodeId: string, portName: string | undefined, source: boolean) => {
-      const node = nodeById.get(nodeId);
-      const constraints = node && input.nodeSettings?.(node)?.portConstraints;
-      if (
-        portName !== undefined ||
-        !["FIXED_SIDE", "FIXED_ORDER", "FIXED_RATIO", "FIXED_POS"].includes(String(constraints))
-      )
-        return undefined;
-      // ELK assigns implicit port sides before cycle breaking. Fixed sides
-      // survive edge reversal; a feedback edge cannot move its endpoint.
-      return source !== directionReversed ? "after" : "before";
-    };
     const sourceSide =
       endpointSide(edge.sourceId, edge.sourcePort) ??
       fixedImplicitSide(edge.sourceId, edge.sourcePort, true) ??
@@ -3852,14 +3928,8 @@ function implicitEdgeEndpoints(
       endpointSide(edge.targetId, edge.targetPort) ??
       fixedImplicitSide(edge.targetId, edge.targetPort, false) ??
       (feedback ? (directionReversed ? "after" : "before") : forward ? "before" : "after");
-    const sourceKey = `${edge.sourceId}:${sourceSide}`;
-    const targetKey = `${edge.targetId}:${targetSide}`;
-    const sourceGroup = groups.get(sourceKey) ?? [];
-    sourceGroup.push({ edge, endpoint: "source" });
-    groups.set(sourceKey, sourceGroup);
-    const targetGroup = groups.get(targetKey) ?? [];
-    targetGroup.push({ edge, endpoint: "target" });
-    groups.set(targetKey, targetGroup);
+    addEntry(edge.sourceId, sourceSide, { edge, endpoint: "source" });
+    addEntry(edge.targetId, targetSide, { edge, endpoint: "target" });
   }
 
   const result = new Map<string, { source: Point; target: Point }>();
@@ -3883,22 +3953,19 @@ function implicitEdgeEndpoints(
     if (!counts) {
       counts = new Map();
       for (const port of node.ports ?? []) {
-        const portSide = input.portSettings?.(port, node)?.["port.side"];
+        const portSide = portSettingsOf(port, node)?.["port.side"];
         counts.set(portSide, (counts.get(portSide) ?? 0) + 1);
       }
       portSideCounts.set(node, counts);
     }
     return counts.get(side) ?? 0;
   };
-  for (const [key, entries] of groups) {
-    const split = key.lastIndexOf(":");
-    const nodeId = key.slice(0, split);
-    const side = key.slice(split + 1);
+  for (const { nodeId, side, entries } of groups) {
     const rect = placement.rectByNodeId.get(nodeId);
     if (!rect) continue;
     const mergeEdges = input.settings.mergeEdges === true;
     const node = nodeById.get(nodeId);
-    const nodeSettings = node ? input.nodeSettings?.(node) : undefined;
+    const nodeSettings = node ? nodeSettingsOf(node) : undefined;
     const hypernode = nodeSettings?.hypernode;
     const unzipping = (input.settings["layerUnzipping.strategy"] ?? "NONE") === "ALTERNATING";
     const crossingStrategy = input.settings["crossingMinimization.strategy"] ?? "LAYER_SWEEP";
@@ -4099,7 +4166,7 @@ function implicitEdgeEndpoints(
       const portName = endpoint === "source" ? edge.sourcePort : edge.targetPort;
       const explicitPort = node?.ports?.find((port) => port.name === portName);
       const physicalSide =
-        node && explicitPort ? input.portSettings?.(explicitPort, node)?.["port.side"] : undefined;
+        node && explicitPort ? portSettingsOf(explicitPort, node)?.["port.side"] : undefined;
       const singleFixedSidePort =
         constraints === "FIXED_SIDE" &&
         physicalSide !== undefined &&
@@ -4108,9 +4175,7 @@ function implicitEdgeEndpoints(
       // Movable port ordering comes from the layer sweep above. Fixed coordinates
       // and authored anchors must replace the synthesized node-origin fallback.
       const authoredAnchor =
-        node && explicitPort
-          ? input.portSettings?.(explicitPort, node)?.["port.anchor"]
-          : undefined;
+        node && explicitPort ? portSettingsOf(explicitPort, node)?.["port.anchor"] : undefined;
       if (
         portName !== undefined &&
         node &&
@@ -4439,6 +4504,16 @@ function routeEdges(style: "ORTHOGONAL" | "POLYLINE" | "SPLINES"): EdgeRouter {
       flowLayerByNodeId.set(interval.id, flowLayers.length - 1);
     }
     const bodyFlowLayers = flowLayers.map((bounds) => ({ ...bounds }));
+    // Placed node ids per flow layer, in placement order. Layer loops only
+    // move these nodes, so a grouping stays valid while its loop runs.
+    const placedIdsByFlowLayer = () => {
+      const ids = flowLayers.map(() => [] as string[]);
+      for (const id of placement.rectByNodeId.keys()) {
+        const layer = flowLayerByNodeId.get(id);
+        if (layer !== undefined) ids[layer]!.push(id);
+      }
+      return ids;
+    };
     const labelFlowLayers = new Set(
       [...flowLayerByNodeId]
         .filter(([id]) => id.startsWith("__layout_dummy:label:"))
@@ -4566,10 +4641,11 @@ function routeEdges(style: "ORTHOGONAL" | "POLYLINE" | "SPLINES"): EdgeRouter {
       labelExtraByGap[gap] = Math.max(labelExtraByGap[gap] ?? 0, extra);
     }
     let labelShift = 0;
+    const labelShiftIds = placedIdsByFlowLayer();
     for (const [layerNo, bounds] of flowLayers.entries()) {
       if (labelShift !== 0) {
-        for (const [id, rect] of placement.rectByNodeId) {
-          if (flowLayerByNodeId.get(id) !== layerNo) continue;
+        for (const id of labelShiftIds[layerNo]!) {
+          const rect = placement.rectByNodeId.get(id)!;
           mutableRects.set(
             id,
             horizontal ? { ...rect, x: rect.x + labelShift } : { ...rect, y: rect.y + labelShift },
@@ -5061,11 +5137,13 @@ function routeEdges(style: "ORTHOGONAL" | "POLYLINE" | "SPLINES"): EdgeRouter {
         leadingSlots > 0 ? edgeNodeSpacing + (leadingSlots - 1) * edgeEdgeSpacing : 0;
       let nextStart = (flowLayers[0]?.start ?? 0) + leadingWidth;
       // ELK omits ordinary node spacing beside an external-port-only layer.
+      const flowLayerIds = flowLayers.map(() => [] as string[]);
+      for (const [id, layer] of flowLayerByNodeId) flowLayerIds[layer]!.push(id);
       const externalFlowLayers = new Set(
         flowLayers.flatMap((_, layer) => {
-          const ids = [...flowLayerByNodeId].filter(([, index]) => index === layer);
+          const ids = flowLayerIds[layer]!;
           return ids.length &&
-            ids.every(([id]) => {
+            ids.every((id) => {
               const node = nodeById.get(id);
               const side = node && externalPortDummyOf(node)?.side;
               return horizontal
@@ -5076,10 +5154,11 @@ function routeEdges(style: "ORTHOGONAL" | "POLYLINE" | "SPLINES"): EdgeRouter {
             : [];
         }),
       );
+      const shiftedIds = placedIdsByFlowLayer();
       for (const [layerNo, bounds] of flowLayers.entries()) {
         const shift = nextStart - bounds.start;
-        for (const [id, rect] of placement.rectByNodeId) {
-          if (flowLayerByNodeId.get(id) !== layerNo) continue;
+        for (const id of shiftedIds[layerNo]!) {
+          const rect = placement.rectByNodeId.get(id)!;
           mutableRects.set(
             id,
             horizontal ? { ...rect, x: rect.x + shift } : { ...rect, y: rect.y + shift },
@@ -5437,10 +5516,11 @@ function routeEdges(style: "ORTHOGONAL" | "POLYLINE" | "SPLINES"): EdgeRouter {
         }
       }
       let nextStart = flowLayers[0]?.start ?? 0;
+      const shiftedIds = placedIdsByFlowLayer();
       for (const [layerNo, bounds] of flowLayers.entries()) {
         const shift = nextStart - bounds.start;
-        for (const [id, rect] of placement.rectByNodeId) {
-          if (flowLayerByNodeId.get(id) !== layerNo) continue;
+        for (const id of shiftedIds[layerNo]!) {
+          const rect = placement.rectByNodeId.get(id)!;
           mutableRects.set(
             id,
             horizontal ? { ...rect, x: rect.x + shift } : { ...rect, y: rect.y + shift },
@@ -6774,7 +6854,7 @@ export function normalizePlacementForPortExtents(
       [nextLayer, false],
     ] as const) {
       for (const id of ids) {
-        const node = input.graph.nodes.find((candidate) => candidate.id === id);
+        const node = findNode(input.graph.nodes, id);
         const rect = placement.rectByNodeId.get(id);
         if (!node || !rect) continue;
         const bodyStart = horizontal ? rect.x : rect.y;
