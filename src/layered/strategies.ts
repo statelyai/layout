@@ -4491,6 +4491,16 @@ function routeEdges(style: "ORTHOGONAL" | "POLYLINE" | "SPLINES"): EdgeRouter {
       flowLayerByNodeId.set(interval.id, flowLayers.length - 1);
     }
     const bodyFlowLayers = flowLayers.map((bounds) => ({ ...bounds }));
+    // Placed node ids per flow layer, in placement order. Layer loops only
+    // move these nodes, so a grouping stays valid while its loop runs.
+    const placedIdsByFlowLayer = () => {
+      const ids = flowLayers.map(() => [] as string[]);
+      for (const id of placement.rectByNodeId.keys()) {
+        const layer = flowLayerByNodeId.get(id);
+        if (layer !== undefined) ids[layer]!.push(id);
+      }
+      return ids;
+    };
     const labelFlowLayers = new Set(
       [...flowLayerByNodeId]
         .filter(([id]) => id.startsWith("__layout_dummy:label:"))
@@ -4618,10 +4628,11 @@ function routeEdges(style: "ORTHOGONAL" | "POLYLINE" | "SPLINES"): EdgeRouter {
       labelExtraByGap[gap] = Math.max(labelExtraByGap[gap] ?? 0, extra);
     }
     let labelShift = 0;
+    const labelShiftIds = placedIdsByFlowLayer();
     for (const [layerNo, bounds] of flowLayers.entries()) {
       if (labelShift !== 0) {
-        for (const [id, rect] of placement.rectByNodeId) {
-          if (flowLayerByNodeId.get(id) !== layerNo) continue;
+        for (const id of labelShiftIds[layerNo]!) {
+          const rect = placement.rectByNodeId.get(id)!;
           mutableRects.set(
             id,
             horizontal ? { ...rect, x: rect.x + labelShift } : { ...rect, y: rect.y + labelShift },
@@ -5113,11 +5124,13 @@ function routeEdges(style: "ORTHOGONAL" | "POLYLINE" | "SPLINES"): EdgeRouter {
         leadingSlots > 0 ? edgeNodeSpacing + (leadingSlots - 1) * edgeEdgeSpacing : 0;
       let nextStart = (flowLayers[0]?.start ?? 0) + leadingWidth;
       // ELK omits ordinary node spacing beside an external-port-only layer.
+      const flowLayerIds = flowLayers.map(() => [] as string[]);
+      for (const [id, layer] of flowLayerByNodeId) flowLayerIds[layer]!.push(id);
       const externalFlowLayers = new Set(
         flowLayers.flatMap((_, layer) => {
-          const ids = [...flowLayerByNodeId].filter(([, index]) => index === layer);
+          const ids = flowLayerIds[layer]!;
           return ids.length &&
-            ids.every(([id]) => {
+            ids.every((id) => {
               const node = nodeById.get(id);
               const side = node && externalPortDummyOf(node)?.side;
               return horizontal
@@ -5128,10 +5141,11 @@ function routeEdges(style: "ORTHOGONAL" | "POLYLINE" | "SPLINES"): EdgeRouter {
             : [];
         }),
       );
+      const shiftedIds = placedIdsByFlowLayer();
       for (const [layerNo, bounds] of flowLayers.entries()) {
         const shift = nextStart - bounds.start;
-        for (const [id, rect] of placement.rectByNodeId) {
-          if (flowLayerByNodeId.get(id) !== layerNo) continue;
+        for (const id of shiftedIds[layerNo]!) {
+          const rect = placement.rectByNodeId.get(id)!;
           mutableRects.set(
             id,
             horizontal ? { ...rect, x: rect.x + shift } : { ...rect, y: rect.y + shift },
@@ -5489,10 +5503,11 @@ function routeEdges(style: "ORTHOGONAL" | "POLYLINE" | "SPLINES"): EdgeRouter {
         }
       }
       let nextStart = flowLayers[0]?.start ?? 0;
+      const shiftedIds = placedIdsByFlowLayer();
       for (const [layerNo, bounds] of flowLayers.entries()) {
         const shift = nextStart - bounds.start;
-        for (const [id, rect] of placement.rectByNodeId) {
-          if (flowLayerByNodeId.get(id) !== layerNo) continue;
+        for (const id of shiftedIds[layerNo]!) {
+          const rect = placement.rectByNodeId.get(id)!;
           mutableRects.set(
             id,
             horizontal ? { ...rect, x: rect.x + shift } : { ...rect, y: rect.y + shift },
