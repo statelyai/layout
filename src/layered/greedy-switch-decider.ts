@@ -15,6 +15,36 @@ function sidePorts(node: CrossingNode, side: Side): CrossingPort[] {
   return side === "WEST" || side === "SOUTH" ? ports.reverse() : ports;
 }
 
+/** Port connectivity and layers; switches within layers leave it unchanged. */
+export interface GreedySwitchTopology {
+  incoming: Map<string, string[]>;
+  outgoing: Map<string, string[]>;
+  layerByPort: Map<string, number>;
+  ownerByPort: Map<string, CrossingNode>;
+}
+
+export function greedySwitchTopology(graph: CrossingGraph): GreedySwitchTopology {
+  const topology: GreedySwitchTopology = {
+    incoming: new Map(),
+    outgoing: new Map(),
+    layerByPort: new Map(),
+    ownerByPort: new Map(),
+  };
+  for (const [layer, nodes] of graph.layers.entries())
+    for (const node of nodes)
+      for (const port of node.ports) {
+        topology.layerByPort.set(port.id, layer);
+        topology.ownerByPort.set(port.id, node);
+        topology.incoming.set(port.id, []);
+        topology.outgoing.set(port.id, []);
+      }
+  for (const edge of graph.edges) {
+    topology.outgoing.get(edge.source)?.push(edge.target);
+    topology.incoming.get(edge.target)?.push(edge.source);
+  }
+  return topology;
+}
+
 interface Adjacency {
   position: number;
   cardinality: number;
@@ -27,10 +57,10 @@ interface Adjacency {
  */
 export class GreedySwitchDecider {
   readonly #free: readonly CrossingNode[];
-  readonly #incoming = new Map<string, string[]>();
-  readonly #outgoing = new Map<string, string[]>();
-  readonly #layerByPort = new Map<string, number>();
-  readonly #ownerByPort = new Map<string, CrossingNode>();
+  readonly #incoming: ReadonlyMap<string, readonly string[]>;
+  readonly #outgoing: ReadonlyMap<string, readonly string[]>;
+  readonly #layerByPort: ReadonlyMap<string, number>;
+  readonly #ownerByPort: ReadonlyMap<string, CrossingNode>;
   readonly #neighbourPositions = new Map<string, number>();
   readonly #adjacencies = new Map<string, { sides: Map<Side, Adjacency[]> }>();
   readonly #matrix = new Map<string, [number, number]>();
@@ -39,21 +69,18 @@ export class GreedySwitchDecider {
   readonly #inLayerSize = new Map<Side, number>();
   readonly #oneSided?: "WEST" | "EAST";
 
-  constructor(graph: CrossingGraph, freeLayerIndex: number, oneSided?: "WEST" | "EAST") {
+  constructor(
+    graph: CrossingGraph,
+    freeLayerIndex: number,
+    oneSided?: "WEST" | "EAST",
+    topology = greedySwitchTopology(graph),
+  ) {
     this.#free = graph.layers[freeLayerIndex] ?? [];
     this.#oneSided = oneSided;
-    for (const [layer, nodes] of graph.layers.entries())
-      for (const node of nodes)
-        for (const port of node.ports) {
-          this.#layerByPort.set(port.id, layer);
-          this.#ownerByPort.set(port.id, node);
-          this.#incoming.set(port.id, []);
-          this.#outgoing.set(port.id, []);
-        }
-    for (const edge of graph.edges) {
-      this.#outgoing.get(edge.source)?.push(edge.target);
-      this.#incoming.get(edge.target)?.push(edge.source);
-    }
+    this.#incoming = topology.incoming;
+    this.#outgoing = topology.outgoing;
+    this.#layerByPort = topology.layerByPort;
+    this.#ownerByPort = topology.ownerByPort;
     for (const [layerIndex, side] of [
       [freeLayerIndex - 1, "EAST"],
       [freeLayerIndex + 1, "WEST"],

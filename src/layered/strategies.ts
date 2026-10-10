@@ -60,7 +60,12 @@ import type { ElkLayeredOptionValueByName } from "./elk-options";
 import { conservativeSpline } from "./spline-bezier";
 import { getFlexiblePortPosition } from "./flexible-ports";
 import { traceLayeredPhase } from "../internal/layered-trace";
-import { assertNorthSouthPortSides, GreedySwitchDecider } from "./greedy-switch-decider";
+import {
+  assertNorthSouthPortSides,
+  GreedySwitchDecider,
+  greedySwitchTopology,
+  type GreedySwitchTopology,
+} from "./greedy-switch-decider";
 import { findNode } from "./node-lookup";
 
 const modelSweepInputs = new WeakSet<LayeredPhaseInput>();
@@ -1034,6 +1039,8 @@ export function applyGreedySwitch(
       (layerIndex + 1 < layers.length ? countBoundary(layerIndex) : 0)
     );
   };
+  // Switches stay within layers, so port connectivity and layers are fixed.
+  let greedyTopology: GreedySwitchTopology | undefined;
   const sweep = (forward: boolean): boolean => {
     let changed = false;
     const indices = forward
@@ -1050,6 +1057,7 @@ export function applyGreedySwitch(
           greedyGraph,
           layerIndex,
           type === "ONE_SIDED" ? (forward ? "WEST" : "EAST") : undefined,
+          (greedyTopology ??= greedySwitchTopology(greedyGraph)),
         );
         do {
           improved = false;
