@@ -276,6 +276,14 @@ and Box SIMPLE geometry, including provider bounds and whether edge sections
 are routed or left authored. Rectangle Packing has an exact default baseline;
 its full Java packing strategy remains in progress.
 
+<!-- size snapping from src/elkjs/index.ts snapSizes -->
+
+Node, port and label sizes are snapped to the browser's 1/64px layout unit
+before layout, and the result reports the snapped sizes. Measured sizes carry
+float noise, such as a rect divided by a zoom factor, and exact ties in layered
+layout would otherwise let that noise move nodes. Sizes already on that grid,
+including all integer sizes, are unchanged.
+
 The compatibility entry's named graph, edge, option, and result types are
 mutually assignable with the declarations shipped by `elkjs@0.11.1`. Its
 default class also accepts the library's broader internal graph inputs.
