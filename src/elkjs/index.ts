@@ -96,6 +96,31 @@ interface PreparedElkScope {
   finish(orders?: ReadonlyMap<PreparedElkScope, LayerOrder>): Promise<ElkNode>;
 }
 
+const LAYOUT_UNITS_PER_PX = 64;
+
+/**
+ * Measured sizes carry float noise (a browser rect divided by zoom), and a
+ * layered layout is full of exact ties that noise decides. Snap sizes to the
+ * browser's 1/64px layout unit so the same graph always lays out the same way;
+ * sizes already on that grid are unchanged.
+ */
+function snapSizes(node: ElkNode): void {
+  const snap = (shape: { width?: number; height?: number }) => {
+    if (typeof shape.width === "number")
+      shape.width = Math.round(shape.width * LAYOUT_UNITS_PER_PX) / LAYOUT_UNITS_PER_PX;
+    if (typeof shape.height === "number")
+      shape.height = Math.round(shape.height * LAYOUT_UNITS_PER_PX) / LAYOUT_UNITS_PER_PX;
+  };
+  snap(node);
+  for (const label of node.labels ?? []) snap(label);
+  for (const port of node.ports ?? []) {
+    snap(port);
+    for (const label of port.labels ?? []) snap(label);
+  }
+  for (const edge of node.edges ?? []) for (const label of edge.labels ?? []) snap(label);
+  for (const child of node.children ?? []) snapSizes(child);
+}
+
 export default class ELK {
   readonly #options: ElkConstructorArguments;
   readonly #algorithmIds: ReadonlySet<string>;
@@ -171,6 +196,7 @@ export default class ELK {
     graph: T,
     arguments_: ElkLayoutArguments = {},
   ): Promise<LaidOutElkNode<T>> {
+    snapSizes(graph);
     const options = { ...this.#options.defaultLayoutOptions, ...arguments_.layoutOptions };
     const seeds = crossingVariants(options, graph);
     const probe = mayShareTracks(graph, options)

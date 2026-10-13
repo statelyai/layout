@@ -1,0 +1,276 @@
+{
+  "id": "root",
+  "layoutOptions": {
+    "elk.algorithm": "layered",
+    "elk.direction": "DOWN",
+    "elk.spacing.nodeNode": "50",
+    "elk.layered.spacing.nodeNodeBetweenLayers": "88",
+    "elk.edgeRouting": "ORTHOGONAL",
+    "elk.hierarchyHandling": "INCLUDE_CHILDREN",
+    "elk.separateConnectedComponents": "false",
+    "elk.spacing.edgeEdge": "10",
+    "elk.spacing.edgeNode": "10",
+    "elk.spacing.edgeLabel": "2",
+    "elk.spacing.labelNode": "5",
+    "elk.spacing.componentComponent": "20",
+    "elk.spacing.nodeSelfLoop": "24",
+    "elk.layered.spacing.edgeEdgeBetweenLayers": "10",
+    "elk.layered.spacing.edgeNodeBetweenLayers": "10",
+    "elk.layered.layering.strategy": "INTERACTIVE",
+    "elk.layered.cycleBreaking.strategy": "MODEL_ORDER",
+    "elk.layered.directionCongruency": "READING_DIRECTION",
+    "elk.layered.nodePlacement.strategy": "BRANDES_KOEPF",
+    "elk.layered.nodePlacement.favorStraightEdges": "true",
+    "elk.layered.nodePlacement.bk.fixedAlignment": "NONE",
+    "elk.layered.nodePlacement.bk.edgeStraightening": "IMPROVE_STRAIGHTNESS",
+    "elk.layered.nodePlacement.linearSegments.deflectionDampening": "0.3",
+    "elk.layered.crossingMinimization.strategy": "LAYER_SWEEP",
+    "elk.layered.crossingMinimization.forceNodeModelOrder": "true",
+    "elk.layered.crossingMinimization.greedySwitch.type": "TWO_SIDED",
+    "elk.layered.crossingMinimization.semiInteractive": "false",
+    "elk.layered.considerModelOrder.strategy": "PREFER_NODES",
+    "elk.layered.considerModelOrder.longEdgeStrategy": "DUMMY_NODE_OVER",
+    "elk.layered.considerModelOrder.components": "MODEL_ORDER",
+    "elk.layered.considerModelOrder.crossingCounterNodeInfluence": "0",
+    "elk.layered.considerModelOrder.crossingCounterPortInfluence": "0",
+    "elk.layered.compaction.connectedComponents": "true",
+    "elk.layered.compaction.postCompaction.strategy": "LEFT",
+    "elk.layered.compaction.postCompaction.constraints": "SCANLINE",
+    "elk.layered.edgeRouting.splines.mode": "SLOPPY",
+    "elk.layered.edgeRouting.splines.sloppy.layerSpacingFactor": "0.2",
+    "elk.layered.edgeLabels.centerLabelPlacementStrategy": "MEDIAN_LAYER",
+    "elk.layered.edgeLabels.sideSelection": "SMART_DOWN",
+    "elk.layered.wrapping.strategy": "OFF",
+    "elk.layered.wrapping.additionalEdgeSpacing": "10",
+    "elk.layered.wrapping.correctionFactor": "1",
+    "elk.layered.highDegreeNodes.treatment": "false",
+    "elk.layered.highDegreeNodes.threshold": "16",
+    "elk.layered.highDegreeNodes.treeHeight": "5",
+    "elk.layered.thoroughness": "7",
+    "elk.layered.mergeEdges": "false",
+    "elk.layered.mergeHierarchyEdges": "true",
+    "elk.layered.feedbackEdges": "false",
+    "elk.layered.unnecessaryBendpoints": "false"
+  },
+  "children": [
+    {
+      "id": "editorModesLayout.Edit Mode",
+      "x": 0,
+      "y": 0,
+      "ports": [],
+      "layoutOptions": {
+        "elk.hierarchyHandling": "INCLUDE_CHILDREN",
+        "elk.layered.edgeRouting.selfLoopDistribution": "NORTH",
+        "elk.layered.edgeRouting.selfLoopOrdering": "STACKED",
+        "elk.portConstraints": "UNDEFINED",
+        "elk.portAlignment.default": "DISTRIBUTED",
+        "elk.portLabels.treatAsGroup": "true",
+        "elk.spacing.portPort": "10",
+        "elk.layered.cycleBreaking.strategy": "MODEL_ORDER",
+        "elk.layered.layering.layerConstraint": "FIRST_SEPARATE"
+      },
+      "width": 113.5625,
+      "height": 44
+    },
+    {
+      "id": "editorModesLayout.Simulation Mode",
+      "x": 0,
+      "y": 0,
+      "ports": [],
+      "children": [
+        {
+          "id": "editorModesLayout.Simulation Mode.Simulating & Story Recording",
+          "x": 948,
+          "y": 592,
+          "ports": [],
+          "layoutOptions": {
+            "elk.hierarchyHandling": "INCLUDE_CHILDREN",
+            "elk.layered.edgeRouting.selfLoopDistribution": "NORTH",
+            "elk.layered.edgeRouting.selfLoopOrdering": "STACKED",
+            "elk.portConstraints": "UNDEFINED",
+            "elk.portAlignment.default": "DISTRIBUTED",
+            "elk.portLabels.treatAsGroup": "true",
+            "elk.spacing.portPort": "10",
+            "elk.layered.cycleBreaking.strategy": "MODEL_ORDER",
+            "elk.layered.layering.layerConstraint": "FIRST_SEPARATE"
+          },
+          "width": 275.953125,
+          "height": 44
+        },
+        {
+          "id": "editorModesLayout.Simulation Mode.Story Playback",
+          "x": 948,
+          "y": 592,
+          "ports": [],
+          "layoutOptions": {
+            "elk.hierarchyHandling": "INCLUDE_CHILDREN",
+            "elk.layered.edgeRouting.selfLoopDistribution": "NORTH",
+            "elk.layered.edgeRouting.selfLoopOrdering": "STACKED",
+            "elk.portConstraints": "UNDEFINED",
+            "elk.portAlignment.default": "DISTRIBUTED",
+            "elk.portLabels.treatAsGroup": "true",
+            "elk.spacing.portPort": "10",
+            "elk.layered.cycleBreaking.strategy": "MODEL_ORDER"
+          },
+          "width": 156.375,
+          "height": 44
+        }
+      ],
+      "layoutOptions": {
+        "elk.hierarchyHandling": "INCLUDE_CHILDREN",
+        "elk.layered.edgeRouting.selfLoopDistribution": "NORTH",
+        "elk.layered.edgeRouting.selfLoopOrdering": "STACKED",
+        "elk.portConstraints": "UNDEFINED",
+        "elk.portAlignment.default": "DISTRIBUTED",
+        "elk.portLabels.treatAsGroup": "true",
+        "elk.spacing.portPort": "10",
+        "elk.layered.cycleBreaking.strategy": "MODEL_ORDER",
+        "elk.padding": "[top=108,left=48,bottom=48,right=48]",
+        "elk.nodeSize.constraints": "NODE_LABELS PORTS MINIMUM_SIZE",
+        "elk.nodeSize.minimum": "(199,44)",
+        "elk.contentAlignment": "H_CENTER",
+        "elk.direction": "DOWN",
+        "elk.spacing.edgeNode": "10",
+        "elk.layered.spacing.edgeNodeBetweenLayers": "10",
+        "elk.layered.nodePlacement.favorStraightEdges": "true",
+        "elk.layered.nodePlacement.bk.edgeStraightening": "IMPROVE_STRAIGHTNESS",
+        "elk.layered.feedbackEdges": "false",
+        "elk.layered.unnecessaryBendpoints": "false",
+        "elk.layered.spacing.nodeNodeBetweenLayers": "48"
+      }
+    },
+    {
+      "id": "editorModesLayout.Loading Version",
+      "x": 0,
+      "y": 0,
+      "ports": [
+        {
+          "id": "editorModesLayout.Loading Version:invoke-block:$auto-loadVersion-0",
+          "x": 0,
+          "y": 0,
+          "width": 0,
+          "height": 0,
+          "layoutOptions": {
+            "elk.port.side": "EAST"
+          }
+        }
+      ],
+      "layoutOptions": {
+        "elk.hierarchyHandling": "INCLUDE_CHILDREN",
+        "elk.layered.edgeRouting.selfLoopDistribution": "NORTH",
+        "elk.layered.edgeRouting.selfLoopOrdering": "STACKED",
+        "elk.portConstraints": "FIXED_SIDE",
+        "elk.portAlignment.default": "DISTRIBUTED",
+        "elk.portLabels.treatAsGroup": "true",
+        "elk.spacing.portPort": "10",
+        "elk.layered.cycleBreaking.strategy": "MODEL_ORDER"
+      },
+      "width": 217.6875,
+      "height": 131.328125
+    }
+  ],
+  "edges": [
+    {
+      "id": "editorModesLayout.Edit Mode-Simulate-0",
+      "sources": ["editorModesLayout.Edit Mode"],
+      "targets": ["editorModesLayout.Simulation Mode"],
+      "labels": [
+        {
+          "id": "editorModesLayout.Edit Mode-Simulate-0:label",
+          "width": 86.734375,
+          "height": 40,
+          "layoutOptions": {
+            "elk.layered.edgeLabels.centerLabelPlacementStrategy": "MEDIAN_LAYER",
+            "elk.edgeLabels.inline": "true",
+            "elk.edgeLabels.placement": "CENTER"
+          }
+        }
+      ]
+    },
+    {
+      "id": "editorModesLayout.Edit Mode-Select version-0",
+      "sources": ["editorModesLayout.Edit Mode"],
+      "targets": ["editorModesLayout.Loading Version"],
+      "labels": [
+        {
+          "id": "editorModesLayout.Edit Mode-Select version-0:label",
+          "width": 124.203125,
+          "height": 40,
+          "layoutOptions": {
+            "elk.layered.edgeLabels.centerLabelPlacementStrategy": "MEDIAN_LAYER",
+            "elk.edgeLabels.inline": "true",
+            "elk.edgeLabels.placement": "CENTER"
+          }
+        }
+      ]
+    },
+    {
+      "id": "editorModesLayout.Simulation Mode-Edit-0",
+      "sources": ["editorModesLayout.Simulation Mode"],
+      "targets": ["editorModesLayout.Edit Mode"],
+      "labels": [
+        {
+          "id": "editorModesLayout.Simulation Mode-Edit-0:label",
+          "width": 53.828125,
+          "height": 40,
+          "layoutOptions": {
+            "elk.layered.edgeLabels.centerLabelPlacementStrategy": "MEDIAN_LAYER",
+            "elk.edgeLabels.inline": "true",
+            "elk.edgeLabels.placement": "CENTER"
+          }
+        }
+      ]
+    },
+    {
+      "id": "editorModesLayout.Simulation Mode-Select story-0",
+      "sources": ["editorModesLayout.Simulation Mode"],
+      "targets": ["editorModesLayout.Simulation Mode.Story Playback"],
+      "labels": [
+        {
+          "id": "editorModesLayout.Simulation Mode-Select story-0:label",
+          "width": 109,
+          "height": 40,
+          "layoutOptions": {
+            "elk.layered.edgeLabels.centerLabelPlacementStrategy": "MEDIAN_LAYER",
+            "elk.edgeLabels.inline": "true",
+            "elk.edgeLabels.placement": "HEAD"
+          }
+        }
+      ]
+    },
+    {
+      "id": "editorModesLayout.Loading Version-xstate.done.actor.loadVersion-0",
+      "sources": ["editorModesLayout.Loading Version"],
+      "targets": ["editorModesLayout.Simulation Mode"],
+      "labels": [
+        {
+          "id": "editorModesLayout.Loading Version-xstate.done.actor.loadVersion-0:label",
+          "width": 171.34375,
+          "height": 40,
+          "layoutOptions": {
+            "elk.layered.edgeLabels.centerLabelPlacementStrategy": "MEDIAN_LAYER",
+            "elk.edgeLabels.inline": "true",
+            "elk.edgeLabels.placement": "CENTER"
+          }
+        }
+      ]
+    },
+    {
+      "id": "editorModesLayout.Loading Version-xstate.error.actor.loadVersion-0",
+      "sources": ["editorModesLayout.Loading Version"],
+      "targets": ["editorModesLayout.Edit Mode"],
+      "labels": [
+        {
+          "id": "editorModesLayout.Loading Version-xstate.error.actor.loadVersion-0:label",
+          "width": 170.546875,
+          "height": 40,
+          "layoutOptions": {
+            "elk.layered.edgeLabels.centerLabelPlacementStrategy": "MEDIAN_LAYER",
+            "elk.edgeLabels.inline": "true",
+            "elk.edgeLabels.placement": "CENTER"
+          }
+        }
+      ]
+    }
+  ]
+}
