@@ -56,3 +56,33 @@ it.each([busRouting, fanRouting, bundleRouting])(
       expect(route.sections.at(-1)!.path.segments.at(-1)!.to).toEqual({ x: 380, y: 70 });
   },
 );
+it.each([busRouting, fanRouting, bundleRouting])(
+  "$id spreads duplicates on the permitted automatic face",
+  (strategy) => {
+    const graph = createGraph({
+      id: "permitted-duplicates",
+      nodes: [
+        { id: "a", x: 20, y: 100, width: 60, height: 60 },
+        { id: "b", x: 380, y: 40, width: 60, height: 60 },
+      ],
+      edges: [
+        { id: "first", sourceId: "a", targetId: "b" },
+        { id: "second", sourceId: "a", targetId: "b" },
+      ],
+    });
+    const snapshot = strategy.route(graph, {
+      policy: { curve: { kind: "polyline" } },
+      edges: {
+        first: { targetSides: ["top"] },
+        second: { targetSides: ["top"] },
+      },
+    });
+    const points = [...snapshot.routes.values()].map((route) => {
+      expect(route.status).toBe("routed");
+      return route.sections.at(-1)!.path.segments.at(-1)!.to;
+    });
+    expect(points[0]!.y).toBe(40);
+    expect(points[1]!.y).toBe(40);
+    expect(points[0]!.x).not.toBe(points[1]!.x);
+  },
+);
