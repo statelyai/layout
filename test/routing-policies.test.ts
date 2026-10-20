@@ -111,21 +111,37 @@ describe("routing policies", () => {
       id: "fallback-reuse",
       nodes: [
         { id: "a", x: 0, y: 0, width: 40, height: 40 },
-        { id: "b", x: 80, y: 100, width: 40, height: 40 },
-        { id: "block", x: 40, y: 80, width: 40, height: 40 },
+        { id: "b", x: 300, y: 100, width: 40, height: 40 },
+        { id: "block", x: 100, y: 50, width: 80, height: 100 },
       ],
       edges: [{ id: "ab", sourceId: "a", targetId: "b" }],
     });
     const settings: RoutingSettings = {
       policy: { ...routingPolicies.smooth, stability: { kind: "preserve-valid" } },
+      edges: { ab: { waypoints: [{ x: 92, y: 42 }] } },
     };
     const before = bezierRouting.route(input, settings);
     const after = bezierRouting
       .update(input, before, getDiff(input, input), {
+        ...settings,
         policy: { ...settings.policy, collisions: { crossingPenalty: 900 } },
       })
       .snapshot.routes.get("ab")!;
     expect(before.routes.get("ab")!.status).toBe("fallback");
+    expect(before.routes.get("ab")!.sections.length).toBeGreaterThan(0);
+    expect(
+      before.routes
+        .get("ab")!
+        .sections.flatMap((section) => section.path.segments)
+        .every((segment) => segment.kind === "line"),
+    ).toBe(true);
+    for (const node of input.nodes)
+      noCollision(
+        before.routes.get("ab")!,
+        node.id === "block"
+          ? { x: 92, y: 42, width: 96, height: 116 }
+          : { x: node.x!, y: node.y!, width: node.width!, height: node.height! },
+      );
     expect(after.status).toBe("fallback");
     expect(after.diagnostics).toContainEqual(
       expect.objectContaining({ code: "CONSTRAINT_VIOLATION" }),
@@ -257,7 +273,7 @@ describe("routing policies", () => {
       expect(blocked.sections).toEqual([]);
     },
   );
-  it("prefers a safe guide when fitted detours hit obstacles", () => {
+  it("finds a compact safe curve around expensive final crossings", () => {
     const node = (id: string, x: number, y: number) => ({ id, x, y, width: 64, height: 44 });
     const input = createGraph({
       id: "crossing-detour",
@@ -280,10 +296,16 @@ describe("routing policies", () => {
       expect.objectContaining({ code: "ROUTE_CONFLICT" }),
     );
     const detour = result(1000);
-    expect(detour.status).toBe("fallback");
-    expect(detour.diagnostics).toContainEqual(
-      expect.objectContaining({ code: "CONSTRAINT_VIOLATION" }),
-    );
+    expect(detour.status).toBe("routed");
+    expect(detour.sections.length).toBeGreaterThan(0);
+    expect(
+      detour.sections
+        .flatMap((section) => section.path.segments)
+        .every((segment) => segment.kind === "cubic"),
+    ).toBe(true);
+    expect(
+      detour.diagnostics.some((diagnostic) => diagnostic.code === "CONSTRAINT_VIOLATION"),
+    ).toBe(false);
     expect(detour.diagnostics.some((d) => d.code === "ROUTE_CONFLICT")).toBe(false);
     for (const node of input.nodes)
       noCollision(detour, {

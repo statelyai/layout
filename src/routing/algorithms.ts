@@ -1017,6 +1017,32 @@ export function routeEdge(
     };
   }
   let shapeFallback = false;
+  function compactBezierGuide(a: Terminal, b: Terminal, via: readonly RoutePoint[]) {
+    const remaining =
+      config.maxSearchNodes -
+      searchContext.visited -
+      (searchContext === context ? 0 : context.visited);
+    if (remaining <= 0) return undefined;
+    const compact = {
+      ...context,
+      visited: 0,
+      budgetExceeded: false,
+      maxSearchNodes: remaining,
+    };
+    const anchors = [a.point, ...via, b.point];
+    const points = [a.point];
+    let complete = true;
+    for (let i = 1; i < anchors.length; i++) {
+      const found = findPath(anchors[i - 1]!, anchors[i]!, "polyline", compact);
+      if (!found) {
+        complete = false;
+        break;
+      }
+      points.push(...found.slice(1));
+    }
+    searchContext.visited += compact.visited;
+    return complete ? points : undefined;
+  }
   function selectPolicyPath(
     a: Terminal,
     b: Terminal,
@@ -1026,7 +1052,13 @@ export function routeEdge(
     const guidePoints = [guide.start, ...guide.segments.map((part) => part.to)];
     const candidates: RoutePath[] = [];
     const unshapedCandidates = new Set<RoutePath>();
-    const pointCandidates = [[a.point, ...via, b.point], guidePoints].filter((points) => {
+    // Search vertices guide automatic curvature; authored waypoints remain knots.
+    const compact = curvePolicy.kind === "bezier" ? compactBezierGuide(a, b, via) : undefined;
+    const pointCandidates = [
+      [a.point, ...via, b.point],
+      guidePoints,
+      ...(compact ? [compact] : []),
+    ].filter((points) => {
       if (!points.some((point) => distance(point, points[0]!) > 1e-8)) return false;
       let index = 0;
       return via.every((point) => {

@@ -118,6 +118,14 @@ describe("policy Bézier clearance quality", () => {
     },
   );
 
+  it.each([16, 128])("shares the %s visit budget with the conservative guide", (maxSearchNodes) => {
+    const result = bezierRouting.route(fixture(), { ...settings, maxSearchNodes });
+    expect(result.metrics.searchNodes).toBeGreaterThan(0);
+    expect(result.metrics.searchNodes).toBeLessThanOrEqual(maxSearchNodes);
+    expect(result.routes.get("edge")!.status).toBe("routed");
+    expectClear(result.routes.get("edge")!, fixtureNodes());
+  });
+
   it("preserves mandatory waypoints and explicit terminal directions", () => {
     const graph = fixture();
     const waypoint = { x: 333, y: 85 };
