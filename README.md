@@ -392,6 +392,7 @@ pnpm demo
 pnpm storybook
 pnpm verify:routing-policies
 pnpm routing:gallery .scratch/routing-policies/after --after
+pnpm routing:quality .scratch/routing-quality-pass/after
 pnpm changeset
 pnpm release
 ```
@@ -418,6 +419,13 @@ The **Routing / Policies / Playground** story covers midpoint labels, endpoint
 and label tangents, obstacle avoidance, Catmull–Rom, rounded routes, crossing
 preferences, monotonicity, and shared trunks. Select an example, compare its
 original settings, and drag nodes to exercise incremental updates.
+
+The **Routing / Quality** stories include direct examples for all twelve
+strategies, four curve families, label modes, fixed and automatic attachments,
+shared branches, self loops, and constrained corridors. Comparisons use a common
+view box so detours remain visible. Individual stories support dragging, reset,
+obstacle moves, and policy controls. The [visual quality review](docs/routing/quality/README.md)
+retains matching before and after examples.
 
 <!-- exported source compatibility derived from tsconfig.json -->
 

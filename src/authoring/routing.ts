@@ -204,8 +204,6 @@ export function routeOrthogonal(
   };
   const startNormal = normal(source, start);
   const endNormal = normal(target, end);
-  // Clearance and leads are preferences. Authored geometry and waypoints may
-  // leave less room, so retry against progressively smaller margins.
   for (const clearance of [8, 4, 1, 0]) {
     check();
     const padded = obstacles.map((rect) => ({

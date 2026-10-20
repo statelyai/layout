@@ -106,6 +106,10 @@ For fixed labels, `through` and `gap` accept their own `tangent`. A gap with
 `border-normal` constrains the visible border attachments, including their
 actual curve derivatives.
 
+Gap border normals are independent at the entry and exit faces. A continuous
+`through` passage and an explicit label vector retain one travel axis through
+the label center.
+
 ## Labels
 
 | `label.kind` | Behavior                                                                         |
@@ -171,6 +175,8 @@ history remains deterministic, and unrelated routes retain identity.
 identical geometry, which renderers draw once. Policies do not introduce a
 second grouping mechanism. Affected shared groups rebuild together, including
 when `preserve-valid` is enabled, so one branch cannot retain a stale trunk.
+Automatic duplicate target branches receive distinct attachments on their
+selected face. Named ports and explicit attachment positions remain exact.
 
 Layered layout accepts these settings through its existing replacement router.
 

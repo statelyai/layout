@@ -244,9 +244,9 @@ export const routingRegressionFixtures: readonly RoutingQualityFixture[] = [
     graph: originalFixture("obstacles").graph,
     strategy: "bezier",
     settings: {
-      ...curveSettings,
+      ...routingPolicySettings.obstacles,
       policy: {
-        ...curveSettings.policy,
+        ...routingPolicySettings.obstacles.policy,
         curve: { kind: "bezier", curvature: 2 },
         label: { kind: "follow" },
       },
