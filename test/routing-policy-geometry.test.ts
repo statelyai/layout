@@ -164,7 +164,6 @@ describe("final curve monotonicity", () => {
 
 describe("passive label placement", () => {
   it("uses arc length on an asymmetric cubic instead of its parameter midpoint", () => {
-    // x(t) = 100t^3, y(t) = 100t^2; arc length has a closed-form integral.
     const path: RoutePath = {
       start: { x: 0, y: 0 },
       segments: [

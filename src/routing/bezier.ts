@@ -400,8 +400,6 @@ export function routeBezierEdge(
     .flatMap(assess)
     .sort((a, b) => a.cost - b.cost);
   let best = shaped[0] ?? unshaped[0];
-  // A shorter guide alone must not discard the requested curve family. A guide
-  // can win when it reduces final route conflicts as well as total finite cost.
   if (best && shaped.length)
     for (const candidate of unshaped)
       if (candidate.conflicts < best.conflicts && candidate.cost < best.cost) best = candidate;

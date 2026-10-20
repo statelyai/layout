@@ -28,7 +28,6 @@ function distinctKnots(knots: readonly RoutePoint[], tangents: ReadonlyMap<numbe
   return { points, directions };
 }
 
-/** Centripetal Catmull–Rom; explicit directions replace local interval derivatives. */
 export function catmullRomPath(
   knots: readonly RoutePoint[],
   tangents: ReadonlyMap<number, RoutePoint> = new Map(),
@@ -76,7 +75,6 @@ export function catmullRomPath(
   return { start: points[0]!, segments };
 }
 
-/** Interpolates every knot with continuous tangent directions and chord-scaled handles. */
 export function bezierThroughPoints(
   knots: readonly RoutePoint[],
   tangents: ReadonlyMap<number, RoutePoint>,
@@ -164,7 +162,6 @@ function endpointDirection(
   return { x: 0, y: 0 };
 }
 
-/** Actual derivative direction, falling back to the first nonzero endpoint derivative. */
 export function pathEndpointTangent(path: RoutePath, at: "start" | "end"): RoutePoint {
   const segments = path.segments.map((segment, i) => ({
     start: i ? path.segments[i - 1]!.to : path.start,
@@ -217,7 +214,6 @@ function extrema(start: RoutePoint, segment: RouteSegment, axis: "x" | "y"): num
   return result;
 }
 
-/** Exact signed-axis reverse travel, partitioning curves at every derivative root. */
 export function pathReverseTravel(
   path: RoutePath,
   axis: "x" | "y" | "both",
@@ -277,7 +273,6 @@ function integrateSpeed(derivative: (t: number) => RoutePoint, end = 1): number 
   return integrate(0, end, fa, fm, fb, estimate, 1e-8 * Math.max(1, estimate), 20);
 }
 
-/** Places a passive label along cumulative curve arc length, excluding gaps between paths. */
 export function placeFollowingLabel(
   paths: readonly RoutePath[],
   size: { width: number; height: number },
@@ -373,7 +368,6 @@ function segmentSlice(
   return { start: geometry.point(low), segment: { kind: "line", to: geometry.point(high) } };
 }
 
-/** Removes rectangle interiors without replacing curve fragments with polylines. */
 export function clipPathOutsideRect(path: RoutePath, rect: RouteBounds): RoutePath[] {
   const paths: RoutePath[] = [];
   let current: { start: RoutePoint; segments: RouteSegment[] } | undefined;
