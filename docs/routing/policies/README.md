@@ -1,5 +1,9 @@
 # Routing policy evidence
 
+This records the policy introduction and its first clearance refinement. The
+latest [visual quality review](../quality/README.md) covers all native policies,
+strategies, and stress cases at `fc1baa8`.
+
 The nine examples use identical graph input, authored direction, dimensions,
 scale, and viewport before and after policy selection. The before source is
 commit `817bd9c`. The after source adds the policy API. Metadata records the
