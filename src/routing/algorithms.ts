@@ -1149,6 +1149,44 @@ export function routeEdge(
     via: readonly RoutePoint[],
     guide: RoutePath,
   ): RoutePath {
+    if (loop && !via.length && curvePolicy.kind === "bezier" && distance(a.point, b.point) < 1e-8) {
+      const normal = vector(a.side),
+        lateral = { x: -normal.y, y: normal.x };
+      const extent = config.clearance + config.edgeSpacing + 10;
+      const loops: { path: RoutePath; cramped: boolean }[] = [];
+      for (const reach of [extent, extent * 2, extent * 3, config.clearance + 1])
+        for (const width of [extent, extent * 2]) {
+          const at = (outward: number, across: number) => ({
+            x: a.point.x + normal.x * outward + lateral.x * across,
+            y: a.point.y + normal.y * outward + lateral.y * across,
+          });
+          loops.push({
+            cramped: reach < extent,
+            path: {
+              start: a.point,
+              segments: [
+                {
+                  kind: "cubic",
+                  control1: at(reach / 2, 0),
+                  control2: at(reach, -width),
+                  to: at(reach, 0),
+                },
+                {
+                  kind: "cubic",
+                  control1: at(reach, width),
+                  control2: at(reach / 2, 0),
+                  to: b.point,
+                },
+              ],
+            },
+          });
+        }
+      const viable = loops
+        .map(({ path, cramped }) => ({ path, cramped, ...assessPath(path, a, b) }))
+        .filter((candidate) => candidate.valid);
+      viable.sort((a, b) => Number(a.cramped) - Number(b.cramped) || a.cost - b.cost);
+      if (viable.length) return viable[0]!.path;
+    }
     const guidePoints = [guide.start, ...guide.segments.map((part) => part.to)];
     const candidates: RoutePath[] = [];
     const unshapedCandidates = new Set<RoutePath>();
