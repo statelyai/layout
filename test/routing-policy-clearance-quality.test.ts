@@ -53,14 +53,17 @@ function transformBounds(
     height: Math.abs(b.y - a.y),
   };
 }
+function fixtureNodes(transform = transforms[0]!) {
+  return [
+    { id: "a", x: 35, y: 65, width: 64, height: 44 },
+    { id: "b", x: 435, y: 220, width: 64, height: 44 },
+    { id: "obstacle", x: 245, y: 110, width: 80, height: 125 },
+  ].map((node) => ({ id: node.id, ...transformBounds(node, transform.point) }));
+}
 function fixture(transform = transforms[0]!) {
   return createGraph({
     id: "clearance-quality",
-    nodes: [
-      { id: "a", x: 35, y: 65, width: 64, height: 44 },
-      { id: "b", x: 435, y: 220, width: 64, height: 44 },
-      { id: "obstacle", x: 245, y: 110, width: 80, height: 125 },
-    ].map((node) => ({ id: node.id, ...transformBounds(node, transform.point) })),
+    nodes: fixtureNodes(transform),
     edges: [
       {
         id: "edge",
@@ -108,9 +111,10 @@ describe("policy Bézier clearance quality", () => {
       };
       expect(pathReverseTravel(canonicalPath, "x", points[0]!, points.at(-1)!)).toBeLessThan(1);
       expect(pathReverseTravel(canonicalPath, "y", points[0]!, points.at(-1)!)).toBeLessThan(20);
-      expectClear(result, graph.nodes);
+      expectClear(result, fixtureNodes(transform));
       expect(result.label).toBeDefined();
-      for (const node of graph.nodes) expect(overlap(result.label!.bounds, node)).toBe(false);
+      for (const node of fixtureNodes(transform))
+        expect(overlap(result.label!.bounds, node)).toBe(false);
     },
   );
 
@@ -133,22 +137,20 @@ describe("policy Bézier clearance quality", () => {
     expect([path.start, ...path.segments.map((segment) => segment.to)]).toContainEqual(waypoint);
     expect(pathEndpointTangent(path, "start")).toEqual({ x: 1, y: 0 });
     expect(pathEndpointTangent(path, "end")).toEqual({ x: 1, y: 0 });
-    expectClear(result, graph.nodes);
+    expectClear(result, fixtureNodes());
   });
 
   it("matches canonical fresh routing after an obstacle moves into the compact guide", () => {
     const graph = fixture();
     const initial = bezierRouting.route(graph, settings);
-    const moved = {
-      ...graph,
-      nodes: graph.nodes.map((node) =>
-        node.id === "obstacle" ? { ...node, x: 275, y: 60 } : node,
-      ),
-    };
+    const movedNodes = fixtureNodes().map((node) =>
+      node.id === "obstacle" ? { ...node, x: 275, y: 60 } : node,
+    );
+    const moved = createGraph({ ...graph, nodes: movedNodes });
     const updated = bezierRouting.update(moved, initial, getDiff(graph, moved)).snapshot;
     const fresh = bezierRouting.route(moved, settings);
     expect(updated.routes.get("edge")).toEqual(fresh.routes.get("edge"));
     expect(updated.routes.get("edge")!.sections).not.toEqual(initial.routes.get("edge")!.sections);
-    expectClear(updated.routes.get("edge")!, moved.nodes);
+    expectClear(updated.routes.get("edge")!, movedNodes);
   });
 });
