@@ -516,6 +516,16 @@ export function routeEdge(
           ? preferred
           : (allowed.find((s) => vector(s).x * outward.x + vector(s).y * outward.y > 1e-8) ?? side);
     }
+    const allowedSides = source ? perEdge.sourceSides : perEdge.targetSides;
+    if (
+      policy &&
+      !attachment &&
+      name === undefined &&
+      !(source ? perEdge.sourceSide : perEdge.targetSide) &&
+      allowedSides?.length &&
+      !allowedSides.includes(side)
+    )
+      side = allowedSides[0]!;
     let point = anchor(bounds, side);
     if (attachment) {
       const toward = attractingLabel ?? other;
@@ -576,7 +586,12 @@ export function routeEdge(
         const rect = otherNode && worldRect(otherNode, state);
         if (!rect) return false;
         const explicit = from ? config.edges[id]?.sourceSide : config.edges[id]?.targetSide;
-        return id === edge.id || (explicit ?? sideToward(center(bounds), center(rect))) === side;
+        const natural = sideToward(center(bounds), center(rect));
+        const allowed = from ? config.edges[id]?.sourceSides : config.edges[id]?.targetSides;
+        const selected =
+          explicit ??
+          (policy && allowed?.length && !allowed.includes(natural) ? allowed[0]! : natural);
+        return id === edge.id || selected === side;
       });
       const horizontal = side === "left" || side === "right";
       const projected = (id: string) => {
