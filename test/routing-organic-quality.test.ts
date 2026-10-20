@@ -1,6 +1,12 @@
 import { createGraph } from "@statelyai/graph";
 import { expect, it } from "vitest";
-import { organicRouting, getPathLength, getPointAtLength, type RoutePath } from "../src/routing";
+import {
+  flattenPath,
+  organicRouting,
+  getPathLength,
+  getPointAtLength,
+  type RoutePath,
+} from "../src/routing";
 
 const graph = createGraph({
   id: "organic-shoulders",
@@ -76,4 +82,22 @@ it.each([
   expect(route.status).toBe("routed");
   for (const waypoint of waypoints)
     expect(route.sections[0]!.path.segments.map((segment) => segment.to)).toContainEqual(waypoint);
+});
+
+it("keeps parallel organic routes ordered through their shoulders", () => {
+  const routes = organicRouting.route(graph).routes;
+  const first = flattenPath(routes.get("parallel")!.sections[0]!.path, { tolerance: 0.02 });
+  const second = flattenPath(routes.get("review")!.sections[0]!.path, { tolerance: 0.02 });
+  const cross = (a: (typeof first)[number], b: typeof a, p: typeof a) =>
+    (b.x - a.x) * (p.y - a.y) - (b.y - a.y) * (p.x - a.x);
+  for (let i = 1; i < first.length; i++)
+    for (let j = 1; j < second.length; j++) {
+      const a = first[i - 1]!,
+        b = first[i]!,
+        c = second[j - 1]!,
+        d = second[j]!;
+      expect(
+        cross(a, b, c) * cross(a, b, d) < -1e-9 && cross(c, d, a) * cross(c, d, b) < -1e-9,
+      ).toBe(false);
+    }
 });
