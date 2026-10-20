@@ -50,6 +50,7 @@ import {
   pathHasSelfIntersection,
   pathCurveOvershoot,
   limitBezierHandles,
+  roundedBezierPath,
   pathReverseTravel,
   placeFollowingLabel,
 } from "./policy-geometry";
@@ -1070,6 +1071,17 @@ export function routeEdge(
       valid,
       cost:
         pathCost(path, context) +
+        (curvePolicy.kind === "bezier" && path.segments.length > 1
+          ? path.segments.filter((segment, index) => {
+              if (segment.kind !== "cubic") return false;
+              const start = index ? path.segments[index - 1]!.to : path.start;
+              const dx = segment.to.x - start.x,
+                dy = segment.to.y - start.y;
+              return [segment.control1, segment.control2].every(
+                (point) => Math.abs(dx * (point.y - start.y) - dy * (point.x - start.x)) < 1e-7,
+              );
+            }).length * context.bendPenalty
+          : 0) +
         (curvePolicy.kind === "catmull-rom"
           ? Math.max(0, path.segments.length - (perEdge.waypoints?.length ?? 0) - 1) *
             context.bendPenalty
@@ -1081,7 +1093,7 @@ export function routeEdge(
     };
   }
   let shapeFallback = false;
-  function compactBezierGuide(a: Terminal, b: Terminal, via: readonly RoutePoint[]) {
+  function compactBezierGuide(a: Terminal, b: Terminal, via: readonly RoutePoint[], padding = 0) {
     const remaining =
       config.maxSearchNodes -
       searchContext.visited -
@@ -1089,6 +1101,15 @@ export function routeEdge(
     if (remaining <= 0) return undefined;
     const compact = {
       ...context,
+      obstacles: (bounds: RouteBounds) =>
+        context.obstacles(inflate(bounds, padding)).map((rect) => {
+          const contains = (point: RoutePoint) =>
+            point.x >= rect.x &&
+            point.x <= rect.x + rect.width &&
+            point.y >= rect.y &&
+            point.y <= rect.y + rect.height;
+          return contains(a.point) || contains(b.point) ? rect : inflate(rect, padding);
+        }),
       visited: 0,
       budgetExceeded: false,
       maxSearchNodes: remaining,
@@ -1117,10 +1138,15 @@ export function routeEdge(
     const candidates: RoutePath[] = [];
     const unshapedCandidates = new Set<RoutePath>();
     const compact = curvePolicy.kind === "bezier" ? compactBezierGuide(a, b, via) : undefined;
+    const smoothCompact =
+      curvePolicy.kind === "bezier" && !via.length
+        ? compactBezierGuide(a, b, via, config.radius / 2)
+        : undefined;
     const pointCandidates = [
       [a.point, ...via, b.point],
       guidePoints,
       ...(compact ? [compact] : []),
+      ...(smoothCompact ? [smoothCompact] : []),
     ].filter((points) => {
       if (!points.some((point) => distance(point, points[0]!) > 1e-8)) return false;
       let index = 0;
@@ -1154,12 +1180,14 @@ export function routeEdge(
               const directions = new Map(tangents);
               if (ends[0] && !a.tangent) directions.set(0, vector(a.side));
               if (ends[1] && !b.tangent) directions.set(points.length - 1, reverse(vector(b.side)));
-              alternatives.push(
-                limitBezierHandles(bezierThroughPoints(points, directions, curvature)),
+              const limited = limitBezierHandles(
+                bezierThroughPoints(points, directions, curvature),
               );
+              if (limited) alternatives.push(limited);
             }
           }
           if (
+            !assessPath(requested, a, b).valid &&
             !alternatives.some(
               (path) => assessPath(path, a, b).valid && pathCurveOvershoot(path) < 0.1,
             )
@@ -1171,8 +1199,14 @@ export function routeEdge(
                 break;
             }
           }
+          if (!via.length && points.length > 2)
+            for (const scale of [1, 0.5, 0.25])
+              alternatives.push(roundedBezierPath(points, config.radius * scale));
           candidates.push(...alternatives);
-          if (!alternatives.some((path) => assessPath(path, a, b).valid)) {
+          if (
+            !assessPath(requested, a, b).valid &&
+            !alternatives.some((path) => assessPath(path, a, b).valid)
+          ) {
             const unshaped = pathFromPoints(points);
             candidates.push(unshaped);
             unshapedCandidates.add(unshaped);
@@ -1206,7 +1240,12 @@ export function routeEdge(
     const viable = candidates
       .map((path, index) => ({ path, index, ...assessPath(path, a, b) }))
       .filter((candidate) => candidate.valid && Number.isFinite(candidate.cost))
-      .sort((a, b) => a.cost - b.cost || a.index - b.index);
+      .sort(
+        (a, b) =>
+          Number(unshapedCandidates.has(a.path)) - Number(unshapedCandidates.has(b.path)) ||
+          a.cost - b.cost ||
+          a.index - b.index,
+      );
     if (viable.length) {
       if (unshapedCandidates.has(viable[0]!.path)) shapeFallback = true;
       return viable[0]!.path;

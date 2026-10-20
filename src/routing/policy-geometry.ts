@@ -1,5 +1,5 @@
 import { splitBezier } from "./bezier-fit";
-import { arcCenter, distance, flattenPath } from "./path";
+import { arcCenter, distance, flattenPath, pathFromPoints, roundCorners } from "./path";
 import type { RouteBounds, RoutePath, RoutePoint, RouteSegment } from "./types";
 
 const subtract = (a: RoutePoint, b: RoutePoint): RoutePoint => ({ x: a.x - b.x, y: a.y - b.y });
@@ -98,7 +98,7 @@ export function bezierThroughPoints(
   };
 }
 
-export function limitBezierHandles(path: RoutePath): RoutePath {
+export function limitBezierHandles(path: RoutePath): RoutePath | undefined {
   const limit = (from: RoutePoint, control: RoutePoint, to: RoutePoint) => {
     let factor = 1;
     for (const axis of ["x", "y"] as const) {
@@ -108,7 +108,8 @@ export function limitBezierHandles(path: RoutePath): RoutePath {
     return interpolate(from, control, factor);
   };
   let from = path.start;
-  return {
+  let degenerate = false;
+  const result = {
     start: path.start,
     segments: path.segments.map((segment) => {
       const result =
@@ -119,7 +120,34 @@ export function limitBezierHandles(path: RoutePath): RoutePath {
               control2: limit(segment.to, segment.control2, from),
             }
           : segment;
+      if (
+        result.kind === "cubic" &&
+        (distance(from, result.control1) < 1e-6 || distance(result.to, result.control2) < 1e-6)
+      )
+        degenerate = true;
       from = segment.to;
+      return result;
+    }),
+  };
+  return degenerate ? undefined : result;
+}
+
+export function roundedBezierPath(points: readonly RoutePoint[], radius: number): RoutePath {
+  const rounded = roundCorners(pathFromPoints(points), { radius });
+  let start = rounded.start;
+  return {
+    start,
+    segments: rounded.segments.map((segment) => {
+      const arc = segment.kind === "arc" ? arcCenter(start, segment) : undefined;
+      const geometry = segmentGeometry(start, segment);
+      const factor = arc ? ((4 / 3) * Math.tan(arc.delta / 4)) / arc.delta : 1 / 3;
+      const result: RouteSegment = {
+        kind: "cubic",
+        control1: add(start, scale(geometry.derivative(0), factor)),
+        control2: subtract(segment.to, scale(geometry.derivative(1), factor)),
+        to: segment.to,
+      };
+      start = segment.to;
       return result;
     }),
   };
