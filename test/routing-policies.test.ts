@@ -107,7 +107,8 @@ describe("routing policies", () => {
     const after = bezierRouting.update(input, before, getDiff(input, input), {
       policy: {...settings.policy, collisions: {crossingPenalty: 900}},
     }).snapshot.routes.get("ab")!;
-    if (before.routes.get("ab")!.status === "fallback") {
+    expect(before.routes.get("ab")!.status).toBe("fallback");
+    {
       expect(after.status).toBe("fallback");
       expect(after.diagnostics).toContainEqual(expect.objectContaining({code: "CONSTRAINT_VIOLATION"}));
     }
@@ -125,6 +126,30 @@ describe("routing policies", () => {
       expect(result.sections.flatMap(s => s.path.segments).every(s => s.kind === "cubic")).toBe(true);
       noCollision(result, {x: 112, y: -28, width: 76, height: 96});
     });
+  it("updates follower overlap diagnostics in canonical routing order", () => {
+    const input = createGraph({id: "follower-overlap", nodes: [
+      {id: "a1", x: 0, y: 0, width: 40, height: 40},
+      {id: "a2", x: 300, y: 0, width: 40, height: 40},
+      {id: "b1", x: 0, y: 300, width: 40, height: 40},
+      {id: "b2", x: 300, y: 300, width: 40, height: 40},
+    ], edges: [
+      {id: "a", sourceId: "a1", targetId: "a2", width: 40, height: 20},
+      {id: "z", sourceId: "b1", targetId: "b2", width: 40, height: 20},
+    ]});
+    const moved = {...input, nodes: input.nodes.map(node => node.id.startsWith("a") ? {...node, y: node.y! + 30} : node)};
+    const settings: RoutingSettings = {policy: routingPolicies.smooth, edges: {
+      a: {policy: {label: {kind: "follow", offset: 120}}},
+      z: {policy: {label: {kind: "follow", offset: -140}}},
+    }};
+    const initial = bezierRouting.route(input, settings);
+    const update = bezierRouting.update(moved, initial, getDiff(input, moved)).snapshot;
+    const fresh = bezierRouting.route(moved, settings);
+    expect([...update.routes]).toEqual([...fresh.routes]);
+    expect(update.routes.get("a")!.diagnostics).toEqual([]);
+    expect(update.routes.get("z")!.diagnostics).toContainEqual(expect.objectContaining({code: "LABEL_OVERLAP", relatedIds: ["e:a"]}));
+    const restored = bezierRouting.update(input, update, getDiff(moved, input)).snapshot;
+    expect([...restored.routes]).toEqual([...initial.routes]);
+  });
   it.each(Object.entries(routingPolicies))("%s works without label geometry", (_name, policy) => {
     const result = route({ policy }, graph(false));
     expect(result.sections.length).toBeGreaterThan(0);
