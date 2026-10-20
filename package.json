@@ -94,6 +94,8 @@
     "typecheck:repo": "tsc --project tsconfig.repo.json",
     "verify": "oxfmt --check . && oxlint && tsc --noEmit && tsc --project tsconfig.repo.json && tsc --project demo/tsconfig.json && tsc --project stories/tsconfig.json && tsx scripts/generate-elk-layered-options.ts --check && tsx scripts/generate-demo-corpus.ts --check && vitest --run && tsdown && vite build --config demo/vite.config.ts && storybook build -o dist-storybook --quiet && publint --pack npm && tsx scripts/smoke-package.ts",
     "validate:package": "publint --pack npm && tsx scripts/smoke-package.ts",
+    "verify:routing-policies": "tsx scripts/check-routing-policies.ts",
+    "routing:gallery": "tsx scripts/render-routing-policies.ts",
     "storybook": "storybook dev -p 6018 --host 127.0.0.1 --no-open",
     "storybook:build": "storybook build -o dist-storybook",
     "storybook:typecheck": "tsc --project stories/tsconfig.json",

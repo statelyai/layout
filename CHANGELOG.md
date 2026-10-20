@@ -17,12 +17,13 @@
 ### Patch Changes
 
 - fd8bfe1: Nested compound graphs with labeled edges get fewer crossings and match ELK's node orders more often:
-  
+
   - A center label on an edge that crosses into compounds stays on the edge's shallowest segment, as in ELK. Nested scopes no longer add label nodes of their own.
   - Each edge on a portless child gets its own boundary slot, in import order. Previously all outgoing edges came before all incoming ones.
   - Crossing counts follow the port order the sweep actually uses. Fixed-side ports with reversed edges were misplaced.
-  
+
   On the holdout, losses to real ELK drop from 87 to 17 with no new losses.
+
 - 8a562c5: Nested compound graphs choose between sweeping a child on its own (bottom-up) and inside its parent (top-down) as ELK does. A node now counts as a path start or end by which of its port sides carry edges, not by edge direction. Edges on a compound node's boundary ports also start in port creation order, as ELK lists them, rather than in edge declaration order; authored ports keep their order. More compound graphs now match ELK's crossing order, and some get fewer crossings.
 - fdadff2: Graphs with `elk.layered.mergeEdges` keep the crossing-minimized order of long edges. Every long-edge dummy used to move ahead of the real nodes in its layer after crossing minimization, which crossed long edges over the rest of the graph. On the new mergeEdges quality corpus this cuts crossings from 10,682 to 1,946 (real ELK: 1,508), and removes all 56 cases with node hits or opposite-direction tracks. Opposite-direction separation can also slide a portless edge end along its node side when the end segment is too short for a jog.
 - cf65e02: With `elk.layered.mergeEdges`, edges in opposite directions no longer share a track where they meet at one node. Portless edges that attach at the same point of a node side now give each direction its own attachment, so an edge and a reversed edge between the same two nodes run on parallel lines instead of one.
@@ -37,7 +38,7 @@
 ### Minor Changes
 
 - fb59bc7: Native layered layout reaches layout quality at or above real ELK (elkjs 0.11.1) on the retained and holdout corpora, with zero hard defects on the corpus, and gains layout hints and geometry constraints on graphs with containers.
-  
+
   - Support geometry constraints on graphs with containers: containers move and grow with their children, siblings never overlap, and only edges touching moved geometry are re-routed.
   - Add layout hints: `hint.anchor` places a node at the start or end of its container, `hint.chain` aligns sequential nodes on one center line, and `statechartHints(graph)` derives both from a statechart. Preferred hints are kept only when the layout is no worse without them; hints never create defects.
   - Add an optional synchronous replacement router to layered layout. Initial layout
@@ -51,10 +52,10 @@
     parent/child return connections, and retraced label/self-loop sections. Preserve
     feasible orthogonal paths when preferred clearances or soft route reservations
     cannot be satisfied, while retaining bounded search and conflict diagnostics.
-  
+
     Repair label-only collisions, reserve port exit corridors, orient same-port loops
     outward, and prevent terminal retracing in narrow or fractional-coordinate gaps.
-  
+
   - Retain both physical endpoints when restoring a cross-port route collapsed to one coordinate. Prevent diagonal compound-edge segments caused by losing the opposite boundary anchor.
   - Fall back to the uncompacted layout when post-compaction would route edges through nodes.
   - Fall back from post-compaction that folds a route back onto itself.
@@ -71,15 +72,15 @@
   - Move complete collinear exterior tracks during inline-label separation, including retained long-edge dummy junctions. Prevent diagonal segments when labels require another lane.
   - Route self-loops between fixed port faces around their owner's perimeter, respect physical port extents, and reserve north clearance only for loops using that side.
   - Respect fixed-position port order and preserve seeded random state between cycle breaking and crossing minimization, route long orthogonal paths with a Manhattan A* heuristic, fit retry leads into subpixel corridors, preserve spacing around unrelated nodes during port-side alignment, and repair label intersections and retraced flat routes.
-  
+
     Process layer and whole-node feedback constraints before cycle breaking, preserve implicit fixed endpoint sides through reversal, and reserve the final endpoint approach while routing a labeled edge's first leg.
-  
+
     Preserve initial fixed implicit endpoint faces during flat routing repair, including corner attachments.
-  
+
     Preserve fixed implicit endpoint coordinates during repair without exposing synthetic ports, and prevent route search from retracing its own terminal leads.
-  
+
     Insert native same-layer inverted-port dummies before crossing minimization and route their orthogonal segments in the matching side corridor.
-  
+
   - Match ELK's greedy sweep traversal by scanning the starting layer once before converging later layers. This preserves the same adjacent-node swap sequence and repairs seeded model-order geometry differences.
   - Decide greedy crossing switches with ELK's local two-node crossing estimates.
   - Fix physical compound boundary-port sides during native hierarchy preparation and normalize fixed-side port sorting for layout direction. Preserve authored compound options in the returned graph. Expand strict real-ELK regressions, retaining remaining hierarchy routing and constraint failures.
@@ -88,7 +89,7 @@
   - Route inverted same-layer ports through canonical orthogonal channels, including exterior boundaries and cycle-broken direction. Preserve occupied-layer clearance, degenerate self-loop corners during compaction, and junction ownership.
   - Preserve original edge model-order values on segments created for inverted fixed-side ports, matching ELK's property inheritance instead of comparing generated-edge indices.
   - Fix layout regressions found against the previous release:
-  
+
     - HEAD and TAIL edge labels no longer cover nodes, other labels or routes; they move beside their route near their endpoint.
     - A nested graph's own `elk.direction` wins over its parent's.
     - Free ports on reversed edges no longer reserve margin on the wrong side.
@@ -96,7 +97,7 @@
     - Fixed-side self-loops on zero-size ports take their own slot instead of landing on a sibling port.
     - Free ports are ordered with elkjs's exact sort, so tied ports and center labels no longer swap; the Viz two-state cycle matches ELK again.
     - Routes of labeled and long edges follow their endpoints when post-compaction moves nodes.
-  
+
   - Reserve clearance on both sides of orthogonal routing tracks beside label layers, keeping label-terminal bends separate from label boundaries before compaction.
   - Pair center-label dummies with adjacent long-edge dummies of the same endpoints when choosing label sides, as ELK does.
   - Seed layered crossing minimization in ELK LongEdgeSplitter order, using authored port order.
@@ -122,21 +123,21 @@
     hierarchical layout and routing parity remains incomplete. Select BK straightening
     edges through physical port order and apply ELK spacing to tagged external
     boundary dummies.
-  
+
     Apply BK straightening thresholds during compaction, with completed-block state
     and deferred retries within available space. Preserve random flat failures in a
     new reproducible corpus covering ports, cycles, self-loops and labels.
-  
+
     Count selected physical ports during native greedy switching and exclude
     self-loop connectivity from crossing sweep ranks. Broad parity remains incomplete.
-  
+
     Select parallel alignment connections independently from the current node's
     clockwise ports in both BK sweep directions.
-  
+
     Reserve movable implicit orthogonal loop envelopes during BK placement and
     transform canonical loop routes by direction. Exclude restored loop ports from
     ordinary flow ranks; retain the existing inline-label and fixed-port phases.
-  
+
   - Preserve explicit native boundary-port identity and selected descendant route
     endpoints in compound layouts. Inherit child layout directions and score
     statechart reading order using inherited direction, retaining explicit overrides.
@@ -183,11 +184,11 @@
 
 - 1c05bea: Solve native compound layout from complete occupied envelopes: measured header bands, asymmetric content padding, children, and edge labels. Retain finalized compound sizes during ancestor placement and return explicit compound geometry and world-space route sections. Add inward content attachments and outward reentry hooks without changing the pinned ELK compatibility contract.
 - 7fa4f37: Add native TypeScript edge routing with immutable snapshots, incremental native graph diffs, persistent spatial/dependency indexes, route patches, and explicit fallback diagnostics. Include straight, Bézier, orthogonal, polyline, octilinear, curved, organic, parallel, self-loop, fan, bus, and bundle strategies; structured line/curve/arc geometry; SVG and polyline rendering utilities; and adapters for native layout and ELK section geometry.
-  
+
   Incremental routing produces the same geometry as fresh routing for the same graph and settings. Previous snapshots cache graph geometry, spatial dependencies, and unaffected results; previous drawn paths do not constrain routing.
-  
+
   Account for endpoint directions in route search, complete octilinear diagonal/grid intersections, distribute shared-node attachments and duplicate-edge corridors, and prefer interior source-facing shared trunks. Incremental invalidation includes coordinated neighbors.
-  
+
   Coordinate unrelated groups with deterministic soft crossing/overlap costs, report residual conflicts, and incrementally invalidate route dependencies. Encode source/port group keys without delimiter collisions.
 
 ## 0.2.0

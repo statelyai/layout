@@ -1,5 +1,9 @@
 # Shared Bézier routing migration
 
+This records the initial migration at `817bd9c`. The subsequent
+[routing policy work](../policies/README.md) extends the same strategies and
+records its verification separately.
+
 The existing `bezierRouting.route/update` API owns floating curves and complete
 label-source chains. Viz supplies semantic topology and connection/obstacle
 frames. It renders returned sections and attachment sides. The library does not
@@ -51,10 +55,10 @@ review artifacts, not new visual-test baselines.
 
 ## Dependency order
 
-Viz PR 889 remains the shipping implementation. Merge and release this library
-change independently. The Viz migration uses an immutable Git revision during
+Viz PR 889 is merged. Merge and release this library change independently.
+The Viz migration uses an immutable Git revision during
 review so installation and CI do not depend on unpublished npm code. After the
 library minor release, replace that temporary pin with the published version
-and regenerate the lockfile. Land the consumer migration after PR 889; refresh
-its prerequisite commits against main once PR 889 lands. No merge or release
+and regenerate the lockfile. Refresh the consumer migration against current
+main before landing it. No merge or release
 was performed as part of this migration.

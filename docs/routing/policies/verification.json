@@ -1,0 +1,42 @@
+{
+  "sourceRevision": "e6181ca990a93858867a3efda475e42f1c766fac",
+  "library": {
+    "verify": "passed",
+    "testFiles": 141,
+    "tests": 2048,
+    "existingLintWarnings": 2,
+    "packedSmoke": ["ESM", "CommonJS", "TypeScript"]
+  },
+  "corpus": {
+    "cases": 672,
+    "emptyRoutes": 0,
+    "reportedFallbacks": 64,
+    "report": "corpus-report.json"
+  },
+  "browser": {
+    "staticExamples": 9,
+    "liveExamples": 9,
+    "labelMove": "passed",
+    "report": "browser-report.json"
+  },
+  "consumer": {
+    "repository": "statelyai/viz",
+    "base": "7a987e39ae3a2f1303a348f175a9c53613a464ae",
+    "affectedTests": 286,
+    "editorTypecheck": "passed",
+    "packageArtifacts": "passed",
+    "installedSourceHashMatch": true,
+    "dependency": "local verification tarball; no published dependency change"
+  },
+  "independentReview": {
+    "originalReproductions": 4,
+    "focusedTests": 8,
+    "confirmedRemainingFindings": 0
+  },
+  "limitations": [
+    "Finite crossing costs do not establish global optimality.",
+    "Rectangle barriers do not establish general-shape obstacle avoidance.",
+    "No yEd quality parity claim.",
+    "No merge or release performed."
+  ]
+}

@@ -53,6 +53,14 @@ global cache or mutable session. World-coordinate route sections represent lines
 curves, label gaps, and shared junctions. Renderers read one snapshot per geometry
 revision. Full layout's existing ELK compatibility contract remains unchanged.
 
+Routing policies extend those strategy calls. The existing engine owns ordering,
+reservations, dependency reads, and snapshots. Policy normalization resolves
+global and per-edge constraints. Curve fitting and interpolation produce the
+same `RoutePath` representation, and final geometry determines validity and
+crossing costs. Following labels are derived placements rather than input
+obstacles. Canonical updates converge with fresh routing; opt-in preservation
+keeps a prior path only while its hard constraints remain valid.
+
 ## Layered pipeline
 
 <!-- built-in measured phases from src/layered/index.ts -->

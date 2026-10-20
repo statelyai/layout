@@ -245,3 +245,10 @@ Every native strategy supports synchronous `route(graph, settings?)` and
 `RoutingStrategy` interface also permits promises. Results preserve fixed
 geometry and contain explicit fallback status. See the [routing reference](routing.md)
 for signatures, snapshot ownership, options, capabilities, and limitations.
+
+`RoutingSettings.policy` and `EdgeRoutingSettings.policy` accept a `RoutingPolicy`.
+`routingPolicies` exports immutable `smooth`, `diagram`, and `authored` presets.
+Policies independently select curve shape, terminal tangents, labels, collision
+handling, monotonicity, and route stability. Optional `Route.label` returns a
+`RouteLabelPlacement` with `bounds`, `anchor`, and `tangent`. See the
+[policy reference](routing-policies.md).

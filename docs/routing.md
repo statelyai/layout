@@ -2,8 +2,9 @@
 
 <!-- routing public API from src/routing/index.ts and src/routing/types.ts -->
 
-Routing consumes positioned `@statelyai/graph` values and preserves all node,
-port, and existing label geometry. Routes are immutable structured geometry;
+Routing consumes positioned `@statelyai/graph` values and preserves all input node,
+port, and label geometry. Opt-in following labels return derived placement in
+`Route.label`. Routes are immutable structured geometry;
 SVG strings and polyline approximations are derived views. No DOM, external
 routing engine, WASM, singleton, or mutable session is required.
 
@@ -41,6 +42,12 @@ value-based contract. Retain the snapshot in editor-local derived state. No
 component needs a routing-session reference. Individual edge renderers read
 that snapshot; compute updates once per geometry change, not per rendered edge.
 
+`settings.policy` adds independent curve families, tangents, label placement,
+collision rules, monotonicity, and incremental stability to the existing
+strategies. Per-edge policies override global defaults. See the
+[routing policy reference](routing-policies.md) for presets, examples, and
+constraint behavior.
+
 ## Incremental contract
 
 `strategy.update(graph, previous, graphDiff, settings?)` returns
@@ -76,10 +83,12 @@ therefore converge to the same routes. The spatial index tracks searched regions
 well as drawn geometry, so an obstacle moving away can open a better route without
 requiring a full-graph recomputation.
 
-Previous drawn paths are cached outputs only, never routing constraints. For the
-same graph and settings, incremental route geometry must equal fresh routing.
-Snapshots retain prior graph geometry and dependency indexes to identify affected
-edges; unaffected outputs retain identity. There is no history-preservation mode.
+With the default `stability: { kind: "recompute" }`, previous drawn paths are
+cached outputs. For the same graph and settings, incremental route geometry
+equals fresh routing. Snapshots retain prior graph geometry and dependency
+indexes to identify affected edges; unaffected outputs retain identity.
+Opt-in `stability: { kind: "preserve-valid" }` favors hard-valid prior paths and
+deliberately depends on edit history. See [routing policies](routing-policies.md).
 
 Settings omitted on update retain the previous settings. Supplied settings
 replace the settings object, using defaults for omitted fields. Configuration
@@ -169,14 +178,16 @@ attachments whose placement depends on them.
 | `organicIterations` | `12`       | Elastic-string relaxation iterations                                              |
 | `edges`             | `{}`       | Per-edge `sourceSide`, `targetSide`, ordered world-space `waypoints`, and `group` |
 
-Every graph edge gets drawable geometry even when constraints are infeasible.
+Legacy routing returns drawable fallback geometry when constraints are infeasible.
 `Route.status` is `"routed"` or `"fallback"`; `Route.diagnostics` explains missing
 geometry/ports, blocked paths, exhausted search budgets, violated constraints, or
 residual crossings/overlaps (`ROUTE_CONFLICT`). Conflicts remain reported
 even if their search penalties are zero.
 Fallbacks preserve endpoints and authored waypoints but may cross obstacles or
-violate the preferred routing style. They never silently disappear. Malformed
-API settings or stale diffs throw; they are programming errors, not route failures.
+violate the preferred routing style. Explicit policy requests preserve hard
+constraints and can return empty sections when no safe fallback exists. Label
+chains can also reject a forbidden connector. Each failure has diagnostics.
+Malformed API settings or stale diffs throw; they are programming errors, not route failures.
 
 The search is bounded and deterministic. Curve clearance recursively subdivides overlapping control hulls and actual arc
 sweeps instead of treating their bounding boxes as occupied. Unresolved numerical

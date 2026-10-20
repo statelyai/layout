@@ -1,0 +1,61 @@
+{
+  "viewport": {
+    "width": 1768,
+    "height": 1170
+  },
+  "scale": 1,
+  "stages": [
+    {
+      "stage": "before",
+      "fixtures": 9,
+      "paths": 19
+    },
+    {
+      "stage": "after",
+      "fixtures": 9,
+      "paths": 17
+    }
+  ],
+  "live": [
+    {
+      "id": "midpoint",
+      "paths": 1
+    },
+    {
+      "id": "tangents",
+      "paths": 1
+    },
+    {
+      "id": "label-tangents",
+      "paths": 2
+    },
+    {
+      "id": "obstacles",
+      "paths": 1
+    },
+    {
+      "id": "catmull-rom",
+      "paths": 1
+    },
+    {
+      "id": "rounded",
+      "paths": 1
+    },
+    {
+      "id": "crossings",
+      "paths": 2
+    },
+    {
+      "id": "monotonic",
+      "paths": 1
+    },
+    {
+      "id": "bundle",
+      "paths": 7
+    }
+  ],
+  "followingLabelMoved": {
+    "original": ["222.00000000164783", "149.50000000169166"],
+    "moved": ["221.99999999828924", "164.49999999863576"]
+  }
+}

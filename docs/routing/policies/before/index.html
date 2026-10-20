@@ -1,0 +1,398 @@
+<!doctype html><meta charset="utf-8" /><title>Routing policies</title
+><style>
+  body {
+    margin: 0;
+    padding: 24px;
+    background: #f0f2f6;
+    color: #26334d;
+    font: 14px system-ui;
+  }
+  main {
+    display: grid;
+    grid-template-columns: repeat(3, 560px);
+    gap: 20px;
+  }
+  article {
+    background: white;
+    border: 1px solid #c9d0dc;
+    border-radius: 8px;
+    overflow: hidden;
+  }
+  h2 {
+    font-size: 16px;
+    margin: 16px 18px 0;
+  }
+</style>
+<main>
+  <article data-fixture="midpoint">
+    <h2>Label follows the curve</h2>
+    <svg xmlns="http://www.w3.org/2000/svg" width="560" height="340" viewBox="0 0 560 340">
+      <rect width="560" height="340" fill="white" />
+      <style>
+        text {
+          font:
+            14px system-ui,
+            sans-serif;
+          fill: #26334d;
+        }
+      </style>
+      <path
+        data-edge="edge"
+        d="M 99 87 C 208.66426 87 240 145.33574 240 255"
+        fill="none"
+        stroke="#3158aa"
+        stroke-width="2.5"
+      />
+      <path
+        data-edge="edge"
+        d="M 285 270 C 361.295478 270 358.704522 242 435 242"
+        fill="none"
+        stroke="#3158aa"
+        stroke-width="2.5"
+      />
+      <g>
+        <rect x="35" y="65" width="64" height="44" rx="6" fill="#eef2f8" stroke="#71809b" />
+        <text x="67" y="92" text-anchor="middle">a</text>
+      </g>
+      <g>
+        <rect x="435" y="220" width="64" height="44" rx="6" fill="#eef2f8" stroke="#71809b" />
+        <text x="467" y="247" text-anchor="middle">b</text>
+      </g>
+      <g>
+        <rect x="195" y="255" width="90" height="30" rx="4" fill="white" stroke="#9b80ad" />
+        <text x="240" y="275" text-anchor="middle">Label</text>
+      </g>
+    </svg>
+  </article>
+  <article data-fixture="tangents">
+    <h2>Independent endpoint tangents</h2>
+    <svg xmlns="http://www.w3.org/2000/svg" width="560" height="340" viewBox="0 0 560 340">
+      <rect width="560" height="340" fill="white" />
+      <style>
+        text {
+          font:
+            14px system-ui,
+            sans-serif;
+          fill: #26334d;
+        }
+      </style>
+      <path
+        data-edge="edge"
+        d="M 99 87 C 284.014189 87 249.985811 242 435 242"
+        fill="none"
+        stroke="#3158aa"
+        stroke-width="2.5"
+      />
+      <g>
+        <rect x="35" y="65" width="64" height="44" rx="6" fill="#eef2f8" stroke="#71809b" />
+        <text x="67" y="92" text-anchor="middle">a</text>
+      </g>
+      <g>
+        <rect x="435" y="220" width="64" height="44" rx="6" fill="#eef2f8" stroke="#71809b" />
+        <text x="467" y="247" text-anchor="middle">b</text>
+      </g>
+    </svg>
+  </article>
+  <article data-fixture="label-tangents">
+    <h2>Perpendicular label attachments</h2>
+    <svg xmlns="http://www.w3.org/2000/svg" width="560" height="340" viewBox="0 0 560 340">
+      <rect width="560" height="340" fill="white" />
+      <style>
+        text {
+          font:
+            14px system-ui,
+            sans-serif;
+          fill: #26334d;
+        }
+      </style>
+      <path
+        data-edge="edge"
+        d="M 99 104.6 C 139.682413 152.32249 166.58802 217.980568 215.491738 255"
+        fill="none"
+        stroke="#3158aa"
+        stroke-width="2.5"
+      />
+      <path
+        data-edge="edge"
+        d="M 285 280.181815 C 330.078764 281.523131 379.184087 262.576849 425.014192 260.132576"
+        fill="none"
+        stroke="#3158aa"
+        stroke-width="2.5"
+      />
+      <g>
+        <rect x="35" y="65" width="64" height="44" rx="6" fill="#eef2f8" stroke="#71809b" />
+        <text x="67" y="92" text-anchor="middle">a</text>
+      </g>
+      <g>
+        <rect x="435" y="220" width="64" height="44" rx="6" fill="#eef2f8" stroke="#71809b" />
+        <text x="467" y="247" text-anchor="middle">b</text>
+      </g>
+      <g>
+        <rect x="195" y="255" width="90" height="30" rx="4" fill="white" stroke="#9b80ad" />
+        <text x="240" y="275" text-anchor="middle">Label</text>
+      </g>
+    </svg>
+  </article>
+  <article data-fixture="obstacles">
+    <h2>Curve clearance around obstacles</h2>
+    <svg xmlns="http://www.w3.org/2000/svg" width="560" height="340" viewBox="0 0 560 340">
+      <rect width="560" height="340" fill="white" />
+      <style>
+        text {
+          font:
+            14px system-ui,
+            sans-serif;
+          fill: #26334d;
+        }
+      </style>
+      <path
+        data-edge="edge"
+        d="M 99 104.6 C 139.682413 152.32249 166.58802 217.980568 215.491738 255"
+        fill="none"
+        stroke="#3158aa"
+        stroke-width="2.5"
+      />
+      <path
+        data-edge="edge"
+        d="M 285 280.181815 C 330.078764 281.523131 379.184087 262.576849 425.014192 260.132576"
+        fill="none"
+        stroke="#3158aa"
+        stroke-width="2.5"
+      />
+      <g>
+        <rect x="35" y="65" width="64" height="44" rx="6" fill="#eef2f8" stroke="#71809b" />
+        <text x="67" y="92" text-anchor="middle">a</text>
+      </g>
+      <g>
+        <rect x="435" y="220" width="64" height="44" rx="6" fill="#eef2f8" stroke="#71809b" />
+        <text x="467" y="247" text-anchor="middle">b</text>
+      </g>
+      <g>
+        <rect x="245" y="110" width="80" height="125" rx="6" fill="#f6e6dc" stroke="#71809b" />
+        <text x="285" y="177.5" text-anchor="middle">obstacle</text>
+      </g>
+      <g>
+        <rect x="195" y="255" width="90" height="30" rx="4" fill="white" stroke="#9b80ad" />
+        <text x="240" y="275" text-anchor="middle">Label</text>
+      </g>
+    </svg>
+  </article>
+  <article data-fixture="catmull-rom">
+    <h2>Centripetal Catmull–Rom waypoints</h2>
+    <svg xmlns="http://www.w3.org/2000/svg" width="560" height="340" viewBox="0 0 560 340">
+      <rect width="560" height="340" fill="white" />
+      <style>
+        text {
+          font:
+            14px system-ui,
+            sans-serif;
+          fill: #26334d;
+        }
+      </style>
+      <path
+        data-edge="edge"
+        d="M 99 87 L 108 87 L 175 205 L 280 65 L 365 190 L 426 242 L 435 242"
+        fill="none"
+        stroke="#3158aa"
+        stroke-width="2.5"
+      />
+      <g>
+        <rect x="35" y="65" width="64" height="44" rx="6" fill="#eef2f8" stroke="#71809b" />
+        <text x="67" y="92" text-anchor="middle">a</text>
+      </g>
+      <g>
+        <rect x="435" y="220" width="64" height="44" rx="6" fill="#eef2f8" stroke="#71809b" />
+        <text x="467" y="247" text-anchor="middle">b</text>
+      </g>
+    </svg>
+  </article>
+  <article data-fixture="rounded">
+    <h2>Rounded orthogonal corridors</h2>
+    <svg xmlns="http://www.w3.org/2000/svg" width="560" height="340" viewBox="0 0 560 340">
+      <rect width="560" height="340" fill="white" />
+      <style>
+        text {
+          font:
+            14px system-ui,
+            sans-serif;
+          fill: #26334d;
+        }
+      </style>
+      <path
+        data-edge="edge"
+        d="M 99 87 L 426 87 L 426 242 L 435 242"
+        fill="none"
+        stroke="#3158aa"
+        stroke-width="2.5"
+      />
+      <g>
+        <rect x="35" y="65" width="64" height="44" rx="6" fill="#eef2f8" stroke="#71809b" />
+        <text x="67" y="92" text-anchor="middle">a</text>
+      </g>
+      <g>
+        <rect x="435" y="220" width="64" height="44" rx="6" fill="#eef2f8" stroke="#71809b" />
+        <text x="467" y="247" text-anchor="middle">b</text>
+      </g>
+      <g>
+        <rect x="245" y="110" width="80" height="125" rx="6" fill="#f6e6dc" stroke="#71809b" />
+        <text x="285" y="177.5" text-anchor="middle">obstacle</text>
+      </g>
+    </svg>
+  </article>
+  <article data-fixture="crossings">
+    <h2>Final geometry crossing preferences</h2>
+    <svg xmlns="http://www.w3.org/2000/svg" width="560" height="340" viewBox="0 0 560 340">
+      <rect width="560" height="340" fill="white" />
+      <style>
+        text {
+          font:
+            14px system-ui,
+            sans-serif;
+          fill: #26334d;
+        }
+      </style>
+      <path
+        data-edge="edge"
+        d="M 99 82 C 285.075254 82 248.924746 242 435 242"
+        fill="none"
+        stroke="#3158aa"
+        stroke-width="2.5"
+      />
+      <path
+        data-edge="second"
+        d="M 99 242 C 285.075254 242 248.924746 82 435 82"
+        fill="none"
+        stroke="#c06d20"
+        stroke-width="2.5"
+      />
+      <g>
+        <rect x="35" y="60" width="64" height="44" rx="6" fill="#eef2f8" stroke="#71809b" />
+        <text x="67" y="87" text-anchor="middle">a</text>
+      </g>
+      <g>
+        <rect x="435" y="220" width="64" height="44" rx="6" fill="#eef2f8" stroke="#71809b" />
+        <text x="467" y="247" text-anchor="middle">b</text>
+      </g>
+      <g>
+        <rect x="35" y="220" width="64" height="44" rx="6" fill="#eef2f8" stroke="#71809b" />
+        <text x="67" y="247" text-anchor="middle">c</text>
+      </g>
+      <g>
+        <rect x="435" y="60" width="64" height="44" rx="6" fill="#eef2f8" stroke="#71809b" />
+        <text x="467" y="87" text-anchor="middle">d</text>
+      </g>
+    </svg>
+  </article>
+  <article data-fixture="monotonic">
+    <h2>Monotonic flow direction</h2>
+    <svg xmlns="http://www.w3.org/2000/svg" width="560" height="340" viewBox="0 0 560 340">
+      <rect width="560" height="340" fill="white" />
+      <style>
+        text {
+          font:
+            14px system-ui,
+            sans-serif;
+          fill: #26334d;
+        }
+      </style>
+      <path
+        data-edge="edge"
+        d="M 99 87 L 426 87 L 426 242 L 435 242"
+        fill="none"
+        stroke="#3158aa"
+        stroke-width="2.5"
+      />
+      <g>
+        <rect x="35" y="65" width="64" height="44" rx="6" fill="#eef2f8" stroke="#71809b" />
+        <text x="67" y="92" text-anchor="middle">a</text>
+      </g>
+      <g>
+        <rect x="435" y="220" width="64" height="44" rx="6" fill="#eef2f8" stroke="#71809b" />
+        <text x="467" y="247" text-anchor="middle">b</text>
+      </g>
+      <g>
+        <rect x="245" y="110" width="80" height="125" rx="6" fill="#f6e6dc" stroke="#71809b" />
+        <text x="285" y="177.5" text-anchor="middle">obstacle</text>
+      </g>
+    </svg>
+  </article>
+  <article data-fixture="bundle">
+    <h2>Shared trunks and branch spacing</h2>
+    <svg xmlns="http://www.w3.org/2000/svg" width="560" height="340" viewBox="0 0 560 340">
+      <rect width="560" height="340" fill="white" />
+      <style>
+        text {
+          font:
+            14px system-ui,
+            sans-serif;
+          fill: #26334d;
+        }
+      </style>
+      <path
+        data-edge="branch-c"
+        d="M 99 167 L 120 167"
+        fill="none"
+        stroke="#3158aa"
+        stroke-width="2.5"
+      />
+      <path
+        data-edge="branch-c"
+        d="M 120 167 L 414 167"
+        fill="none"
+        stroke="#3158aa"
+        stroke-width="2.5"
+      />
+      <path
+        data-edge="branch-c"
+        d="M 414 167 L 435 167"
+        fill="none"
+        stroke="#3158aa"
+        stroke-width="2.5"
+      />
+      <path
+        data-edge="branch-d"
+        d="M 99 167 L 120 167"
+        fill="none"
+        stroke="#3158aa"
+        stroke-width="2.5"
+      />
+      <path
+        data-edge="branch-d"
+        d="M 414 167 L 414 262 A 10 10 0 0 0 424 272 L 435 272"
+        fill="none"
+        stroke="#3158aa"
+        stroke-width="2.5"
+      />
+      <path
+        data-edge="edge"
+        d="M 99 167 L 120 167"
+        fill="none"
+        stroke="#3158aa"
+        stroke-width="2.5"
+      />
+      <path
+        data-edge="edge"
+        d="M 414 167 L 414 72 A 10 10 0 0 1 424 62 L 435 62"
+        fill="none"
+        stroke="#3158aa"
+        stroke-width="2.5"
+      />
+      <g>
+        <rect x="35" y="145" width="64" height="44" rx="6" fill="#eef2f8" stroke="#71809b" />
+        <text x="67" y="172" text-anchor="middle">a</text>
+      </g>
+      <g>
+        <rect x="435" y="40" width="64" height="44" rx="6" fill="#eef2f8" stroke="#71809b" />
+        <text x="467" y="67" text-anchor="middle">b</text>
+      </g>
+      <g>
+        <rect x="435" y="145" width="64" height="44" rx="6" fill="#eef2f8" stroke="#71809b" />
+        <text x="467" y="172" text-anchor="middle">c</text>
+      </g>
+      <g>
+        <rect x="435" y="250" width="64" height="44" rx="6" fill="#eef2f8" stroke="#71809b" />
+        <text x="467" y="277" text-anchor="middle">d</text>
+      </g>
+    </svg>
+  </article>
+</main>
