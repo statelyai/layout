@@ -1,7 +1,8 @@
 import { routeEdge, type Batch, type Metrics, type RoutingInput } from "./algorithms";
 import { fitBezierTransition } from "./bezier-fit";
+import { pathReservations } from "./coordination";
 import { ancestors, center, labelRect, sideToward, worldRect, type EdgeGeometry } from "./model";
-import { flattenPath, pathFromPoints, roundCorners, segmentCrossesRect } from "./path";
+import { distance, flattenPath, pathFromPoints, roundCorners, segmentCrossesRect } from "./path";
 import type {
   BezierEndpoint,
   BezierGuide,
@@ -275,7 +276,7 @@ export function routeBezierEdge(
     ...(inwardTarget ? [] : [targetBounds]),
   ];
   const barriers = [...(avoidObstacles ? obstacles : []), ...terminalBounds];
-  const fitted =
+  const fit = (source: BezierGuide, target: BezierGuide, floating = true) =>
     config.waypoints?.length || inwardSource || inwardTarget
       ? { source, target }
       : fitBezierTransition({
@@ -289,6 +290,7 @@ export function routeBezierEdge(
           targetClearance: config.bezier?.targetClearance ?? state.settings.bezier?.targetClearance,
           labelTangent: config.bezier?.labelTangent,
           endpoints:
+            !floating ||
             family ||
             edge.targetPort !== undefined ||
             (config.bezier?.attachmentMode ?? state.settings.bezier?.attachmentMode) ===
@@ -328,36 +330,87 @@ export function routeBezierEdge(
       safeGuides(candidate, barriers, sourceEndpoint)
     );
   };
-  let result = fitted;
-  if (!valid(result)) {
-    result = {
+  const candidates = [fit(source, target)];
+  if (
+    !family &&
+    edge.targetPort === undefined &&
+    (config.bezier?.attachmentMode ?? state.settings.bezier?.attachmentMode) !== "orthogonal"
+  )
+    candidates.push(fit(source, target, false));
+  const guides = [
+    {
       source: rounded(source, state.settings.radius),
       target: rounded(target, state.settings.radius),
+    },
+  ];
+  let retrySource = guide(planned.sections[0]?.path, sourceBounds, label);
+  let retryTarget = guide(planned.sections.at(-1)?.path, label, targetBounds);
+  if (retrySource && sourceEndpoint.kind === "port")
+    retrySource = {
+      ...retrySource,
+      path: undefined,
+      sourceDirection: sourceEndpoint.direction,
+      points: [sourceEndpoint.point, sourceEndpoint.escape, ...retrySource.points.slice(1)],
     };
+  if (retryTarget && edge.targetPort === undefined)
+    retryTarget = shortenTarget(
+      retryTarget,
+      config.bezier?.targetClearance ?? state.settings.bezier?.targetClearance ?? 10,
+    );
+  if (retrySource && retryTarget) {
+    guides.push({ source: retrySource, target: retryTarget });
+    if (suppliedGuides) candidates.push(fit(retrySource, retryTarget, false));
   }
-  if (!valid(result)) {
-    let retrySource = guide(planned.sections[0]?.path, sourceBounds, label);
-    let retryTarget = guide(planned.sections.at(-1)?.path, label, targetBounds);
-    if (retrySource && sourceEndpoint.kind === "port")
-      retrySource = {
-        ...retrySource,
-        path: undefined,
-        sourceDirection: sourceEndpoint.direction,
-        points: [sourceEndpoint.point, sourceEndpoint.escape, ...retrySource.points.slice(1)],
-      };
-    if (retryTarget && edge.targetPort === undefined)
-      retryTarget = shortenTarget(
-        retryTarget,
-        config.bezier?.targetClearance ?? state.settings.bezier?.targetClearance ?? 10,
-      );
-    if (!retrySource || !retryTarget)
-      return reject(edge, "No complete constrained source-label-target guide is available");
-    result = { source: retrySource, target: retryTarget };
-  }
-  if (!valid(result))
-    return reject(edge, "Bézier paths violate attachment or obstacle constraints");
+  const assess = (candidate: { source: BezierGuide; target: BezierGuide }) => {
+    if (!valid(candidate)) return [];
+    const segments = [candidate.source, candidate.target].flatMap((guide) =>
+      pathReservations(guide.path ?? pathFromPoints(guide.points)),
+    );
+    const conflicts = segments.reduce(
+      (cost, segment) => cost + (batch.edgeCost?.(segment.a, segment.b) ?? 0),
+      0,
+    );
+    const length = segments.reduce((cost, segment) => cost + distance(segment.a, segment.b), 0);
+    return [{ candidate, conflicts, cost: length + conflicts }];
+  };
+  const isShaped = (candidate: { source: BezierGuide; target: BezierGuide }) =>
+    [candidate.source, candidate.target].some((guide) =>
+      guide.path?.segments.some((segment) => segment.kind !== "line"),
+    );
+  const shaped = candidates
+    .filter(isShaped)
+    .flatMap(assess)
+    .sort((a, b) => a.cost - b.cost);
+  const unshaped = [...guides, ...candidates.filter((candidate) => !isShaped(candidate))]
+    .flatMap(assess)
+    .sort((a, b) => a.cost - b.cost);
+  let best = shaped[0] ?? unshaped[0];
+  // A shorter guide alone must not discard the requested curve family. A guide
+  // can win when it reduces final route conflicts as well as total finite cost.
+  if (best && shaped.length)
+    for (const candidate of unshaped)
+      if (candidate.conflicts < best.conflicts && candidate.cost < best.cost) best = candidate;
+  if (!best) return reject(edge, "Bézier paths violate attachment or obstacle constraints");
+  const result = best.candidate;
+  const diagnostics = planned.diagnostics.filter(
+    (diagnostic) => diagnostic.code !== "ROUTE_CONFLICT",
+  );
+  if (
+    [result.source, result.target].some((guide) =>
+      pathReservations(guide.path ?? pathFromPoints(guide.points)).some((segment) =>
+        batch.conflicts?.(segment.a, segment.b),
+      ),
+    )
+  )
+    diagnostics.push({
+      code: "ROUTE_CONFLICT",
+      edgeId: edge.id,
+      message: "Route crosses or overlaps another edge; retained a compact visible path",
+    });
   return {
     ...planned,
+    status: diagnostics.length ? "fallback" : "routed",
+    diagnostics,
     sections: [
       {
         id: `${edge.id}:source-label`,
