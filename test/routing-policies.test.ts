@@ -168,6 +168,34 @@ describe("routing policies", () => {
     expect(blocked.status).toBe("fallback");
     expect(blocked.sections).toEqual([]);
   });
+  it("uses final crossing costs when only a zero-handle detour fits", () => {
+    const node = (id: string, x: number, y: number) => ({id, x, y, width: 64, height: 44});
+    const input = createGraph({id: "crossing-detour", nodes: [node("a",35,60),node("b",435,220),node("c",35,220),node("d",435,60)],
+      edges: [{id: "first", sourceId: "a", targetId: "b"},{id: "second",sourceId: "c",targetId: "d"}]});
+    const result = (crossingPenalty: number) => bezierRouting.route(input, {policy: {curve: {kind: "bezier"}, collisions: {crossingPenalty, overlapPenalty: 12}}}).routes.get("second")!;
+    expect(result(0).diagnostics).toContainEqual(expect.objectContaining({code: "ROUTE_CONFLICT"}));
+    const detour = result(1000);
+    expect(detour.status).toBe("fallback");
+    expect(detour.diagnostics).toContainEqual(expect.objectContaining({code: "CONSTRAINT_VIOLATION"}));
+    expect(detour.diagnostics.some(d => d.code === "ROUTE_CONFLICT")).toBe(false);
+    for (const node of input.nodes) noCollision(detour, {x: node.x! + 1e-6, y: node.y! + 1e-6, width: node.width! - 2e-6, height: node.height! - 2e-6});
+  });
+  it("counts policy guide searches", () => {
+    const input = createGraph({id: "policy-search", nodes: [
+      {id:"a",x:0,y:0,width:40,height:40},{id:"b",x:300,y:0,width:40,height:40},{id:"block",x:120,y:-20,width:60,height:80},
+    ],edges:[{id:"ab",sourceId:"a",targetId:"b"}]});
+    expect(bezierRouting.route(input,{policy:routingPolicies.smooth}).metrics.searchNodes).toBeGreaterThan(0);
+  });
+  it.each([
+    {curve: {kind: "unknown"}}, {sourceTangent: {kind: "unknown"}}, {targetTangent: {kind: "unknown"}},
+    {label: {kind: "unknown"}}, {label: {kind: "through", tangent: {kind: "unknown"}}},
+    {collisions: {nodes: "unknown"}}, {collisions: {labels: "unknown"}},
+    {monotonic: {axis: "unknown", strength: "prefer"}}, {monotonic: {axis: "x", strength: "unknown"}},
+    {stability: {kind: "unknown"}},
+  ])("rejects invalid policy discriminants at normalization: %j", policy => {
+    // @ts-expect-error JavaScript consumers can pass invalid enum values.
+    expect(() => route({policy})).toThrow(RangeError);
+  });
   it.each(Object.entries(routingPolicies))("%s works without label geometry", (_name, policy) => {
     const result = route({ policy }, graph(false));
     expect(result.sections.length).toBeGreaterThan(0);
