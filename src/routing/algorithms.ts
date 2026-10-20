@@ -1052,7 +1052,6 @@ export function routeEdge(
     const guidePoints = [guide.start, ...guide.segments.map((part) => part.to)];
     const candidates: RoutePath[] = [];
     const unshapedCandidates = new Set<RoutePath>();
-    // Search vertices guide automatic curvature; authored waypoints remain knots.
     const compact = curvePolicy.kind === "bezier" ? compactBezierGuide(a, b, via) : undefined;
     const pointCandidates = [
       [a.point, ...via, b.point],
