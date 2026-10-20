@@ -1,4 +1,6 @@
 import type { EntityRect, Graph, GraphDiff, Point } from "@statelyai/graph";
+import type { BezierEndpoint, BezierGuide } from "./bezier-fit";
+export type { BezierEndpoint, BezierGuide } from "./bezier-fit";
 
 export type RoutePoint = Readonly<Point>;
 export type RouteSegment =
@@ -32,6 +34,8 @@ export interface RouteSection {
   readonly from: RouteEndpoint;
   readonly to: RouteEndpoint;
   readonly path: RoutePath;
+  readonly fromSide?: RouteSide;
+  readonly toSide?: RouteSide;
   /** Same ID denotes a shared trunk; render it once. */
   readonly sharedId?: string;
 }
@@ -75,7 +79,27 @@ export interface RouteAttachment {
   readonly bounds: RouteBounds;
   readonly facing?: "inward" | "outward";
 }
+export interface BezierRoutingOptions {
+  readonly avoidObstacles?: boolean;
+  readonly attachmentMode?: "floating" | "orthogonal";
+  readonly targetClearance?: number;
+}
+export interface BezierEdgeSettings extends BezierRoutingOptions {
+  readonly source?: BezierEndpoint;
+  readonly target?: Extract<BezierEndpoint, { kind: "floating" }>;
+  readonly guides?: { readonly source: BezierGuide; readonly target: BezierGuide };
+  readonly obstacles?: readonly RouteBounds[];
+  readonly terminalBounds?: readonly RouteBounds[];
+  readonly labelTangent?: RoutePoint;
+  readonly disabled?: boolean;
+}
 export interface EdgeRoutingSettings {
+  /** Resolve the source from this edge label in the current graph geometry. */
+  readonly sourceLabel?: string;
+  readonly sourceSides?: readonly RouteSide[];
+  readonly targetSides?: readonly RouteSide[];
+  readonly labelSides?: readonly RouteSide[];
+  readonly bezier?: BezierEdgeSettings;
   readonly sourceAttachment?: RouteAttachment;
   readonly targetAttachment?: RouteAttachment;
   readonly sourceSide?: RouteSide;
@@ -85,6 +109,8 @@ export interface EdgeRoutingSettings {
   readonly group?: string;
 }
 export interface RoutingSettings {
+  /** Opt into center-tangent Bézier routing and floating attachments. */
+  readonly bezier?: BezierRoutingOptions;
   /** Native compound geometry is parent-relative; adapters may supply resolved world geometry. */
   readonly coordinateSpace?: "parent" | "world";
   readonly clearance?: number;

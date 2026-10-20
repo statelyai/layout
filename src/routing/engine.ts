@@ -1,4 +1,5 @@
 import type { GraphDiff } from "@statelyai/graph";
+import { expandLabelFamilies, labelFamily, routeBezierEdge } from "./bezier";
 import { conflictCost, reservations, reservationBounds, outsideTerminal } from "./coordination";
 import { segmentBounds } from "./search";
 import { routeBounds, routeEdge, type Metrics, type Batch } from "./algorithms";
@@ -111,12 +112,34 @@ function calculate(
       plans: new Map(),
     };
   const pending = new Set(affected);
+  if (style === "bezier") {
+    expandLabelFamilies(pending, input);
+    if (previous) expandLabelFamilies(pending, previous);
+  }
   const processed = new Set<string>();
+  const familyDepth = new Map<string, number>();
+  const familyRoots = new Map<string, string>();
+  if (style === "bezier") {
+    for (const [id, config] of Object.entries(state.settings.edges)) {
+      if (config.sourceLabel === undefined) continue;
+      const family = labelFamily(id, input);
+      for (let index = 0; index < family.length; index++) {
+        const member = family[index]!;
+        familyRoots.set(member, family.at(-1)!);
+        familyDepth.set(member, family.length - index);
+      }
+    }
+  }
   const priorities = new Map<string, string>();
   const priority = (id: string) => {
     let result = priorities.get(id);
     if (result !== undefined) return result;
     const edge = state.edges.get(id) ?? previous?.edges.get(id);
+    const familyRoot = familyRoots.get(id);
+    if (familyRoot !== undefined) {
+      priorities.set(id, familyRoot);
+      return familyRoot;
+    }
     const key = edge && groupKey(edge, style, state.settings);
     result = key
       ? ((state.edges.has(id) ? state.groups : previous?.groups)?.get(key)?.keys().next().value ??
@@ -125,12 +148,19 @@ function calculate(
     priorities.set(id, result);
     return result;
   };
-  const later = (candidate: string, id: string) =>
-    priority(candidate) > priority(id) || (priority(candidate) === priority(id) && candidate > id);
+  const compare = (a: string, b: string) =>
+    (priority(a) < priority(b) ? -1 : priority(a) > priority(b) ? 1 : 0) ||
+    (familyDepth.get(a) ?? 1) - (familyDepth.get(b) ?? 1) ||
+    (a < b ? -1 : a > b ? 1 : 0);
+  const later = (candidate: string, id: string) => compare(candidate, id) > 0;
   const invalidate = (id: string, bounds: ReturnType<typeof routeBounds>) => {
     for (const candidate of routeIndex.query(inflate(bounds, state.settings.edgeSpacing))) {
       if (!later(candidate, id) || processed.has(candidate)) continue;
       pending.add(candidate);
+      if (style === "bezier") {
+        expandLabelFamilies(pending, input);
+        for (const done of processed) pending.delete(done);
+      }
       const edge = state.edges.get(candidate);
       const key = edge && groupKey(edge, style, state.settings);
       if (key)
@@ -160,11 +190,7 @@ function calculate(
     }
   const segmentCache = new Map<string, ReturnType<typeof reservations>>();
   while (pending.size) {
-    const id = [...pending].sort(
-      (a, b) =>
-        (priority(a) < priority(b) ? -1 : priority(a) > priority(b) ? 1 : 0) ||
-        (a < b ? -1 : a > b ? 1 : 0),
-    )[0]!;
+    const id = [...pending].sort(compare)[0]!;
     pending.delete(id);
     processed.add(id);
     const edge = state.edges.get(id),
@@ -237,7 +263,10 @@ function calculate(
       );
     batch.guides = (bounds) =>
       query(bounds).map((segment) => reservationBounds(segment, state.settings.edgeSpacing));
-    let route = routeEdge(edge, input, style, counts, batch);
+    let route =
+      style === "bezier"
+        ? routeBezierEdge(edge, input, routes, counts, batch)
+        : routeEdge(edge, input, style, counts, batch);
     if (oldRoute && JSON.stringify(oldRoute) === JSON.stringify(route)) route = oldRoute;
     const drawnBounds = routeBounds(route);
     if (route !== oldRoute) {
@@ -426,6 +455,10 @@ function updateState(
       if (key !== undefined)
         for (const peer of version.groups.get(key)?.keys() ?? []) affected.add(peer);
     }
+  if (style === "bezier") {
+    expandLabelFamilies(affected, prior);
+    expandLabelFamilies(affected, state);
+  }
   return { state, affected };
 }
 export function createRoutingStrategy(id: RouteStyle): NativeRoutingStrategy {

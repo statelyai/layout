@@ -42,7 +42,7 @@ import {
   type SearchContext,
 } from "./search";
 
-type RoutingInput = Pick<
+export type RoutingInput = Pick<
   State,
   "nodes" | "edges" | "groups" | "obstacles" | "settings" | "incident"
 >;
@@ -311,10 +311,18 @@ export function routeEdge(
     if (!diagnostics.some((d) => d.code === code))
       diagnostics.push({ code, message, edgeId: edge.id });
   };
-  const sourceNode = state.nodes.get(edge.sourceId),
+  const parentLabel =
+    perEdge.sourceLabel === undefined ? undefined : state.edges.get(perEdge.sourceLabel);
+  const sourceNode = perEdge.sourceLabel === undefined ? state.nodes.get(edge.sourceId) : undefined,
     targetNode = state.nodes.get(edge.targetId);
-  const sourceRect = sourceNode && worldRect(sourceNode, state),
-    targetRect = targetNode && worldRect(targetNode, state);
+  const sourceRect = parentLabel
+      ? labelRect(parentLabel, state)
+      : perEdge.bezier?.source?.kind === "floating"
+        ? perEdge.bezier.source.bounds
+        : perEdge.bezier?.source?.kind === "port"
+          ? perEdge.bezier.source.owner
+          : sourceNode && worldRect(sourceNode, state),
+    targetRect = perEdge.bezier?.target?.bounds ?? (targetNode && worldRect(targetNode, state));
   if (!sourceRect || !targetRect)
     report("MISSING_GEOMETRY", "Missing endpoint geometry; rendered a fallback connection");
   const sourceBounds = sourceRect ?? { x: 0, y: 0, width: 0, height: 0 },
@@ -324,7 +332,7 @@ export function routeEdge(
       width: 0,
       height: 0,
     };
-  const loop = edge.sourceId === edge.targetId;
+  const loop = perEdge.sourceLabel === undefined && edge.sourceId === edge.targetId;
   const group = groupKey(edge, style, config),
     peers = group ? [...(state.groups.get(group)?.keys() ?? [])] : [];
   const grouped = peers.length > 1 && ["bus", "bundle", "fan"].includes(style);
@@ -341,7 +349,11 @@ export function routeEdge(
           }
         : outer,
       other = source ? targetBounds : sourceBounds;
-    const name = source ? edge.sourcePort : edge.targetPort;
+    const name = source
+      ? perEdge.sourceLabel === undefined
+        ? edge.sourcePort
+        : undefined
+      : edge.targetPort;
     let side =
       (source ? perEdge.sourceSide : perEdge.targetSide) ??
       (loop ? (source ? "right" : "top") : sideToward(center(bounds), center(other)));
@@ -370,7 +382,13 @@ export function routeEdge(
           ),
         };
     }
-    if (!attachment && name === undefined && !["bus", "fan", "bundle"].includes(style) && !loop) {
+    if (
+      !attachment &&
+      name === undefined &&
+      !(source && parentLabel) &&
+      !["bus", "fan", "bundle"].includes(style) &&
+      !loop
+    ) {
       const nodeId = source ? edge.sourceId : edge.targetId;
       const adjacent = [...(state.incident.get(nodeId)?.keys() ?? [])].filter((id) => {
         const e = state.edges.get(id)!;
@@ -448,17 +466,24 @@ export function routeEdge(
         }
       }
     }
+    if (source && !parentLabel && perEdge.bezier?.source?.kind === "port") {
+      point = perEdge.bezier.source.escape;
+      side = perEdge.bezier.source.direction;
+    }
     return {
       point,
       side:
         attachment?.facing === "inward"
           ? ({ left: "right", right: "left", top: "bottom", bottom: "top" } as const)[side]
           : side,
-      ref: {
-        kind: "node",
-        nodeId: source ? edge.sourceId : edge.targetId,
-        ...(name === undefined ? {} : { port: name }),
-      },
+      ref:
+        source && parentLabel
+          ? { kind: "label", edgeId: parentLabel.id }
+          : {
+              kind: "node",
+              nodeId: source ? edge.sourceId : edge.targetId,
+              ...(name === undefined ? {} : { port: name }),
+            },
     };
   }
   const source = terminal(true),
@@ -474,7 +499,12 @@ export function routeEdge(
   const context = contextFor(
     state,
     excluded,
-    new Set([`n:${edge.sourceId}`, `n:${edge.targetId}`, `e:${edge.id}`]),
+    new Set([
+      `n:${edge.sourceId}`,
+      `n:${edge.targetId}`,
+      `e:${edge.id}`,
+      ...(parentLabel ? [`e:${parentLabel.id}`] : []),
+    ]),
     metrics,
     batch,
     lane * config.edgeSpacing,
@@ -483,7 +513,12 @@ export function routeEdge(
     ? contextFor(
         state,
         excluded,
-        new Set([`n:${edge.sourceId}`, `n:${edge.targetId}`, `e:${edge.id}`]),
+        new Set([
+          `n:${edge.sourceId}`,
+          `n:${edge.targetId}`,
+          `e:${edge.id}`,
+          ...(parentLabel ? [`e:${parentLabel.id}`] : []),
+        ]),
         metrics,
         batch,
         config.radius * 2 + lane * config.edgeSpacing,
@@ -523,8 +558,12 @@ export function routeEdge(
       ...drawn.map((s) => reservationBounds(s, config.edgeSpacing)),
     ];
   }
+  const labelSide = (toward: RoutePoint) => {
+    const preferred = sideToward(center(label!), toward);
+    return perEdge.labelSides?.includes(preferred) === false ? perEdge.labelSides[0]! : preferred;
+  };
   const labelAnchor = (toward: RoutePoint) => {
-    const side = sideToward(center(label!), toward),
+    const side = labelSide(toward),
       point = anchor(label!, side);
     // Border attachments may slide within the label; avoid tiny center-offset jogs.
     if (
@@ -544,30 +583,52 @@ export function routeEdge(
   const firstTarget: Terminal = label
     ? {
         point: labelAnchor(source.point),
-        side: sideToward(center(label), source.point),
+        side: labelSide(source.point),
         ref: { kind: "label", edgeId: edge.id },
       }
     : target;
-  const lastSource: Terminal | undefined = label
-    ? {
-        point:
-          firstTarget.side === sideToward(center(label), target.point)
-            ? anchor(
-                label,
-                ({ left: "right", right: "left", top: "bottom", bottom: "top" } as const)[
-                  firstTarget.side
-                ],
-              )
-            : labelAnchor(target.point),
-        side:
-          firstTarget.side === sideToward(center(label), target.point)
-            ? ({ left: "right", right: "left", top: "bottom", bottom: "top" } as const)[
-                firstTarget.side
-              ]
-            : sideToward(center(label), target.point),
-        ref: { kind: "label", edgeId: edge.id },
-      }
-    : undefined;
+  const outgoingSide = label && labelSide(target.point);
+  const exitSide =
+    label &&
+    (outgoingSide === firstTarget.side
+      ? perEdge.labelSides
+        ? (perEdge.labelSides.find((side) => side !== firstTarget.side) ?? firstTarget.side)
+        : ({ left: "right", right: "left", top: "bottom", bottom: "top" } as const)[
+            firstTarget.side
+          ]
+      : outgoingSide);
+  if (label && exitSide === firstTarget.side) {
+    const horizontal = exitSide === "top" || exitSide === "bottom";
+    const fraction = (
+      horizontal ? source.point.x > target.point.x : source.point.y > target.point.y
+    )
+      ? 2 / 3
+      : 1 / 3;
+    firstTarget.point = {
+      ...anchor(label, exitSide),
+      ...(horizontal
+        ? { x: label.x + label.width * fraction }
+        : { y: label.y + label.height * fraction }),
+    };
+  }
+  const lastSource: Terminal | undefined =
+    label && exitSide
+      ? {
+          point:
+            exitSide === firstTarget.side
+              ? {
+                  ...anchor(label, exitSide),
+                  ...(exitSide === "top" || exitSide === "bottom"
+                    ? { x: label.x + label.width - (firstTarget.point.x - label.x) }
+                    : { y: label.y + label.height - (firstTarget.point.y - label.y) }),
+                }
+              : exitSide === outgoingSide
+                ? labelAnchor(target.point)
+                : anchor(label, exitSide),
+          side: exitSide,
+          ref: { kind: "label", edgeId: edge.id },
+        }
+      : undefined;
   metrics.routedEdges++;
   const sections: RouteSection[] = [];
   const stub = (t: Terminal) => {
@@ -616,7 +677,12 @@ export function routeEdge(
         const hard = contextFor(
           state,
           excluded,
-          new Set([`n:${edge.sourceId}`, `n:${edge.targetId}`, `e:${edge.id}`]),
+          new Set([
+            `n:${edge.sourceId}`,
+            `n:${edge.targetId}`,
+            `e:${edge.id}`,
+            ...(parentLabel ? [`e:${parentLabel.id}`] : []),
+          ]),
           metrics,
           batch,
           -config.clearance,
@@ -795,7 +861,12 @@ export function routeEdge(
         ...contextFor(
           state,
           excluded,
-          new Set([`n:${edge.sourceId}`, `n:${edge.targetId}`, `e:${edge.id}`]),
+          new Set([
+            `n:${edge.sourceId}`,
+            `n:${edge.targetId}`,
+            `e:${edge.id}`,
+            ...(parentLabel ? [`e:${parentLabel.id}`] : []),
+          ]),
           metrics,
           batch,
           -config.clearance,
@@ -990,7 +1061,12 @@ export function routeEdge(
     const hard = contextFor(
       state,
       excluded,
-      new Set([`n:${edge.sourceId}`, `n:${edge.targetId}`, `e:${edge.id}`]),
+      new Set([
+        `n:${edge.sourceId}`,
+        `n:${edge.targetId}`,
+        `e:${edge.id}`,
+        ...(parentLabel ? [`e:${parentLabel.id}`] : []),
+      ]),
       metrics,
       batch,
       -config.clearance,
@@ -1083,6 +1159,11 @@ export function routeEdge(
   };
 }
 export function routeBounds(route: Route): RouteBounds {
-  return route.sections.map((s) => getPathBounds(s.path)).reduce(union);
+  let bounds: RouteBounds | undefined;
+  for (const section of route.sections) {
+    const next = getPathBounds(section.path);
+    bounds = bounds ? union(bounds, next) : next;
+  }
+  return bounds ?? { x: 0, y: 0, width: 0, height: 0 };
 }
 export { pointsBounds };

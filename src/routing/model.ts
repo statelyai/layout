@@ -29,6 +29,7 @@ export interface EdgeGeometry {
   readonly height?: number;
 }
 export interface Settings {
+  readonly bezier: RoutingSettings["bezier"];
   readonly coordinateSpace: "parent" | "world";
   readonly clearance: number;
   readonly radius: number;
@@ -42,6 +43,7 @@ export interface Settings {
 }
 export function settings(input: RoutingSettings = {}): Settings {
   const result = {
+    bezier: structuredClone(input.bezier),
     coordinateSpace: input.coordinateSpace ?? "parent",
     clearance: input.clearance ?? 8,
     radius: input.radius ?? 10,
@@ -62,6 +64,23 @@ export function settings(input: RoutingSettings = {}): Settings {
     !Number.isInteger(result.organicIterations)
   )
     throw new RangeError("Search and iteration budgets must be integers");
+  for (const config of [result.bezier, ...Object.values(result.edges).map((edge) => edge.bezier)]) {
+    if (
+      config?.targetClearance !== undefined &&
+      (!Number.isFinite(config.targetClearance) || config.targetClearance < 0)
+    )
+      throw new RangeError("Bézier targetClearance must be finite and non-negative");
+  }
+  for (const edge of Object.values(result.edges)) {
+    const tangent = edge.bezier?.labelTangent;
+    if (
+      tangent &&
+      (!Number.isFinite(tangent.x) ||
+        !Number.isFinite(tangent.y) ||
+        !Math.hypot(tangent.x, tangent.y))
+    )
+      throw new RangeError("Bézier labelTangent must be finite and nonzero");
+  }
   return freeze(result);
 }
 export function freeze<T>(value: T): T {

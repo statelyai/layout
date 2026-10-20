@@ -1,0 +1,38 @@
+[
+  {
+    "fixture": "comparison",
+    "mode": "simple",
+    "viewport": [
+      1280,
+      800
+    ],
+    "changedPixels": 125283
+  },
+  {
+    "fixture": "comparison",
+    "mode": "avoiding",
+    "viewport": [
+      1280,
+      800
+    ],
+    "changedPixels": 125124
+  },
+  {
+    "fixture": "conditional-labels",
+    "mode": "simple",
+    "viewport": [
+      1280,
+      800
+    ],
+    "changedPixels": 21836
+  },
+  {
+    "fixture": "conditional-labels",
+    "mode": "avoiding",
+    "viewport": [
+      1280,
+      800
+    ],
+    "changedPixels": 21836
+  }
+]

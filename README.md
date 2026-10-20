@@ -151,6 +151,12 @@ const route = snapshot.routes.get("ab");
 const paths = route?.sections.map((section) => toSvgPath(section.path));
 ```
 
+`bezierRouting` also accepts center-tangent fitting, floating or orthogonal
+attachments, fixed ports, and explicit label-source chains through
+`settings.bezier` and `settings.edges`. It routes each chain together and
+updates child attachments when parent labels move. See the
+[Bézier options and label-chain example](docs/routing.md#center-tangent-bézier-routing-and-label-chains).
+
 Incremental results match fresh routing for the same graph and settings. Previous
 paths are cached outputs, never constraints on new routes.
 

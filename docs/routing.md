@@ -270,3 +270,69 @@ even when node placement and label rectangles do not overlap.
 Port-side alignment preserves node spacing around unrelated nodes. Rectangle-only
 collision checks could leave a port inside a neighbor despite disjoint node bounds;
 seeded random regressions cover these placement failures before routing.
+
+## Center-tangent Bézier routing and label chains
+
+<!-- BezierRoutingOptions, BezierEdgeSettings and EdgeRoutingSettings from src/routing/types.ts -->
+
+Set `bezier` to opt into center-tangent fitting on the existing routing strategy.
+The default floating attachments allow oblique curves at node boundaries.
+The two virtual cubics share a tangent at the label center, and the visible
+sections stop at the label boundary. Sections expose `fromSide` and `toSide`
+so renderers can orient markers without reconstructing attachment geometry. Label rectangles remain graph edge geometry.
+
+```ts
+import { bezierRouting, toSvgPath } from "@statelyai/layout/routing";
+
+const snapshot = bezierRouting.route(graph, {
+  coordinateSpace: "world",
+  bezier: {
+    avoidObstacles: true,
+    attachmentMode: "floating",
+    targetClearance: 10,
+  },
+  edges: {
+    second: { sourceLabel: "first" },
+    third: { sourceLabel: "second", labelSides: ["left", "right"] },
+  },
+});
+for (const route of snapshot.routes.values()) {
+  for (const section of route.sections) render(toSvgPath(section.path));
+}
+```
+
+`sourceLabel` replaces an edge's rendered source with another edge's label.
+The original graph endpoints still describe node ownership and hierarchy.
+The router resolves the parent label from current geometry, ignores inherited
+source ports on child connectors, and orders parents before their children.
+It reserves each parent's incoming and outgoing label sides before selecting
+child source attachments. Missing, cyclic, disabled, or impossible parent
+constraints produce empty sections with diagnostics and suppress dependent
+connectors. No independent node-to-child-label fallback reconnects them.
+
+`update` accepts the same options and ordinary graph diffs. A changed parent
+label invalidates its connected label family, including descendants whose
+previous paths did not cross the changed rectangle. Unrelated routes retain
+identity. Fresh and incremental routing converge for the same geometry.
+
+| Option                                               | Meaning                                                                                                                                             |
+| ---------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `bezier.avoidObstacles`                              | Avoid foreign rectangles when true. Terminal owners remain barriers in either mode. Defaults to true.                                               |
+| `bezier.attachmentMode`                              | `"floating"` allows oblique endpoint tangents. `"orthogonal"` constrains them to rectangle normals.                                                 |
+| `bezier.targetClearance`                             | Distance before floating target borders, for arrowheads. Defaults to 10. Named target ports retain their exact points.                              |
+| `edges[id].sourceSides`, `targetSides`, `labelSides` | Allowed rectangle attachment sides. An empty list rejects the constraint.                                                                           |
+| `edges[id].bezier.source`                            | Explicit floating rectangle or fixed port with `point`, cardinal `direction`, `escape`, and `owner`.                                                |
+| `edges[id].bezier.target`                            | Explicit floating target rectangle and allowed sides.                                                                                               |
+| `edges[id].bezier.labelTangent`                      | Nonzero direction shared by the virtual label-center curves.                                                                                        |
+| `edges[id].bezier.obstacles`                         | Explicit world-space barriers supplied by a domain adapter.                                                                                         |
+| `edges[id].bezier.terminalBounds`                    | Terminal barriers retained in simple mode.                                                                                                          |
+| `edges[id].bezier.guides`                            | Optional constrained source and target guides for hierarchy or self-loops. They contain points, directions, and an optional structured `RoutePath`. |
+| `edges[id].bezier.disabled`                          | Reject a connector because its domain constraints forbid routing.                                                                                   |
+
+Per-edge Bézier options override global options. Existing settings without
+`bezier` retain legacy Bézier geometry. Other routing strategies keep their
+existing behavior. The router remains DOM-independent and knows nothing about
+events, invoke blocks, or statecharts. An adapter supplies those relationships
+as label IDs and geometry constraints, then renders returned sections separately.
+`trimBezierPathStart` trims supported absolute SVG M/L/Q/C paths for curved hit
+targets. Unsupported commands return `undefined`.
