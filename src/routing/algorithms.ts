@@ -1058,6 +1058,28 @@ export function routeEdge(
       return safe(checked, checkedContext);
     });
   }
+  function terminalClearanceCost(path: RoutePath, a = source, b = target): number {
+    if (perEdge.waypoints?.length || loop) return 0;
+    let cost = 0;
+    for (const [terminal, bounds] of [
+      [a, sourceBounds],
+      [b, targetBounds],
+    ] as const) {
+      if (terminal.ref.kind !== "node") continue;
+      const halo = inflate(bounds, config.clearance);
+      const attachment = inflate({ ...terminal.point, width: 0, height: 0 }, config.clearance * 2);
+      for (const segment of pathReservations(path).flatMap((segment) =>
+        outsideTerminal(segment, attachment),
+      )) {
+        const outside = outsideTerminal(segment, halo).reduce(
+          (length, part) => length + distance(part.a, part.b),
+          0,
+        );
+        cost += Math.max(0, distance(segment.a, segment.b) - outside) * 4;
+      }
+    }
+    return cost;
+  }
   const authoredCrossing =
     loop ||
     pathHasSelfIntersection(
@@ -1086,6 +1108,7 @@ export function routeEdge(
       valid,
       cost:
         pathCost(path, context) +
+        terminalClearanceCost(path, a, b) +
         (curvePolicy.kind === "bezier" && path.segments.length > 1
           ? path.segments.filter((segment, index) => {
               if (segment.kind !== "cubic") return false;
@@ -1120,13 +1143,33 @@ export function routeEdge(
             point.x <= rect.x + rect.width &&
             point.y >= rect.y &&
             point.y <= rect.y + rect.height;
-          return contains(a.point) || contains(b.point) ? rect : inflate(rect, padding);
+          return inflate(
+            rect,
+            contains(a.point) || contains(b.point)
+              ? padding
+                ? config.clearance + padding
+                : 0
+              : padding,
+          );
         }),
       visited: 0,
       budgetExceeded: false,
       maxSearchNodes: remaining,
     };
-    const anchors = [a.point, ...via, b.point];
+    const lead = (terminal: Terminal, end: boolean) => {
+      if (!padding) return terminal.point;
+      const direction = terminal.tangent
+        ? end
+          ? reverse(terminal.tangent)
+          : terminal.tangent
+        : vector(terminal.side);
+      const length = Math.max(config.clearance + padding + 1, config.radius * 2);
+      return {
+        x: terminal.point.x + direction.x * length,
+        y: terminal.point.y + direction.y * length,
+      };
+    };
+    const anchors = [lead(a, false), ...via, lead(b, true)];
     const points = [a.point];
     let complete = true;
     for (let i = 1; i < anchors.length; i++) {
@@ -1135,8 +1178,9 @@ export function routeEdge(
         complete = false;
         break;
       }
-      points.push(...found.slice(1));
+      points.push(...found.slice(i === 1 && padding ? 0 : 1));
     }
+    if (padding) points.push(b.point);
     searchContext.visited += compact.visited;
     return complete ? points : undefined;
   }
@@ -1203,6 +1247,9 @@ export function routeEdge(
       guidePoints,
       ...(compact ? [compact] : []),
       ...(smoothCompact ? [smoothCompact] : []),
+      ...(smoothCompact && smoothCompact.length > 4
+        ? [[a.point, ...smoothCompact.slice(2, -2), b.point]]
+        : []),
     ].filter((points) => {
       if (!points.some((point) => distance(point, points[0]!) > 1e-8)) return false;
       let index = 0;
