@@ -620,7 +620,7 @@ export function routeEdge(
             return (
               peer.targetId === edge.targetId &&
               peer.targetPort === undefined &&
-              options?.targetSide === undefined &&
+              options?.bezier?.target === undefined &&
               options?.targetAttachment === undefined
             );
           })
