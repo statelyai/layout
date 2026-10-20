@@ -14,7 +14,15 @@ const graph = createGraph({
   ],
   edges: [
     { id: "review", sourceId: "Start", targetId: "Review" },
-    { id: "publish", sourceId: "Start", targetId: "Publish", x: 210, y: 240, width: 72, height: 26 },
+    {
+      id: "publish",
+      sourceId: "Start",
+      targetId: "Publish",
+      x: 210,
+      y: 240,
+      width: 72,
+      height: 26,
+    },
     { id: "parallel", sourceId: "Start", targetId: "Review" },
     { id: "loop", sourceId: "Publish", targetId: "Publish" },
     { id: "independent", sourceId: "Independent", targetId: "Done" },
@@ -46,8 +54,17 @@ it("distributes organic obstacle turns without faceted shoulders or new route co
 });
 
 it.each([
-  [{ x: 140, y: 80 }, { x: 160, y: 80 }, { x: 320, y: 80 }],
-  [{ x: 350, y: 50 }, { x: 150, y: 200 }, { x: 150, y: 50 }, { x: 350, y: 200 }],
+  [
+    { x: 140, y: 80 },
+    { x: 160, y: 80 },
+    { x: 320, y: 80 },
+  ],
+  [
+    { x: 350, y: 50 },
+    { x: 150, y: 200 },
+    { x: 150, y: 50 },
+    { x: 350, y: 200 },
+  ],
 ])("retains authored organic knots including collinear and crossing runs: %j", (...waypoints) => {
   const input = createGraph({
     id: "authored-organic",

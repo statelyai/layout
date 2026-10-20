@@ -202,6 +202,7 @@ function organic(
   points: readonly RoutePoint[],
   state: RoutingInput,
   context: SearchContext,
+  anchors: readonly RoutePoint[] = [],
 ): RoutePath {
   let samples: RoutePoint[] = [];
   for (let i = 1; i < points.length; i++) {
@@ -215,8 +216,9 @@ function organic(
   for (let iteration = 0; iteration < state.settings.organicIterations; iteration++) {
     const next = [...samples];
     for (let i = 1; i < samples.length - 1; i++) {
-      const p = samples[i]!,
-        a = samples[i - 1]!,
+      const p = samples[i]!;
+      if (anchors.some((anchor) => distance(anchor, p) < 1e-8)) continue;
+      const a = samples[i - 1]!,
         b = samples[i + 1]!;
       let x = (a.x + b.x - 2 * p.x) * 0.2,
         y = (a.y + b.y - 2 * p.y) * 0.2;
@@ -232,12 +234,71 @@ function organic(
         }
       }
       const candidate = { x: p.x + x, y: p.y + y };
-      if (clear(next[i - 1]!, candidate, context) && clear(candidate, b, context))
+      const previous = next[i - 1]!;
+      const conflictCost = (point: RoutePoint) =>
+        (context.edgeCost?.(previous, point) ?? 0) + (context.edgeCost?.(point, b) ?? 0);
+      if (
+        clear(previous, candidate, context) &&
+        clear(candidate, b, context) &&
+        conflictCost(candidate) <= conflictCost(p) + 1e-7
+      )
         next[i] = candidate;
     }
     samples = next;
   }
-  return curve(simplify(samples), state, context);
+  const simplified = simplify(samples);
+  if (simplified.length === 2 && !anchors.length) return pathFromPoints(simplified);
+  const roundedSegments: RouteSegment[] = [];
+  const rounded: RoutePath = { start: samples[0]!, segments: roundedSegments };
+  let first = 0;
+  for (let i = 1; i < samples.length; i++) {
+    if (i !== samples.length - 1 && !anchors.some((anchor) => distance(anchor, samples[i]!) < 1e-8))
+      continue;
+    const piece = curve(simplify(samples.slice(first, i + 1)), state, context);
+    roundedSegments.push(...piece.segments);
+    first = i;
+  }
+  const conflictBudget = pathCost(rounded, context) - pathLength(rounded);
+  for (const stride of [3, 2, 1]) {
+    const knots = samples.filter(
+      (point, index) =>
+        index % stride === 0 ||
+        index === samples.length - 1 ||
+        anchors.some((anchor) => distance(anchor, point) < 1e-8),
+    );
+    const fitted = catmullRomPath(knots);
+    for (const tension of [1, 0.5, 0.25]) {
+      let from = fitted.start;
+      const candidate = {
+        start: from,
+        segments: fitted.segments.map((segment) => {
+          const adjusted =
+            segment.kind === "cubic"
+              ? {
+                  ...segment,
+                  control1: {
+                    x: from.x + (segment.control1.x - from.x) * tension,
+                    y: from.y + (segment.control1.y - from.y) * tension,
+                  },
+                  control2: {
+                    x: segment.to.x + (segment.control2.x - segment.to.x) * tension,
+                    y: segment.to.y + (segment.control2.y - segment.to.y) * tension,
+                  },
+                }
+              : segment;
+          from = segment.to;
+          return adjusted;
+        }),
+      };
+      if (
+        safe(candidate, context) &&
+        !pathHasSelfIntersection(candidate) &&
+        pathCost(candidate, context) - pathLength(candidate) <= conflictBudget + 1e-7
+      )
+        return candidate;
+    }
+  }
+  return rounded;
 }
 function groupPlan(
   key: string,
@@ -1571,12 +1632,12 @@ export function routeEdge(
       }
       points.push(b.point);
       if (ok) {
-        const simple = policy && via.length ? points : simplify(points);
+        const simple = (policy || style === "organic") && via.length ? points : simplify(points);
         path =
           !policy && (style === "curved" || style === "bundle" || style === "bezier")
             ? curve(simple, state, context)
             : style === "organic"
-              ? organic(simple, state, context)
+              ? organic(simple, state, context, via)
               : pathFromPoints(simple);
       }
     }
