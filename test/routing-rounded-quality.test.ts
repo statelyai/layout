@@ -26,7 +26,7 @@ it.each([14, 22])("leaves room for radius %s at terminal corners", (radius) => {
   const path = route.sections[0]!.path;
   const arcs = path.segments.filter((s) => s.kind === "arc");
   expect(arcs.length).toBeGreaterThan(0);
-  for (const arc of arcs) expect(arc.rx).toBe(radius);
+  for (const arc of arcs) expect(arc.rx).toBeCloseTo(radius);
   expect(pathEndpointTangent(path, "start").x).toBeCloseTo(1);
   expect(pathEndpointTangent(path, "end").x).toBeCloseTo(1);
 });

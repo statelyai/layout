@@ -1180,10 +1180,14 @@ export function routeEdge(
           ? reverse(t.tangent)
           : t.tangent
         : vector(t.side),
-      length =
+      length = Math.max(
         config.clearance +
-        1 +
-        (!grouped && peers.length > 1 ? peers.indexOf(edge.id) : 0) * config.edgeSpacing;
+          1 +
+          (!grouped && peers.length > 1 ? peers.indexOf(edge.id) : 0) * config.edgeSpacing,
+        policy && curvePolicy.kind === "rounded-orthogonal"
+          ? (curvePolicy.radius ?? config.radius) * 2
+          : 0,
+      );
     return { x: t.point.x + v.x * length, y: t.point.y + v.y * length };
   };
   function guideConnection(a: Terminal, b: Terminal, via: readonly RoutePoint[] = []): RoutePath {
