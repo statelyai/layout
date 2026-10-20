@@ -47,6 +47,9 @@ import {
   bezierThroughPoints,
   catmullRomPath,
   pathEndpointTangent,
+  pathHasSelfIntersection,
+  pathCurveOvershoot,
+  limitBezierHandles,
   pathReverseTravel,
   placeFollowingLabel,
 } from "./policy-geometry";
@@ -996,6 +999,11 @@ export function routeEdge(
       return safe(checked, checkedContext);
     });
   }
+  const authoredCrossing =
+    loop ||
+    pathHasSelfIntersection(
+      pathFromPoints([source.point, ...(perEdge.waypoints ?? []), target.point]),
+    );
   function assessPath(
     path: RoutePath,
     a?: Terminal,
@@ -1011,6 +1019,7 @@ export function routeEdge(
       : 0;
     const valid =
       policyPathSafe(path) &&
+      (authoredCrossing || !pathHasSelfIntersection(path)) &&
       (!a?.tangent || directionMatches(pathEndpointTangent(path, "start"), a.tangent)) &&
       (!b?.tangent || directionMatches(pathEndpointTangent(path, "end"), b.tangent)) &&
       !(policy?.monotonic?.strength === "require" && reverseTravel > 1e-7);
@@ -1018,6 +1027,13 @@ export function routeEdge(
       valid,
       cost:
         pathCost(path, context) +
+        (curvePolicy.kind === "catmull-rom"
+          ? Math.max(0, path.segments.length - (perEdge.waypoints?.length ?? 0) - 1) *
+            context.bendPenalty
+          : 0) +
+        (!perEdge.waypoints?.length && !loop && path.segments.length > 1
+          ? pathCurveOvershoot(path) * 8
+          : 0) +
         (policy?.monotonic?.strength === "prefer" ? reverseTravel * 80 : 0),
     };
   }
@@ -1081,10 +1097,37 @@ export function routeEdge(
         const curvature = curvePolicy.curvature ?? 0.5;
         const requested = bezierThroughPoints(points, tangents, curvature);
         candidates.push(requested);
-        if (!assessPath(requested, a, b).valid) {
-          const alternatives = [0.5, 0.25, 0.125].map((scale) =>
-            bezierThroughPoints(points, tangents, curvature * scale),
-          );
+        if (
+          !assessPath(requested, a, b).valid ||
+          (!via.length && points.length > 2 && pathCurveOvershoot(requested) > 0.1)
+        ) {
+          const alternatives: RoutePath[] = [];
+          if (!via.length && points.length > 2) {
+            for (const ends of [
+              [true, false],
+              [false, true],
+              [true, true],
+            ]) {
+              const directions = new Map(tangents);
+              if (ends[0] && !a.tangent) directions.set(0, vector(a.side));
+              if (ends[1] && !b.tangent) directions.set(points.length - 1, reverse(vector(b.side)));
+              alternatives.push(
+                limitBezierHandles(bezierThroughPoints(points, directions, curvature)),
+              );
+            }
+          }
+          if (
+            !alternatives.some(
+              (path) => assessPath(path, a, b).valid && pathCurveOvershoot(path) < 0.1,
+            )
+          ) {
+            for (const scale of [0.5, 0.25, 0.125, 0.0625]) {
+              const alternative = bezierThroughPoints(points, tangents, curvature * scale);
+              alternatives.push(alternative);
+              if (assessPath(alternative, a, b).valid && pathCurveOvershoot(alternative) < 0.1)
+                break;
+            }
+          }
           candidates.push(...alternatives);
           if (!alternatives.some((path) => assessPath(path, a, b).valid)) {
             const unshaped = pathFromPoints(points);

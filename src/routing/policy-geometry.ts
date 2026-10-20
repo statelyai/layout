@@ -1,5 +1,5 @@
 import { splitBezier } from "./bezier-fit";
-import { arcCenter, distance } from "./path";
+import { arcCenter, distance, flattenPath } from "./path";
 import type { RouteBounds, RoutePath, RoutePoint, RouteSegment } from "./types";
 
 const subtract = (a: RoutePoint, b: RoutePoint): RoutePoint => ({ x: a.x - b.x, y: a.y - b.y });
@@ -98,6 +98,33 @@ export function bezierThroughPoints(
   };
 }
 
+export function limitBezierHandles(path: RoutePath): RoutePath {
+  const limit = (from: RoutePoint, control: RoutePoint, to: RoutePoint) => {
+    let factor = 1;
+    for (const axis of ["x", "y"] as const) {
+      const delta = control[axis] - from[axis];
+      if (delta) factor = Math.min(factor, Math.max(0, (to[axis] - from[axis]) / delta));
+    }
+    return interpolate(from, control, factor);
+  };
+  let from = path.start;
+  return {
+    start: path.start,
+    segments: path.segments.map((segment) => {
+      const result =
+        segment.kind === "cubic"
+          ? {
+              ...segment,
+              control1: limit(from, segment.control1, segment.to),
+              control2: limit(segment.to, segment.control2, from),
+            }
+          : segment;
+      from = segment.to;
+      return result;
+    }),
+  };
+}
+
 function segmentGeometry(start: RoutePoint, segment: RouteSegment) {
   if (segment.kind === "arc") {
     const arc = arcCenter(start, segment);
@@ -172,6 +199,62 @@ export function pathEndpointTangent(path: RoutePath, at: "start" | "end"): Route
     if (Math.hypot(direction.x, direction.y)) return direction;
   }
   return { x: 0, y: 0 };
+}
+
+export function pathHasSelfIntersection(path: RoutePath): boolean {
+  let start = path.start;
+  for (const segment of path.segments) {
+    if (segment.kind === "cubic") {
+      const a = add(
+        subtract(segment.to, scale(segment.control2, 3)),
+        subtract(scale(segment.control1, 3), start),
+      );
+      const b = scale(add(subtract(start, scale(segment.control1, 2)), segment.control2), 3);
+      const c = scale(subtract(segment.control1, start), 3);
+      const cross = (p: RoutePoint, q: RoutePoint) => p.x * q.y - p.y * q.x;
+      const determinant = cross(a, b);
+      if (Math.abs(determinant) > 1e-10) {
+        const sum = -cross(a, c) / determinant;
+        const product =
+          sum * sum +
+          (Math.abs(a.x) > Math.abs(a.y) ? (b.x * sum + c.x) / a.x : (b.y * sum + c.y) / a.y);
+        const discriminant = sum * sum - 4 * product;
+        if (discriminant > 1e-12) {
+          const root = Math.sqrt(discriminant);
+          if ((sum - root) / 2 > 1e-8 && (sum + root) / 2 < 1 - 1e-8) return true;
+        }
+      }
+    }
+    start = segment.to;
+  }
+  const points = flattenPath(path, { tolerance: 0.1 });
+  for (let i = 1; i < points.length; i++) {
+    const a = points[i - 1]!,
+      b = points[i]!;
+    for (let j = i + 2; j < points.length; j++) {
+      const c = points[j - 1]!,
+        d = points[j]!;
+      const ab = subtract(b, a),
+        cd = subtract(d, c),
+        ac = subtract(c, a);
+      const cross = ab.x * cd.y - ab.y * cd.x;
+      if (Math.abs(cross) <= 1e-10) continue;
+      const t = (ac.x * cd.y - ac.y * cd.x) / cross;
+      const u = (ac.x * ab.y - ac.y * ab.x) / cross;
+      if (t > 1e-8 && t < 1 - 1e-8 && u > 1e-8 && u < 1 - 1e-8) return true;
+    }
+  }
+  return false;
+}
+
+export function pathCurveOvershoot(path: RoutePath): number {
+  let start = path.start,
+    overshoot = 0;
+  for (const segment of path.segments) {
+    overshoot += pathReverseTravel({ start, segments: [segment] }, "both", start, segment.to);
+    start = segment.to;
+  }
+  return overshoot;
 }
 
 function quadraticRoots(a: number, b: number, c: number): number[] {
