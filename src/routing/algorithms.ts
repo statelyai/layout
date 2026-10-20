@@ -1150,39 +1150,42 @@ export function routeEdge(
       const normal = vector(a.side),
         lateral = { x: -normal.y, y: normal.x };
       const extent = config.clearance + config.edgeSpacing + 10;
-      const loops: { path: RoutePath; cramped: boolean }[] = [];
-      for (const reach of [extent, extent * 2, extent * 3, config.clearance + 1])
-        for (const width of [extent, extent * 2]) {
-          const at = (outward: number, across: number) => ({
-            x: a.point.x + normal.x * outward + lateral.x * across,
-            y: a.point.y + normal.y * outward + lateral.y * across,
-          });
-          loops.push({
-            cramped: reach < extent,
-            path: {
-              start: a.point,
-              segments: [
-                {
-                  kind: "cubic",
-                  control1: at(reach / 2, 0),
-                  control2: at(reach, -width),
-                  to: at(reach, 0),
-                },
-                {
-                  kind: "cubic",
-                  control1: at(reach, width),
-                  control2: at(reach / 2, 0),
-                  to: b.point,
-                },
-              ],
+      const makeLoop = (reach: number, width: number): RoutePath => {
+        const at = (outward: number, across: number) => ({
+          x: a.point.x + normal.x * outward + lateral.x * across,
+          y: a.point.y + normal.y * outward + lateral.y * across,
+        });
+        return {
+          start: a.point,
+          segments: [
+            {
+              kind: "cubic",
+              control1: at(reach / 2, 0),
+              control2: at(reach, -width),
+              to: at(reach, 0),
             },
-          });
-        }
+            { kind: "cubic", control1: at(reach, width), control2: at(reach / 2, 0), to: b.point },
+          ],
+        };
+      };
+      const loops: RoutePath[] = [];
+      for (const reach of [extent, extent * 2, extent * 3])
+        for (const width of [extent, extent * 2]) loops.push(makeLoop(reach, width));
       const viable = loops
-        .map(({ path, cramped }) => ({ path, cramped, ...assessPath(path, a, b) }))
+        .map((path) => ({ path, ...assessPath(path, a, b) }))
         .filter((candidate) => candidate.valid);
-      viable.sort((a, b) => Number(a.cramped) - Number(b.cramped) || a.cost - b.cost);
+      viable.sort((a, b) => a.cost - b.cost);
       if (viable.length) return viable[0]!.path;
+      for (const width of [extent * 2, extent * 3]) {
+        let low = 0,
+          high = extent;
+        for (let step = 0; step < 12; step++) {
+          const reach = (low + high) / 2;
+          if (assessPath(makeLoop(reach, width), a, b).valid) low = reach;
+          else high = reach;
+        }
+        if (low > 1) return makeLoop(low, width);
+      }
     }
     const guidePoints = [guide.start, ...guide.segments.map((part) => part.to)];
     const candidates: RoutePath[] = [];
