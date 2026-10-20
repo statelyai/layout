@@ -22,7 +22,7 @@ function pointLineDistance(p: RoutePoint, a: RoutePoint, b: RoutePoint): number 
 }
 type Arc = Extract<RouteSegment, { kind: "arc" }>;
 /** SVG endpoint-to-center conversion, including SVG's radius correction. */
-function arcCenter(start: RoutePoint, arc: Arc) {
+export function arcCenter(start: RoutePoint, arc: Arc) {
   let rx = Math.abs(arc.rx),
     ry = Math.abs(arc.ry);
   if (!rx || !ry || distance(start, arc.to) === 0) return undefined;
