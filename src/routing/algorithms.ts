@@ -897,33 +897,38 @@ export function routeEdge(
               });
       if (curvePolicy.kind === "rounded-orthogonal" && tangent?.kind !== "vector")
         labelDirection = reverse(vector(firstTarget.side));
-      const middle = center(label),
-        direction = labelDirection;
-      const extent = Math.min(
-        direction.x ? label.width / (2 * Math.abs(direction.x)) : Infinity,
-        direction.y ? label.height / (2 * Math.abs(direction.y)) : Infinity,
-      );
-      const enter = { x: middle.x - direction.x * extent, y: middle.y - direction.y * extent };
-      const leave = { x: middle.x + direction.x * extent, y: middle.y + direction.y * extent };
-      const horizontalFace =
-        Math.abs(direction.x) / label.width >= Math.abs(direction.y) / label.height;
-      firstTarget.side = horizontalFace
-        ? direction.x > 0
-          ? "left"
-          : "right"
-        : direction.y > 0
-          ? "top"
-          : "bottom";
-      lastSource.side = horizontalFace
-        ? direction.x > 0
-          ? "right"
-          : "left"
-        : direction.y > 0
-          ? "bottom"
-          : "top";
-      firstTarget.point = policy.label.kind === "through" ? middle : enter;
-      lastSource.point = policy.label.kind === "through" ? middle : leave;
-      firstTarget.tangent = lastSource.tangent = direction;
+      const direction = labelDirection;
+      if (policy.label.kind === "gap" && tangent?.kind === "border-normal") {
+        firstTarget.tangent = reverse(vector(firstTarget.side));
+        lastSource.tangent = vector(lastSource.side);
+      } else {
+        const middle = center(label);
+        const extent = Math.min(
+          direction.x ? label.width / (2 * Math.abs(direction.x)) : Infinity,
+          direction.y ? label.height / (2 * Math.abs(direction.y)) : Infinity,
+        );
+        const enter = { x: middle.x - direction.x * extent, y: middle.y - direction.y * extent };
+        const leave = { x: middle.x + direction.x * extent, y: middle.y + direction.y * extent };
+        const horizontalFace =
+          Math.abs(direction.x) / label.width >= Math.abs(direction.y) / label.height;
+        firstTarget.side = horizontalFace
+          ? direction.x > 0
+            ? "left"
+            : "right"
+          : direction.y > 0
+            ? "top"
+            : "bottom";
+        lastSource.side = horizontalFace
+          ? direction.x > 0
+            ? "right"
+            : "left"
+          : direction.y > 0
+            ? "bottom"
+            : "top";
+        firstTarget.point = policy.label.kind === "through" ? middle : enter;
+        lastSource.point = policy.label.kind === "through" ? middle : leave;
+        firstTarget.tangent = lastSource.tangent = direction;
+      }
       if (
         perEdge.labelSides &&
         (!perEdge.labelSides.includes(firstTarget.side) ||
@@ -1639,7 +1644,14 @@ export function routeEdge(
         oldSections!.at(-2)?.path.segments.at(-1)?.to ?? oldFirst.start,
         firstTarget.point,
       ) < 1e-7 &&
-        distance(oldLast.start, lastSource.point) < 1e-7));
+        distance(oldLast.start, lastSource.point) < 1e-7 &&
+        (!firstTarget.tangent ||
+          directionMatches(
+            pathEndpointTangent(oldSections!.at(-2)!.path, "end"),
+            firstTarget.tangent,
+          )) &&
+        (!lastSource.tangent ||
+          directionMatches(pathEndpointTangent(oldLast, "start"), lastSource.tangent))));
   futureTargetCorridor = corridor;
   if (reusable) {
     sections.push(...oldSections!);
@@ -1744,8 +1756,8 @@ export function routeEdge(
       if (
         !incoming ||
         !outgoing ||
-        !directionMatches(pathEndpointTangent(incoming, "end"), labelDirection) ||
-        !directionMatches(pathEndpointTangent(outgoing, "start"), labelDirection)
+        !directionMatches(pathEndpointTangent(incoming, "end"), firstTarget.tangent!) ||
+        !directionMatches(pathEndpointTangent(outgoing, "start"), lastSource.tangent!)
       )
         report(
           "CONSTRAINT_VIOLATION",

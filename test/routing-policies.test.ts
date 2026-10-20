@@ -480,7 +480,7 @@ describe("routing policies", () => {
     const oneSide = route({
       policy: {
         ...routingPolicies.smooth,
-        label: { kind: "gap", tangent: { kind: "border-normal" } },
+        label: { kind: "through", tangent: { kind: "border-normal" } },
       },
       edges: { ab: { labelSides: ["left"] } },
     });

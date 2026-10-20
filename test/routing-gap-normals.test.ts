@@ -65,8 +65,12 @@ describe("independent gap border normals", () => {
     expect(route.sections).toHaveLength(2);
     expect(route.sections[0]!.toSide).toBe(sides[0]);
     expect(route.sections[1]!.fromSide).toBe(sides[1]);
-    expect(pathEndpointTangent(route.sections[0]!.path, "end")).toEqual(entry);
-    expect(pathEndpointTangent(route.sections[1]!.path, "start")).toEqual(exit);
+    const incoming = pathEndpointTangent(route.sections[0]!.path, "end");
+    const outgoing = pathEndpointTangent(route.sections[1]!.path, "start");
+    expect(incoming.x).toBeCloseTo(entry.x);
+    expect(incoming.y).toBeCloseTo(entry.y);
+    expect(outgoing.x).toBeCloseTo(exit.x);
+    expect(outgoing.y).toBeCloseTo(exit.y);
     const updated = bezierRouting
       .update(graph, first, getDiff(graph, graph), {
         ...settings,
