@@ -809,7 +809,7 @@ export function routeEdge(
           ]),
           metrics,
           batch,
-          config.radius * 2 + lane * config.edgeSpacing,
+          config.radius * (style === "organic" ? 1 : 2) + lane * config.edgeSpacing,
         )
       : context;
   let monotonicSource = source,

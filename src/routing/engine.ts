@@ -221,7 +221,14 @@ function calculate(
             const node = state.nodes.get(id),
               bounds = node && worldRect(node, state);
             return bounds
-              ? [inflate(bounds, state.settings.clearance + state.settings.edgeSpacing * 2 + 1)]
+              ? [
+                  inflate(
+                    bounds,
+                    state.settings.clearance +
+                      (style === "organic" ? 0 : state.settings.edgeSpacing * 2) +
+                      1,
+                  ),
+                ]
               : [];
           });
         let segments = segmentCache.get(otherId);
