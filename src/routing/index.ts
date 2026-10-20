@@ -60,6 +60,11 @@ export type {
   RoutingGraph,
   RoutingMetrics,
   RoutingSettings,
+  RoutingPolicy,
+  RoutingCurve,
+  RoutingTangent,
+  RoutingLabel,
+  RouteLabelPlacement,
   RoutingSnapshot,
   RoutingStrategy,
   RoutingUpdate,
@@ -74,3 +79,5 @@ export {
 } from "./adapters";
 
 export { trimBezierPathStart } from "./bezier-fit";
+
+export { routingPolicies } from "./model";

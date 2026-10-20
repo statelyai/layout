@@ -45,13 +45,30 @@ export type RoutingDiagnosticCode =
   | "ROUTE_CONFLICT"
   | "ROUTE_BLOCKED"
   | "SEARCH_BUDGET"
-  | "CONSTRAINT_VIOLATION";
+  | "CONSTRAINT_VIOLATION"
+  | "LABEL_OVERLAP";
 export interface RoutingDiagnostic {
   readonly code: RoutingDiagnosticCode;
   readonly edgeId: string;
   readonly message: string;
+  readonly constraint?:
+    | "source-tangent"
+    | "target-tangent"
+    | "label-tangent"
+    | "waypoints"
+    | "node-clearance"
+    | "label-clearance"
+    | "monotonicity"
+    | "bundle";
+  readonly relatedIds?: readonly string[];
+}
+export interface RouteLabelPlacement {
+  readonly bounds: RouteBounds;
+  readonly anchor: RoutePoint;
+  readonly tangent: RoutePoint;
 }
 export interface Route {
+  readonly label?: RouteLabelPlacement;
   readonly edgeId: string;
   readonly sections: readonly RouteSection[];
   readonly status: "routed" | "fallback";
@@ -93,7 +110,39 @@ export interface BezierEdgeSettings extends BezierRoutingOptions {
   readonly labelTangent?: RoutePoint;
   readonly disabled?: boolean;
 }
+export type RoutingTangent =
+  | { readonly kind: "automatic" }
+  | { readonly kind: "border-normal" }
+  | { readonly kind: "vector"; readonly direction: RoutePoint };
+export type RoutingCurve =
+  | { readonly kind: "polyline" }
+  | { readonly kind: "bezier"; readonly curvature?: number }
+  | { readonly kind: "catmull-rom" }
+  | { readonly kind: "rounded-orthogonal"; readonly radius?: number };
+export type RoutingLabel =
+  | { readonly kind: "follow"; readonly fraction?: number; readonly offset?: number }
+  | { readonly kind: "fixed" }
+  | { readonly kind: "through"; readonly tangent?: RoutingTangent }
+  | { readonly kind: "gap"; readonly tangent?: RoutingTangent };
+export interface RoutingPolicy {
+  readonly curve?: RoutingCurve;
+  readonly sourceTangent?: RoutingTangent;
+  readonly targetTangent?: RoutingTangent;
+  readonly label?: RoutingLabel;
+  readonly collisions?: {
+    readonly nodes?: "avoid" | "allow";
+    readonly labels?: "avoid" | "allow";
+    readonly crossingPenalty?: number;
+    readonly overlapPenalty?: number;
+  };
+  readonly monotonic?: {
+    readonly axis: "x" | "y" | "both";
+    readonly strength: "prefer" | "require";
+  };
+  readonly stability?: { readonly kind: "recompute" | "preserve-valid" };
+}
 export interface EdgeRoutingSettings {
+  readonly policy?: RoutingPolicy;
   /** Resolve the source from this edge label in the current graph geometry. */
   readonly sourceLabel?: string;
   readonly sourceSides?: readonly RouteSide[];
@@ -109,6 +158,7 @@ export interface EdgeRoutingSettings {
   readonly group?: string;
 }
 export interface RoutingSettings {
+  readonly policy?: RoutingPolicy;
   /** Opt into center-tangent Bézier routing and floating attachments. */
   readonly bezier?: BezierRoutingOptions;
   /** Native compound geometry is parent-relative; adapters may supply resolved world geometry. */

@@ -2,7 +2,15 @@ import { routeEdge, type Batch, type Metrics, type RoutingInput } from "./algori
 import { fitBezierTransition } from "./bezier-fit";
 import { pathReservations } from "./coordination";
 import { ancestors, center, labelRect, sideToward, worldRect, type EdgeGeometry } from "./model";
-import { distance, flattenPath, pathFromPoints, roundCorners, segmentCrossesRect } from "./path";
+import {
+  distance,
+  flattenPath,
+  getPathBounds,
+  pathFromPoints,
+  roundCorners,
+  segmentCrossesRect,
+} from "./path";
+import { inflate, union } from "./spatial";
 import type {
   BezierEndpoint,
   BezierGuide,
@@ -362,10 +370,17 @@ export function routeBezierEdge(
     if (suppliedGuides) candidates.push(fit(retrySource, retryTarget, false));
   }
   const assess = (candidate: { source: BezierGuide; target: BezierGuide }) => {
-    if (!valid(candidate)) return [];
-    const segments = [candidate.source, candidate.target].flatMap((guide) =>
-      pathReservations(guide.path ?? pathFromPoints(guide.points)),
+    const paths = [candidate.source, candidate.target].map(
+      (guide) => guide.path ?? pathFromPoints(guide.points),
     );
+    for (const path of paths) {
+      const bounds = inflate(getPathBounds(path), state.settings.clearance);
+      batch.dependencyBounds = batch.dependencyBounds
+        ? union(batch.dependencyBounds, bounds)
+        : bounds;
+    }
+    if (!valid(candidate)) return [];
+    const segments = paths.flatMap(pathReservations);
     const conflicts = segments.reduce(
       (cost, segment) => cost + (batch.edgeCost?.(segment.a, segment.b) ?? 0),
       0,

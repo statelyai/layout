@@ -1,7 +1,15 @@
 import type { GraphEdge } from "@statelyai/graph";
 import { PersistentMap } from "./persistent";
 import { SpatialIndex } from "./spatial";
-import type { Route, RouteBounds, RoutePoint, RoutingSettings, RouteSide } from "./types";
+import type {
+  Route,
+  RouteBounds,
+  RoutePoint,
+  RoutingSettings,
+  RouteSide,
+  RoutingPolicy,
+  RoutingTangent,
+} from "./types";
 export interface NodeGeometry {
   readonly id: string;
   readonly parentId?: string | null;
@@ -29,6 +37,7 @@ export interface EdgeGeometry {
   readonly height?: number;
 }
 export interface Settings {
+  readonly policy?: RoutingPolicy;
   readonly bezier: RoutingSettings["bezier"];
   readonly coordinateSpace: "parent" | "world";
   readonly clearance: number;
@@ -43,6 +52,7 @@ export interface Settings {
 }
 export function settings(input: RoutingSettings = {}): Settings {
   const result = {
+    policy: normalizePolicy(input.policy),
     bezier: structuredClone(input.bezier),
     coordinateSpace: input.coordinateSpace ?? "parent",
     clearance: input.clearance ?? 8,
@@ -72,6 +82,10 @@ export function settings(input: RoutingSettings = {}): Settings {
       throw new RangeError("Bézier targetClearance must be finite and non-negative");
   }
   for (const edge of Object.values(result.edges)) {
+    if (edge.policy) Object.assign(edge, { policy: normalizePolicy(edge.policy) });
+    for (const point of edge.waypoints ?? [])
+      if (!Number.isFinite(point.x) || !Number.isFinite(point.y))
+        throw new RangeError("Waypoints must be finite");
     const tangent = edge.bezier?.labelTangent;
     if (
       tangent &&
@@ -235,3 +249,132 @@ export function groupKey(edge: EdgeGeometry, style: string, config: Settings): s
       : `source:${JSON.stringify([edge.sourceId, edge.sourcePort ?? null])}`;
   return `pair:${JSON.stringify([edge.sourceId, edge.targetId].sort())}`;
 }
+
+function normalizePolicy(input: RoutingPolicy | undefined): RoutingPolicy | undefined {
+  if (!input) return;
+  const value = structuredClone(input);
+  const nonnegative = (n: number | undefined, name: string) => {
+    if (n !== undefined && (!Number.isFinite(n) || n < 0))
+      throw new RangeError(`${name} must be finite and non-negative`);
+  };
+  function tangent(t: RoutingTangent | undefined): RoutingTangent | undefined {
+    if (t?.kind !== "vector") return t;
+    const { x, y } = t.direction,
+      length = Math.hypot(x, y);
+    if (!Number.isFinite(x) || !Number.isFinite(y) || !Number.isFinite(length) || !length)
+      throw new RangeError("Tangent direction must be finite and nonzero");
+    return { kind: "vector", direction: { x: x / length, y: y / length } };
+  }
+  if (value.curve?.kind === "bezier") nonnegative(value.curve.curvature, "curvature");
+  if (value.curve?.kind === "rounded-orthogonal") nonnegative(value.curve.radius, "radius");
+  nonnegative(value.collisions?.crossingPenalty, "crossingPenalty");
+  nonnegative(value.collisions?.overlapPenalty, "overlapPenalty");
+  if (value.label?.kind === "follow") {
+    const { fraction = 0.5, offset = 0 } = value.label;
+    if (!Number.isFinite(fraction) || fraction < 0 || fraction > 1)
+      throw new RangeError("Label fraction must be in [0, 1]");
+    if (!Number.isFinite(offset)) throw new RangeError("Label offset must be finite");
+  }
+  return freeze({
+    ...value,
+    ...(value.sourceTangent ? { sourceTangent: tangent(value.sourceTangent) } : {}),
+    ...(value.targetTangent ? { targetTangent: tangent(value.targetTangent) } : {}),
+    ...(value.label?.kind === "through" || value.label?.kind === "gap"
+      ? {
+          label: {
+            ...value.label,
+            ...(value.label.tangent ? { tangent: tangent(value.label.tangent) } : {}),
+          },
+        }
+      : {}),
+  });
+}
+export function effectivePolicy(config: Settings, edgeId: string): RoutingPolicy | undefined {
+  const edge = config.edges[edgeId],
+    local = edge?.policy,
+    global = config.policy;
+  if (!local && !global) return;
+  const legacyAttachment = edge?.bezier?.attachmentMode;
+  const legacyTangent: RoutingTangent | undefined =
+    legacyAttachment === "orthogonal"
+      ? { kind: "border-normal" }
+      : legacyAttachment === "floating"
+        ? { kind: "automatic" }
+        : undefined;
+  let label = local?.label ?? global?.label;
+  const legacyLabel = edge?.bezier?.labelTangent;
+  if (!local?.label && legacyLabel && (label?.kind === "through" || label?.kind === "gap")) {
+    const length = Math.hypot(legacyLabel.x, legacyLabel.y);
+    label = {
+      ...label,
+      tangent: {
+        kind: "vector",
+        direction: { x: legacyLabel.x / length, y: legacyLabel.y / length },
+      },
+    };
+  }
+  return {
+    curve: local?.curve ?? global?.curve,
+    sourceTangent: local?.sourceTangent ?? legacyTangent ?? global?.sourceTangent,
+    targetTangent: local?.targetTangent ?? legacyTangent ?? global?.targetTangent,
+    label,
+    collisions: {
+      nodes: local?.collisions?.nodes ?? global?.collisions?.nodes ?? "avoid",
+      labels: local?.collisions?.labels ?? global?.collisions?.labels ?? "avoid",
+      crossingPenalty:
+        local?.collisions?.crossingPenalty ??
+        global?.collisions?.crossingPenalty ??
+        config.crossingPenalty,
+      overlapPenalty:
+        local?.collisions?.overlapPenalty ??
+        global?.collisions?.overlapPenalty ??
+        config.overlapPenalty,
+    },
+    monotonic: local?.monotonic ?? global?.monotonic,
+    stability: local?.stability ?? global?.stability,
+  };
+}
+export function obstacleLabelRect(
+  edge: EdgeGeometry,
+  state: Pick<State, "nodes" | "settings">,
+): RouteBounds | undefined {
+  return effectivePolicy(state.settings, edge.id)?.label?.kind === "follow"
+    ? undefined
+    : labelRect(edge, state);
+}
+const presetCollisions = {
+  nodes: "avoid",
+  labels: "avoid",
+  crossingPenalty: 80,
+  overlapPenalty: 8,
+} as const;
+export const routingPolicies: Readonly<{
+  smooth: RoutingPolicy;
+  diagram: RoutingPolicy;
+  authored: RoutingPolicy;
+}> = freeze({
+  smooth: {
+    curve: { kind: "bezier", curvature: 0.5 },
+    sourceTangent: { kind: "automatic" },
+    targetTangent: { kind: "automatic" },
+    label: { kind: "follow", fraction: 0.5 },
+    collisions: presetCollisions,
+    stability: { kind: "recompute" },
+  },
+  diagram: {
+    curve: { kind: "rounded-orthogonal", radius: 10 },
+    sourceTangent: { kind: "border-normal" },
+    targetTangent: { kind: "border-normal" },
+    label: { kind: "follow", fraction: 0.5 },
+    collisions: presetCollisions,
+    stability: { kind: "recompute" },
+  },
+  authored: {
+    curve: { kind: "catmull-rom" },
+    sourceTangent: { kind: "automatic" },
+    targetTangent: { kind: "automatic" },
+    label: { kind: "follow", fraction: 0.5 },
+    collisions: presetCollisions,
+    stability: { kind: "recompute" },
+  },
+});

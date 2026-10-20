@@ -7,7 +7,8 @@ import {
   edgeGeometry,
   freeze,
   groupKey,
-  labelRect,
+  obstacleLabelRect,
+  effectivePolicy,
   members,
   nodeGeometry,
   settings,
@@ -86,7 +87,7 @@ function initialState(graph: RoutingGraph, config: RoutingSettings, style: Route
     state = { ...state, obstacles: state.obstacles.set(`n:${id}`, worldRect(n, state)) };
   for (const [id, e] of edges) {
     state = edgeMembership(state, e, style, true);
-    state = { ...state, obstacles: state.obstacles.set(`e:${id}`, labelRect(e, state)) };
+    state = { ...state, obstacles: state.obstacles.set(`e:${id}`, obstacleLabelRect(e, state)) };
   }
   return state;
 }
@@ -112,22 +113,18 @@ function calculate(
       plans: new Map(),
     };
   const pending = new Set(affected);
-  if (style === "bezier") {
-    expandLabelFamilies(pending, input);
-    if (previous) expandLabelFamilies(pending, previous);
-  }
+  expandLabelFamilies(pending, input);
+  if (previous) expandLabelFamilies(pending, previous);
   const processed = new Set<string>();
   const familyDepth = new Map<string, number>();
   const familyRoots = new Map<string, string>();
-  if (style === "bezier") {
-    for (const [id, config] of Object.entries(state.settings.edges)) {
-      if (config.sourceLabel === undefined) continue;
-      const family = labelFamily(id, input);
-      for (let index = 0; index < family.length; index++) {
-        const member = family[index]!;
-        familyRoots.set(member, family.at(-1)!);
-        familyDepth.set(member, family.length - index);
-      }
+  for (const [id, config] of Object.entries(state.settings.edges)) {
+    if (config.sourceLabel === undefined) continue;
+    const family = labelFamily(id, input);
+    for (let index = 0; index < family.length; index++) {
+      const member = family[index]!;
+      familyRoots.set(member, family.at(-1)!);
+      familyDepth.set(member, family.length - index);
     }
   }
   const priorities = new Map<string, string>();
@@ -157,10 +154,8 @@ function calculate(
     for (const candidate of routeIndex.query(inflate(bounds, state.settings.edgeSpacing))) {
       if (!later(candidate, id) || processed.has(candidate)) continue;
       pending.add(candidate);
-      if (style === "bezier") {
-        expandLabelFamilies(pending, input);
-        for (const done of processed) pending.delete(done);
-      }
+      expandLabelFamilies(pending, input);
+      for (const done of processed) pending.delete(done);
       const edge = state.edges.get(candidate);
       const key = edge && groupKey(edge, style, state.settings);
       if (key)
@@ -250,9 +245,11 @@ function calculate(
       }
       return result;
     };
+    batch.policy = effectivePolicy(state.settings, id);
+    const costSettings = { ...state.settings, ...batch.policy?.collisions };
     batch.edgeCost = (a, b) =>
       query(segmentBounds(a, b)).reduce(
-        (cost, other) => cost + conflictCost(a, b, other, state.settings),
+        (cost, other) => cost + conflictCost(a, b, other, costSettings),
         0,
       );
     batch.conflicts = (a, b) =>
@@ -263,8 +260,13 @@ function calculate(
       );
     batch.guides = (bounds) =>
       query(bounds).map((segment) => reservationBounds(segment, state.settings.edgeSpacing));
+    batch.routes = routes;
+    batch.previous = oldRoute;
+    batch.previousSettings = previous?.settings;
     let route =
-      style === "bezier"
+      style === "bezier" &&
+      !batch.policy &&
+      !routes.get(state.settings.edges[id]?.sourceLabel ?? "")?.label
         ? routeBezierEdge(edge, input, routes, counts, batch)
         : routeEdge(edge, input, style, counts, batch);
     if (oldRoute && JSON.stringify(oldRoute) === JSON.stringify(route)) route = oldRoute;
@@ -419,7 +421,7 @@ function updateState(
   }
   for (const id of changedEdges) {
     const edge = state.edges.get(id);
-    invalidateObstacle(`e:${id}`, edge && labelRect(edge, state));
+    invalidateObstacle(`e:${id}`, edge && obstacleLabelRect(edge, state));
     affected.add(id);
   }
   // Terminal placement depends on current incident edges, including neighbors
@@ -455,10 +457,8 @@ function updateState(
       if (key !== undefined)
         for (const peer of version.groups.get(key)?.keys() ?? []) affected.add(peer);
     }
-  if (style === "bezier") {
-    expandLabelFamilies(affected, prior);
-    expandLabelFamilies(affected, state);
-  }
+  expandLabelFamilies(affected, prior);
+  expandLabelFamilies(affected, state);
   return { state, affected };
 }
 export function createRoutingStrategy(id: RouteStyle): NativeRoutingStrategy {
