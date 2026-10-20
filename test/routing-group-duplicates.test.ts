@@ -24,8 +24,10 @@ it.each([busRouting, fanRouting, bundleRouting])(
     expect(first.sections.at(-1)!.path.segments.at(-1)!.to).not.toEqual(
       second.sections.at(-1)!.path.segments.at(-1)!.to,
     );
-    expect(first.sections.filter((s) => s.sharedId)).toEqual(
-      second.sections.filter((s) => s.sharedId),
+    expect(
+      first.sections.filter((s) => s.sharedId).map(({ sharedId, path }) => ({ sharedId, path })),
+    ).toEqual(
+      second.sections.filter((s) => s.sharedId).map(({ sharedId, path }) => ({ sharedId, path })),
     );
     const moved = createGraph({
       ...graph,

@@ -523,15 +523,33 @@ export function routeEdge(
           ),
         };
     }
+    const duplicateTargets =
+      !source && grouped
+        ? peers.filter((id) => {
+            const peer = state.edges.get(id)!;
+            const options = config.edges[id];
+            return (
+              peer.targetId === edge.targetId &&
+              peer.targetPort === undefined &&
+              options?.targetSide === undefined &&
+              options?.targetAttachment === undefined
+            );
+          })
+        : [];
     if (
       !attachment &&
       name === undefined &&
       !(source && parentLabel) &&
-      !["bus", "fan", "bundle"].includes(style) &&
+      (!["bus", "fan", "bundle"].includes(style) ||
+        (duplicateTargets.length > 1 && duplicateTargets.includes(edge.id))) &&
       !loop
     ) {
       const nodeId = source ? edge.sourceId : edge.targetId;
-      const adjacent = [...(state.incident.get(nodeId)?.keys() ?? [])].filter((id) => {
+      const adjacent = (
+        duplicateTargets.length > 1
+          ? duplicateTargets
+          : [...(state.incident.get(nodeId)?.keys() ?? [])]
+      ).filter((id) => {
         const e = state.edges.get(id)!;
         if (e.sourceId === e.targetId) return false;
         const from = e.sourceId === nodeId;
