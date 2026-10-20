@@ -72,129 +72,280 @@ describe("routing policies", () => {
         { id: "edge-d", sourceId: "node-1", targetId: "node-4" },
       ],
     });
-    const result = orthogonalRouting.route(input, {
-      maxSearchNodes: 8000,
-      policy: {
-        curve: { kind: "bezier" },
-        sourceTangent: { kind: "border-normal" },
-        targetTangent: { kind: "border-normal" },
-      },
-    }).routes.get("edge-c")!;
+    const result = orthogonalRouting
+      .route(input, {
+        maxSearchNodes: 8000,
+        policy: {
+          curve: { kind: "bezier" },
+          sourceTangent: { kind: "border-normal" },
+          targetTangent: { kind: "border-normal" },
+        },
+      })
+      .routes.get("edge-c")!;
     expect(result.sections.length).toBeGreaterThan(0);
     noCollision(result, { x: 260, y: 262, width: 79, height: 53 });
   });
   it("preserves an authored corner when rounding", () => {
-    const input = createGraph({ id: "authored-corner", nodes: [
-      { id: "a", x: 0, y: 0, width: 40, height: 40 },
-      { id: "b", x: 300, y: 100, width: 40, height: 40 },
-    ], edges: [{ id: "ab", sourceId: "a", targetId: "b" }] });
+    const input = createGraph({
+      id: "authored-corner",
+      nodes: [
+        { id: "a", x: 0, y: 0, width: 40, height: 40 },
+        { id: "b", x: 300, y: 100, width: 40, height: 40 },
+      ],
+      edges: [{ id: "ab", sourceId: "a", targetId: "b" }],
+    });
     const point = { x: 80, y: 20 };
-    const result = orthogonalRouting.route(input, {
-      policy: { curve: { kind: "rounded-orthogonal", radius: 20 } },
-      edges: { ab: { waypoints: [point] } },
-    }).routes.get("ab")!;
+    const result = orthogonalRouting
+      .route(input, {
+        policy: { curve: { kind: "rounded-orthogonal", radius: 20 } },
+        edges: { ab: { waypoints: [point] } },
+      })
+      .routes.get("ab")!;
     expect(result.status).toBe("routed");
-    expect(result.sections.flatMap(s => [s.path.start, ...s.path.segments.map(p => p.to)])).toContainEqual(point);
+    expect(
+      result.sections.flatMap((s) => [s.path.start, ...s.path.segments.map((p) => p.to)]),
+    ).toContainEqual(point);
   });
   it("does not promote an unshaped fallback when preserving a prior route", () => {
-    const input = createGraph({ id: "fallback-reuse", nodes: [
-      { id: "a", x: 0, y: 0, width: 40, height: 40 },
-      { id: "b", x: 80, y: 100, width: 40, height: 40 },
-      { id: "block", x: 40, y: 80, width: 40, height: 40 },
-    ], edges: [{ id: "ab", sourceId: "a", targetId: "b" }] });
-    const settings: RoutingSettings = {policy: {...routingPolicies.smooth, stability: {kind: "preserve-valid"}}};
-    const before = bezierRouting.route(input, settings);
-    const after = bezierRouting.update(input, before, getDiff(input, input), {
-      policy: {...settings.policy, collisions: {crossingPenalty: 900}},
-    }).snapshot.routes.get("ab")!;
-    expect(before.routes.get("ab")!.status).toBe("fallback");
-    {
-      expect(after.status).toBe("fallback");
-      expect(after.diagnostics).toContainEqual(expect.objectContaining({code: "CONSTRAINT_VIOLATION"}));
-    }
-  });
-  it.each([bezierRouting, straightRouting, orthogonalRouting, polylineRouting, curvedRouting,
-    organicRouting, parallelRouting, octilinearRouting, bundleRouting, busRouting, fanRouting, selfLoopRouting])(
-    "$id uses smooth policy guides around obstacles", strategy => {
-      const input = createGraph({id: "override", nodes: [
-        {id: "a", x: 0, y: 0, width: 40, height: 40},
-        {id: "b", x: 300, y: 0, width: 40, height: 40},
-        {id: "block", x: 120, y: -20, width: 60, height: 80},
-      ], edges: [{id: "ab", sourceId: "a", targetId: "b"}]});
-      const result = strategy.route(input, {policy: routingPolicies.smooth}).routes.get("ab")!;
-      expect(result.status).toBe("routed");
-      expect(result.sections.flatMap(s => s.path.segments).every(s => s.kind === "cubic")).toBe(true);
-      noCollision(result, {x: 112, y: -28, width: 76, height: 96});
+    const input = createGraph({
+      id: "fallback-reuse",
+      nodes: [
+        { id: "a", x: 0, y: 0, width: 40, height: 40 },
+        { id: "b", x: 80, y: 100, width: 40, height: 40 },
+        { id: "block", x: 40, y: 80, width: 40, height: 40 },
+      ],
+      edges: [{ id: "ab", sourceId: "a", targetId: "b" }],
     });
+    const settings: RoutingSettings = {
+      policy: { ...routingPolicies.smooth, stability: { kind: "preserve-valid" } },
+    };
+    const before = bezierRouting.route(input, settings);
+    const after = bezierRouting
+      .update(input, before, getDiff(input, input), {
+        policy: { ...settings.policy, collisions: { crossingPenalty: 900 } },
+      })
+      .snapshot.routes.get("ab")!;
+    expect(before.routes.get("ab")!.status).toBe("fallback");
+    expect(after.status).toBe("fallback");
+    expect(after.diagnostics).toContainEqual(
+      expect.objectContaining({ code: "CONSTRAINT_VIOLATION" }),
+    );
+  });
+  it.each([
+    bezierRouting,
+    straightRouting,
+    orthogonalRouting,
+    polylineRouting,
+    curvedRouting,
+    organicRouting,
+    parallelRouting,
+    octilinearRouting,
+    bundleRouting,
+    busRouting,
+    fanRouting,
+    selfLoopRouting,
+  ])("$id uses smooth policy guides around obstacles", (strategy) => {
+    const input = createGraph({
+      id: "override",
+      nodes: [
+        { id: "a", x: 0, y: 0, width: 40, height: 40 },
+        { id: "b", x: 300, y: 0, width: 40, height: 40 },
+        { id: "block", x: 120, y: -20, width: 60, height: 80 },
+      ],
+      edges: [{ id: "ab", sourceId: "a", targetId: "b" }],
+    });
+    const result = strategy.route(input, { policy: routingPolicies.smooth }).routes.get("ab")!;
+    expect(result.status).toBe("routed");
+    expect(result.sections.flatMap((s) => s.path.segments).every((s) => s.kind === "cubic")).toBe(
+      true,
+    );
+    noCollision(result, { x: 112, y: -28, width: 76, height: 96 });
+  });
   it("updates follower overlap diagnostics in canonical routing order", () => {
-    const input = createGraph({id: "follower-overlap", nodes: [
-      {id: "a1", x: 0, y: 0, width: 40, height: 40},
-      {id: "a2", x: 300, y: 0, width: 40, height: 40},
-      {id: "b1", x: 0, y: 300, width: 40, height: 40},
-      {id: "b2", x: 300, y: 300, width: 40, height: 40},
-    ], edges: [
-      {id: "a", sourceId: "a1", targetId: "a2", width: 40, height: 20},
-      {id: "z", sourceId: "b1", targetId: "b2", width: 40, height: 20},
-    ]});
-    const moved = {...input, nodes: input.nodes.map(node => node.id.startsWith("a") ? {...node, y: node.y! + 30} : node)};
-    const settings: RoutingSettings = {policy: routingPolicies.smooth, edges: {
-      a: {policy: {label: {kind: "follow", offset: 120}}},
-      z: {policy: {label: {kind: "follow", offset: -140}}},
-    }};
+    const input = createGraph({
+      id: "follower-overlap",
+      nodes: [
+        { id: "a1", x: 0, y: 0, width: 40, height: 40 },
+        { id: "a2", x: 300, y: 0, width: 40, height: 40 },
+        { id: "b1", x: 0, y: 300, width: 40, height: 40 },
+        { id: "b2", x: 300, y: 300, width: 40, height: 40 },
+      ],
+      edges: [
+        { id: "a", sourceId: "a1", targetId: "a2", width: 40, height: 20 },
+        { id: "z", sourceId: "b1", targetId: "b2", width: 40, height: 20 },
+      ],
+    });
+    const moved = {
+      ...input,
+      nodes: input.nodes.map((node) =>
+        node.id.startsWith("a") ? { ...node, y: node.y! + 30 } : node,
+      ),
+    };
+    const settings: RoutingSettings = {
+      policy: routingPolicies.smooth,
+      edges: {
+        a: { policy: { label: { kind: "follow", offset: 120 } } },
+        z: { policy: { label: { kind: "follow", offset: -140 } } },
+      },
+    };
     const initial = bezierRouting.route(input, settings);
     const update = bezierRouting.update(moved, initial, getDiff(input, moved)).snapshot;
     const fresh = bezierRouting.route(moved, settings);
     expect([...update.routes]).toEqual([...fresh.routes]);
     expect(update.routes.get("a")!.diagnostics).toEqual([]);
-    expect(update.routes.get("z")!.diagnostics).toContainEqual(expect.objectContaining({code: "LABEL_OVERLAP", relatedIds: ["e:a"]}));
+    expect(update.routes.get("z")!.diagnostics).toContainEqual(
+      expect.objectContaining({ code: "LABEL_OVERLAP", relatedIds: ["e:a"] }),
+    );
     const restored = bezierRouting.update(input, update, getDiff(moved, input)).snapshot;
     expect([...restored.routes]).toEqual([...initial.routes]);
   });
-  it.each(["source", "target"] as const)("escapes an interior %s port without permitting owner reentry", endpoint => {
-    const input = createGraph({id: "interior-port", nodes: [
-      {id: "a", x: 0, y: 0, width: 40, height: 40, ports: [{name: "p", x: 20, y: 20}]},
-      {id: "b", x: 200, y: 0, width: 40, height: 40, ports: [{name: "p", x: 20, y: 20}]},
-    ], edges: [{id: "ab", sourceId: "a", targetId: "b", ...(endpoint === "source" ? {sourcePort: "p"} : {targetPort: "p"})}]});
-    const settings: RoutingSettings = {policy: routingPolicies.smooth, edges: {ab: {sourceSide: "right", targetSide: "left"}}};
-    const result = route(settings, input);
-    expect(result.status).toBe("routed");
-    expect(result.sections[0]!.path.start).toEqual({x: endpoint === "source" ? 20 : 40, y: 20});
-    expect(result.sections.at(-1)!.path.segments.at(-1)!.to).toEqual({x: endpoint === "target" ? 220 : 200, y: 20});
-    const owner = endpoint === "source" ? {x: 0, y: 0, width: 40, height: 40} : {x: 200, y: 0, width: 40, height: 40};
-    const path = result.sections[0]!.path;
-    const outside = endpoint === "source" ? {start: path.segments[0]!.to, segments: path.segments.slice(1)} : {...path, segments: path.segments.slice(0, -1)};
-    noCollision({...result, sections: [{...result.sections[0]!, path: outside}]}, owner);
-    const blocked = route({...settings, edges: {ab: {...settings.edges!.ab, waypoints: [{x: 100, y: 70}, {x: owner.x + 25, y: 25}]}}}, input);
-    expect(blocked.status).toBe("fallback");
-    expect(blocked.sections).toEqual([]);
-  });
+  it.each(["source", "target"] as const)(
+    "escapes an interior %s port without permitting owner reentry",
+    (endpoint) => {
+      const input = createGraph({
+        id: "interior-port",
+        nodes: [
+          { id: "a", x: 0, y: 0, width: 40, height: 40, ports: [{ name: "p", x: 20, y: 20 }] },
+          { id: "b", x: 200, y: 0, width: 40, height: 40, ports: [{ name: "p", x: 20, y: 20 }] },
+        ],
+        edges: [
+          {
+            id: "ab",
+            sourceId: "a",
+            targetId: "b",
+            ...(endpoint === "source" ? { sourcePort: "p" } : { targetPort: "p" }),
+          },
+        ],
+      });
+      const settings: RoutingSettings = {
+        policy: routingPolicies.smooth,
+        edges: { ab: { sourceSide: "right", targetSide: "left" } },
+      };
+      const result = route(settings, input);
+      expect(result.status).toBe("routed");
+      expect(result.sections[0]!.path.start).toEqual({ x: endpoint === "source" ? 20 : 40, y: 20 });
+      expect(result.sections.at(-1)!.path.segments.at(-1)!.to).toEqual({
+        x: endpoint === "target" ? 220 : 200,
+        y: 20,
+      });
+      const owner =
+        endpoint === "source"
+          ? { x: 0, y: 0, width: 40, height: 40 }
+          : { x: 200, y: 0, width: 40, height: 40 };
+      const path = result.sections[0]!.path;
+      const outside =
+        endpoint === "source"
+          ? { start: path.segments[0]!.to, segments: path.segments.slice(1) }
+          : { ...path, segments: path.segments.slice(0, -1) };
+      noCollision({ ...result, sections: [{ ...result.sections[0]!, path: outside }] }, owner);
+      const blocked = route(
+        {
+          ...settings,
+          edges: {
+            ab: {
+              ...settings.edges!.ab,
+              waypoints: [
+                { x: 100, y: 70 },
+                { x: owner.x + 25, y: 25 },
+              ],
+            },
+          },
+        },
+        input,
+      );
+      expect(blocked.status).toBe("fallback");
+      expect(blocked.sections).toEqual([]);
+    },
+  );
   it("uses final crossing costs when only a zero-handle detour fits", () => {
-    const node = (id: string, x: number, y: number) => ({id, x, y, width: 64, height: 44});
-    const input = createGraph({id: "crossing-detour", nodes: [node("a",35,60),node("b",435,220),node("c",35,220),node("d",435,60)],
-      edges: [{id: "first", sourceId: "a", targetId: "b"},{id: "second",sourceId: "c",targetId: "d"}]});
-    const result = (crossingPenalty: number) => bezierRouting.route(input, {policy: {curve: {kind: "bezier"}, collisions: {crossingPenalty, overlapPenalty: 12}}}).routes.get("second")!;
-    expect(result(0).diagnostics).toContainEqual(expect.objectContaining({code: "ROUTE_CONFLICT"}));
+    const node = (id: string, x: number, y: number) => ({ id, x, y, width: 64, height: 44 });
+    const input = createGraph({
+      id: "crossing-detour",
+      nodes: [node("a", 35, 60), node("b", 435, 220), node("c", 35, 220), node("d", 435, 60)],
+      edges: [
+        { id: "first", sourceId: "a", targetId: "b" },
+        { id: "second", sourceId: "c", targetId: "d" },
+      ],
+    });
+    const result = (crossingPenalty: number) =>
+      bezierRouting
+        .route(input, {
+          policy: {
+            curve: { kind: "bezier" },
+            collisions: { crossingPenalty, overlapPenalty: 12 },
+          },
+        })
+        .routes.get("second")!;
+    expect(result(0).diagnostics).toContainEqual(
+      expect.objectContaining({ code: "ROUTE_CONFLICT" }),
+    );
     const detour = result(1000);
     expect(detour.status).toBe("fallback");
-    expect(detour.diagnostics).toContainEqual(expect.objectContaining({code: "CONSTRAINT_VIOLATION"}));
-    expect(detour.diagnostics.some(d => d.code === "ROUTE_CONFLICT")).toBe(false);
-    for (const node of input.nodes) noCollision(detour, {x: node.x! + 1e-6, y: node.y! + 1e-6, width: node.width! - 2e-6, height: node.height! - 2e-6});
+    expect(detour.diagnostics).toContainEqual(
+      expect.objectContaining({ code: "CONSTRAINT_VIOLATION" }),
+    );
+    expect(detour.diagnostics.some((d) => d.code === "ROUTE_CONFLICT")).toBe(false);
+    for (const node of input.nodes)
+      noCollision(detour, {
+        x: node.x! + 1e-6,
+        y: node.y! + 1e-6,
+        width: node.width! - 2e-6,
+        height: node.height! - 2e-6,
+      });
   });
   it("counts policy guide searches", () => {
-    const input = createGraph({id: "policy-search", nodes: [
-      {id:"a",x:0,y:0,width:40,height:40},{id:"b",x:300,y:0,width:40,height:40},{id:"block",x:120,y:-20,width:60,height:80},
-    ],edges:[{id:"ab",sourceId:"a",targetId:"b"}]});
-    expect(bezierRouting.route(input,{policy:routingPolicies.smooth}).metrics.searchNodes).toBeGreaterThan(0);
+    const input = createGraph({
+      id: "policy-search",
+      nodes: [
+        { id: "a", x: 0, y: 0, width: 40, height: 40 },
+        { id: "b", x: 300, y: 0, width: 40, height: 40 },
+        { id: "block", x: 120, y: -20, width: 60, height: 80 },
+      ],
+      edges: [{ id: "ab", sourceId: "a", targetId: "b" }],
+    });
+    expect(
+      bezierRouting.route(input, { policy: routingPolicies.smooth }).metrics.searchNodes,
+    ).toBeGreaterThan(0);
   });
   it.each([
-    {curve: {kind: "unknown"}}, {sourceTangent: {kind: "unknown"}}, {targetTangent: {kind: "unknown"}},
-    {label: {kind: "unknown"}}, {label: {kind: "through", tangent: {kind: "unknown"}}},
-    {collisions: {nodes: "unknown"}}, {collisions: {labels: "unknown"}},
-    {monotonic: {axis: "unknown", strength: "prefer"}}, {monotonic: {axis: "x", strength: "unknown"}},
-    {stability: {kind: "unknown"}},
-  ])("rejects invalid policy discriminants at normalization: %j", policy => {
+    { curve: { kind: "unknown" } },
+    { sourceTangent: { kind: "unknown" } },
+    { targetTangent: { kind: "unknown" } },
+    { label: { kind: "unknown" } },
+    { label: { kind: "through", tangent: { kind: "unknown" } } },
+    { collisions: { nodes: "unknown" } },
+    { collisions: { labels: "unknown" } },
+    { monotonic: { axis: "unknown", strength: "prefer" } },
+    { monotonic: { axis: "x", strength: "unknown" } },
+    { stability: { kind: "unknown" } },
+  ])("rejects invalid policy discriminants at normalization: %j", (policy) => {
     // @ts-expect-error JavaScript consumers can pass invalid enum values.
-    expect(() => route({policy})).toThrow(RangeError);
+    expect(() => route({ policy })).toThrow(RangeError);
+  });
+  it("honors disabled edges and rejects dependent label routes", () => {
+    const input = graph();
+    const family = {...input, nodes: [...input.nodes, {id: "c", x: 500, y: 220, width: 40, height: 40}],
+      edges: [...input.edges, {id:"child",sourceId:"a",targetId:"c"}]};
+    const snapshot = bezierRouting.route(family, {policy: routingPolicies.smooth, edges: {
+      ab: {bezier: {disabled: true}}, child: {sourceLabel: "ab"},
+    }});
+    for (const result of snapshot.routes.values()) {
+      expect(result.status).toBe("fallback");
+      expect(result.sections).toEqual([]);
+      expect(result.diagnostics).toContainEqual(expect.objectContaining({code:"CONSTRAINT_VIOLATION"}));
+    }
+  });
+  it.each(["obstacles", "terminalBounds"] as const)("honors explicit Bézier %s with a policy", field => {
+    const input = createGraph({id:"custom-barrier",nodes:[{id:"a",x:0,y:0,width:40,height:40},{id:"b",x:300,y:0,width:40,height:40}],edges:[{id:"ab",sourceId:"a",targetId:"b"}]});
+    const barrier = {x:120,y:-20,width:60,height:80};
+    const result = route({policy: routingPolicies.smooth, edges: {ab: {bezier: {[field]: [barrier]}}}}, input);
+    expect(result.sections.length).toBeGreaterThan(0);
+    noCollision(result, barrier);
+    if (field === "terminalBounds") {
+      const hard = route({policy: {...routingPolicies.smooth, collisions:{nodes:"allow",labels:"allow"}}, edges: {ab:{bezier:{terminalBounds:[barrier],avoidObstacles:false}}}}, input);
+      expect(hard.sections.length).toBeGreaterThan(0);
+      noCollision(hard, barrier);
+    }
   });
   it.each(Object.entries(routingPolicies))("%s works without label geometry", (_name, policy) => {
     const result = route({ policy }, graph(false));
