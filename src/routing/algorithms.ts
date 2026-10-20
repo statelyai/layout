@@ -1101,9 +1101,6 @@ export function routeEdge(
           ? Math.max(0, path.segments.length - (perEdge.waypoints?.length ?? 0) - 1) *
             context.bendPenalty
           : 0) +
-        (!perEdge.waypoints?.length && !loop && path.segments.length > 1
-          ? pathCurveOvershoot(path) * 8
-          : 0) +
         (policy?.monotonic?.strength === "prefer" ? reverseTravel * 80 : 0),
     };
   }
