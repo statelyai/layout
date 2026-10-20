@@ -1,6 +1,6 @@
 import { createGraph } from "@statelyai/graph";
 import { expect, it } from "vitest";
-import { bezierRouting } from "../src/routing";
+import { bezierRouting, getPathLength } from "../src/routing";
 import { pathEndpointTangent } from "../src/routing/policy-geometry";
 it.each([false, true])("keeps obstacle guide joins smooth with fixed ports %s", (fixed) => {
   const graph = createGraph({
@@ -30,6 +30,7 @@ it.each([false, true])("keeps obstacle guide joins smooth with fixed ports %s", 
     .routes.get("edge")!;
   expect(route.status).toBe("routed");
   const path = route.sections[0]!.path;
+  if (!fixed) expect(getPathLength(path)).toBeLessThan(500);
   for (let i = 1; i < path.segments.length; i++) {
     const previous = {
       start: i > 1 ? path.segments[i - 2]!.to : path.start,
