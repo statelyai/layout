@@ -1594,6 +1594,7 @@ export function routeEdge(
     batch.previous?.status === "routed" &&
     oldFirst &&
     oldLast &&
+    oldSections!.every((section) => section.sharedId === undefined) &&
     distance(oldFirst.start, portEscapes.get(source)?.point ?? source.point) < 1e-7 &&
     distance(
       oldLast.segments.at(-1)?.to ?? oldLast.start,
