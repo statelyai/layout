@@ -260,6 +260,18 @@ function calculate(
       );
     batch.guides = (bounds) =>
       query(bounds).map((segment) => reservationBounds(segment, state.settings.edgeSpacing));
+    batch.labelOverlaps = (bounds) => {
+      batch.dependencyBounds = batch.dependencyBounds
+        ? union(batch.dependencyBounds, bounds)
+        : bounds;
+      return routeIndex
+        .query(bounds)
+        .filter((otherId) => {
+          const label = routes.get(otherId)?.label;
+          return later(id, otherId) && label && intersects(bounds, label.bounds);
+        })
+        .map((otherId) => `e:${otherId}`);
+    };
     batch.routes = routes;
     batch.previous = oldRoute;
     batch.previousSettings = previous?.settings;

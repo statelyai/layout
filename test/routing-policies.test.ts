@@ -257,7 +257,7 @@ describe("routing policies", () => {
       expect(blocked.sections).toEqual([]);
     },
   );
-  it("uses final crossing costs when only a zero-handle detour fits", () => {
+  it("prefers a safe guide when fitted detours hit obstacles", () => {
     const node = (id: string, x: number, y: number) => ({ id, x, y, width: 64, height: 44 });
     const input = createGraph({
       id: "crossing-detour",
@@ -324,29 +324,57 @@ describe("routing policies", () => {
   });
   it("honors disabled edges and rejects dependent label routes", () => {
     const input = graph();
-    const family = {...input, nodes: [...input.nodes, {id: "c", x: 500, y: 220, width: 40, height: 40}],
-      edges: [...input.edges, {id:"child",sourceId:"a",targetId:"c"}]};
-    const snapshot = bezierRouting.route(family, {policy: routingPolicies.smooth, edges: {
-      ab: {bezier: {disabled: true}}, child: {sourceLabel: "ab"},
-    }});
+    const family = createGraph({
+      ...input,
+      nodes: [...input.nodes, { id: "c", x: 500, y: 220, width: 40, height: 40 }],
+      edges: [...input.edges, { id: "child", sourceId: "a", targetId: "c" }],
+    });
+    const snapshot = bezierRouting.route(family, {
+      policy: routingPolicies.smooth,
+      edges: {
+        ab: { bezier: { disabled: true } },
+        child: { sourceLabel: "ab" },
+      },
+    });
     for (const result of snapshot.routes.values()) {
       expect(result.status).toBe("fallback");
       expect(result.sections).toEqual([]);
-      expect(result.diagnostics).toContainEqual(expect.objectContaining({code:"CONSTRAINT_VIOLATION"}));
+      expect(result.diagnostics).toContainEqual(
+        expect.objectContaining({ code: "CONSTRAINT_VIOLATION" }),
+      );
     }
   });
-  it.each(["obstacles", "terminalBounds"] as const)("honors explicit Bézier %s with a policy", field => {
-    const input = createGraph({id:"custom-barrier",nodes:[{id:"a",x:0,y:0,width:40,height:40},{id:"b",x:300,y:0,width:40,height:40}],edges:[{id:"ab",sourceId:"a",targetId:"b"}]});
-    const barrier = {x:120,y:-20,width:60,height:80};
-    const result = route({policy: routingPolicies.smooth, edges: {ab: {bezier: {[field]: [barrier]}}}}, input);
-    expect(result.sections.length).toBeGreaterThan(0);
-    noCollision(result, barrier);
-    if (field === "terminalBounds") {
-      const hard = route({policy: {...routingPolicies.smooth, collisions:{nodes:"allow",labels:"allow"}}, edges: {ab:{bezier:{terminalBounds:[barrier],avoidObstacles:false}}}}, input);
-      expect(hard.sections.length).toBeGreaterThan(0);
-      noCollision(hard, barrier);
-    }
-  });
+  it.each(["obstacles", "terminalBounds"] as const)(
+    "honors explicit Bézier %s with a policy",
+    (field) => {
+      const input = createGraph({
+        id: "custom-barrier",
+        nodes: [
+          { id: "a", x: 0, y: 0, width: 40, height: 40 },
+          { id: "b", x: 300, y: 0, width: 40, height: 40 },
+        ],
+        edges: [{ id: "ab", sourceId: "a", targetId: "b" }],
+      });
+      const barrier = { x: 120, y: -20, width: 60, height: 80 };
+      const result = route(
+        { policy: routingPolicies.smooth, edges: { ab: { bezier: { [field]: [barrier] } } } },
+        input,
+      );
+      expect(result.sections.length).toBeGreaterThan(0);
+      noCollision(result, barrier);
+      if (field === "terminalBounds") {
+        const hard = route(
+          {
+            policy: { ...routingPolicies.smooth, collisions: { nodes: "allow", labels: "allow" } },
+            edges: { ab: { bezier: { terminalBounds: [barrier], avoidObstacles: false } } },
+          },
+          input,
+        );
+        expect(hard.sections.length).toBeGreaterThan(0);
+        noCollision(hard, barrier);
+      }
+    },
+  );
   it.each(Object.entries(routingPolicies))("%s works without label geometry", (_name, policy) => {
     const result = route({ policy }, graph(false));
     expect(result.sections.length).toBeGreaterThan(0);

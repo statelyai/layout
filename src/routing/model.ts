@@ -253,11 +253,33 @@ export function groupKey(edge: EdgeGeometry, style: string, config: Settings): s
 function normalizePolicy(input: RoutingPolicy | undefined): RoutingPolicy | undefined {
   if (!input) return;
   const value = structuredClone(input);
+  const oneOf = (value: unknown, allowed: readonly string[], name: string) => {
+    if (typeof value !== "string" || !allowed.includes(value))
+      throw new RangeError(`Invalid ${name}`);
+  };
+  if (value.curve)
+    oneOf(
+      value.curve.kind,
+      ["polyline", "bezier", "catmull-rom", "rounded-orthogonal"],
+      "curve kind",
+    );
+  if (value.label) oneOf(value.label.kind, ["follow", "fixed", "through", "gap"], "label kind");
+  if (value.monotonic) {
+    oneOf(value.monotonic.axis, ["x", "y", "both"], "monotonic axis");
+    oneOf(value.monotonic.strength, ["prefer", "require"], "monotonic strength");
+  }
+  if (value.stability)
+    oneOf(value.stability.kind, ["recompute", "preserve-valid"], "stability kind");
+  for (const name of ["nodes", "labels"] as const)
+    if (value.collisions?.[name] !== undefined)
+      oneOf(value.collisions[name], ["avoid", "allow"], `${name} collision mode`);
+
   const nonnegative = (n: number | undefined, name: string) => {
     if (n !== undefined && (!Number.isFinite(n) || n < 0))
       throw new RangeError(`${name} must be finite and non-negative`);
   };
   function tangent(t: RoutingTangent | undefined): RoutingTangent | undefined {
+    if (t) oneOf(t.kind, ["automatic", "border-normal", "vector"], "tangent kind");
     if (t?.kind !== "vector") return t;
     const { x, y } = t.direction,
       length = Math.hypot(x, y);

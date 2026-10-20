@@ -3,6 +3,7 @@ import type {
   RouteBounds,
   RouteEndpoint,
   RoutePath,
+  RouteSegment,
   RoutePoint,
   RouteSection,
   RouteSide,
@@ -86,6 +87,7 @@ export interface Batch {
   edgeCost?(a: RoutePoint, b: RoutePoint): number;
   conflicts?(a: RoutePoint, b: RoutePoint): boolean;
   guides?(bounds: RouteBounds): readonly RouteBounds[];
+  labelOverlaps?(bounds: RouteBounds): readonly string[];
 }
 function contextFor(
   state: RoutingInput,
@@ -365,6 +367,21 @@ export function routeEdge(
       diagnostics.push({ code, message, edgeId: edge.id, ...(constraint ? { constraint } : {}) });
   };
   if (policy) {
+    if (perEdge.bezier?.disabled) {
+      report("CONSTRAINT_VIOLATION", "Bézier routing disabled by the edge constraints");
+      return { edgeId: edge.id, sections: [], status: "fallback", diagnostics };
+    }
+    let obstacles = state.obstacles;
+    const extraObstacles =
+      (perEdge.bezier?.avoidObstacles ?? config.bezier?.avoidObstacles) === false
+        ? []
+        : (perEdge.bezier?.obstacles ?? []);
+    for (const [index, bounds] of [
+      ...extraObstacles,
+      ...(perEdge.bezier?.terminalBounds ?? []),
+    ].entries())
+      obstacles = obstacles.set(`policy-barrier:${edge.id}:${index}`, bounds);
+    if (obstacles !== state.obstacles) state = { ...state, obstacles };
     const seen = new Set([edge.id]);
     let parent = perEdge.sourceLabel;
     while (parent !== undefined) {
@@ -654,21 +671,24 @@ export function routeEdge(
     batch,
     lane * config.edgeSpacing,
   );
-  const searchContext = ["curved", "organic", "bundle", "bezier"].includes(style)
-    ? contextFor(
-        state,
-        excluded,
-        new Set([
-          `n:${edge.sourceId}`,
-          `n:${edge.targetId}`,
-          `e:${edge.id}`,
-          ...(parentLabel ? [`e:${parentLabel.id}`] : []),
-        ]),
-        metrics,
-        batch,
-        config.radius * 2 + lane * config.edgeSpacing,
-      )
-    : context;
+  const searchContext =
+    policy?.curve?.kind === "bezier" ||
+    policy?.curve?.kind === "catmull-rom" ||
+    (!policy?.curve && ["curved", "organic", "bundle", "bezier"].includes(style))
+      ? contextFor(
+          state,
+          excluded,
+          new Set([
+            `n:${edge.sourceId}`,
+            `n:${edge.targetId}`,
+            `e:${edge.id}`,
+            ...(parentLabel ? [`e:${parentLabel.id}`] : []),
+          ]),
+          metrics,
+          batch,
+          config.radius * 2 + lane * config.edgeSpacing,
+        )
+      : context;
   let futureTargetCorridor: RouteBounds | undefined;
   const protectFutureTarget = (ctx: SearchContext) => {
     const obstacles = ctx.obstacles;
@@ -787,6 +807,7 @@ export function routeEdge(
   const directionMatches = (actual: RoutePoint, requested: RoutePoint) =>
     actual.x * requested.x + actual.y * requested.y > 1 - 1e-6;
   let labelDirection: RoutePoint | undefined;
+  const portEscapes = new Map<Terminal, { point: RoutePoint; context: SearchContext }>();
   if (policy) {
     for (const [terminal, requested, sourceEnd] of [
       [source, policy.sourceTangent, true],
@@ -816,6 +837,50 @@ export function routeEdge(
           "Orthogonal paths require axis-aligned terminal tangents",
           sourceEnd ? "source-tangent" : "target-tangent",
         );
+    }
+    for (const terminal of [source, target]) {
+      if (terminal.ref.kind !== "node" || terminal.ref.port === undefined) continue;
+      const owner = terminal === source ? sourceBounds : targetBounds;
+      const point = terminal.point;
+      if (
+        point.x <= owner.x ||
+        point.x >= owner.x + owner.width ||
+        point.y <= owner.y ||
+        point.y >= owner.y + owner.height
+      )
+        continue;
+      const outward = terminal === source ? terminal.tangent! : reverse(terminal.tangent!);
+      const length = Math.min(
+        outward.x > 0
+          ? (owner.x + owner.width - point.x) / outward.x
+          : outward.x < 0
+            ? (owner.x - point.x) / outward.x
+            : Infinity,
+        outward.y > 0
+          ? (owner.y + owner.height - point.y) / outward.y
+          : outward.y < 0
+            ? (owner.y - point.y) / outward.y
+            : Infinity,
+      );
+      portEscapes.set(terminal, {
+        point,
+        context: protectFutureTarget(
+          contextFor(
+            state,
+            new Set([...excluded, `n:${terminal.ref.nodeId}`]),
+            new Set([
+              `n:${edge.sourceId}`,
+              `n:${edge.targetId}`,
+              `e:${edge.id}`,
+              ...(parentLabel ? [`e:${parentLabel.id}`] : []),
+            ]),
+            metrics,
+            batch,
+            lane * config.edgeSpacing,
+          ),
+        ),
+      });
+      terminal.point = { x: point.x + outward.x * length, y: point.y + outward.y * length };
     }
     if (policy.label && policy.label.kind !== "follow" && !positionedLabel)
       report("MISSING_GEOMETRY", "This label policy requires positioned label geometry");
@@ -877,16 +942,70 @@ export function routeEdge(
         );
     }
   }
+  const portSegment = (from: RoutePoint, to: RoutePoint): RouteSegment =>
+    curvePolicy.kind === "bezier" || curvePolicy.kind === "catmull-rom"
+      ? {
+          kind: "cubic",
+          control1: { x: from.x + (to.x - from.x) / 3, y: from.y + (to.y - from.y) / 3 },
+          control2: {
+            x: from.x + ((to.x - from.x) * 2) / 3,
+            y: from.y + ((to.y - from.y) * 2) / 3,
+          },
+          to,
+        }
+      : { kind: "line", to };
+  function withPortEscapes(path: RoutePath, a: Terminal, b: Terminal): RoutePath {
+    const first = portEscapes.get(a),
+      last = portEscapes.get(b);
+    return first || last
+      ? {
+          start: first?.point ?? path.start,
+          segments: [
+            ...(first ? [portSegment(first.point, a.point)] : []),
+            ...path.segments,
+            ...(last ? [portSegment(b.point, last.point)] : []),
+          ],
+        }
+      : path;
+  }
+  function policyPathSafe(path: RoutePath): boolean {
+    if (!portEscapes.size) return safe(path, context);
+    let from = path.start;
+    return path.segments.every((segment, index) => {
+      let checkedContext = context;
+      for (const [terminal, escape] of portEscapes) {
+        const sourceEnd = terminal === source;
+        const expected = sourceEnd
+          ? portSegment(escape.point, terminal.point)
+          : portSegment(terminal.point, escape.point);
+        if (
+          (sourceEnd
+            ? index === 0 && distance(from, escape.point) < 1e-7
+            : index === path.segments.length - 1 && distance(from, terminal.point) < 1e-7) &&
+          JSON.stringify(segment) === JSON.stringify(expected)
+        )
+          checkedContext = escape.context;
+      }
+      const checked = { start: from, segments: [segment] };
+      from = segment.to;
+      return safe(checked, checkedContext);
+    });
+  }
   function assessPath(
     path: RoutePath,
     a?: Terminal,
     b?: Terminal,
   ): { valid: boolean; cost: number } {
     const reverseTravel = policy?.monotonic
-      ? pathReverseTravel(path, policy.monotonic.axis, source.point, target.point)
+      ? pathReverseTravel(
+          path,
+          policy.monotonic.axis,
+          portEscapes.get(source)?.point ?? source.point,
+          portEscapes.get(target)?.point ?? target.point,
+        )
       : 0;
     const valid =
-      safe(path, context) &&
+      policyPathSafe(path) &&
       (!a?.tangent || directionMatches(pathEndpointTangent(path, "start"), a.tangent)) &&
       (!b?.tangent || directionMatches(pathEndpointTangent(path, "end"), b.tangent)) &&
       !(policy?.monotonic?.strength === "require" && reverseTravel > 1e-7);
@@ -906,6 +1025,7 @@ export function routeEdge(
   ): RoutePath {
     const guidePoints = [guide.start, ...guide.segments.map((part) => part.to)];
     const candidates: RoutePath[] = [];
+    const unshapedCandidates = new Set<RoutePath>();
     const pointCandidates = [[a.point, ...via, b.point], guidePoints].filter((points) => {
       if (!points.some((point) => distance(point, points[0]!) > 1e-8)) return false;
       let index = 0;
@@ -925,27 +1045,50 @@ export function routeEdge(
         const curvature = curvePolicy.curvature ?? 0.5;
         const requested = bezierThroughPoints(points, tangents, curvature);
         candidates.push(requested);
-        if (!assessPath(requested, a, b).valid)
-          for (const scale of [0.5, 0.25, 0.125])
-            candidates.push(bezierThroughPoints(points, tangents, curvature * scale));
+        if (!assessPath(requested, a, b).valid) {
+          const alternatives = [0.5, 0.25, 0.125].map((scale) =>
+            bezierThroughPoints(points, tangents, curvature * scale),
+          );
+          candidates.push(...alternatives);
+          if (!alternatives.some((path) => assessPath(path, a, b).valid)) {
+            const unshaped = pathFromPoints(points);
+            candidates.push(unshaped);
+            unshapedCandidates.add(unshaped);
+          }
+        }
       } else if (
         points
           .slice(1)
           .every((point, index) => point.x === points[index]!.x || point.y === points[index]!.y)
       ) {
-        for (const scale of [1, 0.5, 0.25])
-          candidates.push(
-            roundCorners(pathFromPoints(points), {
-              radius: (curvePolicy.radius ?? config.radius) * scale,
-            }),
-          );
+        for (const scale of [1, 0.5, 0.25]) {
+          const segments: RoutePath["segments"][number][] = [];
+          let start = 0;
+          for (let end = 1; end < points.length; end++) {
+            if (
+              end !== points.length - 1 &&
+              !via.some((point) => distance(point, points[end]!) < 1e-7)
+            )
+              continue;
+            segments.push(
+              ...roundCorners(pathFromPoints(points.slice(start, end + 1)), {
+                radius: (curvePolicy.radius ?? config.radius) * scale,
+              }).segments,
+            );
+            start = end;
+          }
+          candidates.push({ start: points[0]!, segments });
+        }
       }
     }
     const viable = candidates
       .map((path, index) => ({ path, index, ...assessPath(path, a, b) }))
       .filter((candidate) => candidate.valid && Number.isFinite(candidate.cost))
       .sort((a, b) => a.cost - b.cost || a.index - b.index);
-    if (viable.length) return viable[0]!.path;
+    if (viable.length) {
+      if (unshapedCandidates.has(viable[0]!.path)) shapeFallback = true;
+      return viable[0]!.path;
+    }
     shapeFallback = true;
     return guide;
   }
@@ -1009,7 +1152,7 @@ export function routeEdge(
           ]),
           metrics,
           batch,
-          -config.clearance,
+          policy ? 0 : -config.clearance,
         );
         for (const extent of [config.clearance + 1, gap, gap * 2])
           for (const sign of [1, -1]) {
@@ -1183,7 +1326,7 @@ export function routeEdge(
     // Clearance and soft edge reservations must not turn a feasible connection
     // into an obstacle-crossing fallback. Retry against the hard geometry with
     // short terminal leads and a fresh, bounded search budget.
-    if (!["straight", "bezier", "polyline", "organic", "parallel"].includes(style)) {
+    if (policy || !["straight", "bezier", "polyline", "organic", "parallel"].includes(style)) {
       const hard = {
         ...contextFor(
           state,
@@ -1196,7 +1339,7 @@ export function routeEdge(
           ]),
           metrics,
           batch,
-          -config.clearance,
+          policy ? 0 : -config.clearance,
         ),
         maxSearchNodes: Math.max(
           0,
@@ -1387,7 +1530,7 @@ export function routeEdge(
       for (let i = diagnostics.length - 1; i >= diagnosticStart; i--)
         if (diagnostics[i]!.code === "ROUTE_BLOCKED" || diagnostics[i]!.code === "SEARCH_BUDGET")
           diagnostics.splice(i, 1);
-    return path;
+    return withPortEscapes(path, a, b);
   }
   const via = perEdge.waypoints ?? [];
   if (via.some((p) => !Number.isFinite(p.x) || !Number.isFinite(p.y)))
@@ -1448,10 +1591,14 @@ export function routeEdge(
   const reusable =
     policy?.stability?.kind === "preserve-valid" &&
     sameConstraints &&
+    batch.previous?.status === "routed" &&
     oldFirst &&
     oldLast &&
-    distance(oldFirst.start, source.point) < 1e-7 &&
-    distance(oldLast.segments.at(-1)?.to ?? oldLast.start, target.point) < 1e-7 &&
+    distance(oldFirst.start, portEscapes.get(source)?.point ?? source.point) < 1e-7 &&
+    distance(
+      oldLast.segments.at(-1)?.to ?? oldLast.start,
+      portEscapes.get(target)?.point ?? target.point,
+    ) < 1e-7 &&
     oldSections!.every((section) => assessPath(section.path).valid) &&
     (!source.tangent || directionMatches(pathEndpointTangent(oldFirst, "start"), source.tangent)) &&
     (!target.tangent || directionMatches(pathEndpointTangent(oldLast, "end"), target.tangent)) &&
@@ -1527,6 +1674,7 @@ export function routeEdge(
       });
     }
   }
+  metrics.searchNodes += searchContext.visited + (searchContext === context ? 0 : context.visited);
   if (policy) {
     const labelKind = policy.label?.kind;
     const logicalPaths = sections.map((section) => section.path);
@@ -1577,7 +1725,12 @@ export function routeEdge(
       logicalPaths.some(
         (path) =>
           policy.monotonic?.strength === "require" &&
-          pathReverseTravel(path, policy.monotonic.axis, source.point, target.point) > 1e-7,
+          pathReverseTravel(
+            path,
+            policy.monotonic.axis,
+            portEscapes.get(source)?.point ?? source.point,
+            portEscapes.get(target)?.point ?? target.point,
+          ) > 1e-7,
       )
     )
       report(
@@ -1585,7 +1738,7 @@ export function routeEdge(
         "No final curve satisfies required monotonicity",
         "monotonicity",
       );
-    if (sections.some((section) => !safe(section.path, context))) {
+    if (sections.some((section) => !policyPathSafe(section.path))) {
       const labelsBlocked =
         policy.collisions?.labels !== "allow" &&
         sections.some((section) => {
@@ -1659,7 +1812,12 @@ export function routeEdge(
       policy.monotonic?.strength === "prefer" &&
       logicalPaths.some(
         (path) =>
-          pathReverseTravel(path, policy.monotonic!.axis, source.point, target.point) > 1e-7,
+          pathReverseTravel(
+            path,
+            policy.monotonic!.axis,
+            portEscapes.get(source)?.point ?? source.point,
+            portEscapes.get(target)?.point ?? target.point,
+          ) > 1e-7,
       )
     )
       report(
@@ -1713,9 +1871,7 @@ export function routeEdge(
       const overlaps = state.obstacles
         .query(placement.bounds)
         .filter((id) => intersects(placement!.bounds, state.obstacles.bounds.get(id)!));
-      for (const [id, other] of batch.routes ?? [])
-        if (id !== edge.id && other.label && intersects(placement.bounds, other.label.bounds))
-          overlaps.push(`e:${id}`);
+      overlaps.push(...(batch.labelOverlaps?.(placement.bounds) ?? []));
       if (overlaps.length)
         diagnostics.push({
           code: "LABEL_OVERLAP",
@@ -1756,7 +1912,6 @@ export function routeEdge(
       "ROUTE_CONFLICT",
       "Route crosses or overlaps another edge; retained a compact visible path",
     );
-  metrics.searchNodes += searchContext.visited + (searchContext === context ? 0 : context.visited);
   return {
     edgeId: edge.id,
     sections,
@@ -1765,7 +1920,7 @@ export function routeEdge(
   };
 }
 export function routeBounds(route: Route): RouteBounds {
-  let bounds: RouteBounds | undefined;
+  let bounds: RouteBounds | undefined = route.label?.bounds;
   for (const section of route.sections) {
     const next = getPathBounds(section.path);
     bounds = bounds ? union(bounds, next) : next;
