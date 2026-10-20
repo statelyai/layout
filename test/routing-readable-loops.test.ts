@@ -25,6 +25,12 @@ it.each([false, true])("draws a readable smooth same-face loop beside obstacle %
   const path = route.sections[0]!.path;
   expect(pathHasSelfIntersection(path)).toBe(false);
   const points = flattenPath(path, { tolerance: 0.02 });
+  if (obstacle) {
+    expect(Math.max(...points.map((point) => point.x)) - path.start.x).toBeGreaterThan(14);
+    expect(
+      Math.max(...points.map((point) => point.y)) - Math.min(...points.map((point) => point.y)),
+    ).toBeGreaterThan(40);
+  }
   const area =
     Math.abs(
       points.slice(1).reduce((sum, p, i) => sum + points[i]!.x * p.y - p.x * points[i]!.y, 0),
