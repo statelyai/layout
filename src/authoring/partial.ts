@@ -363,13 +363,7 @@ export function runPartialLayout<N, E, G, P>(
             "Partial layout supports its built-in orthogonal router only",
           );
         const ancestorIds = new Set([...ancestors(source.id), ...ancestors(target.id)]);
-        const nodeObstacles = graph.nodes
-          .filter((n) => !ancestorIds.has(n.id))
-          .map((n) =>
-            n.id === source.id || n.id === target.id
-              ? n
-              : { ...n, x: n.x - 1, y: n.y - 1, width: n.width + 2, height: n.height + 2 },
-          );
+        const nodeObstacles = graph.nodes.filter((n) => !ancestorIds.has(n.id));
         const labelObstacles = [...edgeById.values()].filter(
           (e) => e.id !== edge.id && e.width > 0 && e.height > 0,
         );

@@ -191,24 +191,71 @@ export function routeOrthogonal(
   waypoints: readonly Point[],
   check: () => void,
 ): Point[] | undefined {
-  const anchors = [
-    endpoint(source, edge.sourcePort, direction, true),
-    ...waypoints,
-    endpoint(target, edge.targetPort, direction, false),
-  ];
-  const points: Point[] = [];
-  for (let i = 1; i < anchors.length; i++) {
-    const segment = connect(anchors[i - 1]!, anchors[i]!, obstacles, check);
-    if (!segment) return undefined;
-    points.push(...(points.length ? segment.slice(1) : segment));
-  }
-  return points.filter((p, i) => {
-    if (i === 0 || i === points.length - 1) return true;
-    const before = points[i - 1]!,
-      after = points[i + 1]!;
-    return !(
-      (before.x === p.x && p.x === after.x && (p.y - before.y) * (after.y - p.y) >= 0) ||
-      (before.y === p.y && p.y === after.y && (p.x - before.x) * (after.x - p.x) >= 0)
+  const start = endpoint(source, edge.sourcePort, direction, true);
+  const end = endpoint(target, edge.targetPort, direction, false);
+  const normal = (node: VisualNode, point: Point): Point => {
+    const sides = [
+      { distance: Math.abs(point.x - node.x), x: -1, y: 0 },
+      { distance: Math.abs(point.x - node.x - node.width), x: 1, y: 0 },
+      { distance: Math.abs(point.y - node.y), x: 0, y: -1 },
+      { distance: Math.abs(point.y - node.y - node.height), x: 0, y: 1 },
+    ];
+    return sides.sort((a, b) => a.distance - b.distance)[0]!;
+  };
+  const startNormal = normal(source, start);
+  const endNormal = normal(target, end);
+  // Clearance and leads are preferences. Authored geometry and waypoints may
+  // leave less room, so retry against progressively smaller margins.
+  for (const clearance of [8, 4, 1, 0]) {
+    check();
+    const padded = obstacles.map((rect) => ({
+      ...rect,
+      x: rect.x - clearance,
+      y: rect.y - clearance,
+      width: rect.width + clearance * 2,
+      height: rect.height + clearance * 2,
+    }));
+    const startLead = {
+      x: start.x + startNormal.x * clearance,
+      y: start.y + startNormal.y * clearance,
+    };
+    const endLead = {
+      x: end.x + endNormal.x * clearance,
+      y: end.y + endNormal.y * clearance,
+    };
+    if (
+      obstacles.some(
+        (rect, i) =>
+          (rect !== source && crossesRect(start, startLead, padded[i]!)) ||
+          (rect !== target && crossesRect(end, endLead, padded[i]!)),
+      )
+    )
+      continue;
+    const anchors = [startLead, ...waypoints, endLead];
+    const points: Point[] = [start];
+    let routed = true;
+    for (let i = 1; i < anchors.length; i++) {
+      const segment = connect(anchors[i - 1]!, anchors[i]!, padded, check);
+      if (!segment) {
+        routed = false;
+        break;
+      }
+      points.push(...(i === 1 ? segment : segment.slice(1)));
+    }
+    if (!routed) continue;
+    points.push(end);
+    const unique = points.filter(
+      (p, i) => i === 0 || p.x !== points[i - 1]!.x || p.y !== points[i - 1]!.y,
     );
-  });
+    return unique.filter((p, i) => {
+      if (i === 0 || i === unique.length - 1) return true;
+      const before = unique[i - 1]!,
+        after = unique[i + 1]!;
+      return !(
+        (before.x === p.x && p.x === after.x && (p.y - before.y) * (after.y - p.y) >= 0) ||
+        (before.y === p.y && p.y === after.y && (p.x - before.x) * (after.x - p.x) >= 0)
+      );
+    });
+  }
+  return undefined;
 }
