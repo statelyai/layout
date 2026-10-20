@@ -31,8 +31,6 @@ const graph = createGraph({
 
 function maximumShoulderTurn(path: RoutePath) {
   let maximum = 0;
-  // Measure direction change over two adjacent four-pixel spans. Abrupt tiny
-  // circular joins concentrate the turn even when segment tangents agree.
   for (let position = 4; position < getPathLength(path) - 4; position++) {
     const a = getPointAtLength(path, position - 4, { tolerance: 0.001 });
     const b = getPointAtLength(path, position, { tolerance: 0.001 });
