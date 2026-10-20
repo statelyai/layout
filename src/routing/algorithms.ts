@@ -1366,11 +1366,27 @@ export function routeEdge(
         const curvature = curvePolicy.curvature ?? 0.5;
         const requested = bezierThroughPoints(points, tangents, curvature);
         candidates.push(requested);
+        const returnNormal = vector(b.side);
+        const lastKnot = points.at(-2)!;
+        const returnFit =
+          !via.length &&
+          points.length > 2 &&
+          b.tangent &&
+          directionMatches(b.tangent, reverse(returnNormal)) &&
+          (lastKnot.x - b.point.x) * returnNormal.x + (lastKnot.y - b.point.y) * returnNormal.y >
+            1e-7
+            ? bezierThroughPoints(
+                points,
+                new Map([...tangents, [points.length - 2, returnNormal]]),
+                curvature,
+              )
+            : undefined;
+        if (returnFit) candidates.push(returnFit);
         if (
           !assessPath(requested, a, b).valid ||
           (!via.length && points.length > 2 && pathCurveOvershoot(requested) > 0.1)
         ) {
-          const alternatives: RoutePath[] = [];
+          const alternatives: RoutePath[] = returnFit ? [returnFit] : [];
           if (!via.length && points.length > 2) {
             for (const ends of [
               [true, false],
@@ -1388,9 +1404,7 @@ export function routeEdge(
           }
           if (
             !assessPath(requested, a, b).valid &&
-            !alternatives.some(
-              (path) => assessPath(path, a, b).valid && pathCurveOvershoot(path) < 0.1,
-            )
+            !alternatives.some((path) => assessPath(path, a, b).valid)
           ) {
             for (const scale of [0.5, 0.25, 0.125, 0.0625]) {
               const alternative = bezierThroughPoints(points, tangents, curvature * scale);
