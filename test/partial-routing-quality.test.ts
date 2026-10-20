@@ -39,7 +39,10 @@ describe("partial routing quality", () => {
       const graph = fixture();
       const result = await getLayout({
         graph,
-        scope: { mode, edgeIds: ["ab"], ...(mode === "partial" ? { edgeGeometry: "routes" } : {}) },
+        scope:
+          mode === "partial"
+            ? { mode, edgeIds: ["ab"], edgeGeometry: "routes" }
+            : { mode, edgeIds: ["ab"], previous: graph },
       });
       const points = result.graph.edges[0]!.points!;
       expect(routeCrosses(points, { x: 272, y: 57, width: 116, height: 141 })).toBe(false);
@@ -60,7 +63,7 @@ describe("partial routing quality", () => {
     const point = { x: 275, y: 62 };
     const result = await getLayout({
       graph,
-      scope: { mode: "route-only" },
+      scope: { mode: "route-only", previous: graph },
       constraints: [c.waypoint({ id: "via", edgeId: "ab", point })],
     });
     const points = result.graph.edges[0]!.points!;
@@ -86,11 +89,15 @@ describe("partial routing quality", () => {
 
   it("uses positioned port sides for leads while preserving their authored geometry", async () => {
     const graph = fixture();
-    graph.nodes[0]!.ports = [{ name: "out", x: 40, y: 0, width: 0, height: 0, data: null }];
-    graph.nodes[1]!.ports = [{ name: "in", x: 40, y: 44, width: 0, height: 0, data: null }];
+    graph.nodes[0]!.ports = [
+      { name: "out", direction: "out", x: 40, y: 0, width: 0, height: 0, data: null },
+    ];
+    graph.nodes[1]!.ports = [
+      { name: "in", direction: "in", x: 40, y: 44, width: 0, height: 0, data: null },
+    ];
     graph.edges[0]!.sourcePort = "out";
     graph.edges[0]!.targetPort = "in";
-    const result = await getLayout({ graph, scope: { mode: "route-only" } });
+    const result = await getLayout({ graph, scope: { mode: "route-only", previous: graph } });
     const points = result.graph.edges[0]!.points!;
     expect(points[0]).toEqual({ x: 80, y: 100 });
     expect(points[1]!.x).toBe(80);
@@ -104,7 +111,7 @@ describe("partial routing quality", () => {
   it("relaxes leads when a channel has less than one unit of room", async () => {
     const graph = fixture();
     Object.assign(graph.nodes[2]!, { x: 120.5, y: 100, width: 10, height: 44 });
-    const result = await getLayout({ graph, scope: { mode: "route-only" } });
+    const result = await getLayout({ graph, scope: { mode: "route-only", previous: graph } });
     const points = result.graph.edges[0]!.points!;
     expect(points[0]).toEqual({ x: 120, y: 122 });
     expect(points.at(-1)).toEqual({ x: 470, y: 122 });
@@ -118,7 +125,7 @@ describe("partial routing quality", () => {
       { ...graph.nodes[0]!, id: "parent", x: 1000, y: 2000, width: 700, height: 400 },
       ...graph.nodes.map((node) => ({ ...node, parentId: "parent" })),
     ];
-    const result = await getLayout({ graph, scope: { mode: "route-only" } });
+    const result = await getLayout({ graph, scope: { mode: "route-only", previous: graph } });
     const points = result.graph.edges[0]!.points!;
     expect(points[0]).toEqual({ x: 120, y: 122 });
     expect(points.at(-1)).toEqual({ x: 470, y: 122 });
@@ -137,7 +144,10 @@ describe("partial routing quality", () => {
       width: 100,
       height: 125,
     });
-    const result = await getLayout({ graph, scope: { mode: "route-only", edgeIds: ["ab"] } });
+    const result = await getLayout({
+      graph,
+      scope: { mode: "route-only", edgeIds: ["ab"], previous: graph },
+    });
     expect(
       routeCrosses(result.graph.edges[0]!.points, { x: 272, y: 57, width: 116, height: 141 }),
     ).toBe(false);
