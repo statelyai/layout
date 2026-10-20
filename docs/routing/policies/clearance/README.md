@@ -16,9 +16,12 @@ or policy value changes between these images.
 | --------------------------------- | ------------------------------- |
 | ![Reported clearance](before.png) | ![Refined clearance](after.png) |
 
-Both images use the same 560 by 340 viewport, device scale 1, graph, dimensions,
-policy, and loaded fonts. The policy uses curvature `0.5` and a following label.
-The SVGs and JSON metrics are stored alongside the images.
+The paired PNG captures and SVG fixture viewBoxes are 560 by 340. Both use
+device scale 1 and identical graph input, dimensions, policy, and loaded fonts.
+`browser.json` records a separate live Storybook check with a 1050 by 780 browser
+viewport. That viewport differs from the paired fixture captures. The policy
+uses curvature `0.5` and a following label. The SVGs and JSON metrics are stored
+alongside the images.
 
 | Geometry                        |  Reported |   Refined |
 | ------------------------------- | --------: | --------: |
