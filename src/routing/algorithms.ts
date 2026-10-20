@@ -812,6 +812,25 @@ export function routeEdge(
           config.radius * 2 + lane * config.edgeSpacing,
         )
       : context;
+  let monotonicSource = source,
+    monotonicTarget = target;
+  const monotonic = policy?.monotonic;
+  const allowsStep =
+    monotonic?.strength === "require"
+      ? (a: RoutePoint, b: RoutePoint) => {
+          const axes: readonly ("x" | "y")[] =
+            monotonic.axis === "both" ? ["x", "y"] : [monotonic.axis];
+          return axes.every((axis) => {
+            const direction = Math.sign(
+              (portEscapes.get(monotonicTarget)?.point ?? monotonicTarget.point)[axis] -
+                (portEscapes.get(monotonicSource)?.point ?? monotonicSource.point)[axis],
+            );
+            const change = b[axis] - a[axis];
+            return direction ? direction * change >= -1e-8 : Math.abs(change) <= 1e-8;
+          });
+        }
+      : undefined;
+  context.allowsStep = searchContext.allowsStep = allowsStep;
   let futureTargetCorridor: RouteBounds | undefined;
   const protectFutureTarget = (ctx: SearchContext) => {
     const obstacles = ctx.obstacles;
@@ -1155,8 +1174,8 @@ export function routeEdge(
       ? pathReverseTravel(
           path,
           policy.monotonic.axis,
-          portEscapes.get(source)?.point ?? source.point,
-          portEscapes.get(target)?.point ?? target.point,
+          portEscapes.get(monotonicSource)?.point ?? monotonicSource.point,
+          portEscapes.get(monotonicTarget)?.point ?? monotonicTarget.point,
         )
       : 0;
     const valid =
@@ -1673,6 +1692,7 @@ export function routeEdge(
             (searchContext === context ? 0 : context.visited),
         ),
       };
+      hard.allowsStep = allowsStep;
       protectFutureTarget(hard);
       hard.guides = undefined;
       hard.edgeCost = selfCost;
@@ -1772,7 +1792,12 @@ export function routeEdge(
                   return false;
                 }),
               );
-              if (retraces || !safe(candidate, hard)) continue;
+              if (
+                retraces ||
+                !safe(candidate, hard) ||
+                segments.some((segment) => !(allowsStep?.(segment.a, segment.b) ?? true))
+              )
+                continue;
               const cost = pathCost(candidate, context);
               if (cost < bestCost) {
                 best = candidate;
@@ -1851,6 +1876,10 @@ export function routeEdge(
     const diagnosticStart = diagnostics.length;
     const fallbackBefore = shapeFallback;
     const evaluate = (from: Terminal, to: Terminal) => {
+      if (a === source && b === target) {
+        monotonicSource = from;
+        monotonicTarget = to;
+      }
       diagnostics.splice(diagnosticStart);
       shapeFallback = fallbackBefore;
       const guide = guideConnection(from, to, via);
@@ -1902,6 +1931,8 @@ export function routeEdge(
     }
     diagnostics.splice(diagnosticStart, diagnostics.length - diagnosticStart, ...best.diagnostics);
     shapeFallback = best.fallback;
+    monotonicSource = source;
+    monotonicTarget = target;
     if (a === source && b === target) {
       Object.assign(source, best.from);
       Object.assign(target, best.to);

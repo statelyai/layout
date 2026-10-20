@@ -43,3 +43,30 @@ it.each(["fan", "bus", "bundle"] as const)(
     ).toBe(true);
   },
 );
+
+it("uses the selected automatic faces for monotonic direction while locking an equal axis", () => {
+  const input = createGraph({
+    id: "equal-axis-obstacle",
+    nodes: [
+      { id: "a", x: 0, y: 0, width: 100, height: 60 },
+      { id: "b", x: 0, y: 180, width: 100, height: 60 },
+      { id: "obstacle", x: 30, y: 90, width: 40, height: 40 },
+    ],
+    edges: [{ id: "edge", sourceId: "a", targetId: "b" }],
+  });
+  const policy = {
+    curve: { kind: "bezier" as const },
+    monotonic: { axis: "x" as const, strength: "require" as const },
+  };
+  const locked = routingStrategies.bezier
+    .route(input, {
+      policy,
+      edges: { edge: { sourceSides: ["bottom"], targetSides: ["top"] } },
+    })
+    .routes.get("edge")!;
+  expect(locked.sections).toEqual([]);
+  const automatic = routingStrategies.bezier.route(input, { policy }).routes.get("edge")!;
+  expect(automatic.sections.length).toBeGreaterThan(0);
+  const path = automatic.sections[0]!.path;
+  expect(pathReverseTravel(path, "x", path.start, path.segments.at(-1)!.to)).toBeLessThan(1e-7);
+});
