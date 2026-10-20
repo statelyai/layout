@@ -72,6 +72,10 @@ produce route diagnostics.
 Handles and corner radii can shrink to satisfy hard geometry constraints.
 A safe guide returned in place of a requested curve carries fallback diagnostics.
 
+Bézier policies also fit a compact visibility guide between authored anchors.
+Discovered search vertices can change; authored waypoints remain exact. Final
+curve clearance and crossing costs decide which candidate to retain.
+
 Catmull–Rom uses centripetal parameterization, alpha `0.5`, and produces ordinary
 cubic `RouteSegment` values. Authored waypoints retain their order and position.
 Consecutive duplicate knots do not cause division by zero. Explicit endpoint
@@ -165,7 +169,8 @@ history remains deterministic, and unrelated routes retain identity.
 `fanRouting`, `busRouting`, and `bundleRouting` own shared trunks. Per-edge
 `group` assigns branches to a group. Equal section `sharedId` values denote
 identical geometry, which renderers draw once. Policies do not introduce a
-second grouping mechanism.
+second grouping mechanism. Affected shared groups rebuild together, including
+when `preserve-valid` is enabled, so one branch cannot retain a stale trunk.
 
 Layered layout accepts these settings through its existing replacement router.
 

@@ -1,11 +1,11 @@
 {
   "cases": 672,
   "visibleSections": 3360,
-  "reportedFallbacks": 64,
+  "reportedFallbacks": 57,
   "emptyRoutes": 0,
   "diagnostics": {
     "ROUTE_CONFLICT": 1329,
-    "CONSTRAINT_VIOLATION": 64
+    "CONSTRAINT_VIOLATION": 57
   },
   "seed": 173,
   "checks": [

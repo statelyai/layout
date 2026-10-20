@@ -53,3 +53,23 @@ quality are separate checks. The gallery provides matching review images.
 The seeded corpus checks public-API geometry and updates. Neither establishes
 commercial-tool parity or a global optimum. The broader product direction is
 a complete layout and routing library competitive with yEd.
+
+## Clearance quality refinement
+
+The original safety and consistency checks accepted a visibly awkward obstacle
+route. An orthogonal search guide contained a five-pixel jog and a short terminal
+lead beside long spans. Interpolating every synthetic point produced a large
+bulge and a target hook. Hard validity did not measure these artifacts.
+
+Two independent sketches considered reusing the existing visibility search or
+enumerating new obstacle-corner support points. A separate judge selected the
+existing search. It generates a compact guide between mandatory authored anchors
+without adding public controls or another route generator. The original guide
+remains available, and finished curves still own clearance and crossing scores.
+Global curvature reduction and local handle caps were rejected as primary fixes
+because runtime probes retained the main detour.
+
+The [clearance comparison](clearance/README.md) uses identical graph and policy
+settings before and after this refinement. Geometry regressions measure compactness,
+reverse travel, actual clearance, following labels, authored knots, tangents, and
+incremental updates. They do not establish optimal routing for every graph.

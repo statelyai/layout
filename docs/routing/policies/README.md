@@ -38,26 +38,34 @@ this repository. Set `ROUTING_STORYBOOK_URL` to include the live Storybook check
 Those checks exercise every example and verify that a following label moves
 after a source-node edit. No browser dependency enters the published library.
 
+The [clearance quality refinement](clearance/README.md) compares the reported
+policy route with its fix using identical settings. The original hard-safe path
+had avoidable reversals; a compact visibility guide removes the source jog and
+target hook.
+
 ## Verified source
 
-Source `e6181ca` passes the full `pnpm verify`: 2,048 tests across 141 files,
+Source `3724487` passes the full `pnpm verify`: 2,059 tests across 143 files,
 source/repository/demo/Storybook type checks, demo and Storybook builds,
 publint, and packed ESM/CommonJS/TypeScript smoke checks. Two existing lint
 warnings remain.
 
 The deterministic corpus passes 672 cases: twelve routing strategies, seven
-policies, and eight seeded graphs. It reports 64 explicit curve fallbacks and
+policies, and eight seeded graphs. It reports 57 explicit curve fallbacks and
 zero empty routes. Random graphs exercise rectangular nodes and edges; focused
 unit tests cover labels, ports, authored waypoints, and custom barriers.
 
 The [browser report](browser-report.json) records nine matching static examples,
 nine live Storybook examples, and a following label moving after a node edit.
-Independent final review re-ran all four reported regressions and eight focused
-tests, with no confirmed remaining finding.
+Independent review of the refinement passes 114 focused tests. A separate
+100-position obstacle probe finds no clearance failure, update/fresh mismatch,
+or visit-budget overrun. The earlier four correctness regressions remain covered.
+A comparison of 108 no-policy cases against the prior packed package returns
+identical routes.
 
 The same packed source also passes 286 affected tests in a fresh main-based
 Viz migration checkout, its editor typecheck, and its package build/artifact
-verification. Installed routing source hashes match `e6181ca`. That checkout
+verification. Installed routing source hashes match `3724487`. That checkout
 uses a local tarball for verification; no consumer dependency update is published.
 
 ## Evidence boundaries
