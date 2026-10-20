@@ -34,6 +34,7 @@ to the first command.
 pnpm routing:quality .scratch/routing-quality-pass/baseline /path/to/baseline/dist/routing/index.mjs
 pnpm routing:quality .scratch/routing-quality-pass/after
 ROUTING_STORYBOOK_URL=http://127.0.0.1:6018 node scripts/verify-routing-quality.mjs
+pnpm exec tsx scripts/render-authoring-routing-quality.mjs .scratch/routing-quality-pass/authoring /path/to/baseline/dist/index.mjs
 ```
 
 The browser verifier requires Playwright. Set `ROUTING_BROWSER_MODULE` when its

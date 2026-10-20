@@ -1,4 +1,5 @@
-import { mkdirSync, writeFileSync } from "node:fs";
+import { mkdirSync, writeFileSync, readFileSync, readdirSync } from "node:fs";
+import { createHash } from "node:crypto";
 import { execFileSync } from "node:child_process";
 import { join, resolve } from "node:path";
 import { pathToFileURL } from "node:url";
@@ -24,8 +25,16 @@ const strategies: typeof routingStrategies = baseline
   ? (await import(pathToFileURL(resolve(baseline)).href)).routingStrategies
   : routingStrategies;
 const revision = baseline
-  ? "741ab54"
+  ? (process.env.ROUTING_BASELINE_REVISION ?? "external baseline; source revision unverified")
   : execFileSync("git", ["rev-parse", "HEAD"], { encoding: "utf8" }).trim();
+const hash = (path: string) => createHash("sha256").update(readFileSync(path)).digest("hex");
+const sourceHashes = baseline
+  ? null
+  : Object.fromEntries(
+      readdirSync("src/routing")
+        .filter((name) => name.endsWith(".ts"))
+        .map((name) => [`src/routing/${name}`, hash(`src/routing/${name}`)]),
+    );
 const curveFixture = getRoutingQualityFixture("multiple-obstacles");
 const fixtures = [
   ...routingQualityFixtures,
@@ -155,6 +164,9 @@ writeFileSync(
     {
       revision,
       baselinePackage: baseline ?? null,
+      baselineModuleHash: baseline ? hash(resolve(baseline)) : null,
+      sourceHashes,
+      fixtureHash: hash("stories/routing-quality-fixtures.ts"),
       cases: records.length,
       direction: "authored",
       deviceScaleFactor: 1,

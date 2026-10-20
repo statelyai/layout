@@ -38,6 +38,7 @@ let cases = 0;
 let visibleRoutes = 0;
 let reportedFallbacks = 0;
 let emptyRoutes = 0;
+const emptyCases: { context: string; edgeId: string; diagnostics: readonly string[] }[] = [];
 const diagnosticCounts: Record<string, number> = {};
 for (let seed = 0; seed < 8; seed++) {
   const graph = createGraph({
@@ -88,7 +89,14 @@ for (let seed = 0; seed < 8; seed++) {
       );
       const shared = new Map<string, string>();
       for (const route of fresh.routes.values()) {
-        if (!route.sections.length) emptyRoutes++;
+        if (!route.sections.length) {
+          emptyRoutes++;
+          emptyCases.push({
+            context,
+            edgeId: route.edgeId,
+            diagnostics: route.diagnostics.map((d) => d.code),
+          });
+        }
         for (const diagnostic of route.diagnostics)
           diagnosticCounts[diagnostic.code] = (diagnosticCounts[diagnostic.code] ?? 0) + 1;
         assert(
@@ -143,6 +151,7 @@ console.log(
       visibleSections: visibleRoutes,
       reportedFallbacks,
       emptyRoutes,
+      emptyCases,
       diagnostics: diagnosticCounts,
       seed: 173,
       checks: [

@@ -9,6 +9,8 @@ const { chromium } = require(process.env.ROUTING_BROWSER_MODULE ?? "@playwright/
 const root = resolve(process.argv[2] ?? ".scratch/routing-quality-pass");
 const before = JSON.parse(readFileSync(join(root, "baseline/routes.json"), "utf8"));
 const after = JSON.parse(readFileSync(join(root, "after/routes.json"), "utf8"));
+const baselineMetadata = JSON.parse(readFileSync(join(root, "baseline/metadata.json"), "utf8"));
+const afterMetadata = JSON.parse(readFileSync(join(root, "after/metadata.json"), "utf8"));
 const identity = (records) =>
   records.map(({ id, graph, settings, strategy }) => ({ id, graph, settings, strategy }));
 assert.deepEqual(identity(after), identity(before), "Matched inputs required");
@@ -31,7 +33,7 @@ const cards = after.map((record, i) => {
     writeFileSync(join(output, `${record.id}-${stage}.svg`), value);
     return value;
   };
-  return `<article id="${record.id}"><h2>${escape(record.title)}</h2><p>${escape(record.description)}</p><div class="pair"><section><h3>Before · 741ab54</h3>${svg(previous, "before")}</section><section><h3>After</h3>${svg(record, "after")}</section></div></article>`;
+  return `<article id="${record.id}"><h2>${escape(record.title)}</h2><p>${escape(record.description)}</p><div class="pair"><section><h3>Before · ${escape(baselineMetadata.revision.slice(0, 12))}</h3>${svg(previous, "before")}</section><section><h3>After · ${escape(afterMetadata.revision.slice(0, 12))}</h3>${svg(record, "after")}</section></div></article>`;
 });
 const html = (body) =>
   `<!doctype html><meta charset="utf-8"><style>body{margin:20px;background:#f7f8fb;color:#27334a;font:15px system-ui}h2{margin:8px 0}p{margin:6px 0}.pair{display:flex;gap:12px}section{background:white;border:1px solid #ccd3df}h3{margin:10px 16px}svg{display:block}article{margin-bottom:24px;break-inside:avoid}</style>${body}`;
@@ -45,7 +47,15 @@ const page = await browser.newPage({
 });
 const errors = [];
 page.on("pageerror", (e) => errors.push(e.message));
-const report = { matchedCases: after.length, screenshots: [], stories: [] };
+const report = {
+  baselineRevision: baselineMetadata.revision,
+  sourceRevision: afterMetadata.revision,
+  deviceScaleFactor: 1,
+  pairCanvas: { width: 760, height: 470 },
+  matchedCases: after.length,
+  screenshots: [],
+  stories: [],
+};
 try {
   await page.goto(pathToFileURL(join(output, "index.html")).href);
   await page.evaluate(() => document.fonts.ready);
