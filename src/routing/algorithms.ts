@@ -1190,7 +1190,10 @@ export function routeEdge(
     const guidePoints = [guide.start, ...guide.segments.map((part) => part.to)];
     const candidates: RoutePath[] = [];
     const unshapedCandidates = new Set<RoutePath>();
-    const compact = curvePolicy.kind === "bezier" ? compactBezierGuide(a, b, via) : undefined;
+    const compact =
+      curvePolicy.kind === "bezier" || curvePolicy.kind === "catmull-rom"
+        ? compactBezierGuide(a, b, via)
+        : undefined;
     const smoothCompact =
       curvePolicy.kind === "bezier" && !via.length
         ? compactBezierGuide(a, b, via, config.radius / 2)
