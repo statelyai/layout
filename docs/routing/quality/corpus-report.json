@@ -1,0 +1,21 @@
+{
+  "cases": 672,
+  "visibleSections": 3360,
+  "reportedFallbacks": 27,
+  "emptyRoutes": 0,
+  "emptyCases": [],
+  "diagnostics": {
+    "ROUTE_CONFLICT": 1329,
+    "CONSTRAINT_VIOLATION": 27
+  },
+  "seed": 173,
+  "checks": [
+    "finite paths",
+    "hard node clearance",
+    "fresh/update equivalence",
+    "no-op updates",
+    "input order invariance",
+    "fallback diagnostics",
+    "shared trunk consistency"
+  ]
+}

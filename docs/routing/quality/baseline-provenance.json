@@ -1,0 +1,101 @@
+{
+  "sourceRevision": "741ab54",
+  "packageBuildRevision": "3724487",
+  "matchingFiles": [
+    {
+      "path": "src/routing/adapters.ts",
+      "sha256": "094ec47250f5b28edeff58bfa55688a3050db0de3233f13c5d7bb37032a7d2cc",
+      "matches": true
+    },
+    {
+      "path": "src/routing/algorithms.ts",
+      "sha256": "4b7762cd0244b30232104eac9461d52ef9c30ef1b9a006041113bdf50dfb77c3",
+      "matches": true
+    },
+    {
+      "path": "src/routing/bezier-fit.ts",
+      "sha256": "8110ff14883ee6d08b076e1ca9e720a2c39e65b2dd2630792d75dc71c605dd73",
+      "matches": true
+    },
+    {
+      "path": "src/routing/bezier-visibility.ts",
+      "sha256": "e9112016f00b6398e6deed350d635ca1b08b33173f62e65f28d6ae56b5f9ce2e",
+      "matches": true
+    },
+    {
+      "path": "src/routing/bezier.ts",
+      "sha256": "d6653495bdfd69955497f6962c6cfc1dfaeadb029ff80081bf346254400063a0",
+      "matches": true
+    },
+    {
+      "path": "src/routing/coordination.ts",
+      "sha256": "4c2d6a10fee7f5eb4faa85711980eede4c68f3d03ab24ce5e88ee537034e527c",
+      "matches": true
+    },
+    {
+      "path": "src/routing/engine.ts",
+      "sha256": "442ea9caf33660e10c1f843a3b213fa5f6206df008ca9be7fbb422ec319e4120",
+      "matches": true
+    },
+    {
+      "path": "src/routing/index.ts",
+      "sha256": "e3abf2d17611f20f9db8bfd387b033248cf423b2ba31c6218b97e932ba3f7c42",
+      "matches": true
+    },
+    {
+      "path": "src/routing/layout-cache.ts",
+      "sha256": "db6a0b3bea305f8d3c8f4c94fbc040f0477a91095032f09aded84ffe4e6cd25c",
+      "matches": true
+    },
+    {
+      "path": "src/routing/model.ts",
+      "sha256": "f7daa5c6771a74c150549ff52e42d87e2e3aa454652ccbb4e508f1d7a490159c",
+      "matches": true
+    },
+    {
+      "path": "src/routing/path.ts",
+      "sha256": "df34cf13555e77a220c0a800e25f923ce26b3f27bf55b010f4d5bba7bd4bc5ef",
+      "matches": true
+    },
+    {
+      "path": "src/routing/persistent.ts",
+      "sha256": "e49e45407d35cad2b1ba1510ada33f941f26b2a1b8b62cbad065189cf151c77e",
+      "matches": true
+    },
+    {
+      "path": "src/routing/policy-geometry.ts",
+      "sha256": "1472c8dceacae76bca4e184a43d430f49bf531fbec2207b74162249575bb440b",
+      "matches": true
+    },
+    {
+      "path": "src/routing/search.ts",
+      "sha256": "587fed3b7656abe38aebc4456afa53458c51736429440734e4ff1c2abd49b184",
+      "matches": true
+    },
+    {
+      "path": "src/routing/spatial.ts",
+      "sha256": "34ee961f97b2cce871f43770f698885c84fe1a5a8589b2a7f38eaf000d6ec5f0",
+      "matches": true
+    },
+    {
+      "path": "src/routing/types.ts",
+      "sha256": "a40503ef8777e5dbf9062e1bb748cc692e0e6fe1289250071682a9013440bf5f",
+      "matches": true
+    },
+    {
+      "path": "src/index.ts",
+      "sha256": "ed63097b3d278bd61f65b6c66635cce7335406db2404cd5ef5800afa95592769",
+      "matches": true
+    },
+    {
+      "path": "src/authoring/partial.ts",
+      "sha256": "0df68ad7c03b1257e075611324dff8417f1163d3d8e5975c73af8a956b3af6fd",
+      "matches": true
+    },
+    {
+      "path": "src/authoring/routing.ts",
+      "sha256": "a8d613ac2908fd5f8d52a3c4362067381a1cf3c9eac82f78cd810817cd1c77ec",
+      "matches": true
+    }
+  ]
+}

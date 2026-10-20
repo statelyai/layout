@@ -1,0 +1,10 @@
+{
+  "revision": "741ab54",
+  "baselinePackage": ".scratch/routing-quality-pass/baseline-package/package/dist/routing/index.mjs",
+  "baselineModuleHash": "52535cde22f8013f708377f33620c2ee924ea5abfff3689a14fef2d343ed4af6",
+  "sourceHashes": null,
+  "fixtureHash": "cd63c0377c4ff8b544070fbf8d80e8a1df952d1d1d285a853bfe63ef53557edf",
+  "cases": 46,
+  "direction": "authored",
+  "deviceScaleFactor": 1
+}

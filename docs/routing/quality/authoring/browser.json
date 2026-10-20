@@ -1,0 +1,130 @@
+[
+  {
+    "name": "gallery-partial-before",
+    "viewport": {
+      "width": 1550,
+      "height": 950
+    },
+    "geometry": [
+      {
+        "edge": "ab",
+        "points": "120,122 120,64 381,64 381,122 470,122",
+        "length": 466
+      }
+    ]
+  },
+  {
+    "name": "gallery-partial-after",
+    "viewport": {
+      "width": 1550,
+      "height": 950
+    },
+    "geometry": [
+      {
+        "edge": "ab",
+        "points": "120,122 128,122 128,57 388,57 388,122 470,122",
+        "length": 480
+      }
+    ]
+  },
+  {
+    "name": "gallery-route-only-before",
+    "viewport": {
+      "width": 1550,
+      "height": 950
+    },
+    "geometry": [
+      {
+        "edge": "ab",
+        "points": "120,122 120,64 381,64 381,122 470,122",
+        "length": 466
+      }
+    ]
+  },
+  {
+    "name": "gallery-route-only-after",
+    "viewport": {
+      "width": 1550,
+      "height": 950
+    },
+    "geometry": [
+      {
+        "edge": "ab",
+        "points": "120,122 128,122 128,57 388,57 388,122 470,122",
+        "length": 480
+      }
+    ]
+  },
+  {
+    "name": "gallery-required-waypoint-before",
+    "viewport": {
+      "width": 1550,
+      "height": 950
+    },
+    "geometry": [
+      {
+        "edge": "ab",
+        "points": "120,122 120,62 275,62 275,64 381,64 381,122 470,122",
+        "length": 470
+      }
+    ]
+  },
+  {
+    "name": "gallery-required-waypoint-after",
+    "viewport": {
+      "width": 1550,
+      "height": 950
+    },
+    "geometry": [
+      {
+        "edge": "ab",
+        "points": "120,122 124,122 124,62 276,62 276,61 384,61 384,122 470,122",
+        "length": 472
+      }
+    ]
+  },
+  {
+    "name": "gallery-nested-leaf-before",
+    "viewport": {
+      "width": 1550,
+      "height": 950
+    },
+    "geometry": []
+  },
+  {
+    "name": "gallery-nested-leaf-after",
+    "viewport": {
+      "width": 1550,
+      "height": 950
+    },
+    "geometry": []
+  },
+  {
+    "name": "nested-route-only-before",
+    "viewport": {
+      "width": 1550,
+      "height": 950
+    },
+    "geometry": [
+      {
+        "edge": "ab",
+        "points": "1120,2122 1120,2064 1381,2064 1381,2122 1470,2122",
+        "length": 466
+      }
+    ]
+  },
+  {
+    "name": "nested-route-only-after",
+    "viewport": {
+      "width": 1550,
+      "height": 950
+    },
+    "geometry": [
+      {
+        "edge": "ab",
+        "points": "1120,2122 1128,2122 1128,2057 1388,2057 1388,2122 1470,2122",
+        "length": 480
+      }
+    ]
+  }
+]

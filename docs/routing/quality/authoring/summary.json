@@ -1,0 +1,127 @@
+{
+  "baseline": {
+    "requestedRevision": "741ab54",
+    "module": "/Users/davidkpiano/.codex/worktrees/layout/shared-bezier-routing/.scratch/routing-quality-pass/baseline-package/package/dist/index.mjs",
+    "moduleSha256": "fa766987955d7a0a6a819879c219898562d3bf346b8959fa471ef79b91784df1"
+  },
+  "current": {
+    "revision": "fc1baa877769bae3ee192b1ce002e0701e28a576",
+    "project": "/Users/davidkpiano/.codex/worktrees/layout/shared-bezier-routing",
+    "workingTreeDirty": false,
+    "sourceSha256": {
+      "src/index.ts": "ed63097b3d278bd61f65b6c66635cce7335406db2404cd5ef5800afa95592769",
+      "src/authoring/routing.ts": "734b54ef8ecebe701e740816c4583fe448e246a63e3218bee328577f3adcdf9b",
+      "src/authoring/partial.ts": "5438c55f4cf917a5a907a67d0feb89480278b8b1abe9a462b6b8c716ed07fb8d",
+      "stories/authoring-fixtures.ts": "d4cc8948a827b10e1c2bc8dc6232d0062d8bc751229634440d80c4f86d7aad44"
+    }
+  },
+  "viewport": {
+    "width": 1550,
+    "height": 950
+  },
+  "font": "Arial,sans-serif",
+  "cases": [
+    {
+      "id": "gallery-partial",
+      "source": "stories/authoring-fixtures.ts authoringRequest(defaults)",
+      "inputHashBefore": "d648f157da6599d09de30ae55606d3d7fd3281cb52399bafdf55b7ff90ebbf36",
+      "inputHashAfter": "d648f157da6599d09de30ae55606d3d7fd3281cb52399bafdf55b7ff90ebbf36",
+      "inputEqual": true,
+      "inputUnmutated": true,
+      "beforeStatus": "ok",
+      "afterStatus": "ok",
+      "beforeClearance": 1,
+      "afterClearance": 8,
+      "beforeConstraints": [],
+      "afterConstraints": [],
+      "beforeFixedNodesPreserved": true,
+      "afterFixedNodesPreserved": true
+    },
+    {
+      "id": "gallery-route-only",
+      "source": "gallery graph with equivalent public route-only scope",
+      "inputHashBefore": "0b855f0ee10efa38e76fbdcaddd3be04eeee9d3d6fd9f2c8113726945e75dc42",
+      "inputHashAfter": "0b855f0ee10efa38e76fbdcaddd3be04eeee9d3d6fd9f2c8113726945e75dc42",
+      "inputEqual": true,
+      "inputUnmutated": true,
+      "beforeStatus": "ok",
+      "afterStatus": "ok",
+      "beforeClearance": 1,
+      "afterClearance": 8,
+      "beforeConstraints": [],
+      "afterConstraints": [],
+      "beforeFixedNodesPreserved": true,
+      "afterFixedNodesPreserved": true
+    },
+    {
+      "id": "gallery-required-waypoint",
+      "source": "gallery graph with required waypoint from test/partial-routing-quality.test.ts",
+      "inputHashBefore": "5f3cbb053345a395fc5888344aeed130ac9c397d625364c8fcda5f71d77b1f28",
+      "inputHashAfter": "5f3cbb053345a395fc5888344aeed130ac9c397d625364c8fcda5f71d77b1f28",
+      "inputEqual": true,
+      "inputUnmutated": true,
+      "beforeStatus": "ok",
+      "afterStatus": "ok",
+      "beforeClearance": 1,
+      "afterClearance": 4,
+      "beforeConstraints": [
+        {
+          "id": "via",
+          "kind": "waypoint",
+          "satisfied": true
+        }
+      ],
+      "afterConstraints": [
+        {
+          "id": "via",
+          "kind": "waypoint",
+          "satisfied": true
+        }
+      ],
+      "beforeFixedNodesPreserved": true,
+      "afterFixedNodesPreserved": true
+    },
+    {
+      "id": "gallery-nested-leaf",
+      "source": "stories/authoring-fixtures.ts authoringRequest({...defaults,scenario:'nested'})",
+      "inputHashBefore": "787247edfe8cda17511acf8f04147af26ac4192c5b8357cdf5c3161814729349",
+      "inputHashAfter": "787247edfe8cda17511acf8f04147af26ac4192c5b8357cdf5c3161814729349",
+      "inputEqual": true,
+      "inputUnmutated": true,
+      "beforeStatus": "ok",
+      "afterStatus": "ok",
+      "beforeConstraints": [
+        {
+          "id": "world-position",
+          "kind": "pin",
+          "satisfied": true
+        }
+      ],
+      "afterConstraints": [
+        {
+          "id": "world-position",
+          "kind": "pin",
+          "satisfied": true
+        }
+      ],
+      "beforeFixedNodesPreserved": true,
+      "afterFixedNodesPreserved": true
+    },
+    {
+      "id": "nested-route-only",
+      "source": "gallery scene nested exactly as test/partial-routing-quality.test.ts",
+      "inputHashBefore": "1b6ea34eecb0ab08e73f2bfcd50255023ca6e0bd0d7593a0708785399390c155",
+      "inputHashAfter": "1b6ea34eecb0ab08e73f2bfcd50255023ca6e0bd0d7593a0708785399390c155",
+      "inputEqual": true,
+      "inputUnmutated": true,
+      "beforeStatus": "ok",
+      "afterStatus": "ok",
+      "beforeClearance": 1,
+      "afterClearance": 8,
+      "beforeConstraints": [],
+      "afterConstraints": [],
+      "beforeFixedNodesPreserved": true,
+      "afterFixedNodesPreserved": true
+    }
+  ]
+}

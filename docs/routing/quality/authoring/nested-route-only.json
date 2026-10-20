@@ -1,0 +1,488 @@
+{
+  "id": "nested-route-only",
+  "source": "gallery scene nested exactly as test/partial-routing-quality.test.ts",
+  "input": {
+    "graph": {
+      "id": "",
+      "mode": "directed",
+      "initialNodeId": null,
+      "nodes": [
+        {
+          "type": "node",
+          "id": "parent",
+          "label": null,
+          "data": null,
+          "x": 1000,
+          "y": 2000,
+          "width": 700,
+          "height": 400
+        },
+        {
+          "type": "node",
+          "id": "a",
+          "label": null,
+          "data": null,
+          "x": 40,
+          "y": 100,
+          "width": 80,
+          "height": 44,
+          "parentId": "parent"
+        },
+        {
+          "type": "node",
+          "id": "b",
+          "label": null,
+          "data": null,
+          "x": 470,
+          "y": 100,
+          "width": 80,
+          "height": 44,
+          "parentId": "parent"
+        },
+        {
+          "type": "node",
+          "id": "fixed",
+          "label": null,
+          "data": null,
+          "x": 280,
+          "y": 65,
+          "width": 100,
+          "height": 125,
+          "parentId": "parent"
+        }
+      ],
+      "edges": [
+        {
+          "type": "edge",
+          "id": "ab",
+          "sourceId": "a",
+          "targetId": "b",
+          "label": null,
+          "data": null,
+          "points": [
+            {
+              "x": 120,
+              "y": 122
+            },
+            {
+              "x": 470,
+              "y": 122
+            }
+          ],
+          "routing": "orthogonal",
+          "x": 165,
+          "y": 270,
+          "width": 80,
+          "height": 26
+        }
+      ],
+      "data": null,
+      "direction": "right"
+    },
+    "options": {
+      "direction": "right",
+      "spacing": {
+        "node": 24
+      }
+    },
+    "scope": {
+      "mode": "route-only",
+      "previous": {
+        "id": "",
+        "mode": "directed",
+        "initialNodeId": null,
+        "nodes": [
+          {
+            "type": "node",
+            "id": "parent",
+            "label": null,
+            "data": null,
+            "x": 1000,
+            "y": 2000,
+            "width": 700,
+            "height": 400
+          },
+          {
+            "type": "node",
+            "id": "a",
+            "label": null,
+            "data": null,
+            "x": 40,
+            "y": 100,
+            "width": 80,
+            "height": 44,
+            "parentId": "parent"
+          },
+          {
+            "type": "node",
+            "id": "b",
+            "label": null,
+            "data": null,
+            "x": 470,
+            "y": 100,
+            "width": 80,
+            "height": 44,
+            "parentId": "parent"
+          },
+          {
+            "type": "node",
+            "id": "fixed",
+            "label": null,
+            "data": null,
+            "x": 280,
+            "y": 65,
+            "width": 100,
+            "height": 125,
+            "parentId": "parent"
+          }
+        ],
+        "edges": [
+          {
+            "type": "edge",
+            "id": "ab",
+            "sourceId": "a",
+            "targetId": "b",
+            "label": null,
+            "data": null,
+            "points": [
+              {
+                "x": 120,
+                "y": 122
+              },
+              {
+                "x": 470,
+                "y": 122
+              }
+            ],
+            "routing": "orthogonal",
+            "x": 165,
+            "y": 270,
+            "width": 80,
+            "height": 26
+          }
+        ],
+        "data": null,
+        "direction": "right"
+      }
+    }
+  },
+  "inputHashBefore": "1b6ea34eecb0ab08e73f2bfcd50255023ca6e0bd0d7593a0708785399390c155",
+  "inputHashAfter": "1b6ea34eecb0ab08e73f2bfcd50255023ca6e0bd0d7593a0708785399390c155",
+  "inputEqual": true,
+  "inputUnmutated": true,
+  "frame": {
+    "scale": 1.3541666666666667,
+    "tx": -1227.0833333333335,
+    "ty": -2471.25
+  },
+  "before": {
+    "status": "ok",
+    "graph": {
+      "id": "",
+      "mode": "directed",
+      "initialNodeId": null,
+      "nodes": [
+        {
+          "type": "node",
+          "id": "parent",
+          "label": null,
+          "data": null,
+          "x": 1000,
+          "y": 2000,
+          "width": 700,
+          "height": 400
+        },
+        {
+          "type": "node",
+          "id": "a",
+          "label": null,
+          "data": null,
+          "x": 40,
+          "y": 100,
+          "width": 80,
+          "height": 44,
+          "parentId": "parent"
+        },
+        {
+          "type": "node",
+          "id": "b",
+          "label": null,
+          "data": null,
+          "x": 470,
+          "y": 100,
+          "width": 80,
+          "height": 44,
+          "parentId": "parent"
+        },
+        {
+          "type": "node",
+          "id": "fixed",
+          "label": null,
+          "data": null,
+          "x": 280,
+          "y": 65,
+          "width": 100,
+          "height": 125,
+          "parentId": "parent"
+        }
+      ],
+      "edges": [
+        {
+          "type": "edge",
+          "id": "ab",
+          "sourceId": "a",
+          "targetId": "b",
+          "label": null,
+          "data": null,
+          "points": [
+            {
+              "x": 120,
+              "y": 122
+            },
+            {
+              "x": 120,
+              "y": 64
+            },
+            {
+              "x": 381,
+              "y": 64
+            },
+            {
+              "x": 381,
+              "y": 122
+            },
+            {
+              "x": 470,
+              "y": 122
+            }
+          ],
+          "routing": "orthogonal",
+          "x": 165,
+          "y": 270,
+          "width": 80,
+          "height": 26
+        }
+      ],
+      "data": null,
+      "direction": "right"
+    },
+    "patches": [
+      {
+        "op": "updateEdge",
+        "id": "ab",
+        "data": {
+          "points": [
+            {
+              "x": 120,
+              "y": 122
+            },
+            {
+              "x": 120,
+              "y": 64
+            },
+            {
+              "x": 381,
+              "y": 64
+            },
+            {
+              "x": 381,
+              "y": 122
+            },
+            {
+              "x": 470,
+              "y": 122
+            }
+          ]
+        },
+        "description": "Apply layout geometry"
+      }
+    ],
+    "diagnostics": [],
+    "obstacleClearance": 1,
+    "routePoints": [
+      {
+        "x": 120,
+        "y": 122
+      },
+      {
+        "x": 120,
+        "y": 64
+      },
+      {
+        "x": 381,
+        "y": 64
+      },
+      {
+        "x": 381,
+        "y": 122
+      },
+      {
+        "x": 470,
+        "y": 122
+      }
+    ],
+    "fixedNodesPreserved": true,
+    "constraintSatisfaction": []
+  },
+  "after": {
+    "status": "ok",
+    "graph": {
+      "id": "",
+      "mode": "directed",
+      "initialNodeId": null,
+      "nodes": [
+        {
+          "type": "node",
+          "id": "parent",
+          "label": null,
+          "data": null,
+          "x": 1000,
+          "y": 2000,
+          "width": 700,
+          "height": 400
+        },
+        {
+          "type": "node",
+          "id": "a",
+          "label": null,
+          "data": null,
+          "x": 40,
+          "y": 100,
+          "width": 80,
+          "height": 44,
+          "parentId": "parent"
+        },
+        {
+          "type": "node",
+          "id": "b",
+          "label": null,
+          "data": null,
+          "x": 470,
+          "y": 100,
+          "width": 80,
+          "height": 44,
+          "parentId": "parent"
+        },
+        {
+          "type": "node",
+          "id": "fixed",
+          "label": null,
+          "data": null,
+          "x": 280,
+          "y": 65,
+          "width": 100,
+          "height": 125,
+          "parentId": "parent"
+        }
+      ],
+      "edges": [
+        {
+          "type": "edge",
+          "id": "ab",
+          "sourceId": "a",
+          "targetId": "b",
+          "label": null,
+          "data": null,
+          "points": [
+            {
+              "x": 120,
+              "y": 122
+            },
+            {
+              "x": 128,
+              "y": 122
+            },
+            {
+              "x": 128,
+              "y": 57
+            },
+            {
+              "x": 388,
+              "y": 57
+            },
+            {
+              "x": 388,
+              "y": 122
+            },
+            {
+              "x": 470,
+              "y": 122
+            }
+          ],
+          "routing": "orthogonal",
+          "x": 165,
+          "y": 270,
+          "width": 80,
+          "height": 26
+        }
+      ],
+      "data": null,
+      "direction": "right"
+    },
+    "patches": [
+      {
+        "op": "updateEdge",
+        "id": "ab",
+        "data": {
+          "points": [
+            {
+              "x": 120,
+              "y": 122
+            },
+            {
+              "x": 128,
+              "y": 122
+            },
+            {
+              "x": 128,
+              "y": 57
+            },
+            {
+              "x": 388,
+              "y": 57
+            },
+            {
+              "x": 388,
+              "y": 122
+            },
+            {
+              "x": 470,
+              "y": 122
+            }
+          ]
+        },
+        "description": "Apply layout geometry"
+      }
+    ],
+    "diagnostics": [],
+    "obstacleClearance": 8,
+    "routePoints": [
+      {
+        "x": 120,
+        "y": 122
+      },
+      {
+        "x": 128,
+        "y": 122
+      },
+      {
+        "x": 128,
+        "y": 57
+      },
+      {
+        "x": 388,
+        "y": 57
+      },
+      {
+        "x": 388,
+        "y": 122
+      },
+      {
+        "x": 470,
+        "y": 122
+      }
+    ],
+    "fixedNodesPreserved": true,
+    "constraintSatisfaction": []
+  }
+}
