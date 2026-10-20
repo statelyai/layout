@@ -150,6 +150,24 @@ describe("routing policies", () => {
     const restored = bezierRouting.update(input, update, getDiff(moved, input)).snapshot;
     expect([...restored.routes]).toEqual([...initial.routes]);
   });
+  it.each(["source", "target"] as const)("escapes an interior %s port without permitting owner reentry", endpoint => {
+    const input = createGraph({id: "interior-port", nodes: [
+      {id: "a", x: 0, y: 0, width: 40, height: 40, ports: [{name: "p", x: 20, y: 20}]},
+      {id: "b", x: 200, y: 0, width: 40, height: 40, ports: [{name: "p", x: 20, y: 20}]},
+    ], edges: [{id: "ab", sourceId: "a", targetId: "b", ...(endpoint === "source" ? {sourcePort: "p"} : {targetPort: "p"})}]});
+    const settings: RoutingSettings = {policy: routingPolicies.smooth, edges: {ab: {sourceSide: "right", targetSide: "left"}}};
+    const result = route(settings, input);
+    expect(result.status).toBe("routed");
+    expect(result.sections[0]!.path.start).toEqual({x: endpoint === "source" ? 20 : 40, y: 20});
+    expect(result.sections.at(-1)!.path.segments.at(-1)!.to).toEqual({x: endpoint === "target" ? 220 : 200, y: 20});
+    const owner = endpoint === "source" ? {x: 0, y: 0, width: 40, height: 40} : {x: 200, y: 0, width: 40, height: 40};
+    const path = result.sections[0]!.path;
+    const outside = endpoint === "source" ? {start: path.segments[0]!.to, segments: path.segments.slice(1)} : {...path, segments: path.segments.slice(0, -1)};
+    noCollision({...result, sections: [{...result.sections[0]!, path: outside}]}, owner);
+    const blocked = route({...settings, edges: {ab: {...settings.edges!.ab, waypoints: [{x: 100, y: 70}, {x: owner.x + 25, y: 25}]}}}, input);
+    expect(blocked.status).toBe("fallback");
+    expect(blocked.sections).toEqual([]);
+  });
   it.each(Object.entries(routingPolicies))("%s works without label geometry", (_name, policy) => {
     const result = route({ policy }, graph(false));
     expect(result.sections.length).toBeGreaterThan(0);
