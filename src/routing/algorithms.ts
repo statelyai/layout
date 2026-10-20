@@ -1312,6 +1312,23 @@ export function routeEdge(
       }
     }
     const guidePoints = [guide.start, ...guide.segments.map((part) => part.to)];
+    if (curvePolicy.kind === "bezier" && !via.length) {
+      const tangents = new Map<number, RoutePoint>();
+      if (a.tangent) tangents.set(0, a.tangent);
+      if (b.tangent) tangents.set(1, b.tangent);
+      const direct = bezierThroughPoints(
+        [a.point, b.point],
+        tangents,
+        curvePolicy.curvature ?? 0.5,
+      );
+      if (
+        assessPath(direct, a, b).valid &&
+        pathReverseTravel(direct, "both", a.point, b.point) < 1e-7 &&
+        pathCost(direct, context) - pathLength(direct) < 1e-7 &&
+        terminalClearanceCost(direct, a, b) < 1e-7
+      )
+        return direct;
+    }
     const candidates: RoutePath[] = [];
     const unshapedCandidates = new Set<RoutePath>();
     const compact =
@@ -1319,7 +1336,7 @@ export function routeEdge(
         ? compactBezierGuide(a, b, via)
         : undefined;
     const smoothCompact =
-      curvePolicy.kind === "bezier" && !via.length
+      curvePolicy.kind === "bezier" && !via.length && terminalClearanceCost(guide, a, b) > 1e-7
         ? compactBezierGuide(a, b, via, config.radius / 2)
         : undefined;
     const pointCandidates = [
