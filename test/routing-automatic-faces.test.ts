@@ -42,3 +42,40 @@ it("keeps an explicitly requested departure face", () => {
     .routes.get("second")!;
   expect(route.sections[0]!.fromSide).toBe("right");
 });
+
+it.each([1, 10, 50, 200])(
+  "shares the %s-node search budget across face candidates",
+  (maxSearchNodes) => {
+    const snapshot = bezierRouting.route(graph, { ...settings, maxSearchNodes });
+    expect(snapshot.metrics.searchNodes).toBeLessThanOrEqual(maxSearchNodes * graph.edges.length);
+  },
+);
+it.each(["mirror", "rotate"] as const)(
+  "removes the transformed attachment hook after %s",
+  (transform) => {
+    const transformed = createGraph({
+      ...graph,
+      nodes: graph.nodes.map((node) =>
+        transform === "mirror"
+          ? {
+              ...node,
+              x: 540 - node.x! - node.width!,
+            }
+          : {
+              ...node,
+              x: 500 - node.y! - node.height!,
+              y: node.x,
+              width: node.height,
+              height: node.width,
+            },
+      ),
+    });
+    const allowed =
+      transform === "mirror" ? (["top", "left"] as const) : (["right", "bottom"] as const);
+    const route = bezierRouting
+      .route(transformed, { ...settings, edges: { second: { sourceSides: allowed } } })
+      .routes.get("second")!;
+    expect(route.status).toBe("routed");
+    expect(route.sections[0]!.fromSide).toBe(allowed[0]);
+  },
+);

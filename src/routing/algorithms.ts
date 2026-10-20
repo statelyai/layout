@@ -462,7 +462,23 @@ export function routeEdge(
     policy?.label?.kind === "follow" || policy?.label?.kind === "fixed"
       ? undefined
       : labelRect(edge, state);
-  function terminal(source: boolean): Terminal {
+  const automaticFaces =
+    !!policy &&
+    !loop &&
+    !grouped &&
+    !parentLabel &&
+    !perEdge.sourceAttachment &&
+    !perEdge.targetAttachment &&
+    !perEdge.bezier &&
+    !perEdge.sourceSide &&
+    !perEdge.targetSide &&
+    edge.sourcePort === undefined &&
+    edge.targetPort === undefined &&
+    !perEdge.waypoints?.length &&
+    policy.sourceTangent?.kind !== "vector" &&
+    policy.targetTangent?.kind !== "vector" &&
+    (!labelRect(edge, state) || policy.label?.kind === "follow" || policy.label?.kind === "fixed");
+  function terminal(source: boolean, selectedSide?: RouteSide): Terminal {
     const node = source ? sourceNode : targetNode,
       outer = source ? sourceBounds : targetBounds,
       attachment = source ? perEdge.sourceAttachment : perEdge.targetAttachment,
@@ -480,6 +496,7 @@ export function routeEdge(
         : undefined
       : edge.targetPort;
     let side =
+      selectedSide ??
       (source ? perEdge.sourceSide : perEdge.targetSide) ??
       (loop ? (source ? "right" : "top") : sideToward(center(bounds), center(other)));
     const requestedTangent = source ? policy?.sourceTangent : policy?.targetTangent;
@@ -558,7 +575,7 @@ export function routeEdge(
         const rect = otherNode && worldRect(otherNode, state);
         if (!rect) return false;
         const explicit = from ? config.edges[id]?.sourceSide : config.edges[id]?.targetSide;
-        return (explicit ?? sideToward(center(bounds), center(rect))) === side;
+        return id === edge.id || (explicit ?? sideToward(center(bounds), center(rect))) === side;
       });
       const horizontal = side === "left" || side === "right";
       const projected = (id: string) => {
@@ -664,8 +681,16 @@ export function routeEdge(
             },
     };
   }
-  const source = terminal(true),
-    target = terminal(false),
+  const previousSide = (source: boolean) => {
+    if (!automaticFaces || policy?.stability?.kind !== "preserve-valid") return undefined;
+    const side = source
+      ? batch.previous?.sections[0]?.fromSide
+      : batch.previous?.sections.at(-1)?.toSide;
+    const allowed = source ? perEdge.sourceSides : perEdge.targetSides;
+    return side && (!allowed || allowed.includes(side)) ? side : undefined;
+  };
+  const source = terminal(true, previousSide(true)),
+    target = terminal(false, previousSide(false)),
     positionedLabel = labelRect(edge, state),
     label =
       policy?.label?.kind === "follow" || policy?.label?.kind === "fixed"
@@ -1191,13 +1216,9 @@ export function routeEdge(
   }
   metrics.routedEdges++;
   const sections: RouteSection[] = [];
-  const stub = (t: Terminal) => {
+  const stub = (t: Terminal, end: boolean) => {
     if (t.ref.kind === "junction") return t.point;
-    const v = t.tangent
-        ? t === target || t === firstTarget
-          ? reverse(t.tangent)
-          : t.tangent
-        : vector(t.side),
+    const v = t.tangent ? (end ? reverse(t.tangent) : t.tangent) : vector(t.side),
       length = Math.max(
         config.clearance +
           1 +
@@ -1320,15 +1341,15 @@ export function routeEdge(
         (b.point.x - a.point.x) * vector(a.side).x + (b.point.y - a.point.y) * vector(a.side).y >
           0 &&
         (a.point.x - b.point.x) * vector(b.side).x + (a.point.y - b.point.y) * vector(b.side).y > 0;
-      const boundedStub = (t: Terminal) => {
-        const p = stub(t),
+      const boundedStub = (t: Terminal, end: boolean) => {
+        const p = stub(t, end),
           gap = distance(a.point, b.point) / 3;
         if (!alignedFacing || distance(t.point, p) <= gap) return p;
         const v = vector(t.side);
         return { x: t.point.x + v.x * gap, y: t.point.y + v.y * gap };
       };
-      const start = boundedStub(a),
-        end = boundedStub(b),
+      const start = boundedStub(a, false),
+        end = boundedStub(b, true),
         waypoints = [...via];
       if (style === "parallel" && peers.length > 1) {
         // Find a feasible corridor before choosing lanes; an arbitrary midpoint
@@ -1625,13 +1646,64 @@ export function routeEdge(
   function connection(a: Terminal, b: Terminal, via: readonly RoutePoint[] = []): RoutePath {
     if (!policy) return guideConnection(a, b, via);
     const diagnosticStart = diagnostics.length;
-    const guide = guideConnection(a, b, via);
-    const path = selectPolicyPath(a, b, via, guide);
-    if (path !== guide)
-      for (let i = diagnostics.length - 1; i >= diagnosticStart; i--)
-        if (diagnostics[i]!.code === "ROUTE_BLOCKED" || diagnostics[i]!.code === "SEARCH_BUDGET")
-          diagnostics.splice(i, 1);
-    return withPortEscapes(path, a, b);
+    const fallbackBefore = shapeFallback;
+    const evaluate = (from: Terminal, to: Terminal) => {
+      diagnostics.splice(diagnosticStart);
+      shapeFallback = fallbackBefore;
+      const guide = guideConnection(from, to, via);
+      const path = selectPolicyPath(from, to, via, guide);
+      if (path !== guide)
+        for (let i = diagnostics.length - 1; i >= diagnosticStart; i--)
+          if (diagnostics[i]!.code === "ROUTE_BLOCKED" || diagnostics[i]!.code === "SEARCH_BUDGET")
+            diagnostics.splice(i, 1);
+      return {
+        path: withPortEscapes(path, from, to),
+        from,
+        to,
+        ...assessPath(path, from, to),
+        diagnostics: diagnostics.slice(diagnosticStart),
+        fallback: shapeFallback,
+      };
+    };
+    let best = evaluate(a, b);
+    if (
+      automaticFaces &&
+      a === source &&
+      b === target &&
+      (!best.valid || pathReverseTravel(best.path, "both", a.point, b.point) > 1)
+    ) {
+      for (const sourceEnd of [true, false]) {
+        const current = sourceEnd ? a : b;
+        const allowed = (sourceEnd ? perEdge.sourceSides : perEdge.targetSides) ?? [
+          "left",
+          "right",
+          "top",
+          "bottom",
+        ];
+        for (const side of allowed) {
+          if (side === current.side) continue;
+          if (
+            searchContext.visited + (searchContext === context ? 0 : context.visited) >=
+            config.maxSearchNodes
+          )
+            break;
+          const alternative = terminal(sourceEnd, side);
+          const requested = sourceEnd ? policy.sourceTangent : policy.targetTangent;
+          if (requested?.kind === "border-normal")
+            alternative.tangent = sourceEnd ? vector(side) : reverse(vector(side));
+          const candidate = evaluate(sourceEnd ? alternative : a, sourceEnd ? b : alternative);
+          if (candidate.valid && (!best.valid || candidate.cost < best.cost - 1e-7))
+            best = candidate;
+        }
+      }
+    }
+    diagnostics.splice(diagnosticStart, diagnostics.length - diagnosticStart, ...best.diagnostics);
+    shapeFallback = best.fallback;
+    if (a === source && b === target) {
+      Object.assign(source, best.from);
+      Object.assign(target, best.to);
+    }
+    return best.path;
   }
   const via = perEdge.waypoints ?? [];
   if (via.some((p) => !Number.isFinite(p.x) || !Number.isFinite(p.y)))
