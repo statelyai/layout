@@ -37,7 +37,7 @@ export const descriptions: Record<
     description:
       "Reroute ab while preserving every node and label position. Change direction or move the blocker.",
     limitation:
-      "Current partial router: shortest orthogonal paths, not ELK routing. Bend penalties, endpoint exit segments, and edge-to-edge clearance are not implemented.",
+      "Current partial router: shortest orthogonal paths with preferred 8px obstacle clearance and endpoint leads, relaxed in constrained scenes. Bend penalties and edge-to-edge clearance are not implemented.",
   },
   groups: {
     title: "Independent constraint groups",

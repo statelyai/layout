@@ -6,6 +6,7 @@ import type { RouteBounds, RoutePoint } from "./types";
 export interface SearchContext {
   obstacles(bounds: RouteBounds): readonly RouteBounds[];
   edgeCost?(a: RoutePoint, b: RoutePoint): number;
+  allowsStep?(a: RoutePoint, b: RoutePoint): boolean;
   guides?(bounds: RouteBounds): readonly RouteBounds[];
   readonly maxSearchNodes: number;
   readonly maxGridNodes?: number;
@@ -110,6 +111,7 @@ export function findPath(
     (style === "polyline" ||
       aligned ||
       (style === "octilinear" && Math.abs(start.x - end.x) === Math.abs(start.y - end.y))) &&
+    (context.allowsStep?.(start, end) ?? true) &&
     clear(start, end, context) &&
     attachmentCost([start, end]) === 0 &&
     (context.edgeCost?.(start, end) ?? 0) === 0
@@ -120,7 +122,13 @@ export function findPath(
       { x: start.x, y: end.y },
       { x: end.x, y: start.y },
     ]
-      .filter((bend) => clear(start, bend, context) && clear(bend, end, context))
+      .filter(
+        (bend) =>
+          (context.allowsStep?.(start, bend) ?? true) &&
+          (context.allowsStep?.(bend, end) ?? true) &&
+          clear(start, bend, context) &&
+          clear(bend, end, context),
+      )
       .map((bend) => simplify([start, bend, end]));
     candidates.sort((a, b) => attachmentCost(a) - attachmentCost(b));
     if (
@@ -276,7 +284,7 @@ export function findPath(
       for (const next of neighbors(current.index)) {
         if (next === current.index || next === current.previous) continue;
         const b = points[next]!;
-        if (!visible(current.index, next)) continue;
+        if (!(context.allowsStep?.(a, b) ?? true) || !visible(current.index, next)) continue;
         const before =
           current.previous < 0 ? terminals.incoming : delta(points[current.previous]!, a);
         const step = delta(a, b);

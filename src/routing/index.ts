@@ -34,9 +34,14 @@ export {
   getTangentAtLength,
   pathFromPoints,
   roundCorners,
+  segmentCrossesRect,
   toSvgPath,
 } from "./path";
 export type {
+  BezierEndpoint,
+  BezierGuide,
+  BezierRoutingOptions,
+  BezierEdgeSettings,
   RouteAttachment,
   EdgeRoutingSettings,
   NativeRoutingStrategy,
@@ -55,6 +60,11 @@ export type {
   RoutingGraph,
   RoutingMetrics,
   RoutingSettings,
+  RoutingPolicy,
+  RoutingCurve,
+  RoutingTangent,
+  RoutingLabel,
+  RouteLabelPlacement,
   RoutingSnapshot,
   RoutingStrategy,
   RoutingUpdate,
@@ -67,3 +77,7 @@ export {
   routeToPolylines,
   routeToPoints,
 } from "./adapters";
+
+export { trimBezierPathStart } from "./bezier-fit";
+
+export { routingPolicies } from "./model";

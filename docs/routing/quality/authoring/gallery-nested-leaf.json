@@ -1,0 +1,208 @@
+{
+  "id": "gallery-nested-leaf",
+  "source": "stories/authoring-fixtures.ts authoringRequest({...defaults,scenario:'nested'})",
+  "input": {
+    "graph": {
+      "id": "",
+      "mode": "directed",
+      "initialNodeId": null,
+      "nodes": [
+        {
+          "type": "node",
+          "id": "parent",
+          "label": null,
+          "data": null,
+          "x": 80,
+          "y": 50,
+          "width": 440,
+          "height": 280
+        },
+        {
+          "type": "node",
+          "id": "child",
+          "parentId": "parent",
+          "label": null,
+          "data": null,
+          "x": 25,
+          "y": 35,
+          "width": 80,
+          "height": 44
+        },
+        {
+          "type": "node",
+          "id": "sibling",
+          "parentId": "parent",
+          "label": null,
+          "data": null,
+          "x": 310,
+          "y": 150,
+          "width": 80,
+          "height": 44
+        }
+      ],
+      "edges": [],
+      "data": null,
+      "direction": "right"
+    },
+    "options": {
+      "direction": "right",
+      "spacing": {
+        "node": 24
+      }
+    },
+    "scope": {
+      "mode": "partial",
+      "nodeIds": ["child"]
+    },
+    "constraints": [
+      {
+        "id": "world-position",
+        "entity": {
+          "nodeId": "child"
+        },
+        "x": 250,
+        "y": 180,
+        "kind": "pin"
+      }
+    ]
+  },
+  "inputHashBefore": "787247edfe8cda17511acf8f04147af26ac4192c5b8357cdf5c3161814729349",
+  "inputHashAfter": "787247edfe8cda17511acf8f04147af26ac4192c5b8357cdf5c3161814729349",
+  "inputEqual": true,
+  "inputUnmutated": true,
+  "frame": {
+    "scale": 1.8055555555555556,
+    "tx": -8.333333333333329,
+    "ty": 155.83333333333334
+  },
+  "before": {
+    "status": "ok",
+    "graph": {
+      "id": "",
+      "mode": "directed",
+      "initialNodeId": null,
+      "nodes": [
+        {
+          "type": "node",
+          "id": "parent",
+          "label": null,
+          "data": null,
+          "x": 80,
+          "y": 50,
+          "width": 440,
+          "height": 280
+        },
+        {
+          "type": "node",
+          "id": "child",
+          "parentId": "parent",
+          "label": null,
+          "data": null,
+          "x": 170,
+          "y": 130,
+          "width": 80,
+          "height": 44
+        },
+        {
+          "type": "node",
+          "id": "sibling",
+          "parentId": "parent",
+          "label": null,
+          "data": null,
+          "x": 310,
+          "y": 150,
+          "width": 80,
+          "height": 44
+        }
+      ],
+      "edges": [],
+      "data": null,
+      "direction": "right"
+    },
+    "patches": [
+      {
+        "op": "updateNode",
+        "id": "child",
+        "data": {
+          "x": 170,
+          "y": 130
+        },
+        "description": "Apply layout geometry"
+      }
+    ],
+    "diagnostics": [],
+    "fixedNodesPreserved": true,
+    "constraintSatisfaction": [
+      {
+        "id": "world-position",
+        "kind": "pin",
+        "satisfied": true
+      }
+    ]
+  },
+  "after": {
+    "status": "ok",
+    "graph": {
+      "id": "",
+      "mode": "directed",
+      "initialNodeId": null,
+      "nodes": [
+        {
+          "type": "node",
+          "id": "parent",
+          "label": null,
+          "data": null,
+          "x": 80,
+          "y": 50,
+          "width": 440,
+          "height": 280
+        },
+        {
+          "type": "node",
+          "id": "child",
+          "parentId": "parent",
+          "label": null,
+          "data": null,
+          "x": 170,
+          "y": 130,
+          "width": 80,
+          "height": 44
+        },
+        {
+          "type": "node",
+          "id": "sibling",
+          "parentId": "parent",
+          "label": null,
+          "data": null,
+          "x": 310,
+          "y": 150,
+          "width": 80,
+          "height": 44
+        }
+      ],
+      "edges": [],
+      "data": null,
+      "direction": "right"
+    },
+    "patches": [
+      {
+        "op": "updateNode",
+        "id": "child",
+        "data": {
+          "x": 170,
+          "y": 130
+        },
+        "description": "Apply layout geometry"
+      }
+    ],
+    "diagnostics": [],
+    "fixedNodesPreserved": true,
+    "constraintSatisfaction": [
+      {
+        "id": "world-position",
+        "kind": "pin",
+        "satisfied": true
+      }
+    ]
+  }
+}

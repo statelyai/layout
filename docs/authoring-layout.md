@@ -60,9 +60,12 @@ package's null-to-clear semantics.
 
 The partial router uses orthogonal rectangle visibility paths and named port
 positions. It avoids node interiors and other label rectangles. Common ancestor
-containers are traversable. Search is bounded to 40,000 visibility-grid vertices
+containers are traversable. Routes prefer 8px obstacle clearance and outward
+terminal leads. Required waypoints and tight channels can reduce that preference
+to 4px, 1px, or zero clearance. Named ports retain their exact positions.
+Search is bounded to 40,000 visibility-grid vertices
 per attempt, using nearby obstacles to build the grid while checking routes against
-all obstacles. Up to eight attempts expand the search neighborhood. Failure preserves the previous route with `ROUTE_BLOCKED`. Supplied
+all obstacles. Up to eight attempts per clearance expand the search neighborhood. Failure preserves the previous route with `ROUTE_BLOCKED`. Supplied
 spline routing or custom `routeEdges` strategies fail explicitly when route repair
 is requested; partial
 routing currently produces orthogonal paths. It does not optimize crossings

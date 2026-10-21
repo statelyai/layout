@@ -1,0 +1,1361 @@
+[
+  {
+    "id": "midpoint",
+    "title": "Label follows the curve",
+    "fixture": {
+      "id": "midpoint",
+      "mode": "directed",
+      "initialNodeId": null,
+      "nodes": [
+        {
+          "type": "node",
+          "id": "a",
+          "label": null,
+          "data": null,
+          "x": 35,
+          "y": 65,
+          "width": 64,
+          "height": 44
+        },
+        {
+          "type": "node",
+          "id": "b",
+          "label": null,
+          "data": null,
+          "x": 435,
+          "y": 220,
+          "width": 64,
+          "height": 44
+        }
+      ],
+      "edges": [
+        {
+          "type": "edge",
+          "id": "edge",
+          "sourceId": "a",
+          "targetId": "b",
+          "label": null,
+          "data": null,
+          "x": 195,
+          "y": 255,
+          "width": 90,
+          "height": 30
+        }
+      ],
+      "data": null
+    },
+    "settings": {},
+    "routes": [
+      {
+        "edgeId": "edge",
+        "sections": [
+          {
+            "id": "edge:0",
+            "from": {
+              "kind": "node",
+              "nodeId": "a"
+            },
+            "to": {
+              "kind": "label",
+              "edgeId": "edge"
+            },
+            "path": {
+              "start": {
+                "x": 99,
+                "y": 87
+              },
+              "segments": [
+                {
+                  "kind": "cubic",
+                  "control1": {
+                    "x": 208.66426035860542,
+                    "y": 87
+                  },
+                  "control2": {
+                    "x": 240,
+                    "y": 145.33573964139458
+                  },
+                  "to": {
+                    "x": 240,
+                    "y": 255
+                  }
+                }
+              ]
+            }
+          },
+          {
+            "id": "edge:label-target",
+            "from": {
+              "kind": "label",
+              "edgeId": "edge"
+            },
+            "to": {
+              "kind": "node",
+              "nodeId": "b"
+            },
+            "path": {
+              "start": {
+                "x": 285,
+                "y": 270
+              },
+              "segments": [
+                {
+                  "kind": "cubic",
+                  "control1": {
+                    "x": 361.2954782408499,
+                    "y": 270
+                  },
+                  "control2": {
+                    "x": 358.7045217591501,
+                    "y": 242
+                  },
+                  "to": {
+                    "x": 435,
+                    "y": 242
+                  }
+                }
+              ]
+            }
+          }
+        ],
+        "status": "routed",
+        "diagnostics": []
+      }
+    ]
+  },
+  {
+    "id": "tangents",
+    "title": "Independent endpoint tangents",
+    "fixture": {
+      "id": "tangents",
+      "mode": "directed",
+      "initialNodeId": null,
+      "nodes": [
+        {
+          "type": "node",
+          "id": "a",
+          "label": null,
+          "data": null,
+          "x": 35,
+          "y": 65,
+          "width": 64,
+          "height": 44
+        },
+        {
+          "type": "node",
+          "id": "b",
+          "label": null,
+          "data": null,
+          "x": 435,
+          "y": 220,
+          "width": 64,
+          "height": 44
+        }
+      ],
+      "edges": [
+        {
+          "type": "edge",
+          "id": "edge",
+          "sourceId": "a",
+          "targetId": "b",
+          "label": null,
+          "data": null
+        }
+      ],
+      "data": null
+    },
+    "settings": {},
+    "routes": [
+      {
+        "edgeId": "edge",
+        "sections": [
+          {
+            "id": "edge:0",
+            "from": {
+              "kind": "node",
+              "nodeId": "a"
+            },
+            "to": {
+              "kind": "node",
+              "nodeId": "b"
+            },
+            "path": {
+              "start": {
+                "x": 99,
+                "y": 87
+              },
+              "segments": [
+                {
+                  "kind": "cubic",
+                  "control1": {
+                    "x": 284.0141886450874,
+                    "y": 87
+                  },
+                  "control2": {
+                    "x": 249.98581135491256,
+                    "y": 242
+                  },
+                  "to": {
+                    "x": 435,
+                    "y": 242
+                  }
+                }
+              ]
+            }
+          }
+        ],
+        "status": "routed",
+        "diagnostics": []
+      }
+    ]
+  },
+  {
+    "id": "label-tangents",
+    "title": "Perpendicular label attachments",
+    "fixture": {
+      "id": "label-tangents",
+      "mode": "directed",
+      "initialNodeId": null,
+      "nodes": [
+        {
+          "type": "node",
+          "id": "a",
+          "label": null,
+          "data": null,
+          "x": 35,
+          "y": 65,
+          "width": 64,
+          "height": 44
+        },
+        {
+          "type": "node",
+          "id": "b",
+          "label": null,
+          "data": null,
+          "x": 435,
+          "y": 220,
+          "width": 64,
+          "height": 44
+        }
+      ],
+      "edges": [
+        {
+          "type": "edge",
+          "id": "edge",
+          "sourceId": "a",
+          "targetId": "b",
+          "label": null,
+          "data": null,
+          "x": 195,
+          "y": 255,
+          "width": 90,
+          "height": 30
+        }
+      ],
+      "data": null
+    },
+    "settings": {
+      "bezier": {
+        "attachmentMode": "floating"
+      }
+    },
+    "routes": [
+      {
+        "edgeId": "edge",
+        "sections": [
+          {
+            "id": "edge:source-label",
+            "from": {
+              "kind": "node",
+              "nodeId": "a"
+            },
+            "to": {
+              "kind": "label",
+              "edgeId": "edge"
+            },
+            "fromSide": "right",
+            "toSide": "top",
+            "path": {
+              "start": {
+                "x": 99,
+                "y": 104.6
+              },
+              "segments": [
+                {
+                  "kind": "cubic",
+                  "control1": {
+                    "x": 139.6824126557225,
+                    "y": 152.32248973940779
+                  },
+                  "control2": {
+                    "x": 166.58801975705524,
+                    "y": 217.98056829454708
+                  },
+                  "to": {
+                    "x": 215.49173760025354,
+                    "y": 254.9999999999955
+                  }
+                }
+              ]
+            }
+          },
+          {
+            "id": "edge:label-target",
+            "from": {
+              "kind": "label",
+              "edgeId": "edge"
+            },
+            "to": {
+              "kind": "node",
+              "nodeId": "b"
+            },
+            "fromSide": "right",
+            "toSide": "left",
+            "path": {
+              "start": {
+                "x": 284.9999999999819,
+                "y": 280.18181504422176
+              },
+              "segments": [
+                {
+                  "kind": "cubic",
+                  "control1": {
+                    "x": 330.078763992431,
+                    "y": 281.52313072798324
+                  },
+                  "control2": {
+                    "x": 379.18408741490003,
+                    "y": 262.57684867120537
+                  },
+                  "to": {
+                    "x": 425.0141919532217,
+                    "y": 260.13257642916153
+                  }
+                }
+              ]
+            }
+          }
+        ],
+        "status": "routed",
+        "diagnostics": []
+      }
+    ]
+  },
+  {
+    "id": "obstacles",
+    "title": "Curve clearance around obstacles",
+    "fixture": {
+      "id": "obstacles",
+      "mode": "directed",
+      "initialNodeId": null,
+      "nodes": [
+        {
+          "type": "node",
+          "id": "a",
+          "label": null,
+          "data": null,
+          "x": 35,
+          "y": 65,
+          "width": 64,
+          "height": 44
+        },
+        {
+          "type": "node",
+          "id": "b",
+          "label": null,
+          "data": null,
+          "x": 435,
+          "y": 220,
+          "width": 64,
+          "height": 44
+        },
+        {
+          "type": "node",
+          "id": "obstacle",
+          "label": null,
+          "data": null,
+          "x": 245,
+          "y": 110,
+          "width": 80,
+          "height": 125
+        }
+      ],
+      "edges": [
+        {
+          "type": "edge",
+          "id": "edge",
+          "sourceId": "a",
+          "targetId": "b",
+          "label": null,
+          "data": null,
+          "x": 195,
+          "y": 255,
+          "width": 90,
+          "height": 30
+        }
+      ],
+      "data": null
+    },
+    "settings": {
+      "bezier": {}
+    },
+    "routes": [
+      {
+        "edgeId": "edge",
+        "sections": [
+          {
+            "id": "edge:source-label",
+            "from": {
+              "kind": "node",
+              "nodeId": "a"
+            },
+            "to": {
+              "kind": "label",
+              "edgeId": "edge"
+            },
+            "fromSide": "right",
+            "toSide": "top",
+            "path": {
+              "start": {
+                "x": 99,
+                "y": 104.6
+              },
+              "segments": [
+                {
+                  "kind": "cubic",
+                  "control1": {
+                    "x": 139.6824126557225,
+                    "y": 152.32248973940779
+                  },
+                  "control2": {
+                    "x": 166.58801975705524,
+                    "y": 217.98056829454708
+                  },
+                  "to": {
+                    "x": 215.49173760025354,
+                    "y": 254.9999999999955
+                  }
+                }
+              ]
+            }
+          },
+          {
+            "id": "edge:label-target",
+            "from": {
+              "kind": "label",
+              "edgeId": "edge"
+            },
+            "to": {
+              "kind": "node",
+              "nodeId": "b"
+            },
+            "fromSide": "right",
+            "toSide": "left",
+            "path": {
+              "start": {
+                "x": 284.9999999999819,
+                "y": 280.18181504422176
+              },
+              "segments": [
+                {
+                  "kind": "cubic",
+                  "control1": {
+                    "x": 330.078763992431,
+                    "y": 281.52313072798324
+                  },
+                  "control2": {
+                    "x": 379.18408741490003,
+                    "y": 262.57684867120537
+                  },
+                  "to": {
+                    "x": 425.0141919532217,
+                    "y": 260.13257642916153
+                  }
+                }
+              ]
+            }
+          }
+        ],
+        "status": "routed",
+        "diagnostics": []
+      }
+    ]
+  },
+  {
+    "id": "catmull-rom",
+    "title": "Centripetal Catmull–Rom waypoints",
+    "fixture": {
+      "id": "catmull-rom",
+      "mode": "directed",
+      "initialNodeId": null,
+      "nodes": [
+        {
+          "type": "node",
+          "id": "a",
+          "label": null,
+          "data": null,
+          "x": 35,
+          "y": 65,
+          "width": 64,
+          "height": 44
+        },
+        {
+          "type": "node",
+          "id": "b",
+          "label": null,
+          "data": null,
+          "x": 435,
+          "y": 220,
+          "width": 64,
+          "height": 44
+        }
+      ],
+      "edges": [
+        {
+          "type": "edge",
+          "id": "edge",
+          "sourceId": "a",
+          "targetId": "b",
+          "label": null,
+          "data": null
+        }
+      ],
+      "data": null
+    },
+    "settings": {
+      "edges": {
+        "edge": {
+          "waypoints": [
+            {
+              "x": 175,
+              "y": 205
+            },
+            {
+              "x": 280,
+              "y": 65
+            },
+            {
+              "x": 365,
+              "y": 190
+            }
+          ]
+        }
+      }
+    },
+    "routes": [
+      {
+        "edgeId": "edge",
+        "sections": [
+          {
+            "id": "edge:0",
+            "from": {
+              "kind": "node",
+              "nodeId": "a"
+            },
+            "to": {
+              "kind": "node",
+              "nodeId": "b"
+            },
+            "path": {
+              "start": {
+                "x": 99,
+                "y": 87
+              },
+              "segments": [
+                {
+                  "kind": "line",
+                  "to": {
+                    "x": 108,
+                    "y": 87
+                  }
+                },
+                {
+                  "kind": "line",
+                  "to": {
+                    "x": 175,
+                    "y": 205
+                  }
+                },
+                {
+                  "kind": "line",
+                  "to": {
+                    "x": 280,
+                    "y": 65
+                  }
+                },
+                {
+                  "kind": "line",
+                  "to": {
+                    "x": 365,
+                    "y": 190
+                  }
+                },
+                {
+                  "kind": "line",
+                  "to": {
+                    "x": 426,
+                    "y": 242
+                  }
+                },
+                {
+                  "kind": "line",
+                  "to": {
+                    "x": 435,
+                    "y": 242
+                  }
+                }
+              ]
+            }
+          }
+        ],
+        "status": "routed",
+        "diagnostics": []
+      }
+    ]
+  },
+  {
+    "id": "rounded",
+    "title": "Rounded orthogonal corridors",
+    "fixture": {
+      "id": "rounded",
+      "mode": "directed",
+      "initialNodeId": null,
+      "nodes": [
+        {
+          "type": "node",
+          "id": "a",
+          "label": null,
+          "data": null,
+          "x": 35,
+          "y": 65,
+          "width": 64,
+          "height": 44
+        },
+        {
+          "type": "node",
+          "id": "b",
+          "label": null,
+          "data": null,
+          "x": 435,
+          "y": 220,
+          "width": 64,
+          "height": 44
+        },
+        {
+          "type": "node",
+          "id": "obstacle",
+          "label": null,
+          "data": null,
+          "x": 245,
+          "y": 110,
+          "width": 80,
+          "height": 125
+        }
+      ],
+      "edges": [
+        {
+          "type": "edge",
+          "id": "edge",
+          "sourceId": "a",
+          "targetId": "b",
+          "label": null,
+          "data": null
+        }
+      ],
+      "data": null
+    },
+    "settings": {},
+    "routes": [
+      {
+        "edgeId": "edge",
+        "sections": [
+          {
+            "id": "edge:0",
+            "from": {
+              "kind": "node",
+              "nodeId": "a"
+            },
+            "to": {
+              "kind": "node",
+              "nodeId": "b"
+            },
+            "path": {
+              "start": {
+                "x": 99,
+                "y": 87
+              },
+              "segments": [
+                {
+                  "kind": "line",
+                  "to": {
+                    "x": 426,
+                    "y": 87
+                  }
+                },
+                {
+                  "kind": "line",
+                  "to": {
+                    "x": 426,
+                    "y": 242
+                  }
+                },
+                {
+                  "kind": "line",
+                  "to": {
+                    "x": 435,
+                    "y": 242
+                  }
+                }
+              ]
+            }
+          }
+        ],
+        "status": "routed",
+        "diagnostics": []
+      }
+    ]
+  },
+  {
+    "id": "crossings",
+    "title": "Final geometry crossing preferences",
+    "fixture": {
+      "id": "crossings",
+      "mode": "directed",
+      "initialNodeId": null,
+      "nodes": [
+        {
+          "type": "node",
+          "id": "a",
+          "label": null,
+          "data": null,
+          "x": 35,
+          "y": 60,
+          "width": 64,
+          "height": 44
+        },
+        {
+          "type": "node",
+          "id": "b",
+          "label": null,
+          "data": null,
+          "x": 435,
+          "y": 220,
+          "width": 64,
+          "height": 44
+        },
+        {
+          "type": "node",
+          "id": "c",
+          "label": null,
+          "data": null,
+          "x": 35,
+          "y": 220,
+          "width": 64,
+          "height": 44
+        },
+        {
+          "type": "node",
+          "id": "d",
+          "label": null,
+          "data": null,
+          "x": 435,
+          "y": 60,
+          "width": 64,
+          "height": 44
+        }
+      ],
+      "edges": [
+        {
+          "type": "edge",
+          "id": "edge",
+          "sourceId": "a",
+          "targetId": "b",
+          "label": null,
+          "data": null
+        },
+        {
+          "type": "edge",
+          "id": "second",
+          "sourceId": "c",
+          "targetId": "d",
+          "label": null,
+          "data": null
+        }
+      ],
+      "data": null
+    },
+    "settings": {
+      "crossingPenalty": 0,
+      "overlapPenalty": 0
+    },
+    "routes": [
+      {
+        "edgeId": "edge",
+        "sections": [
+          {
+            "id": "edge:0",
+            "from": {
+              "kind": "node",
+              "nodeId": "a"
+            },
+            "to": {
+              "kind": "node",
+              "nodeId": "b"
+            },
+            "path": {
+              "start": {
+                "x": 99,
+                "y": 82
+              },
+              "segments": [
+                {
+                  "kind": "cubic",
+                  "control1": {
+                    "x": 285.0752535938081,
+                    "y": 82
+                  },
+                  "control2": {
+                    "x": 248.9247464061919,
+                    "y": 242
+                  },
+                  "to": {
+                    "x": 435,
+                    "y": 242
+                  }
+                }
+              ]
+            }
+          }
+        ],
+        "status": "routed",
+        "diagnostics": []
+      },
+      {
+        "edgeId": "second",
+        "sections": [
+          {
+            "id": "second:0",
+            "from": {
+              "kind": "node",
+              "nodeId": "c"
+            },
+            "to": {
+              "kind": "node",
+              "nodeId": "d"
+            },
+            "path": {
+              "start": {
+                "x": 99,
+                "y": 242
+              },
+              "segments": [
+                {
+                  "kind": "cubic",
+                  "control1": {
+                    "x": 285.0752535938081,
+                    "y": 242
+                  },
+                  "control2": {
+                    "x": 248.9247464061919,
+                    "y": 82
+                  },
+                  "to": {
+                    "x": 435,
+                    "y": 82
+                  }
+                }
+              ]
+            }
+          }
+        ],
+        "status": "fallback",
+        "diagnostics": [
+          {
+            "code": "ROUTE_CONFLICT",
+            "message": "Route crosses or overlaps another edge; retained a compact visible path",
+            "edgeId": "second"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "monotonic",
+    "title": "Monotonic flow direction",
+    "fixture": {
+      "id": "monotonic",
+      "mode": "directed",
+      "initialNodeId": null,
+      "nodes": [
+        {
+          "type": "node",
+          "id": "a",
+          "label": null,
+          "data": null,
+          "x": 35,
+          "y": 65,
+          "width": 64,
+          "height": 44
+        },
+        {
+          "type": "node",
+          "id": "b",
+          "label": null,
+          "data": null,
+          "x": 435,
+          "y": 220,
+          "width": 64,
+          "height": 44
+        },
+        {
+          "type": "node",
+          "id": "obstacle",
+          "label": null,
+          "data": null,
+          "x": 245,
+          "y": 110,
+          "width": 80,
+          "height": 125
+        }
+      ],
+      "edges": [
+        {
+          "type": "edge",
+          "id": "edge",
+          "sourceId": "a",
+          "targetId": "b",
+          "label": null,
+          "data": null
+        }
+      ],
+      "data": null
+    },
+    "settings": {},
+    "routes": [
+      {
+        "edgeId": "edge",
+        "sections": [
+          {
+            "id": "edge:0",
+            "from": {
+              "kind": "node",
+              "nodeId": "a"
+            },
+            "to": {
+              "kind": "node",
+              "nodeId": "b"
+            },
+            "path": {
+              "start": {
+                "x": 99,
+                "y": 87
+              },
+              "segments": [
+                {
+                  "kind": "line",
+                  "to": {
+                    "x": 426,
+                    "y": 87
+                  }
+                },
+                {
+                  "kind": "line",
+                  "to": {
+                    "x": 426,
+                    "y": 242
+                  }
+                },
+                {
+                  "kind": "line",
+                  "to": {
+                    "x": 435,
+                    "y": 242
+                  }
+                }
+              ]
+            }
+          }
+        ],
+        "status": "routed",
+        "diagnostics": []
+      }
+    ]
+  },
+  {
+    "id": "bundle",
+    "title": "Shared trunks and branch spacing",
+    "fixture": {
+      "id": "bundle",
+      "mode": "directed",
+      "initialNodeId": null,
+      "nodes": [
+        {
+          "type": "node",
+          "id": "a",
+          "label": null,
+          "data": null,
+          "x": 35,
+          "y": 145,
+          "width": 64,
+          "height": 44
+        },
+        {
+          "type": "node",
+          "id": "b",
+          "label": null,
+          "data": null,
+          "x": 435,
+          "y": 40,
+          "width": 64,
+          "height": 44
+        },
+        {
+          "type": "node",
+          "id": "c",
+          "label": null,
+          "data": null,
+          "x": 435,
+          "y": 145,
+          "width": 64,
+          "height": 44
+        },
+        {
+          "type": "node",
+          "id": "d",
+          "label": null,
+          "data": null,
+          "x": 435,
+          "y": 250,
+          "width": 64,
+          "height": 44
+        }
+      ],
+      "edges": [
+        {
+          "type": "edge",
+          "id": "edge",
+          "sourceId": "a",
+          "targetId": "b",
+          "label": null,
+          "data": null
+        },
+        {
+          "type": "edge",
+          "id": "branch-c",
+          "sourceId": "a",
+          "targetId": "c",
+          "label": null,
+          "data": null
+        },
+        {
+          "type": "edge",
+          "id": "branch-d",
+          "sourceId": "a",
+          "targetId": "d",
+          "label": null,
+          "data": null
+        }
+      ],
+      "data": null
+    },
+    "settings": {},
+    "routes": [
+      {
+        "edgeId": "branch-c",
+        "sections": [
+          {
+            "id": "branch-c:source",
+            "from": {
+              "kind": "node",
+              "nodeId": "a"
+            },
+            "to": {
+              "kind": "junction",
+              "id": "trunk:source:[\"a\",null]:start"
+            },
+            "path": {
+              "start": {
+                "x": 99,
+                "y": 167
+              },
+              "segments": [
+                {
+                  "kind": "line",
+                  "to": {
+                    "x": 120,
+                    "y": 167
+                  }
+                }
+              ]
+            }
+          },
+          {
+            "id": "branch-c:trunk",
+            "sharedId": "trunk:source:[\"a\",null]",
+            "from": {
+              "kind": "junction",
+              "id": "trunk:source:[\"a\",null]:start"
+            },
+            "to": {
+              "kind": "junction",
+              "id": "trunk:source:[\"a\",null]:end"
+            },
+            "path": {
+              "start": {
+                "x": 120,
+                "y": 167
+              },
+              "segments": [
+                {
+                  "kind": "line",
+                  "to": {
+                    "x": 414,
+                    "y": 167
+                  }
+                }
+              ]
+            }
+          },
+          {
+            "id": "branch-c:target",
+            "from": {
+              "kind": "junction",
+              "id": "trunk:source:[\"a\",null]:end"
+            },
+            "to": {
+              "kind": "node",
+              "nodeId": "c"
+            },
+            "path": {
+              "start": {
+                "x": 414,
+                "y": 167
+              },
+              "segments": [
+                {
+                  "kind": "line",
+                  "to": {
+                    "x": 435,
+                    "y": 167
+                  }
+                }
+              ]
+            }
+          }
+        ],
+        "status": "routed",
+        "diagnostics": []
+      },
+      {
+        "edgeId": "branch-d",
+        "sections": [
+          {
+            "id": "branch-d:source",
+            "from": {
+              "kind": "node",
+              "nodeId": "a"
+            },
+            "to": {
+              "kind": "junction",
+              "id": "trunk:source:[\"a\",null]:start"
+            },
+            "path": {
+              "start": {
+                "x": 99,
+                "y": 167
+              },
+              "segments": [
+                {
+                  "kind": "line",
+                  "to": {
+                    "x": 120,
+                    "y": 167
+                  }
+                }
+              ]
+            }
+          },
+          {
+            "id": "branch-d:trunk",
+            "sharedId": "trunk:source:[\"a\",null]",
+            "from": {
+              "kind": "junction",
+              "id": "trunk:source:[\"a\",null]:start"
+            },
+            "to": {
+              "kind": "junction",
+              "id": "trunk:source:[\"a\",null]:end"
+            },
+            "path": {
+              "start": {
+                "x": 120,
+                "y": 167
+              },
+              "segments": [
+                {
+                  "kind": "line",
+                  "to": {
+                    "x": 414,
+                    "y": 167
+                  }
+                }
+              ]
+            }
+          },
+          {
+            "id": "branch-d:target",
+            "from": {
+              "kind": "junction",
+              "id": "trunk:source:[\"a\",null]:end"
+            },
+            "to": {
+              "kind": "node",
+              "nodeId": "d"
+            },
+            "path": {
+              "start": {
+                "x": 414,
+                "y": 167
+              },
+              "segments": [
+                {
+                  "kind": "line",
+                  "to": {
+                    "x": 414,
+                    "y": 262
+                  }
+                },
+                {
+                  "kind": "arc",
+                  "rx": 10,
+                  "ry": 10,
+                  "rotation": 0,
+                  "largeArc": false,
+                  "sweep": false,
+                  "to": {
+                    "x": 424,
+                    "y": 272
+                  }
+                },
+                {
+                  "kind": "line",
+                  "to": {
+                    "x": 435,
+                    "y": 272
+                  }
+                }
+              ]
+            }
+          }
+        ],
+        "status": "routed",
+        "diagnostics": []
+      },
+      {
+        "edgeId": "edge",
+        "sections": [
+          {
+            "id": "edge:source",
+            "from": {
+              "kind": "node",
+              "nodeId": "a"
+            },
+            "to": {
+              "kind": "junction",
+              "id": "trunk:source:[\"a\",null]:start"
+            },
+            "path": {
+              "start": {
+                "x": 99,
+                "y": 167
+              },
+              "segments": [
+                {
+                  "kind": "line",
+                  "to": {
+                    "x": 120,
+                    "y": 167
+                  }
+                }
+              ]
+            }
+          },
+          {
+            "id": "edge:trunk",
+            "sharedId": "trunk:source:[\"a\",null]",
+            "from": {
+              "kind": "junction",
+              "id": "trunk:source:[\"a\",null]:start"
+            },
+            "to": {
+              "kind": "junction",
+              "id": "trunk:source:[\"a\",null]:end"
+            },
+            "path": {
+              "start": {
+                "x": 120,
+                "y": 167
+              },
+              "segments": [
+                {
+                  "kind": "line",
+                  "to": {
+                    "x": 414,
+                    "y": 167
+                  }
+                }
+              ]
+            }
+          },
+          {
+            "id": "edge:target",
+            "from": {
+              "kind": "junction",
+              "id": "trunk:source:[\"a\",null]:end"
+            },
+            "to": {
+              "kind": "node",
+              "nodeId": "b"
+            },
+            "path": {
+              "start": {
+                "x": 414,
+                "y": 167
+              },
+              "segments": [
+                {
+                  "kind": "line",
+                  "to": {
+                    "x": 414,
+                    "y": 72
+                  }
+                },
+                {
+                  "kind": "arc",
+                  "rx": 10,
+                  "ry": 10,
+                  "rotation": 0,
+                  "largeArc": false,
+                  "sweep": true,
+                  "to": {
+                    "x": 424,
+                    "y": 62
+                  }
+                },
+                {
+                  "kind": "line",
+                  "to": {
+                    "x": 435,
+                    "y": 62
+                  }
+                }
+              ]
+            }
+          }
+        ],
+        "status": "routed",
+        "diagnostics": []
+      }
+    ]
+  }
+]

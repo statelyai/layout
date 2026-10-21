@@ -1,0 +1,507 @@
+{
+  "id": "gallery-required-waypoint",
+  "source": "gallery graph with required waypoint from test/partial-routing-quality.test.ts",
+  "input": {
+    "graph": {
+      "id": "",
+      "mode": "directed",
+      "initialNodeId": null,
+      "nodes": [
+        {
+          "type": "node",
+          "id": "a",
+          "label": null,
+          "data": null,
+          "x": 40,
+          "y": 100,
+          "width": 80,
+          "height": 44
+        },
+        {
+          "type": "node",
+          "id": "b",
+          "label": null,
+          "data": null,
+          "x": 470,
+          "y": 100,
+          "width": 80,
+          "height": 44
+        },
+        {
+          "type": "node",
+          "id": "fixed",
+          "label": null,
+          "data": null,
+          "x": 280,
+          "y": 65,
+          "width": 100,
+          "height": 125
+        }
+      ],
+      "edges": [
+        {
+          "type": "edge",
+          "id": "ab",
+          "sourceId": "a",
+          "targetId": "b",
+          "label": null,
+          "data": null,
+          "points": [
+            {
+              "x": 120,
+              "y": 122
+            },
+            {
+              "x": 470,
+              "y": 122
+            }
+          ],
+          "routing": "orthogonal",
+          "x": 165,
+          "y": 270,
+          "width": 80,
+          "height": 26
+        }
+      ],
+      "data": null,
+      "direction": "right"
+    },
+    "options": {
+      "direction": "right",
+      "spacing": {
+        "node": 24
+      }
+    },
+    "scope": {
+      "mode": "route-only",
+      "previous": {
+        "id": "",
+        "mode": "directed",
+        "initialNodeId": null,
+        "nodes": [
+          {
+            "type": "node",
+            "id": "a",
+            "label": null,
+            "data": null,
+            "x": 40,
+            "y": 100,
+            "width": 80,
+            "height": 44
+          },
+          {
+            "type": "node",
+            "id": "b",
+            "label": null,
+            "data": null,
+            "x": 470,
+            "y": 100,
+            "width": 80,
+            "height": 44
+          },
+          {
+            "type": "node",
+            "id": "fixed",
+            "label": null,
+            "data": null,
+            "x": 280,
+            "y": 65,
+            "width": 100,
+            "height": 125
+          }
+        ],
+        "edges": [
+          {
+            "type": "edge",
+            "id": "ab",
+            "sourceId": "a",
+            "targetId": "b",
+            "label": null,
+            "data": null,
+            "points": [
+              {
+                "x": 120,
+                "y": 122
+              },
+              {
+                "x": 470,
+                "y": 122
+              }
+            ],
+            "routing": "orthogonal",
+            "x": 165,
+            "y": 270,
+            "width": 80,
+            "height": 26
+          }
+        ],
+        "data": null,
+        "direction": "right"
+      }
+    },
+    "constraints": [
+      {
+        "id": "via",
+        "edgeId": "ab",
+        "point": {
+          "x": 275,
+          "y": 62
+        },
+        "kind": "waypoint"
+      }
+    ]
+  },
+  "inputHashBefore": "5f3cbb053345a395fc5888344aeed130ac9c397d625364c8fcda5f71d77b1f28",
+  "inputHashAfter": "5f3cbb053345a395fc5888344aeed130ac9c397d625364c8fcda5f71d77b1f28",
+  "inputEqual": true,
+  "inputUnmutated": true,
+  "frame": {
+    "scale": 2.090032154340836,
+    "tx": 58.19935691318328,
+    "ty": 115.94855305466238
+  },
+  "before": {
+    "status": "ok",
+    "graph": {
+      "id": "",
+      "mode": "directed",
+      "initialNodeId": null,
+      "nodes": [
+        {
+          "type": "node",
+          "id": "a",
+          "label": null,
+          "data": null,
+          "x": 40,
+          "y": 100,
+          "width": 80,
+          "height": 44
+        },
+        {
+          "type": "node",
+          "id": "b",
+          "label": null,
+          "data": null,
+          "x": 470,
+          "y": 100,
+          "width": 80,
+          "height": 44
+        },
+        {
+          "type": "node",
+          "id": "fixed",
+          "label": null,
+          "data": null,
+          "x": 280,
+          "y": 65,
+          "width": 100,
+          "height": 125
+        }
+      ],
+      "edges": [
+        {
+          "type": "edge",
+          "id": "ab",
+          "sourceId": "a",
+          "targetId": "b",
+          "label": null,
+          "data": null,
+          "points": [
+            {
+              "x": 120,
+              "y": 122
+            },
+            {
+              "x": 120,
+              "y": 62
+            },
+            {
+              "x": 275,
+              "y": 62
+            },
+            {
+              "x": 275,
+              "y": 64
+            },
+            {
+              "x": 381,
+              "y": 64
+            },
+            {
+              "x": 381,
+              "y": 122
+            },
+            {
+              "x": 470,
+              "y": 122
+            }
+          ],
+          "routing": "orthogonal",
+          "x": 165,
+          "y": 270,
+          "width": 80,
+          "height": 26
+        }
+      ],
+      "data": null,
+      "direction": "right"
+    },
+    "patches": [
+      {
+        "op": "updateEdge",
+        "id": "ab",
+        "data": {
+          "points": [
+            {
+              "x": 120,
+              "y": 122
+            },
+            {
+              "x": 120,
+              "y": 62
+            },
+            {
+              "x": 275,
+              "y": 62
+            },
+            {
+              "x": 275,
+              "y": 64
+            },
+            {
+              "x": 381,
+              "y": 64
+            },
+            {
+              "x": 381,
+              "y": 122
+            },
+            {
+              "x": 470,
+              "y": 122
+            }
+          ]
+        },
+        "description": "Apply layout geometry"
+      }
+    ],
+    "diagnostics": [],
+    "obstacleClearance": 1,
+    "routePoints": [
+      {
+        "x": 120,
+        "y": 122
+      },
+      {
+        "x": 120,
+        "y": 62
+      },
+      {
+        "x": 275,
+        "y": 62
+      },
+      {
+        "x": 275,
+        "y": 64
+      },
+      {
+        "x": 381,
+        "y": 64
+      },
+      {
+        "x": 381,
+        "y": 122
+      },
+      {
+        "x": 470,
+        "y": 122
+      }
+    ],
+    "fixedNodesPreserved": true,
+    "constraintSatisfaction": [
+      {
+        "id": "via",
+        "kind": "waypoint",
+        "satisfied": true
+      }
+    ]
+  },
+  "after": {
+    "status": "ok",
+    "graph": {
+      "id": "",
+      "mode": "directed",
+      "initialNodeId": null,
+      "nodes": [
+        {
+          "type": "node",
+          "id": "a",
+          "label": null,
+          "data": null,
+          "x": 40,
+          "y": 100,
+          "width": 80,
+          "height": 44
+        },
+        {
+          "type": "node",
+          "id": "b",
+          "label": null,
+          "data": null,
+          "x": 470,
+          "y": 100,
+          "width": 80,
+          "height": 44
+        },
+        {
+          "type": "node",
+          "id": "fixed",
+          "label": null,
+          "data": null,
+          "x": 280,
+          "y": 65,
+          "width": 100,
+          "height": 125
+        }
+      ],
+      "edges": [
+        {
+          "type": "edge",
+          "id": "ab",
+          "sourceId": "a",
+          "targetId": "b",
+          "label": null,
+          "data": null,
+          "points": [
+            {
+              "x": 120,
+              "y": 122
+            },
+            {
+              "x": 124,
+              "y": 122
+            },
+            {
+              "x": 124,
+              "y": 62
+            },
+            {
+              "x": 276,
+              "y": 62
+            },
+            {
+              "x": 276,
+              "y": 61
+            },
+            {
+              "x": 384,
+              "y": 61
+            },
+            {
+              "x": 384,
+              "y": 122
+            },
+            {
+              "x": 470,
+              "y": 122
+            }
+          ],
+          "routing": "orthogonal",
+          "x": 165,
+          "y": 270,
+          "width": 80,
+          "height": 26
+        }
+      ],
+      "data": null,
+      "direction": "right"
+    },
+    "patches": [
+      {
+        "op": "updateEdge",
+        "id": "ab",
+        "data": {
+          "points": [
+            {
+              "x": 120,
+              "y": 122
+            },
+            {
+              "x": 124,
+              "y": 122
+            },
+            {
+              "x": 124,
+              "y": 62
+            },
+            {
+              "x": 276,
+              "y": 62
+            },
+            {
+              "x": 276,
+              "y": 61
+            },
+            {
+              "x": 384,
+              "y": 61
+            },
+            {
+              "x": 384,
+              "y": 122
+            },
+            {
+              "x": 470,
+              "y": 122
+            }
+          ]
+        },
+        "description": "Apply layout geometry"
+      }
+    ],
+    "diagnostics": [],
+    "obstacleClearance": 4,
+    "routePoints": [
+      {
+        "x": 120,
+        "y": 122
+      },
+      {
+        "x": 124,
+        "y": 122
+      },
+      {
+        "x": 124,
+        "y": 62
+      },
+      {
+        "x": 276,
+        "y": 62
+      },
+      {
+        "x": 276,
+        "y": 61
+      },
+      {
+        "x": 384,
+        "y": 61
+      },
+      {
+        "x": 384,
+        "y": 122
+      },
+      {
+        "x": 470,
+        "y": 122
+      }
+    ],
+    "fixedNodesPreserved": true,
+    "constraintSatisfaction": [
+      {
+        "id": "via",
+        "kind": "waypoint",
+        "satisfied": true
+      }
+    ]
+  }
+}

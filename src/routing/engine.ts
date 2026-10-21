@@ -1,4 +1,5 @@
 import type { GraphDiff } from "@statelyai/graph";
+import { expandLabelFamilies, labelFamily, routeBezierEdge } from "./bezier";
 import { conflictCost, reservations, reservationBounds, outsideTerminal } from "./coordination";
 import { segmentBounds } from "./search";
 import { routeBounds, routeEdge, type Metrics, type Batch } from "./algorithms";
@@ -6,7 +7,8 @@ import {
   edgeGeometry,
   freeze,
   groupKey,
-  labelRect,
+  obstacleLabelRect,
+  effectivePolicy,
   members,
   nodeGeometry,
   settings,
@@ -85,7 +87,7 @@ function initialState(graph: RoutingGraph, config: RoutingSettings, style: Route
     state = { ...state, obstacles: state.obstacles.set(`n:${id}`, worldRect(n, state)) };
   for (const [id, e] of edges) {
     state = edgeMembership(state, e, style, true);
-    state = { ...state, obstacles: state.obstacles.set(`e:${id}`, labelRect(e, state)) };
+    state = { ...state, obstacles: state.obstacles.set(`e:${id}`, obstacleLabelRect(e, state)) };
   }
   return state;
 }
@@ -111,12 +113,30 @@ function calculate(
       plans: new Map(),
     };
   const pending = new Set(affected);
+  expandLabelFamilies(pending, input);
+  if (previous) expandLabelFamilies(pending, previous);
   const processed = new Set<string>();
+  const familyDepth = new Map<string, number>();
+  const familyRoots = new Map<string, string>();
+  for (const [id, config] of Object.entries(state.settings.edges)) {
+    if (config.sourceLabel === undefined) continue;
+    const family = labelFamily(id, input);
+    for (let index = 0; index < family.length; index++) {
+      const member = family[index]!;
+      familyRoots.set(member, family.at(-1)!);
+      familyDepth.set(member, family.length - index);
+    }
+  }
   const priorities = new Map<string, string>();
   const priority = (id: string) => {
     let result = priorities.get(id);
     if (result !== undefined) return result;
     const edge = state.edges.get(id) ?? previous?.edges.get(id);
+    const familyRoot = familyRoots.get(id);
+    if (familyRoot !== undefined) {
+      priorities.set(id, familyRoot);
+      return familyRoot;
+    }
     const key = edge && groupKey(edge, style, state.settings);
     result = key
       ? ((state.edges.has(id) ? state.groups : previous?.groups)?.get(key)?.keys().next().value ??
@@ -125,12 +145,17 @@ function calculate(
     priorities.set(id, result);
     return result;
   };
-  const later = (candidate: string, id: string) =>
-    priority(candidate) > priority(id) || (priority(candidate) === priority(id) && candidate > id);
+  const compare = (a: string, b: string) =>
+    (priority(a) < priority(b) ? -1 : priority(a) > priority(b) ? 1 : 0) ||
+    (familyDepth.get(a) ?? 1) - (familyDepth.get(b) ?? 1) ||
+    (a < b ? -1 : a > b ? 1 : 0);
+  const later = (candidate: string, id: string) => compare(candidate, id) > 0;
   const invalidate = (id: string, bounds: ReturnType<typeof routeBounds>) => {
     for (const candidate of routeIndex.query(inflate(bounds, state.settings.edgeSpacing))) {
       if (!later(candidate, id) || processed.has(candidate)) continue;
       pending.add(candidate);
+      expandLabelFamilies(pending, input);
+      for (const done of processed) pending.delete(done);
       const edge = state.edges.get(candidate);
       const key = edge && groupKey(edge, style, state.settings);
       if (key)
@@ -160,11 +185,7 @@ function calculate(
     }
   const segmentCache = new Map<string, ReturnType<typeof reservations>>();
   while (pending.size) {
-    const id = [...pending].sort(
-      (a, b) =>
-        (priority(a) < priority(b) ? -1 : priority(a) > priority(b) ? 1 : 0) ||
-        (a < b ? -1 : a > b ? 1 : 0),
-    )[0]!;
+    const id = [...pending].sort(compare)[0]!;
     pending.delete(id);
     processed.add(id);
     const edge = state.edges.get(id),
@@ -200,7 +221,14 @@ function calculate(
             const node = state.nodes.get(id),
               bounds = node && worldRect(node, state);
             return bounds
-              ? [inflate(bounds, state.settings.clearance + state.settings.edgeSpacing * 2 + 1)]
+              ? [
+                  inflate(
+                    bounds,
+                    state.settings.clearance +
+                      (style === "organic" ? 0 : state.settings.edgeSpacing * 2) +
+                      1,
+                  ),
+                ]
               : [];
           });
         let segments = segmentCache.get(otherId);
@@ -224,9 +252,11 @@ function calculate(
       }
       return result;
     };
+    batch.policy = effectivePolicy(state.settings, id);
+    const costSettings = { ...state.settings, ...batch.policy?.collisions };
     batch.edgeCost = (a, b) =>
       query(segmentBounds(a, b)).reduce(
-        (cost, other) => cost + conflictCost(a, b, other, state.settings),
+        (cost, other) => cost + conflictCost(a, b, other, costSettings),
         0,
       );
     batch.conflicts = (a, b) =>
@@ -237,7 +267,27 @@ function calculate(
       );
     batch.guides = (bounds) =>
       query(bounds).map((segment) => reservationBounds(segment, state.settings.edgeSpacing));
-    let route = routeEdge(edge, input, style, counts, batch);
+    batch.labelOverlaps = (bounds) => {
+      batch.dependencyBounds = batch.dependencyBounds
+        ? union(batch.dependencyBounds, bounds)
+        : bounds;
+      return routeIndex
+        .query(bounds)
+        .filter((otherId) => {
+          const label = routes.get(otherId)?.label;
+          return later(id, otherId) && label && intersects(bounds, label.bounds);
+        })
+        .map((otherId) => `e:${otherId}`);
+    };
+    batch.routes = routes;
+    batch.previous = oldRoute;
+    batch.previousSettings = previous?.settings;
+    let route =
+      style === "bezier" &&
+      !batch.policy &&
+      !routes.get(state.settings.edges[id]?.sourceLabel ?? "")?.label
+        ? routeBezierEdge(edge, input, routes, counts, batch)
+        : routeEdge(edge, input, style, counts, batch);
     if (oldRoute && JSON.stringify(oldRoute) === JSON.stringify(route)) route = oldRoute;
     const drawnBounds = routeBounds(route);
     if (route !== oldRoute) {
@@ -390,7 +440,7 @@ function updateState(
   }
   for (const id of changedEdges) {
     const edge = state.edges.get(id);
-    invalidateObstacle(`e:${id}`, edge && labelRect(edge, state));
+    invalidateObstacle(`e:${id}`, edge && obstacleLabelRect(edge, state));
     affected.add(id);
   }
   // Terminal placement depends on current incident edges, including neighbors
@@ -426,6 +476,8 @@ function updateState(
       if (key !== undefined)
         for (const peer of version.groups.get(key)?.keys() ?? []) affected.add(peer);
     }
+  expandLabelFamilies(affected, prior);
+  expandLabelFamilies(affected, state);
   return { state, affected };
 }
 export function createRoutingStrategy(id: RouteStyle): NativeRoutingStrategy {

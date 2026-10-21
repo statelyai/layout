@@ -1,4 +1,6 @@
 import type { EntityRect, Graph, GraphDiff, Point } from "@statelyai/graph";
+import type { BezierEndpoint, BezierGuide } from "./bezier-fit";
+export type { BezierEndpoint, BezierGuide } from "./bezier-fit";
 
 export type RoutePoint = Readonly<Point>;
 export type RouteSegment =
@@ -32,6 +34,8 @@ export interface RouteSection {
   readonly from: RouteEndpoint;
   readonly to: RouteEndpoint;
   readonly path: RoutePath;
+  readonly fromSide?: RouteSide;
+  readonly toSide?: RouteSide;
   /** Same ID denotes a shared trunk; render it once. */
   readonly sharedId?: string;
 }
@@ -41,13 +45,30 @@ export type RoutingDiagnosticCode =
   | "ROUTE_CONFLICT"
   | "ROUTE_BLOCKED"
   | "SEARCH_BUDGET"
-  | "CONSTRAINT_VIOLATION";
+  | "CONSTRAINT_VIOLATION"
+  | "LABEL_OVERLAP";
 export interface RoutingDiagnostic {
   readonly code: RoutingDiagnosticCode;
   readonly edgeId: string;
   readonly message: string;
+  readonly constraint?:
+    | "source-tangent"
+    | "target-tangent"
+    | "label-tangent"
+    | "waypoints"
+    | "node-clearance"
+    | "label-clearance"
+    | "monotonicity"
+    | "bundle";
+  readonly relatedIds?: readonly string[];
+}
+export interface RouteLabelPlacement {
+  readonly bounds: RouteBounds;
+  readonly anchor: RoutePoint;
+  readonly tangent: RoutePoint;
 }
 export interface Route {
+  readonly label?: RouteLabelPlacement;
   readonly edgeId: string;
   readonly sections: readonly RouteSection[];
   readonly status: "routed" | "fallback";
@@ -75,7 +96,59 @@ export interface RouteAttachment {
   readonly bounds: RouteBounds;
   readonly facing?: "inward" | "outward";
 }
+export interface BezierRoutingOptions {
+  readonly avoidObstacles?: boolean;
+  readonly attachmentMode?: "floating" | "orthogonal";
+  readonly targetClearance?: number;
+}
+export interface BezierEdgeSettings extends BezierRoutingOptions {
+  readonly source?: BezierEndpoint;
+  readonly target?: Extract<BezierEndpoint, { kind: "floating" }>;
+  readonly guides?: { readonly source: BezierGuide; readonly target: BezierGuide };
+  readonly obstacles?: readonly RouteBounds[];
+  readonly terminalBounds?: readonly RouteBounds[];
+  readonly labelTangent?: RoutePoint;
+  readonly disabled?: boolean;
+}
+export type RoutingTangent =
+  | { readonly kind: "automatic" }
+  | { readonly kind: "border-normal" }
+  | { readonly kind: "vector"; readonly direction: RoutePoint };
+export type RoutingCurve =
+  | { readonly kind: "polyline" }
+  | { readonly kind: "bezier"; readonly curvature?: number }
+  | { readonly kind: "catmull-rom" }
+  | { readonly kind: "rounded-orthogonal"; readonly radius?: number };
+export type RoutingLabel =
+  | { readonly kind: "follow"; readonly fraction?: number; readonly offset?: number }
+  | { readonly kind: "fixed" }
+  | { readonly kind: "through"; readonly tangent?: RoutingTangent }
+  | { readonly kind: "gap"; readonly tangent?: RoutingTangent };
+export interface RoutingPolicy {
+  readonly curve?: RoutingCurve;
+  readonly sourceTangent?: RoutingTangent;
+  readonly targetTangent?: RoutingTangent;
+  readonly label?: RoutingLabel;
+  readonly collisions?: {
+    readonly nodes?: "avoid" | "allow";
+    readonly labels?: "avoid" | "allow";
+    readonly crossingPenalty?: number;
+    readonly overlapPenalty?: number;
+  };
+  readonly monotonic?: {
+    readonly axis: "x" | "y" | "both";
+    readonly strength: "prefer" | "require";
+  };
+  readonly stability?: { readonly kind: "recompute" | "preserve-valid" };
+}
 export interface EdgeRoutingSettings {
+  readonly policy?: RoutingPolicy;
+  /** Resolve the source from this edge label in the current graph geometry. */
+  readonly sourceLabel?: string;
+  readonly sourceSides?: readonly RouteSide[];
+  readonly targetSides?: readonly RouteSide[];
+  readonly labelSides?: readonly RouteSide[];
+  readonly bezier?: BezierEdgeSettings;
   readonly sourceAttachment?: RouteAttachment;
   readonly targetAttachment?: RouteAttachment;
   readonly sourceSide?: RouteSide;
@@ -85,6 +158,9 @@ export interface EdgeRoutingSettings {
   readonly group?: string;
 }
 export interface RoutingSettings {
+  readonly policy?: RoutingPolicy;
+  /** Opt into center-tangent Bézier routing and floating attachments. */
+  readonly bezier?: BezierRoutingOptions;
   /** Native compound geometry is parent-relative; adapters may supply resolved world geometry. */
   readonly coordinateSpace?: "parent" | "world";
   readonly clearance?: number;

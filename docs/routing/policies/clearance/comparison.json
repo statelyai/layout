@@ -1,0 +1,87 @@
+{
+  "beforeSource": "1a712a4",
+  "afterSource": "3724487",
+  "identicalGraphAndPolicy": true,
+  "viewport": {
+    "width": 560,
+    "height": 340
+  },
+  "scale": 1,
+  "direction": "authored",
+  "before": {
+    "browserPathLength": 528.6194458007812,
+    "horizontalReverseTravel": 28.91788525695668,
+    "segments": 5
+  },
+  "after": {
+    "browserPathLength": 417.3199157714844,
+    "horizontalReverseTravel": 0,
+    "segments": 2
+  },
+  "fixture": {
+    "id": "obstacles",
+    "mode": "directed",
+    "initialNodeId": null,
+    "nodes": [
+      {
+        "type": "node",
+        "id": "a",
+        "label": null,
+        "data": null,
+        "x": 35,
+        "y": 65,
+        "width": 64,
+        "height": 44
+      },
+      {
+        "type": "node",
+        "id": "b",
+        "label": null,
+        "data": null,
+        "x": 435,
+        "y": 220,
+        "width": 64,
+        "height": 44
+      },
+      {
+        "type": "node",
+        "id": "obstacle",
+        "label": null,
+        "data": null,
+        "x": 245,
+        "y": 110,
+        "width": 80,
+        "height": 125
+      }
+    ],
+    "edges": [
+      {
+        "type": "edge",
+        "id": "edge",
+        "sourceId": "a",
+        "targetId": "b",
+        "label": null,
+        "data": null,
+        "x": 195,
+        "y": 255,
+        "width": 90,
+        "height": 30
+      }
+    ],
+    "data": null
+  },
+  "settings": {
+    "policy": {
+      "curve": {
+        "kind": "bezier"
+      },
+      "label": {
+        "kind": "follow"
+      },
+      "collisions": {
+        "nodes": "avoid",
+        "labels": "avoid"
+      }
+    }
+  }
+}

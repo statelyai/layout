@@ -151,11 +151,25 @@ const route = snapshot.routes.get("ab");
 const paths = route?.sections.map((section) => toSvgPath(section.path));
 ```
 
-Incremental results match fresh routing for the same graph and settings. Previous
-paths are cached outputs, never constraints on new routes.
+`bezierRouting` also accepts center-tangent fitting, floating or orthogonal
+attachments, fixed ports, and explicit label-source chains through
+`settings.bezier` and `settings.edges`. It routes each chain together and
+updates child attachments when parent labels move. See the
+[Bézier options and label-chain example](docs/routing.md#center-tangent-bézier-routing-and-label-chains).
+
+`settings.policy` independently controls curve families, endpoint and label
+tangents, passive or fixed labels, collisions, monotonicity, and route stability.
+`routingPolicies.smooth`, `.diagram`, and `.authored` provide Bézier, rounded
+orthogonal, and centripetal Catmull–Rom presets. Following labels use half the
+final path length and return their placement in `Route.label`. See the
+[routing policy reference](docs/routing-policies.md).
+
+Canonical incremental results match fresh routing for the same graph and
+settings. Opt-in `stability: { kind: "preserve-valid" }` keeps valid prior paths
+to reduce changes during editing and deliberately depends on edit history.
 
 Every strategy supports incremental updates with immutable snapshots and shared
-indexes. Nodes, ports, and labels stay fixed. Every edge receives a route;
+indexes. Input nodes, ports, and labels remain unchanged. Every edge receives a route;
 fallbacks expose status and diagnostics. Deterministic soft crossing/overlap costs
 coordinate unrelated groups; residual conflicts stay visible and reported. Native TypeScript strategies cover
 straight, Bézier, orthogonal, polyline, octilinear, curved, organic, parallel,
@@ -376,6 +390,9 @@ pnpm verify
 pnpm bench
 pnpm demo
 pnpm storybook
+pnpm verify:routing-policies
+pnpm routing:gallery .scratch/routing-policies/after --after
+pnpm routing:quality .scratch/routing-quality-pass/after
 pnpm changeset
 pnpm release
 ```
@@ -397,6 +414,18 @@ selected-node placement, affected-route repair, constraint conflicts, overlap
 diagnostics, nested coordinates, and unsupported incremental layout. Controls
 rerun the real API; each story shows matched before/after geometry, patches, and
 current limitations. `pnpm storybook:build` writes a static build to `dist-storybook`.
+
+The **Routing / Policies / Playground** story covers midpoint labels, endpoint
+and label tangents, obstacle avoidance, Catmull–Rom, rounded routes, crossing
+preferences, monotonicity, and shared trunks. Select an example, compare its
+original settings, and drag nodes to exercise incremental updates.
+
+The **Routing / Quality** stories include direct examples for all twelve
+strategies, four curve families, label modes, fixed and automatic attachments,
+shared branches, self loops, and constrained corridors. Comparisons use a common
+view box so detours remain visible. Individual stories support dragging, reset,
+obstacle moves, and policy controls. The [visual quality review](docs/routing/quality/README.md)
+retains matching before and after examples.
 
 <!-- exported source compatibility derived from tsconfig.json -->
 

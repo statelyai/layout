@@ -1,0 +1,260 @@
+{
+  "baselineRevision": "741ab54",
+  "sourceRevision": "fc1baa877769bae3ee192b1ce002e0701e28a576",
+  "deviceScaleFactor": 1,
+  "pairCanvas": {
+    "width": 760,
+    "height": 470
+  },
+  "matchedCases": 46,
+  "screenshots": [
+    "midpoint.png",
+    "tangents.png",
+    "label-tangents.png",
+    "obstacles.png",
+    "catmull-rom.png",
+    "rounded.png",
+    "crossings.png",
+    "monotonic.png",
+    "bundle.png",
+    "label-follow.png",
+    "label-fixed.png",
+    "label-through.png",
+    "label-gap.png",
+    "automatic-ports.png",
+    "fixed-ports.png",
+    "opposing-faces.png",
+    "same-face-loops.png",
+    "tight-corridor.png",
+    "multiple-obstacles.png",
+    "parallel-branches.png",
+    "shared-bundle.png",
+    "reversed-edges.png",
+    "incremental-moves.png",
+    "high-curvature-obstacle.png",
+    "restricted-label-sides.png",
+    "catmull-fixed-ports.png",
+    "dense-same-face.png",
+    "loop-near-obstacle.png",
+    "strategy-straight.png",
+    "strategy-bezier.png",
+    "strategy-orthogonal.png",
+    "strategy-polyline.png",
+    "strategy-octilinear.png",
+    "strategy-curved.png",
+    "strategy-organic.png",
+    "strategy-parallel.png",
+    "strategy-self-loop.png",
+    "strategy-fan.png",
+    "strategy-bus.png",
+    "strategy-bundle.png",
+    "coordination-0.png",
+    "coordination-800.png",
+    "curve-polyline.png",
+    "curve-bezier.png",
+    "curve-catmull-rom.png",
+    "curve-rounded-orthogonal.png"
+  ],
+  "stories": [
+    {
+      "id": "routing-policies--playground",
+      "paths": 1
+    },
+    {
+      "id": "routing-policies--label-follows-curve",
+      "paths": 1
+    },
+    {
+      "id": "routing-policies--independent-endpoint-tangents",
+      "paths": 1
+    },
+    {
+      "id": "routing-policies--perpendicular-label-attachments",
+      "paths": 2
+    },
+    {
+      "id": "routing-policies--curve-obstacle-clearance",
+      "paths": 1
+    },
+    {
+      "id": "routing-policies--catmull-rom-waypoints",
+      "paths": 1
+    },
+    {
+      "id": "routing-policies--rounded-orthogonal-corridors",
+      "paths": 1
+    },
+    {
+      "id": "routing-policies--final-geometry-crossings",
+      "paths": 2
+    },
+    {
+      "id": "routing-policies--monotonic-flow-direction",
+      "paths": 1
+    },
+    {
+      "id": "routing-policies--shared-trunks-and-branches",
+      "paths": 7
+    },
+    {
+      "id": "routing-quality--full-gallery",
+      "paths": 55
+    },
+    {
+      "id": "routing-quality--curve-family-comparison",
+      "paths": 4
+    },
+    {
+      "id": "routing-quality--label-mode-comparison",
+      "paths": 6
+    },
+    {
+      "id": "routing-quality--attachment-comparison",
+      "paths": 2
+    },
+    {
+      "id": "routing-quality--original-policy-comparison",
+      "paths": 3
+    },
+    {
+      "id": "routing-quality--label-follow",
+      "paths": 1
+    },
+    {
+      "id": "routing-quality--label-fixed",
+      "paths": 1
+    },
+    {
+      "id": "routing-quality--label-through",
+      "paths": 2
+    },
+    {
+      "id": "routing-quality--label-gap",
+      "paths": 2
+    },
+    {
+      "id": "routing-quality--automatic-attachments",
+      "paths": 1
+    },
+    {
+      "id": "routing-quality--fixed-ports",
+      "paths": 1
+    },
+    {
+      "id": "routing-quality--opposing-faces",
+      "paths": 1
+    },
+    {
+      "id": "routing-quality--same-face-self-loops",
+      "paths": 2
+    },
+    {
+      "id": "routing-quality--tight-corridor",
+      "paths": 1
+    },
+    {
+      "id": "routing-quality--multiple-obstacles",
+      "paths": 1
+    },
+    {
+      "id": "routing-quality--parallel-branches",
+      "paths": 4
+    },
+    {
+      "id": "routing-quality--shared-bundle",
+      "paths": 9
+    },
+    {
+      "id": "routing-quality--reversed-edges",
+      "paths": 2
+    },
+    {
+      "id": "routing-quality--incremental-moves",
+      "paths": 2
+    },
+    {
+      "id": "routing-quality--high-curvature-obstacle",
+      "paths": 1
+    },
+    {
+      "id": "routing-quality--restricted-label-sides",
+      "paths": 2
+    },
+    {
+      "id": "routing-quality--catmull-rom-fixed-ports",
+      "paths": 1
+    },
+    {
+      "id": "routing-quality--dense-same-face-attachments",
+      "paths": 3
+    },
+    {
+      "id": "routing-quality--self-loop-near-obstacle",
+      "paths": 1
+    },
+    {
+      "id": "routing-quality--strategy-gallery",
+      "paths": 84
+    },
+    {
+      "id": "routing-quality--coordination-comparison",
+      "paths": 4
+    },
+    {
+      "id": "routing-quality--straight-strategy",
+      "paths": 6
+    },
+    {
+      "id": "routing-quality--bezier-strategy",
+      "paths": 6
+    },
+    {
+      "id": "routing-quality--orthogonal-strategy",
+      "paths": 6
+    },
+    {
+      "id": "routing-quality--polyline-strategy",
+      "paths": 6
+    },
+    {
+      "id": "routing-quality--octilinear-strategy",
+      "paths": 6
+    },
+    {
+      "id": "routing-quality--curved-strategy",
+      "paths": 6
+    },
+    {
+      "id": "routing-quality--organic-strategy",
+      "paths": 6
+    },
+    {
+      "id": "routing-quality--parallel-strategy",
+      "paths": 6
+    },
+    {
+      "id": "routing-quality--self-loop-strategy",
+      "paths": 6
+    },
+    {
+      "id": "routing-quality--fan-strategy",
+      "paths": 10
+    },
+    {
+      "id": "routing-quality--bus-strategy",
+      "paths": 10
+    },
+    {
+      "id": "routing-quality--bundle-strategy",
+      "paths": 10
+    }
+  ],
+  "interactions": {
+    "passiveLabelMove": true,
+    "reset": true,
+    "drag": true,
+    "curveFamilies": 4,
+    "policyControls": true,
+    "obstacleUpdate": "Revision 1 · 1 recomputed · 1 reused · 0 patches · 0 search visits"
+  }
+}
