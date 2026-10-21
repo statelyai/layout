@@ -3,7 +3,7 @@ import { createHash } from "node:crypto";
 import { execFileSync } from "node:child_process";
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { createRequire } from "node:module";
-import { resolve } from "node:path";
+import { relative, resolve } from "node:path";
 import { pathToFileURL } from "node:url";
 
 const usage =
@@ -276,12 +276,12 @@ try {
 const summary = {
   baseline: {
     requestedRevision: requestedBaselineRevision,
-    module: baselinePath,
+    module: relative(project, baselinePath),
     moduleSha256: baselineModuleSha256,
   },
   current: {
     revision: currentRevision,
-    project,
+    project: ".",
     workingTreeDirty:
       execFileSync("git", ["status", "--porcelain"], { cwd: project, encoding: "utf8" }).trim()
         .length > 0,
