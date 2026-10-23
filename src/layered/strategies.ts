@@ -5864,6 +5864,20 @@ function routeEdges(style: "ORTHOGONAL" | "POLYLINE" | "SPLINES"): EdgeRouter {
               input,
             )
           : targetFallback;
+        // A reversed chain enters a center-label dummy through its forward-side
+        // port and leaves through its backward-side port: route to those sides.
+        const [forwardSide, backwardSide] = (
+          {
+            right: ["EAST", "WEST"],
+            left: ["WEST", "EAST"],
+            down: ["SOUTH", "NORTH"],
+            up: ["NORTH", "SOUTH"],
+          } as const
+        )[input.direction];
+        const faces = (node: GraphNode, side: unknown, away: string) =>
+          !fixedSideFeedback && node.id.startsWith("__layout_dummy:label:") && side === away;
+        const sourceFace = faces(source, feedbackSourcePortSide, backwardSide) ? -1 : 1;
+        const targetFace = faces(target, feedbackTargetPortSide, forwardSide) ? -1 : 1;
         if (horizontal) {
           const sign = fixedSideFeedback
             ? Math.sign(sourceRect.x - targetRect.x) || 1
@@ -5878,16 +5892,16 @@ function routeEdges(style: "ORTHOGONAL" | "POLYLINE" | "SPLINES"): EdgeRouter {
             fixedSideFeedback && input.settings.unnecessaryBendpoints === true;
           pointsByEdgeId.set(edge.id, [
             start,
-            { x: start.x + sign * flowSpacing, y: start.y },
-            { x: start.x + sign * flowSpacing, y: outerCross },
+            { x: start.x + sourceFace * sign * flowSpacing, y: start.y },
+            { x: start.x + sourceFace * sign * flowSpacing, y: outerCross },
             ...(preserveCenters
               ? [
                   { x: sourceRect.x + sourceRect.width / 2, y: outerCross },
                   { x: targetRect.x + targetRect.width / 2, y: outerCross },
                 ]
               : []),
-            { x: end.x - sign * flowSpacing, y: outerCross },
-            { x: end.x - sign * flowSpacing, y: end.y },
+            { x: end.x - targetFace * sign * flowSpacing, y: outerCross },
+            { x: end.x - targetFace * sign * flowSpacing, y: end.y },
             end,
           ]);
         } else {
@@ -5904,16 +5918,16 @@ function routeEdges(style: "ORTHOGONAL" | "POLYLINE" | "SPLINES"): EdgeRouter {
             fixedSideFeedback && input.settings.unnecessaryBendpoints === true;
           pointsByEdgeId.set(edge.id, [
             start,
-            { x: start.x, y: start.y + sign * flowSpacing },
-            { x: outerCross, y: start.y + sign * flowSpacing },
+            { x: start.x, y: start.y + sourceFace * sign * flowSpacing },
+            { x: outerCross, y: start.y + sourceFace * sign * flowSpacing },
             ...(preserveCenters
               ? [
                   { x: outerCross, y: sourceRect.y + sourceRect.height / 2 },
                   { x: outerCross, y: targetRect.y + targetRect.height / 2 },
                 ]
               : []),
-            { x: outerCross, y: end.y - sign * flowSpacing },
-            { x: end.x, y: end.y - sign * flowSpacing },
+            { x: outerCross, y: end.y - targetFace * sign * flowSpacing },
+            { x: end.x, y: end.y - targetFace * sign * flowSpacing },
             end,
           ]);
         }

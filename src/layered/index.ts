@@ -2413,9 +2413,12 @@ export function* createLayeredScopePipeline<N, E, G, P>(
       const hasFlexiblePairPorts = hasFlexiblePorts(firstNode) && hasFlexiblePorts(secondNode);
       if (isolatedAntiparallelPair && !hasFlexiblePairPorts) continue;
 
-      const firstBeforeSecond = horizontal
-        ? firstRect.x + firstRect.width / 2 < secondRect.x + secondRect.width / 2
-        : firstRect.y + firstRect.height / 2 < secondRect.y + secondRect.height / 2;
+      // "Before" is in flow order: UP and LEFT layouts flow toward smaller coordinates.
+      const firstBeforeSecond =
+        (horizontal
+          ? firstRect.x + firstRect.width / 2 < secondRect.x + secondRect.width / 2
+          : firstRect.y + firstRect.height / 2 < secondRect.y + secondRect.height / 2) !==
+        (direction === "left" || direction === "up");
       const beforeRect = firstBeforeSecond ? firstRect : secondRect;
       const afterRect = firstBeforeSecond ? secondRect : firstRect;
       const forward = pair.find((edge) =>
