@@ -1,0 +1,249 @@
+{
+  "id": "root",
+  "children": [
+    {
+      "id": "Coordinator",
+      "width": 268.875,
+      "height": 82,
+      "ports": [
+        {
+          "id": "[\"Coordinator\",\"Testing\",\"[\\\"gray\\\",\\\"solid\\\"]\"]__src",
+          "width": 20,
+          "height": 20,
+          "layoutOptions": {
+            "elk.port.side": "SOUTH"
+          }
+        },
+        {
+          "id": "Spawns__src",
+          "width": 20,
+          "height": 20,
+          "layoutOptions": {
+            "elk.port.side": "SOUTH"
+          }
+        },
+        {
+          "id": "Sends NOTIFY__src",
+          "width": 20,
+          "height": 20,
+          "layoutOptions": {
+            "elk.port.side": "SOUTH"
+          }
+        },
+        {
+          "id": "Sends DONE__tgt",
+          "width": 20,
+          "height": 20,
+          "layoutOptions": {
+            "elk.port.side": "NORTH"
+          }
+        }
+      ],
+      "layoutOptions": {
+        "elk.hierarchyHandling": "INHERIT",
+        "elk.layered.edgeRouting.selfLoopDistribution": "NORTH",
+        "elk.layered.edgeRouting.selfLoopOrdering": "STACKED",
+        "elk.portConstraints": "UNDEFINED",
+        "elk.portAlignment.default": "DISTRIBUTED",
+        "elk.portLabels.treatAsGroup": "true",
+        "elk.spacing.portPort": "10",
+        "elk.padding": "[top=48, left=48, right=48, bottom=48]"
+      },
+      "order": 0
+    },
+    {
+      "id": "Testing",
+      "width": 320,
+      "height": 106,
+      "ports": [
+        {
+          "id": "[\"Coordinator\",\"Testing\",\"[\\\"gray\\\",\\\"solid\\\"]\"]__tgt",
+          "width": 20,
+          "height": 20,
+          "layoutOptions": {
+            "elk.port.side": "NORTH"
+          }
+        },
+        {
+          "id": "Sends DONE__src",
+          "width": 20,
+          "height": 20,
+          "layoutOptions": {
+            "elk.port.side": "SOUTH"
+          }
+        }
+      ],
+      "layoutOptions": {
+        "elk.hierarchyHandling": "INHERIT",
+        "elk.layered.edgeRouting.selfLoopDistribution": "NORTH",
+        "elk.layered.edgeRouting.selfLoopOrdering": "STACKED",
+        "elk.portConstraints": "UNDEFINED",
+        "elk.portAlignment.default": "DISTRIBUTED",
+        "elk.portLabels.treatAsGroup": "true",
+        "elk.spacing.portPort": "10",
+        "elk.padding": "[top=48, left=48, right=48, bottom=48]"
+      },
+      "order": 1
+    },
+    {
+      "id": "Notifier",
+      "width": 227.015625,
+      "height": 82,
+      "ports": [
+        {
+          "id": "Spawns__tgt",
+          "width": 20,
+          "height": 20,
+          "layoutOptions": {
+            "elk.port.side": "NORTH"
+          }
+        },
+        {
+          "id": "Sends NOTIFY__tgt",
+          "width": 20,
+          "height": 20,
+          "layoutOptions": {
+            "elk.port.side": "NORTH"
+          }
+        }
+      ],
+      "layoutOptions": {
+        "elk.hierarchyHandling": "INHERIT",
+        "elk.layered.edgeRouting.selfLoopDistribution": "NORTH",
+        "elk.layered.edgeRouting.selfLoopOrdering": "STACKED",
+        "elk.portConstraints": "UNDEFINED",
+        "elk.portAlignment.default": "DISTRIBUTED",
+        "elk.portLabels.treatAsGroup": "true",
+        "elk.spacing.portPort": "10",
+        "elk.padding": "[top=48, left=48, right=48, bottom=48]"
+      },
+      "order": 2
+    }
+  ],
+  "edges": [
+    {
+      "id": "[\"Coordinator\",\"Testing\",\"[\\\"gray\\\",\\\"solid\\\"]\"]",
+      "sources": ["[\"Coordinator\",\"Testing\",\"[\\\"gray\\\",\\\"solid\\\"]\"]__src"],
+      "targets": ["[\"Coordinator\",\"Testing\",\"[\\\"gray\\\",\\\"solid\\\"]\"]__tgt"],
+      "labels": [
+        {
+          "id": "[\"Coordinator\",\"Testing\",\"[\\\"gray\\\",\\\"solid\\\"]\"]",
+          "text": "[\"Coordinator\",\"Testing\",\"[\\\"gray\\\",\\\"solid\\\"]\"]",
+          "width": 91.640625,
+          "height": 72,
+          "layoutOptions": {
+            "elk.layered.edgeLabels.centerLabelPlacementStrategy": "MEDIAN_LAYER",
+            "elk.edgeLabels.inline": "true",
+            "elk.edgeLabels.placement": "CENTER"
+          }
+        }
+      ]
+    },
+    {
+      "id": "Spawns",
+      "sources": ["Spawns__src"],
+      "targets": ["Spawns__tgt"],
+      "labels": [
+        {
+          "id": "Spawns",
+          "text": "Spawns",
+          "width": 61.140625,
+          "height": 32,
+          "layoutOptions": {
+            "elk.layered.edgeLabels.centerLabelPlacementStrategy": "MEDIAN_LAYER",
+            "elk.edgeLabels.inline": "true",
+            "elk.edgeLabels.placement": "CENTER"
+          }
+        }
+      ]
+    },
+    {
+      "id": "Sends NOTIFY",
+      "sources": ["Sends NOTIFY__src"],
+      "targets": ["Sends NOTIFY__tgt"],
+      "labels": [
+        {
+          "id": "Sends NOTIFY",
+          "text": "Sends NOTIFY",
+          "width": 98.890625,
+          "height": 32,
+          "layoutOptions": {
+            "elk.layered.edgeLabels.centerLabelPlacementStrategy": "MEDIAN_LAYER",
+            "elk.edgeLabels.inline": "true",
+            "elk.edgeLabels.placement": "CENTER"
+          }
+        }
+      ]
+    },
+    {
+      "id": "Sends DONE",
+      "sources": ["Sends DONE__src"],
+      "targets": ["Sends DONE__tgt"],
+      "labels": [
+        {
+          "id": "Sends DONE",
+          "text": "Sends DONE",
+          "width": 88.9375,
+          "height": 32,
+          "layoutOptions": {
+            "elk.layered.edgeLabels.centerLabelPlacementStrategy": "MEDIAN_LAYER",
+            "elk.edgeLabels.inline": "true",
+            "elk.edgeLabels.placement": "CENTER"
+          }
+        }
+      ]
+    }
+  ],
+  "layoutOptions": {
+    "elk.algorithm": "layered",
+    "elk.edgeRouting": "ORTHOGONAL",
+    "elk.hierarchyHandling": "INHERIT",
+    "elk.separateConnectedComponents": "true",
+    "elk.spacing.nodeNode": "50",
+    "elk.spacing.edgeEdge": "10",
+    "elk.spacing.edgeNode": "10",
+    "elk.spacing.edgeLabel": "2",
+    "elk.spacing.labelNode": "5",
+    "elk.spacing.componentComponent": "20",
+    "elk.spacing.nodeSelfLoop": "24",
+    "elk.layered.spacing.nodeNodeBetweenLayers": "30",
+    "elk.layered.spacing.edgeEdgeBetweenLayers": "10",
+    "elk.layered.spacing.edgeNodeBetweenLayers": "10",
+    "elk.layered.layering.strategy": "INTERACTIVE",
+    "elk.layered.cycleBreaking.strategy": "MODEL_ORDER",
+    "elk.layered.directionCongruency": "READING_DIRECTION",
+    "elk.layered.nodePlacement.strategy": "BRANDES_KOEPF",
+    "elk.layered.nodePlacement.favorStraightEdges": "true",
+    "elk.layered.nodePlacement.bk.fixedAlignment": "NONE",
+    "elk.layered.nodePlacement.bk.edgeStraightening": "IMPROVE_STRAIGHTNESS",
+    "elk.layered.nodePlacement.linearSegments.deflectionDampening": "0.3",
+    "elk.layered.crossingMinimization.strategy": "LAYER_SWEEP",
+    "elk.layered.crossingMinimization.forceNodeModelOrder": "true",
+    "elk.layered.crossingMinimization.greedySwitch.type": "TWO_SIDED",
+    "elk.layered.crossingMinimization.semiInteractive": "false",
+    "elk.layered.considerModelOrder.strategy": "PREFER_NODES",
+    "elk.layered.considerModelOrder.longEdgeStrategy": "DUMMY_NODE_OVER",
+    "elk.layered.considerModelOrder.components": "NONE",
+    "elk.layered.considerModelOrder.crossingCounterNodeInfluence": "0",
+    "elk.layered.considerModelOrder.crossingCounterPortInfluence": "0",
+    "elk.layered.compaction.connectedComponents": "true",
+    "elk.layered.compaction.postCompaction.strategy": "LEFT",
+    "elk.layered.compaction.postCompaction.constraints": "SCANLINE",
+    "elk.layered.edgeRouting.splines.mode": "SLOPPY",
+    "elk.layered.edgeRouting.splines.sloppy.layerSpacingFactor": "0.2",
+    "elk.layered.edgeLabels.centerLabelPlacementStrategy": "MEDIAN_LAYER",
+    "elk.layered.edgeLabels.sideSelection": "SMART_DOWN",
+    "elk.layered.wrapping.strategy": "OFF",
+    "elk.layered.wrapping.additionalEdgeSpacing": "10",
+    "elk.layered.wrapping.correctionFactor": "1",
+    "elk.layered.highDegreeNodes.treatment": "false",
+    "elk.layered.highDegreeNodes.threshold": "16",
+    "elk.layered.highDegreeNodes.treeHeight": "5",
+    "elk.layered.thoroughness": "7",
+    "elk.layered.mergeEdges": "false",
+    "elk.layered.mergeHierarchyEdges": "true",
+    "elk.layered.feedbackEdges": "false",
+    "elk.layered.unnecessaryBendpoints": "false",
+    "elk.direction": "DOWN"
+  }
+}

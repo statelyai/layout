@@ -82,6 +82,7 @@ import {
   placeNodesInLayers,
   placeNodesInteractively,
   placePorts,
+  recordSweptPortOrder,
   routeEdgesOrthogonally,
   routeEdgesWithPolylines,
   routeEdgesWithSplines,
@@ -1731,7 +1732,7 @@ export function* createLayeredScopePipeline<N, E, G, P>(
       },
     };
   }
-  const northSouth = insertNorthSouthPortDummies(expanded);
+  const northSouth = insertNorthSouthPortDummies(expanded, preparedPorts);
   expanded = northSouth.expansion;
   if (prepareModelOrder) markInitialModelOrderPrepared(expanded.input, preparedPorts!);
   const associates = new Map<string, string[]>(),
@@ -1837,6 +1838,7 @@ export function* createLayeredScopePipeline<N, E, G, P>(
     minimize: minimizeScope,
     finishOrder: finishCrossingOrder,
   };
+  recordSweptPortOrder(graph, direction, order);
   traceLayeredPhase(() => ({
     kind: "crossing-order",
     scope: graph.id,

@@ -1794,6 +1794,8 @@ function sortLayerByAdjacentPosition(
   sameLayerNeighbors: ReadonlyMap<string, readonly string[]> = new Map(),
   orderedVisits?: ReadonlyMap<string, readonly (number | string)[]>,
   forcedCompare?: (left: string, right: string) => number,
+  /** Nodes ELK's forced model-order comparator ties with everything. */
+  forcedTies?: ReadonlySet<string>,
 ): void {
   const originalIndex = new Map(layer.map((nodeId, index) => [nodeId, index] as const));
   const adjacentPosition = new Map<string, number | undefined>();
@@ -1870,6 +1872,7 @@ function sortLayerByAdjacentPosition(
   }
 
   const compare = (a: string, b: string) => {
+    if (forcedTies?.has(a) || forcedTies?.has(b)) return 0;
     return (
       forcedCompare?.(a, b) ||
       (adjacentPosition.get(a) ?? 0) - (adjacentPosition.get(b) ?? 0) ||
@@ -2185,6 +2188,18 @@ export function createLayerSweepSession(
     usesInitialModelOrder && input.settings["crossingMinimization.forceNodeModelOrder"] === true
       ? normalModelComparator(input)
       : undefined;
+  // ELK's forced comparator returns 0 for separate-layer nodes before
+  // consulting barycenters, so insertion sort never moves past them.
+  const forcedTies = forcedCompare
+    ? new Set(
+        input.graph.nodes
+          .filter((node) => {
+            const constraint = input.nodeSettings?.(node)?.["layering.layerConstraint"];
+            return constraint === "FIRST_SEPARATE" || constraint === "LAST_SEPARATE";
+          })
+          .map((node) => node.id),
+      )
+    : undefined;
   const usePortRanks = true;
   const medianWeights = new Map<string, number>();
   const listedEdgeIds = new Map<string, string>();
@@ -2440,8 +2455,10 @@ export function createLayerSweepSession(
       (working[firstLayerIndex] ?? []).map((id) => [id, random.nextDouble()]),
     );
     const compare = (left: string, right: string) =>
-      forcedCompare?.(left, right) ||
-      (firstLayerWeights.get(left) ?? 0) - (firstLayerWeights.get(right) ?? 0);
+      forcedTies?.has(left) || forcedTies?.has(right)
+        ? 0
+        : forcedCompare?.(left, right) ||
+          (firstLayerWeights.get(left) ?? 0) - (firstLayerWeights.get(right) ?? 0);
     const first = working[firstLayerIndex];
     if (first) {
       if (forcedCompare)
@@ -2596,6 +2613,7 @@ export function createLayerSweepSession(
               sameLayerNeighbors(isForward),
               adjacent.visits,
               forcedCompare,
+              forcedTies,
             );
           }
           groupMixedPortDirections(current, previous, working[layer + 1]);
@@ -2625,6 +2643,7 @@ export function createLayerSweepSession(
               sameLayerNeighbors(isForward),
               adjacent.visits,
               forcedCompare,
+              forcedTies,
             );
           }
           groupMixedPortDirections(current, next, working[layer - 1]);
@@ -6528,6 +6547,67 @@ export const routeEdgesOrthogonally = routeEdges("ORTHOGONAL");
 export const routeEdgesWithPolylines = routeEdges("POLYLINE");
 export const routeEdgesWithSplines = routeEdges("SPLINES");
 
+type PortSide = "NORTH" | "SOUTH" | "WEST" | "EAST";
+const sweptPortRanks = new WeakMap<
+  readonly GraphPort<unknown>[],
+  (port: GraphPort<unknown>, side: PortSide) => number | undefined
+>();
+
+/**
+ * Order movable ports along each physical side as crossing minimization left
+ * them, as ELK places ports from its swept port lists. The lists are
+ * clockwise per canonical side.
+ */
+export function recordSweptPortOrder(
+  graph: Pick<LayeredPhaseInput["graph"], "nodes" | "edges">,
+  direction: LayeredPhaseInput["direction"],
+  order: LayerOrder,
+): void {
+  // Unconnected ports carry no swept decision.
+  const connected = new Set(
+    graph.edges.flatMap((edge) => [
+      JSON.stringify([edge.sourceId, edge.sourcePort]),
+      JSON.stringify([edge.targetId, edge.targetPort]),
+    ]),
+  );
+  const vertical = direction === "down" || direction === "up";
+  const reverse = direction === "up" || direction === "left";
+  const canonical: Record<PortSide, PortSide> =
+    direction === "right"
+      ? { NORTH: "NORTH", EAST: "EAST", SOUTH: "SOUTH", WEST: "WEST" }
+      : direction === "left"
+        ? { NORTH: "NORTH", EAST: "WEST", SOUTH: "SOUTH", WEST: "EAST" }
+        : direction === "down"
+          ? { NORTH: "WEST", EAST: "SOUTH", SOUTH: "EAST", WEST: "NORTH" }
+          : { NORTH: "EAST", EAST: "SOUTH", SOUTH: "WEST", WEST: "NORTH" };
+  for (const node of graph.nodes) {
+    if (!node.ports) continue;
+    const swept = order.physicalPortOrderByNodeId?.get(node.id);
+    if (!swept) {
+      sweptPortRanks.delete(node.ports);
+      continue;
+    }
+    const index = new Map(swept.flatMap((id, i) => (connected.has(id) ? [[id, i] as const] : [])));
+    const rankByPort = new Map(
+      node.ports.map((port) => [port, index.get(JSON.stringify([node.id, port.name]))]),
+    );
+    sweptPortRanks.set(node.ports, (port, side) => {
+      const rank = rankByPort.get(port);
+      if (rank === undefined) return undefined;
+      // Canonical clockwise ranks rise with the flow coordinate on NORTH,
+      // with the cross coordinate on EAST, and fall on SOUTH and WEST.
+      const alongFlow = (side === "NORTH" || side === "SOUTH") !== vertical;
+      const c = canonical[side];
+      const sign = alongFlow
+        ? (c === "NORTH" ? 1 : -1) * (reverse ? -1 : 1)
+        : c === "EAST"
+          ? 1
+          : -1;
+      return sign * rank;
+    });
+  }
+}
+
 export function placePorts<P>(
   ports: readonly GraphPort<P>[] | undefined,
   rect: EntityRect,
@@ -6573,13 +6653,24 @@ export function placePorts<P>(
     group.push(port);
     grouped.set(side, group);
   }
+  const swept =
+    constraints === "FIXED_ORDER" || constraints === "FIXED_POS" || constraints === "FIXED_RATIO"
+      ? undefined
+      : sweptPortRanks.get(ports as readonly GraphPort<unknown>[]);
   for (const group of grouped.values()) {
-    group.sort(
-      (left, right) =>
-        Number(portSettings?.(left)?.["port.index"] ?? ports.indexOf(left)) -
-        Number(portSettings?.(right)?.["port.index"] ?? ports.indexOf(right)),
-    );
     const side = sideByPort.get(group[0]!);
+    const ranks = swept && group.map((port) => swept(port as GraphPort<unknown>, side!));
+    const ranked =
+      ranks?.every((rank) => rank !== undefined) &&
+      group.every((port) => portSettings?.(port)?.["port.index"] === undefined)
+        ? new Map(group.map((port, i) => [port, ranks[i]!]))
+        : undefined;
+    group.sort((left, right) =>
+      ranked
+        ? ranked.get(left)! - ranked.get(right)!
+        : Number(portSettings?.(left)?.["port.index"] ?? ports.indexOf(left)) -
+          Number(portSettings?.(right)?.["port.index"] ?? ports.indexOf(right)),
+    );
     if (constraints === "FIXED_ORDER" && (side === "SOUTH" || side === "WEST")) {
       group.reverse();
     }
