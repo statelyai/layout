@@ -27,7 +27,11 @@ export interface NorthSouthPortExpansion {
 }
 
 /** Detach fixed cross-axis ports into same-layer units before crossing minimization. */
-export function insertNorthSouthPortDummies(expansion: LongEdgeExpansion): NorthSouthPortExpansion {
+export function insertNorthSouthPortDummies(
+  expansion: LongEdgeExpansion,
+  /** Physical port order after ELK's model-order sort, by node id. */
+  sortedPorts?: ReadonlyMap<string, readonly string[]>,
+): NorthSouthPortExpansion {
   const { input, orientation } = expansion;
   const vertical = input.direction === "down" || input.direction === "up";
   const forward =
@@ -152,14 +156,23 @@ export function insertNorthSouthPortDummies(expansion: LongEdgeExpansion): North
   const roleOrder = (origin: CrossPortOrigin) =>
     origin.input && origin.output ? 2 : origin.input ? 0 : 1;
   const negativeFlow = input.direction === "left" || input.direction === "up";
+  // With model order, ELK reverses each side's output-only ports before
+  // creating dummies (modelOrderNorthSouthInputReversing).
+  const modelOrder = (input.settings["considerModelOrder.strategy"] ?? "NONE") !== "NONE";
   const orderedOrigins = input.graph.nodes.flatMap((node) => {
     const entries = [...origins].filter(([, origin]) => origin.node.id === node.id);
     const constraints = input.nodeSettings?.(node)?.portConstraints;
+    const sorted = sortedPorts?.get(node.id);
     const coordinate = (origin: CrossPortOrigin) => {
+      const flip = modelOrder && origin.output && !origin.input ? -1 : 1;
       if (constraints === "FIXED_POS" || constraints === "FIXED_RATIO")
-        return (vertical ? (origin.port.y ?? 0) : (origin.port.x ?? 0)) * (negativeFlow ? -1 : 1);
-      const index = node.ports?.indexOf(origin.port) ?? 0;
-      return origin.beforeOwner ? index : -index;
+        return (
+          (vertical ? (origin.port.y ?? 0) : (origin.port.x ?? 0)) * (negativeFlow ? -1 : 1) * flip
+        );
+      const index = sorted
+        ? sorted.indexOf(JSON.stringify([node.id, origin.port.name]))
+        : (node.ports?.indexOf(origin.port) ?? 0);
+      return (origin.beforeOwner ? index : -index) * flip;
     };
     return entries.sort(
       ([, a], [, b]) =>
