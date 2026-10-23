@@ -1,0 +1,400 @@
+// Throwaway: capture every ELK input the editor's layoutGraph sends for the
+// editor's machine corpora. Output: $CAPTURE_OUT (JSON).
+import fs from 'node:fs';
+import path from 'node:path';
+import { it } from 'vitest';
+import { chromium } from 'playwright';
+import ELK from '@statelyai/layout/elkjs';
+import { createMachine } from 'xstate-v5';
+import { xstateSourceToConfig } from '@statelyai/graph-tools/typescript';
+import { convertToGraph } from './convertToGraph';
+import { xstateCodeToGraph } from './conversion/xstateConverter';
+import { scxmlToGraph } from './scxmlToGraph';
+import {
+  awsStatesLanguageToGraph,
+  type AWSStateMachine,
+} from './awsStatesLanguageToGraph';
+import { stateMachineToGraph } from './stateMachineToGraph';
+import { createFlowStore } from './flowStore';
+import { graphToFlowGraph } from './graphToFlowGraph';
+import { layoutGraph } from './layout';
+import { getLayoutParentNodeIds } from './inlineStateLayout';
+import { DEFAULT_INLINE_CHILD_PADDING } from './settings';
+import { estimateEntitySizes, ESTIMATE_FONTS } from './estimateEntitySizes';
+import { parseMermaidStateDiagramToGraph } from './mermaid';
+import type { XGraph, XGraphEdge, XGraphNode } from './graphTypes';
+import { xstateV6ProjectCorpus } from './stories/examples/fixtures/xstateV6ProjectCorpus';
+import omniV6 from './stories/examples/fixtures/xstateV6AlphaOmniMachine.ts.txt?raw';
+import exprV5 from './stories/examples/fixtures/xstateV5ExpressionOmniMachine.ts.txt?raw';
+import exprV6 from './stories/examples/fixtures/xstateV6ExpressionOmniMachine.ts.txt?raw';
+import moduleScope from './stories/examples/fixtures/xstateV6ModuleScope.ts.txt?raw';
+import moduleScopeInvoke from './stories/examples/fixtures/xstateV6ModuleScopeWithInvoke.ts.txt?raw';
+import transitionScope from './stories/examples/fixtures/xstateV6TransitionScope.ts.txt?raw';
+import cseProspect from './stories/examples/fixtures/cseProspectLargeHierarchicalMachine.ts.txt?raw';
+import magscope from './stories/examples/fixtures/magscopeCoordinatorOperations.xgraph.json';
+import createCatalogTable from './stories/examples/github-routing-corpus/aws-create-catalog-table.json?raw';
+import genAiHitl from './stories/examples/github-routing-corpus/aws-genai-hitl.json?raw';
+import shipOrder from './stories/examples/github-routing-corpus/aws-ship-order.json?raw';
+import supportTicket from '../../vscode-extension/examples/json/machine.json?raw';
+import { routingCorpusFixtures } from './stories/canvas/MachineEditor.stories';
+import * as agentStories from './stories/examples/AgentExamples.stories';
+import actorDoneError from '../scripts/corpus-probes/actor-done-error.machine.ts?raw';
+import chooseActionV5 from '../scripts/corpus-probes/choose-action-v5.machine.ts?raw';
+import chooseActionDefinition from '../scripts/corpus-probes/choose-action.definition.json';
+import babyfood from './stories/fixtures/babyfood-layout.json';
+import branchSide from './stories/fixtures/branch-side-collision.xgraph.json';
+import editorModes from './stories/fixtures/editor-modes-routing.xgraph.json';
+import espressoBar from './stories/fixtures/espresso-bar.xgraph.json';
+import espressoSizes from './stories/fixtures/espresso-bar.measured-sizes.json';
+import inlineCompound from './stories/fixtures/inline-compound-digraph.json';
+import restaurantPos from './stories/fixtures/restaurant-pos-routing.xgraph.json';
+import straightLabel from './stories/fixtures/straight-label-routing.xgraph.json';
+import systemLanes from './stories/fixtures/system-routing-lanes.xgraph.json';
+import { conditionalLabelsGraph } from './stories/fixtures/conditional-labels';
+import emailDrafter from './test/fixtures/email-drafter-v1.txt?raw';
+import reciprocalLock from './test/fixtures/reciprocal-lock-transitions.xgraph.json';
+import requestWorkflow from './test/fixtures/request-workflow.xgraph.json';
+import sparseSignup from './test/fixtures/sparse-signup.xgraph.json';
+import studioConnected from './test/fixtures/studio-connected-project.mmd?raw';
+
+const scxmlSources = import.meta.glob(
+  '../node_modules/@scion-scxml/test-framework/test/**/*.scxml',
+  { query: '?raw', import: 'default', eager: true },
+) as Record<string, string>;
+const SCION_PREFIX = '@scion-scxml/test-framework/test/';
+
+type Entry = { source: string; id: string; load: () => Promise<XGraph> | XGraph };
+const v6 = (code: string) =>
+  xstateCodeToGraph(code, { profile: 'xstate-v6-alpha' });
+const json = (value: unknown) => convertToGraph(JSON.stringify(value));
+
+/** Find a `machines` prop in a story's rendered element tree. */
+function findMachines(element: unknown): Array<{ id: string; machine: unknown }> {
+  if (!element || typeof element !== 'object') return [];
+  const props = (element as { props?: Record<string, unknown> }).props;
+  if (!props) return [];
+  if (Array.isArray(props.machines)) return props.machines as never;
+  const children = Array.isArray(props.children)
+    ? props.children
+    : [props.children];
+  return children.flatMap(findMachines);
+}
+
+function entries(): Entry[] {
+  const list: Entry[] = [];
+  for (const fixture of xstateV6ProjectCorpus)
+    list.push({ source: 'xstate-v6-corpus', id: fixture.id, load: () => v6(fixture.source) });
+  list.push({ source: 'xstate-v6-corpus', id: 'omni-coverage', load: () => v6(omniV6) });
+  list.push({ source: 'expression-imports', id: 'xstate-v5-expression-omni', load: () => xstateCodeToGraph(exprV5) });
+  list.push({ source: 'expression-imports', id: 'xstate-v6-expression-omni', load: () => v6(exprV6) });
+  list.push({ source: 'expression-imports', id: 'xstate-v6-module-scope', load: () => v6(moduleScope) });
+  list.push({ source: 'expression-imports', id: 'xstate-v6-module-scope-invoke', load: () => v6(moduleScopeInvoke) });
+  list.push({ source: 'expression-imports', id: 'xstate-v6-transition-scope', load: () => v6(transitionScope) });
+  list.push({
+    source: 'large-hierarchical',
+    id: 'cse-prospect',
+    load: () =>
+      stateMachineToGraph(
+        createMachine(xstateSourceToConfig(cseProspect) as Parameters<typeof createMachine>[0]),
+      ),
+  });
+  list.push({ source: 'magscope', id: 'coordinator-operations', load: () => json(magscope) });
+  for (const [id, src] of [
+    ['aws-create-catalog-table', createCatalogTable],
+    ['aws-ship-order', shipOrder],
+    ['aws-genai-hitl', genAiHitl],
+  ] as const)
+    list.push({
+      source: 'github-routing',
+      id,
+      load: () => awsStatesLanguageToGraph(JSON.parse(src) as AWSStateMachine, id),
+    });
+  list.push({ source: 'github-routing', id: 'bug-support-ticket-label-overlap', load: () => json(JSON.parse(supportTicket)) });
+  for (const [id, machine] of Object.entries(routingCorpusFixtures))
+    list.push({
+      source: 'github-routing',
+      id,
+      load: () => convertToGraph(machine as never),
+    });
+  const agent = findMachines(
+    (agentStories.ProjectView as { render: () => unknown }).render(),
+  );
+  for (const machine of agent)
+    list.push({ source: 'agent-examples', id: machine.id, load: () => json(machine.machine) });
+  for (const [file, src] of Object.entries(scxmlSources).sort(([a], [b]) => a.localeCompare(b))) {
+    const id = file.slice(file.indexOf(SCION_PREFIX) + SCION_PREFIX.length);
+    list.push({ source: 'scion', id, load: () => scxmlToGraph(src) });
+  }
+  list.push({ source: 'corpus-probes', id: 'actor-done-error', load: () => xstateCodeToGraph(actorDoneError) });
+  list.push({ source: 'corpus-probes', id: 'choose-action-v5', load: () => xstateCodeToGraph(chooseActionV5) });
+  list.push({ source: 'corpus-probes', id: 'choose-action-definition', load: () => convertToGraph(structuredClone(chooseActionDefinition) as never) });
+  list.push({ source: 'fixtures', id: 'babyfood', load: () => json(babyfood) });
+  list.push({ source: 'fixtures', id: 'branch-side-collision', load: () => json(branchSide) });
+  list.push({ source: 'fixtures', id: 'editor-modes-routing', load: () => json(editorModes) });
+  list.push({
+    source: 'fixtures',
+    id: 'espresso-bar',
+    load: async () => {
+      const graph = await json(espressoBar);
+      for (const node of graph.nodes)
+        Object.assign(node, espressoSizes.nodes[node.id as keyof typeof espressoSizes.nodes]);
+      for (const edge of graph.edges)
+        Object.assign(edge, espressoSizes.edges[edge.id as keyof typeof espressoSizes.edges]);
+      return graph;
+    },
+  });
+  list.push({ source: 'fixtures', id: 'inline-compound-digraph', load: () => convertToGraph(structuredClone(inlineCompound) as never) });
+  list.push({ source: 'fixtures', id: 'restaurant-pos-routing', load: () => json(restaurantPos) });
+  list.push({ source: 'fixtures', id: 'straight-label-routing', load: () => json(straightLabel) });
+  list.push({ source: 'fixtures', id: 'system-routing-lanes', load: () => json(systemLanes) });
+  list.push({ source: 'fixtures', id: 'conditional-labels', load: () => conditionalLabelsGraph() });
+  list.push({ source: 'fixtures', id: 'email-drafter', load: () => v6(emailDrafter) });
+  list.push({ source: 'fixtures', id: 'reciprocal-lock-transitions', load: () => json(reciprocalLock) });
+  list.push({ source: 'fixtures', id: 'request-workflow', load: () => json(requestWorkflow) });
+  list.push({ source: 'fixtures', id: 'sparse-signup', load: () => json(sparseSignup) });
+  list.push({ source: 'fixtures', id: 'studio-connected-project', load: () => parseMermaidStateDiagramToGraph(studioConnected) });
+  return list;
+}
+
+// --- sizing -----------------------------------------------------------------
+type Measure = (text: string, font: string, letterSpacing?: number) => number;
+const hasSize = (e: { width?: number; height?: number }) =>
+  (e.width ?? 0) > 0 && (e.height ?? 0) > 0;
+const stripParams = <T extends { params?: unknown }>(effects: T[] | undefined) =>
+  (effects ?? []).map(({ params: _params, ...rest }) => rest as T);
+
+function sanitizeNode(node: XGraphNode): XGraphNode {
+  const seen = new Set<string>();
+  return {
+    ...node,
+    data: {
+      ...node.data,
+      description: undefined,
+      meta: null,
+      assets: [],
+      output: undefined,
+      invokes: [],
+      history: false,
+      type: node.data.type === 'final' ? 'final' : 'normal',
+      entry: stripParams(node.data.entry),
+      exit: stripParams(node.data.exit),
+      tags: (node.data.tags ?? [])
+        .map((tag) => ({ ...tag, name: tag.name.trim() }))
+        .filter((tag) => {
+          const key = tag.name.toLocaleLowerCase();
+          if (!tag.name || seen.has(key)) return false;
+          seen.add(key);
+          return true;
+        }),
+    },
+  } as XGraphNode;
+}
+
+function eventLabel(eventType: string): string {
+  if (!eventType) return 'always';
+  const after = /^xstate\.after\.([^.]+)/.exec(eventType);
+  if (after) return `after ${after[1]}`;
+  if (eventType.startsWith('xstate.done.')) return 'done';
+  if (eventType.startsWith('xstate.error.')) return 'error';
+  if (eventType.startsWith('xstate.')) return eventType.slice(7);
+  if (eventType === '*') return 'any event';
+  return eventType;
+}
+
+function sanitizeEdge(edge: XGraphEdge, keep: 'guard' | 'actions'): XGraphEdge {
+  const data = edge.data;
+  return {
+    ...edge,
+    data: {
+      ...data,
+      eventType: eventLabel(data.eventType ?? ''),
+      description: undefined,
+      meta: undefined,
+      matches: undefined,
+      context: undefined,
+      assets: [],
+      guard: keep === 'guard' && data.guard ? { ...data.guard, params: undefined } : undefined,
+      actions: keep === 'actions' ? stripParams(data.actions) : [],
+    },
+  } as XGraphEdge;
+}
+
+/**
+ * Text-metric sizes as the editor estimates them; entities the estimator
+ * defers to the DOM get the estimate of a sanitized copy plus fixed extras.
+ */
+function sizeGraph(graph: XGraph, measure: Measure): XGraph {
+  const out = structuredClone(graph);
+  const parents = new Set(out.nodes.map((node) => node.parentId));
+  const one = (g: XGraph, id: string) => estimateEntitySizes(g, new Set([id]), measure)?.[0]?.size;
+  for (const node of out.nodes) {
+    if (hasSize(node)) continue;
+    let size = one(out, node.id);
+    if (!size) {
+      const clean = sanitizeNode(node);
+      size = one({ ...out, nodes: [clean], edges: [] }, node.id);
+      if (size) {
+        const invokes = node.data.invokes?.length ?? 0;
+        size = {
+          width: Math.max(size.width, invokes ? 200 : 0, parents.has(node.id) ? 240 : 0),
+          height:
+            size.height +
+            (node.data.description ? 40 : 0) +
+            (invokes ? 40 + 26 * invokes : 0) +
+            (parents.has(node.id) ? 80 : 0),
+        };
+      }
+    }
+    if (size) Object.assign(node, size);
+  }
+  for (const edge of out.edges) {
+    if (hasSize(edge)) continue;
+    let size = one(out, edge.id);
+    if (!size) {
+      const g = sanitizeEdge(edge, 'guard');
+      const a = sanitizeEdge(edge, 'actions');
+      const gs = one({ ...out, edges: [g] }, edge.id);
+      const as = one({ ...out, edges: [a] }, edge.id);
+      if (gs && as)
+        size = edge.data.guard && edge.data.actions?.length
+          ? { width: Math.max(gs.width, as.width), height: gs.height + as.height - 40 }
+          : edge.data.guard
+            ? gs
+            : as;
+    }
+    if (size) Object.assign(edge, size);
+  }
+  return out;
+}
+
+async function browserMeasure(texts: Set<string>): Promise<Map<string, number>> {
+  const fontFile = path.resolve(
+    'node_modules/@fontsource-variable/inter/files/inter-latin-wght-normal.woff2',
+  );
+  const browser = await chromium.launch();
+  try {
+    const page = await browser.newPage();
+    await page.setContent('<html><body></body></html>');
+    const base64 = fs.readFileSync(fontFile).toString('base64');
+    const keys = [...texts];
+    const widths = await page.evaluate(
+      async ({ base64, keys }) => {
+        const face = new FontFace('Inter Variable', `url(data:font/woff2;base64,${base64})`, {
+          weight: '100 900',
+        });
+        await face.load();
+        document.fonts.add(face);
+        const context = document.createElement('canvas').getContext('2d')!;
+        return keys.map((key) => {
+          const [text, font, spacing] = JSON.parse(key) as [string, string, number];
+          context.font = font;
+          context.letterSpacing = `${spacing}px`;
+          return Math.ceil(context.measureText(text).width * 64 - 1e-6) / 64;
+        });
+      },
+      { base64, keys },
+    );
+    return new Map(keys.map((key, i) => [key, widths[i]!]));
+  } finally {
+    await browser.close();
+  }
+}
+
+it('captures editor ELK inputs', { timeout: 3_600_000 }, async () => {
+  const out = process.env.CAPTURE_OUT;
+  if (!out) throw new Error('Set CAPTURE_OUT');
+  void ESTIMATE_FONTS;
+  const machines: Array<{ source: string; id: string; graph: XGraph }> = [];
+  const failures: Array<{ source: string; id: string; error: string }> = [];
+  for (const entry of entries()) {
+    try {
+      const graph = await entry.load();
+      const normalized = createFlowStore(graph, { initialParentNodeId: null, mode: 'editing' })
+        .getSnapshot().context.graph;
+      machines.push({ source: entry.source, id: entry.id, graph: normalized });
+    } catch (error) {
+      failures.push({ source: entry.source, id: entry.id, error: String(error).slice(0, 300) });
+    }
+  }
+  const texts = new Set<string>();
+  const record: Measure = (text, font, spacing = 0) => {
+    texts.add(JSON.stringify([text, font, spacing]));
+    return 10;
+  };
+  for (const machine of machines) sizeGraph(machine.graph, record);
+  const widths = await browserMeasure(texts);
+  const measure: Measure = (text, font, spacing = 0) =>
+    widths.get(JSON.stringify([text, font, spacing]))!;
+  for (const machine of machines) machine.graph = sizeGraph(machine.graph, measure);
+
+  const calls: Array<Record<string, unknown>> = [];
+  let tag: Record<string, unknown> = {};
+  let callIndex = 0;
+  const original = ELK.prototype.layout;
+  ELK.prototype.layout = function (graph: unknown, args?: unknown) {
+    calls.push({
+      ...tag,
+      call: callIndex++,
+      graph: structuredClone(graph),
+      ...(args === undefined ? {} : { args: structuredClone(args) }),
+    });
+    return original.call(this, graph as never, args as never);
+  } as typeof original;
+  const layoutErrors: Array<Record<string, unknown>> = [];
+  const summary: Array<Record<string, unknown>> = [];
+  try {
+    for (const machine of machines) {
+      callIndex = 0;
+      const before = calls.length;
+      const scopes = [...getLayoutParentNodeIds(machine.graph)];
+      for (const direction of ['DEFAULT', 'DOWN', 'RIGHT', 'UP', 'LEFT'] as const)
+        for (const parentNodeId of scopes) {
+          tag = { source: machine.source, machine: machine.id, direction, scope: parentNodeId };
+          try {
+            const flowGraph = graphToFlowGraph(machine.graph, {
+              parentNodeId,
+              depth: 1,
+              inlineChildPadding: DEFAULT_INLINE_CHILD_PADDING,
+            });
+            await layoutGraph(
+              machine.graph,
+              flowGraph,
+              parentNodeId,
+              direction === 'DEFAULT' ? {} : { 'elk.direction': direction },
+            );
+          } catch (error) {
+            layoutErrors.push({ ...tag, error: String(error).slice(0, 300) });
+          }
+        }
+      summary.push({
+        source: machine.source,
+        id: machine.id,
+        nodes: machine.graph.nodes.length,
+        edges: machine.graph.edges.length,
+        scopes: scopes.length,
+        calls: calls.length - before,
+      });
+    }
+  } finally {
+    ELK.prototype.layout = original;
+  }
+  fs.writeFileSync(
+    out,
+    JSON.stringify({
+      capturedAt: new Date().toISOString(),
+      layoutPackage: '@statelyai/layout@0.4.3',
+      machines: summary,
+      conversionFailures: failures,
+      layoutErrors,
+      calls,
+    }),
+  );
+  console.log(
+    JSON.stringify({
+      machines: machines.length,
+      failures: failures.length,
+      calls: calls.length,
+      layoutErrors: layoutErrors.length,
+    }),
+  );
+});
