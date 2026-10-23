@@ -1,5 +1,22 @@
 # @statelyai/layout
 
+## 0.5.0
+
+### Minor Changes
+
+- 1a712a4: Add composable routing policies and smooth, diagram, and authored presets. Configure Bézier or centripetal Catmull–Rom curves, rounded orthogonal routes, independent terminal tangents, passive arc-length labels, fixed label passages, node and label avoidance, final-geometry crossing costs, monotonicity, and incremental route stability through the existing routing strategies.
+  
+  Fit obstacle-avoiding Bézier policies through compact visibility guides instead of retaining unnecessary orthogonal search detours. Preserve authored anchors, final clearance checks, and crossing costs.
+  
+  Improve inferred curve joins, automatic attachments, rounded terminal room, same-face loops, independent gap-label normals, duplicate grouped branches, and organic shoulder smoothing while preserving authored waypoints. Add React stories covering every strategy and policy with matched comparisons and incremental controls. Partial and route-only authoring prefer 8px obstacle clearance and outward terminal leads, reducing those preferences when required geometry leaves less room.
+- 817bd9c: Extend bezierRouting.route/update with center-tangent curve fitting, floating and orthogonal attachments, explicit fixed ports, obstacle modes and label-source chains. Route complete chains with shared side reservations and invalidate their dependencies when labels move.
+
+### Patch Changes
+
+- 142d7de: Fix two statechart routing defects: antiparallel labeled pairs in UP and LEFT layouts no longer bend the forward edge into a diagonal through the other label, and labeled feedback edges no longer retrace their label's layer. If a pair or feedback chain still comes out diagonal, the layout is retried with its former routing, and the retry is kept only when it has fewer diagonals overall.
+- 04a2e0d: Keep statechart nodes, routes and labels from overlapping: connected-component compaction now measures every route, label and port in the mirrored UP/LEFT frame, parallel labeled edges only realign an isolated node pair, and feedback chains fall back to a fresh outer track instead of detouring through the layer.
+- 7a12d21: Place movable ports in the order crossing minimization chose for them, as ELK does, instead of their authored order, which crossed and overlapped transitions on fixed-side and free-port states. With model order, order north/south port dummies from the sorted port list and keep separate-layer nodes in place during forced model-order sorting, as ELK does. Parallel labeled transitions no longer move their states onto others in the same layer.
+
 ## 0.4.3
 
 ### Patch Changes
