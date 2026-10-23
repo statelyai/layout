@@ -121,7 +121,7 @@ function entries(): Entry[] {
   );
   for (const machine of agent)
     list.push({ source: 'agent-examples', id: machine.id, load: () => json(machine.machine) });
-  for (const [file, src] of Object.entries(scxmlSources).sort(([a], [b]) => a.localeCompare(b))) {
+  for (const [file, src] of Object.entries(scxmlSources).sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0))) {
     const id = file.slice(file.indexOf(SCION_PREFIX) + SCION_PREFIX.length);
     list.push({ source: 'scion', id, load: () => scxmlToGraph(src) });
   }
@@ -316,6 +316,8 @@ it('captures editor ELK inputs', { timeout: 3_600_000 }, async () => {
       failures.push({ source: entry.source, id: entry.id, error: String(error).slice(0, 300) });
     }
   }
+  // A machine that fails to convert would silently drop out of the corpus.
+  if (failures.length > 0) throw new Error(`Conversion failures: ${JSON.stringify(failures)}`);
   const texts = new Set<string>();
   const record: Measure = (text, font, spacing = 0) => {
     texts.add(JSON.stringify([text, font, spacing]));

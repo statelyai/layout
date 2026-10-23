@@ -85,7 +85,12 @@ const oracle = new OracleELK();
 for (const [half, entries] of Object.entries(halves)) {
   const rows = [];
   for (const [seed, entry] of entries.entries()) {
-    const owner = [...entry.uses].sort((a, b) => machineKey(a).localeCompare(machineKey(b)))[0]!;
+    // The same code-unit order that chose the half, so the row names that machine.
+    const owner = [...entry.uses].sort((a, b) => {
+      const left = machineKey(a),
+        right = machineKey(b);
+      return left < right ? -1 : left > right ? 1 : 0;
+    })[0]!;
     let elk: { graph: ElkNode } | { error: string };
     try {
       elk = {

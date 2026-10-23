@@ -65,6 +65,7 @@ pnpm exec tsx scripts/parity/generate-statechart-corpus.ts docs/heuristics/quali
 
 ```sh
 pnpm exec tsx scripts/parity/quality-gate.ts corpus.json docs/heuristics/quality-statecharts/corpus.json.gz --jobs 8
+pnpm exec tsx scripts/parity/quality-gate.ts holdout.json docs/heuristics/quality-statecharts/holdout.json.gz --jobs 8
 ```
 
 |                                    | Corpus            | Holdout           |
