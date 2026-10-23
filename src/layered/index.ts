@@ -1199,53 +1199,101 @@ function runSeparatedComponents<N, E, G, P>(
           bottom: options.padding?.bottom ?? 12,
           left: options.padding?.left ?? 12,
         };
+  // Components are packed in reading order, row by row. For UP and LEFT layouts
+  // the packing is mirrored along the flow so later components follow the first
+  // one's flow instead of preceding it (e.g. an isolated state below an UP
+  // statechart's start): LEFT mirrors each row, UP mirrors the stack of rows.
+  // Compaction measures every shape in that mirrored frame.
+  const direction = options.direction ?? graph.direction ?? "right";
+  type Rect = { x: number; y: number; width: number; height: number };
+  // Everything a component draws, so compaction keeps other components off its
+  // routes and labels as well as its nodes.
+  const drawnRects = (result: VisualGraph<N, E, G, P>): Rect[] => {
+    const rects: Rect[] = [];
+    for (const node of result.nodes) {
+      const x = node.x ?? 0,
+        y = node.y ?? 0;
+      rects.push({ x, y, width: node.width ?? 0, height: node.height ?? 0 });
+      for (const port of node.ports ?? [])
+        rects.push({
+          x: x + (port.x ?? 0),
+          y: y + (port.y ?? 0),
+          width: port.width ?? 0,
+          height: port.height ?? 0,
+        });
+    }
+    for (const edge of result.edges) {
+      const points = edge.points ?? [];
+      for (let index = 1; index < points.length; index++) {
+        const from = points[index - 1]!,
+          to = points[index]!;
+        const x = Math.min(from.x, to.x),
+          y = Math.min(from.y, to.y);
+        rects.push({ x, y, width: Math.max(from.x, to.x) - x, height: Math.max(from.y, to.y) - y });
+      }
+      if ((edge.width ?? 0) > 0 || (edge.height ?? 0) > 0)
+        rects.push({
+          x: edge.x ?? 0,
+          y: edge.y ?? 0,
+          width: edge.width ?? 0,
+          height: edge.height ?? 0,
+        });
+    }
+    return rects;
+  };
+  const rows: Array<Array<{ component: (typeof components)[number]; x: number }>> = [];
   let x = 0;
+  for (const component of components) {
+    if (x > 0 && x + component.bounds.width > maxRowWidth) x = 0;
+    if (x === 0) rows.push([]);
+    rows.at(-1)!.push({ component, x });
+    x += component.bounds.width + componentSpacing;
+  }
   let y = 0;
-  let rowHeight = 0;
   const compactConnectedComponents = options.settings?.["compaction.connectedComponents"] === true;
   const placedShapes: Array<{ left: number; right: number; top: number; bottom: number }> = [];
   const nodeResults = new Map<string, VisualNode<N, P>>();
   const edgeResults = new Map<string, (typeof components)[number]["result"]["edges"][number]>();
   const placements: Array<{ component: (typeof components)[number]; x: number; y: number }> = [];
-  for (const component of components) {
-    if (x > 0 && x + component.bounds.width > maxRowWidth) {
-      x = 0;
-      y += rowHeight + componentSpacing;
-      rowHeight = 0;
-    }
-    let compactedY = y;
-    if (compactConnectedComponents && y > 0) {
-      let requiredY = 0;
-      for (const node of component.result.nodes) {
-        const localLeft = x + (node.x ?? 0) - component.bounds.left;
-        const localRight = localLeft + (node.width ?? 0);
-        const localTop = (node.y ?? 0) - component.bounds.top;
-        for (const placed of placedShapes) {
-          if (localRight <= placed.left || localLeft >= placed.right) continue;
-          requiredY = Math.max(requiredY, placed.bottom + componentSpacing - localTop);
-        }
+  for (const row of rows) {
+    const rowWidth = Math.max(...row.map((entry) => entry.x + entry.component.bounds.width));
+    let rowHeight = 0;
+    for (const { component, x: packedX } of row) {
+      const { bounds } = component;
+      const left = direction === "left" ? rowWidth - packedX - bounds.width : packedX;
+      const shapes = drawnRects(component.result).map((rect) => ({
+        left: left + rect.x - bounds.left,
+        top:
+          direction === "up"
+            ? bounds.top + bounds.height - rect.y - rect.height
+            : rect.y - bounds.top,
+        width: rect.width,
+        height: rect.height,
+      }));
+      let compactedY = y;
+      if (compactConnectedComponents && y > 0) {
+        let requiredY = 0;
+        for (const shape of shapes)
+          for (const placed of placedShapes) {
+            if (shape.left + shape.width <= placed.left || shape.left >= placed.right) continue;
+            requiredY = Math.max(requiredY, placed.bottom + componentSpacing - shape.top);
+          }
+        compactedY = Math.min(y, requiredY);
       }
-      compactedY = Math.min(y, requiredY);
+      for (const shape of shapes)
+        placedShapes.push({
+          left: shape.left,
+          right: shape.left + shape.width,
+          top: compactedY + shape.top,
+          bottom: compactedY + shape.top + shape.height,
+        });
+      placements.push({ component, x: left, y: compactedY });
+      rowHeight = Math.max(rowHeight, bounds.height);
     }
-    for (const node of component.result.nodes)
-      placedShapes.push({
-        left: x + (node.x ?? 0) - component.bounds.left,
-        right: x + (node.x ?? 0) - component.bounds.left + (node.width ?? 0),
-        top: compactedY + (node.y ?? 0) - component.bounds.top,
-        bottom: compactedY + (node.y ?? 0) - component.bounds.top + (node.height ?? 0),
-      });
-    placements.push({ component, x, y: compactedY });
-    x += component.bounds.width + componentSpacing;
-    rowHeight = Math.max(rowHeight, component.bounds.height);
+    y += rowHeight + componentSpacing;
   }
-  // Components are packed in reading order. For UP and LEFT layouts, mirror the
-  // packing along the flow so later components follow the first one's flow
-  // instead of preceding it (e.g. an isolated state below an UP statechart's start).
-  const direction = options.direction ?? graph.direction ?? "right";
-  const packedWidth = Math.max(0, ...placements.map((p) => p.x + p.component.bounds.width));
   const packedHeight = Math.max(0, ...placements.map((p) => p.y + p.component.bounds.height));
-  for (const { component, x: packedX, y: packedY } of placements) {
-    const left = direction === "left" ? packedWidth - packedX - component.bounds.width : packedX;
+  for (const { component, x: left, y: packedY } of placements) {
     const top = direction === "up" ? packedHeight - packedY - component.bounds.height : packedY;
     const dx = padding.left + left - component.bounds.left;
     const dy = padding.top + top - component.bounds.top;
@@ -2554,6 +2602,7 @@ export function* createLayeredScopePipeline<N, E, G, P>(
       routes.pointsByEdgeId as Map<string, readonly Point[]>,
       placement.rectByNodeId as Map<string, EntityRect>,
       horizontal,
+      Number(options.settings?.["spacing.edgeEdge"] ?? 10),
     );
   }
   if (options.settings?.["layering.nodePromotion.strategy"] === "MODEL_ORDER_LEFT_TO_RIGHT") {
@@ -2667,8 +2716,21 @@ export function* createLayeredScopePipeline<N, E, G, P>(
     };
   }
 
+  // Stacking the pair's labels from the padding and aligning both endpoints
+  // moves the nodes without regard for their layer neighbors, so it only
+  // applies when the two nodes connect to nothing else.
+  const connectsOnlyTo = (nodeId: string, otherId: string) =>
+    graph.edges.every(
+      (edge) =>
+        edge.sourceId === edge.targetId ||
+        (edge.sourceId !== nodeId && edge.targetId !== nodeId) ||
+        edge.sourceId === otherId ||
+        edge.targetId === otherId,
+    );
   for (const pair of labeledEdgesByPair.values()) {
     if (pair.length < 2) continue;
+    const { sourceId, targetId } = pair[0]!;
+    if (!connectsOnlyTo(sourceId, targetId) || !connectsOnlyTo(targetId, sourceId)) continue;
     const sourceRect = mutableRects.get(pair[0]!.sourceId);
     const targetRect = mutableRects.get(pair[0]!.targetId);
     if (!sourceRect || !targetRect) continue;
