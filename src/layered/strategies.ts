@@ -19,6 +19,8 @@ import { routingCoordinates } from "./routing-coordinates";
 import {
   hasMovableLoopPorts,
   hasPlacementLoopEnvelope,
+  movableLoopPortOffset,
+  movableLoopTrack,
   loopEnvelopes,
   preparedLoopEnvelopes,
 } from "./loop-envelopes";
@@ -4337,16 +4339,14 @@ function routeEdges(style: "ORTHOGONAL" | "POLYLINE" | "SPLINES"): EdgeRouter {
       edge: GraphEdge,
       side: string,
       ordering: string,
-      canonical = false,
     ): number => {
-      const crossSide = side === "NORTH" || side === "SOUTH";
-      const axis = crossSide === (!canonical || horizontal) ? "height" : "width";
+      const axis = side === "NORTH" || side === "SOUTH" ? "height" : "width";
       const ordered = ordering === "REVERSE_STACKED" ? [...loops].reverse() : loops;
       const index = ordered.indexOf(edge);
       const spacing = Number(input.settings["spacing.nodeSelfLoop"] ?? 10);
       const labelSpacing = Number(input.settings["spacing.edgeLabel"] ?? 2);
       const size = (candidate: GraphEdge) =>
-        canonical || input.edgeSettings?.(candidate)?.["edgeLabels.inline"] === true
+        input.edgeSettings?.(candidate)?.["edgeLabels.inline"] === true
           ? (candidate[axis] ?? 0)
           : 0;
       return (
@@ -4442,7 +4442,7 @@ function routeEdges(style: "ORTHOGONAL" | "POLYLINE" | "SPLINES"): EdgeRouter {
         for (const [id, loops] of selfLoopsByNodeId) {
           const rect = mutableRects.get(id);
           const node = nodeById.get(id);
-          if (!rect || !node) continue;
+          if (!rect || !node || hasPlacementLoopEnvelope(placement, id)) continue;
           const settings = input.nodeSettings?.(node);
           const distribution = settings?.["edgeRouting.selfLoopDistribution"] ?? "NORTH";
           const ordering = settings?.["edgeRouting.selfLoopOrdering"] ?? "STACKED";
@@ -6146,9 +6146,7 @@ function routeEdges(style: "ORTHOGONAL" | "POLYLINE" | "SPLINES"): EdgeRouter {
             continue;
           }
           const movable =
-            hasMovableLoopPorts(input, edge) &&
-            hasPlacementLoopEnvelope(placement, source.id) &&
-            input.edgeSettings?.(edge)?.["edgeLabels.inline"] !== true;
+            hasMovableLoopPorts(input, edge) && hasPlacementLoopEnvelope(placement, source.id);
           // Route unconstrained loops in the canonical rightward system, then
           // apply the same direction transform as the layer pipeline.
           const loopRect = movable
@@ -6200,7 +6198,21 @@ function routeEdges(style: "ORTHOGONAL" | "POLYLINE" | "SPLINES"): EdgeRouter {
             const sideLoops = loops.filter(
               (candidate, i) => loopSide(distribution, i, candidate) === side,
             );
-            const distance = loopDistance(sideLoops, edge, side, ordering, movable);
+            if (movable) {
+              const track = movableLoopTrack(input, sideLoops, edge, side, ordering);
+              const sign = side === "NORTH" ? -1 : 1;
+              const base = side === "NORTH" ? 0 : loopRect.height;
+              const [first, last] = [startRatio, endRatio].map((ratio) =>
+                movableLoopPortOffset(input, sideLoops, side, loopRect.width, ratio),
+              );
+              return [
+                { x: first!.along, y: base + sign * first!.normal },
+                { x: first!.along, y: base + sign * track },
+                { x: last!.along, y: base + sign * track },
+                { x: last!.along, y: base + sign * last!.normal },
+              ];
+            }
+            const distance = loopDistance(sideLoops, edge, side, ordering);
             const y =
               side === "NORTH" ? loopRect.y - distance : loopRect.y + loopRect.height + distance;
             const start = {
@@ -6224,15 +6236,26 @@ function routeEdges(style: "ORTHOGONAL" | "POLYLINE" | "SPLINES"): EdgeRouter {
             const secondRatio = sequenced ? 1 / denominator : 2 / denominator;
             const startRatio = side === "EAST" ? firstRatio : secondRatio;
             const endRatio = side === "EAST" ? secondRatio : firstRatio;
+            const sideLoops = loops.filter(
+              (candidate, i) => loopSide(distribution, i, candidate) === side,
+            );
+            if (movable) {
+              const track = movableLoopTrack(input, sideLoops, edge, side, ordering);
+              const sign = side === "WEST" ? -1 : 1;
+              const base = side === "WEST" ? 0 : loopRect.width;
+              const [first, last] = [startRatio, endRatio].map((ratio) =>
+                movableLoopPortOffset(input, sideLoops, side, loopRect.height, ratio),
+              );
+              return [
+                { x: base + sign * first!.normal, y: first!.along },
+                { x: base + sign * track, y: first!.along },
+                { x: base + sign * track, y: last!.along },
+                { x: base + sign * last!.normal, y: last!.along },
+              ];
+            }
             const distance =
-              movable || input.edgeSettings?.(edge)?.["edgeLabels.inline"] === true
-                ? loopDistance(
-                    loops.filter((candidate, i) => loopSide(distribution, i, candidate) === side),
-                    edge,
-                    side,
-                    ordering,
-                    movable,
-                  )
+              input.edgeSettings?.(edge)?.["edgeLabels.inline"] === true
+                ? loopDistance(sideLoops, edge, side, ordering)
                 : spacing * (indexOnSide + 1);
             const x =
               side === "EAST" ? loopRect.x + loopRect.width + distance : loopRect.x - distance;
