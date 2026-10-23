@@ -72,6 +72,24 @@ const modelSweepInputs = new WeakSet<LayeredPhaseInput>();
 
 const nodeRelativePortRanksByInput = new WeakMap<LayeredPhaseInput, boolean>();
 
+const labelPortSideFeedbackByInput = new WeakMap<
+  LayeredPhaseInput,
+  { exempt: ReadonlySet<string>; routed: Set<string> }
+>();
+
+/**
+ * @internal Collect the feedback segments routed to a center-label dummy's port
+ * sides. Exempt segments keep the plain feedback detour instead.
+ */
+export function trackLabelPortSideFeedback(
+  input: LayeredPhaseInput,
+  exempt: ReadonlySet<string>,
+): ReadonlySet<string> {
+  const routed = new Set<string>();
+  labelPortSideFeedbackByInput.set(input, { exempt, routed });
+  return routed;
+}
+
 function getOrientedEndpoints(
   edge: GraphEdge,
   orientation: AcyclicOrientation,
@@ -5874,10 +5892,15 @@ function routeEdges(style: "ORTHOGONAL" | "POLYLINE" | "SPLINES"): EdgeRouter {
             up: ["NORTH", "SOUTH"],
           } as const
         )[input.direction];
+        const labelPortSides = labelPortSideFeedbackByInput.get(input);
         const faces = (node: GraphNode, side: unknown, away: string) =>
-          !fixedSideFeedback && node.id.startsWith("__layout_dummy:label:") && side === away;
+          !fixedSideFeedback &&
+          !labelPortSides?.exempt.has(edge.id) &&
+          node.id.startsWith("__layout_dummy:label:") &&
+          side === away;
         const sourceFace = faces(source, feedbackSourcePortSide, backwardSide) ? -1 : 1;
         const targetFace = faces(target, feedbackTargetPortSide, forwardSide) ? -1 : 1;
+        if (sourceFace < 0 || targetFace < 0) labelPortSides?.routed.add(edge.id);
         if (horizontal) {
           const sign = fixedSideFeedback
             ? Math.sign(sourceRect.x - targetRect.x) || 1

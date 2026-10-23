@@ -40,3 +40,35 @@ it.each([1088, 1089, 1090, 1091])(
     expect(hard(score(await new NativeELK().layout(structuredClone(input)), input))).toEqual(clean);
   },
 );
+
+// Flow order can bend an antiparallel pair diagonally: aligning the forward
+// edge's ports shifts the two nodes by different amounts, and the reversed
+// edge's halves no longer meet at its label dummy. Diagonals are never valid
+// orthogonal routes, so such a pair keeps coordinate order. Each case adds the
+// reverse of one corpus transition, with a wider label, in an UP layout.
+it.each([
+  [392, "scxml-transition:b11:0:0:t"],
+  [672, "scxml-transition:s0:0:0:foo"],
+  [285, "scxml-transition:hp:0:0:"],
+])("keeps flow-ordered antiparallel pairs orthogonal (row %i)", async (index, edgeId) => {
+  const input = structuredClone(rows[index]!.input);
+  const nodes = [input, ...(input.children ?? [])];
+  const edge = input.edges!.find((candidate) => candidate.id === edgeId)!;
+  const owner = (portId: string) => nodes.find((node) => node.ports?.some((p) => p.id === portId))!;
+  const port = (portId: string) => owner(portId).ports!.find((p) => p.id === portId)!;
+  owner(edge.targets[0]!).ports!.push({ ...port(edge.sources[0]!), id: `${edgeId}-rev__src` });
+  owner(edge.sources[0]!).ports!.push({ ...port(edge.targets[0]!), id: `${edgeId}-rev__tgt` });
+  input.edges!.push({
+    id: `${edgeId}-rev`,
+    sources: [`${edgeId}-rev__src`],
+    targets: [`${edgeId}-rev__tgt`],
+    labels: edge.labels!.map((label) => ({
+      ...label,
+      id: `${label.id}-rev`,
+      width: label.width! * 2.2,
+    })),
+  });
+  input.layoutOptions = { ...input.layoutOptions, "elk.direction": "UP" };
+  const metrics = score(await new NativeELK().layout(structuredClone(input)), input);
+  expect(metrics.diagonals).toBe(0);
+});
