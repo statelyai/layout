@@ -83,6 +83,7 @@ import {
   placeNodesInteractively,
   placePorts,
   recordSweptPortOrder,
+  trackLabelPortSideFeedback,
   routeEdgesOrthogonally,
   routeEdgesWithPolylines,
   routeEdgesWithSplines,
@@ -1373,7 +1374,10 @@ export function* createLayeredScopePipeline<N, E, G, P>(
   graph: Graph<N, E, G, P> | VisualGraph<N, E, G, P>,
   options: LayeredLayoutOptions,
   context?: LayoutExecutionContext,
+  /** Pairs and segments that keep their former routing because the new one bent them diagonally. */
+  fallbacks: OrthogonalFallbacks = { antiparallelPairs: new Set(), feedbackSegments: new Set() },
 ): Generator<LayeredCrossingPhase, VisualGraph<N, E, G, P>, LayerOrder> {
+  const scopeOptions = options;
   if ((options.settings?.["spacing.edgeEdge"] ?? 10) < 2) {
     options = { ...options, settings: { ...options.settings, "spacing.edgeEdge": 2 } };
   }
@@ -1838,6 +1842,7 @@ export function* createLayeredScopePipeline<N, E, G, P>(
     minimize: minimizeScope,
     finishOrder: finishCrossingOrder,
   };
+  const crossingOrder = order;
   recordSweptPortOrder(graph, direction, order);
   traceLayeredPhase(() => ({
     kind: "crossing-order",
@@ -2204,6 +2209,10 @@ export function* createLayeredScopePipeline<N, E, G, P>(
   // rather than moving or orthogonalizing its routes afterwards.
   if (options.strategies?.routeEdges)
     measure("post-compaction", () => applyPostCompaction(expanded.input, placement));
+  const labelPortSideSegments = trackLabelPortSideFeedback(
+    expanded.input,
+    fallbacks.feedbackSegments,
+  );
   let expandedRoutes = measure("edge-routing", () =>
     edgeRouter(expanded.input, expanded.orientation, placement),
   );
@@ -2268,6 +2277,7 @@ export function* createLayeredScopePipeline<N, E, G, P>(
   const outerAntiparallelLabelIds = new Set<string>();
   const parallelLabelPositions = new Map<string, Point>();
   const postCompactionNodeCrossDeltas = new Map<string, number>();
+  const flowOrderedPairs = new Map<string, readonly [string, string]>();
   const horizontalAntiparallelFlow = direction === "left" || direction === "right";
   const usesVizInteractivePlacementProfile =
     options.strategies?.routeEdges === undefined &&
@@ -2363,6 +2373,7 @@ export function* createLayeredScopePipeline<N, E, G, P>(
     const horizontal = horizontalAntiparallelFlow;
     const nodesById = new Map(graph.nodes.map((node) => [node.id, node]));
     const pairEdges = new Map<string, GraphEdge[]>();
+    const flowOrder = direction === "left" || direction === "up";
     for (const edge of graph.edges) {
       if (edge.sourceId === edge.targetId || (edge.width ?? 0) <= 0 || (edge.height ?? 0) <= 0) {
         continue;
@@ -2372,7 +2383,7 @@ export function* createLayeredScopePipeline<N, E, G, P>(
       pair.push(edge);
       pairEdges.set(key, pair);
     }
-    for (const pair of pairEdges.values()) {
+    for (const [pairKey, pair] of pairEdges) {
       if (
         pair.length !== 2 ||
         pair[0]!.sourceId !== pair[1]!.targetId ||
@@ -2413,9 +2424,13 @@ export function* createLayeredScopePipeline<N, E, G, P>(
       const hasFlexiblePairPorts = hasFlexiblePorts(firstNode) && hasFlexiblePorts(secondNode);
       if (isolatedAntiparallelPair && !hasFlexiblePairPorts) continue;
 
-      const firstBeforeSecond = horizontal
-        ? firstRect.x + firstRect.width / 2 < secondRect.x + secondRect.width / 2
-        : firstRect.y + firstRect.height / 2 < secondRect.y + secondRect.height / 2;
+      // "Before" is in flow order: UP and LEFT layouts flow toward smaller coordinates.
+      const pairFlowOrder = flowOrder && !fallbacks.antiparallelPairs.has(pairKey);
+      const firstBeforeSecond =
+        (horizontal
+          ? firstRect.x + firstRect.width / 2 < secondRect.x + secondRect.width / 2
+          : firstRect.y + firstRect.height / 2 < secondRect.y + secondRect.height / 2) !==
+        pairFlowOrder;
       const beforeRect = firstBeforeSecond ? firstRect : secondRect;
       const afterRect = firstBeforeSecond ? secondRect : firstRect;
       const forward = pair.find((edge) =>
@@ -2424,6 +2439,7 @@ export function* createLayeredScopePipeline<N, E, G, P>(
           : edge.sourceId === pair[0]!.targetId,
       );
       if (!forward?.sourcePort || !forward.targetPort) continue;
+      if (pairFlowOrder) flowOrderedPairs.set(pairKey, [firstNode.id, secondNode.id]);
 
       let cross = Math.min(
         horizontal ? firstRect.y : firstRect.x,
@@ -3313,6 +3329,41 @@ export function* createLayeredScopePipeline<N, E, G, P>(
     });
   }
 
+  // Diagonals are never valid orthogonal routes. A flow-ordered antiparallel
+  // pair or a label-port-side feedback chain that came out diagonal falls back
+  // to its former routing when that has fewer diagonals.
+  if (edgeRouting === "ORTHOGONAL") {
+    const diagonalEdges = edges.filter((edge) => countDiagonals(edge.points) > 0);
+    const antiparallelPairs = [...flowOrderedPairs].flatMap(([key, nodeIds]) =>
+      diagonalEdges.some(
+        (edge) => nodeIds.includes(edge.sourceId) || nodeIds.includes(edge.targetId),
+      )
+        ? [key]
+        : [],
+    );
+    const feedbackSegments = diagonalEdges.flatMap((edge) => {
+      const segments = expanded.segmentIdsByEdgeId.get(edge.id) ?? [edge.id];
+      return segments.some((id) => labelPortSideSegments.has(id)) ? segments : [];
+    });
+    if (antiparallelPairs.length > 0 || feedbackSegments.length > 0) {
+      const retry = createLayeredScopePipeline(
+        graph,
+        scopeOptions,
+        context && { ...context, diagnostics: [] },
+        {
+          antiparallelPairs: new Set([...fallbacks.antiparallelPairs, ...antiparallelPairs]),
+          feedbackSegments: new Set([...fallbacks.feedbackSegments, ...feedbackSegments]),
+        },
+      );
+      const prepared = retry.next();
+      const resumed = prepared.done ? prepared : retry.next(crossingOrder);
+      if (!resumed.done) throw new Error("Layered scope yielded more than one crossing phase");
+      const diagonals = (routed: readonly { points?: readonly Point[] }[]) =>
+        routed.reduce((sum, edge) => sum + countDiagonals(edge.points), 0);
+      if (diagonals(resumed.value.edges) < diagonals(edges)) return resumed.value;
+    }
+  }
+
   return setElkjs0111ResultPolicy(
     { ...graph, direction, nodes, edges },
     {
@@ -3323,6 +3374,23 @@ export function* createLayeredScopePipeline<N, E, G, P>(
       junctionPointsByEdgeId: routes.junctionPointsByEdgeId,
     },
   );
+}
+
+interface OrthogonalFallbacks {
+  /** Antiparallel pair keys that keep coordinate order instead of flow order. */
+  antiparallelPairs: ReadonlySet<string>;
+  /** Feedback segments that keep the plain detour instead of label-dummy port sides. */
+  feedbackSegments: ReadonlySet<string>;
+}
+
+function countDiagonals(points: readonly Point[] | undefined): number {
+  let count = 0;
+  for (let index = 1; index < (points?.length ?? 0); index++) {
+    const a = points![index - 1]!;
+    const b = points![index]!;
+    if (Math.abs(a.x - b.x) > 1e-6 && Math.abs(a.y - b.y) > 1e-6) count++;
+  }
+  return count;
 }
 
 /**
