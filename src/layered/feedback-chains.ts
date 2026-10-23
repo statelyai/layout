@@ -31,13 +31,15 @@ function opposed(a: readonly Point[], b: readonly Point[]): boolean {
  * A reversed feedback edge split by label or inverted-port dummies is routed
  * one segment at a time, so each segment detours to the outer feedback track
  * and back to the next dummy. Rejoin the chain as one track: the label's own
- * track, or the outer track with the label moved onto it, whichever is clear.
+ * track, or the outer track with the label moved onto it, whichever is clear;
+ * failing both, a fresh track past everything else with the label on it.
  */
 export function straightenFeedbackChains(
   chains: readonly FeedbackChain[],
   pointsByEdgeId: Map<string, readonly Point[]>,
   rectByNodeId: Map<string, EntityRect>,
   horizontal: boolean,
+  spacing: number,
 ): void {
   const cross = (p: Point) => (horizontal ? p.y : p.x);
   const flow = (p: Point) => (horizontal ? p.x : p.y);
@@ -60,7 +62,19 @@ export function straightenFeedbackChains(
       end = points.at(-1)!;
     const outer = Math.max(...points.map(cross));
     const labelRect = label && rectByNodeId.get(label.id);
-    for (const track of label ? [label.cross, outer] : [outer]) {
+    const tracks = label ? [label.cross, outer] : [outer];
+    if (labelRect) {
+      // Other feedback routes may share the outer track; past everything, the
+      // moved label is clear of them.
+      const farthest = Math.max(
+        ...[...pointsByEdgeId.values()].flatMap((other) => other.map(cross)),
+        ...[...rectByNodeId.values()].map((rect) =>
+          horizontal ? rect.y + rect.height : rect.x + rect.width,
+        ),
+      );
+      tracks.push(farthest + spacing + label!.cross - (horizontal ? labelRect.y : labelRect.x));
+    }
+    for (const track of tracks) {
       const route = [start, lead, at(flow(lead), track), at(flow(tail), track), tail, end];
       const moved = labelRect && {
         ...labelRect,
@@ -103,8 +117,12 @@ export function straightenFeedbackChains(
       }
       if (simple.at(-1) !== end) continue;
       if (simple.length >= points.length) break;
-      // Never share a track with another route heading the opposite way.
-      if ([...pointsByEdgeId].some(([id, other]) => id !== edgeId && opposed(simple, other)))
+      // Never newly share a track with another route heading the opposite way.
+      if (
+        [...pointsByEdgeId].some(
+          ([id, other]) => id !== edgeId && opposed(simple, other) && !opposed(points, other),
+        )
+      )
         continue;
       pointsByEdgeId.set(edgeId, simple);
       if (moved) rectByNodeId.set(label!.id, moved);
