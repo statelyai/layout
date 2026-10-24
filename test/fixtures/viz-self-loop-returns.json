@@ -1,0 +1,642 @@
+{
+  "input": {
+    "id": "root",
+    "children": [
+      {
+        "id": "doc.editing",
+        "width": 93,
+        "height": 45,
+        "ports": [
+          {
+            "id": "[\"doc.editing\",\"doc.editing\",\"[\\\"gray\\\",\\\"solid\\\"]\"]__src",
+            "width": 20,
+            "height": 20,
+            "layoutOptions": { "elk.port.side": "SOUTH" }
+          },
+          {
+            "id": "[\"doc.editing\",\"doc.editing\",\"[\\\"gray\\\",\\\"solid\\\"]\"]__tgt",
+            "width": 20,
+            "height": 20,
+            "layoutOptions": { "elk.port.side": "NORTH" }
+          },
+          {
+            "id": "doc.editing-SAVE-0__src",
+            "width": 20,
+            "height": 20,
+            "layoutOptions": { "elk.port.side": "SOUTH" }
+          },
+          {
+            "id": "doc.saving-FAIL-0__tgt",
+            "width": 20,
+            "height": 20,
+            "layoutOptions": { "elk.port.side": "NORTH" }
+          },
+          {
+            "id": "doc.saved-EDIT-0__tgt",
+            "width": 20,
+            "height": 20,
+            "layoutOptions": { "elk.port.side": "NORTH" }
+          }
+        ],
+        "layoutOptions": {
+          "elk.hierarchyHandling": "INHERIT",
+          "elk.layered.edgeRouting.selfLoopDistribution": "NORTH",
+          "elk.layered.edgeRouting.selfLoopOrdering": "STACKED",
+          "elk.portConstraints": "UNDEFINED",
+          "elk.portAlignment.default": "DISTRIBUTED",
+          "elk.portLabels.treatAsGroup": "true",
+          "elk.spacing.portPort": "10",
+          "elk.layered.layering.layerConstraint": "FIRST_SEPARATE",
+          "elk.padding": "[top=48, left=48, right=48, bottom=48]"
+        },
+        "order": 0
+      },
+      {
+        "id": "doc.saving",
+        "width": 91,
+        "height": 45,
+        "ports": [
+          {
+            "id": "doc.editing-SAVE-0__tgt",
+            "width": 20,
+            "height": 20,
+            "layoutOptions": { "elk.port.side": "NORTH" }
+          },
+          {
+            "id": "doc.saving-SAVED-0__src",
+            "width": 20,
+            "height": 20,
+            "layoutOptions": { "elk.port.side": "SOUTH" }
+          },
+          {
+            "id": "doc.saving-FAIL-0__src",
+            "width": 20,
+            "height": 20,
+            "layoutOptions": { "elk.port.side": "SOUTH" }
+          }
+        ],
+        "layoutOptions": {
+          "elk.hierarchyHandling": "INHERIT",
+          "elk.layered.edgeRouting.selfLoopDistribution": "NORTH",
+          "elk.layered.edgeRouting.selfLoopOrdering": "STACKED",
+          "elk.portConstraints": "UNDEFINED",
+          "elk.portAlignment.default": "DISTRIBUTED",
+          "elk.portLabels.treatAsGroup": "true",
+          "elk.spacing.portPort": "10",
+          "elk.padding": "[top=48, left=48, right=48, bottom=48]"
+        },
+        "order": 1
+      },
+      {
+        "id": "doc.saved",
+        "width": 85,
+        "height": 45,
+        "ports": [
+          {
+            "id": "doc.saving-SAVED-0__tgt",
+            "width": 20,
+            "height": 20,
+            "layoutOptions": { "elk.port.side": "NORTH" }
+          },
+          {
+            "id": "doc.saved-EDIT-0__src",
+            "width": 20,
+            "height": 20,
+            "layoutOptions": { "elk.port.side": "SOUTH" }
+          }
+        ],
+        "layoutOptions": {
+          "elk.hierarchyHandling": "INHERIT",
+          "elk.layered.edgeRouting.selfLoopDistribution": "NORTH",
+          "elk.layered.edgeRouting.selfLoopOrdering": "STACKED",
+          "elk.portConstraints": "UNDEFINED",
+          "elk.portAlignment.default": "DISTRIBUTED",
+          "elk.portLabels.treatAsGroup": "true",
+          "elk.spacing.portPort": "10",
+          "elk.padding": "[top=48, left=48, right=48, bottom=48]"
+        },
+        "order": 2
+      }
+    ],
+    "edges": [
+      {
+        "id": "[\"doc.editing\",\"doc.editing\",\"[\\\"gray\\\",\\\"solid\\\"]\"]",
+        "sources": ["[\"doc.editing\",\"doc.editing\",\"[\\\"gray\\\",\\\"solid\\\"]\"]__src"],
+        "targets": ["[\"doc.editing\",\"doc.editing\",\"[\\\"gray\\\",\\\"solid\\\"]\"]__tgt"],
+        "labels": [
+          {
+            "id": "[\"doc.editing\",\"doc.editing\",\"[\\\"gray\\\",\\\"solid\\\"]\"]",
+            "text": "[\"doc.editing\",\"doc.editing\",\"[\\\"gray\\\",\\\"solid\\\"]\"]",
+            "width": 73,
+            "height": 184,
+            "layoutOptions": {
+              "elk.layered.edgeLabels.centerLabelPlacementStrategy": "MEDIAN_LAYER",
+              "elk.edgeLabels.inline": "true",
+              "elk.edgeLabels.placement": "CENTER"
+            }
+          }
+        ]
+      },
+      {
+        "id": "doc.editing-SAVE-0",
+        "sources": ["doc.editing-SAVE-0__src"],
+        "targets": ["doc.editing-SAVE-0__tgt"],
+        "labels": [
+          {
+            "id": "doc.editing-SAVE-0",
+            "text": "doc.editing-SAVE-0",
+            "width": 65,
+            "height": 40,
+            "layoutOptions": {
+              "elk.layered.edgeLabels.centerLabelPlacementStrategy": "MEDIAN_LAYER",
+              "elk.edgeLabels.inline": "true",
+              "elk.edgeLabels.placement": "CENTER"
+            }
+          }
+        ]
+      },
+      {
+        "id": "doc.saving-SAVED-0",
+        "sources": ["doc.saving-SAVED-0__src"],
+        "targets": ["doc.saving-SAVED-0__tgt"],
+        "labels": [
+          {
+            "id": "doc.saving-SAVED-0",
+            "text": "doc.saving-SAVED-0",
+            "width": 75,
+            "height": 40,
+            "layoutOptions": {
+              "elk.layered.edgeLabels.centerLabelPlacementStrategy": "MEDIAN_LAYER",
+              "elk.edgeLabels.inline": "true",
+              "elk.edgeLabels.placement": "CENTER"
+            }
+          }
+        ]
+      },
+      {
+        "id": "doc.saving-FAIL-0",
+        "sources": ["doc.saving-FAIL-0__src"],
+        "targets": ["doc.saving-FAIL-0__tgt"],
+        "labels": [
+          {
+            "id": "doc.saving-FAIL-0",
+            "text": "doc.saving-FAIL-0",
+            "width": 57,
+            "height": 40,
+            "layoutOptions": {
+              "elk.layered.edgeLabels.centerLabelPlacementStrategy": "MEDIAN_LAYER",
+              "elk.edgeLabels.inline": "true",
+              "elk.edgeLabels.placement": "CENTER"
+            }
+          }
+        ]
+      },
+      {
+        "id": "doc.saved-EDIT-0",
+        "sources": ["doc.saved-EDIT-0__src"],
+        "targets": ["doc.saved-EDIT-0__tgt"],
+        "labels": [
+          {
+            "id": "doc.saved-EDIT-0",
+            "text": "doc.saved-EDIT-0",
+            "width": 60,
+            "height": 40,
+            "layoutOptions": {
+              "elk.layered.edgeLabels.centerLabelPlacementStrategy": "MEDIAN_LAYER",
+              "elk.edgeLabels.inline": "true",
+              "elk.edgeLabels.placement": "CENTER"
+            }
+          }
+        ]
+      }
+    ],
+    "layoutOptions": {
+      "elk.algorithm": "layered",
+      "elk.edgeRouting": "ORTHOGONAL",
+      "elk.hierarchyHandling": "INHERIT",
+      "elk.separateConnectedComponents": "true",
+      "elk.spacing.nodeNode": "50",
+      "elk.spacing.edgeEdge": "10",
+      "elk.spacing.edgeNode": "10",
+      "elk.spacing.edgeLabel": "2",
+      "elk.spacing.labelNode": "5",
+      "elk.spacing.componentComponent": "20",
+      "elk.spacing.nodeSelfLoop": "24",
+      "elk.layered.spacing.nodeNodeBetweenLayers": "30",
+      "elk.layered.spacing.edgeEdgeBetweenLayers": "10",
+      "elk.layered.spacing.edgeNodeBetweenLayers": "10",
+      "elk.layered.layering.strategy": "INTERACTIVE",
+      "elk.layered.cycleBreaking.strategy": "MODEL_ORDER",
+      "elk.layered.directionCongruency": "READING_DIRECTION",
+      "elk.layered.nodePlacement.strategy": "BRANDES_KOEPF",
+      "elk.layered.nodePlacement.favorStraightEdges": "true",
+      "elk.layered.nodePlacement.bk.fixedAlignment": "NONE",
+      "elk.layered.nodePlacement.bk.edgeStraightening": "IMPROVE_STRAIGHTNESS",
+      "elk.layered.nodePlacement.linearSegments.deflectionDampening": "0.3",
+      "elk.layered.crossingMinimization.strategy": "LAYER_SWEEP",
+      "elk.layered.crossingMinimization.forceNodeModelOrder": "true",
+      "elk.layered.crossingMinimization.greedySwitch.type": "TWO_SIDED",
+      "elk.layered.crossingMinimization.semiInteractive": "false",
+      "elk.layered.considerModelOrder.strategy": "PREFER_NODES",
+      "elk.layered.considerModelOrder.longEdgeStrategy": "DUMMY_NODE_OVER",
+      "elk.layered.considerModelOrder.components": "MODEL_ORDER",
+      "elk.layered.considerModelOrder.crossingCounterNodeInfluence": "0",
+      "elk.layered.considerModelOrder.crossingCounterPortInfluence": "0",
+      "elk.layered.compaction.connectedComponents": "true",
+      "elk.layered.compaction.postCompaction.strategy": "LEFT",
+      "elk.layered.compaction.postCompaction.constraints": "SCANLINE",
+      "elk.layered.edgeRouting.splines.mode": "SLOPPY",
+      "elk.layered.edgeRouting.splines.sloppy.layerSpacingFactor": "0.2",
+      "elk.layered.edgeLabels.centerLabelPlacementStrategy": "MEDIAN_LAYER",
+      "elk.layered.edgeLabels.sideSelection": "SMART_DOWN",
+      "elk.layered.wrapping.strategy": "OFF",
+      "elk.layered.wrapping.additionalEdgeSpacing": "10",
+      "elk.layered.wrapping.correctionFactor": "1",
+      "elk.layered.highDegreeNodes.treatment": "false",
+      "elk.layered.highDegreeNodes.threshold": "16",
+      "elk.layered.highDegreeNodes.treeHeight": "5",
+      "elk.layered.thoroughness": "7",
+      "elk.layered.mergeEdges": "false",
+      "elk.layered.mergeHierarchyEdges": "true",
+      "elk.layered.feedbackEdges": "false",
+      "elk.layered.unnecessaryBendpoints": "false",
+      "elk.direction": "DOWN"
+    }
+  },
+  "elk": {
+    "id": "root",
+    "children": [
+      {
+        "id": "doc.editing",
+        "width": 93,
+        "height": 45,
+        "ports": [
+          {
+            "id": "[\"doc.editing\",\"doc.editing\",\"[\\\"gray\\\",\\\"solid\\\"]\"]__src",
+            "width": 20,
+            "height": 20,
+            "layoutOptions": { "elk.port.side": "SOUTH" },
+            "x": -20,
+            "y": 1.666666666666666
+          },
+          {
+            "id": "[\"doc.editing\",\"doc.editing\",\"[\\\"gray\\\",\\\"solid\\\"]\"]__tgt",
+            "width": 20,
+            "height": 20,
+            "layoutOptions": { "elk.port.side": "NORTH" },
+            "x": -20,
+            "y": 23.33333333333333
+          },
+          {
+            "id": "doc.editing-SAVE-0__src",
+            "width": 20,
+            "height": 20,
+            "layoutOptions": { "elk.port.side": "SOUTH" },
+            "x": 8.25,
+            "y": 45
+          },
+          {
+            "id": "doc.saving-FAIL-0__tgt",
+            "width": 20,
+            "height": 20,
+            "layoutOptions": { "elk.port.side": "NORTH" },
+            "x": 36.5,
+            "y": 45
+          },
+          {
+            "id": "doc.saved-EDIT-0__tgt",
+            "width": 20,
+            "height": 20,
+            "layoutOptions": { "elk.port.side": "NORTH" },
+            "x": 64.75,
+            "y": 45
+          }
+        ],
+        "layoutOptions": {
+          "elk.hierarchyHandling": "INHERIT",
+          "elk.layered.edgeRouting.selfLoopDistribution": "NORTH",
+          "elk.layered.edgeRouting.selfLoopOrdering": "STACKED",
+          "elk.portConstraints": "UNDEFINED",
+          "elk.portAlignment.default": "DISTRIBUTED",
+          "elk.portLabels.treatAsGroup": "true",
+          "elk.spacing.portPort": "10",
+          "elk.layered.layering.layerConstraint": "FIRST_SEPARATE",
+          "elk.padding": "[top=48, left=48, right=48, bottom=48]"
+        },
+        "order": 0,
+        "$H": 277,
+        "x": 147.75,
+        "y": 81.5
+      },
+      {
+        "id": "doc.saving",
+        "width": 91,
+        "height": 45,
+        "ports": [
+          {
+            "id": "doc.editing-SAVE-0__tgt",
+            "width": 20,
+            "height": 20,
+            "layoutOptions": { "elk.port.side": "NORTH" },
+            "x": 17,
+            "y": -20
+          },
+          {
+            "id": "doc.saving-SAVED-0__src",
+            "width": 20,
+            "height": 20,
+            "layoutOptions": { "elk.port.side": "SOUTH" },
+            "x": 35.5,
+            "y": 45
+          },
+          {
+            "id": "doc.saving-FAIL-0__src",
+            "width": 20,
+            "height": 20,
+            "layoutOptions": { "elk.port.side": "SOUTH" },
+            "x": 54,
+            "y": -20
+          }
+        ],
+        "layoutOptions": {
+          "elk.hierarchyHandling": "INHERIT",
+          "elk.layered.edgeRouting.selfLoopDistribution": "NORTH",
+          "elk.layered.edgeRouting.selfLoopOrdering": "STACKED",
+          "elk.portConstraints": "UNDEFINED",
+          "elk.portAlignment.default": "DISTRIBUTED",
+          "elk.portLabels.treatAsGroup": "true",
+          "elk.spacing.portPort": "10",
+          "elk.padding": "[top=48, left=48, right=48, bottom=48]"
+        },
+        "order": 1,
+        "$H": 285,
+        "x": 51.5,
+        "y": 316
+      },
+      {
+        "id": "doc.saved",
+        "width": 85,
+        "height": 45,
+        "ports": [
+          {
+            "id": "doc.saving-SAVED-0__tgt",
+            "width": 20,
+            "height": 20,
+            "layoutOptions": { "elk.port.side": "NORTH" },
+            "x": 15,
+            "y": -20
+          },
+          {
+            "id": "doc.saved-EDIT-0__src",
+            "width": 20,
+            "height": 20,
+            "layoutOptions": { "elk.port.side": "SOUTH" },
+            "x": 50,
+            "y": -20
+          }
+        ],
+        "layoutOptions": {
+          "elk.hierarchyHandling": "INHERIT",
+          "elk.layered.edgeRouting.selfLoopDistribution": "NORTH",
+          "elk.layered.edgeRouting.selfLoopOrdering": "STACKED",
+          "elk.portConstraints": "UNDEFINED",
+          "elk.portAlignment.default": "DISTRIBUTED",
+          "elk.portLabels.treatAsGroup": "true",
+          "elk.spacing.portPort": "10",
+          "elk.padding": "[top=48, left=48, right=48, bottom=48]"
+        },
+        "order": 2,
+        "$H": 290,
+        "x": 162.5,
+        "y": 491
+      }
+    ],
+    "edges": [
+      {
+        "id": "[\"doc.editing\",\"doc.editing\",\"[\\\"gray\\\",\\\"solid\\\"]\"]",
+        "sources": ["[\"doc.editing\",\"doc.editing\",\"[\\\"gray\\\",\\\"solid\\\"]\"]__src"],
+        "targets": ["[\"doc.editing\",\"doc.editing\",\"[\\\"gray\\\",\\\"solid\\\"]\"]__tgt"],
+        "labels": [
+          {
+            "id": "[\"doc.editing\",\"doc.editing\",\"[\\\"gray\\\",\\\"solid\\\"]\"]",
+            "text": "[\"doc.editing\",\"doc.editing\",\"[\\\"gray\\\",\\\"solid\\\"]\"]",
+            "width": 73,
+            "height": 184,
+            "layoutOptions": {
+              "elk.layered.edgeLabels.centerLabelPlacementStrategy": "MEDIAN_LAYER",
+              "elk.edgeLabels.inline": "true",
+              "elk.edgeLabels.placement": "CENTER"
+            },
+            "x": 28.75,
+            "y": 12
+          }
+        ],
+        "sections": [
+          {
+            "id": "[\"doc.editing\",\"doc.editing\",\"[\\\"gray\\\",\\\"solid\\\"]\"]_s0",
+            "startPoint": { "x": 127.75, "y": 93.16666666666667 },
+            "endPoint": { "x": 127.75, "y": 114.83333333333333 },
+            "bendPoints": [
+              { "x": 103.75, "y": 93.16666666666667 },
+              { "x": 103.75, "y": 114.83333333333333 }
+            ],
+            "incomingShape": "[\"doc.editing\",\"doc.editing\",\"[\\\"gray\\\",\\\"solid\\\"]\"]__src",
+            "outgoingShape": "[\"doc.editing\",\"doc.editing\",\"[\\\"gray\\\",\\\"solid\\\"]\"]__tgt"
+          }
+        ],
+        "container": "root"
+      },
+      {
+        "id": "doc.editing-SAVE-0",
+        "sources": ["doc.editing-SAVE-0__src"],
+        "targets": ["doc.editing-SAVE-0__tgt"],
+        "labels": [
+          {
+            "id": "doc.editing-SAVE-0",
+            "text": "doc.editing-SAVE-0",
+            "width": 65,
+            "height": 40,
+            "layoutOptions": {
+              "elk.layered.edgeLabels.centerLabelPlacementStrategy": "MEDIAN_LAYER",
+              "elk.edgeLabels.inline": "true",
+              "elk.edgeLabels.placement": "CENTER"
+            },
+            "x": 12,
+            "y": 226
+          }
+        ],
+        "sections": [
+          {
+            "id": "doc.editing-SAVE-0_s0",
+            "startPoint": { "x": 166, "y": 146.5 },
+            "endPoint": { "x": 78.5, "y": 296 },
+            "bendPoints": [
+              { "x": 166, "y": 124.83333333333333 },
+              { "x": 44.5, "y": 124.83333333333333 },
+              { "x": 44.5, "y": 276 },
+              { "x": 78.5, "y": 276 }
+            ],
+            "incomingShape": "doc.editing-SAVE-0__src",
+            "outgoingShape": "doc.editing-SAVE-0__tgt"
+          }
+        ],
+        "container": "root"
+      },
+      {
+        "id": "doc.saving-SAVED-0",
+        "sources": ["doc.saving-SAVED-0__src"],
+        "targets": ["doc.saving-SAVED-0__tgt"],
+        "labels": [
+          {
+            "id": "doc.saving-SAVED-0",
+            "text": "doc.saving-SAVED-0",
+            "width": 75,
+            "height": 40,
+            "layoutOptions": {
+              "elk.layered.edgeLabels.centerLabelPlacementStrategy": "MEDIAN_LAYER",
+              "elk.edgeLabels.inline": "true",
+              "elk.edgeLabels.placement": "CENTER"
+            },
+            "x": 59.5,
+            "y": 411
+          }
+        ],
+        "sections": [
+          {
+            "id": "doc.saving-SAVED-0_s0",
+            "startPoint": { "x": 97, "y": 381 },
+            "endPoint": { "x": 187.5, "y": 471 },
+            "bendPoints": [
+              { "x": 97, "y": 461 },
+              { "x": 187.5, "y": 461 }
+            ],
+            "incomingShape": "doc.saving-SAVED-0__src",
+            "outgoingShape": "doc.saving-SAVED-0__tgt"
+          }
+        ],
+        "container": "root"
+      },
+      {
+        "id": "doc.saving-FAIL-0",
+        "sources": ["doc.saving-FAIL-0__src"],
+        "targets": ["doc.saving-FAIL-0__tgt"],
+        "labels": [
+          {
+            "id": "doc.saving-FAIL-0",
+            "text": "doc.saving-FAIL-0",
+            "width": 57,
+            "height": 40,
+            "layoutOptions": {
+              "elk.layered.edgeLabels.centerLabelPlacementStrategy": "MEDIAN_LAYER",
+              "elk.edgeLabels.inline": "true",
+              "elk.edgeLabels.placement": "CENTER"
+            },
+            "x": 87,
+            "y": 226
+          }
+        ],
+        "sections": [
+          {
+            "id": "doc.saving-FAIL-0_s0",
+            "startPoint": { "x": 115.5, "y": 296 },
+            "endPoint": { "x": 194.25, "y": 146.5 },
+            "bendPoints": [
+              { "x": 115.5, "y": 134.83333333333331 },
+              { "x": 194.25, "y": 134.83333333333331 }
+            ],
+            "incomingShape": "doc.saving-FAIL-0__src",
+            "outgoingShape": "doc.saving-FAIL-0__tgt"
+          }
+        ],
+        "container": "root"
+      },
+      {
+        "id": "doc.saved-EDIT-0",
+        "sources": ["doc.saved-EDIT-0__src"],
+        "targets": ["doc.saved-EDIT-0__tgt"],
+        "labels": [
+          {
+            "id": "doc.saved-EDIT-0",
+            "text": "doc.saved-EDIT-0",
+            "width": 60,
+            "height": 40,
+            "layoutOptions": {
+              "elk.layered.edgeLabels.centerLabelPlacementStrategy": "MEDIAN_LAYER",
+              "elk.edgeLabels.inline": "true",
+              "elk.edgeLabels.placement": "CENTER"
+            },
+            "x": 192.5,
+            "y": 226
+          }
+        ],
+        "sections": [
+          {
+            "id": "doc.saved-EDIT-0_s0",
+            "startPoint": { "x": 222.5, "y": 471 },
+            "endPoint": { "x": 222.5, "y": 146.5 },
+            "incomingShape": "doc.saved-EDIT-0__src",
+            "outgoingShape": "doc.saved-EDIT-0__tgt"
+          }
+        ],
+        "container": "root"
+      }
+    ],
+    "layoutOptions": {
+      "elk.algorithm": "layered",
+      "elk.edgeRouting": "ORTHOGONAL",
+      "elk.hierarchyHandling": "INHERIT",
+      "elk.separateConnectedComponents": "true",
+      "elk.spacing.nodeNode": "50",
+      "elk.spacing.edgeEdge": "10",
+      "elk.spacing.edgeNode": "10",
+      "elk.spacing.edgeLabel": "2",
+      "elk.spacing.labelNode": "5",
+      "elk.spacing.componentComponent": "20",
+      "elk.spacing.nodeSelfLoop": "24",
+      "elk.layered.spacing.nodeNodeBetweenLayers": "30",
+      "elk.layered.spacing.edgeEdgeBetweenLayers": "10",
+      "elk.layered.spacing.edgeNodeBetweenLayers": "10",
+      "elk.layered.layering.strategy": "INTERACTIVE",
+      "elk.layered.cycleBreaking.strategy": "MODEL_ORDER",
+      "elk.layered.directionCongruency": "READING_DIRECTION",
+      "elk.layered.nodePlacement.strategy": "BRANDES_KOEPF",
+      "elk.layered.nodePlacement.favorStraightEdges": "true",
+      "elk.layered.nodePlacement.bk.fixedAlignment": "NONE",
+      "elk.layered.nodePlacement.bk.edgeStraightening": "IMPROVE_STRAIGHTNESS",
+      "elk.layered.nodePlacement.linearSegments.deflectionDampening": "0.3",
+      "elk.layered.crossingMinimization.strategy": "LAYER_SWEEP",
+      "elk.layered.crossingMinimization.forceNodeModelOrder": "true",
+      "elk.layered.crossingMinimization.greedySwitch.type": "TWO_SIDED",
+      "elk.layered.crossingMinimization.semiInteractive": "false",
+      "elk.layered.considerModelOrder.strategy": "PREFER_NODES",
+      "elk.layered.considerModelOrder.longEdgeStrategy": "DUMMY_NODE_OVER",
+      "elk.layered.considerModelOrder.components": "MODEL_ORDER",
+      "elk.layered.considerModelOrder.crossingCounterNodeInfluence": "0",
+      "elk.layered.considerModelOrder.crossingCounterPortInfluence": "0",
+      "elk.layered.compaction.connectedComponents": "true",
+      "elk.layered.compaction.postCompaction.strategy": "LEFT",
+      "elk.layered.compaction.postCompaction.constraints": "SCANLINE",
+      "elk.layered.edgeRouting.splines.mode": "SLOPPY",
+      "elk.layered.edgeRouting.splines.sloppy.layerSpacingFactor": "0.2",
+      "elk.layered.edgeLabels.centerLabelPlacementStrategy": "MEDIAN_LAYER",
+      "elk.layered.edgeLabels.sideSelection": "SMART_DOWN",
+      "elk.layered.wrapping.strategy": "OFF",
+      "elk.layered.wrapping.additionalEdgeSpacing": "10",
+      "elk.layered.wrapping.correctionFactor": "1",
+      "elk.layered.highDegreeNodes.treatment": "false",
+      "elk.layered.highDegreeNodes.threshold": "16",
+      "elk.layered.highDegreeNodes.treeHeight": "5",
+      "elk.layered.thoroughness": "7",
+      "elk.layered.mergeEdges": "false",
+      "elk.layered.mergeHierarchyEdges": "true",
+      "elk.layered.feedbackEdges": "false",
+      "elk.layered.unnecessaryBendpoints": "false",
+      "elk.direction": "DOWN"
+    },
+    "$H": 13,
+    "x": 0,
+    "y": 0,
+    "width": 264.5,
+    "height": 548
+  }
+}
