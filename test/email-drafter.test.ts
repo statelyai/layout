@@ -78,7 +78,10 @@ it("allows a self-loop on a FIRST_SEPARATE initial state", async () => {
   expect(Number.isFinite(result.edges![0]!.labels![0]!.y)).toBe(true);
 });
 
-it.each([200, 1200])("reserves an inline self-loop label above a %s-wide owner", async (width) => {
+// ELK routes the loop on its internal NORTH side, which is WEST in DOWN
+// layouts, and ignores `inline` for one-sided loop labels: the label sits
+// beside the loop, centered on the owner, in space reserved for it.
+it.each([200, 1200])("reserves an inline self-loop label beside a %s-wide owner", async (width) => {
   const result = await new ELK().layout({
     id: "root",
     layoutOptions: { "elk.direction": "DOWN" },
@@ -102,7 +105,9 @@ it.each([200, 1200])("reserves an inline self-loop label above a %s-wide owner",
   });
   const owner = result.children![0]!;
   const label = result.edges![0]!.labels![0]!;
-  expect(label.y! + label.height!).toBeLessThanOrEqual(owner.y!);
+  expect(label.x).toBeGreaterThanOrEqual(0);
+  expect(label.x! + label.width!).toBeLessThanOrEqual(owner.x!);
+  expect(label.y! + label.height! / 2).toBe(owner.y! + owner.height! / 2);
 });
 
 it.each(["label", "edge"])(
