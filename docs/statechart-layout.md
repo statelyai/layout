@@ -107,7 +107,7 @@ Mixed compound directions are
 supported but do not optimize boundary crossings
 jointly with the parent. Do not remove consumer geometry repairs based on this
 wrapper alone. Viz/Flow adoption and physical editor rendering need separate
-consumer verification. Published layout 0.0.5 does not contain these new exports.
+consumer verification.
 
 ## Reproducible regression
 
