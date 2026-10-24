@@ -40,6 +40,8 @@ export function straightenFeedbackChains(
   rectByNodeId: Map<string, EntityRect>,
   horizontal: boolean,
   spacing: number,
+  /** Cross-axis room each node reserves beside it, such as for self loops and their labels. */
+  crossMargins?: ReadonlyMap<string, { before: number; after: number }>,
 ): void {
   const cross = (p: Point) => (horizontal ? p.y : p.x);
   const flow = (p: Point) => (horizontal ? p.x : p.y);
@@ -82,12 +84,27 @@ export function straightenFeedbackChains(
           ? { y: labelRect.y + track - label!.cross }
           : { x: labelRect.x + track - label!.cross }),
       };
-      const blocked = [...rectByNodeId].some(
-        ([id, rect]) =>
-          id !== label?.id &&
-          (route.slice(1, 4).some((point, index) => hits(point, route[index + 2]!, rect)) ||
-            (moved !== undefined && overlaps(moved, rect))),
-      );
+      const blocked = [...rectByNodeId].some(([id, node]) => {
+        if (id === label?.id) return false;
+        const margin = crossMargins?.get(id);
+        const rect = !margin
+          ? node
+          : horizontal
+            ? {
+                ...node,
+                y: node.y - margin.before,
+                height: node.height + margin.before + margin.after,
+              }
+            : {
+                ...node,
+                x: node.x - margin.before,
+                width: node.width + margin.before + margin.after,
+              };
+        return (
+          route.slice(1, 4).some((point, index) => hits(point, route[index + 2]!, rect)) ||
+          (moved !== undefined && overlaps(moved, rect))
+        );
+      });
       const crossed =
         moved !== undefined &&
         track !== label!.cross &&

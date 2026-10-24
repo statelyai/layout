@@ -1185,6 +1185,13 @@ export default class ELK {
           ...elementSettings(elkPort?.layoutOptions),
           // ELK imports ports in authored order and sorts sides after dummy insertion.
           "port.authoredIndex": found?.position,
+          // A nested layout with its own direction already routed to this
+          // boundary port's side.
+          "port.pinnedSide":
+            child !== undefined &&
+            preparedChildren.has(String(child.id)) &&
+            getOption(child.layoutOptions ?? {}, "direction") !== undefined &&
+            getDirection(child.layoutOptions!) !== getDirection(layoutOptions),
           "port.labelWidth": Math.max(
             0,
             ...(elkPort?.labels ?? []).map((label) => label.width ?? 0),
