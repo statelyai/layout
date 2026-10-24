@@ -7,7 +7,7 @@ import { restoreHierarchicalPorts } from "./hierarchical-port-restoration";
 import { countAllCrossings } from "./crossing-counter";
 import { crossingGraph } from "./crossing-graph";
 import { sortInitialModelOrder, markInitialModelOrderPrepared } from "./initial-model-order";
-import { hasMovableLoopPorts } from "./loop-envelopes";
+import { hasMovableLoopPorts, loopEnvelopes } from "./loop-envelopes";
 import { hideSelfLoopPorts, restoreSelfLoopPorts } from "./self-loop-ports";
 import { fixedSelfLoopLabels, fixedSelfLoopSide } from "./fixed-self-loop";
 import { compactionBounds, placementCrossBounds } from "./compaction-bounds";
@@ -1954,19 +1954,35 @@ export function* createLayeredScopePipeline<N, E, G, P>(
     context?.diagnostics,
   );
   // ELK's SweepCopy.assertCorrectPortSides: a north/south port whose dummy
-  // ended on the other side of its node switches to that side.
-  for (const layer of order.layers) {
-    const position = new Map(layer.map((id, index) => [id, index]));
-    for (const [dummy, origin] of northSouth.originsByDummyId) {
-      const at = position.get(dummy),
-        owner = position.get(origin.node.id);
-      if (at === undefined || owner === undefined || at < owner === origin.beforeOwner) continue;
-      const opposite = ({ NORTH: "SOUTH", SOUTH: "NORTH", WEST: "EAST", EAST: "WEST" } as const)[
-        origin.side
-      ];
-      switchedSideByPort.set(`${origin.node.id}\0${origin.port.name}`, opposite);
-    }
-  }
+  // ended on the other side of its node switches to that side. A port whose
+  // side a nested layout already routed to cannot switch: its dummy returns
+  // to the port's side instead.
+  order = {
+    ...order,
+    layers: order.layers.map((members) => {
+      let layer = members;
+      const position = new Map(layer.map((id, index) => [id, index]));
+      for (const [dummy, origin] of northSouth.originsByDummyId) {
+        const at = position.get(dummy),
+          owner = position.get(origin.node.id);
+        if (at === undefined || owner === undefined || at < owner === origin.beforeOwner) continue;
+        const settings = expanded.input.portSettings?.(origin.port, origin.node) as
+          | { "port.pinnedSide"?: boolean }
+          | undefined;
+        if (settings?.["port.pinnedSide"] === true) {
+          const rest = layer.filter((id) => id !== dummy);
+          const index = rest.indexOf(origin.node.id) + (origin.beforeOwner ? 0 : 1);
+          layer = [...rest.slice(0, index), dummy, ...rest.slice(index)];
+          continue;
+        }
+        const opposite = ({ NORTH: "SOUTH", SOUTH: "NORTH", WEST: "EAST", EAST: "WEST" } as const)[
+          origin.side
+        ];
+        switchedSideByPort.set(`${origin.node.id}\0${origin.port.name}`, opposite);
+      }
+      return layer;
+    }),
+  };
   const unzippingFanIn =
     graph.edges.length === graph.nodes.length - 1 &&
     graph.nodes.some(
@@ -2653,6 +2669,7 @@ export function* createLayeredScopePipeline<N, E, G, P>(
       placement.rectByNodeId as Map<string, EntityRect>,
       horizontal,
       Number(options.settings?.["spacing.edgeEdge"] ?? 10),
+      loopEnvelopes(expanded.input),
     );
   }
   if (options.settings?.["layering.nodePromotion.strategy"] === "MODEL_ORDER_LEFT_TO_RIGHT") {
@@ -3183,23 +3200,47 @@ export function* createLayeredScopePipeline<N, E, G, P>(
         last = points[2]!;
       // Cross-axis loop labels are centered on the node. Flow-side loop
       // labels align with the first physical port, as ELK's label placer does.
-      if (first.y === last.y) {
-        const low = first.y < sourceRect.y;
-        return {
-          x: horizontal ? sourceRect.x + (sourceRect.width - width) / 2 : Math.min(first.x, last.x),
-          y: low ? first.y - labelSpacing - height : first.y + labelSpacing,
-        };
-      }
-      if (first.x === last.x) {
-        const low = first.x < sourceRect.x;
-        return {
-          x: low ? first.x - labelSpacing - width : first.x + labelSpacing,
-          y: horizontal
-            ? Math.min(first.y, last.y)
-            : sourceRect.y + (sourceRect.height - height) / 2,
-        };
-      }
-      return undefined;
+      const box =
+        first.y === last.y
+          ? {
+              x: horizontal
+                ? sourceRect.x + (sourceRect.width - width) / 2
+                : Math.min(first.x, last.x),
+              y: first.y < sourceRect.y ? first.y - labelSpacing - height : first.y + labelSpacing,
+            }
+          : first.x === last.x
+            ? {
+                x: first.x < sourceRect.x ? first.x - labelSpacing - width : first.x + labelSpacing,
+                y: horizontal
+                  ? Math.min(first.y, last.y)
+                  : sourceRect.y + (sourceRect.height - height) / 2,
+              }
+            : undefined;
+      if (!box || (first.y === last.y) !== horizontal) return box;
+      // Outer stacked loops leave the node through this centered label's
+      // column. It then sits before the loops' legs in the flow instead.
+      const legs = graph.edges.flatMap((other) => {
+        if (other.id === edge.id || other.sourceId !== edge.sourceId) return [];
+        if (other.targetId !== edge.targetId || !hasMovableLoopPorts(input, other)) return [];
+        const route = routes.pointsByEdgeId.get(other.id) ?? [];
+        return route.slice(1).flatMap((b, index) => {
+          const a = route[index]!;
+          const [along, from, to] = horizontal ? [a.x, a.y, b.y] : [a.y, a.x, b.x];
+          const [low, high] = horizontal ? [box.y, box.y + height] : [box.x, box.x + width];
+          return (horizontal ? a.x === b.x : a.y === b.y) &&
+            Math.min(from, to) < high &&
+            Math.max(from, to) > low
+            ? [along]
+            : [];
+        });
+      });
+      const [start, size] = horizontal ? [box.x, width] : [box.y, height];
+      if (!legs.some((along) => along > start && along < start + size)) return box;
+      const shifted =
+        direction === "left" || direction === "up"
+          ? Math.max(...legs) + labelSpacing
+          : Math.min(...legs) - labelSpacing - size;
+      return horizontal ? { ...box, x: shifted } : { ...box, y: shifted };
     })();
     // A self-loop label whose default spot covers a node or another route
     // sits beside one of the loop's segments instead, longest first, on the

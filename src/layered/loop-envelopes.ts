@@ -89,6 +89,40 @@ export function movableLoopPortOffset(
   };
 }
 
+/**
+ * How far past its node's flow-before face a stacked cross-side loop label
+ * reaches. ELK centers each label on the node, where the legs of the loops
+ * stacked outside it cross the label; the label then sits before those legs.
+ */
+function stackedLoopLabelReach(
+  input: LayeredPhaseInput,
+  sideLoops: readonly GraphEdge[],
+  side: CanonicalSide,
+  length: number,
+  ordering: string,
+): number {
+  const count = sideLoops.length;
+  if (count < 2 || ordering === "SEQUENCED") return 0;
+  const horizontal = input.direction === "right" || input.direction === "left";
+  const spacing = Number(input.settings["spacing.edgeLabel"] ?? 2);
+  const ordered = ordering === "REVERSE_STACKED" ? [...sideLoops].reverse() : sideLoops;
+  const leg = (index: number) =>
+    movableLoopPortOffset(input, sideLoops, side, length, (index + 1) / (count * 2 + 1)).along;
+  let reach = 0;
+  for (const [nesting, loop] of ordered.entries()) {
+    const size = (horizontal ? loop.width : loop.height) ?? 0;
+    if (size <= 0 || (horizontal ? loop.height : loop.width) === 0) continue;
+    const low = (length - size) / 2,
+      high = low + size;
+    for (let index = 0; index < count * 2; index++) {
+      if (index >= count - 1 - nesting && index <= count + nesting) continue;
+      const along = leg(index);
+      if (along > low && along < high) reach = Math.max(reach, size + spacing - leg(0));
+    }
+  }
+  return reach;
+}
+
 export interface LoopEnvelope {
   before: number;
   after: number;
@@ -244,6 +278,10 @@ export function loopEnvelopes(input: LayeredPhaseInput): ReadonlyMap<string, Loo
         envelope.flowBefore = Math.max(envelope.flowBefore, overhang / 2);
         envelope.flowAfter = Math.max(envelope.flowAfter, overhang / 2);
       }
+      envelope.flowBefore = Math.max(
+        envelope.flowBefore,
+        stackedLoopLabelReach(input, selected, canonical, flowSize, ordering),
+      );
     }
     envelopes.set(node.id, envelope);
   }
