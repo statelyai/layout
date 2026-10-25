@@ -2520,10 +2520,10 @@ export function* createLayeredScopePipeline<N, E, G, P>(
           : horizontal
             ? Math.round(forwardLabel.y + (forward.height ?? 0) / 2)
             : Math.round(forwardLabel.x + (forward.width ?? 0) / 2);
-      const alignedCross = (node: GraphNode, portName: string): number | undefined => {
+      const alignPort = (node: GraphNode, portName: string): void => {
         const rect = placement.rectByNodeId.get(node.id);
         const port = node.ports?.find((candidate) => candidate.name === portName);
-        if (!rect || !port) return undefined;
+        if (!rect || !port) return;
         const placedPort = placePorts(
           node.ports,
           rect,
@@ -2533,15 +2533,11 @@ export function* createLayeredScopePipeline<N, E, G, P>(
           (candidate) =>
             getOrientedPortDirection(expanded.input, expanded.orientation, node, candidate),
         )?.find((candidate) => candidate.name === portName);
-        if (!placedPort) return undefined;
+        if (!placedPort) return;
         const localCross = horizontal
           ? (placedPort.y ?? 0) + (placedPort.height ?? 0) / 2
           : (placedPort.x ?? 0) + (placedPort.width ?? 0) / 2;
-        return forwardCross - localCross;
-      };
-      const alignPort = (node: GraphNode, nextCross: number | undefined): void => {
-        const rect = placement.rectByNodeId.get(node.id);
-        if (!rect || nextCross === undefined) return;
+        const nextCross = forwardCross - localCross;
         const currentCross = horizontal ? rect.y : rect.x;
         postCompactionNodeCrossDeltas.set(
           node.id,
@@ -2553,23 +2549,8 @@ export function* createLayeredScopePipeline<N, E, G, P>(
         );
       };
       if (isolatedAntiparallelPair) {
-        const ends = [
-          [nodesById.get(forward.sourceId)!, forward.sourcePort],
-          [nodesById.get(forward.targetId)!, forward.targetPort],
-        ] as const;
-        const crosses = ends.map(([node, port]) => alignedCross(node, port));
-        // ELK keeps a loop owner where BK placed it, and moving it here would
-        // leave its loop and label behind, so such a pair stays as placed.
-        const movesLoopOwner = ends.some(([node], index) => {
-          const rect = placement.rectByNodeId.get(node.id);
-          return (
-            rect !== undefined &&
-            crosses[index] !== undefined &&
-            Math.abs(crosses[index]! - (horizontal ? rect.y : rect.x)) > 1e-9 &&
-            graph.edges.some((edge) => edge.sourceId === node.id && edge.targetId === node.id)
-          );
-        });
-        if (!movesLoopOwner) ends.forEach(([node], index) => alignPort(node, crosses[index]));
+        alignPort(nodesById.get(forward.sourceId)!, forward.sourcePort);
+        alignPort(nodesById.get(forward.targetId)!, forward.targetPort);
       }
     }
   }

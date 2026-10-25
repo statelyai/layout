@@ -222,28 +222,17 @@ export function loopEnvelopes(input: LayeredPhaseInput): ReadonlyMap<string, Loo
       flowAfter: "EAST",
       flowBefore: "WEST",
     } as const;
-    const horizontal = input.direction === "right" || input.direction === "left";
-    const size = input.sizes.get(node.id) ?? { width: 0, height: 0 };
-    const flowSize = horizontal ? size.width : size.height;
     for (const side of sides) {
       const selected = loops.filter((_, index) => sides[index % sides.length] === side);
       const canonical = canonicalSides[side];
       envelope[side] = Math.max(
-        envelope[side],
+        0,
         ...selected.map(
           (edge) =>
             movableLoopTrack(input, selected, edge, canonical, ordering) +
             movableLoopLabelExtent(input, edge, canonical),
         ),
       );
-      if (!crossSide(canonical)) continue;
-      // ELK centers cross-side loop labels on their node along the flow, and
-      // a label longer than its node widens the node's layer by the overhang.
-      for (const edge of selected) {
-        const overhang = ((horizontal ? edge.width : edge.height) ?? 0) - flowSize;
-        envelope.flowBefore = Math.max(envelope.flowBefore, overhang / 2);
-        envelope.flowAfter = Math.max(envelope.flowAfter, overhang / 2);
-      }
     }
     envelopes.set(node.id, envelope);
   }
