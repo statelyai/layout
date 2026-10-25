@@ -8,7 +8,6 @@ import { countAllCrossings } from "./crossing-counter";
 import { crossingGraph } from "./crossing-graph";
 import { sortInitialModelOrder, markInitialModelOrderPrepared } from "./initial-model-order";
 import { hasMovableLoopPorts } from "./loop-envelopes";
-import { hideSelfLoopPorts, restoreSelfLoopPorts } from "./self-loop-ports";
 import { fixedSelfLoopLabels, fixedSelfLoopSide } from "./fixed-self-loop";
 import { compactionBounds, placementCrossBounds } from "./compaction-bounds";
 import { setElkjs0111ResultPolicy } from "../internal/elkjs-compatibility";
@@ -1425,18 +1424,6 @@ export function* createLayeredScopePipeline<N, E, G, P>(
     const separated = runSeparatedComponents(graph, options, context);
     if (separated) return separated;
   }
-  const hiddenLoopPorts = hideSelfLoopPorts(graph as Graph<N, E, G, P>, options);
-  if (hiddenLoopPorts)
-    return restoreSelfLoopPorts(
-      graph as Graph<N, E, G, P>,
-      yield* createLayeredScopePipeline(
-        hiddenLoopPorts.graph,
-        hiddenLoopPorts.options,
-        context,
-        fallbacks,
-      ),
-      hiddenLoopPorts.edges,
-    );
   const direction = options.direction ?? graph.direction ?? "right";
   const padding =
     typeof options.padding === "number"
@@ -3155,6 +3142,7 @@ export function* createLayeredScopePipeline<N, E, G, P>(
       if (
         edgeRouting !== "ORTHOGONAL" ||
         labelPlacement !== "CENTER" ||
+        inlineLabel ||
         !hasMovableLoopPorts(input, edge) ||
         !sourceRect ||
         points.length !== 4
