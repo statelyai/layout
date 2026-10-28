@@ -5901,6 +5901,38 @@ function routeEdges(style: "ORTHOGONAL" | "POLYLINE" | "SPLINES"): EdgeRouter {
         const sourceFace = faces(source, feedbackSourcePortSide, backwardSide) ? -1 : 1;
         const targetFace = faces(target, feedbackTargetPortSide, forwardSide) ? -1 : 1;
         if (sourceFace < 0 || targetFace < 0) labelPortSides?.routed.add(edge.id);
+        // A leg runs across the layer to the outer track. It starts one
+        // spacing past its endpoint, then steps past any node it would cut
+        // through, such as a taller sibling in the same layer.
+        const clearFeedbackLeg = (
+          flow: number,
+          step: number,
+          from: number,
+          to: number,
+          own: EntityRect,
+        ) => {
+          const low = Math.min(from, to),
+            high = Math.max(from, to);
+          for (let moved = true; moved;) {
+            moved = false;
+            for (const rect of placement.rectByNodeId.values()) {
+              if (rect === own) continue;
+              const [flowStart, flowSize, crossStart, crossSize] = horizontal
+                ? [rect.x, rect.width, rect.y, rect.height]
+                : [rect.y, rect.height, rect.x, rect.width];
+              if (
+                flow <= flowStart + 1e-9 ||
+                flow >= flowStart + flowSize - 1e-9 ||
+                crossStart >= high - 1e-9 ||
+                crossStart + crossSize <= low + 1e-9
+              )
+                continue;
+              flow = step > 0 ? flowStart + flowSize + flowSpacing : flowStart - flowSpacing;
+              moved = true;
+            }
+          }
+          return flow;
+        };
         if (horizontal) {
           const sign = fixedSideFeedback
             ? Math.sign(sourceRect.x - targetRect.x) || 1
@@ -5913,18 +5945,32 @@ function routeEdges(style: "ORTHOGONAL" | "POLYLINE" | "SPLINES"): EdgeRouter {
             (fixedSideFeedback ? 0.5 : 0);
           const preserveCenters =
             fixedSideFeedback && input.settings.unnecessaryBendpoints === true;
+          const sourceLeg = clearFeedbackLeg(
+            start.x + sourceFace * sign * flowSpacing,
+            sourceFace * sign,
+            start.y,
+            outerCross,
+            sourceRect,
+          );
+          const targetLeg = clearFeedbackLeg(
+            end.x - targetFace * sign * flowSpacing,
+            -targetFace * sign,
+            end.y,
+            outerCross,
+            targetRect,
+          );
           pointsByEdgeId.set(edge.id, [
             start,
-            { x: start.x + sourceFace * sign * flowSpacing, y: start.y },
-            { x: start.x + sourceFace * sign * flowSpacing, y: outerCross },
+            { x: sourceLeg, y: start.y },
+            { x: sourceLeg, y: outerCross },
             ...(preserveCenters
               ? [
                   { x: sourceRect.x + sourceRect.width / 2, y: outerCross },
                   { x: targetRect.x + targetRect.width / 2, y: outerCross },
                 ]
               : []),
-            { x: end.x - targetFace * sign * flowSpacing, y: outerCross },
-            { x: end.x - targetFace * sign * flowSpacing, y: end.y },
+            { x: targetLeg, y: outerCross },
+            { x: targetLeg, y: end.y },
             end,
           ]);
         } else {
@@ -5939,18 +5985,32 @@ function routeEdges(style: "ORTHOGONAL" | "POLYLINE" | "SPLINES"): EdgeRouter {
             (fixedSideFeedback ? 0.5 : 0);
           const preserveCenters =
             fixedSideFeedback && input.settings.unnecessaryBendpoints === true;
+          const sourceLeg = clearFeedbackLeg(
+            start.y + sourceFace * sign * flowSpacing,
+            sourceFace * sign,
+            start.x,
+            outerCross,
+            sourceRect,
+          );
+          const targetLeg = clearFeedbackLeg(
+            end.y - targetFace * sign * flowSpacing,
+            -targetFace * sign,
+            end.x,
+            outerCross,
+            targetRect,
+          );
           pointsByEdgeId.set(edge.id, [
             start,
-            { x: start.x, y: start.y + sourceFace * sign * flowSpacing },
-            { x: outerCross, y: start.y + sourceFace * sign * flowSpacing },
+            { x: start.x, y: sourceLeg },
+            { x: outerCross, y: sourceLeg },
             ...(preserveCenters
               ? [
                   { x: outerCross, y: sourceRect.y + sourceRect.height / 2 },
                   { x: outerCross, y: targetRect.y + targetRect.height / 2 },
                 ]
               : []),
-            { x: outerCross, y: end.y - targetFace * sign * flowSpacing },
-            { x: end.x, y: end.y - targetFace * sign * flowSpacing },
+            { x: outerCross, y: targetLeg },
+            { x: end.x, y: targetLeg },
             end,
           ]);
         }

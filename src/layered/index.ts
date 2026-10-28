@@ -1941,19 +1941,35 @@ export function* createLayeredScopePipeline<N, E, G, P>(
     context?.diagnostics,
   );
   // ELK's SweepCopy.assertCorrectPortSides: a north/south port whose dummy
-  // ended on the other side of its node switches to that side.
-  for (const layer of order.layers) {
-    const position = new Map(layer.map((id, index) => [id, index]));
-    for (const [dummy, origin] of northSouth.originsByDummyId) {
-      const at = position.get(dummy),
-        owner = position.get(origin.node.id);
-      if (at === undefined || owner === undefined || at < owner === origin.beforeOwner) continue;
-      const opposite = ({ NORTH: "SOUTH", SOUTH: "NORTH", WEST: "EAST", EAST: "WEST" } as const)[
-        origin.side
-      ];
-      switchedSideByPort.set(`${origin.node.id}\0${origin.port.name}`, opposite);
-    }
-  }
+  // ended on the other side of its node switches to that side. A port whose
+  // side a nested layout already routed to cannot switch: its dummy returns
+  // to the port's side instead.
+  order = {
+    ...order,
+    layers: order.layers.map((members) => {
+      let layer = members;
+      const position = new Map(layer.map((id, index) => [id, index]));
+      for (const [dummy, origin] of northSouth.originsByDummyId) {
+        const at = position.get(dummy),
+          owner = position.get(origin.node.id);
+        if (at === undefined || owner === undefined || at < owner === origin.beforeOwner) continue;
+        const settings = expanded.input.portSettings?.(origin.port, origin.node) as
+          | { "port.pinnedSide"?: boolean }
+          | undefined;
+        if (settings?.["port.pinnedSide"] === true) {
+          const rest = layer.filter((id) => id !== dummy);
+          const index = rest.indexOf(origin.node.id) + (origin.beforeOwner ? 0 : 1);
+          layer = [...rest.slice(0, index), dummy, ...rest.slice(index)];
+          continue;
+        }
+        const opposite = ({ NORTH: "SOUTH", SOUTH: "NORTH", WEST: "EAST", EAST: "WEST" } as const)[
+          origin.side
+        ];
+        switchedSideByPort.set(`${origin.node.id}\0${origin.port.name}`, opposite);
+      }
+      return layer;
+    }),
+  };
   const unzippingFanIn =
     graph.edges.length === graph.nodes.length - 1 &&
     graph.nodes.some(
