@@ -26,7 +26,10 @@ places components with larger summed node priorities first. Stress keeps authore
 in their original coordinate frame instead of packing that graph. Fixed or
 locked components can therefore overlap; the solver does not impose collision
 constraints. Stress minimizes center distances and does not guarantee rectangle
-separation.
+separation. Stress computes weighted shortest paths with one sparse Dijkstra
+search per node, then retains a quadratic distance table for the stress objective.
+It checks cancellation before each search and each majorization iteration,
+including when `iterationLimit` is zero. Execution remains synchronous.
 
 ## ELK adapter mappings
 
@@ -38,8 +41,10 @@ separation.
 | Force    | `randomSeed`, `force.model`, `force.iterations`, `force.temperature`, `force.repulsion`, node `priority`                                                      |
 | Stress   | `randomSeed`, `stress.desiredEdgeLength`, `stress.iterationLimit`, `stress.epsilon`, `stress.dimension`, node `stress.fixed`, edge `stress.desiredEdgeLength` |
 
-Option IDs accept bare, `elk.`, and `org.eclipse.elk.` forms. Graph options override
-call options, which override constructor defaults. Selection accepts the same
+Option IDs accept bare, `elk.`, and `org.eclipse.elk.` forms. Graph `layoutOptions`
+override graph `properties`, then call options, then constructor defaults,
+independently of spelling. Node and edge `layoutOptions` override their `properties`.
+Within one source, bare IDs take precedence over `elk.`, then `org.eclipse.elk.`. Selection accepts the same
 three algorithm ID forms. The bundled constructor's `algorithms` argument does
 not filter inventory, matching the actual bundled oracle.
 
@@ -56,10 +61,12 @@ constraints are also rejected.
 
 <!-- exact comparisons from scripts/check-additional-provider-parity.ts; functional checks from test/additional-providers.test.ts -->
 
-The 45 behavior tests cover empty/singleton, measured branching, disconnected
+The 61 behavior tests cover empty/singleton, measured branching, disconnected
 components, permitted cycles, radial cycle rejection, data preservation,
 immutability, finite routes, wide radial fanout, seed repeatability, option effects,
-fixed anchors, locked dimensions, ID aliases, precedence, and explicit errors.
+fixed anchors, locked dimensions, ID aliases, precedence across option sources,
+root-port rejection, weighted shortest paths, cancellation during distance
+construction, and explicit errors.
 The packed consumer smoke test runs all four through native `getLayout` and the
 worker API against the built package.
 

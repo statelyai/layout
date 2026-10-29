@@ -40,25 +40,43 @@ interface TreeNode {
   leaves: number;
 }
 
+interface GraphIndex {
+  nodes: ReadonlyMap<string, VisualGraph["nodes"][number]>;
+  neighbors: ReadonlyMap<string, readonly string[]>;
+  indegree: ReadonlyMap<string, number>;
+  outgoingCount: ReadonlyMap<string, number>;
+}
+
+function graphIndex(graph: VisualGraph): GraphIndex {
+  const indegree = new Map<string, number>();
+  const outgoingCount = new Map<string, number>();
+  for (const edge of graph.edges) {
+    indegree.set(edge.targetId, (indegree.get(edge.targetId) ?? 0) + 1);
+    outgoingCount.set(edge.sourceId, (outgoingCount.get(edge.sourceId) ?? 0) + 1);
+  }
+  return {
+    nodes: new Map(graph.nodes.map((node) => [node.id, node])),
+    neighbors: adjacency(graph),
+    indegree,
+    outgoingCount,
+  };
+}
+
 function spanningTree(
-  graph: VisualGraph,
+  index: GraphIndex,
   ids: readonly string[],
   rootId: string | undefined,
   radial: boolean,
 ): { root: TreeNode; order: TreeNode[] } {
   const members = new Set(ids);
-  const indegree = new Map(ids.map((id) => [id, 0]));
-  for (const edge of graph.edges)
-    if (members.has(edge.targetId))
-      indegree.set(edge.targetId, (indegree.get(edge.targetId) ?? 0) + 1);
   const chosen =
-    rootId && members.has(rootId) ? rootId : (ids.find((id) => indegree.get(id) === 0) ?? ids[0]);
+    rootId && members.has(rootId)
+      ? rootId
+      : (ids.find((id) => (index.indegree.get(id) ?? 0) === 0) ?? ids[0]);
   if (chosen === undefined)
     throw new LayoutError("Cannot root an empty component", "INVALID_GRAPH");
-  const neighbors = adjacency(graph);
-  const byId = new Map(graph.nodes.map((node) => [node.id, node]));
   const makeNode = (id: string, depth: number): TreeNode => {
-    const node = byId.get(id);
+    const node = index.nodes.get(id);
     return {
       id,
       depth,
@@ -71,7 +89,7 @@ function spanningTree(
   };
   if (
     radial &&
-    graph.edges.filter((edge) => members.has(edge.sourceId)).length !== ids.length - 1
+    ids.reduce((sum, id) => sum + (index.outgoingCount.get(id) ?? 0), 0) !== ids.length - 1
   ) {
     throw new LayoutError(
       "Radial layout requires a tree in each connected component",
@@ -84,7 +102,7 @@ function spanningTree(
   const stack = [{ node: root, next: 0 }];
   while (stack.length) {
     const frame = stack[stack.length - 1]!;
-    const next = neighbors.get(frame.node.id)?.[frame.next++];
+    const next = index.neighbors.get(frame.node.id)?.[frame.next++];
     if (next === undefined) {
       stack.pop();
       continue;
@@ -118,10 +136,11 @@ export function getTreeLayout<N, E, G, P>(
   const layerSpacing = nonnegative(options.layerSpacing, spacing, "layerSpacing");
   const direction = options.direction ?? input.direction ?? "down";
   const vertical = direction === "down" || direction === "up";
+  const index = graphIndex(graph);
   const positions = new Map<string, { x: number; y: number }>();
   let componentOffset = 0;
   for (const ids of components(graph)) {
-    const { root: tree, order } = spanningTree(graph, ids, options.rootId, false);
+    const { root: tree, order } = spanningTree(index, ids, options.rootId, false);
     const levels: number[] = [];
     for (let index = order.length - 1; index >= 0; index--) {
       const node = order[index]!;
@@ -177,17 +196,13 @@ export function getRadialLayout<N, E, G, P>(
   const radius = nonnegative(options.radius, 100, "radius");
   if (!Number.isFinite(options.rotation ?? 0))
     throw new LayoutError("rotation must be finite", "INVALID_OPTIONS");
+  const index = graphIndex(graph);
   const positions = new Map<string, { x: number; y: number }>();
   let componentOffset = 0;
   for (const ids of components(graph)) {
-    const { root: tree, order } = spanningTree(graph, ids, options.rootId, true);
-    const members = new Set(ids);
-    const maxSize = Math.max(
-      0,
-      ...graph.nodes
-        .filter((node) => members.has(node.id))
-        .map((node) => Math.hypot(node.width, node.height)),
-    );
+    const { root: tree, order } = spanningTree(index, ids, options.rootId, true);
+    const local = ids.map((id) => index.nodes.get(id)!);
+    const maxSize = Math.max(0, ...local.map((node) => Math.hypot(node.width, node.height)));
     const step = Math.max(radius, maxSize + spacing);
     const wedges = new Map([[tree.id, { start: 0, end: 2 * Math.PI }]]);
     for (const node of order) {
@@ -204,7 +219,6 @@ export function getRadialLayout<N, E, G, P>(
         cursor += wedge;
       }
     }
-    const local = graph.nodes.filter((node) => members.has(node.id));
     let expansion = 1;
     for (let i = 0; i < local.length; i++)
       for (let j = i + 1; j < local.length; j++) {

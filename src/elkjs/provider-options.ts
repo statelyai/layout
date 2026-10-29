@@ -9,11 +9,26 @@ import type { ElkNode } from "./types";
 type ProviderId = "mrtree" | "radial" | "force" | "stress";
 type Options = Readonly<Record<string, unknown>>;
 
+export function mergeElkOptions(...sources: (Options | undefined)[]): Record<string, unknown> {
+  const result = new Map<string, unknown>();
+  for (const source of sources) {
+    if (!source) continue;
+    const ids = new Set(
+      Object.keys(source).map((key) => key.replace(/^(?:org\.eclipse\.)?elk\./, "")),
+    );
+    for (const id of ids) result.set(id, option(source, id));
+  }
+  return Object.fromEntries(result);
+}
+
 export function isAdditionalProvider(id: string): id is ProviderId {
   return id === "mrtree" || id === "radial" || id === "force" || id === "stress";
 }
 function option(options: Options, id: string): unknown {
-  return options[id] ?? options[`elk.${id}`] ?? options[`org.eclipse.elk.${id}`];
+  for (const key of [id, `elk.${id}`, `org.eclipse.elk.${id}`]) {
+    if (options[key] !== undefined) return options[key];
+  }
+  return undefined;
 }
 function number(options: Options, id: string): number | undefined {
   const value = option(options, id);
@@ -29,11 +44,11 @@ function boolean(options: Options, id: string): boolean | undefined {
   if (value === false || value === "false") return false;
   throw new Error(`Invalid boolean option ${id}`);
 }
-function elementOptions(node: { properties?: unknown; layoutOptions?: Options }): Options {
-  return {
-    ...(typeof node.properties === "object" && node.properties !== null ? node.properties : {}),
-    ...node.layoutOptions,
-  };
+function elementOptions(node: { properties?: Options; layoutOptions?: Options }): Options {
+  return mergeElkOptions(
+    typeof node.properties === "object" && node.properties !== null ? node.properties : {},
+    node.layoutOptions,
+  );
 }
 function rejectUnimplemented(id: ProviderId, values: Options, supported: readonly string[]): void {
   for (const key of Object.keys(values)) {

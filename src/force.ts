@@ -14,6 +14,7 @@ import {
   providerGraph,
   type GraphProviderOptions,
 } from "./internal/graph-provider";
+import { shortestPathDistances } from "./internal/shortest-paths";
 import { JavaRandom } from "./java-random";
 import type { LayoutAlgorithm, LayoutExecutionContext } from "./types";
 
@@ -49,12 +50,19 @@ function iterationCount(value: number | undefined, fallback: number): number {
     throw new LayoutError("iterations must be an integer from 0 to 100000", "INVALID_OPTIONS");
   return count;
 }
-function particles(graph: VisualGraph, ids: readonly string[], seed: number): Particle[] {
+function componentGroups(graph: VisualGraph) {
+  const groups: { ids: string[]; nodes: VisualGraph["nodes"]; edges: VisualGraph["edges"] }[] =
+    components(graph).map((ids) => ({ ids, nodes: [], edges: [] }));
+  const groupById = new Map(groups.flatMap((group) => group.ids.map((id) => [id, group] as const)));
+  for (const node of graph.nodes) groupById.get(node.id)!.nodes.push(node);
+  for (const edge of graph.edges) groupById.get(edge.sourceId)!.edges.push(edge);
+  return groups;
+}
+
+function particles(nodes: readonly VisualGraph["nodes"][number][], seed: number): Particle[] {
   if (!Number.isSafeInteger(seed))
     throw new LayoutError("seed must be a safe integer", "INVALID_OPTIONS");
   const random = new JavaRandom(seed);
-  const members = new Set(ids);
-  const nodes = graph.nodes.filter((node) => members.has(node.id));
   const extent =
     Math.sqrt(nodes.length) *
     Math.max(50, ...nodes.map((node) => Math.hypot(node.width, node.height)));
@@ -127,14 +135,17 @@ export function getForceLayout<N, E, G, P>(
   const priority = new Map(
     graph.nodes.map((node) => [node.id, nonnegative(options.priority?.(node), 1, "priority")]),
   );
-  const orderedComponents = components(graph)
-    .map((ids) => ({ ids, priority: ids.reduce((sum, id) => sum + (priority.get(id) ?? 1), 0) }))
+  const orderedComponents = componentGroups(graph)
+    .map((group) => ({
+      ...group,
+      priority: group.ids.reduce((sum, id) => sum + (priority.get(id) ?? 1), 0),
+    }))
     .sort((a, b) => b.priority - a.priority);
-  const groups = orderedComponents.map(({ ids }) => {
-    const points = particles(graph, ids, options.seed ?? 1);
+  const groups = orderedComponents.map((component) => {
+    const points = particles(component.nodes, options.seed ?? 1);
     const index = new Map(points.map((point, i) => [point.id, i]));
     const connection = points.map(() => points.map(() => 0));
-    for (const edge of graph.edges) {
+    for (const edge of component.edges) {
       const i = index.get(edge.sourceId),
         j = index.get(edge.targetId);
       if (i !== undefined && j !== undefined && i !== j) {
@@ -212,15 +223,14 @@ export function getStressLayout<N, E, G, P>(
   const desired = Math.max(1e-6, nonnegative(options.desiredEdgeLength, 100, "desiredEdgeLength"));
   if (options.dimension !== undefined && !["XY", "X", "Y"].includes(options.dimension))
     throw new LayoutError("Unknown stress dimension", "INVALID_OPTIONS");
-  const groups = components(graph).map((ids) => {
-    const points = particles(graph, ids, options.seed ?? 1);
+  const authoredById = new Map(input.nodes.map((node) => [node.id, node]));
+  const fixed = new Set(graph.nodes.filter((node) => options.fixed?.(node)).map((node) => node.id));
+  const groups = componentGroups(graph).map((component) => {
+    const points = particles(component.nodes, options.seed ?? 1);
     const index = new Map(points.map((point, i) => [point.id, i]));
-    const distances = points.map((_, i) => points.map((_, j) => (i === j ? 0 : Infinity)));
-    const fixed = new Set(
-      graph.nodes.filter((node) => options.fixed?.(node)).map((node) => node.id),
-    );
+    const neighbors = points.map(() => new Map<number, number>());
     for (const point of points) {
-      const authored = input.nodes.find((node) => node.id === point.id);
+      const authored = authoredById.get(point.id);
       if (authored) {
         if (fixed.has(point.id) || options.dimension === "Y")
           point.x = (authored.x ?? 0) + point.width / 2;
@@ -228,19 +238,16 @@ export function getStressLayout<N, E, G, P>(
           point.y = (authored.y ?? 0) + point.height / 2;
       }
     }
-    for (const edge of graph.edges) {
+    for (const edge of component.edges) {
       const i = index.get(edge.sourceId),
         j = index.get(edge.targetId);
       if (i === undefined || j === undefined || i === j) continue;
       const length = Math.max(1e-6, nonnegative(options.edgeLength?.(edge), desired, "edgeLength"));
-      distances[i]![j] = Math.min(distances[i]![j]!, length);
-      distances[j]![i] = distances[i]![j]!;
+      const shortest = Math.min(neighbors[i]!.get(j) ?? Infinity, length);
+      neighbors[i]!.set(j, shortest);
+      neighbors[j]!.set(i, shortest);
     }
-    for (let k = 0; k < points.length; k++)
-      for (let i = 0; i < points.length; i++)
-        for (let j = 0; j < points.length; j++) {
-          distances[i]![j] = Math.min(distances[i]![j]!, distances[i]![k]! + distances[k]![j]!);
-        }
+    const distances = shortestPathDistances(neighbors, context);
     let previousStress = Infinity;
     for (let iteration = 0; iteration < iterations; iteration++) {
       context?.throwIfAborted();
@@ -284,9 +291,7 @@ export function getStressLayout<N, E, G, P>(
     return points;
   });
   const preserveCoordinates =
-    options.dimension === "X" ||
-    options.dimension === "Y" ||
-    graph.nodes.some((node) => options.fixed?.(node));
+    options.dimension === "X" || options.dimension === "Y" || fixed.size > 0;
   return pack(graph, groups, options, preserveCoordinates);
 }
 

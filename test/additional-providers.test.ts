@@ -13,6 +13,8 @@ import {
   treeAlgorithm,
 } from "../src";
 import ELK from "../src/elkjs";
+import { shortestPathDistances } from "../src/internal/shortest-paths";
+import { mergeElkOptions } from "../src/elkjs/provider-options";
 
 const algorithms = [treeAlgorithm, radialAlgorithm, forceAlgorithm, stressAlgorithm];
 const nodes = [
@@ -206,6 +208,38 @@ describe("additional native providers", () => {
       expectFinite(result);
     },
   );
+  it("stress checks cancellation during distances even with no iterations", () => {
+    let checks = 0;
+    expect(() =>
+      getStressLayout(
+        fixture(),
+        { iterationLimit: 0 },
+        {
+          throwIfAborted() {
+            if (++checks === 2) throw new Error("cancel distances");
+          },
+        },
+      ),
+    ).toThrow("cancel distances");
+    expect(checks).toBe(2);
+  });
+  it.each([getTreeLayout, getRadialLayout, getForceLayout, getStressLayout])(
+    "packs many isolates and disconnected components consistently",
+    (layout) => {
+      const graph = createGraph({
+        nodes: Array.from({ length: 1000 }, (_, i) => ({ id: String(i), width: 40, height: 20 })),
+        edges: [
+          { id: "01", sourceId: "0", targetId: "1" },
+          { id: "23", sourceId: "2", targetId: "3" },
+        ],
+      });
+      const result = layout(graph);
+      expectFinite(result);
+      expect(result.nodes).toHaveLength(1000);
+      expect(result.nodes[4]!.x).toBeGreaterThan(result.nodes[3]!.x + 40);
+      expect(result).toEqual(layout(graph));
+    },
+  );
   it("stress honors desired lengths, edge overrides, fixed anchors and locked axes", () => {
     const graph = createGraph({
       nodes: [
@@ -268,6 +302,16 @@ describe("additional ELK adapter providers", () => {
         })),
       });
     });
+    it(`${id} rejects root ports before losing their edges`, async () => {
+      await expect(
+        new ELK().layout({
+          ...input(),
+          ports: [{ id: "root-port", width: 5, height: 5 }],
+          edges: [{ id: "port-edge", sources: ["root-port"], targets: ["a"] }],
+          layoutOptions: { "elk.algorithm": id },
+        }),
+      ).rejects.toThrow("ports");
+    });
     it(`${id} rejects unsupported provider options and hyperedges`, async () => {
       await expect(
         new ELK().layout({
@@ -303,6 +347,24 @@ describe("additional ELK adapter providers", () => {
       await new OracleELK().knownLayoutCategories(),
     );
   });
+  it("applies source precedence across aliases including explicit zero", async () => {
+    const defaults = {
+      "elk.algorithm": "force",
+      "elk.force.iterations": "300",
+      "elk.randomSeed": "7",
+    };
+    const call = { "org.eclipse.elk.force.iterations": "0" };
+    const graph = input();
+    const actual = await new ELK({ defaultLayoutOptions: defaults }).layout(
+      structuredClone(graph),
+      { layoutOptions: call },
+    );
+    const expected = await new ELK().layout({
+      ...structuredClone(graph),
+      layoutOptions: { ...defaults, "elk.force.iterations": "0" },
+    });
+    expect(actual.children).toEqual(expected.children);
+  });
   it("graph options override call options which override constructor defaults", async () => {
     const elk = new ELK({ defaultLayoutOptions: { "elk.algorithm": "unknown" } });
     const result = await elk.layout(
@@ -312,5 +374,155 @@ describe("additional ELK adapter providers", () => {
     expect(result.children?.length).toBe(4);
     const result2 = await elk.layout(input(), { layoutOptions: { "elk.algorithm": "mrtree" } });
     expect(result2.children?.length).toBe(4);
+  });
+});
+
+describe("provider option sources", () => {
+  it("keeps prototype-shaped keys as own data properties", () => {
+    const options = mergeElkOptions(
+      JSON.parse('{"__proto__":{"algorithm":"fixed"},"elk.algorithm":"mrtree"}'),
+    );
+    expect(Object.hasOwn(options, "__proto__")).toBe(true);
+    expect(Object.getPrototypeOf(options)).toBe(Object.prototype);
+    expect(options.algorithm).toBe("mrtree");
+    expect(options.__proto__).toEqual({ algorithm: "fixed" });
+  });
+  it("canonicalizes each source before applying precedence without dropping false or zero", () => {
+    expect(
+      mergeElkOptions(
+        {
+          "elk.algorithm": "force",
+          "elk.force.iterations": 300,
+          "elk.direction": "RIGHT",
+          "elk.padding": 20,
+        },
+        { "org.eclipse.elk.force.iterations": 0, "org.eclipse.elk.direction": "LEFT" },
+        { algorithm: "mrtree", direction: "UP", "elk.padding": 10 },
+        { "org.eclipse.elk.algorithm": "radial", "elk.direction": "DOWN", padding: 0 },
+      ),
+    ).toEqual({ algorithm: "radial", "force.iterations": 0, direction: "DOWN", padding: 0 });
+    expect(
+      mergeElkOptions({ "stress.fixed": true }, { "org.eclipse.elk.stress.fixed": false }),
+    ).toEqual({ "stress.fixed": false });
+    expect(
+      mergeElkOptions(
+        { "elk.stress.desiredEdgeLength": 100 },
+        { "org.eclipse.elk.stress.desiredEdgeLength": 0 },
+      ),
+    ).toEqual({ "stress.desiredEdgeLength": 0 });
+  });
+  it("uses node and edge layoutOptions over differently aliased properties", async () => {
+    const graph = {
+      id: "root",
+      children: [
+        {
+          id: "a",
+          width: 20,
+          height: 20,
+          x: 100,
+          y: 80,
+          properties: { "elk.stress.fixed": true },
+          layoutOptions: { "org.eclipse.elk.stress.fixed": false },
+        },
+        { id: "b", width: 20, height: 20, x: 300, y: 90 },
+      ],
+      edges: [
+        {
+          id: "ab",
+          sources: ["a"],
+          targets: ["b"],
+          properties: { "elk.stress.desiredEdgeLength": 900 },
+          layoutOptions: { "org.eclipse.elk.stress.desiredEdgeLength": 200 },
+        },
+      ],
+      layoutOptions: { "elk.algorithm": "stress", "elk.randomSeed": 7 },
+    };
+    const expected = structuredClone(graph);
+    expected.children[0]!.properties!["elk.stress.fixed"] = false;
+    expected.edges[0]!.properties["elk.stress.desiredEdgeLength"] = 200;
+    const actual = await new ELK().layout(graph);
+    const result = await new ELK().layout(expected);
+    expect(actual.children?.map(({ x, y }) => ({ x, y }))).toEqual(
+      result.children?.map(({ x, y }) => ({ x, y })),
+    );
+    expect(actual.children?.[0]).not.toMatchObject({ x: 100, y: 80 });
+    expect(
+      mergeElkOptions({
+        "elk.force.iterations": 5,
+        "force.iterations": 0,
+        "org.eclipse.elk.force.iterations": 10,
+      }),
+    ).toEqual({ "force.iterations": 0 });
+  });
+  it("uses graph layoutOptions over properties and call aliases", async () => {
+    const graph = {
+      ...input(),
+      properties: { "elk.algorithm": "force", "elk.direction": "RIGHT" },
+      layoutOptions: {
+        "org.eclipse.elk.algorithm": "mrtree",
+        "org.eclipse.elk.direction": "UP",
+        "org.eclipse.elk.padding": "[top=5,left=7,bottom=9,right=11]",
+      },
+    };
+    for (const Constructor of [ELK, OracleELK]) {
+      const actual = await new Constructor().layout(structuredClone(graph), {
+        layoutOptions: { algorithm: "radial" },
+      });
+      const expected = await new Constructor().layout({
+        ...input(),
+        layoutOptions: {
+          "org.eclipse.elk.algorithm": "mrtree",
+          "org.eclipse.elk.direction": "UP",
+          "org.eclipse.elk.padding": "[top=5,left=7,bottom=9,right=11]",
+        },
+      });
+      const geometry = (nodes: typeof actual.children) =>
+        nodes?.map(({ id, x, y, width, height }) => ({ id, x, y, width, height }));
+      expect(geometry(actual.children)).toEqual(geometry(expected.children));
+    }
+  });
+});
+
+describe("weighted sparse shortest paths", () => {
+  it("matches an independent Floyd-Warshall reference including disconnected vertices", () => {
+    const neighbors = Array.from({ length: 7 }, () => new Map<number, number>());
+    for (const [a, b, length] of [
+      [0, 1, 5],
+      [0, 2, 50],
+      [1, 2, 7],
+      [2, 3, 1],
+      [1, 3, 30],
+      [3, 4, 2],
+      [4, 5, 9],
+    ]) {
+      neighbors[a!]!.set(b!, length!);
+      neighbors[b!]!.set(a!, length!);
+    }
+    const reference = neighbors.map((edges, i) =>
+      neighbors.map((_, j) => (i === j ? 0 : (edges.get(j) ?? Infinity))),
+    );
+    for (let k = 0; k < neighbors.length; k++)
+      for (let i = 0; i < neighbors.length; i++)
+        for (let j = 0; j < neighbors.length; j++)
+          reference[i]![j] = Math.min(reference[i]![j]!, reference[i]![k]! + reference[k]![j]!);
+    expect(shortestPathDistances(neighbors)).toEqual(reference);
+    expect(reference[0]![3]).toBe(13);
+  });
+  it("uses the shortest parallel edge in stress layouts", () => {
+    const graph = createGraph({
+      nodes: ["a", "b", "c"].map((id) => ({ id, width: 20, height: 20 })),
+      edges: [
+        { id: "short", sourceId: "a", targetId: "b" },
+        { id: "bc", sourceId: "b", targetId: "c" },
+      ],
+    });
+    const options = {
+      seed: 7,
+      edgeLength: (edge: { id: string }) => (edge.id === "long" ? 900 : 100),
+    };
+    const expected = getStressLayout(graph, options);
+    graph.edges.push({ ...graph.edges[0]!, id: "long" });
+    const actual = getStressLayout(graph, options);
+    expect(actual.nodes).toEqual(expected.nodes);
   });
 });

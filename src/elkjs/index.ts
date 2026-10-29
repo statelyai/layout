@@ -35,7 +35,11 @@ import {
   elkCategoryInventory,
   isBuiltInAlgorithmId,
 } from "./algorithm-inventory";
-import { executeAdditionalProvider, isAdditionalProvider } from "./provider-options";
+import {
+  executeAdditionalProvider,
+  isAdditionalProvider,
+  mergeElkOptions,
+} from "./provider-options";
 import { executeElkjs0111Layout } from "../internal/layout-engine";
 import { elkjs0111ResultPolicy, type Elkjs0111ResultPolicy } from "../internal/elkjs-compatibility";
 import type {
@@ -266,12 +270,23 @@ export default class ELK {
       throw new TypeError("Graph id must be a string or integer");
     }
     delete graph.logging;
-    const layoutOptions = {
-      ...this.#options.defaultLayoutOptions,
-      ...arguments_.layoutOptions,
-      ...graph.properties,
-      ...graph.layoutOptions,
-    };
+    const optionSources = [
+      this.#options.defaultLayoutOptions,
+      arguments_.layoutOptions,
+      graph.properties,
+      graph.layoutOptions,
+    ];
+    const mergedOptions = mergeElkOptions(...optionSources);
+    const requestedAlgorithm = String(getOption(mergedOptions, "algorithm") ?? "layered");
+    const algorithm = requestedAlgorithm.replace(/^(?:org\.eclipse\.)?elk\./, "");
+    const layoutOptions = isAdditionalProvider(algorithm)
+      ? mergedOptions
+      : {
+          ...this.#options.defaultLayoutOptions,
+          ...arguments_.layoutOptions,
+          ...graph.properties,
+          ...graph.layoutOptions,
+        };
     // Programmatic incremental metadata is accepted by ELK but is neither
     // serialized by elkjs nor geometry-affecting during a normal layout.
     void getOption(layoutOptions, "debugMode");
@@ -302,15 +317,16 @@ export default class ELK {
         "layered.considerModelOrder.groupModelOrder.componentGroupId",
       );
     }
-    const requestedAlgorithm = String(getOption(layoutOptions, "algorithm") ?? "layered");
-    const algorithm = requestedAlgorithm.replace(/^(?:org\.eclipse\.)?elk\./, "");
     if (!isBuiltInAlgorithmId(algorithm)) {
       throw new Error(
         `org.eclipse.elk.core.UnsupportedConfigurationException: Layout algorithm '${requestedAlgorithm}' not found`,
       );
     }
     if (isAdditionalProvider(algorithm)) {
-      if ((graph.children ?? []).some((child) => child.children?.length || child.ports?.length)) {
+      if (
+        graph.ports?.length ||
+        (graph.children ?? []).some((child) => child.children?.length || child.ports?.length)
+      ) {
         throw new Error(`${algorithm} currently supports flat graphs without explicit ports`);
       }
       if (
