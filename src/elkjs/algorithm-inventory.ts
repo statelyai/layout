@@ -3,7 +3,7 @@
  * Copyright (c) Eclipse ELK contributors.
  * SPDX-License-Identifier: EPL-2.0
  *******************************************************************************/
-import type { BuiltInLayoutAlgorithmId } from "../internal/layout-engine";
+import type { ElkLayoutAlgorithmId } from "../internal/layout-engine";
 import type {
   ElkLayoutAlgorithmDescription,
   ElkLayoutOptionDescription,
@@ -419,7 +419,7 @@ export const elkAlgorithmInventory = {
       "org.eclipse.elk.rectpacking.orderBySize",
     ],
   },
-} satisfies Record<BuiltInLayoutAlgorithmId, ElkLayoutAlgorithmDescription>;
+} satisfies Record<ElkLayoutAlgorithmId, ElkLayoutAlgorithmDescription>;
 
 export const elkCategoryInventory: readonly ElkLayoutCategoryDescription[] = [
   {
@@ -482,7 +482,7 @@ export const elkCategoryInventory: readonly ElkLayoutCategoryDescription[] = [
   },
 ];
 
-export function isBuiltInAlgorithmId(id: string): id is BuiltInLayoutAlgorithmId {
+export function isElkAlgorithmId(id: string): id is ElkLayoutAlgorithmId {
   return Object.hasOwn(elkAlgorithmInventory, id);
 }
 

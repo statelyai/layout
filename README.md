@@ -265,6 +265,42 @@ hint even at that cost. `statechartHints` requires initial-state anchors and
 prefers chains. Hints apply to the native API; the elkjs compatibility entry
 point is unchanged.
 
+## Pele layout
+
+<!-- Pele algorithm and options from src/pele/index.ts -->
+
+`pele` is an independent algorithm adapted from [Pele](https://github.com/obsidianmd/pele),
+with its own ranking, crossing reduction, positioning, floating attachments,
+and smooth edge routing. It does not run the ELK-compatible layered engine.
+
+```ts
+import { getLayout, getLayoutRoutes } from "@statelyai/layout";
+
+const { graph: positioned } = await getLayout({
+  graph,
+  algorithm: "pele",
+  options: {
+    direction: "down",
+    spacing: { node: 40, layer: 44, edge: 16 },
+    padding: 20,
+  },
+});
+const routes = getLayoutRoutes(positioned);
+```
+
+Supply complete node dimensions through `measure` or authored `width`/`height`,
+and complete transition-card dimensions through `measureLabel` or edge
+`width`/`height`. Descriptions and guards remain application data; the algorithm
+reserves their measured boxes without hiding or truncating their contents.
+Render the sections from `getLayoutRoutes` to preserve curves and label gaps.
+Edge `points` provide a flattened fallback, which joins across label gaps.
+
+This version supports full layout of flat graphs in all four directions,
+including cycles, parallel edges, and self-loops. Nested nodes, named ports,
+geometry constraints, incremental, partial, and route-only scopes are not yet
+supported and are rejected explicitly. No editor integration is included.
+The upstream MIT license and pinned revision are recorded in `NOTICE.md`.
+
 ## elkjs compatibility
 
 <!-- elkjs-compatible entry point and layered mapping exports from package.json#exports and src/layered/index.ts -->

@@ -1,3 +1,5 @@
+export { getPeleLayout, peleAlgorithm } from "./pele";
+export type { PeleLayoutOptions, PeleVisualGraph } from "./pele";
 export { getTreeLayout, getRadialLayout, treeAlgorithm, radialAlgorithm } from "./tree";
 export type { TreeLayoutOptions, RadialLayoutOptions } from "./tree";
 export { getForceLayout, getStressLayout, forceAlgorithm, stressAlgorithm } from "./force";

@@ -25,9 +25,11 @@ import {
   type TreeLayoutOptions,
   type RadialLayoutOptions,
 } from "../tree";
+import { peleAlgorithm, type PeleLayoutOptions } from "../pele";
 import type { LayoutAlgorithm, LayoutExecutionContext } from "../types";
 
 export interface BuiltInLayoutOptionsById {
+  pele: PeleLayoutOptions;
   mrtree: TreeLayoutOptions;
   radial: RadialLayoutOptions;
   force: ForceLayoutOptions;
@@ -44,6 +46,7 @@ export interface BuiltInLayoutOptionsById {
 export type BuiltInLayoutAlgorithmId = keyof BuiltInLayoutOptionsById;
 
 export const builtInLayoutAlgorithms = {
+  pele: peleAlgorithm,
   mrtree: treeAlgorithm,
   radial: radialAlgorithm,
   force: forceAlgorithm,
@@ -60,14 +63,20 @@ export const builtInLayoutAlgorithms = {
 };
 
 const elkjs0111LayoutAlgorithms = {
-  ...builtInLayoutAlgorithms,
+  mrtree: treeAlgorithm,
+  radial: radialAlgorithm,
+  force: forceAlgorithm,
+  stress: stressAlgorithm,
+  fixed: fixedAlgorithm,
+  sporeCompaction: sporeCompactionAlgorithm,
+  sporeOverlap: sporeOverlapRemovalAlgorithm,
   box: elkjs0111BoxAlgorithm,
   random: elkjs0111RandomAlgorithm,
   layered: elkjs0111LayeredAlgorithm,
   rectpacking: elkjs0111RectanglePackingAlgorithm,
-} satisfies {
-  [Id in BuiltInLayoutAlgorithmId]: LayoutAlgorithm<BuiltInLayoutOptionsById[Id]>;
 };
+
+export type ElkLayoutAlgorithmId = keyof typeof elkjs0111LayoutAlgorithms;
 
 export function getBuiltInLayoutAlgorithm(id: string): LayoutAlgorithm<unknown> | undefined {
   if (!Object.hasOwn(builtInLayoutAlgorithms, id)) return undefined;
@@ -129,7 +138,7 @@ export function executeBuiltInLayout<N, E, G, P, Id extends BuiltInLayoutAlgorit
 }
 
 /** Execute through the pinned elkjs 0.11.1 compatibility policy. */
-export function executeElkjs0111Layout<N, E, G, P, Id extends BuiltInLayoutAlgorithmId>({
+export function executeElkjs0111Layout<N, E, G, P, Id extends ElkLayoutAlgorithmId>({
   algorithm,
   graph,
   options,
