@@ -1,3 +1,8 @@
+export { getTreeLayout, getRadialLayout, treeAlgorithm, radialAlgorithm } from "./tree";
+export type { TreeLayoutOptions, RadialLayoutOptions } from "./tree";
+export { getForceLayout, getStressLayout, forceAlgorithm, stressAlgorithm } from "./force";
+export type { ForceLayoutOptions, StressLayoutOptions } from "./force";
+export type { BuiltInLayoutAlgorithmId, BuiltInLayoutOptionsById } from "./internal/layout-engine";
 export { LayoutError, UnsupportedLayoutError } from "./errors";
 export { boxAlgorithm, getBoxLayout } from "./box";
 export type { BoxLayoutOptions } from "./box";

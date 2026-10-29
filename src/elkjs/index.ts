@@ -29,6 +29,13 @@ import {
   type ElkLayeredOptionValueByName,
   type LayeredAdvancedOptions,
 } from "../layered/elk-options";
+import {
+  additionalProviderOptionDescriptions,
+  elkAlgorithmInventory,
+  elkCategoryInventory,
+  isBuiltInAlgorithmId,
+} from "./algorithm-inventory";
+import { executeAdditionalProvider, isAdditionalProvider } from "./provider-options";
 import { executeElkjs0111Layout } from "../internal/layout-engine";
 import { elkjs0111ResultPolicy, type Elkjs0111ResultPolicy } from "../internal/elkjs-compatibility";
 import type {
@@ -123,48 +130,18 @@ function snapSizes(node: ElkNode): void {
 
 export default class ELK {
   readonly #options: ElkConstructorArguments;
-  readonly #algorithmIds: ReadonlySet<string>;
-
   constructor(options: ElkConstructorArguments = {}) {
     this.#options = options;
-    this.#algorithmIds = new Set([
-      "box",
-      "fixed",
-      "random",
-      "rectpacking",
-      "sporeCompaction",
-      "sporeOverlap",
-      ...(options.algorithms ?? ["layered"]).filter((id) => id === "layered"),
-    ]);
   }
 
   async knownLayoutAlgorithms(): Promise<ElkLayoutAlgorithmDescription[]> {
-    return [...this.#algorithmIds].map((id) => ({
-      id: id === "layered" ? "org.eclipse.elk.layered" : id,
-      name: {
-        layered: "Layered",
-        box: "Box",
-        fixed: "Fixed",
-        random: "Random",
-        rectpacking: "Rectangle Packing",
-        sporeCompaction: "SPOrE Compaction",
-        sporeOverlap: "SPOrE Overlap Removal",
-      }[id],
-      category: id === "layered" ? "layered" : "other",
-      knownOptions:
-        id === "layered"
-          ? elkLayeredOptionDefinitions.map((definition) => definition.elkId)
-          : id === "box"
-            ? ["padding", "spacing.nodeNode", "aspectRatio", "box.packingMode"]
-            : id === "random"
-              ? ["padding", "spacing.nodeNode", "aspectRatio", "randomSeed"]
-              : ["position", "bendPoints"],
-    }));
+    return structuredClone(Object.values(elkAlgorithmInventory));
   }
 
   async knownLayoutOptions(): Promise<ElkLayoutOptionDescription[]> {
     return [
       { id: "org.eclipse.elk.algorithm", name: "Layout Algorithm", type: "STRING" },
+      ...structuredClone(additionalProviderOptionDescriptions),
       ...elkLayeredOptionDefinitions.map((definition) => ({
         id: definition.elkId,
         name: definition.name,
@@ -175,14 +152,7 @@ export default class ELK {
   }
 
   async knownLayoutCategories(): Promise<ElkLayoutCategoryDescription[]> {
-    return [
-      {
-        id: "layered",
-        name: "Layered",
-        knownLayouters: this.#algorithmIds.has("layered") ? ["layered"] : [],
-      },
-      { id: "other", name: "Other", knownLayouters: ["box", "fixed", "random"] },
-    ];
+    return structuredClone([...elkCategoryInventory]);
   }
 
   terminateWorker(): void {}
@@ -334,18 +304,22 @@ export default class ELK {
     }
     const requestedAlgorithm = String(getOption(layoutOptions, "algorithm") ?? "layered");
     const algorithm = requestedAlgorithm.replace(/^(?:org\.eclipse\.)?elk\./, "");
-    if (
-      algorithm !== "layered" &&
-      algorithm !== "box" &&
-      algorithm !== "fixed" &&
-      algorithm !== "random" &&
-      algorithm !== "rectpacking" &&
-      algorithm !== "sporeCompaction" &&
-      algorithm !== "sporeOverlap"
-    ) {
+    if (!isBuiltInAlgorithmId(algorithm)) {
       throw new Error(
         `org.eclipse.elk.core.UnsupportedConfigurationException: Layout algorithm '${requestedAlgorithm}' not found`,
       );
+    }
+    if (isAdditionalProvider(algorithm)) {
+      if ((graph.children ?? []).some((child) => child.children?.length || child.ports?.length)) {
+        throw new Error(`${algorithm} currently supports flat graphs without explicit ports`);
+      }
+      if (
+        (graph.edges ?? []).some(
+          (edge) => (edge.sources?.length ?? 1) !== 1 || (edge.targets?.length ?? 1) !== 1,
+        )
+      ) {
+        throw new Error(`${algorithm} does not support hyperedges`);
+      }
     }
     const preparedChildren = new Map<string, PreparedElkScope>();
     const finishChildren: Array<() => Promise<void>> = [];
@@ -1248,75 +1222,80 @@ export default class ELK {
           }
         }
       }
-      const laidOut = await (algorithm === "sporeCompaction"
-        ? executeElkjs0111Layout({
-            algorithm: "sporeCompaction",
-            graph: graph_,
-            options: {
-              padding,
-              spacing: getNumberOption(layoutOptions, "spacing.nodeNode"),
-            },
-          })
-        : algorithm === "sporeOverlap"
-          ? executeElkjs0111Layout({
-              algorithm: "sporeOverlap",
+      const runProvider = () => {
+        if (isAdditionalProvider(algorithm)) {
+          return executeAdditionalProvider(algorithm, graph_, graph, layoutOptions, padding);
+        }
+        switch (algorithm) {
+          case "sporeCompaction":
+          case "sporeOverlap":
+            return executeElkjs0111Layout({
+              algorithm,
               graph: graph_,
               options: {
                 padding,
                 spacing: getNumberOption(layoutOptions, "spacing.nodeNode"),
               },
-            })
-          : algorithm === "rectpacking"
-            ? executeElkjs0111Layout({
-                algorithm: "rectpacking",
-                graph: graph_,
-                options: {
-                  padding: getOption(layoutOptions, "padding") === undefined ? 15 : padding,
-                  spacing: getNumberOption(layoutOptions, "spacing.nodeNode") ?? 15,
+            });
+          case "rectpacking":
+            return executeElkjs0111Layout({
+              algorithm,
+              graph: graph_,
+              options: {
+                padding: getOption(layoutOptions, "padding") === undefined ? 15 : padding,
+                spacing: getNumberOption(layoutOptions, "spacing.nodeNode") ?? 15,
+              },
+            });
+          case "random":
+            return executeElkjs0111Layout({
+              algorithm,
+              graph: graph_,
+              options: {
+                padding: getOption(layoutOptions, "padding") === undefined ? 15 : padding,
+                spacing: getNumberOption(layoutOptions, "spacing.nodeNode"),
+                aspectRatio: getNumberOption(layoutOptions, "aspectRatio"),
+                seed: getNumberOption(layoutOptions, "randomSeed"),
+              },
+            });
+          case "box":
+            return executeElkjs0111Layout({
+              algorithm,
+              graph: graph_,
+              options: {
+                padding: getOption(layoutOptions, "padding") === undefined ? 15 : padding,
+                spacing: getNumberOption(layoutOptions, "spacing.nodeNode"),
+                aspectRatio: getNumberOption(layoutOptions, "aspectRatio"),
+                interactive: getBooleanOption(layoutOptions, "interactive"),
+                expandNodes: getBooleanOption(layoutOptions, "expandNodes"),
+                priority: (node) => {
+                  const child = graph.children?.find(
+                    (candidate) => String(candidate.id) === node.id,
+                  );
+                  return getNumberOption(child?.layoutOptions ?? {}, "priority");
                 },
-              })
-            : algorithm === "random"
-              ? executeElkjs0111Layout({
-                  algorithm: "random",
-                  graph: graph_,
-                  options: {
-                    padding: getOption(layoutOptions, "padding") === undefined ? 15 : padding,
-                    spacing: getNumberOption(layoutOptions, "spacing.nodeNode"),
-                    aspectRatio: getNumberOption(layoutOptions, "aspectRatio"),
-                    seed: getNumberOption(layoutOptions, "randomSeed"),
-                  },
-                })
-              : algorithm === "box"
-                ? executeElkjs0111Layout({
-                    algorithm: "box",
-                    graph: graph_,
-                    options: {
-                      padding: getOption(layoutOptions, "padding") === undefined ? 15 : padding,
-                      spacing: getNumberOption(layoutOptions, "spacing.nodeNode"),
-                      aspectRatio: getNumberOption(layoutOptions, "aspectRatio"),
-                      interactive: getBooleanOption(layoutOptions, "interactive"),
-                      expandNodes: getBooleanOption(layoutOptions, "expandNodes"),
-                      priority: (node) => {
-                        const child = graph.children?.find(
-                          (candidate) => String(candidate.id) === node.id,
-                        );
-                        return getNumberOption(child?.layoutOptions ?? {}, "priority");
-                      },
-                    },
-                  })
-                : algorithm === "fixed"
-                  ? executeElkjs0111Layout({
-                      algorithm: "fixed",
-                      graph: graph_,
-                      options: { direction: getDirection(layoutOptions) },
-                    })
-                  : finishLayered());
+              },
+            });
+          case "fixed":
+            return executeElkjs0111Layout({
+              algorithm,
+              graph: graph_,
+              options: { direction: getDirection(layoutOptions) },
+            });
+          case "layered":
+            return finishLayered();
+        }
+      };
+      const laidOut = await runProvider();
       const resultPolicy = (
         laidOut as typeof laidOut & {
           [elkjs0111ResultPolicy]?: Elkjs0111ResultPolicy;
         }
       )[elkjs0111ResultPolicy];
       applyLayout(graph, laidOut, padding, layoutOptions, resultPolicy);
+      if (isAdditionalProvider(algorithm)) {
+        graph.x ??= 0;
+        graph.y ??= 0;
+      }
       if (resultPolicy?.providerBounds) {
         graph.width = resultPolicy.providerBounds.width;
         graph.height = resultPolicy.providerBounds.height;

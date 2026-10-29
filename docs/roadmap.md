@@ -40,8 +40,9 @@
 - Package and worker entry-point compatibility for elkjs consumers
 - Option migration with diagnostics
 - Fixed plus Java-derived Box SIMPLE and seeded Random placement
-- Stress, tree, radial, force, and component layout as justified by
-  usage and benchmarks
+- Initial native Stress, Mr. Tree, Radial, and Force providers are available.
+  Exact Java provider/importer behavior, full option coverage, and component
+  packing remain incomplete. See [algorithm coverage](algorithm-coverage.md).
 
 ## Evaluation
 

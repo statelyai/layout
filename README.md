@@ -36,6 +36,14 @@ runtime and one shared scorer to track that gap. Native layered layout also
 supports partial selection, route-only execution, and geometric constraints.
 Incremental layout remains explicitly unsupported.
 
+<!-- non-layered provider exports from src/index.ts and registrations from src/internal/layout-engine.ts -->
+
+The registry also runs `mrtree`, `radial`, `force`, and `stress` through `getLayout`.
+Their direct native APIs are `getTreeLayout`, `getRadialLayout`, `getForceLayout`,
+and `getStressLayout`. These providers implement the corresponding layout models
+without a runtime elkjs dependency. They do not yet reproduce full ELK geometry.
+See [provider options and measured compatibility gaps](docs/algorithm-coverage.md).
+
 ## Install
 
 <!-- install command derived from package.json#name -->
