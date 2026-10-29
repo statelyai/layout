@@ -114,7 +114,8 @@ describe("editor gate scoring", () => {
     expect(compare(metrics, { ...metrics, groupHits: 0 }).status).toBe("LOSS");
     const dirty = { ...metrics, edgeLabelHits: 1 };
     expect(compare({ ...dirty, groupHits: 2 }, dirty)).toEqual({ status: "LOSS", metric: "hard" });
-    expect(compare({ ...dirty, groupHits: 2, edgeLabelHits: 0 }, dirty).metric).not.toBe("hard");
+    // Mixed hard changes fall through to the soft metrics, which are equal here.
+    expect(compare({ ...dirty, groupHits: 2, edgeLabelHits: 0 }, dirty)).toEqual({ status: "TIE" });
   });
 
   it("reports sibling order changes along and across the flow", () => {
