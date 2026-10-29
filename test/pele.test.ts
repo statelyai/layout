@@ -1,3 +1,4 @@
+import ELK from "../src/elkjs";
 import { createGraph } from "@statelyai/graph";
 import { describe, expect, it } from "vitest";
 import {
@@ -34,6 +35,16 @@ describe("Pele layout", () => {
     expect(result.patches.length).toBeGreaterThan(0);
     expect(result.diagnostics).toEqual([]);
     expect(result.metrics.phases[0]?.id).toBe("pele");
+  });
+
+  it("keeps the native Pele algorithm separate from ELK discovery", async () => {
+    const elk = new ELK();
+    expect(
+      (await elk.knownLayoutAlgorithms()).some((algorithm) => algorithm.id.includes("pele")),
+    ).toBe(false);
+    await expect(
+      elk.layout({ id: "g", layoutOptions: { "elk.algorithm": "pele" } }),
+    ).rejects.toThrow(/not found/);
   });
 
   it.each(["down", "up", "left", "right"] as const)(

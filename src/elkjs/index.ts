@@ -33,7 +33,7 @@ import {
   additionalProviderOptionDescriptions,
   elkAlgorithmInventory,
   elkCategoryInventory,
-  isBuiltInAlgorithmId,
+  isElkAlgorithmId,
 } from "./algorithm-inventory";
 import {
   executeAdditionalProvider,
@@ -317,7 +317,7 @@ export default class ELK {
         "layered.considerModelOrder.groupModelOrder.componentGroupId",
       );
     }
-    if (!isBuiltInAlgorithmId(algorithm)) {
+    if (!isElkAlgorithmId(algorithm)) {
       throw new Error(
         `org.eclipse.elk.core.UnsupportedConfigurationException: Layout algorithm '${requestedAlgorithm}' not found`,
       );
