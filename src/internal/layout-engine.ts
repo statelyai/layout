@@ -25,9 +25,11 @@ import {
   type TreeLayoutOptions,
   type RadialLayoutOptions,
 } from "../tree";
+import { peleAlgorithm, type PeleLayoutOptions } from "../pele";
 import type { LayoutAlgorithm, LayoutExecutionContext } from "../types";
 
 export interface BuiltInLayoutOptionsById {
+  pele: PeleLayoutOptions;
   mrtree: TreeLayoutOptions;
   radial: RadialLayoutOptions;
   force: ForceLayoutOptions;
@@ -44,6 +46,7 @@ export interface BuiltInLayoutOptionsById {
 export type BuiltInLayoutAlgorithmId = keyof BuiltInLayoutOptionsById;
 
 export const builtInLayoutAlgorithms = {
+  pele: peleAlgorithm,
   mrtree: treeAlgorithm,
   radial: radialAlgorithm,
   force: forceAlgorithm,

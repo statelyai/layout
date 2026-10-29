@@ -28,10 +28,14 @@ Import these exports from `@statelyai/layout`.
 | `getBoxLayout`                 | `BoxLayoutOptions`              |
 | `getFixedLayout`               | `FixedLayoutOptions`            |
 | `getLayeredLayout`             | `LayeredLayoutOptions`          |
+| `getPeleLayout`                | `PeleLayoutOptions`             |
 | `getRandomLayout`              | `RandomLayoutOptions`           |
 | `getRectanglePackingLayout`    | `RectanglePackingLayoutOptions` |
 | `getSporeCompactionLayout`     | `SporeLayoutOptions`            |
 | `getSporeOverlapRemovalLayout` | `SporeLayoutOptions`            |
+
+`PeleVisualGraph` extends `VisualGraph` with exact route sections in
+`compoundRoutes`. Read them through `getLayoutRoutes`.
 
 ### Algorithm objects
 
@@ -44,6 +48,7 @@ Import these exports from `@statelyai/layout`.
 | `boxAlgorithm`                 | `box`             |
 | `fixedAlgorithm`               | `fixed`           |
 | `layeredAlgorithm`             | `layered`         |
+| `peleAlgorithm`                | `pele`            |
 | `randomAlgorithm`              | `random`          |
 | `rectanglePackingAlgorithm`    | `rectpacking`     |
 | `sporeCompactionAlgorithm`     | `sporeCompaction` |
