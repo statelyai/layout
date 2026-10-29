@@ -79,3 +79,37 @@ pnpm exec tsx scripts/parity/quality-gate.ts holdout.json docs/heuristics/qualit
 | Bends (native / ELK)               | 4,412 / 3,424     | 3,299 / 2,520     |
 | Route length (native / ELK)        | 691,024 / 642,658 | 451,391 / 415,981 |
 | Area (native / ELK)                | 262.8M / 261.1M   | 193.4M / 190.4M   |
+
+## Editor gate
+
+The Stately editor takes only node and label positions from the layout. It throws away the routes the layout computes and routes every edge with its own router. A route-only fix is therefore invisible in the editor. A placement change can also score as a win here and still look worse in the editor: the west self-loops in 0.5.1–0.5.2 and the feedback-leg changes in layout#63 both did. `scripts/parity/editor-gate.ts` scores what the editor actually draws.
+
+The renders come from a harness in `statelyai/viz` (`packages/editor/scripts/layout-gate`). It lays out the same corpus machines the way the editor's "layout all" does, routes each canvas with a headless Flow engine and the canvas's edge router, and writes node bounds, label bounds and edge polylines. `LAYOUT_SRC` points it at a local layout checkout. Its README covers the setup.
+
+```sh
+pnpm exec tsx scripts/parity/editor-gate.ts editor-gate.json baseline.json.gz candidate.json.gz
+```
+
+Rows are canvases: a machine, a direction and the parent state being viewed. Canvases with fewer than two states are skipped. The split is the same as above (sha256 of `<source>/<machine>`). Only corpus rows are written to the output; holdout rows are reported in aggregate only.
+
+Scoring uses the shared metrics, with these changes for the editor's geometry:
+
+- **Graze tolerance.** The editor attaches routes at whole pixels while sizes are fractional. Hit tests ignore the outer 1 px of every node and label.
+- **Transition families.** The editor stacks the labels of parallel transitions (same source and target), and of a guarded branch chain, on one shared trunk. A route through a label of its own family is not a hit.
+- **`groupHits`** (hard): a route through a compound state that contains neither endpoint, which reads as cutting through siblings.
+- **Order drift** (reported, not scored): sibling pairs whose layer or in-layer order changed. Drift can be an improvement, so drifted rows get a visual check.
+
+Each row compares candidate to baseline with the ELK gate's rule, plus one addition: when both sides have hard violations, a side that is worse on some hard metric and better on none loses.
+
+### Validation (baseline `@statelyai/layout` 0.5.0)
+
+The editor runs 0.5.0. 0.5.3 has the same code.
+
+| Candidate                 | Corpus WIN / TIE / LOSS | New / fixed hard rows | Drift rows | Expected                                                         |
+| ------------------------- | ----------------------: | --------------------: | ---------: | ---------------------------------------------------------------- |
+| installed 0.5.0 (`dist`)  |           0 / 2,300 / 0 |                 0 / 0 |          0 | identical                                                        |
+| 0.5.3                     |           0 / 2,300 / 0 |                 0 / 0 |          0 | identical                                                        |
+| 0.5.2 (west self-loops)   |        61 / 2,090 / 149 |                3 / 16 |         35 | worse: 90 of the 120 self-loop rows that changed lose            |
+| layout#63 (feedback legs) |           0 / 2,295 / 5 |                 0 / 0 |          5 | worse: Magscope loses in every direction (`groupHits` 4 → 25–31) |
+
+Corpus totals for 0.5.0 (2,300 rows, 72 with hard violations): `edgeLabelHits` 378, `opposingOverlapLength` 6,344, `groupHits` 21, crossings 4,813, bends 5,892, route length 3.01M. Most of the opposing overlap is real. In `reciprocal-lock-transitions`, for example, the two transitions between a pair of states enter the same stub from opposite directions. `edgeOverlapLength` includes the shared trunks of transition families.
