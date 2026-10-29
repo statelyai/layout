@@ -12,7 +12,7 @@ describe("elkjs compatibility: metadata API", () => {
     await expect(elk.knownLayoutAlgorithms()).resolves.toEqual(
       expect.arrayContaining([
         expect.objectContaining({ id: "org.eclipse.elk.layered", knownOptions: expect.any(Array) }),
-        expect.objectContaining({ id: "fixed" }),
+        expect.objectContaining({ id: "org.eclipse.elk.fixed" }),
       ]),
     );
     await expect(elk.knownLayoutOptions()).resolves.toEqual(
@@ -23,7 +23,7 @@ describe("elkjs compatibility: metadata API", () => {
     );
     expect(layered?.knownOptions).toHaveLength(152);
     await expect(elk.knownLayoutCategories()).resolves.toEqual(
-      expect.arrayContaining([expect.objectContaining({ id: "layered" })]),
+      expect.arrayContaining([expect.objectContaining({ id: "org.eclipse.elk.layered" })]),
     );
     expect(() => {
       elk.terminateWorker();

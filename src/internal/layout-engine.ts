@@ -13,9 +13,25 @@ import {
   sporeOverlapRemovalAlgorithm,
   type SporeLayoutOptions,
 } from "../spore";
+import {
+  forceAlgorithm,
+  stressAlgorithm,
+  type ForceLayoutOptions,
+  type StressLayoutOptions,
+} from "../force";
+import {
+  treeAlgorithm,
+  radialAlgorithm,
+  type TreeLayoutOptions,
+  type RadialLayoutOptions,
+} from "../tree";
 import type { LayoutAlgorithm, LayoutExecutionContext } from "../types";
 
 export interface BuiltInLayoutOptionsById {
+  mrtree: TreeLayoutOptions;
+  radial: RadialLayoutOptions;
+  force: ForceLayoutOptions;
+  stress: StressLayoutOptions;
   box: BoxLayoutOptions;
   fixed: FixedLayoutOptions;
   layered: LayeredLayoutOptions;
@@ -28,6 +44,10 @@ export interface BuiltInLayoutOptionsById {
 export type BuiltInLayoutAlgorithmId = keyof BuiltInLayoutOptionsById;
 
 export const builtInLayoutAlgorithms = {
+  mrtree: treeAlgorithm,
+  radial: radialAlgorithm,
+  force: forceAlgorithm,
+  stress: stressAlgorithm,
   box: boxAlgorithm,
   fixed: fixedAlgorithm,
   layered: layeredAlgorithm,

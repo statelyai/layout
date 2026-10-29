@@ -32,17 +32,28 @@ require style for every migration entry point.
 
 ## Native algorithm status
 
-<!-- registered native algorithms from src/layout.ts -->
+<!-- registered native algorithms from src/internal/layout-engine.ts -->
 
-| Algorithm             | Native API                     | Current fidelity                                              |
-| --------------------- | ------------------------------ | ------------------------------------------------------------- |
-| Box                   | `getBoxLayout`                 | Exact SIMPLE adapter corpus; grouped modes pending            |
-| Layered               | `getLayeredLayout`             | Native ELK reimplementation; broad geometry parity incomplete |
-| Fixed                 | `getFixedLayout`               | Preserves authored geometry and routes                        |
-| Random                | `getRandomLayout`              | Exact ELK adapter; corrected native edge endpoints            |
-| Rectangle packing     | `getRectanglePackingLayout`    | Exact default slice; full packing parity pending              |
-| SPOrE compaction      | `getSporeCompactionLayout`     | Initial relative-direction baseline; not ELK parity           |
-| SPOrE overlap removal | `getSporeOverlapRemovalLayout` | Initial separation baseline; not ELK parity                   |
+| Algorithm             | Native API                     | Current fidelity                                               |
+| --------------------- | ------------------------------ | -------------------------------------------------------------- |
+| Mr. Tree              | `getTreeLayout`                | Ordered spanning-tree placement; ELK geometry incomplete       |
+| Radial                | `getRadialLayout`              | Eades leaf-weighted wedges; ELK optimization incomplete        |
+| Force                 | `getForceLayout`               | Eades and FR models; ELK iteration/import behavior incomplete  |
+| Stress                | `getStressLayout`              | Graph-distance stress majorization; ELK initialization differs |
+| Box                   | `getBoxLayout`                 | Exact SIMPLE adapter corpus; grouped modes pending             |
+| Layered               | `getLayeredLayout`             | Native ELK reimplementation; broad geometry parity incomplete  |
+| Fixed                 | `getFixedLayout`               | Preserves authored geometry and routes                         |
+| Random                | `getRandomLayout`              | Exact ELK adapter; corrected native edge endpoints             |
+| Rectangle packing     | `getRectanglePackingLayout`    | Exact default slice; full packing parity pending               |
+| SPOrE compaction      | `getSporeCompactionLayout`     | Initial relative-direction baseline; not ELK parity            |
+| SPOrE overlap removal | `getSporeOverlapRemovalLayout` | Initial separation baseline; not ELK parity                    |
+
+The four additional providers have 41 behavior tests, exact bundled discovery
+metadata, and a separate strict 20-case oracle comparison. Eight empty/singleton
+outputs match exactly. Eleven nontrivial geometry cases differ. The remaining radial cycle matches the pinned exception text. The strict
+comparison exits nonzero and retains every geometry mismatch. This is functional
+algorithm coverage, not full ELK compatibility. See
+[provider settings and remaining work](algorithm-coverage.md).
 
 The native layered pipeline handles compound layout and cross-hierarchy
 routing, with complete occupied envelopes reserved before ancestor placement.

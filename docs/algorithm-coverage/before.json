@@ -1,0 +1,22 @@
+[
+  {
+    "algorithm": "mrtree",
+    "compatError": "Error: org.eclipse.elk.core.UnsupportedConfigurationException: Layout algorithm 'mrtree' not found",
+    "nativeError": "LayoutError: Unknown layout algorithm: mrtree"
+  },
+  {
+    "algorithm": "radial",
+    "compatError": "Error: org.eclipse.elk.core.UnsupportedConfigurationException: Layout algorithm 'radial' not found",
+    "nativeError": "LayoutError: Unknown layout algorithm: radial"
+  },
+  {
+    "algorithm": "force",
+    "compatError": "Error: org.eclipse.elk.core.UnsupportedConfigurationException: Layout algorithm 'force' not found",
+    "nativeError": "LayoutError: Unknown layout algorithm: force"
+  },
+  {
+    "algorithm": "stress",
+    "compatError": "Error: org.eclipse.elk.core.UnsupportedConfigurationException: Layout algorithm 'stress' not found",
+    "nativeError": "LayoutError: Unknown layout algorithm: stress"
+  }
+]

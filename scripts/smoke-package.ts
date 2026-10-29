@@ -135,6 +135,14 @@ let workerCreated = false;
 const apiElk = new ApiELK({ workerFactory: () => { workerCreated = true; return new Worker(); } });
 assert.equal(workerCreated, true);
 assert.equal((await apiElk.layout({ id: "root" })).id, "root");
+for (const algorithm of ["mrtree", "radial", "force", "stress"]) {
+  const native = await getLayout({ graph, algorithm });
+  assert.equal(native.graph.nodes.length, 2);
+  assert(native.graph.nodes.every(node => Number.isFinite(node.x) && Number.isFinite(node.y)));
+  const routed = await apiElk.layout({ id: "root", children: [{id:"a",width:80,height:40},{id:"b",width:80,height:40}], edges: [{id:"ab",sources:["a"],targets:["b"]}], layoutOptions: {"elk.algorithm":algorithm,"elk.randomSeed":"7"} });
+  assert.equal(routed.children.length, 2);
+  assert(routed.edges[0].sections.length > 0);
+}
 apiElk.terminateWorker();
 const minifiedApiElk = new ApiELK({ workerFactory: () => new MinifiedWorker() });
 assert.equal((await minifiedApiElk.layout({ id: "root" })).id, "root");
