@@ -4426,7 +4426,9 @@ function routeEdges(style: "ORTHOGONAL" | "POLYLINE" | "SPLINES"): EdgeRouter {
     for (const [candidateId, candidateRect] of mutableRects) {
       const reserve = northReserves.reduce(
         (total, [layerY, layerReserve]) =>
-          candidateRect.y + 1e-9 >= layerY ? total + layerReserve : total,
+          candidateRect.y + candidateRect.height / 2 + 1e-9 >= layerY
+            ? total + layerReserve
+            : total,
         0,
       );
       if (reserve > 0) {
@@ -4481,8 +4483,11 @@ function routeEdges(style: "ORTHOGONAL" | "POLYLINE" | "SPLINES"): EdgeRouter {
           }
         }
         for (const [id, rect] of mutableRects) {
+          // A label dummy can be taller than the loop's node yet centered in
+          // the same row, so the row is decided by center, not leading edge.
+          const center = rect[axis] + rect[size] / 2;
           const shift = [...reservations].reduce(
-            (sum, [boundary, extent]) => sum + (rect[axis] >= boundary - 1e-9 ? extent : 0),
+            (sum, [boundary, extent]) => sum + (center >= boundary - 1e-9 ? extent : 0),
             0,
           );
           if (shift > 0) mutableRects.set(id, { ...rect, [axis]: rect[axis] + shift });
