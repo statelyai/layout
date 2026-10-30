@@ -1,0 +1,156 @@
+{
+  "boxes": [
+    {
+      "height": 75.96328735351562,
+      "id": "createStateMachine.Queued",
+      "label": "Node: Queued",
+      "width": 329.44091796875,
+      "x": 498.34613037109375,
+      "y": 189.84152221679688
+    },
+    {
+      "height": 75.96334838867188,
+      "id": "createStateMachine.Checking request",
+      "label": "Node: Checking request",
+      "width": 329.44091796875,
+      "x": 515.9376220703125,
+      "y": 456.9125061035156
+    },
+    {
+      "height": 88.7572021484375,
+      "id": "createStateMachine.Converting source",
+      "label": "Node: Converting source",
+      "width": 329.4407958984375,
+      "x": 779.0106201171875,
+      "y": 632.8275146484375
+    },
+    {
+      "height": 75.96331787109375,
+      "id": "createStateMachine.Checking result",
+      "label": "Node: Checking result",
+      "width": 329.44091796875,
+      "x": 574.3094482421875,
+      "y": 801.5460205078125
+    },
+    {
+      "height": 88.75714111328125,
+      "id": "createStateMachine.Rejected without applying",
+      "label": "Node: Rejected without applying",
+      "width": 329.44085693359375,
+      "x": 168.9052734375,
+      "y": 989.4552612304688
+    },
+    {
+      "height": 75.96331787109375,
+      "id": "createStateMachine.Source or graph needs correction",
+      "label": "Node: Source or graph needs correction",
+      "width": 329.44085693359375,
+      "x": 745.4268188476562,
+      "y": 989.4552612304688
+    },
+    {
+      "height": 75.96331787109375,
+      "id": "createStateMachine.Applied",
+      "label": "Node: Applied",
+      "width": 329.44091796875,
+      "x": 1106.8521728515625,
+      "y": 989.4552612304688
+    },
+    {
+      "height": 44.77838134765625,
+      "id": "createStateMachine.Queued-queueReady-0",
+      "label": "queueReadyPrevious queued work has settled; execute this action.",
+      "width": 269.488525390625,
+      "x": 674.2424926757812,
+      "y": 380.49029541015625
+    },
+    {
+      "height": 63.9691162109375,
+      "id": "createStateMachine.Checking request--0",
+      "label": "1alwaysIFpreflightRejectedA preflight check throws before creation begins.",
+      "width": 240.89614868164065,
+      "x": 130.5238037109375,
+      "y": 645.621337890625
+    },
+    {
+      "height": 63.96905517578125,
+      "id": "createStateMachine.Checking request--1",
+      "label": "2alwaysELSEPreflight succeeds; mark creation as started and await conversion.",
+      "width": 324.6431884765625,
+      "x": 781.409423828125,
+      "y": 548.8681030273438
+    },
+    {
+      "height": 44.7783203125,
+      "id": "createStateMachine.Converting source-conversionCompleted-0",
+      "label": "conversionCompletedA graph is returned; reassess the live editor before applying it.",
+      "width": 304.4654541015625,
+      "x": 587.103271484375,
+      "y": 736.77734375
+    },
+    {
+      "height": 57.57220458984375,
+      "id": "createStateMachine.Converting source-conversionFailed-0",
+      "label": "conversionFailedConversion throws after creation starts; surface a repairable rejection.",
+      "width": 329.44091796875,
+      "x": 1142.03515625,
+      "y": 811.1414184570312
+    },
+    {
+      "height": 76.762939453125,
+      "id": "createStateMachine.Checking result--0",
+      "label": "1alwaysIFrequestObsoleteOrUnavailableThe request was cancelled/replaced, editing is unavailable or the semantic graph revision changed.",
+      "width": 329.4408874511719,
+      "x": 257.6623840332031,
+      "y": 892.7020263671875
+    },
+    {
+      "height": 76.762939453125,
+      "id": "createStateMachine.Checking result--1",
+      "label": "2alwaysELSE IFcandidateRejectedRequest remains current but the candidate fails graph contract checks.",
+      "width": 329.44085693359375,
+      "x": 628.6832275390625,
+      "y": 892.7020263671875
+    },
+    {
+      "height": 76.762939453125,
+      "id": "createStateMachine.Checking result--2",
+      "label": "3alwaysELSERequest and candidate checks pass; replace the graph and request layout.",
+      "width": 329.44085693359375,
+      "x": 970.9179077148438,
+      "y": 892.7020263671875
+    }
+  ],
+  "canvas": "createStateMachine canvas",
+  "descriptions": 15,
+  "overlaps": [],
+  "paths": [
+    "M 869,-25 L 869,118",
+    "M 708 -5 L 708 134",
+    "M 869,175 L 869,204",
+    "M 502,262 L 336.5,262 L 181,262 C 181,262 171,262 171,272 L 171,450",
+    "M 481.9999963194132 262 C 433.49999754627544 262 384.99999877313775 262 336.5 262 C 284.6666666666667 262 232.83333333333334 262 181 262 C 181 262 171 262 171 272 C 171 331.3333333333333 171 390.66666666666663 171 450",
+    "M 171,530 L 171,870",
+    "M 321,490 L 450.5,490 L 570,490 C 570,490 580,490 580,480 L 580,429.5 L 580,379 C 580,379 580,369 590,369 L 834,369",
+    "M 340.9999974519015 490 C 377.4999983012677 490 413.9999991506338 490 450.5 490 C 490.3333333333333 490 530.1666666666666 490 570 490 C 570 490 580 490 580 480 C 580 463.1666666666667 580 446.3333333333333 580 429.5 C 580 412.6666666666667 580 395.8333333333333 580 379 C 580 379 580 369 590 369 C 671.3333333333334 369 752.6666666666666 369 834 369",
+    "M 1037,409 L 1037,424",
+    "M 831,534 L 806,534 L 791,534 C 791,534 781,534 781,544 L 781,564",
+    "M 811.0000004470347 534 C 809.3333336313565 534 807.6666668156782 534 806 534 C 801 534 796 534 791 534 C 791 534 781 534 781 544 C 781 550.6666666666666 781 557.3333333333334 781 564",
+    "M 781,620 L 781,635",
+    "M 1243,535 L 1367,535 L 1481,535 C 1481,535 1491,535 1491,545 L 1491,657",
+    "M 1262.9999994039533 535 C 1297.6666662693021 535 1332.3333331346512 535 1367 535 C 1405 535 1443 535 1481 535 C 1481 535 1491 535 1491 545 C 1491 582.3333333333334 1491 619.6666666666666 1491 657",
+    "M 1491,729 L 1491,744 L 1491,749 C 1491,749 1491,759 1481,759 L 1276,759 L 1071,759 C 1071,759 1061,759 1061,769 L 1061,870",
+    "M 575,729 L 480,729 L 395,729 C 395,729 385,729 385,739 L 385,759",
+    "M 554.9999998509884 729 C 529.999999900659 729 504.9999999503295 729 480 729 C 451.6666666666667 729 423.3333333333333 729 395 729 C 395 729 385 729 385 739 C 385 745.6666666666666 385 752.3333333333334 385 759",
+    "M 385,855 L 385,870",
+    "M 591,807 L 643,807",
+    "M 611 807 C 620 807, 620 807, 643 807",
+    "M 849,855 L 849,870",
+    "M 1055,807 L 1071,807",
+    "M 1063 807 C 1066 807, 1066 807, 1071 807",
+    "M 1277,855 L 1277,870"
+  ],
+  "states": 7,
+  "transitionLabels": 8,
+  "url": "http://localhost:3026/local"
+}

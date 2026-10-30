@@ -21,21 +21,34 @@ Import these exports from `@statelyai/layout`.
 
 | Export                         | Options type                    |
 | ------------------------------ | ------------------------------- |
+| `getTreeLayout`                | `TreeLayoutOptions`             |
+| `getRadialLayout`              | `RadialLayoutOptions`           |
+| `getForceLayout`               | `ForceLayoutOptions`            |
+| `getStressLayout`              | `StressLayoutOptions`           |
 | `getBoxLayout`                 | `BoxLayoutOptions`              |
 | `getFixedLayout`               | `FixedLayoutOptions`            |
 | `getLayeredLayout`             | `LayeredLayoutOptions`          |
+| `getPeleLayout`                | `PeleLayoutOptions`             |
 | `getRandomLayout`              | `RandomLayoutOptions`           |
 | `getRectanglePackingLayout`    | `RectanglePackingLayoutOptions` |
 | `getSporeCompactionLayout`     | `SporeLayoutOptions`            |
 | `getSporeOverlapRemovalLayout` | `SporeLayoutOptions`            |
 
+`PeleVisualGraph` extends `VisualGraph` with exact route sections in
+`compoundRoutes`. Read them through `getLayoutRoutes`.
+
 ### Algorithm objects
 
 | Export                         | ID                |
 | ------------------------------ | ----------------- |
+| `treeAlgorithm`                | `mrtree`          |
+| `radialAlgorithm`              | `radial`          |
+| `forceAlgorithm`               | `force`           |
+| `stressAlgorithm`              | `stress`          |
 | `boxAlgorithm`                 | `box`             |
 | `fixedAlgorithm`               | `fixed`           |
 | `layeredAlgorithm`             | `layered`         |
+| `peleAlgorithm`                | `pele`            |
 | `randomAlgorithm`              | `random`          |
 | `rectanglePackingAlgorithm`    | `rectpacking`     |
 | `sporeCompactionAlgorithm`     | `sporeCompaction` |
@@ -43,19 +56,21 @@ Import these exports from `@statelyai/layout`.
 
 ### Execution types
 
-| Type                     | Description                                      |
-| ------------------------ | ------------------------------------------------ |
-| `AnyGraph`               | A graph with all data parameters set to unknown. |
-| `LayoutAlgorithm`        | Contract implemented by an algorithm.            |
-| `LayoutCapabilities`     | Features declared by an algorithm.               |
-| `LayoutDiagnostic`       | Structured layout message.                       |
-| `LayoutDirection`        | `up`, `down`, `left`, or `right`.                |
-| `LayoutExecutionContext` | Scope, cancellation, diagnostics, and timing.    |
-| `LayoutMetrics`          | Overall timing and graph counts.                 |
-| `LayoutPhaseMetrics`     | Timing for one named phase.                      |
-| `LayoutRequest`          | Input to `getLayout`.                            |
-| `LayoutResult`           | Output from `getLayout`.                         |
-| `LayoutScope`            | Full, incremental, partial, or route-only scope. |
+| Type                       | Description                                      |
+| -------------------------- | ------------------------------------------------ |
+| `BuiltInLayoutAlgorithmId` | Registered built-in algorithm IDs.               |
+| `BuiltInLayoutOptionsById` | Built-in algorithm option types keyed by ID.     |
+| `AnyGraph`                 | A graph with all data parameters set to unknown. |
+| `LayoutAlgorithm`          | Contract implemented by an algorithm.            |
+| `LayoutCapabilities`       | Features declared by an algorithm.               |
+| `LayoutDiagnostic`         | Structured layout message.                       |
+| `LayoutDirection`          | `up`, `down`, `left`, or `right`.                |
+| `LayoutExecutionContext`   | Scope, cancellation, diagnostics, and timing.    |
+| `LayoutMetrics`            | Overall timing and graph counts.                 |
+| `LayoutPhaseMetrics`       | Timing for one named phase.                      |
+| `LayoutRequest`            | Input to `getLayout`.                            |
+| `LayoutResult`             | Output from `getLayout`.                         |
+| `LayoutScope`              | Full, incremental, partial, or route-only scope. |
 
 ### Layered strategy functions
 
@@ -252,3 +267,22 @@ Policies independently select curve shape, terminal tangents, labels, collision
 handling, monotonicity, and route stability. Optional `Route.label` returns a
 `RouteLabelPlacement` with `bounds`, `anchor`, and `tangent`. See the
 [policy reference](routing-policies.md).
+
+## Tree, radial, force, and stress
+
+<!-- public non-layered providers from src/index.ts, src/tree.ts and src/force.ts -->
+
+All four support direct calls and `getLayout({ graph, algorithm, options })`.
+They return measured node geometry and polyline edge routes without mutating input.
+They support flat full layout. Partial/incremental/route-only scopes, constraints,
+hierarchy, and explicit ports raise `UnsupportedLayoutError`.
+
+| Registry ID | Direct native function | Options type          |
+| ----------- | ---------------------- | --------------------- |
+| `mrtree`    | `getTreeLayout`        | `TreeLayoutOptions`   |
+| `radial`    | `getRadialLayout`      | `RadialLayoutOptions` |
+| `force`     | `getForceLayout`       | `ForceLayoutOptions`  |
+| `stress`    | `getStressLayout`      | `StressLayoutOptions` |
+
+See [algorithm coverage](algorithm-coverage.md) for option defaults, adapter
+mapping, exact comparison evidence, and unsupported ELK settings.

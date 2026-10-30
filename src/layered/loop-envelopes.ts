@@ -8,86 +8,6 @@ import {
   selfLoopTracks,
 } from "./fixed-self-loop";
 import { findNode } from "./node-lookup";
-import { hiddenLoopPorts } from "./self-loop-ports";
-
-type CanonicalSide = "NORTH" | "SOUTH" | "EAST" | "WEST";
-const crossSide = (side: CanonicalSide) => side === "NORTH" || side === "SOUTH";
-
-/**
- * Extents of a movable loop's hidden ports in the canonical rightward frame:
- * along its side, and protruding from it.
- */
-function loopPortExtents(input: LayeredPhaseInput, edge: GraphEdge, side: CanonicalSide) {
-  const ports = hiddenLoopPorts(input.settings, edge.id);
-  const horizontal = input.direction === "right" || input.direction === "left";
-  const along = (crossSide(side) === horizontal ? "width" : "height") as "width" | "height";
-  const normal = along === "width" ? "height" : "width";
-  return {
-    along: ports ? ports.source[along] + ports.target[along] : 0,
-    normal: ports ? Math.max(ports.source[normal], ports.target[normal]) : 0,
-  };
-}
-
-/** A movable loop's label extent away from its side, in the canonical frame. */
-export function movableLoopLabelExtent(
-  input: LayeredPhaseInput,
-  edge: GraphEdge,
-  side: CanonicalSide,
-): number {
-  const horizontal = input.direction === "right" || input.direction === "left";
-  const size = (crossSide(side) === horizontal ? edge.height : edge.width) ?? 0;
-  return size > 0 ? size + Number(input.settings["spacing.edgeLabel"] ?? 2) : 0;
-}
-
-/**
- * ELK's OrthogonalSelfLoopRouter routing slot of a movable loop, measured
- * from its node side in the canonical frame: past the protruding ports and
- * the self-loop spacing, then one edge spacing plus any label per inner slot.
- */
-export function movableLoopTrack(
-  input: LayeredPhaseInput,
-  sideLoops: readonly GraphEdge[],
-  edge: GraphEdge,
-  side: CanonicalSide,
-  ordering: string,
-): number {
-  const ordered = ordering === "REVERSE_STACKED" ? [...sideLoops].reverse() : sideLoops;
-  const inner = ordering === "SEQUENCED" ? [] : ordered.slice(0, ordered.indexOf(edge));
-  const edgeSpacing = Number(input.settings["spacing.edgeEdge"] ?? 10);
-  return (
-    Math.max(0, ...sideLoops.map((loop) => loopPortExtents(input, loop, side).normal)) +
-    Number(input.settings["spacing.nodeSelfLoop"] ?? 10) +
-    inner.reduce(
-      (sum, loop) =>
-        sum + edgeSpacing + (crossSide(side) ? movableLoopLabelExtent(input, loop, side) : 0),
-      0,
-    )
-  );
-}
-
-/**
- * Canonical position of a movable loop port along its side, given its
- * DISTRIBUTED ratio among the side's implicit ports (ELK's port placement
- * with equal gaps between hidden ports of their own size).
- */
-export function movableLoopPortOffset(
-  input: LayeredPhaseInput,
-  sideLoops: readonly GraphEdge[],
-  side: CanonicalSide,
-  length: number,
-  ratio: number,
-): { along: number; normal: number } {
-  const count = sideLoops.length * 2;
-  const extents = sideLoops.map((loop) => loopPortExtents(input, loop, side));
-  const total = extents.reduce((sum, extent) => sum + extent.along, 0);
-  const size = total / count;
-  const index = Math.round(ratio * (count + 1)) - 1;
-  const gap = (length - total) / (count + 1);
-  return {
-    along: gap * (index + 1) + size * index + size / 2,
-    normal: Math.max(0, ...extents.map((extent) => extent.normal)),
-  };
-}
 
 export interface LoopEnvelope {
   before: number;
@@ -205,10 +125,18 @@ export function loopEnvelopes(input: LayeredPhaseInput): ReadonlyMap<string, Loo
       }
     }
     const loops = allLoops.filter((edge) => hasMovableLoopPorts(input, edge));
-    if (loops.length === 0) continue;
+    // Inline labels remain owned by the existing labeled-loop phase. Move
+    // the entire node together when that phase is ported, rather than mixing
+    // two different loop distributions and reservations on the same node.
+    if (
+      loops.length === 0 ||
+      loops.some((edge) => input.edgeSettings?.(edge)?.["edgeLabels.inline"] === true)
+    )
+      continue;
     const settings = input.nodeSettings?.(node);
     const distribution = settings?.["edgeRouting.selfLoopDistribution"] ?? "NORTH";
     const ordering = settings?.["edgeRouting.selfLoopOrdering"] ?? "STACKED";
+    const spacing = Number(input.settings["spacing.nodeSelfLoop"] ?? 10);
     const envelope = { before: 0, after: 0, flowBefore: 0, flowAfter: 0 };
     const sides =
       distribution === "EQUALLY"
@@ -216,34 +144,25 @@ export function loopEnvelopes(input: LayeredPhaseInput): ReadonlyMap<string, Loo
         : distribution === "NORTH_SOUTH"
           ? (["before", "after"] as const)
           : (["before"] as const);
-    const canonicalSides = {
-      before: "NORTH",
-      after: "SOUTH",
-      flowAfter: "EAST",
-      flowBefore: "WEST",
-    } as const;
-    const horizontal = input.direction === "right" || input.direction === "left";
-    const size = input.sizes.get(node.id) ?? { width: 0, height: 0 };
-    const flowSize = horizontal ? size.width : size.height;
     for (const side of sides) {
       const selected = loops.filter((_, index) => sides[index % sides.length] === side);
-      const canonical = canonicalSides[side];
-      envelope[side] = Math.max(
-        envelope[side],
-        ...selected.map(
-          (edge) =>
-            movableLoopTrack(input, selected, edge, canonical, ordering) +
-            movableLoopLabelExtent(input, edge, canonical),
-        ),
-      );
-      if (!crossSide(canonical)) continue;
-      // ELK centers cross-side loop labels on their node along the flow, and
-      // a label longer than its node widens the node's layer by the overhang.
-      for (const edge of selected) {
-        const overhang = ((horizontal ? edge.width : edge.height) ?? 0) - flowSize;
-        envelope.flowBefore = Math.max(envelope.flowBefore, overhang / 2);
-        envelope.flowAfter = Math.max(envelope.flowAfter, overhang / 2);
-      }
+      const horizontal = input.direction === "right" || input.direction === "left";
+      const crossSize =
+        side === "before" || side === "after"
+          ? horizontal
+            ? "height"
+            : "width"
+          : horizontal
+            ? "width"
+            : "height";
+      const labelSpacing = Number(input.settings["spacing.edgeLabel"] ?? 2);
+      envelope[side] =
+        spacing * (ordering === "SEQUENCED" ? Math.min(1, selected.length) : selected.length) +
+        selected.reduce(
+          (sum, edge) =>
+            sum + ((edge[crossSize] ?? 0) > 0 ? (edge[crossSize] ?? 0) + labelSpacing : 0),
+          0,
+        );
     }
     envelopes.set(node.id, envelope);
   }
