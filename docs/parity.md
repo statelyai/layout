@@ -36,6 +36,7 @@ require style for every migration entry point.
 
 | Algorithm             | Native API                     | Current fidelity                                               |
 | --------------------- | ------------------------------ | -------------------------------------------------------------- |
+| Pele                  | `getPeleLayout`                | Independent flat-graph layout; not an ELK compatibility target |
 | Mr. Tree              | `getTreeLayout`                | Ordered spanning-tree placement; ELK geometry incomplete       |
 | Radial                | `getRadialLayout`              | Eades leaf-weighted wedges; ELK optimization incomplete        |
 | Force                 | `getForceLayout`               | Eades and FR models; ELK iteration/import behavior incomplete  |
