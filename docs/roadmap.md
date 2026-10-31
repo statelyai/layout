@@ -20,7 +20,7 @@
 ## Current compatibility checkpoint
 
 - elkjs-compatible `/elkjs` entry
-- 37 of 43 upstream elkjs 0.11.1 public-suite behaviors covered
+- 43 of 43 upstream elkjs 0.11.1 public-suite behaviors covered
 - Original elkjs#7 and ChangeAwareArrayList fixtures
 - Legacy option aliases, padding, fixed vectors/routes, logging, labels
 - Complete layered option inventory and native compound-parent handling
@@ -43,6 +43,8 @@
 - Initial native Stress, Mr. Tree, Radial, and Force providers are available.
   Exact Java provider/importer behavior, full option coverage, and component
   packing remain incomplete. See [algorithm coverage](algorithm-coverage.md).
+- Independent Pele layout is available for flat graphs. Nested nodes, named
+  ports, constraints, incremental layout, and partial layout remain unsupported.
 
 ## Evaluation
 

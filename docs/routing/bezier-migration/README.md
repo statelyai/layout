@@ -55,10 +55,7 @@ review artifacts, not new visual-test baselines.
 
 ## Dependency order
 
-Viz PR 889 is merged. Merge and release this library change independently.
-The Viz migration uses an immutable Git revision during
-review so installation and CI do not depend on unpublished npm code. After the
-library minor release, replace that temporary pin with the published version
-and regenerate the lockfile. Refresh the consumer migration against current
-main before landing it. No merge or release
-was performed as part of this migration.
+Viz PR 889 is merged. Layout 0.5.0 released the shared routing API. During
+review, Viz used an immutable Git revision so installation and CI did not depend
+on unpublished npm code. The consumer tracked replacement of that temporary pin
+separately.

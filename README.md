@@ -38,10 +38,11 @@ Incremental layout remains explicitly unsupported.
 
 <!-- non-layered provider exports from src/index.ts and registrations from src/internal/layout-engine.ts -->
 
-The registry also runs `mrtree`, `radial`, `force`, and `stress` through `getLayout`.
-Their direct native APIs are `getTreeLayout`, `getRadialLayout`, `getForceLayout`,
-and `getStressLayout`. These providers implement the corresponding layout models
-without a runtime elkjs dependency. They do not yet reproduce full ELK geometry.
+The registry also runs `mrtree`, `radial`, `force`, `stress`, and `pele` through
+`getLayout`. Their direct native APIs are `getTreeLayout`, `getRadialLayout`,
+`getForceLayout`, `getStressLayout`, and `getPeleLayout`. The first four providers
+implement the corresponding ELK models without a runtime elkjs dependency. They
+do not yet reproduce full ELK geometry. Pele is an independent algorithm.
 See [provider options and measured compatibility gaps](docs/algorithm-coverage.md).
 
 ## Install
