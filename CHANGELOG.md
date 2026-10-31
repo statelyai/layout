@@ -1,5 +1,19 @@
 # @statelyai/layout
 
+## 0.6.0
+
+### Minor Changes
+
+- acbdaef: Add native Mr. Tree, Radial, Force, and Stress layout providers through the shared
+  algorithm registry and ELK adapter. Restore bundled elkjs 0.11.1 algorithm and
+  category discovery. Reject unsupported provider settings and graph features.
+  Document measured geometry gaps and add a strict rerunnable oracle comparison.
+- 7cacb78: Add the independent `pele` layout algorithm, adapted from Pele under MIT. Preserve measured node and transition-label boxes, and expose coordinated smooth curves through `getLayoutRoutes`. Support full flat-graph layout in four directions, including cycles, parallel edges, and self-loops; reject unsupported hierarchy, ports, and layout scopes explicitly.
+
+### Patch Changes
+
+- 05e1c70: Keep edge labels in their row when a self loop above a node makes room. In RIGHT and LEFT layouts, a label taller than its row's nodes was left behind when the row moved down, so edges into a node with a labeled self loop detoured through the loop's label.
+
 ## 0.5.3
 
 ### Patch Changes
