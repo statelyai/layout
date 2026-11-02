@@ -68,13 +68,13 @@ export function applyGroupedEdgeLengthCompaction(
       const candidates = outgoing.get(last.targetId)!;
       // Merged hyperedge dummies have several outgoing chains. Continue the
       // original edge's chain, rather than choosing another branch's edge.
-      const family = last.id.replace(/(?:::(?:segment|inverted):\d+)+$/, "");
+      const family = last.id.replace(/(?:::(?:segment|inverted|label):\d+)+$/, "");
       const next =
         candidates.length === 1
           ? candidates[0]!
           : candidates.find(
               (candidate) =>
-                candidate.id.replace(/(?:::(?:segment|inverted):\d+)+$/, "") === family,
+                candidate.id.replace(/(?:::(?:segment|inverted|label):\d+)+$/, "") === family,
             );
       if (!next)
         throw new Error("Missing continuation through a merged long-edge dummy", {
