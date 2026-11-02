@@ -105,10 +105,22 @@ describe("editor gate scoring", () => {
     const crossing = scoreRow(
       row(nodes, [
         ...shared,
-        { id: "three", sourceId: "b", targetId: "a", segments: [[[50, 200], [50, 40]]] },
+        {
+          id: "three",
+          sourceId: "b",
+          targetId: "a",
+          segments: [
+            [
+              [50, 200],
+              [50, 40],
+            ],
+          ],
+        },
       ]),
     );
     expect(crossing.edgeOverlapLength).toBeGreaterThan(0);
+    const missing = shared.map((edge) => ({ ...edge, segments: [] }));
+    expect(scoreRow(row(nodes, missing)).missingRoutes).toBe(2);
   });
 
   it("counts routes through a compound state that holds neither endpoint", () => {

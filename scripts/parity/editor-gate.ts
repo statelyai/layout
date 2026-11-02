@@ -84,10 +84,11 @@ export function scoreRow(row: Row): Metrics {
     edges = row.edges!;
   const byId = new Map(nodes.map((node) => [node.id, { ...node, rect: inset(node.rect) }]));
   // Parallel transitions the editor draws as one shared route are one route:
-  // measure its length and bends once.
+  // measure its length and bends once. Each missing route still counts.
   const find = familyOf(edges);
   const drawn = new Set<string>();
   const routed = edges.filter((edge) => {
+    if (!edge.segments.some((points) => points.length > 1)) return true;
     const key = `${find(edge.id)}\u0000${JSON.stringify(edge.segments)}`;
     if (drawn.has(key)) return false;
     drawn.add(key);
