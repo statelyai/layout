@@ -83,6 +83,16 @@ export function scoreRow(row: Row): Metrics {
   const nodes = row.nodes!,
     edges = row.edges!;
   const byId = new Map(nodes.map((node) => [node.id, { ...node, rect: inset(node.rect) }]));
+  // Parallel transitions the editor draws as one shared route are one route:
+  // measure its length and bends once.
+  const find = familyOf(edges);
+  const drawn = new Set<string>();
+  const routed = edges.filter((edge) => {
+    const key = `${find(edge.id)}\u0000${JSON.stringify(edge.segments)}`;
+    if (drawn.has(key)) return false;
+    drawn.add(key);
+    return true;
+  });
   // measureQuality nests coordinates under parents; the editor reports world bounds.
   const layout = {
     nodes: [...byId.values()].map(({ id, parentId, rect: [x, y, width, height] }) => {
@@ -102,7 +112,7 @@ export function scoreRow(row: Row): Metrics {
         : { id, x: 0, y: 0, width: 0, height: 0 },
     ),
     routes: new Map(
-      edges.map((edge) => [
+      routed.map((edge) => [
         edge.id,
         {
           sections: edge.segments
@@ -119,9 +129,22 @@ export function scoreRow(row: Row): Metrics {
   };
   const input = {
     nodes: nodes.map(({ id }) => ({ id })),
-    edges: edges.map(({ id, sourceId, targetId }) => ({ id, sourceId, targetId })),
+    edges: routed.map(({ id, sourceId, targetId }) => ({ id, sourceId, targetId })),
   };
   const metrics = measureQuality(layout, input) as Metrics;
+  // Members of a family share their trunk on purpose; only count where they
+  // run along or cross other families. Pair sums are additive, so subtract
+  // each family measured alone.
+  for (const members of Map.groupBy(routed, (edge) => find(edge.id)).values()) {
+    if (members.length < 2) continue;
+    const ids = new Set(members.map(({ id }) => id));
+    const own = measureQuality(
+      { ...layout, routes: new Map([...layout.routes].filter(([id]) => ids.has(id))) },
+      { ...input, edges: input.edges.filter(({ id }) => ids.has(id)) },
+    ) as Metrics;
+    metrics.edgeOverlapLength! -= own.edgeOverlapLength!;
+    metrics.edgeCrossings! -= own.edgeCrossings!;
+  }
   const parents = new Set(nodes.map((node) => node.parentId));
   const ancestors = (id: string) => {
     const out = new Set<string>();
@@ -145,12 +168,8 @@ export function scoreRow(row: Row): Metrics {
   return { ...metrics, edgeLabelHits: labelHits(edges), groupHits };
 }
 
-/**
- * The editor stacks the labels of parallel transitions, and of a guarded
- * branch chain, on one shared trunk, so a route through a label of its own
- * family is the intended drawing. Only hits on other families count.
- */
-function labelHits(edges: NonNullable<Row["edges"]>) {
+/** Transitions with the same drawn endpoints, or in one branch chain, form one family. */
+function familyOf(edges: NonNullable<Row["edges"]>) {
   const family = new Map<string, string>();
   const find = (id: string): string => {
     const parent = family.get(id) ?? id;
@@ -164,6 +183,16 @@ function labelHits(edges: NonNullable<Row["edges"]>) {
     else pairs.set(pair, edge.id);
     if (edge.branchOf && edges.some(({ id }) => id === edge.branchOf)) join(edge.id, edge.branchOf);
   }
+  return find;
+}
+
+/**
+ * The editor stacks the labels of parallel transitions, and of a guarded
+ * branch chain, on one shared trunk, so a route through a label of its own
+ * family is the intended drawing. Only hits on other families count.
+ */
+function labelHits(edges: NonNullable<Row["edges"]>) {
+  const find = familyOf(edges);
   let hits = 0;
   for (const edge of edges)
     for (const other of edges)

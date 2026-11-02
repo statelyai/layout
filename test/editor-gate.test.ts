@@ -86,6 +86,31 @@ describe("editor gate scoring", () => {
     expect(scoreRow(row(nodes, unrelated)).edgeLabelHits).toBe(1);
   });
 
+  it("measures a shared route once and counts overlap only with other families", () => {
+    const nodes = [node("a", [0, 0, 100, 40]), node("b", [0, 200, 100, 40])];
+    const trunk: Array<Array<[number, number]>> = [
+      [
+        [50, 40],
+        [50, 200],
+      ],
+    ];
+    const shared = [
+      { id: "one", sourceId: "a", targetId: "b", segments: trunk },
+      { id: "two", sourceId: "a", targetId: "b", segments: trunk },
+    ];
+    const single = scoreRow(row(nodes, shared.slice(0, 1)));
+    const metrics = scoreRow(row(nodes, shared));
+    expect(metrics.edgeOverlapLength).toBe(0);
+    expect(metrics.routeLength).toBe(single.routeLength);
+    const crossing = scoreRow(
+      row(nodes, [
+        ...shared,
+        { id: "three", sourceId: "b", targetId: "a", segments: [[[50, 200], [50, 40]]] },
+      ]),
+    );
+    expect(crossing.edgeOverlapLength).toBeGreaterThan(0);
+  });
+
   it("counts routes through a compound state that holds neither endpoint", () => {
     const metrics = scoreRow(
       row(
