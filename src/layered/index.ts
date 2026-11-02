@@ -2735,12 +2735,11 @@ export function* createLayeredScopePipeline<N, E, G, P>(
   }
 
   // Stacking the pair's labels from the padding and aligning both endpoints
-  // moves the nodes without regard for their layer neighbors, so it only
-  // applies when the two nodes connect to nothing else.
+  // moves the nodes without regard for their layer neighbors or self loops, so
+  // it only applies when the two nodes connect to nothing else.
   const connectsOnlyTo = (nodeId: string, otherId: string) =>
     graph.edges.every(
       (edge) =>
-        edge.sourceId === edge.targetId ||
         (edge.sourceId !== nodeId && edge.targetId !== nodeId) ||
         edge.sourceId === otherId ||
         edge.targetId === otherId,
