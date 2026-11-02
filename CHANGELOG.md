@@ -1,5 +1,12 @@
 # @statelyai/layout
 
+## 0.6.1
+
+### Patch Changes
+
+- 8ca4bae: Fix compaction failing to follow merged transition chains across consecutive label segments.
+- 0b244d3: Keep a node's self loop and its label outside the node when the node also has two or more labeled edges to one other node. Stacking those edges' labels moved the node onto its own loop, so the loop ran through the node and its label covered the node.
+
 ## 0.6.0
 
 ### Minor Changes
