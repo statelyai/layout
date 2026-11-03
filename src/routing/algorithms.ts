@@ -16,6 +16,9 @@ import type {
 import {
   anchor,
   effectivePolicy,
+  coordinationFor,
+  geometryFor,
+  sharedCoordination,
   type Settings,
   ancestors,
   center,
@@ -42,6 +45,7 @@ import {
   pathFromPoints,
   roundCorners,
   segmentCrossesRect,
+  trimPath,
 } from "./path";
 import {
   bezierThroughPoints,
@@ -384,7 +388,13 @@ function groupPlan(
   exterior.sort((a, b) => score(a) - score(b));
   candidates.push(...exterior);
   for (const candidate of candidates) {
-    const points = findPath(candidate.start, candidate.end, "orthogonal", context);
+    const geometry = geometryFor(style);
+    const points = findPath(
+      candidate.start,
+      candidate.end,
+      geometry === "straight" ? "polyline" : geometry,
+      context,
+    );
     if (!points) continue;
     const policy = batch.policy?.curve;
     const path =
@@ -418,11 +428,16 @@ export function routeEdge(
 ): Route {
   const policy = effectivePolicy(state.settings, edge.id);
   const strategyStyle = style;
-  if (policy?.curve?.kind === "rounded-orthogonal" && !["bundle", "bus", "fan"].includes(style))
+  if (policy?.curve?.kind === "rounded-orthogonal" && !sharedCoordination(style, state.settings))
     style = "orthogonal";
   const config = policy ? { ...state.settings, ...policy.collisions } : state.settings,
     perEdge = config.edges[edge.id] ?? {},
     diagnostics: RoutingDiagnostic[] = [];
+  const coordination = coordinationFor(strategyStyle, config);
+  const sourceConstraint = perEdge.source ?? perEdge.bezier?.source;
+  const targetConstraint = perEdge.target ?? perEdge.bezier?.target;
+  const labelOnly = perEdge.topology?.kind === "label-only";
+  const guides = perEdge.guides;
   const report = (
     code: RoutingDiagnostic["code"],
     message: string,
@@ -431,19 +446,20 @@ export function routeEdge(
     if (!diagnostics.some((d) => d.code === code && d.constraint === constraint))
       diagnostics.push({ code, message, edgeId: edge.id, ...(constraint ? { constraint } : {}) });
   };
+  if (perEdge.disabled ?? perEdge.bezier?.disabled) {
+    report("CONSTRAINT_VIOLATION", "Routing disabled by the edge constraints");
+    return { edgeId: edge.id, sections: [], status: "fallback", diagnostics };
+  }
   if (policy) {
-    if (perEdge.bezier?.disabled) {
-      report("CONSTRAINT_VIOLATION", "Bézier routing disabled by the edge constraints");
-      return { edgeId: edge.id, sections: [], status: "fallback", diagnostics };
-    }
     let obstacles = state.obstacles;
     const extraObstacles =
-      (perEdge.bezier?.avoidObstacles ?? config.bezier?.avoidObstacles) === false
+      perEdge.obstacles ??
+      ((perEdge.bezier?.avoidObstacles ?? config.bezier?.avoidObstacles) === false
         ? []
-        : (perEdge.bezier?.obstacles ?? []);
+        : (perEdge.bezier?.obstacles ?? []));
     for (const [index, bounds] of [
       ...extraObstacles,
-      ...(perEdge.bezier?.terminalBounds ?? []),
+      ...(perEdge.terminalBounds ?? perEdge.bezier?.terminalBounds ?? []),
     ].entries())
       obstacles = obstacles.set(`policy-barrier:${edge.id}:${index}`, bounds);
     if (obstacles !== state.obstacles) state = { ...state, obstacles };
@@ -473,12 +489,18 @@ export function routeEdge(
     targetNode = state.nodes.get(edge.targetId);
   const sourceRect = parentLabel
       ? (batch.routes?.get(parentLabel.id)?.label?.bounds ?? labelRect(parentLabel, state))
-      : perEdge.bezier?.source?.kind === "floating"
-        ? perEdge.bezier.source.bounds
-        : perEdge.bezier?.source?.kind === "port"
-          ? perEdge.bezier.source.owner
+      : sourceConstraint?.kind === "floating"
+        ? sourceConstraint.bounds
+        : sourceConstraint?.kind === "port"
+          ? sourceConstraint.owner
           : sourceNode && worldRect(sourceNode, state),
-    targetRect = perEdge.bezier?.target?.bounds ?? (targetNode && worldRect(targetNode, state));
+    targetRect = labelOnly
+      ? sourceRect
+      : targetConstraint?.kind === "floating"
+        ? targetConstraint.bounds
+        : targetConstraint?.kind === "port"
+          ? targetConstraint.owner
+          : targetNode && worldRect(targetNode, state);
   if (
     perEdge.sourceLabel !== undefined &&
     batch.routes?.get(perEdge.sourceLabel)?.sections.length === 0
@@ -504,7 +526,8 @@ export function routeEdge(
       width: 0,
       height: 0,
     };
-  const loop = perEdge.sourceLabel === undefined && edge.sourceId === edge.targetId;
+  const loop = !labelOnly && perEdge.sourceLabel === undefined && edge.sourceId === edge.targetId;
+  const loopClearance = config.selfLoops?.clearance ?? config.clearance + config.edgeSpacing + 1;
   const group = groupKey(edge, strategyStyle, config),
     peers = group ? [...(state.groups.get(group)?.keys() ?? [])] : [];
   const compatibleGroup =
@@ -512,7 +535,8 @@ export function routeEdge(
     peers.every(
       (id) => JSON.stringify(effectivePolicy(state.settings, id)) === JSON.stringify(policy),
     );
-  const grouped = peers.length > 1 && ["bus", "bundle", "fan"].includes(style) && compatibleGroup;
+  const grouped =
+    !loop && peers.length > 1 && sharedCoordination(strategyStyle, config) && compatibleGroup;
   if (!compatibleGroup)
     report(
       "CONSTRAINT_VIOLATION",
@@ -532,6 +556,9 @@ export function routeEdge(
     !perEdge.sourceAttachment &&
     !perEdge.targetAttachment &&
     !perEdge.bezier &&
+    !sourceConstraint &&
+    !targetConstraint &&
+    !guides &&
     !perEdge.sourceSide &&
     !perEdge.targetSide &&
     edge.sourcePort === undefined &&
@@ -560,7 +587,14 @@ export function routeEdge(
     let side =
       selectedSide ??
       (source ? perEdge.sourceSide : perEdge.targetSide) ??
-      (loop ? (source ? "right" : "top") : sideToward(center(bounds), center(other)));
+      (source
+        ? guides?.source?.sourceDirection
+        : (guides?.target?.targetDirection ?? guides?.source?.targetDirection)) ??
+      (loop
+        ? source
+          ? (config.selfLoops?.sourceSide ?? "right")
+          : (config.selfLoops?.targetSide ?? "top")
+        : sideToward(center(bounds), center(other)));
     const requestedTangent = source ? policy?.sourceTangent : policy?.targetTangent;
     if (
       requestedTangent?.kind === "vector" &&
@@ -629,7 +663,7 @@ export function routeEdge(
       !attachment &&
       name === undefined &&
       !(source && parentLabel) &&
-      (!["bus", "fan", "bundle"].includes(style) ||
+      (!sharedCoordination(strategyStyle, config) ||
         (duplicateTargets.length > 1 && duplicateTargets.includes(edge.id))) &&
       !loop
     ) {
@@ -719,9 +753,15 @@ export function routeEdge(
         }
       }
     }
-    if (source && !parentLabel && perEdge.bezier?.source?.kind === "port") {
-      point = perEdge.bezier.source.escape;
-      side = perEdge.bezier.source.direction;
+    const requested = source ? (parentLabel ? undefined : sourceConstraint) : targetConstraint;
+    if (requested?.kind === "port") {
+      point = requested.escape;
+      side = requested.direction;
+    } else if (requested?.kind === "floating" && !requested.sides.includes(side)) {
+      if (requested.sides.length) {
+        side = requested.sides[0]!;
+        point = anchor(bounds, side);
+      } else report("CONSTRAINT_VIOLATION", "No endpoint attachment side is allowed");
     }
     if (policy) {
       const allowed = source ? perEdge.sourceSides : perEdge.targetSides;
@@ -773,6 +813,10 @@ export function routeEdge(
       policy?.label?.kind === "follow" || policy?.label?.kind === "fixed"
         ? undefined
         : positionedLabel;
+  if (labelOnly && !label) {
+    report("MISSING_GEOMETRY", "Label-only connections require positioned fixed label geometry");
+    return { edgeId: edge.id, sections: [], status: "fallback", diagnostics };
+  }
   const excluded = new Set(
     [...ancestors(edge.sourceId, state), ...ancestors(edge.targetId, state)]
       .filter((id) => id !== edge.sourceId && id !== edge.targetId)
@@ -894,16 +938,29 @@ export function routeEdge(
         ref: { kind: "label", edgeId: edge.id },
       }
     : target;
+  if (
+    label &&
+    guides?.source &&
+    (!perEdge.labelSides || perEdge.labelSides.includes(guides.source.targetDirection))
+  ) {
+    firstTarget.side = guides.source.targetDirection;
+    firstTarget.point = anchor(label, firstTarget.side);
+  }
+  if (labelOnly) monotonicTarget = firstTarget;
   const outgoingSide = label && labelSide(target.point);
   const exitSide =
     label &&
-    (outgoingSide === firstTarget.side
-      ? perEdge.labelSides
-        ? (perEdge.labelSides.find((side) => side !== firstTarget.side) ?? firstTarget.side)
-        : ({ left: "right", right: "left", top: "bottom", bottom: "top" } as const)[
-            firstTarget.side
-          ]
-      : outgoingSide);
+    ((guides?.target &&
+    (!perEdge.labelSides || perEdge.labelSides.includes(guides.target.sourceDirection))
+      ? guides.target.sourceDirection
+      : undefined) ??
+      (outgoingSide === firstTarget.side
+        ? perEdge.labelSides
+          ? (perEdge.labelSides.find((side) => side !== firstTarget.side) ?? firstTarget.side)
+          : ({ left: "right", right: "left", top: "bottom", bottom: "top" } as const)[
+              firstTarget.side
+            ]
+        : outgoingSide));
   if (label && exitSide === firstTarget.side) {
     const horizontal = exitSide === "top" || exitSide === "bottom";
     const fraction = (
@@ -919,7 +976,7 @@ export function routeEdge(
     };
   }
   const lastSource: Terminal | undefined =
-    label && exitSide
+    label && exitSide && !labelOnly
       ? {
           point:
             exitSide === firstTarget.side
@@ -981,6 +1038,26 @@ export function routeEdge(
         );
     }
     for (const terminal of [source, target]) {
+      const requested =
+        terminal === source ? (parentLabel ? undefined : sourceConstraint) : targetConstraint;
+      if (requested?.kind === "port") {
+        terminal.tangent =
+          terminal === source ? vector(requested.direction) : reverse(vector(requested.direction));
+        portEscapes.set(terminal, {
+          point: requested.point,
+          context: protectFutureTarget(
+            contextFor(
+              state,
+              new Set([...excluded, `n:${terminal === source ? edge.sourceId : edge.targetId}`]),
+              new Set([`e:${edge.id}`, ...(parentLabel ? [`e:${parentLabel.id}`] : [])]),
+              metrics,
+              batch,
+              lane * config.edgeSpacing,
+            ),
+          ),
+        });
+        continue;
+      }
       if (terminal.ref.kind !== "node" || terminal.ref.port === undefined) continue;
       const owner = terminal === source ? sourceBounds : targetBounds;
       const point = terminal.point;
@@ -1170,6 +1247,23 @@ export function routeEdge(
     a?: Terminal,
     b?: Terminal,
   ): { valid: boolean; cost: number } {
+    let from = path.start;
+    const geometry = geometryFor(style);
+    const validGeometry =
+      curvePolicy.kind !== "polyline" ||
+      path.segments.every((segment) => {
+        const dx = Math.abs(segment.to.x - from.x),
+          dy = Math.abs(segment.to.y - from.y);
+        from = segment.to;
+        return (
+          segment.kind === "line" &&
+          (geometry === "polyline" ||
+            geometry === "straight" ||
+            dx < 1e-7 ||
+            dy < 1e-7 ||
+            (geometry === "octilinear" && Math.abs(dx - dy) < 1e-7))
+        );
+      });
     const reverseTravel = policy?.monotonic
       ? pathReverseTravel(
           path,
@@ -1179,6 +1273,7 @@ export function routeEdge(
         )
       : 0;
     const valid =
+      validGeometry &&
       policyPathSafe(path) &&
       (authoredCrossing || !pathHasSelfIntersection(path)) &&
       (!a?.tangent || directionMatches(pathEndpointTangent(path, "start"), a.tangent)) &&
@@ -1273,7 +1368,7 @@ export function routeEdge(
     if (loop && !via.length && curvePolicy.kind === "bezier" && distance(a.point, b.point) < 1e-8) {
       const normal = vector(a.side),
         lateral = { x: -normal.y, y: normal.x };
-      const extent = config.clearance + config.edgeSpacing + 10;
+      const extent = loopClearance + 9;
       const makeLoop = (reach: number, width: number): RoutePath => {
         const at = (outward: number, across: number) => ({
           x: a.point.x + normal.x * outward + lateral.x * across,
@@ -1469,6 +1564,17 @@ export function routeEdge(
   }
   metrics.routedEdges++;
   const sections: RouteSection[] = [];
+  const visibleSections = () =>
+    sections.map((section, index) => ({
+      ...section,
+      path: trimPath(section.path, {
+        start: index === 0 ? perEdge.sourceClearance : undefined,
+        end:
+          index === sections.length - 1 && section.to.kind === "node" && !labelOnly
+            ? perEdge.targetClearance
+            : undefined,
+      }),
+    }));
   const stub = (t: Terminal, end: boolean) => {
     if (t.ref.kind === "junction") return t.point;
     const v = t.tangent ? (end ? reverse(t.tangent) : t.tangent) : vector(t.side),
@@ -1487,7 +1593,7 @@ export function routeEdge(
     if (distance(a.point, b.point) < 1e-8 && !via.length) {
       const v = vector(a.side),
         tangent = { x: -v.y, y: v.x };
-      const gap = config.clearance + config.edgeSpacing + 10;
+      const gap = loop ? loopClearance + 9 : config.clearance + config.edgeSpacing + 10;
       const candidates: RoutePath[] = [];
       // A loop at one port must extend out along that port's normal. The
       // common initial/return lead stays inside the shared attachment region.
@@ -1555,6 +1661,35 @@ export function routeEdge(
         b.point,
       ]);
     }
+    if (loop && config.selfLoops && !via.length && a.ref.kind === "node" && b.ref.kind === "node") {
+      const bounds = inflate(sourceBounds, loopClearance);
+      const sides: readonly RouteSide[] = ["top", "right", "bottom", "left"];
+      const corners = [
+        { x: bounds.x, y: bounds.y },
+        { x: bounds.x + bounds.width, y: bounds.y },
+        { x: bounds.x + bounds.width, y: bounds.y + bounds.height },
+        { x: bounds.x, y: bounds.y + bounds.height },
+      ];
+      const outside = (t: Terminal) => {
+        const v = vector(t.side);
+        return { x: t.point.x + v.x * loopClearance, y: t.point.y + v.y * loopClearance };
+      };
+      const candidates: RoutePath[] = [];
+      for (const step of [1, -1]) {
+        const points = [a.point, outside(a)];
+        let side = sides.indexOf(a.side);
+        const end = sides.indexOf(b.side);
+        while (side !== end) {
+          points.push(corners[(side + (step > 0 ? 1 : 0)) % 4]!);
+          side = (side + step + 4) % 4;
+        }
+        points.push(outside(b), b.point);
+        const path = pathFromPoints(simplify(points));
+        if (safe(path, context)) candidates.push(path);
+      }
+      candidates.sort((x, y) => pathCost(x, context) - pathCost(y, context));
+      if (candidates.length) return candidates[0]!;
+    }
     if (
       loop &&
       !via.length &&
@@ -1563,7 +1698,7 @@ export function routeEdge(
       a.side === "right" &&
       b.side === "top"
     ) {
-      const r = inflate(sourceBounds, config.clearance + config.edgeSpacing + 1);
+      const r = inflate(sourceBounds, loopClearance);
       const points = [
         a.point,
         { x: r.x + r.width, y: a.point.y },
@@ -1579,8 +1714,7 @@ export function routeEdge(
             ? organic(points, state, context)
             : loopPath;
     }
-    if (!policy && style === "straight" && !via.length && !loop)
-      path = pathFromPoints([a.point, b.point]);
+    if (style === "straight" && !via.length && !loop) path = pathFromPoints([a.point, b.point]);
     else if (!policy && style === "bezier" && !via.length && !loop) {
       const direct = cubic(a, b);
       if (safe(direct, context)) {
@@ -1604,13 +1738,20 @@ export function routeEdge(
       const start = boundedStub(a, false),
         end = boundedStub(b, true),
         waypoints = [...via];
-      if (style === "parallel" && peers.length > 1) {
+      if (coordination === "parallel" && peers.length > 1) {
         // Find a feasible corridor before choosing lanes; an arbitrary midpoint
         // may be inside an obstacle even when good parallel routes exist.
-        const base = findPathBetweenLeads(start, end, "polyline", context, [
-          [a.point, start],
-          [end, b.point],
-        ]);
+        const geometry = geometryFor(style);
+        const base = findPathBetweenLeads(
+          start,
+          end,
+          geometry === "straight" ? "polyline" : geometry,
+          context,
+          [
+            [a.point, start],
+            [end, b.point],
+          ],
+        );
         const mid =
           base && base.length > 2
             ? base[Math.floor(base.length / 2)]!
@@ -1891,7 +2032,7 @@ export function routeEdge(
     );
     // Always keep every endpoint and authored waypoint visible, even if no feasible path exists.
     if (loop && !via.length) {
-      const r = inflate(sourceBounds, config.clearance + config.edgeSpacing + 1);
+      const r = inflate(sourceBounds, loopClearance);
       return pathFromPoints([
         a.point,
         { x: r.x + r.width, y: a.point.y },
@@ -1903,6 +2044,13 @@ export function routeEdge(
     return pathFromPoints([a.point, ...via, b.point]);
   }
   function connection(a: Terminal, b: Terminal, via: readonly RoutePoint[] = []): RoutePath {
+    const requestedGuide =
+      a === source ? guides?.source : b === target ? guides?.target : undefined;
+    const guide =
+      requestedGuide?.sourceDirection === a.side && requestedGuide.targetDirection === b.side
+        ? requestedGuide
+        : undefined;
+    if (guide && !via.length) via = guide.points.slice(1, -1);
     if (!policy) return guideConnection(a, b, via);
     const diagnosticStart = diagnostics.length;
     const fallbackBefore = shapeFallback;
@@ -2144,6 +2292,7 @@ export function routeEdge(
       );
     if (
       last &&
+      !labelOnly &&
       target.tangent &&
       !directionMatches(pathEndpointTangent(last, "end"), target.tangent)
     )
@@ -2343,7 +2492,7 @@ export function routeEdge(
       );
     return {
       edgeId: edge.id,
-      sections,
+      sections: visibleSections(),
       status: failed ? "fallback" : "routed",
       diagnostics,
       ...(placement ? { label: placement } : {}),
@@ -2360,7 +2509,7 @@ export function routeEdge(
     );
   return {
     edgeId: edge.id,
-    sections,
+    sections: visibleSections(),
     status: diagnostics.length ? "fallback" : "routed",
     diagnostics,
   };
