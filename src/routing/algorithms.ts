@@ -60,6 +60,7 @@ import {
 } from "./policy-geometry";
 import { inflate, intersects, union } from "./spatial";
 import { retargetLinePath } from "./retarget";
+import { rememberUntrimmedRoute } from "./route-cache";
 import {
   clear,
   findPath,
@@ -2715,13 +2716,16 @@ export function routeEdge(
           d.constraint !== "monotonicity" &&
           d.constraint !== "bundle",
       );
-    return {
+    const route: Route = {
       edgeId: edge.id,
       sections: visibleSections(),
       status: failed ? "fallback" : "routed",
       diagnostics,
       ...(placement ? { label: placement } : {}),
     };
+    return perEdge.sourceClearance || perEdge.targetClearance
+      ? rememberUntrimmedRoute(route, sections)
+      : route;
   }
   if (
     sections.some((section) =>
@@ -2732,12 +2736,15 @@ export function routeEdge(
       "ROUTE_CONFLICT",
       "Route crosses or overlaps another edge; retained a compact visible path",
     );
-  return {
+  const route: Route = {
     edgeId: edge.id,
     sections: visibleSections(),
     status: diagnostics.length ? "fallback" : "routed",
     diagnostics,
   };
+  return perEdge.sourceClearance || perEdge.targetClearance
+    ? rememberUntrimmedRoute(route, sections)
+    : route;
 }
 export function routeBounds(route: Route): RouteBounds {
   let bounds: RouteBounds | undefined = route.label?.bounds;

@@ -86,3 +86,45 @@ it("keeps the default recompute policy independent of endpoint drag history", ()
     ...orthogonalRouting.update(next, previous, getDiff(graph, next)).snapshot.routes,
   ]).toEqual([...orthogonalRouting.route(next).routes]);
 });
+
+it.each([false, true])(
+  "preserves eligible marker-gap paths without accumulating trims (label=%s)",
+  (labeled) => {
+    const base = input();
+    const graph = labeled
+      ? {
+          ...base,
+          edges: base.edges.map((edge) => ({ ...edge, x: 100, y: 110, width: 80, height: 30 })),
+        }
+      : base;
+    const options: RoutingSettings = {
+      policy: {
+        curve: { kind: "rounded-orthogonal", radius: 8 },
+        sourceTangent: { kind: "border-normal" },
+        targetTangent: { kind: "border-normal" },
+        ...(labeled ? { label: { kind: "gap", tangent: { kind: "border-normal" } } } : {}),
+        stability: { kind: "preserve-valid" },
+      },
+      edges: { ab: { sourceClearance: 5, targetClearance: 10 } },
+    };
+    const previous = orthogonalRouting.route(graph, options);
+    const old = previous.routes.get("ab")!;
+    expect(old.status).toBe("routed");
+    const next = {
+      ...graph,
+      nodes: graph.nodes.map((node) => (node.id === "block" ? { ...node, y: 300 } : node)),
+    };
+    const update = orthogonalRouting.update(next, previous, getDiff(graph, next));
+    expect(update.snapshot.routes.get("ab")).toBe(old);
+    expect(update.patches).toEqual([]);
+    const again = {
+      ...next,
+      nodes: next.nodes.map((node) => (node.id === "block" ? { ...node, y: 400 } : node)),
+    };
+    expect(
+      orthogonalRouting
+        .update(again, update.snapshot, getDiff(next, again))
+        .snapshot.routes.get("ab"),
+    ).toBe(old);
+  },
+);
