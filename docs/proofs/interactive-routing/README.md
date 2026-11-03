@@ -25,7 +25,8 @@ inconclusive. The high-degree fixture remained substantially slower and produced
 fallbacks, so it is not evidence of successful high-degree routing performance.
 
 [Raw process results](benchmark-runs.json) retain all workloads, tails, counts,
-machine load and scope. Rerun with `pnpm bench:routing`; the fixture/harness source
+machine load and scope. Rerun with
+`ROUTING_BENCH_FRAMES=30 ROUTING_BENCH_TRIALS=1 pnpm bench:routing`; the fixture/harness source
 is committed under `bench/routing-fixtures.ts` and `scripts/bench-routing.ts`.
 
 Separating drawn-segment reservations from searched dependency envelopes improved
@@ -42,6 +43,7 @@ preservation and `0`/`8` cost profile ran with load 41 on 10 cores. It produced 
 initial empty routes and 57 initial fallbacks. Pointer updates remained above a
 frame budget; emitted patches had zero hard failures. [That run](adverse-drag-run.json)
 is retained as negative evidence, not a comparative speed claim. Use
-`pnpm bench:viz-routing` to reproduce and profile this limit separately from the
+`ROUTING_BENCH_FRAMES=3 ROUTING_BENCH_PRESERVE=true ROUTING_BENCH_CROSSING_PENALTY=0 ROUTING_BENCH_OVERLAP_PENALTY=8 pnpm bench:viz-routing`
+to reproduce and profile this limit separately from the
 sparse benchmark. Browser paint, worker transfer and projection/diff construction
 remain excluded from these CPU measurements.

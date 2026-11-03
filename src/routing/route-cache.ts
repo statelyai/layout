@@ -12,3 +12,8 @@ export function rememberUntrimmedRoute(route: Route, sections: readonly RouteSec
 export function getUntrimmedRoute(route: Route | undefined): Route | undefined {
   return route && (untrimmed.get(route) ?? route);
 }
+
+export function copyUntrimmedRoute(source: Route, route: Route): Route {
+  const sections = untrimmed.get(source)?.sections;
+  return sections ? rememberUntrimmedRoute(route, sections) : route;
+}

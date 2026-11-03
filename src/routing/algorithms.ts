@@ -59,7 +59,7 @@ import {
 } from "./policy-geometry";
 import { inflate, intersects, union } from "./spatial";
 import { retargetLinePath } from "./retarget";
-import { rememberUntrimmedRoute } from "./route-cache";
+import { copyUntrimmedRoute, rememberUntrimmedRoute } from "./route-cache";
 import {
   clear,
   findPath,
@@ -2769,7 +2769,7 @@ export function routeEdge(
         batch,
       );
       if (independent.sections.length && (hardFailure || independent.status === "routed"))
-        return {
+        return copyUntrimmedRoute(independent, {
           ...independent,
           diagnostics: [
             ...independent.diagnostics,
@@ -2780,7 +2780,7 @@ export function routeEdge(
               message: "Parallel lane spacing is infeasible; retained an independent route",
             },
           ],
-        };
+        });
     }
     if ((hardFailure || shapeFallback) && grouped) {
       const independent = routeEdge(
@@ -2799,7 +2799,7 @@ export function routeEdge(
         metrics,
         batch,
       );
-      return {
+      return copyUntrimmedRoute(independent, {
         ...independent,
         diagnostics: [
           ...independent.diagnostics,
@@ -2810,7 +2810,7 @@ export function routeEdge(
             message: "Shared geometry violates this branch policy; routed independently",
           },
         ],
-      };
+      });
     }
     if (hardFailure) return { edgeId: edge.id, sections: [], status: "fallback", diagnostics };
     if (shapeFallback)

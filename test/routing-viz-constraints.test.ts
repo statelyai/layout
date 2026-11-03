@@ -1,6 +1,7 @@
 import { createGraph } from "@statelyai/graph";
 import { expect, it } from "vitest";
-import { orthogonalRouting, segmentCrossesRect } from "../src/routing";
+import { getPathLength, orthogonalRouting, segmentCrossesRect } from "../src/routing";
+import { getUntrimmedRoute } from "../src/routing/route-cache";
 import type {
   Route,
   RouteBounds,
@@ -31,6 +32,8 @@ it("keeps parallel lane planning from rejecting feasible fixed-geometry connecti
       Object.entries(parallelFixture.settings.edges).map(([id, value]) => {
         const config: EdgeRoutingSettings = {
           ...value,
+          sourceClearance: 5,
+          targetClearance: 10,
           geometry: "orthogonal",
           topology: { kind: "connection" },
           policy: { curve: { kind: "rounded-orthogonal", radius: 10 } },
@@ -40,12 +43,24 @@ it("keeps parallel lane planning from rejecting feasible fixed-geometry connecti
     ),
   };
   const result = orthogonalRouting.route(graph, settings);
+  let independentRetries = 0;
   for (const route of result.routes.values()) {
     expect(route.sections.length).toBeGreaterThan(0);
     expect(route.diagnostics.some((diagnostic) => diagnostic.code === "MISSING_GEOMETRY")).toBe(
       false,
     );
+    if (route.diagnostics.some((diagnostic) => diagnostic.constraint === "coordination")) {
+      independentRetries++;
+      const untrimmed = getUntrimmedRoute(route)!;
+      expect(
+        getPathLength(untrimmed.sections[0]!.path) - getPathLength(route.sections[0]!.path),
+      ).toBeCloseTo(5, 7);
+      expect(
+        getPathLength(untrimmed.sections.at(-1)!.path) - getPathLength(route.sections.at(-1)!.path),
+      ).toBeCloseTo(10, 7);
+    }
   }
+  expect(independentRetries).toBeGreaterThan(0);
 });
 const labelPositions = [
   { side: "top", label: { x: 10, y: -100, width: 80, height: 30 } },

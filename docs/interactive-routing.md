@@ -95,6 +95,9 @@ that geometry. Native compound routing and native flat repairs also retain their
 snapshot and constraints. A layout that did not invoke the native fixed-geometry
 router has no retained snapshot. Edits to a returned layout invalidate its cached
 handoff; serialized/cloned layouts do not contain private routing state.
+Flat repairs initially expose the same routes as the layout output. Subsequent
+updates can reference synthetic attachment ports present in the handoff graph;
+use that graph when resolving endpoint references.
 
 For other layout providers, normalize their routes using `getLayoutRoutes` and
 pass them as `initialRoutes` when calling `routeEdges` on the corresponding
