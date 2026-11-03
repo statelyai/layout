@@ -1,0 +1,1249 @@
+{
+  "graph": {
+    "id": "root",
+    "mode": "directed",
+    "initialNodeId": "coffeeComparison.flat.idle",
+    "nodes": [
+      {
+        "type": "node",
+        "id": "coffeeComparison.flat.idle",
+        "label": "idle",
+        "data": {
+          "key": "idle",
+          "exit": [],
+          "meta": {},
+          "tags": [],
+          "type": "normal",
+          "color": "yellow",
+          "entry": [],
+          "nodeId": null,
+          "history": false,
+          "invokes": [],
+          "initialId": null,
+          "description": "Powered on and waiting to start a coffee.",
+          "label": "idle"
+        },
+        "x": 95,
+        "y": 48,
+        "width": 260.671875,
+        "height": 63
+      },
+      {
+        "type": "node",
+        "id": "node-et4fp0twe0q",
+        "label": "heating",
+        "data": {
+          "nodeId": null,
+          "key": "heating",
+          "type": null,
+          "history": false,
+          "entry": [],
+          "exit": [],
+          "meta": null,
+          "tags": [],
+          "initialId": null,
+          "invokes": [],
+          "label": "heating"
+        },
+        "x": 0,
+        "y": 0,
+        "width": 200,
+        "height": 100
+      },
+      {
+        "type": "node",
+        "id": "coffeeComparison.flat.off",
+        "label": "off",
+        "data": {
+          "key": "off",
+          "exit": [],
+          "meta": {},
+          "tags": [],
+          "type": "normal",
+          "color": "red",
+          "entry": [],
+          "nodeId": null,
+          "history": false,
+          "invokes": [],
+          "initialId": null,
+          "description": "Power is off. POWER_ON returns to idle.",
+          "label": "off"
+        },
+        "x": 616,
+        "y": 340,
+        "width": 253.46875,
+        "height": 63
+      },
+      {
+        "type": "node",
+        "id": "node-klfsqwwqyik",
+        "label": "cleaning",
+        "data": {
+          "nodeId": null,
+          "key": "cleaning",
+          "type": null,
+          "history": false,
+          "entry": [],
+          "exit": [],
+          "meta": null,
+          "tags": [],
+          "initialId": null,
+          "invokes": [],
+          "label": "cleaning"
+        },
+        "x": 0,
+        "y": 0,
+        "width": 200,
+        "height": 100
+      },
+      {
+        "type": "node",
+        "id": "node-d0yghru5ltl",
+        "label": "fault",
+        "data": {
+          "nodeId": null,
+          "key": "fault",
+          "type": null,
+          "history": false,
+          "entry": [],
+          "exit": [],
+          "meta": null,
+          "tags": [],
+          "initialId": null,
+          "invokes": [],
+          "label": "fault"
+        },
+        "x": 0,
+        "y": 0,
+        "width": 200,
+        "height": 100
+      },
+      {
+        "type": "node",
+        "id": "coffeeComparison.flat.grinding",
+        "label": "grinding",
+        "data": {
+          "key": "grinding",
+          "exit": [],
+          "meta": {},
+          "tags": [],
+          "type": "normal",
+          "color": "blue",
+          "entry": [],
+          "nodeId": null,
+          "history": false,
+          "invokes": [],
+          "initialId": null,
+          "description": "Grinding coffee beans.",
+          "label": "grinding"
+        },
+        "x": 147,
+        "y": 216,
+        "width": 157.21875,
+        "height": 63
+      },
+      {
+        "type": "node",
+        "id": "coffeeComparison.flat.brewing",
+        "label": "brewing",
+        "data": {
+          "key": "brewing",
+          "exit": [],
+          "meta": {},
+          "tags": [],
+          "type": "normal",
+          "color": "blue",
+          "entry": [],
+          "nodeId": null,
+          "history": false,
+          "invokes": [],
+          "initialId": null,
+          "description": "Brewing the coffee.",
+          "label": "brewing"
+        },
+        "x": 156,
+        "y": 385,
+        "width": 138.453125,
+        "height": 63
+      },
+      {
+        "type": "node",
+        "id": "node-xhc5uc54rc",
+        "label": "dispensing",
+        "data": {
+          "nodeId": null,
+          "key": "dispensing",
+          "type": null,
+          "history": false,
+          "entry": [],
+          "exit": [],
+          "meta": null,
+          "tags": [],
+          "initialId": null,
+          "invokes": [],
+          "label": "dispensing"
+        },
+        "x": 0,
+        "y": 0,
+        "width": 200,
+        "height": 100
+      },
+      {
+        "type": "node",
+        "id": "coffeeComparison.flat.ready",
+        "label": "ready",
+        "data": {
+          "key": "ready",
+          "exit": [],
+          "meta": {},
+          "tags": [],
+          "type": "normal",
+          "color": "green",
+          "entry": [],
+          "nodeId": null,
+          "history": false,
+          "invokes": [],
+          "initialId": null,
+          "description": "Coffee is ready. Take the cup to prepare another coffee.",
+          "label": "ready"
+        },
+        "x": 53,
+        "y": 553,
+        "width": 345.421875,
+        "height": 63
+      }
+    ],
+    "edges": [
+      {
+        "type": "edge",
+        "id": "coffeeComparison.flat.idle-START-0",
+        "sourceId": "coffeeComparison.flat.idle",
+        "targetId": "node-et4fp0twe0q",
+        "label": null,
+        "data": {
+          "meta": null,
+          "guard": null,
+          "actions": [],
+          "eventType": "START",
+          "description": null,
+          "transitionType": "normal",
+          "edgeId": "coffeeComparison.flat.idle-START-0",
+          "edgeMode": "directed",
+          "sourceNodeId": "coffeeComparison.flat.idle",
+          "actualTargetId": "node-et4fp0twe0q",
+          "ariaLabel": "Transition START from idle to heating"
+        },
+        "sourcePort": null,
+        "x": 196,
+        "y": 150,
+        "width": 58.609375,
+        "height": 28,
+        "style": {
+          "strokeWidth": 2
+        }
+      },
+      {
+        "type": "edge",
+        "id": "coffeeComparison.flat.idle-POWER_OFF-0",
+        "sourceId": "coffeeComparison.flat.idle",
+        "targetId": "coffeeComparison.flat.off",
+        "label": null,
+        "data": {
+          "meta": null,
+          "color": "red",
+          "guard": null,
+          "actions": [],
+          "eventType": "POWER_OFF",
+          "description": null,
+          "transitionType": "normal",
+          "edgeId": "coffeeComparison.flat.idle-POWER_OFF-0",
+          "edgeMode": "directed",
+          "sourceNodeId": "coffeeComparison.flat.idle",
+          "actualTargetId": "coffeeComparison.flat.off",
+          "ariaLabel": "Transition POWER_OFF from idle to off"
+        },
+        "sourcePort": null,
+        "x": 461,
+        "y": 59,
+        "width": 92.265625,
+        "height": 28,
+        "style": {
+          "strokeWidth": 2
+        }
+      },
+      {
+        "type": "edge",
+        "id": "coffeeComparison.flat.grinding-GRIND_COMPLETE-0",
+        "sourceId": "coffeeComparison.flat.grinding",
+        "targetId": "coffeeComparison.flat.brewing",
+        "label": null,
+        "data": {
+          "meta": null,
+          "guard": null,
+          "actions": [],
+          "eventType": "GRIND_COMPLETE",
+          "description": null,
+          "transitionType": "normal",
+          "edgeId": "coffeeComparison.flat.grinding-GRIND_COMPLETE-0",
+          "edgeMode": "directed",
+          "sourceNodeId": "coffeeComparison.flat.grinding",
+          "actualTargetId": "coffeeComparison.flat.brewing",
+          "ariaLabel": "Transition GRIND_COMPLETE from grinding to brewing"
+        },
+        "sourcePort": null,
+        "x": 161,
+        "y": 318,
+        "width": 128.109375,
+        "height": 28,
+        "style": {
+          "strokeWidth": 2
+        }
+      },
+      {
+        "type": "edge",
+        "id": "coffeeComparison.flat.grinding-POWER_OFF-0",
+        "sourceId": "coffeeComparison.flat.grinding",
+        "targetId": "coffeeComparison.flat.off",
+        "label": null,
+        "data": {
+          "meta": null,
+          "color": "red",
+          "guard": null,
+          "actions": [],
+          "eventType": "POWER_OFF",
+          "description": null,
+          "transitionType": "normal",
+          "edgeId": "coffeeComparison.flat.grinding-POWER_OFF-0",
+          "edgeMode": "directed",
+          "sourceNodeId": "coffeeComparison.flat.grinding",
+          "actualTargetId": "coffeeComparison.flat.off",
+          "ariaLabel": "Transition POWER_OFF from grinding to off"
+        },
+        "sourcePort": null,
+        "x": 461,
+        "y": 234,
+        "width": 92.265625,
+        "height": 28,
+        "style": {
+          "strokeWidth": 2
+        }
+      },
+      {
+        "type": "edge",
+        "id": "coffeeComparison.flat.brewing-BREW_COMPLETE-0",
+        "sourceId": "coffeeComparison.flat.brewing",
+        "targetId": "node-xhc5uc54rc",
+        "label": null,
+        "data": {
+          "meta": {},
+          "color": "green",
+          "guard": null,
+          "actions": [],
+          "eventType": "BREW_COMPLETE",
+          "description": null,
+          "transitionType": "normal",
+          "edgeId": "coffeeComparison.flat.brewing-BREW_COMPLETE-0",
+          "edgeMode": "directed",
+          "sourceNodeId": "coffeeComparison.flat.brewing",
+          "actualTargetId": "node-xhc5uc54rc",
+          "ariaLabel": "Transition BREW_COMPLETE from brewing to dispensing"
+        },
+        "sourcePort": null,
+        "x": 163,
+        "y": 486,
+        "width": 125.765625,
+        "height": 28,
+        "style": {
+          "strokeWidth": 2
+        }
+      },
+      {
+        "type": "edge",
+        "id": "coffeeComparison.flat.brewing-POWER_OFF-0",
+        "sourceId": "coffeeComparison.flat.brewing",
+        "targetId": "coffeeComparison.flat.off",
+        "label": null,
+        "data": {
+          "meta": null,
+          "color": "red",
+          "guard": null,
+          "actions": [],
+          "eventType": "POWER_OFF",
+          "description": null,
+          "transitionType": "normal",
+          "edgeId": "coffeeComparison.flat.brewing-POWER_OFF-0",
+          "edgeMode": "directed",
+          "sourceNodeId": "coffeeComparison.flat.brewing",
+          "actualTargetId": "coffeeComparison.flat.off",
+          "ariaLabel": "Transition POWER_OFF from brewing to off"
+        },
+        "sourcePort": null,
+        "x": 461,
+        "y": 402,
+        "width": 92.265625,
+        "height": 28,
+        "style": {
+          "strokeWidth": 2
+        }
+      },
+      {
+        "type": "edge",
+        "id": "coffeeComparison.flat.ready-TAKE_CUP-0",
+        "sourceId": "coffeeComparison.flat.ready",
+        "targetId": "coffeeComparison.flat.idle",
+        "label": null,
+        "data": {
+          "meta": null,
+          "guard": null,
+          "actions": [],
+          "eventType": "TAKE_CUP",
+          "description": null,
+          "transitionType": "normal",
+          "edgeId": "coffeeComparison.flat.ready-TAKE_CUP-0",
+          "edgeMode": "directed",
+          "sourceNodeId": "coffeeComparison.flat.ready",
+          "actualTargetId": "coffeeComparison.flat.idle",
+          "ariaLabel": "Transition TAKE_CUP from ready to idle"
+        },
+        "sourcePort": null,
+        "x": -38,
+        "y": 318,
+        "width": 81.265625,
+        "height": 28,
+        "style": {
+          "strokeWidth": 2
+        }
+      },
+      {
+        "type": "edge",
+        "id": "coffeeComparison.flat.ready-POWER_OFF-0",
+        "sourceId": "coffeeComparison.flat.ready",
+        "targetId": "coffeeComparison.flat.off",
+        "label": null,
+        "data": {
+          "meta": null,
+          "color": "red",
+          "guard": null,
+          "actions": [],
+          "eventType": "POWER_OFF",
+          "description": null,
+          "transitionType": "normal",
+          "edgeId": "coffeeComparison.flat.ready-POWER_OFF-0",
+          "edgeMode": "directed",
+          "sourceNodeId": "coffeeComparison.flat.ready",
+          "actualTargetId": "coffeeComparison.flat.off",
+          "ariaLabel": "Transition POWER_OFF from ready to off"
+        },
+        "sourcePort": null,
+        "x": 461,
+        "y": 571,
+        "width": 92.265625,
+        "height": 28,
+        "style": {
+          "strokeWidth": 2
+        }
+      },
+      {
+        "type": "edge",
+        "id": "coffeeComparison.flat.off-POWER_ON-0",
+        "sourceId": "coffeeComparison.flat.off",
+        "targetId": "coffeeComparison.flat.idle",
+        "label": null,
+        "data": {
+          "meta": null,
+          "guard": null,
+          "actions": [],
+          "eventType": "POWER_ON",
+          "description": null,
+          "transitionType": "normal",
+          "edgeId": "coffeeComparison.flat.off-POWER_ON-0",
+          "edgeMode": "directed",
+          "sourceNodeId": "coffeeComparison.flat.off",
+          "actualTargetId": "coffeeComparison.flat.idle",
+          "ariaLabel": "Transition POWER_ON from off to idle"
+        },
+        "sourcePort": null,
+        "x": 777,
+        "y": 13,
+        "width": 87.203125,
+        "height": 28,
+        "style": {
+          "strokeWidth": 2
+        }
+      },
+      {
+        "type": "edge",
+        "id": "edge-iefroln5ovh",
+        "sourceId": "node-et4fp0twe0q",
+        "targetId": "coffeeComparison.flat.grinding",
+        "label": null,
+        "data": {
+          "eventType": "HEAT_COMPLETE",
+          "transitionType": "normal",
+          "guard": null,
+          "description": null,
+          "actions": [],
+          "meta": null,
+          "edgeId": "edge-iefroln5ovh",
+          "edgeMode": "directed",
+          "sourceNodeId": "node-et4fp0twe0q",
+          "actualTargetId": "coffeeComparison.flat.grinding",
+          "ariaLabel": "Transition HEAT_COMPLETE from heating to grinding"
+        },
+        "sourcePort": null,
+        "x": 0,
+        "y": 60,
+        "width": 120,
+        "height": 60,
+        "style": {
+          "strokeWidth": 2
+        }
+      },
+      {
+        "type": "edge",
+        "id": "edge-xghjw84az5",
+        "sourceId": "node-xhc5uc54rc",
+        "targetId": "coffeeComparison.flat.ready",
+        "label": null,
+        "data": {
+          "eventType": "DISPENSE_COMPLETE",
+          "transitionType": "normal",
+          "guard": null,
+          "description": null,
+          "actions": [],
+          "meta": null,
+          "edgeId": "edge-xghjw84az5",
+          "edgeMode": "directed",
+          "sourceNodeId": "node-xhc5uc54rc",
+          "actualTargetId": "coffeeComparison.flat.ready",
+          "ariaLabel": "Transition DISPENSE_COMPLETE from dispensing to ready"
+        },
+        "sourcePort": null,
+        "x": 0,
+        "y": 60,
+        "width": 120,
+        "height": 60,
+        "style": {
+          "strokeWidth": 2
+        }
+      },
+      {
+        "type": "edge",
+        "id": "edge-qi591d9ejxj",
+        "sourceId": "coffeeComparison.flat.idle",
+        "targetId": "node-klfsqwwqyik",
+        "label": null,
+        "data": {
+          "eventType": "CLEAN",
+          "transitionType": "normal",
+          "guard": null,
+          "description": null,
+          "actions": [],
+          "meta": null,
+          "edgeId": "edge-qi591d9ejxj",
+          "edgeMode": "directed",
+          "sourceNodeId": "coffeeComparison.flat.idle",
+          "actualTargetId": "node-klfsqwwqyik",
+          "ariaLabel": "Transition CLEAN from idle to cleaning"
+        },
+        "sourcePort": null,
+        "x": 95,
+        "y": 171,
+        "width": 120,
+        "height": 60,
+        "style": {
+          "strokeWidth": 2
+        }
+      },
+      {
+        "type": "edge",
+        "id": "edge-tw6c8y1nuo",
+        "sourceId": "coffeeComparison.flat.ready",
+        "targetId": "node-klfsqwwqyik",
+        "label": null,
+        "data": {
+          "eventType": "CLEAN",
+          "transitionType": "normal",
+          "guard": null,
+          "description": null,
+          "actions": [],
+          "meta": null,
+          "edgeId": "edge-tw6c8y1nuo",
+          "edgeMode": "directed",
+          "sourceNodeId": "coffeeComparison.flat.ready",
+          "actualTargetId": "node-klfsqwwqyik",
+          "ariaLabel": "Transition CLEAN from ready to cleaning"
+        },
+        "sourcePort": null,
+        "x": 53,
+        "y": 676,
+        "width": 120,
+        "height": 60,
+        "style": {
+          "strokeWidth": 2
+        }
+      },
+      {
+        "type": "edge",
+        "id": "edge-1sdl3lkb6co",
+        "sourceId": "node-klfsqwwqyik",
+        "targetId": "coffeeComparison.flat.idle",
+        "label": null,
+        "data": {
+          "eventType": "CLEAN_COMPLETE",
+          "transitionType": "normal",
+          "guard": null,
+          "description": null,
+          "actions": [],
+          "meta": null,
+          "edgeId": "edge-1sdl3lkb6co",
+          "edgeMode": "directed",
+          "sourceNodeId": "node-klfsqwwqyik",
+          "actualTargetId": "coffeeComparison.flat.idle",
+          "ariaLabel": "Transition CLEAN_COMPLETE from cleaning to idle"
+        },
+        "sourcePort": null,
+        "x": 0,
+        "y": 60,
+        "width": 120,
+        "height": 60,
+        "style": {
+          "strokeWidth": 2
+        }
+      },
+      {
+        "type": "edge",
+        "id": "edge-2bke8h85e5k",
+        "sourceId": "node-et4fp0twe0q",
+        "targetId": "coffeeComparison.flat.off",
+        "label": null,
+        "data": {
+          "eventType": "POWER_OFF",
+          "transitionType": "normal",
+          "guard": null,
+          "description": null,
+          "actions": [],
+          "meta": null,
+          "edgeId": "edge-2bke8h85e5k",
+          "edgeMode": "directed",
+          "sourceNodeId": "node-et4fp0twe0q",
+          "actualTargetId": "coffeeComparison.flat.off",
+          "ariaLabel": "Transition POWER_OFF from heating to off"
+        },
+        "sourcePort": null,
+        "x": 0,
+        "y": 60,
+        "width": 120,
+        "height": 60,
+        "style": {
+          "strokeWidth": 2
+        }
+      },
+      {
+        "type": "edge",
+        "id": "edge-g21k499fsuh",
+        "sourceId": "node-xhc5uc54rc",
+        "targetId": "coffeeComparison.flat.off",
+        "label": null,
+        "data": {
+          "eventType": "POWER_OFF",
+          "transitionType": "normal",
+          "guard": null,
+          "description": null,
+          "actions": [],
+          "meta": null,
+          "edgeId": "edge-g21k499fsuh",
+          "edgeMode": "directed",
+          "sourceNodeId": "node-xhc5uc54rc",
+          "actualTargetId": "coffeeComparison.flat.off",
+          "ariaLabel": "Transition POWER_OFF from dispensing to off"
+        },
+        "sourcePort": null,
+        "x": 0,
+        "y": 60,
+        "width": 120,
+        "height": 60,
+        "style": {
+          "strokeWidth": 2
+        }
+      },
+      {
+        "type": "edge",
+        "id": "edge-c39mqq5rkc4",
+        "sourceId": "node-klfsqwwqyik",
+        "targetId": "coffeeComparison.flat.off",
+        "label": null,
+        "data": {
+          "eventType": "POWER_OFF",
+          "transitionType": "normal",
+          "guard": null,
+          "description": null,
+          "actions": [],
+          "meta": null,
+          "edgeId": "edge-c39mqq5rkc4",
+          "edgeMode": "directed",
+          "sourceNodeId": "node-klfsqwwqyik",
+          "actualTargetId": "coffeeComparison.flat.off",
+          "ariaLabel": "Transition POWER_OFF from cleaning to off"
+        },
+        "sourcePort": null,
+        "x": 0,
+        "y": 60,
+        "width": 120,
+        "height": 60,
+        "style": {
+          "strokeWidth": 2
+        }
+      },
+      {
+        "type": "edge",
+        "id": "edge-iy8r8tupxg",
+        "sourceId": "node-d0yghru5ltl",
+        "targetId": "coffeeComparison.flat.off",
+        "label": null,
+        "data": {
+          "eventType": "POWER_OFF",
+          "transitionType": "normal",
+          "guard": null,
+          "description": null,
+          "actions": [],
+          "meta": null,
+          "edgeId": "edge-iy8r8tupxg",
+          "edgeMode": "directed",
+          "sourceNodeId": "node-d0yghru5ltl",
+          "actualTargetId": "coffeeComparison.flat.off",
+          "ariaLabel": "Transition POWER_OFF from fault to off"
+        },
+        "sourcePort": null,
+        "x": 0,
+        "y": 60,
+        "width": 120,
+        "height": 60,
+        "style": {
+          "strokeWidth": 2
+        }
+      },
+      {
+        "type": "edge",
+        "id": "edge-oqys46khrm",
+        "sourceId": "coffeeComparison.flat.idle",
+        "targetId": "node-d0yghru5ltl",
+        "label": null,
+        "data": {
+          "eventType": "FAULT",
+          "transitionType": "normal",
+          "guard": null,
+          "description": null,
+          "actions": [],
+          "meta": null,
+          "edgeId": "edge-oqys46khrm",
+          "edgeMode": "directed",
+          "sourceNodeId": "coffeeComparison.flat.idle",
+          "actualTargetId": "node-d0yghru5ltl",
+          "ariaLabel": "Transition FAULT from idle to fault"
+        },
+        "sourcePort": null,
+        "x": 95,
+        "y": 171,
+        "width": 120,
+        "height": 60,
+        "style": {
+          "strokeWidth": 2
+        }
+      },
+      {
+        "type": "edge",
+        "id": "edge-bxjzoc28dc",
+        "sourceId": "node-et4fp0twe0q",
+        "targetId": "node-d0yghru5ltl",
+        "label": null,
+        "data": {
+          "eventType": "FAULT",
+          "transitionType": "normal",
+          "guard": null,
+          "description": null,
+          "actions": [],
+          "meta": null,
+          "edgeId": "edge-bxjzoc28dc",
+          "edgeMode": "directed",
+          "sourceNodeId": "node-et4fp0twe0q",
+          "actualTargetId": "node-d0yghru5ltl",
+          "ariaLabel": "Transition FAULT from heating to fault"
+        },
+        "sourcePort": null,
+        "x": 0,
+        "y": 60,
+        "width": 120,
+        "height": 60,
+        "style": {
+          "strokeWidth": 2
+        }
+      },
+      {
+        "type": "edge",
+        "id": "edge-dnaeun3xymq",
+        "sourceId": "coffeeComparison.flat.grinding",
+        "targetId": "node-d0yghru5ltl",
+        "label": null,
+        "data": {
+          "eventType": "FAULT",
+          "transitionType": "normal",
+          "guard": null,
+          "description": null,
+          "actions": [],
+          "meta": null,
+          "edgeId": "edge-dnaeun3xymq",
+          "edgeMode": "directed",
+          "sourceNodeId": "coffeeComparison.flat.grinding",
+          "actualTargetId": "node-d0yghru5ltl",
+          "ariaLabel": "Transition FAULT from grinding to fault"
+        },
+        "sourcePort": null,
+        "x": 147,
+        "y": 339,
+        "width": 120,
+        "height": 60,
+        "style": {
+          "strokeWidth": 2
+        }
+      },
+      {
+        "type": "edge",
+        "id": "edge-u46rlt2ljjn",
+        "sourceId": "coffeeComparison.flat.brewing",
+        "targetId": "node-d0yghru5ltl",
+        "label": null,
+        "data": {
+          "eventType": "FAULT",
+          "transitionType": "normal",
+          "guard": null,
+          "description": null,
+          "actions": [],
+          "meta": null,
+          "edgeId": "edge-u46rlt2ljjn",
+          "edgeMode": "directed",
+          "sourceNodeId": "coffeeComparison.flat.brewing",
+          "actualTargetId": "node-d0yghru5ltl",
+          "ariaLabel": "Transition FAULT from brewing to fault"
+        },
+        "sourcePort": null,
+        "x": 156,
+        "y": 508,
+        "width": 120,
+        "height": 60,
+        "style": {
+          "strokeWidth": 2
+        }
+      },
+      {
+        "type": "edge",
+        "id": "edge-3cteeg0nr7o",
+        "sourceId": "node-xhc5uc54rc",
+        "targetId": "node-d0yghru5ltl",
+        "label": null,
+        "data": {
+          "eventType": "FAULT",
+          "transitionType": "normal",
+          "guard": null,
+          "description": null,
+          "actions": [],
+          "meta": null,
+          "edgeId": "edge-3cteeg0nr7o",
+          "edgeMode": "directed",
+          "sourceNodeId": "node-xhc5uc54rc",
+          "actualTargetId": "node-d0yghru5ltl",
+          "ariaLabel": "Transition FAULT from dispensing to fault"
+        },
+        "sourcePort": null,
+        "x": 0,
+        "y": 60,
+        "width": 120,
+        "height": 60,
+        "style": {
+          "strokeWidth": 2
+        }
+      },
+      {
+        "type": "edge",
+        "id": "edge-ce9s42p3f5",
+        "sourceId": "coffeeComparison.flat.ready",
+        "targetId": "node-d0yghru5ltl",
+        "label": null,
+        "data": {
+          "eventType": "FAULT",
+          "transitionType": "normal",
+          "guard": null,
+          "description": null,
+          "actions": [],
+          "meta": null,
+          "edgeId": "edge-ce9s42p3f5",
+          "edgeMode": "directed",
+          "sourceNodeId": "coffeeComparison.flat.ready",
+          "actualTargetId": "node-d0yghru5ltl",
+          "ariaLabel": "Transition FAULT from ready to fault"
+        },
+        "sourcePort": null,
+        "x": 53,
+        "y": 676,
+        "width": 120,
+        "height": 60,
+        "style": {
+          "strokeWidth": 2
+        }
+      },
+      {
+        "type": "edge",
+        "id": "edge-923c9rrp5n",
+        "sourceId": "node-klfsqwwqyik",
+        "targetId": "node-d0yghru5ltl",
+        "label": null,
+        "data": {
+          "eventType": "FAULT",
+          "transitionType": "normal",
+          "guard": null,
+          "description": null,
+          "actions": [],
+          "meta": null,
+          "edgeId": "edge-923c9rrp5n",
+          "edgeMode": "directed",
+          "sourceNodeId": "node-klfsqwwqyik",
+          "actualTargetId": "node-d0yghru5ltl",
+          "ariaLabel": "Transition FAULT from cleaning to fault"
+        },
+        "sourcePort": null,
+        "x": 0,
+        "y": 60,
+        "width": 120,
+        "height": 60,
+        "style": {
+          "strokeWidth": 2
+        }
+      },
+      {
+        "type": "edge",
+        "id": "edge-zm8rtlfc1o",
+        "sourceId": "node-d0yghru5ltl",
+        "targetId": "node-d0yghru5ltl",
+        "label": null,
+        "data": {
+          "eventType": "FAULT",
+          "transitionType": "normal",
+          "guard": null,
+          "description": null,
+          "actions": [],
+          "meta": null,
+          "edgeId": "edge-zm8rtlfc1o",
+          "edgeMode": "directed",
+          "sourceNodeId": "node-d0yghru5ltl",
+          "actualTargetId": "node-d0yghru5ltl",
+          "ariaLabel": "Transition FAULT from fault to fault"
+        },
+        "sourcePort": null,
+        "x": 0,
+        "y": 60,
+        "width": 120,
+        "height": 60,
+        "style": {
+          "strokeWidth": 2
+        }
+      },
+      {
+        "type": "edge",
+        "id": "edge-3hy6ap1k1vd",
+        "sourceId": "node-d0yghru5ltl",
+        "targetId": "coffeeComparison.flat.idle",
+        "label": null,
+        "data": {
+          "eventType": "RESET",
+          "transitionType": "normal",
+          "guard": null,
+          "description": null,
+          "actions": [],
+          "meta": null,
+          "edgeId": "edge-3hy6ap1k1vd",
+          "edgeMode": "directed",
+          "sourceNodeId": "node-d0yghru5ltl",
+          "actualTargetId": "coffeeComparison.flat.idle",
+          "ariaLabel": "Transition RESET from fault to idle"
+        },
+        "sourcePort": null,
+        "x": 0,
+        "y": 60,
+        "width": 120,
+        "height": 60,
+        "style": {
+          "strokeWidth": 2
+        }
+      }
+    ],
+    "data": {}
+  },
+  "options": {
+    "direction": "down",
+    "padding": 48,
+    "spacing": {
+      "node": 50,
+      "layer": 30
+    },
+    "settings": {
+      "cycleBreaking.strategy": "MODEL_ORDER",
+      "considerModelOrder.strategy": "PREFER_NODES",
+      "edgeRouting": "ORTHOGONAL",
+      "separateConnectedComponents": false,
+      "spacing.edgeEdge": 10,
+      "spacing.edgeNode": 10,
+      "spacing.edgeLabel": 2,
+      "spacing.labelNode": 5,
+      "spacing.componentComponent": 20,
+      "spacing.nodeSelfLoop": 24,
+      "spacing.edgeEdgeBetweenLayers": 10,
+      "spacing.edgeNodeBetweenLayers": 10,
+      "layering.strategy": "INTERACTIVE",
+      "directionCongruency": "READING_DIRECTION",
+      "nodePlacement.strategy": "BRANDES_KOEPF",
+      "nodePlacement.favorStraightEdges": true,
+      "nodePlacement.bk.fixedAlignment": "NONE",
+      "nodePlacement.bk.edgeStraightening": "IMPROVE_STRAIGHTNESS",
+      "nodePlacement.linearSegments.deflectionDampening": 0.3,
+      "crossingMinimization.strategy": "LAYER_SWEEP",
+      "crossingMinimization.forceNodeModelOrder": true,
+      "crossingMinimization.greedySwitch.type": "TWO_SIDED",
+      "crossingMinimization.semiInteractive": false,
+      "considerModelOrder.longEdgeStrategy": "DUMMY_NODE_OVER",
+      "considerModelOrder.components": "NONE",
+      "considerModelOrder.crossingCounterNodeInfluence": 0,
+      "considerModelOrder.crossingCounterPortInfluence": 0,
+      "compaction.connectedComponents": true,
+      "compaction.postCompaction.strategy": "LEFT",
+      "compaction.postCompaction.constraints": "SCANLINE",
+      "edgeRouting.splines.mode": "SLOPPY",
+      "edgeRouting.splines.sloppy.layerSpacingFactor": 0.2,
+      "edgeLabels.centerLabelPlacementStrategy": "MEDIAN_LAYER",
+      "edgeLabels.sideSelection": "SMART_DOWN",
+      "wrapping.strategy": "OFF",
+      "wrapping.additionalEdgeSpacing": 10,
+      "wrapping.correctionFactor": 1,
+      "highDegreeNodes.treatment": false,
+      "highDegreeNodes.threshold": 16,
+      "highDegreeNodes.treeHeight": 5,
+      "thoroughness": 7,
+      "mergeEdges": false,
+      "mergeHierarchyEdges": true,
+      "feedbackEdges": false,
+      "unnecessaryBendpoints": false,
+      "spacing.portPort": 10
+    }
+  },
+  "nodeSettings": {
+    "coffeeComparison.flat.idle": {
+      "edgeRouting.selfLoopDistribution": "NORTH",
+      "edgeRouting.selfLoopOrdering": "STACKED",
+      "portConstraints": "UNDEFINED",
+      "portAlignment.default": "DISTRIBUTED",
+      "portLabels.treatAsGroup": true,
+      "spacing.portPort": 10,
+      "layering.layerConstraint": "FIRST_SEPARATE"
+    },
+    "node-et4fp0twe0q": {
+      "edgeRouting.selfLoopDistribution": "NORTH",
+      "edgeRouting.selfLoopOrdering": "STACKED",
+      "portConstraints": "UNDEFINED",
+      "portAlignment.default": "DISTRIBUTED",
+      "portLabels.treatAsGroup": true,
+      "spacing.portPort": 10
+    },
+    "coffeeComparison.flat.off": {
+      "edgeRouting.selfLoopDistribution": "NORTH",
+      "edgeRouting.selfLoopOrdering": "STACKED",
+      "portConstraints": "UNDEFINED",
+      "portAlignment.default": "DISTRIBUTED",
+      "portLabels.treatAsGroup": true,
+      "spacing.portPort": 10
+    },
+    "node-klfsqwwqyik": {
+      "edgeRouting.selfLoopDistribution": "NORTH",
+      "edgeRouting.selfLoopOrdering": "STACKED",
+      "portConstraints": "UNDEFINED",
+      "portAlignment.default": "DISTRIBUTED",
+      "portLabels.treatAsGroup": true,
+      "spacing.portPort": 10
+    },
+    "node-d0yghru5ltl": {
+      "edgeRouting.selfLoopDistribution": "NORTH",
+      "edgeRouting.selfLoopOrdering": "STACKED",
+      "portConstraints": "UNDEFINED",
+      "portAlignment.default": "DISTRIBUTED",
+      "portLabels.treatAsGroup": true,
+      "spacing.portPort": 10
+    },
+    "coffeeComparison.flat.grinding": {
+      "edgeRouting.selfLoopDistribution": "NORTH",
+      "edgeRouting.selfLoopOrdering": "STACKED",
+      "portConstraints": "UNDEFINED",
+      "portAlignment.default": "DISTRIBUTED",
+      "portLabels.treatAsGroup": true,
+      "spacing.portPort": 10
+    },
+    "coffeeComparison.flat.brewing": {
+      "edgeRouting.selfLoopDistribution": "NORTH",
+      "edgeRouting.selfLoopOrdering": "STACKED",
+      "portConstraints": "UNDEFINED",
+      "portAlignment.default": "DISTRIBUTED",
+      "portLabels.treatAsGroup": true,
+      "spacing.portPort": 10
+    },
+    "node-xhc5uc54rc": {
+      "edgeRouting.selfLoopDistribution": "NORTH",
+      "edgeRouting.selfLoopOrdering": "STACKED",
+      "portConstraints": "UNDEFINED",
+      "portAlignment.default": "DISTRIBUTED",
+      "portLabels.treatAsGroup": true,
+      "spacing.portPort": 10
+    },
+    "coffeeComparison.flat.ready": {
+      "edgeRouting.selfLoopDistribution": "NORTH",
+      "edgeRouting.selfLoopOrdering": "STACKED",
+      "portConstraints": "UNDEFINED",
+      "portAlignment.default": "DISTRIBUTED",
+      "portLabels.treatAsGroup": true,
+      "spacing.portPort": 10
+    }
+  },
+  "edgeSettings": {
+    "coffeeComparison.flat.idle-START-0": {
+      "edgeLabels.centerLabelPlacementStrategy": "MEDIAN_LAYER",
+      "edgeLabels.inline": true,
+      "edgeLabels.placement": "CENTER"
+    },
+    "coffeeComparison.flat.idle-POWER_OFF-0": {
+      "edgeLabels.centerLabelPlacementStrategy": "MEDIAN_LAYER",
+      "edgeLabels.inline": true,
+      "edgeLabels.placement": "CENTER"
+    },
+    "coffeeComparison.flat.grinding-GRIND_COMPLETE-0": {
+      "edgeLabels.centerLabelPlacementStrategy": "MEDIAN_LAYER",
+      "edgeLabels.inline": true,
+      "edgeLabels.placement": "CENTER"
+    },
+    "coffeeComparison.flat.grinding-POWER_OFF-0": {
+      "edgeLabels.centerLabelPlacementStrategy": "MEDIAN_LAYER",
+      "edgeLabels.inline": true,
+      "edgeLabels.placement": "CENTER"
+    },
+    "coffeeComparison.flat.brewing-BREW_COMPLETE-0": {
+      "edgeLabels.centerLabelPlacementStrategy": "MEDIAN_LAYER",
+      "edgeLabels.inline": true,
+      "edgeLabels.placement": "CENTER"
+    },
+    "coffeeComparison.flat.brewing-POWER_OFF-0": {
+      "edgeLabels.centerLabelPlacementStrategy": "MEDIAN_LAYER",
+      "edgeLabels.inline": true,
+      "edgeLabels.placement": "CENTER"
+    },
+    "coffeeComparison.flat.ready-TAKE_CUP-0": {
+      "edgeLabels.centerLabelPlacementStrategy": "MEDIAN_LAYER",
+      "edgeLabels.inline": true,
+      "edgeLabels.placement": "CENTER"
+    },
+    "coffeeComparison.flat.ready-POWER_OFF-0": {
+      "edgeLabels.centerLabelPlacementStrategy": "MEDIAN_LAYER",
+      "edgeLabels.inline": true,
+      "edgeLabels.placement": "CENTER"
+    },
+    "coffeeComparison.flat.off-POWER_ON-0": {
+      "edgeLabels.centerLabelPlacementStrategy": "MEDIAN_LAYER",
+      "edgeLabels.inline": true,
+      "edgeLabels.placement": "CENTER"
+    },
+    "edge-iefroln5ovh": {
+      "edgeLabels.centerLabelPlacementStrategy": "MEDIAN_LAYER",
+      "edgeLabels.inline": true,
+      "edgeLabels.placement": "CENTER"
+    },
+    "edge-xghjw84az5": {
+      "edgeLabels.centerLabelPlacementStrategy": "MEDIAN_LAYER",
+      "edgeLabels.inline": true,
+      "edgeLabels.placement": "CENTER"
+    },
+    "edge-qi591d9ejxj": {
+      "edgeLabels.centerLabelPlacementStrategy": "MEDIAN_LAYER",
+      "edgeLabels.inline": true,
+      "edgeLabels.placement": "CENTER"
+    },
+    "edge-tw6c8y1nuo": {
+      "edgeLabels.centerLabelPlacementStrategy": "MEDIAN_LAYER",
+      "edgeLabels.inline": true,
+      "edgeLabels.placement": "CENTER"
+    },
+    "edge-1sdl3lkb6co": {
+      "edgeLabels.centerLabelPlacementStrategy": "MEDIAN_LAYER",
+      "edgeLabels.inline": true,
+      "edgeLabels.placement": "CENTER"
+    },
+    "edge-2bke8h85e5k": {
+      "edgeLabels.centerLabelPlacementStrategy": "MEDIAN_LAYER",
+      "edgeLabels.inline": true,
+      "edgeLabels.placement": "CENTER"
+    },
+    "edge-g21k499fsuh": {
+      "edgeLabels.centerLabelPlacementStrategy": "MEDIAN_LAYER",
+      "edgeLabels.inline": true,
+      "edgeLabels.placement": "CENTER"
+    },
+    "edge-c39mqq5rkc4": {
+      "edgeLabels.centerLabelPlacementStrategy": "MEDIAN_LAYER",
+      "edgeLabels.inline": true,
+      "edgeLabels.placement": "CENTER"
+    },
+    "edge-iy8r8tupxg": {
+      "edgeLabels.centerLabelPlacementStrategy": "MEDIAN_LAYER",
+      "edgeLabels.inline": true,
+      "edgeLabels.placement": "CENTER"
+    },
+    "edge-oqys46khrm": {
+      "edgeLabels.centerLabelPlacementStrategy": "MEDIAN_LAYER",
+      "edgeLabels.inline": true,
+      "edgeLabels.placement": "CENTER"
+    },
+    "edge-bxjzoc28dc": {
+      "edgeLabels.centerLabelPlacementStrategy": "MEDIAN_LAYER",
+      "edgeLabels.inline": true,
+      "edgeLabels.placement": "CENTER"
+    },
+    "edge-dnaeun3xymq": {
+      "edgeLabels.centerLabelPlacementStrategy": "MEDIAN_LAYER",
+      "edgeLabels.inline": true,
+      "edgeLabels.placement": "CENTER"
+    },
+    "edge-u46rlt2ljjn": {
+      "edgeLabels.centerLabelPlacementStrategy": "MEDIAN_LAYER",
+      "edgeLabels.inline": true,
+      "edgeLabels.placement": "CENTER"
+    },
+    "edge-3cteeg0nr7o": {
+      "edgeLabels.centerLabelPlacementStrategy": "MEDIAN_LAYER",
+      "edgeLabels.inline": true,
+      "edgeLabels.placement": "CENTER"
+    },
+    "edge-ce9s42p3f5": {
+      "edgeLabels.centerLabelPlacementStrategy": "MEDIAN_LAYER",
+      "edgeLabels.inline": true,
+      "edgeLabels.placement": "CENTER"
+    },
+    "edge-923c9rrp5n": {
+      "edgeLabels.centerLabelPlacementStrategy": "MEDIAN_LAYER",
+      "edgeLabels.inline": true,
+      "edgeLabels.placement": "CENTER"
+    },
+    "edge-zm8rtlfc1o": {
+      "edgeLabels.centerLabelPlacementStrategy": "MEDIAN_LAYER",
+      "edgeLabels.inline": true,
+      "edgeLabels.placement": "CENTER"
+    },
+    "edge-3hy6ap1k1vd": {
+      "edgeLabels.centerLabelPlacementStrategy": "MEDIAN_LAYER",
+      "edgeLabels.inline": true,
+      "edgeLabels.placement": "CENTER"
+    }
+  }
+}
