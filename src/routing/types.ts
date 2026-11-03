@@ -59,7 +59,9 @@ export interface RoutingDiagnostic {
     | "node-clearance"
     | "label-clearance"
     | "monotonicity"
-    | "bundle";
+    | "bundle"
+    | "curve"
+    | "coordination";
   readonly relatedIds?: readonly string[];
 }
 export interface RouteLabelPlacement {
@@ -90,7 +92,21 @@ export type RouteStyle =
   | "fan"
   | "bus"
   | "bundle";
+export type RouteGeometry = "straight" | "orthogonal" | "polyline" | "octilinear";
+export type RoutingCoordination =
+  | { readonly kind: "independent" }
+  | { readonly kind: "parallel" }
+  | { readonly kind: "fan" }
+  | { readonly kind: "bus" }
+  | { readonly kind: "bundle" };
 export type RouteSide = "left" | "right" | "top" | "bottom";
+export interface SelfLoopRoutingSettings {
+  readonly sourceSide?: RouteSide;
+  readonly targetSide?: RouteSide;
+  readonly clearance?: number;
+}
+export type RouteEndpointConstraint = BezierEndpoint;
+export type RouteGuide = BezierGuide;
 export interface RouteAttachment {
   /** Node-local attachment rectangle, independent of its outer obstacle bounds. */
   readonly bounds: RouteBounds;
@@ -143,6 +159,16 @@ export interface RoutingPolicy {
 }
 export interface EdgeRoutingSettings {
   readonly policy?: RoutingPolicy;
+  readonly geometry?: RouteGeometry;
+  readonly topology?: { readonly kind: "connection" } | { readonly kind: "label-only" };
+  readonly source?: RouteEndpointConstraint;
+  readonly target?: RouteEndpointConstraint;
+  readonly sourceClearance?: number;
+  readonly targetClearance?: number;
+  readonly obstacles?: readonly RouteBounds[];
+  readonly terminalBounds?: readonly RouteBounds[];
+  readonly guides?: { readonly source?: RouteGuide; readonly target?: RouteGuide };
+  readonly disabled?: boolean;
   /** Resolve the source from this edge label in the current graph geometry. */
   readonly sourceLabel?: string;
   readonly sourceSides?: readonly RouteSide[];
@@ -159,6 +185,8 @@ export interface EdgeRoutingSettings {
 }
 export interface RoutingSettings {
   readonly policy?: RoutingPolicy;
+  readonly coordination?: RoutingCoordination;
+  readonly selfLoops?: SelfLoopRoutingSettings;
   /** Opt into center-tangent Bézier routing and floating attachments. */
   readonly bezier?: BezierRoutingOptions;
   /** Native compound geometry is parent-relative; adapters may supply resolved world geometry. */

@@ -1,0 +1,238 @@
+{
+  "graph": {
+    "id": "flow-statechart-routing",
+    "mode": "directed",
+    "initialNodeId": null,
+    "nodes": [
+      {
+        "type": "node",
+        "id": "Coordinator",
+        "parentId": "root",
+        "label": null,
+        "data": null,
+        "x": 42,
+        "y": 12,
+        "width": 268.875,
+        "height": 82
+      },
+      {
+        "type": "node",
+        "id": "Testing",
+        "parentId": "root",
+        "label": null,
+        "data": null,
+        "x": 12,
+        "y": 196,
+        "width": 320,
+        "height": 106
+      },
+      {
+        "type": "node",
+        "id": "Notifier",
+        "parentId": "root",
+        "label": null,
+        "data": null,
+        "x": 382,
+        "y": 186,
+        "width": 227.008,
+        "height": 82
+      },
+      {
+        "type": "node",
+        "id": "root",
+        "parentId": null,
+        "label": null,
+        "data": null,
+        "x": 0,
+        "y": 0,
+        "width": 0,
+        "height": 0
+      }
+    ],
+    "edges": [
+      {
+        "type": "edge",
+        "id": "Invokes",
+        "sourceId": "Coordinator",
+        "targetId": "Testing",
+        "label": null,
+        "data": null,
+        "x": 57,
+        "y": 124,
+        "width": 59.492,
+        "height": 32
+      },
+      {
+        "type": "edge",
+        "id": "Spawns",
+        "sourceId": "Coordinator",
+        "targetId": "Notifier",
+        "label": null,
+        "data": null,
+        "x": 427,
+        "y": 124,
+        "width": 61.148,
+        "height": 32
+      },
+      {
+        "type": "edge",
+        "id": "Sends WORK",
+        "sourceId": "Coordinator",
+        "targetId": "Testing",
+        "label": null,
+        "data": null,
+        "x": 126,
+        "y": 134,
+        "width": 91.633,
+        "height": 32
+      },
+      {
+        "type": "edge",
+        "id": "Sends NOTIFY",
+        "sourceId": "Coordinator",
+        "targetId": "Notifier",
+        "label": null,
+        "data": null,
+        "x": 498,
+        "y": 114,
+        "width": 98.898,
+        "height": 32
+      },
+      {
+        "type": "edge",
+        "id": "Sends DONE",
+        "sourceId": "Testing",
+        "targetId": "Coordinator",
+        "label": null,
+        "data": null,
+        "x": 228,
+        "y": 134,
+        "width": 88.938,
+        "height": 32
+      }
+    ],
+    "data": null
+  },
+  "settings": {
+    "coordinateSpace": "world",
+    "clearance": 8,
+    "coordination": {
+      "kind": "parallel"
+    },
+    "crossingPenalty": 0,
+    "overlapPenalty": 0,
+    "policy": {
+      "curve": {
+        "kind": "rounded-orthogonal",
+        "radius": 10
+      },
+      "sourceTangent": {
+        "kind": "border-normal"
+      },
+      "targetTangent": {
+        "kind": "border-normal"
+      },
+      "label": {
+        "kind": "gap",
+        "tangent": {
+          "kind": "border-normal"
+        }
+      },
+      "stability": {
+        "kind": "preserve-valid"
+      },
+      "collisions": {
+        "nodes": "avoid",
+        "labels": "avoid"
+      }
+    },
+    "edges": {
+      "Invokes": {
+        "geometry": "orthogonal",
+        "policy": {
+          "curve": {
+            "kind": "rounded-orthogonal",
+            "radius": 10
+          }
+        },
+        "sourceClearance": 0,
+        "targetClearance": 10,
+        "topology": {
+          "kind": "connection"
+        },
+        "obstacles": [],
+        "group": "[\"gray\",\"solid\",\"0\",\"solid\",\"0\"]",
+        "disabled": false
+      },
+      "Spawns": {
+        "geometry": "orthogonal",
+        "policy": {
+          "curve": {
+            "kind": "rounded-orthogonal",
+            "radius": 10
+          }
+        },
+        "sourceClearance": 0,
+        "targetClearance": 10,
+        "topology": {
+          "kind": "connection"
+        },
+        "obstacles": [],
+        "group": "[\"gray\",\"solid\",\"0\",\"solid\",\"0\"]",
+        "disabled": false
+      },
+      "Sends WORK": {
+        "geometry": "orthogonal",
+        "policy": {
+          "curve": {
+            "kind": "rounded-orthogonal",
+            "radius": 10
+          }
+        },
+        "sourceClearance": 0,
+        "targetClearance": 10,
+        "topology": {
+          "kind": "connection"
+        },
+        "obstacles": [],
+        "group": "[\"gray\",\"solid\",\"0\",\"solid\",\"0\"]",
+        "disabled": false
+      },
+      "Sends NOTIFY": {
+        "geometry": "orthogonal",
+        "policy": {
+          "curve": {
+            "kind": "rounded-orthogonal",
+            "radius": 10
+          }
+        },
+        "sourceClearance": 0,
+        "targetClearance": 10,
+        "topology": {
+          "kind": "connection"
+        },
+        "obstacles": [],
+        "group": "[\"blue\",\"solid\",\"0\",\"solid\",\"0\"]",
+        "disabled": false
+      },
+      "Sends DONE": {
+        "geometry": "orthogonal",
+        "policy": {
+          "curve": {
+            "kind": "rounded-orthogonal",
+            "radius": 10
+          }
+        },
+        "sourceClearance": 0,
+        "targetClearance": 10,
+        "topology": {
+          "kind": "connection"
+        },
+        "obstacles": [],
+        "group": "[\"gray\",\"solid\",\"0\",\"solid\",\"0\"]",
+        "disabled": false
+      }
+    }
+  },
+  "geometry": "orthogonal"
+}

@@ -57,11 +57,18 @@ function remove<V>(n: Node<V> | undefined, key: string): Node<V> | undefined {
   while (successor.left) successor = successor.left;
   return balance(node(successor.key, successor.value, n.left, remove(n.right, successor.key)));
 }
-function* entries<V>(n?: Node<V>): Generator<[string, V]> {
-  if (!n) return;
-  yield* entries(n.left);
-  yield [n.key, n.value];
-  yield* entries(n.right);
+function* entries<V>(root?: Node<V>): Generator<[string, V]> {
+  const stack: Node<V>[] = [];
+  let current = root;
+  while (current || stack.length) {
+    while (current) {
+      stack.push(current);
+      current = current.left;
+    }
+    const next = stack.pop()!;
+    yield [next.key, next.value];
+    current = next.right;
+  }
 }
 export class PersistentMap<V> implements ReadonlyMap<string, V> {
   readonly #root?: Node<V>;

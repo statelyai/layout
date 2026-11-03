@@ -2,6 +2,7 @@ import { expect, it } from "vitest";
 import { createGraph, type VisualGraph } from "@statelyai/graph";
 import { getLayoutRoutes } from "../src";
 import { repairFlatRouting } from "../src/layered/native-routing";
+import { getLayoutRouting } from "../src/routing";
 
 it("preserves a fixed implicit source side when repairing a labeled feedback edge", () => {
   const graph = createGraph({
@@ -34,6 +35,7 @@ it("preserves a fixed implicit source side when repairing a labeled feedback edg
     nodeSettings: () => ({ portConstraints: "FIXED_POS" }),
   });
   expect(repaired.nodes).toEqual(graph.nodes);
+  expect(getLayoutRouting(repaired)!.snapshot.routes).toBe(getLayoutRoutes(repaired));
   for (const route of getLayoutRoutes(repaired).values())
     for (const section of route.sections)
       for (const endpoint of [section.from, section.to])

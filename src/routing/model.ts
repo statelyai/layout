@@ -1,6 +1,7 @@
 import type { GraphEdge } from "@statelyai/graph";
 import { PersistentMap } from "./persistent";
 import { SpatialIndex } from "./spatial";
+import type { RouteReservationIndex } from "./coordination";
 import type {
   Route,
   RouteBounds,
@@ -9,6 +10,10 @@ import type {
   RouteSide,
   RoutingPolicy,
   RoutingTangent,
+  RouteGeometry,
+  RouteStyle,
+  RoutingCoordination,
+  RouteEndpointConstraint,
 } from "./types";
 export interface NodeGeometry {
   readonly id: string;
@@ -38,6 +43,8 @@ export interface EdgeGeometry {
 }
 export interface Settings {
   readonly policy?: RoutingPolicy;
+  readonly coordination: RoutingSettings["coordination"];
+  readonly selfLoops: RoutingSettings["selfLoops"];
   readonly bezier: RoutingSettings["bezier"];
   readonly coordinateSpace: "parent" | "world";
   readonly clearance: number;
@@ -53,6 +60,8 @@ export interface Settings {
 export function settings(input: RoutingSettings = {}): Settings {
   const result = {
     policy: normalizePolicy(input.policy),
+    coordination: structuredClone(input.coordination),
+    selfLoops: structuredClone(input.selfLoops),
     bezier: structuredClone(input.bezier),
     coordinateSpace: input.coordinateSpace ?? "parent",
     clearance: input.clearance ?? 8,
@@ -74,6 +83,19 @@ export function settings(input: RoutingSettings = {}): Settings {
     !Number.isInteger(result.organicIterations)
   )
     throw new RangeError("Search and iteration budgets must be integers");
+  if (
+    result.coordination &&
+    !["independent", "parallel", "fan", "bus", "bundle"].includes(result.coordination.kind)
+  )
+    throw new RangeError("Invalid edge coordination kind");
+  if (
+    result.selfLoops?.clearance !== undefined &&
+    (!Number.isFinite(result.selfLoops.clearance) || result.selfLoops.clearance < 0)
+  )
+    throw new RangeError("Self-loop clearance must be finite and non-negative");
+  for (const side of [result.selfLoops?.sourceSide, result.selfLoops?.targetSide])
+    if (side !== undefined && !["left", "right", "top", "bottom"].includes(side))
+      throw new RangeError("Invalid self-loop attachment side");
   for (const config of [result.bezier, ...Object.values(result.edges).map((edge) => edge.bezier)]) {
     if (
       config?.targetClearance !== undefined &&
@@ -82,6 +104,54 @@ export function settings(input: RoutingSettings = {}): Settings {
       throw new RangeError("Bézier targetClearance must be finite and non-negative");
   }
   for (const edge of Object.values(result.edges)) {
+    if (
+      edge.geometry !== undefined &&
+      !["straight", "orthogonal", "polyline", "octilinear"].includes(edge.geometry)
+    )
+      throw new RangeError("Invalid edge routing geometry");
+    if (edge.topology && !["connection", "label-only"].includes(edge.topology.kind))
+      throw new RangeError("Invalid edge topology kind");
+    for (const gap of [edge.sourceClearance, edge.targetClearance])
+      if (gap !== undefined && (!Number.isFinite(gap) || gap < 0))
+        throw new RangeError("Endpoint clearance must be finite and non-negative");
+    const endpoint = (value: RouteEndpointConstraint | undefined) => {
+      if (!value) return;
+      if (value.kind === "floating") {
+        if (
+          !rect(value.bounds) ||
+          value.sides.some((side) => !["left", "right", "top", "bottom"].includes(side))
+        )
+          throw new RangeError("Invalid floating endpoint geometry");
+      } else if (value.kind === "port") {
+        if (
+          !rect(value.owner) ||
+          !["left", "right", "top", "bottom"].includes(value.direction) ||
+          ![value.point.x, value.point.y, value.escape.x, value.escape.y].every(Number.isFinite)
+        )
+          throw new RangeError("Invalid fixed endpoint geometry");
+        const direction = vector(value.direction);
+        const dx = value.escape.x - value.point.x,
+          dy = value.escape.y - value.point.y;
+        if (
+          dx * direction.x + dy * direction.y < -1e-7 ||
+          Math.abs(dx * direction.y - dy * direction.x) > 1e-7
+        )
+          throw new RangeError("Port escape must follow its outward direction");
+      } else throw new RangeError("Invalid endpoint kind");
+    };
+    endpoint(edge.source);
+    endpoint(edge.target);
+    for (const bounds of [...(edge.obstacles ?? []), ...(edge.terminalBounds ?? [])])
+      if (!rect(bounds)) throw new RangeError("Invalid routing obstacle geometry");
+    for (const guide of [edge.guides?.source, edge.guides?.target])
+      if (
+        guide &&
+        (!guide.points.every((point) => Number.isFinite(point.x) && Number.isFinite(point.y)) ||
+          ![guide.sourceDirection, guide.targetDirection].every((side) =>
+            ["left", "right", "top", "bottom"].includes(side),
+          ))
+      )
+        throw new RangeError("Invalid routing guide geometry");
     if (edge.policy) Object.assign(edge, { policy: normalizePolicy(edge.policy) });
     for (const point of edge.waypoints ?? [])
       if (!Number.isFinite(point.x) || !Number.isFinite(point.y))
@@ -158,6 +228,8 @@ export interface State {
   readonly groups: PersistentMap<PersistentMap<true>>;
   readonly obstacles: SpatialIndex;
   readonly routeIndex: SpatialIndex;
+  readonly drawnIndex: SpatialIndex;
+  readonly reservationIndex: RouteReservationIndex;
   readonly routes: PersistentMap<Route>;
 }
 export function members(
@@ -241,12 +313,29 @@ export function anchor(bounds: RouteBounds, side: RouteSide): RoutePoint {
     v = vector(side);
   return { x: c.x + (v.x * bounds.width) / 2, y: c.y + (v.y * bounds.height) / 2 };
 }
+export function geometryFor(style: RouteStyle): RouteGeometry {
+  if (style === "straight" || style === "polyline" || style === "octilinear") return style;
+  return style === "organic" || style === "parallel" ? "polyline" : "orthogonal";
+}
+export function coordinationFor(style: string, config: Settings): RoutingCoordination["kind"] {
+  return (
+    config.coordination?.kind ??
+    (style === "bus" || style === "bundle" || style === "fan" || style === "parallel"
+      ? style
+      : "independent")
+  );
+}
+export function sharedCoordination(style: string, config: Settings): boolean {
+  const kind = coordinationFor(style, config);
+  return kind === "bus" || kind === "bundle" || kind === "fan";
+}
 export function groupKey(edge: EdgeGeometry, style: string, config: Settings): string | undefined {
   const group = config.edges[edge.id]?.group;
-  if (style === "bus" || style === "bundle" || style === "fan")
+  if (sharedCoordination(style, config))
     return group !== undefined
       ? `group:${group}`
       : `source:${JSON.stringify([edge.sourceId, edge.sourcePort ?? null])}`;
+  if (config.coordination?.kind === "independent") return;
   return `pair:${JSON.stringify([edge.sourceId, edge.targetId].sort())}`;
 }
 
@@ -315,7 +404,21 @@ export function effectivePolicy(config: Settings, edgeId: string): RoutingPolicy
   const edge = config.edges[edgeId],
     local = edge?.policy,
     global = config.policy;
-  if (!local && !global) return;
+  if (!local && !global) {
+    if (
+      edge?.source ||
+      edge?.target ||
+      edge?.obstacles ||
+      edge?.terminalBounds ||
+      edge?.guides ||
+      edge?.disabled !== undefined ||
+      edge?.topology ||
+      edge?.sourceClearance !== undefined ||
+      edge?.targetClearance !== undefined
+    )
+      return {};
+    return;
+  }
   const legacyAttachment = edge?.bezier?.attachmentMode;
   const legacyTangent: RoutingTangent | undefined =
     legacyAttachment === "orthogonal"

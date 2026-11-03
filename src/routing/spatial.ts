@@ -64,12 +64,14 @@ export class SpatialIndex {
   query(rect: RouteBounds): string[] {
     const keys = cells(rect),
       found = new Set<string>();
-    if (!keys) {
+    const candidates = keys?.map((key) => this.buckets.get(key));
+    const bucketEntries = candidates?.reduce((sum, bucket) => sum + (bucket?.size ?? 0), 0);
+    if (!candidates || bucketEntries! > this.bounds.size * 2) {
       for (const [id, bounds] of this.bounds) if (intersects(rect, bounds)) found.add(id);
     } else {
-      for (const key of keys)
-        for (const id of this.buckets.get(key)?.keys() ?? [])
-          if (intersects(rect, this.bounds.get(id)!)) found.add(id);
+      for (const bucket of candidates)
+        for (const id of bucket?.keys() ?? [])
+          if (!found.has(id) && intersects(rect, this.bounds.get(id)!)) found.add(id);
       for (const id of this.overflow.keys())
         if (intersects(rect, this.bounds.get(id)!)) found.add(id);
     }
