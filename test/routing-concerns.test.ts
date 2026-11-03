@@ -154,6 +154,7 @@ describe("strategy-independent constraints", () => {
                 owner: sourceBounds,
               },
               obstacles: [barrier],
+              terminalBounds: [sourceBounds, targetBounds],
             },
           },
         })

@@ -132,7 +132,9 @@ function contextFor(
         .map((id) =>
           inflate(
             state.obstacles.bounds.get(id)!,
-            endpoints.has(id) ? 0 : state.settings.clearance + padding,
+            endpoints.has(id) || id.startsWith("policy-terminal:")
+              ? 0
+              : state.settings.clearance + padding,
           ),
         );
     },
@@ -438,6 +440,7 @@ export function routeEdge(
   const targetConstraint = perEdge.target ?? perEdge.bezier?.target;
   const labelOnly = perEdge.topology?.kind === "label-only";
   const guides = perEdge.guides;
+  const terminalBounds = perEdge.terminalBounds ?? perEdge.bezier?.terminalBounds ?? [];
   const report = (
     code: RoutingDiagnostic["code"],
     message: string,
@@ -457,11 +460,10 @@ export function routeEdge(
       ((perEdge.bezier?.avoidObstacles ?? config.bezier?.avoidObstacles) === false
         ? []
         : (perEdge.bezier?.obstacles ?? []));
-    for (const [index, bounds] of [
-      ...extraObstacles,
-      ...(perEdge.terminalBounds ?? perEdge.bezier?.terminalBounds ?? []),
-    ].entries())
+    for (const [index, bounds] of extraObstacles.entries())
       obstacles = obstacles.set(`policy-barrier:${edge.id}:${index}`, bounds);
+    for (const [index, bounds] of terminalBounds.entries())
+      obstacles = obstacles.set(`policy-terminal:${edge.id}:${index}`, bounds);
     if (obstacles !== state.obstacles) state = { ...state, obstacles };
     const seen = new Set([edge.id]);
     let parent = perEdge.sourceLabel;
@@ -1007,6 +1009,21 @@ export function routeEdge(
     actual.x * requested.x + actual.y * requested.y > 1 - 1e-6;
   let labelDirection: RoutePoint | undefined;
   const portEscapes = new Map<Terminal, { point: RoutePoint; context: SearchContext }>();
+  const portExclusions = (terminal: Terminal) => {
+    const owner = terminal === source ? sourceBounds : targetBounds;
+    return new Set([
+      ...excluded,
+      `n:${terminal === source ? edge.sourceId : edge.targetId}`,
+      ...terminalBounds.flatMap((bounds, index) =>
+        bounds.x === owner.x &&
+        bounds.y === owner.y &&
+        bounds.width === owner.width &&
+        bounds.height === owner.height
+          ? [`policy-terminal:${edge.id}:${index}`]
+          : [],
+      ),
+    ]);
+  };
   if (policy) {
     for (const [terminal, requested, sourceEnd] of [
       [source, policy.sourceTangent, true],
@@ -1048,7 +1065,7 @@ export function routeEdge(
           context: protectFutureTarget(
             contextFor(
               state,
-              new Set([...excluded, `n:${terminal === source ? edge.sourceId : edge.targetId}`]),
+              portExclusions(terminal),
               new Set([`e:${edge.id}`, ...(parentLabel ? [`e:${parentLabel.id}`] : [])]),
               metrics,
               batch,
@@ -1086,7 +1103,7 @@ export function routeEdge(
         context: protectFutureTarget(
           contextFor(
             state,
-            new Set([...excluded, `n:${terminal.ref.nodeId}`]),
+            portExclusions(terminal),
             new Set([
               `n:${edge.sourceId}`,
               `n:${edge.targetId}`,
