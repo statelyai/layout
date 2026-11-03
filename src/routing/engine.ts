@@ -27,6 +27,7 @@ import {
 } from "./model";
 import { PersistentMap } from "./persistent";
 import { toSvgPath } from "./path";
+import { getUntrimmedRoute } from "./route-cache";
 import { inflate, intersects, SpatialIndex, union } from "./spatial";
 import type {
   NativeRoutingStrategy,
@@ -361,7 +362,7 @@ function calculate(
         .map((otherId) => `e:${otherId}`);
     };
     batch.routes = routes;
-    batch.previous = preservePrevious ? oldRoute : undefined;
+    batch.previous = preservePrevious ? getUntrimmedRoute(oldRoute) : undefined;
     batch.previousSettings = previous?.settings;
     let route =
       style === "bezier" &&
