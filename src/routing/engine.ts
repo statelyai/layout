@@ -26,8 +26,8 @@ import {
   type Settings,
 } from "./model";
 import { PersistentMap } from "./persistent";
-import { toSvgPath } from "./path";
-import { getUntrimmedRoute } from "./route-cache";
+import { toSvgPath, segmentCrossesRect } from "./path";
+import { getUntrimmedRoute, rememberUntrimmedRoute } from "./route-cache";
 import { inflate, intersects, SpatialIndex, union } from "./spatial";
 import type {
   NativeRoutingStrategy,
@@ -199,6 +199,7 @@ function calculate(
       plans: new Map(),
     };
   const processed = new Set<string>();
+  const dirtyConflicts = new Set<string>();
   const { roots: familyRoots, depths: familyDepth } = labelFamilyIndex(input);
   const priorities = new Map<string, string>();
   const priority = (id: string) => {
@@ -230,6 +231,13 @@ function calculate(
   const invalidate = (id: string, bounds: ReturnType<typeof routeBounds>) => {
     for (const candidate of routeIndex.query(inflate(bounds, state.settings.edgeSpacing))) {
       if (!later(candidate, id) || processed.has(candidate)) continue;
+      if (
+        effectivePolicy(state.settings, candidate)?.stability?.kind === "preserve-valid" &&
+        routes.has(candidate)
+      ) {
+        dirtyConflicts.add(candidate);
+        continue;
+      }
       pending.add(candidate);
       expandLabelFamilies(pending, input);
       for (const done of processed) pending.delete(done);
@@ -260,32 +268,19 @@ function calculate(
           if (group) for (const peer of state.groups.get(group)?.keys() ?? []) pending.add(peer);
         }
     }
-  while (pending.size) {
-    const id = pending.take();
-    processed.add(id);
-    const edge = state.edges.get(id),
-      oldRoute = previous?.routes.get(id);
-    if (!edge) {
-      if (routes.has(id)) {
-        invalidate(id, routeBounds(routes.get(id)!));
-        routes = routes.delete(id);
-        routeIndex = routeIndex.set(id);
-        drawnIndex = drawnIndex.set(id);
-        reservationIndex = reservationIndex.set(id);
-        patches.push({ op: "delete", edgeId: id });
-      }
-      continue;
-    }
-    batch.dependencyBounds = undefined;
-    const query = (bounds: ReturnType<typeof routeBounds>) => {
+  const createQuery = (edge: EdgeGeometry, recordDependencies = true) => {
+    const terminalCache = new Map<string, RouteBounds[]>();
+    return (bounds: ReturnType<typeof routeBounds>) => {
       const area = inflate(bounds, state.settings.edgeSpacing);
-      batch.dependencyBounds = batch.dependencyBounds ? union(batch.dependencyBounds, area) : area;
+      if (recordDependencies)
+        batch.dependencyBounds = batch.dependencyBounds
+          ? union(batch.dependencyBounds, area)
+          : area;
       const result: ReturnType<typeof reservations> = [];
       const shared = new Set<string>();
-      const terminalCache = new Map<string, RouteBounds[]>();
       for (const segment of reservationIndex.query(area)) {
         const otherId = segment.edgeId;
-        if (!later(id, otherId)) continue;
+        if (!later(edge.id, otherId)) continue;
         const other = state.edges.get(otherId),
           route = routes.get(otherId);
         if (!other || !route) continue;
@@ -330,6 +325,25 @@ function calculate(
       }
       return result;
     };
+  };
+  while (pending.size) {
+    const id = pending.take();
+    processed.add(id);
+    const edge = state.edges.get(id),
+      oldRoute = previous?.routes.get(id);
+    if (!edge) {
+      if (routes.has(id)) {
+        invalidate(id, routeBounds(routes.get(id)!));
+        routes = routes.delete(id);
+        routeIndex = routeIndex.set(id);
+        drawnIndex = drawnIndex.set(id);
+        reservationIndex = reservationIndex.set(id);
+        patches.push({ op: "delete", edgeId: id });
+      }
+      continue;
+    }
+    batch.dependencyBounds = undefined;
+    const query = createQuery(edge);
     batch.policy = effectivePolicy(state.settings, id);
     const costSettings = { ...state.settings, ...batch.policy?.collisions };
     batch.edgeCost = (a, b) =>
@@ -366,6 +380,8 @@ function calculate(
     batch.previousSettings = previous?.settings;
     let route =
       style === "bezier" &&
+      state.settings.edges[id]?.geometry === undefined &&
+      state.settings.coordination === undefined &&
       !batch.policy &&
       !routes.get(state.settings.edges[id]?.sourceLabel ?? "")?.label
         ? routeBezierEdge(edge, input, routes, counts, batch)
@@ -386,6 +402,63 @@ function calculate(
     routes = routes.set(id, route);
     reservationIndex = reservationIndex.set(id, route);
     patches.push({ op: "set", edgeId: id, route });
+  }
+  // Soft route changes cannot invalidate a preserved path's hard geometry.
+  // Refresh diagnostics without repeating visibility search or curve fitting.
+  for (const id of dirtyConflicts) {
+    if (processed.has(id)) continue;
+    const edge = state.edges.get(id),
+      route = routes.get(id);
+    if (!edge || !route) continue;
+    const query = createQuery(edge, false);
+    const conflicts = reservations(route).some((segment) =>
+      query(segmentBounds(segment.a, segment.b)).some(
+        (other) =>
+          conflictCost(segment.a, segment.b, other, {
+            ...state.settings,
+            crossingPenalty: 1,
+            overlapPenalty: 1,
+          }) > 1e-8,
+      ),
+    );
+    const diagnostics = route.diagnostics.filter(
+      (diagnostic) => diagnostic.code !== "ROUTE_CONFLICT" && diagnostic.code !== "LABEL_OVERLAP",
+    );
+    if (conflicts)
+      diagnostics.push({
+        code: "ROUTE_CONFLICT",
+        edgeId: id,
+        message: "Final curve crosses or overlaps another edge",
+      });
+    if (route.label && effectivePolicy(state.settings, id)?.label?.kind === "follow") {
+      const bounds = route.label.bounds;
+      const overlaps = state.obstacles
+        .query(bounds)
+        .filter((other) => intersects(bounds, state.obstacles.bounds.get(other)!));
+      overlaps.push(
+        ...drawnIndex
+          .query(bounds)
+          .filter(
+            (other) =>
+              later(id, other) &&
+              routes.get(other)?.label &&
+              intersects(bounds, routes.get(other)!.label!.bounds),
+          )
+          .map((other) => `e:${other}`),
+      );
+      if (overlaps.length)
+        diagnostics.push({
+          code: "LABEL_OVERLAP",
+          edgeId: id,
+          message: "Following label overlaps fixed geometry or another label",
+          relatedIds: [...new Set(overlaps)].sort(),
+        });
+    }
+    if (JSON.stringify(diagnostics) === JSON.stringify(route.diagnostics)) continue;
+    const next = freeze({ ...route, diagnostics });
+    rememberUntrimmedRoute(next, getUntrimmedRoute(route)!.sections);
+    routes = routes.set(id, next);
+    patches.push({ op: "set", edgeId: id, route: next });
   }
   counts.affectedEdges = processed.size;
   counts.reusedEdges = Math.max(
@@ -528,11 +601,28 @@ function updateState(
   function invalidateObstacle(id: string, bounds: ReturnType<typeof worldRect>) {
     const old = prior.obstacles.bounds.get(id);
     for (const rect of [old, bounds])
-      if (rect)
-        for (const edgeId of prior.routeIndex.query(
-          inflate(rect, Math.max(prior.settings.clearance, nextSettings.clearance)),
-        ))
+      if (rect) {
+        const area = inflate(rect, Math.max(prior.settings.clearance, nextSettings.clearance));
+        for (const edgeId of prior.routeIndex.query(area)) {
+          const route = prior.routes.get(edgeId);
+          if (
+            route?.status === "routed" &&
+            effectivePolicy(nextSettings, edgeId)?.stability?.kind === "preserve-valid"
+          ) {
+            const hint = getUntrimmedRoute(route)!;
+            const collides = hint.sections.some((section) => {
+              let from = section.path.start;
+              return section.path.segments.some((segment) => {
+                const hit = segmentCrossesRect(from, segment, area);
+                from = segment.to;
+                return hit;
+              });
+            });
+            if (!collides && !(route.label && intersects(route.label.bounds, area))) continue;
+          }
           affected.add(edgeId);
+        }
+      }
     state = { ...state, obstacles: state.obstacles.set(id, bounds) };
   }
   for (const id of changedNodes) {
@@ -657,6 +747,8 @@ export function adoptRoutingSnapshot(
       ...initial,
       routes: initial.routes.set(id, hint),
       routeIndex: initial.routeIndex.set(id, routeBounds(hint)),
+      drawnIndex: initial.drawnIndex.set(id, routeBounds(hint)),
+      reservationIndex: initial.reservationIndex.set(id, hint),
     };
   }
   const counts = metrics();
@@ -702,13 +794,17 @@ export function rebaseLayoutRoutingSnapshot(
   if (!prior || paths.size !== prior.routes.size)
     throw new Error("Layout route handoff requires the original native routing snapshot");
   let routes = prior.routes,
-    routeIndex = prior.routeIndex;
+    routeIndex = prior.routeIndex,
+    drawnIndex = prior.drawnIndex,
+    reservationIndex = prior.reservationIndex;
   for (const [id, route] of paths) {
     if (id !== route.edgeId || !prior.edges.has(id)) throw new Error(`Unknown layout route ${id}`);
     routes = routes.set(id, freeze(route));
     const bounds = routeBounds(route),
       old = routeIndex.bounds.get(id);
     routeIndex = routeIndex.set(id, old ? union(old, bounds) : bounds);
+    drawnIndex = drawnIndex.set(id, bounds);
+    reservationIndex = reservationIndex.set(id, route);
   }
   const config = settings({
     ...prior.settings,
@@ -717,7 +813,14 @@ export function rebaseLayoutRoutingSnapshot(
   return Object.freeze({
     ...previous,
     routes,
-    [STATE]: Object.freeze({ ...prior, settings: config, routes, routeIndex }),
+    [STATE]: Object.freeze({
+      ...prior,
+      settings: config,
+      routes,
+      routeIndex,
+      drawnIndex,
+      reservationIndex,
+    }),
   });
 }
 export function applyRoutePatches(

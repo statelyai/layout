@@ -248,6 +248,16 @@ constraint strengths, failure behavior, and route-only defaults.
 
 <!-- routing exports from src/routing/index.ts and src/elkjs/routes.ts -->
 
+The object API is `routeEdges({ graph, geometry?, settings?, initialRoutes? })`,
+`updateRoutes({ previous, graph, changes, settings? })`, and
+`refineRoutes({ previous })`. Geometry, curve construction, coordination and
+self-loop constraints are independent. `getLayoutRouting(layout)` returns a
+retained snapshot and resolved routing graph when available.
+`createRoutingScheduler` batches operation diffs, supports asynchronous executors,
+and suppresses obsolete results. `mergeRoutingChanges` composes consecutive diffs
+without comparing full graphs. `trimPath` trims marker gaps while retaining curves.
+See [interactive routing](interactive-routing.md).
+
 `@statelyai/layout/routing` (also exported from the root) provides
 `routingStrategies`, the twelve named `*Routing` strategies, `applyRoutePatches`,
 `pathFromPoints`, `pathFromSplinePoints`, `flattenPath`, `roundCorners`,

@@ -1,5 +1,5 @@
 import { orthogonalRouting, routeToPoints } from "../routing";
-import { recordRouteGeometry } from "../routing/layout-cache";
+import { recordRouteGeometry, recordLayoutRouting } from "../routing/layout-cache";
 import type { EdgeRoutingSettings, Route } from "../routing/types";
 import type {
   EntityRect,
@@ -419,10 +419,12 @@ export function layoutCompounds<N, E, G, P>(
       },
     ];
   });
-  const snapshot = orthogonalRouting.route(
-    { ...graph, nodes: [...worldNodes, ...headers], edges: [...edges.values()] },
-    { coordinateSpace: "world", edges: attachmentSettings, maxSearchNodes: 40000 },
-  );
+  const routingGraph = { ...graph, nodes: [...worldNodes, ...headers], edges: [...edges.values()] };
+  const snapshot = orthogonalRouting.route(routingGraph, {
+    coordinateSpace: "world",
+    edges: attachmentSettings,
+    maxSearchNodes: 40000,
+  });
   for (const [id, route] of snapshot.routes) {
     Object.assign(edges.get(id)!, {
       points: routeToPoints(route),
@@ -441,5 +443,6 @@ export function layoutCompounds<N, E, G, P>(
     compoundRoutes: snapshot.routes,
   };
   recordRouteGeometry(result, snapshot.routes);
+  recordLayoutRouting(result, routingGraph, snapshot);
   return result;
 }

@@ -59,7 +59,9 @@ export interface RoutingDiagnostic {
     | "node-clearance"
     | "label-clearance"
     | "monotonicity"
-    | "bundle";
+    | "bundle"
+    | "curve"
+    | "coordination";
   readonly relatedIds?: readonly string[];
 }
 export interface RouteLabelPlacement {

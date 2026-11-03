@@ -1,9 +1,16 @@
 import { createGraph } from "@statelyai/graph";
 import { expect, it } from "vitest";
 import { orthogonalRouting, segmentCrossesRect } from "../src/routing";
-import type { Route, RouteBounds, RoutingPolicy, RoutingSettings } from "../src/routing/types";
+import type {
+  Route,
+  RouteBounds,
+  RoutingPolicy,
+  RoutingSettings,
+  EdgeRoutingSettings,
+} from "../src/routing/types";
 import sourceOverlap from "./fixtures/viz-routing-source-label-overlap.json";
 import labelOverlap from "./fixtures/viz-routing-overlapping-labels.json";
+import parallelFixture from "./fixtures/viz-routing-parallel.json";
 
 const policy = {
   curve: { kind: "rounded-orthogonal", radius: 8 },
@@ -11,6 +18,35 @@ const policy = {
   targetTangent: { kind: "border-normal" },
   label: { kind: "gap", tangent: { kind: "border-normal" } },
 } satisfies RoutingPolicy;
+
+it("keeps parallel lane planning from rejecting feasible fixed-geometry connections", () => {
+  const graph = createGraph({ ...parallelFixture.graph, mode: "directed" });
+  const settings: RoutingSettings = {
+    coordinateSpace: "world",
+    crossingPenalty: 0,
+    overlapPenalty: 0,
+    policy,
+    coordination: { kind: "parallel" },
+    edges: Object.fromEntries(
+      Object.entries(parallelFixture.settings.edges).map(([id, value]) => {
+        const config: EdgeRoutingSettings = {
+          ...value,
+          geometry: "orthogonal",
+          topology: { kind: "connection" },
+          policy: { curve: { kind: "rounded-orthogonal", radius: 10 } },
+        };
+        return [id, config];
+      }),
+    ),
+  };
+  const result = orthogonalRouting.route(graph, settings);
+  for (const route of result.routes.values()) {
+    expect(route.sections.length).toBeGreaterThan(0);
+    expect(route.diagnostics.some((diagnostic) => diagnostic.code === "MISSING_GEOMETRY")).toBe(
+      false,
+    );
+  }
+});
 const labelPositions = [
   { side: "top", label: { x: 10, y: -100, width: 80, height: 30 } },
   { side: "right", label: { x: 160, y: 15, width: 80, height: 30 } },

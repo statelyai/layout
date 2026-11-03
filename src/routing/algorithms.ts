@@ -16,7 +16,6 @@ import type {
 import {
   anchor,
   effectivePolicy,
-  coordinationFor,
   geometryFor,
   sharedCoordination,
   type Settings,
@@ -438,7 +437,6 @@ export function routeEdge(
   const config = policy ? { ...state.settings, ...policy.collisions } : state.settings,
     perEdge = config.edges[edge.id] ?? {},
     diagnostics: RoutingDiagnostic[] = [];
-  const coordination = coordinationFor(strategyStyle, config);
   const sourceConstraint = perEdge.source ?? perEdge.bezier?.source;
   const targetConstraint = perEdge.target ?? perEdge.bezier?.target;
   const labelOnly = perEdge.topology?.kind === "label-only";
@@ -608,6 +606,20 @@ export function routeEdge(
     policy.sourceTangent?.kind !== "vector" &&
     policy.targetTangent?.kind !== "vector" &&
     (!labelRect(edge, state) || policy.label?.kind === "follow" || policy.label?.kind === "fixed");
+  const onFace = (point: RoutePoint, bounds: RouteBounds, side: RouteSide) =>
+    point.x >= bounds.x - 1e-7 &&
+    point.x <= bounds.x + bounds.width + 1e-7 &&
+    point.y >= bounds.y - 1e-7 &&
+    point.y <= bounds.y + bounds.height + 1e-7 &&
+    Math.abs(
+      side === "left"
+        ? point.x - bounds.x
+        : side === "right"
+          ? point.x - bounds.x - bounds.width
+          : side === "top"
+            ? point.y - bounds.y
+            : point.y - bounds.y - bounds.height,
+    ) < 1e-7;
   function terminal(source: boolean, selectedSide?: RouteSide): Terminal {
     const node = source ? sourceNode : targetNode,
       outer = source ? sourceBounds : targetBounds,
@@ -877,6 +889,30 @@ export function routeEdge(
         }
       }
     }
+    if (
+      policy?.stability?.kind === "preserve-valid" &&
+      name === undefined &&
+      requested?.kind !== "port" &&
+      !attachment &&
+      !(source ? guides?.source : guides?.target)
+    ) {
+      const previousPath = source
+        ? batch.previous?.sections[0]?.path
+        : batch.previous?.sections.at(-1)?.path;
+      const previousPoint = source ? previousPath?.start : previousPath?.segments.at(-1)?.to;
+      if (
+        previousPoint &&
+        onFace(previousPoint, bounds, side) &&
+        exposedAttachment(
+          previousPoint,
+          side,
+          source && parentLabel
+            ? `e:${parentLabel.id}`
+            : `n:${source ? edge.sourceId : edge.targetId}`,
+        )
+      )
+        point = previousPoint;
+    }
     return {
       point,
       side:
@@ -894,12 +930,27 @@ export function routeEdge(
     };
   }
   const previousSide = (source: boolean) => {
-    if (!automaticFaces || policy?.stability?.kind !== "preserve-valid") return undefined;
+    if (
+      policy?.stability?.kind !== "preserve-valid" ||
+      grouped ||
+      (source ? perEdge.sourceAttachment : perEdge.targetAttachment)
+    )
+      return undefined;
     const side = source
       ? batch.previous?.sections[0]?.fromSide
       : batch.previous?.sections.at(-1)?.toSide;
     const allowed = source ? perEdge.sourceSides : perEdge.targetSides;
-    return side && (!allowed || allowed.includes(side)) ? side : undefined;
+    const declared = source ? perEdge.sourceSide : perEdge.targetSide;
+    const endpoint = source ? sourceConstraint : targetConstraint;
+    const loopSide = loop && (source ? config.selfLoops?.sourceSide : config.selfLoops?.targetSide);
+    return side &&
+      (!allowed || allowed.includes(side)) &&
+      (!declared || declared === side) &&
+      (!loopSide || loopSide === side) &&
+      endpoint?.kind !== "port" &&
+      (endpoint?.kind !== "floating" || endpoint.sides.includes(side))
+      ? side
+      : undefined;
   };
   const source = terminal(true, previousSide(true)),
     target = terminal(false, previousSide(false)),
@@ -1049,6 +1100,22 @@ export function routeEdge(
     firstTarget.point = anchor(label, firstTarget.side);
   }
   if (labelOnly) monotonicTarget = firstTarget;
+  if (label && !guides?.source && policy?.stability?.kind === "preserve-valid") {
+    const previous = batch.previous?.sections[0];
+    const point = previous?.path.segments.at(-1)?.to;
+    if (
+      previous?.to.kind === "label" &&
+      previous.to.edgeId === edge.id &&
+      point &&
+      previous.toSide &&
+      (!labelSides || labelSides.includes(previous.toSide)) &&
+      onFace(point, label, previous.toSide) &&
+      exposedAttachment(point, previous.toSide, `e:${edge.id}`)
+    ) {
+      firstTarget.point = point;
+      firstTarget.side = previous.toSide;
+    }
+  }
   const outgoingSide = label && labelSide(target.point);
   const exitSide =
     label &&
@@ -1097,6 +1164,22 @@ export function routeEdge(
           ref: { kind: "label", edgeId: edge.id },
         }
       : undefined;
+  if (label && lastSource && !guides?.target && policy?.stability?.kind === "preserve-valid") {
+    const previous = batch.previous?.sections.at(-1);
+    const point = previous?.path.start;
+    if (
+      previous?.from.kind === "label" &&
+      previous.from.edgeId === edge.id &&
+      point &&
+      previous.fromSide &&
+      (!labelSides || labelSides.includes(previous.fromSide)) &&
+      onFace(point, label, previous.fromSide) &&
+      exposedAttachment(point, previous.fromSide, `e:${edge.id}`)
+    ) {
+      lastSource.point = point;
+      lastSource.side = previous.fromSide;
+    }
+  }
   const curvePolicy =
     policy?.curve ??
     (style === "bezier" || style === "curved" || style === "organic" || style === "bundle"
@@ -1266,6 +1349,43 @@ export function routeEdge(
         firstTarget.point = policy.label.kind === "through" ? middle : enter;
         lastSource.point = policy.label.kind === "through" ? middle : leave;
         firstTarget.tangent = lastSource.tangent = direction;
+      }
+      if (
+        policy.label.kind === "gap" &&
+        policy.stability?.kind === "preserve-valid" &&
+        (!tangent || tangent.kind === "automatic")
+      ) {
+        const incoming = batch.previous?.sections[0],
+          outgoing = batch.previous?.sections.at(-1);
+        const enter = incoming?.path.segments.at(-1)?.to,
+          leave = outgoing?.path.start;
+        if (
+          incoming?.to.kind === "label" &&
+          incoming.to.edgeId === edge.id &&
+          incoming.toSide &&
+          outgoing?.from.kind === "label" &&
+          outgoing.from.edgeId === edge.id &&
+          outgoing.fromSide &&
+          enter &&
+          leave &&
+          onFace(enter, label, incoming.toSide) &&
+          onFace(leave, label, outgoing.fromSide) &&
+          (!labelSides ||
+            (labelSides.includes(incoming.toSide) && labelSides.includes(outgoing.fromSide))) &&
+          exposedAttachment(enter, incoming.toSide, `e:${edge.id}`) &&
+          exposedAttachment(leave, outgoing.fromSide, `e:${edge.id}`)
+        ) {
+          firstTarget.point = enter;
+          firstTarget.side = incoming.toSide;
+          lastSource.point = leave;
+          lastSource.side = outgoing.fromSide;
+          firstTarget.tangent = pathEndpointTangent(incoming.path, "end");
+          lastSource.tangent = pathEndpointTangent(outgoing.path, "start");
+          labelDirection = normalized({
+            x: firstTarget.tangent.x + lastSource.tangent.x,
+            y: firstTarget.tangent.y + lastSource.tangent.y,
+          });
+        }
       }
       if (
         perEdge.labelSides &&
@@ -1857,7 +1977,7 @@ export function routeEdge(
       const start = boundedStub(a, false),
         end = boundedStub(b, true),
         waypoints = [...via];
-      if (coordination === "parallel" && peers.length > 1) {
+      if (strategyStyle === "parallel" && config.coordination === undefined && peers.length > 1) {
         // Find a feasible corridor before choosing lanes; an arbitrary midpoint
         // may be inside an obstacle even when good parallel routes exist.
         const geometry = geometryFor(style);
@@ -2290,6 +2410,16 @@ export function routeEdge(
       monotonic: p.monotonic,
     };
   const oldConfig = batch.previousSettings?.edges[edge.id];
+  const previousCurveFallback =
+    batch.previous?.status === "fallback" &&
+    batch.previous.diagnostics.some((diagnostic) => diagnostic.constraint === "curve") &&
+    batch.previous.diagnostics.every(
+      (diagnostic) =>
+        diagnostic.constraint === "curve" ||
+        diagnostic.constraint === "coordination" ||
+        diagnostic.code === "ROUTE_CONFLICT" ||
+        diagnostic.code === "LABEL_OVERLAP",
+    );
   const sameConstraints =
     JSON.stringify({ ...oldConfig, policy: undefined }) ===
       JSON.stringify({ ...perEdge, policy: undefined }) &&
@@ -2327,6 +2457,7 @@ export function routeEdge(
     return oldKnot < oldKnots.length;
   });
   const oldCurveValid =
+    previousCurveFallback ||
     (curvePolicy.kind !== "bezier" && curvePolicy.kind !== "catmull-rom") ||
     oldSections?.every((section) =>
       section.path.segments.every((segment) => segment.kind === "cubic"),
@@ -2352,16 +2483,39 @@ export function routeEdge(
     });
   const corridor = futureTargetCorridor;
   futureTargetCorridor = undefined;
+  const oldLegsDoNotRetrace = () => {
+    if (!oldSections || oldSections.length < 2) return true;
+    let incoming = pathReservations(oldSections[0]!.path);
+    if (label) incoming = incoming.flatMap((segment) => outsideTerminal(segment, label, false));
+    if (loop)
+      incoming = incoming.flatMap((segment) =>
+        outsideTerminal(segment, inflate(sourceBounds, config.clearance + 1)),
+      );
+    return oldSections.slice(1).every((section) =>
+      pathReservations(section.path).every((outgoing) =>
+        incoming.every(
+          (segment) =>
+            conflictCost(outgoing.a, outgoing.b, segment, {
+              ...config,
+              edgeSpacing: 0,
+              crossingPenalty: 0,
+              overlapPenalty: 1,
+            }) <= 1e-8,
+        ),
+      ),
+    );
+  };
   const reusable =
     policy?.stability?.kind === "preserve-valid" &&
     sameConstraints &&
-    batch.previous?.status === "routed" &&
+    (batch.previous?.status === "routed" || previousCurveFallback) &&
     oldFirst &&
     oldLast &&
     oldTopologyValid &&
     oldWaypointsValid &&
     oldCurveValid &&
     oldRoundedValid &&
+    oldLegsDoNotRetrace() &&
     oldSections!.every((section) => section.sharedId === undefined) &&
     distance(oldFirst.start, portEscapes.get(source)?.point ?? source.point) < 1e-7 &&
     distance(
@@ -2435,6 +2589,9 @@ export function routeEdge(
     }
   }
   if (preserved) {
+    shapeFallback ||= previousCurveFallback;
+    for (const diagnostic of batch.previous?.diagnostics ?? [])
+      if (diagnostic.constraint === "coordination") diagnostics.push(diagnostic);
     sections.push(...preserved);
     futureTargetCorridor = undefined;
   } else {
@@ -2599,8 +2756,32 @@ export function routeEdge(
       (d) =>
         d.code === "MISSING_GEOMETRY" ||
         d.code === "MISSING_PORT" ||
-        (d.code === "CONSTRAINT_VIOLATION" && d.constraint !== "bundle"),
+        (d.code === "CONSTRAINT_VIOLATION" &&
+          d.constraint !== "bundle" &&
+          d.constraint !== "coordination"),
     );
+    if ((hardFailure || shapeFallback) && config.coordination?.kind === "parallel") {
+      const independent = routeEdge(
+        edge,
+        { ...state, settings: { ...state.settings, coordination: { kind: "independent" } } },
+        strategyStyle,
+        metrics,
+        batch,
+      );
+      if (independent.sections.length && (hardFailure || independent.status === "routed"))
+        return {
+          ...independent,
+          diagnostics: [
+            ...independent.diagnostics,
+            {
+              code: "CONSTRAINT_VIOLATION",
+              edgeId: edge.id,
+              constraint: "coordination",
+              message: "Parallel lane spacing is infeasible; retained an independent route",
+            },
+          ],
+        };
+    }
     if ((hardFailure || shapeFallback) && grouped) {
       const independent = routeEdge(
         edge,
@@ -2633,7 +2814,11 @@ export function routeEdge(
     }
     if (hardFailure) return { edgeId: edge.id, sections: [], status: "fallback", diagnostics };
     if (shapeFallback)
-      report("CONSTRAINT_VIOLATION", "Requested curve unavailable; retained a hard-safe guide");
+      report(
+        "CONSTRAINT_VIOLATION",
+        "Requested curve unavailable; retained a hard-safe guide",
+        "curve",
+      );
     if (
       policy.monotonic?.strength === "prefer" &&
       logicalPaths.some(
@@ -2719,7 +2904,8 @@ export function routeEdge(
           d.code !== "ROUTE_CONFLICT" &&
           d.code !== "LABEL_OVERLAP" &&
           d.constraint !== "monotonicity" &&
-          d.constraint !== "bundle",
+          d.constraint !== "bundle" &&
+          d.constraint !== "coordination",
       );
     const route: Route = {
       edgeId: edge.id,

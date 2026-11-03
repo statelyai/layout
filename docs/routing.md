@@ -48,6 +48,32 @@ strategies. Per-edge policies override global defaults. See the
 [routing policy reference](routing-policies.md) for presets, examples, and
 constraint behavior.
 
+## Explicit routing concerns
+
+<!-- routeEdges, updateRoutes, refineRoutes and independent routing concerns from src/routing/api.ts and src/routing/types.ts -->
+
+`routeEdges({ graph, geometry, settings, initialRoutes? })` initializes routing.
+`updateRoutes({ graph, previous, changes, settings? })` updates the retained
+snapshot. Omitted geometry defaults to orthogonal; omitted coordination defaults
+to independent. `geometry` selects straight, orthogonal, polyline or octilinear
+search; `policy.curve` selects the curve; `coordination` selects independent,
+parallel, fan, bus or bundle planning. The historical strategy catalog below
+remains supported.
+
+Self-loops are detected from graph endpoints. `selfLoops` supplies their source
+and target sides and preferred clearance. Per-edge `topology: { kind: "label-only" }`
+terminates at the edge's positioned label without a return connector.
+
+All geometries accept per-edge `source`/`target` floating rectangles or fixed
+ports with direction, escape point and owner; `obstacles`, `terminalBounds`,
+`guides`, `disabled`, `sourceClearance` and `targetClearance`. These fields take
+precedence over equivalent historical Bézier-only fields. Clearance trims exact
+line, quadratic, cubic and arc geometry by numerical arc length. A trim longer
+than the path leaves a zero-length path; it never invents a shortcut.
+
+`getLayoutRouting`, validated `initialRoutes`, `refineRoutes`, and
+`createRoutingScheduler` are described in the [interactive guide](interactive-routing.md).
+
 ## Incremental contract
 
 `strategy.update(graph, previous, graphDiff, settings?)` returns
@@ -91,8 +117,9 @@ Opt-in `stability: { kind: "preserve-valid" }` favors hard-valid prior paths and
 deliberately depends on edit history. See [routing policies](routing-policies.md).
 
 Settings omitted on update retain the previous settings. Supplied settings
-replace the settings object, using defaults for omitted fields. Configuration
-changes invalidate all routes. Snapshots are in-memory values with opaque
+replace the settings object, using defaults for omitted fields. Global configuration
+changes invalidate all routes. Per-edge configuration changes invalidate the
+changed edges, incident attachment peers, shared groups and dependent labels. Snapshots are in-memory values with opaque
 immutable indexes; serialize routes for storage, then rebuild with `route`
 after loading. Snapshots are not transferable worker messages. A worker should
 own its snapshot and exchange graph diffs and route patches with the main thread.

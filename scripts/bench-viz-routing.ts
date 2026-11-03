@@ -19,12 +19,16 @@ const fixture: { graph: RoutingGraph; settings: RoutingSettings } = JSON.parse(
 );
 const frames = Number(process.env.ROUTING_BENCH_FRAMES ?? 5);
 const preserve = process.env.ROUTING_BENCH_PRESERVE !== "false";
-const zeroCosts = process.env.ROUTING_BENCH_ZERO_COSTS !== "false";
+const crossingPenalty = Number(process.env.ROUTING_BENCH_CROSSING_PENALTY ?? 0);
+const overlapPenalty = Number(process.env.ROUTING_BENCH_OVERLAP_PENALTY ?? 8);
+if (![crossingPenalty, overlapPenalty].every((value) => Number.isFinite(value) && value >= 0))
+  throw new Error("Routing penalties must be finite and non-negative");
 if (!Number.isSafeInteger(frames) || frames < 1)
   throw new Error("Frames must be a positive integer");
 const settings: RoutingSettings = {
   ...fixture.settings,
-  ...(zeroCosts ? { crossingPenalty: 0, overlapPenalty: 0 } : {}),
+  crossingPenalty,
+  overlapPenalty,
   policy: {
     ...fixture.settings.policy,
     stability: { kind: preserve ? "preserve-valid" : "recompute" },
@@ -76,7 +80,9 @@ for (const kind of ["node", "label"] as const) {
       if (
         patch.route.diagnostics.some(
           (diagnostic) =>
-            diagnostic.code !== "ROUTE_CONFLICT" && diagnostic.code !== "LABEL_OVERLAP",
+            diagnostic.code !== "ROUTE_CONFLICT" &&
+            diagnostic.code !== "LABEL_OVERLAP" &&
+            diagnostic.constraint !== "curve",
         )
       )
         hardFailures++;
@@ -107,5 +113,5 @@ if (
 )
   throw new Error("Canonical incremental routes differ from fresh routing");
 process.stdout.write(
-  `${JSON.stringify({ node: process.version, cores: cpus().length, loadAverage: loadavg(), scope: "Synthetic Viz projection; synchronous routing, patch application and SVG serialization only. Graph diff production, browser paint, worker transfer excluded. Fallbacks and hard diagnostics are reported, not treated as successful routing.", preserve, zeroCosts, nodes: graph.nodes.length, edges: graph.edges.length, initialMs, initialFallbacks, initialEmpty, results, svgBytes, errors: 0 }, null, 2)}\n`,
+  `${JSON.stringify({ node: process.version, cores: cpus().length, loadAverage: loadavg(), scope: "Synthetic Viz projection; synchronous routing, patch application and SVG serialization only. Graph diff production, browser paint, worker transfer excluded. Fallbacks and hard diagnostics are reported, not treated as successful routing.", preserve, crossingPenalty, overlapPenalty, nodes: graph.nodes.length, edges: graph.edges.length, initialMs, initialFallbacks, initialEmpty, results, svgBytes, errors: 0 }, null, 2)}\n`,
 );
