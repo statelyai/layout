@@ -59,6 +59,7 @@ import {
   placeFollowingLabel,
 } from "./policy-geometry";
 import { inflate, intersects, union } from "./spatial";
+import { retargetLinePath } from "./retarget";
 import {
   clear,
   findPath,
@@ -430,6 +431,7 @@ export function routeEdge(
 ): Route {
   const policy = effectivePolicy(state.settings, edge.id);
   const strategyStyle = style;
+  style = state.settings.edges[edge.id]?.geometry ?? style;
   if (policy?.curve?.kind === "rounded-orthogonal" && !sharedCoordination(style, state.settings))
     style = "orthogonal";
   const config = policy ? { ...state.settings, ...policy.collisions } : state.settings,
@@ -560,16 +562,21 @@ export function routeEdge(
   const group = groupKey(edge, strategyStyle, config),
     peers = group ? [...(state.groups.get(group)?.keys() ?? [])] : [];
   const compatibleGroup =
-    !policy ||
+    (!policy ||
+      peers.every(
+        (id) => JSON.stringify(effectivePolicy(state.settings, id)) === JSON.stringify(policy),
+      )) &&
     peers.every(
-      (id) => JSON.stringify(effectivePolicy(state.settings, id)) === JSON.stringify(policy),
+      (id) =>
+        (state.settings.edges[id]?.geometry ?? geometryFor(strategyStyle)) ===
+        (perEdge.geometry ?? geometryFor(strategyStyle)),
     );
   const grouped =
     !loop && peers.length > 1 && sharedCoordination(strategyStyle, config) && compatibleGroup;
   if (!compatibleGroup)
     report(
       "CONSTRAINT_VIOLATION",
-      "Incompatible bundle policies use independent branches",
+      "Incompatible shared routing constraints use independent branches",
       "bundle",
     );
   const lane = !grouped && peers.length > 1 ? peers.length - 1 - peers.indexOf(edge.id) : 0;
@@ -2372,8 +2379,57 @@ export function routeEdge(
         (!lastSource.tangent ||
           directionMatches(pathEndpointTangent(oldLast, "start"), lastSource.tangent))));
   futureTargetCorridor = corridor;
-  if (reusable) {
-    sections.push(...oldSections!);
+  let preserved = reusable ? oldSections : undefined;
+  if (
+    !preserved &&
+    policy?.stability?.kind === "preserve-valid" &&
+    sameConstraints &&
+    batch.previous?.status === "routed" &&
+    oldTopologyValid &&
+    oldSections?.length === 1 &&
+    !oldSections[0]!.sharedId &&
+    !loop &&
+    !label &&
+    !grouped &&
+    !via.length &&
+    !guides &&
+    !perEdge.sourceClearance &&
+    !perEdge.targetClearance &&
+    !portEscapes.size &&
+    !sourceConstraint &&
+    !targetConstraint &&
+    curvePolicy.kind === "polyline"
+  ) {
+    const path = retargetLinePath(
+      oldSections[0]!.path,
+      source.point,
+      target.point,
+      geometryFor(style),
+    );
+    if (path && path.segments.length) {
+      const startDirection = pathEndpointTangent(path, "start"),
+        endDirection = pathEndpointTangent(path, "end");
+      const fromNormal = vector(source.side),
+        toNormal = vector(target.side);
+      if (
+        startDirection.x * fromNormal.x + startDirection.y * fromNormal.y > 1e-7 &&
+        endDirection.x * toNormal.x + endDirection.y * toNormal.y < -1e-7 &&
+        assessPath(path, source, target).valid
+      )
+        preserved = [
+          {
+            ...oldSections[0]!,
+            from: source.ref,
+            to: target.ref,
+            path,
+            fromSide: source.side,
+            toSide: target.side,
+          },
+        ];
+    }
+  }
+  if (preserved) {
+    sections.push(...preserved);
     futureTargetCorridor = undefined;
   } else {
     const plan = grouped ? groupPlan(group!, state, metrics, batch, style) : undefined;

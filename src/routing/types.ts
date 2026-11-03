@@ -157,6 +157,7 @@ export interface RoutingPolicy {
 }
 export interface EdgeRoutingSettings {
   readonly policy?: RoutingPolicy;
+  readonly geometry?: RouteGeometry;
   readonly topology?: { readonly kind: "connection" } | { readonly kind: "label-only" };
   readonly source?: RouteEndpointConstraint;
   readonly target?: RouteEndpointConstraint;

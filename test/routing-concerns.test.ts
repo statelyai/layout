@@ -43,6 +43,52 @@ function orthogonal(route: Route) {
 }
 
 describe("independent routing concerns", () => {
+  it("retains mixed per-edge geometry in one incremental snapshot", () => {
+    const graph = createGraph({
+      nodes: [
+        { id: "a", x: 0, y: 0, width: 40, height: 40 },
+        { id: "b", x: 300, y: 170, width: 40, height: 40 },
+      ],
+      edges: [
+        { id: "axis", sourceId: "a", targetId: "b" },
+        { id: "free", sourceId: "a", targetId: "b" },
+      ],
+    });
+    const settings: RoutingSettings = {
+      coordination: { kind: "independent" },
+      edges: { free: { geometry: "polyline" } },
+    };
+    const previous = routingStrategies.orthogonal.route(graph, settings);
+    orthogonal(previous.routes.get("axis")!);
+    let from = previous.routes.get("free")!.sections[0]!.path.start;
+    expect(
+      previous.routes.get("free")!.sections[0]!.path.segments.some((segment) => {
+        const diagonal =
+          Math.abs(segment.to.x - from.x) > 1e-7 && Math.abs(segment.to.y - from.y) > 1e-7;
+        from = segment.to;
+        return diagonal;
+      }),
+    ).toBe(true);
+    const next = {
+      ...graph,
+      nodes: graph.nodes.map((node) => (node.id === "b" ? { ...node, y: 200 } : node)),
+    };
+    expect([
+      ...routingStrategies.orthogonal.update(next, previous, getDiff(graph, next)).snapshot.routes,
+    ]).toEqual([...routingStrategies.orthogonal.route(next, settings).routes]);
+  });
+
+  it("rejects a shared trunk with incompatible per-edge geometry", () => {
+    const result = routingStrategies.orthogonal.route(diagram(), {
+      coordination: { kind: "bus" },
+      edges: { ac: { geometry: "polyline" } },
+    });
+    for (const route of result.routes.values()) {
+      expect(route.sections.every((section) => !section.sharedId)).toBe(true);
+      expect(route.diagnostics.some((diagnostic) => diagnostic.constraint === "bundle")).toBe(true);
+    }
+  });
+
   it("coordinates parallel edges without changing orthogonal geometry", () => {
     const input = diagram();
     const graph = { ...input, edges: [input.edges[0]!, { ...input.edges[0]!, id: "ab2" }] };

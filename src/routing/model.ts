@@ -104,6 +104,11 @@ export function settings(input: RoutingSettings = {}): Settings {
       throw new RangeError("Bézier targetClearance must be finite and non-negative");
   }
   for (const edge of Object.values(result.edges)) {
+    if (
+      edge.geometry !== undefined &&
+      !["straight", "orthogonal", "polyline", "octilinear"].includes(edge.geometry)
+    )
+      throw new RangeError("Invalid edge routing geometry");
     if (edge.topology && !["connection", "label-only"].includes(edge.topology.kind))
       throw new RangeError("Invalid edge topology kind");
     for (const gap of [edge.sourceClearance, edge.targetClearance])
