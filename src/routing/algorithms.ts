@@ -528,6 +528,33 @@ export function routeEdge(
       width: 0,
       height: 0,
     };
+  const ancestorObstacles = new Set(
+    [...ancestors(edge.sourceId, state), ...ancestors(edge.targetId, state)]
+      .filter((id) => id !== edge.sourceId && id !== edge.targetId)
+      .map((id) => `n:${id}`),
+  );
+  const exposedAttachment = (point: RoutePoint, side: RouteSide, owner: string) => {
+    const normal = vector(side);
+    const lead = { x: point.x + normal.x, y: point.y + normal.y };
+    const ids = state.obstacles.query(inflate(segmentBounds(point, lead), config.clearance));
+    metrics.obstacleCandidates += ids.length;
+    return !ids.some((id) => {
+      if (id === owner || ancestorObstacles.has(id)) return false;
+      if (id.startsWith("n:") && policy?.collisions?.nodes === "allow") return false;
+      if (id.startsWith("e:") && policy?.collisions?.labels === "allow") return false;
+      const terminal =
+        id === `n:${edge.sourceId}` ||
+        id === `n:${edge.targetId}` ||
+        id === `e:${edge.id}` ||
+        id === `e:${parentLabel?.id}` ||
+        id.startsWith("policy-terminal:");
+      return crossesRect(
+        point,
+        lead,
+        inflate(state.obstacles.bounds.get(id)!, terminal ? 0 : config.clearance),
+      );
+    });
+  };
   const loop = !labelOnly && perEdge.sourceLabel === undefined && edge.sourceId === edge.targetId;
   const loopClearance = config.selfLoops?.clearance ?? config.clearance + config.edgeSpacing + 1;
   const group = groupKey(edge, strategyStyle, config),
@@ -550,6 +577,10 @@ export function routeEdge(
     policy?.label?.kind === "follow" || policy?.label?.kind === "fixed"
       ? undefined
       : labelRect(edge, state);
+  const loopLabelFace =
+    loop && policy && attractingLabel
+      ? sideToward(center(sourceBounds), center(attractingLabel))
+      : undefined;
   const automaticFaces =
     !!policy &&
     !loop &&
@@ -594,8 +625,8 @@ export function routeEdge(
         : (guides?.target?.targetDirection ?? guides?.source?.targetDirection)) ??
       (loop
         ? source
-          ? (config.selfLoops?.sourceSide ?? "right")
-          : (config.selfLoops?.targetSide ?? "top")
+          ? (config.selfLoops?.sourceSide ?? loopLabelFace ?? "right")
+          : (config.selfLoops?.targetSide ?? loopLabelFace ?? "top")
         : sideToward(center(bounds), center(other)));
     const requestedTangent = source ? policy?.sourceTangent : policy?.targetTangent;
     if (
@@ -647,6 +678,55 @@ export function routeEdge(
             Math.min(bounds.x + bounds.width - margin, center(toward).x),
           ),
         };
+    }
+    if (
+      policy &&
+      !selectedSide &&
+      name === undefined &&
+      !attachment &&
+      !(source ? perEdge.sourceSide || sourceConstraint : perEdge.targetSide || targetConstraint) &&
+      !exposedAttachment(
+        point,
+        side,
+        source && parentLabel
+          ? `e:${parentLabel.id}`
+          : `n:${source ? edge.sourceId : edge.targetId}`,
+      )
+    ) {
+      for (const alternative of allowedSides ?? (["left", "right", "top", "bottom"] as const)) {
+        const candidate = anchor(bounds, alternative);
+        if (
+          !exposedAttachment(
+            candidate,
+            alternative,
+            source && parentLabel
+              ? `e:${parentLabel.id}`
+              : `n:${source ? edge.sourceId : edge.targetId}`,
+          )
+        )
+          continue;
+        side = alternative;
+        point = candidate;
+        break;
+      }
+    }
+    if (
+      loopLabelFace &&
+      name === undefined &&
+      !attachment &&
+      !sourceConstraint &&
+      !targetConstraint &&
+      !perEdge.sourceSide &&
+      !perEdge.targetSide &&
+      !config.selfLoops?.sourceSide &&
+      !config.selfLoops?.targetSide
+    ) {
+      const horizontal = side === "top" || side === "bottom";
+      const span = horizontal ? bounds.width : bounds.height;
+      const offset = Math.min(config.edgeSpacing / 2, span / 6) * (source ? -1 : 1);
+      point = horizontal
+        ? { x: point.x + offset, y: point.y }
+        : { x: point.x, y: point.y + offset };
     }
     const duplicateTargets =
       !source && grouped
@@ -911,9 +991,16 @@ export function routeEdge(
       ...drawn.map((s) => reservationBounds(s, config.edgeSpacing)),
     ];
   }
+  const exposedLabelSides =
+    label && policy
+      ? (perEdge.labelSides ?? (["left", "right", "top", "bottom"] as const)).filter((side) =>
+          exposedAttachment(anchor(label, side), side, `e:${edge.id}`),
+        )
+      : undefined;
+  const labelSides = exposedLabelSides?.length ? exposedLabelSides : perEdge.labelSides;
   const labelSide = (toward: RoutePoint) => {
     const preferred = sideToward(center(label!), toward);
-    return perEdge.labelSides?.includes(preferred) === false ? perEdge.labelSides[0]! : preferred;
+    return labelSides?.includes(preferred) === false ? labelSides[0]! : preferred;
   };
   const labelAnchor = (toward: RoutePoint) => {
     const side = labelSide(toward),
@@ -956,13 +1043,15 @@ export function routeEdge(
     (!perEdge.labelSides || perEdge.labelSides.includes(guides.target.sourceDirection))
       ? guides.target.sourceDirection
       : undefined) ??
-      (outgoingSide === firstTarget.side
-        ? perEdge.labelSides
-          ? (perEdge.labelSides.find((side) => side !== firstTarget.side) ?? firstTarget.side)
-          : ({ left: "right", right: "left", top: "bottom", bottom: "top" } as const)[
-              firstTarget.side
-            ]
-        : outgoingSide));
+      (loop && policy && source.side === target.side
+        ? outgoingSide
+        : outgoingSide === firstTarget.side
+          ? labelSides
+            ? (labelSides.find((side) => side !== firstTarget.side) ?? firstTarget.side)
+            : ({ left: "right", right: "left", top: "bottom", bottom: "top" } as const)[
+                firstTarget.side
+              ]
+          : outgoingSide));
   if (label && exitSide === firstTarget.side) {
     const horizontal = exitSide === "top" || exitSide === "bottom";
     const fraction = (
@@ -1963,6 +2052,12 @@ export function routeEdge(
               )
                 continue;
               const candidate = pathFromPoints(simplify(candidatePoints));
+              if (
+                (a.tangent &&
+                  !directionMatches(pathEndpointTangent(candidate, "start"), a.tangent)) ||
+                (b.tangent && !directionMatches(pathEndpointTangent(candidate, "end"), b.tangent))
+              )
+                continue;
               const segments = pathReservations(candidate);
               const retraces = segments.some((s, j) =>
                 segments.slice(j + 1).some((t) => {
@@ -2223,6 +2318,25 @@ export function routeEdge(
     oldSections?.every((section) =>
       section.path.segments.every((segment) => segment.kind === "cubic"),
     );
+  const oldRoundedValid =
+    curvePolicy.kind !== "rounded-orthogonal" ||
+    oldSections?.every((section) => {
+      let from = section.path.start;
+      return section.path.segments.every((segment) => {
+        const dx = Math.abs(segment.to.x - from.x),
+          dy = Math.abs(segment.to.y - from.y);
+        from = segment.to;
+        return segment.kind === "line"
+          ? dx < 1e-7 || dy < 1e-7
+          : segment.kind === "arc" &&
+              segment.rotation === 0 &&
+              !segment.largeArc &&
+              segment.rx <= (curvePolicy.radius ?? config.radius) + 1e-7 &&
+              Math.abs(segment.rx - segment.ry) < 1e-7 &&
+              Math.abs(dx - segment.rx) < 1e-7 &&
+              Math.abs(dy - segment.ry) < 1e-7;
+      });
+    });
   const corridor = futureTargetCorridor;
   futureTargetCorridor = undefined;
   const reusable =
@@ -2234,6 +2348,7 @@ export function routeEdge(
     oldTopologyValid &&
     oldWaypointsValid &&
     oldCurveValid &&
+    oldRoundedValid &&
     oldSections!.every((section) => section.sharedId === undefined) &&
     distance(oldFirst.start, portEscapes.get(source)?.point ?? source.point) < 1e-7 &&
     distance(

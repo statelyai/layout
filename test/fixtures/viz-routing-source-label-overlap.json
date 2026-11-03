@@ -1,0 +1,78 @@
+{
+  "id": "flow-statechart-routing",
+  "mode": "directed",
+  "initialNodeId": null,
+  "nodes": [
+    {
+      "type": "node",
+      "id": "idle",
+      "parentId": "root",
+      "label": null,
+      "data": null,
+      "x": 0,
+      "y": 0,
+      "width": 100,
+      "height": 60
+    },
+    {
+      "type": "node",
+      "id": "middle",
+      "parentId": "root",
+      "label": null,
+      "data": null,
+      "x": -70,
+      "y": 120,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "type": "node",
+      "id": "active",
+      "parentId": "root",
+      "label": null,
+      "data": null,
+      "x": 220,
+      "y": 100,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "type": "node",
+      "id": "root",
+      "parentId": null,
+      "label": null,
+      "data": null,
+      "x": 0,
+      "y": 0,
+      "width": 0,
+      "height": 0
+    }
+  ],
+  "edges": [
+    {
+      "type": "edge",
+      "id": "NEXT",
+      "sourceId": "idle",
+      "targetId": "middle",
+      "label": null,
+      "data": null,
+      "x": -20,
+      "y": 55,
+      "width": 100,
+      "height": 40
+    },
+    {
+      "type": "edge",
+      "id": "DONE",
+      "sourceId": "middle",
+      "targetId": "active",
+      "label": null,
+      "data": null,
+      "x": 105,
+      "y": 50,
+      "width": 100,
+      "height": 40
+    }
+  ],
+  "data": null
+}

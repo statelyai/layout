@@ -1,0 +1,101 @@
+import { createGraph } from "@statelyai/graph";
+import { expect, it } from "vitest";
+import { orthogonalRouting, segmentCrossesRect } from "../src/routing";
+import type { Route, RouteBounds, RoutingPolicy, RoutingSettings } from "../src/routing/types";
+import sourceOverlap from "./fixtures/viz-routing-source-label-overlap.json";
+import labelOverlap from "./fixtures/viz-routing-overlapping-labels.json";
+
+const policy = {
+  curve: { kind: "rounded-orthogonal", radius: 8 },
+  sourceTangent: { kind: "border-normal" },
+  targetTangent: { kind: "border-normal" },
+  label: { kind: "gap", tangent: { kind: "border-normal" } },
+} satisfies RoutingPolicy;
+
+function avoids(route: Route, bounds: RouteBounds) {
+  for (const section of route.sections) {
+    let from = section.path.start;
+    for (const segment of section.path.segments) {
+      expect(segmentCrossesRect(from, segment, bounds)).toBe(false);
+      from = segment.to;
+    }
+  }
+}
+
+it.each([sourceOverlap, labelOverlap])(
+  "routes exposed faces of overlapping fixed labels in $id",
+  (fixture) => {
+    const graph = createGraph({
+      id: fixture.id,
+      nodes: fixture.nodes.map(({ id, parentId, x, y, width, height }) => ({
+        id,
+        parentId,
+        x,
+        y,
+        width,
+        height,
+      })),
+      edges: fixture.edges.map(({ id, sourceId, targetId, x, y, width, height }) => ({
+        id,
+        sourceId,
+        targetId,
+        x,
+        y,
+        width,
+        height,
+      })),
+    });
+    const settings: RoutingSettings = {
+      coordinateSpace: "world",
+      coordination: { kind: "independent" },
+      policy,
+      edges: Object.fromEntries(
+        graph.edges.map((edge) => [edge.id, { sourceClearance: 0, targetClearance: 10 }]),
+      ),
+    };
+    const result = orthogonalRouting.route(graph, settings);
+    for (const route of result.routes.values()) {
+      expect(route.status).toBe("routed");
+      expect(route.sections).toHaveLength(2);
+      for (const node of fixture.nodes) avoids(route, node);
+      for (const label of fixture.edges) if (label.id !== route.edgeId) avoids(route, label);
+    }
+  },
+);
+
+it.each([
+  { side: "top", label: { x: 10, y: -100, width: 80, height: 30 } },
+  { side: "right", label: { x: 160, y: 15, width: 80, height: 30 } },
+  { side: "bottom", label: { x: 10, y: 130, width: 80, height: 30 } },
+  { side: "left", label: { x: -160, y: 15, width: 80, height: 30 } },
+])(
+  "routes a labeled self-loop through distinct attachments on its $side face",
+  ({ side, label }) => {
+    const node = { id: "a", x: 0, y: 0, width: 100, height: 60 };
+    const graph = createGraph({
+      nodes: [node],
+      edges: [{ id: "loop", sourceId: "a", targetId: "a", ...label }],
+    });
+    const route = orthogonalRouting.route(graph, { policy }).routes.get("loop")!;
+    expect(route.status).toBe("routed");
+    expect(route.sections).toHaveLength(2);
+    expect(route.sections[0]!.fromSide).toBe(side);
+    expect(route.sections[1]!.toSide).toBe(side);
+    expect(route.sections[0]!.path.start).not.toEqual(route.sections[1]!.path.segments.at(-1)!.to);
+    avoids(route, node);
+    avoids(route, label);
+  },
+);
+
+it("retains explicit self-loop attachment rules when its label faces another side", () => {
+  const graph = createGraph({
+    nodes: [{ id: "a", x: 0, y: 0, width: 100, height: 60 }],
+    edges: [{ id: "loop", sourceId: "a", targetId: "a", x: 10, y: -100, width: 80, height: 30 }],
+  });
+  const route = orthogonalRouting
+    .route(graph, { policy, selfLoops: { sourceSide: "left", targetSide: "bottom" } })
+    .routes.get("loop")!;
+  expect(route.status).toBe("routed");
+  expect(route.sections[0]!.fromSide).toBe("left");
+  expect(route.sections[1]!.toSide).toBe("bottom");
+});
