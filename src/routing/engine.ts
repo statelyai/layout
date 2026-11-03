@@ -1,6 +1,12 @@
 import type { GraphDiff } from "@statelyai/graph";
 import { expandLabelFamilies, labelFamilyIndex, routeBezierEdge } from "./bezier";
-import { conflictCost, reservations, reservationBounds, outsideTerminal } from "./coordination";
+import {
+  conflictCost,
+  reservations,
+  reservationBounds,
+  outsideTerminal,
+  RouteReservationIndex,
+} from "./coordination";
 import { segmentBounds } from "./search";
 import { routeBounds, routeEdge, type Metrics, type Batch } from "./algorithms";
 import {
@@ -25,6 +31,7 @@ import { inflate, intersects, SpatialIndex, union } from "./spatial";
 import type {
   NativeRoutingStrategy,
   Route,
+  RouteBounds,
   RoutePatch,
   RouteStyle,
   RouteGeometry,
@@ -154,6 +161,8 @@ function initialState(graph: RoutingGraph, config: RoutingSettings, style: Route
     groups: new PersistentMap(),
     obstacles: new SpatialIndex(),
     routeIndex: new SpatialIndex(),
+    drawnIndex: new SpatialIndex(),
+    reservationIndex: new RouteReservationIndex(),
     routes: new PersistentMap(),
   };
   for (const [id, n] of nodes)
@@ -173,7 +182,9 @@ function calculate(
   preservePrevious = true,
 ): { state: State; patches: RoutePatch[] } {
   let routes = state.routes,
-    routeIndex = state.routeIndex;
+    routeIndex = state.routeIndex,
+    drawnIndex = state.drawnIndex,
+    reservationIndex = state.reservationIndex;
   const input = {
     nodes: state.nodes,
     incident: state.incident,
@@ -248,7 +259,6 @@ function calculate(
           if (group) for (const peer of state.groups.get(group)?.keys() ?? []) pending.add(peer);
         }
     }
-  const segmentCache = new Map<string, ReturnType<typeof reservations>>();
   while (pending.size) {
     const id = pending.take();
     processed.add(id);
@@ -259,6 +269,8 @@ function calculate(
         invalidate(id, routeBounds(routes.get(id)!));
         routes = routes.delete(id);
         routeIndex = routeIndex.set(id);
+        drawnIndex = drawnIndex.set(id);
+        reservationIndex = reservationIndex.set(id);
         patches.push({ op: "delete", edgeId: id });
       }
       continue;
@@ -269,7 +281,9 @@ function calculate(
       batch.dependencyBounds = batch.dependencyBounds ? union(batch.dependencyBounds, area) : area;
       const result: ReturnType<typeof reservations> = [];
       const shared = new Set<string>();
-      for (const otherId of routeIndex.query(area)) {
+      const terminalCache = new Map<string, RouteBounds[]>();
+      for (const segment of reservationIndex.query(area)) {
+        const otherId = segment.edgeId;
         if (!later(id, otherId)) continue;
         const other = state.edges.get(otherId),
           route = routes.get(otherId);
@@ -279,30 +293,29 @@ function calculate(
           groupKey(other, style, state.settings) === groupKey(edge, style, state.settings)
         )
           continue;
-        const terminalRegions = [edge.sourceId, edge.targetId]
-          .filter((node) => node === other.sourceId || node === other.targetId)
-          .flatMap((id) => {
-            const node = state.nodes.get(id),
-              bounds = node && worldRect(node, state);
-            return bounds
-              ? [
-                  inflate(
-                    bounds,
-                    state.settings.clearance +
-                      (style === "organic" ? 0 : state.settings.edgeSpacing * 2) +
-                      1,
-                  ),
-                ]
-              : [];
-          });
-        let segments = segmentCache.get(otherId);
-        if (!segments) {
-          segments = reservations(route);
-          segmentCache.set(otherId, segments);
+        let terminalRegions = terminalCache.get(otherId);
+        if (!terminalRegions) {
+          terminalRegions = [edge.sourceId, edge.targetId]
+            .filter((node) => node === other.sourceId || node === other.targetId)
+            .flatMap((id) => {
+              const node = state.nodes.get(id),
+                bounds = node && worldRect(node, state);
+              return bounds
+                ? [
+                    inflate(
+                      bounds,
+                      state.settings.clearance +
+                        (style === "organic" ? 0 : state.settings.edgeSpacing * 2) +
+                        1,
+                    ),
+                  ]
+                : [];
+            });
+          terminalCache.set(otherId, terminalRegions);
         }
-        const outside = terminalRegions.reduce(
+        const outside = terminalRegions.reduce<ReturnType<typeof reservations>>(
           (segments, rect) => segments.flatMap((segment) => outsideTerminal(segment, rect)),
-          segments,
+          [segment],
         );
         for (const segment of outside) {
           if (!intersects(segmentBounds(segment.a, segment.b), area)) continue;
@@ -319,10 +332,12 @@ function calculate(
     batch.policy = effectivePolicy(state.settings, id);
     const costSettings = { ...state.settings, ...batch.policy?.collisions };
     batch.edgeCost = (a, b) =>
-      query(segmentBounds(a, b)).reduce(
-        (cost, other) => cost + conflictCost(a, b, other, costSettings),
-        0,
-      );
+      costSettings.crossingPenalty === 0 && costSettings.overlapPenalty === 0
+        ? 0
+        : query(segmentBounds(a, b)).reduce(
+            (cost, other) => cost + conflictCost(a, b, other, costSettings),
+            0,
+          );
     batch.conflicts = (a, b) =>
       query(segmentBounds(a, b)).some(
         (other) =>
@@ -330,12 +345,14 @@ function calculate(
           1e-8,
       );
     batch.guides = (bounds) =>
-      query(bounds).map((segment) => reservationBounds(segment, state.settings.edgeSpacing));
+      costSettings.crossingPenalty === 0 && costSettings.overlapPenalty === 0
+        ? []
+        : query(bounds).map((segment) => reservationBounds(segment, state.settings.edgeSpacing));
     batch.labelOverlaps = (bounds) => {
       batch.dependencyBounds = batch.dependencyBounds
         ? union(batch.dependencyBounds, bounds)
         : bounds;
-      return routeIndex
+      return drawnIndex
         .query(bounds)
         .filter((otherId) => {
           const label = routes.get(otherId)?.label;
@@ -362,10 +379,11 @@ function calculate(
       id,
       batch.dependencyBounds ? union(batch.dependencyBounds, drawnBounds) : drawnBounds,
     );
+    drawnIndex = drawnIndex.set(id, drawnBounds);
     if (route === oldRoute) continue;
     route = freeze(route);
     routes = routes.set(id, route);
-    segmentCache.delete(id);
+    reservationIndex = reservationIndex.set(id, route);
     patches.push({ op: "set", edgeId: id, route });
   }
   counts.affectedEdges = processed.size;
@@ -374,7 +392,7 @@ function calculate(
     state.routes.size - [...processed].filter((id) => state.routes.has(id)).length,
   );
   patches.sort((a, b) => (a.edgeId < b.edgeId ? -1 : a.edgeId > b.edgeId ? 1 : 0));
-  return { state: { ...state, routes, routeIndex }, patches };
+  return { state: { ...state, routes, routeIndex, drawnIndex, reservationIndex }, patches };
 }
 function descendants(state: State, ids: Set<string>) {
   const queue = [...ids];

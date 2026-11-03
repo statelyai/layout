@@ -1,6 +1,7 @@
 import type { GraphEdge } from "@statelyai/graph";
 import { PersistentMap } from "./persistent";
 import { SpatialIndex } from "./spatial";
+import type { RouteReservationIndex } from "./coordination";
 import type {
   Route,
   RouteBounds,
@@ -222,6 +223,8 @@ export interface State {
   readonly groups: PersistentMap<PersistentMap<true>>;
   readonly obstacles: SpatialIndex;
   readonly routeIndex: SpatialIndex;
+  readonly drawnIndex: SpatialIndex;
+  readonly reservationIndex: RouteReservationIndex;
   readonly routes: PersistentMap<Route>;
 }
 export function members(
