@@ -54,10 +54,15 @@ it.each([
   const input = structuredClone(rows[index]!.input);
   const nodes = [input, ...(input.children ?? [])];
   const edge = input.edges!.find((candidate) => candidate.id === edgeId)!;
-  const owner = (portId: string) => nodes.find((node) => node.ports?.some((p) => p.id === portId))!;
-  const port = (portId: string) => owner(portId).ports!.find((p) => p.id === portId)!;
-  owner(edge.targets[0]!).ports!.push({ ...port(edge.sources[0]!), id: `${edgeId}-rev__src` });
-  owner(edge.sources[0]!).ports!.push({ ...port(edge.targets[0]!), id: `${edgeId}-rev__tgt` });
+  const owner = (portId: string | number) =>
+    nodes.find((node) => node.ports?.some((p) => p.id === portId))!;
+  const port = (portId: string | number) => owner(portId).ports!.find((p) => p.id === portId)!;
+  const source = edge.sources?.[0],
+    target = edge.targets?.[0];
+  if (source === undefined || target === undefined)
+    throw new Error("Fixture requires positioned ports");
+  owner(target).ports!.push({ ...port(source), id: `${edgeId}-rev__src` });
+  owner(source).ports!.push({ ...port(target), id: `${edgeId}-rev__tgt` });
   input.edges!.push({
     id: `${edgeId}-rev`,
     sources: [`${edgeId}-rev__src`],
