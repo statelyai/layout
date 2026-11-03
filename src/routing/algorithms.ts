@@ -619,7 +619,12 @@ export function routeEdge(
             y: outer.y + attachment.bounds.y,
           }
         : outer,
-      other = source ? targetBounds : sourceBounds;
+      other =
+        source && labelOnly && attractingLabel
+          ? attractingLabel
+          : source
+            ? targetBounds
+            : sourceBounds;
     const name = source
       ? perEdge.sourceLabel === undefined
         ? edge.sourcePort

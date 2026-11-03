@@ -11,6 +11,12 @@ const policy = {
   targetTangent: { kind: "border-normal" },
   label: { kind: "gap", tangent: { kind: "border-normal" } },
 } satisfies RoutingPolicy;
+const labelPositions = [
+  { side: "top", label: { x: 10, y: -100, width: 80, height: 30 } },
+  { side: "right", label: { x: 160, y: 15, width: 80, height: 30 } },
+  { side: "bottom", label: { x: 10, y: 130, width: 80, height: 30 } },
+  { side: "left", label: { x: -160, y: 15, width: 80, height: 30 } },
+];
 
 function avoids(route: Route, bounds: RouteBounds) {
   for (const section of route.sections) {
@@ -63,12 +69,7 @@ it.each([sourceOverlap, labelOverlap])(
   },
 );
 
-it.each([
-  { side: "top", label: { x: 10, y: -100, width: 80, height: 30 } },
-  { side: "right", label: { x: 160, y: 15, width: 80, height: 30 } },
-  { side: "bottom", label: { x: 10, y: 130, width: 80, height: 30 } },
-  { side: "left", label: { x: -160, y: 15, width: 80, height: 30 } },
-])(
+it.each(labelPositions)(
   "routes a labeled self-loop through distinct attachments on its $side face",
   ({ side, label }) => {
     const node = { id: "a", x: 0, y: 0, width: 100, height: 60 };
@@ -82,6 +83,26 @@ it.each([
     expect(route.sections[0]!.fromSide).toBe(side);
     expect(route.sections[1]!.toSide).toBe(side);
     expect(route.sections[0]!.path.start).not.toEqual(route.sections[1]!.path.segments.at(-1)!.to);
+    avoids(route, node);
+    avoids(route, label);
+  },
+);
+
+it.each(labelPositions)(
+  "routes label-only topology through its label-facing $side face",
+  ({ side, label }) => {
+    const node = { id: "a", x: 0, y: 0, width: 100, height: 60 };
+    const graph = createGraph({
+      nodes: [node],
+      edges: [{ id: "notice", sourceId: "a", targetId: "a", ...label }],
+    });
+    const route = orthogonalRouting
+      .route(graph, { policy, edges: { notice: { topology: { kind: "label-only" } } } })
+      .routes.get("notice")!;
+    expect(route.status).toBe("routed");
+    expect(route.sections).toHaveLength(1);
+    expect(route.sections[0]!.fromSide).toBe(side);
+    expect(route.sections[0]!.to).toEqual({ kind: "label", edgeId: "notice" });
     avoids(route, node);
     avoids(route, label);
   },
