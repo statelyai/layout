@@ -2172,6 +2172,40 @@ export function routeEdge(
   const oldSections = batch.previous?.sections;
   const oldFirst = oldSections?.[0]?.path,
     oldLast = oldSections?.at(-1)?.path;
+  const sameEndpoint = (a: RouteEndpoint, b: RouteEndpoint) => {
+    switch (a.kind) {
+      case "node":
+        return b.kind === "node" && a.nodeId === b.nodeId && a.port === b.port;
+      case "label":
+        return b.kind === "label" && a.edgeId === b.edgeId;
+      case "junction":
+        return b.kind === "junction" && a.id === b.id;
+    }
+  };
+  const oldTopologyValid =
+    oldSections?.length === (lastSource ? 2 : 1) &&
+    sameEndpoint(oldSections[0]!.from, source.ref) &&
+    sameEndpoint(oldSections[0]!.to, firstTarget.ref) &&
+    (!lastSource ||
+      (sameEndpoint(oldSections[1]!.from, lastSource.ref) &&
+        sameEndpoint(oldSections[1]!.to, target.ref)));
+  const oldKnots =
+    via.length && policy?.stability?.kind === "preserve-valid"
+      ? (oldSections?.flatMap((section) => [
+          section.path.start,
+          ...section.path.segments.map((segment) => segment.to),
+        ]) ?? [])
+      : [];
+  let oldKnot = 0;
+  const oldWaypointsValid = via.every((point) => {
+    while (oldKnot < oldKnots.length && distance(oldKnots[oldKnot]!, point) > 1e-7) oldKnot++;
+    return oldKnot < oldKnots.length;
+  });
+  const oldCurveValid =
+    (curvePolicy.kind !== "bezier" && curvePolicy.kind !== "catmull-rom") ||
+    oldSections?.every((section) =>
+      section.path.segments.every((segment) => segment.kind === "cubic"),
+    );
   const corridor = futureTargetCorridor;
   futureTargetCorridor = undefined;
   const reusable =
@@ -2180,11 +2214,14 @@ export function routeEdge(
     batch.previous?.status === "routed" &&
     oldFirst &&
     oldLast &&
+    oldTopologyValid &&
+    oldWaypointsValid &&
+    oldCurveValid &&
     oldSections!.every((section) => section.sharedId === undefined) &&
     distance(oldFirst.start, portEscapes.get(source)?.point ?? source.point) < 1e-7 &&
     distance(
       oldLast.segments.at(-1)?.to ?? oldLast.start,
-      portEscapes.get(target)?.point ?? target.point,
+      labelOnly ? firstTarget.point : (portEscapes.get(target)?.point ?? target.point),
     ) < 1e-7 &&
     oldSections!.every((section) => assessPath(section.path).valid) &&
     (!source.tangent || directionMatches(pathEndpointTangent(oldFirst, "start"), source.tangent)) &&
