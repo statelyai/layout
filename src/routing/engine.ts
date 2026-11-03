@@ -7,6 +7,7 @@ import {
   edgeGeometry,
   freeze,
   groupKey,
+  sharedCoordination,
   obstacleLabelRect,
   effectivePolicy,
   members,
@@ -19,12 +20,14 @@ import {
   type Settings,
 } from "./model";
 import { PersistentMap } from "./persistent";
+import { toSvgPath } from "./path";
 import { inflate, intersects, SpatialIndex, union } from "./spatial";
 import type {
   NativeRoutingStrategy,
   Route,
   RoutePatch,
   RouteStyle,
+  RouteGeometry,
   RoutingGraph,
   RoutingSettings,
   RoutingSnapshot,
@@ -38,6 +41,15 @@ function settingsKey(config: Settings): string {
   if (cached !== undefined) return cached;
   const key = JSON.stringify(config);
   settingsKeys.set(config, key);
+  return key;
+}
+const globalSettingsKeys = new WeakMap<Settings, string>();
+function globalSettingsKey(config: Settings): string {
+  const cached = globalSettingsKeys.get(config);
+  if (cached !== undefined) return cached;
+  const { edges: _edges, ...global } = config;
+  const key = JSON.stringify(global);
+  globalSettingsKeys.set(config, key);
   return key;
 }
 
@@ -103,12 +115,18 @@ function snapshot(state: State, style: RouteStyle, revision: number, counts: Met
     [STATE]: Object.freeze(state),
   });
 }
-function edgeMembership(state: State, edge: EdgeGeometry, style: RouteStyle, add: boolean): State {
+function edgeMembership(
+  state: State,
+  edge: EdgeGeometry,
+  style: RouteStyle,
+  add: boolean,
+  config = state.settings,
+): State {
   let incident = state.incident,
     groups = state.groups;
   for (const id of new Set([edge.sourceId, edge.targetId]))
     incident = members(incident, id, edge.id, add);
-  const key = groupKey(edge, style, state.settings);
+  const key = groupKey(edge, style, config);
   if (key !== undefined) groups = members(groups, key, edge.id, add);
   return { ...state, incident, groups };
 }
@@ -152,6 +170,7 @@ function calculate(
   affected: ReadonlySet<string>,
   counts: Metrics,
   previous?: State,
+  preservePrevious = true,
 ): { state: State; patches: RoutePatch[] } {
   let routes = state.routes,
     routeIndex = state.routeIndex;
@@ -256,7 +275,7 @@ function calculate(
           route = routes.get(otherId);
         if (!other || !route) continue;
         if (
-          ["bus", "fan", "bundle"].includes(style) &&
+          sharedCoordination(style, state.settings) &&
           groupKey(other, style, state.settings) === groupKey(edge, style, state.settings)
         )
           continue;
@@ -325,7 +344,7 @@ function calculate(
         .map((otherId) => `e:${otherId}`);
     };
     batch.routes = routes;
-    batch.previous = oldRoute;
+    batch.previous = preservePrevious ? oldRoute : undefined;
     batch.previousSettings = previous?.settings;
     let route =
       style === "bezier" &&
@@ -395,11 +414,26 @@ function updateState(
     settingsKey(candidateSettings) === settingsKey(prior.settings)
       ? prior.settings
       : candidateSettings;
-  const settingsChanged = nextSettings !== prior.settings || prior.direction !== graph.direction;
+  const settingsChanged =
+    prior.direction !== graph.direction ||
+    (nextSettings !== prior.settings &&
+      globalSettingsKey(nextSettings) !== globalSettingsKey(prior.settings));
   let state: State = { ...prior, settings: nextSettings, direction: graph.direction };
   const changedNodes = new Set<string>(),
     changedEdges = new Set<string>(),
+    changedConfigs = new Set<string>(),
     affected = new Set<string>();
+  if (!settingsChanged && nextSettings !== prior.settings) {
+    for (const id of new Set([
+      ...Object.keys(prior.settings.edges),
+      ...Object.keys(nextSettings.edges),
+    ])) {
+      if (JSON.stringify(prior.settings.edges[id]) === JSON.stringify(nextSettings.edges[id]))
+        continue;
+      changedConfigs.add(id);
+      changedEdges.add(id);
+    }
+  }
   for (const n of diff.nodes.removed) {
     if (!state.nodes.has(n.id)) throw new Error(`Routing diff removes missing node ${n.id}`);
     const old = state.nodes.get(n.id)!;
@@ -432,7 +466,7 @@ function updateState(
   for (const e of diff.edges.removed) {
     const old = state.edges.get(e.id);
     if (!old) throw new Error(`Routing diff removes missing edge ${e.id}`);
-    state = edgeMembership(state, old, style, false);
+    state = edgeMembership(state, old, style, false, prior.settings);
     state = { ...state, edges: state.edges.delete(e.id) };
     changedEdges.add(e.id);
   }
@@ -448,10 +482,16 @@ function updateState(
     verifyOld(old, change.old, change.id);
     const next = edgeGeometry({ ...old, ...change.new, id: change.id });
     if (JSON.stringify(old) === JSON.stringify(next)) continue;
-    state = edgeMembership(state, old!, style, false);
+    state = edgeMembership(state, old!, style, false, prior.settings);
     state = { ...state, edges: state.edges.set(change.id, next) };
     state = edgeMembership(state, next, style, true);
     changedEdges.add(change.id);
+  }
+  for (const id of changedConfigs) {
+    const before = prior.edges.get(id),
+      after = state.edges.get(id);
+    if (before) state = edgeMembership(state, before, style, false, prior.settings);
+    if (after) state = edgeMembership(state, after, style, true);
   }
   if (settingsChanged) {
     // Configuration changes can alter every dependency and clearance envelope.
@@ -489,11 +529,12 @@ function updateState(
   }
   // Terminal placement depends on current incident edges, including neighbors
   // whose other endpoint changes side or whose connection is added/deleted.
-  if (!["bus", "fan", "bundle"].includes(style))
+  if (!sharedCoordination(style, state.settings))
     for (const id of changedEdges) {
       const before = prior.edges.get(id),
         after = state.edges.get(id);
       const changesAttachment =
+        changedConfigs.has(id) ||
         !before ||
         !after ||
         before.sourceId !== after.sourceId ||
@@ -546,13 +587,118 @@ export function createRoutingStrategy(id: RouteStyle): NativeRoutingStrategy {
         );
       const { state, affected } = updateState(graph, prior, diff, id, config),
         counts = metrics();
-      const result = calculate(state, id, affected, counts, prior);
+      const preservePrevious =
+        prior.direction === state.direction &&
+        (prior.settings === state.settings ||
+          globalSettingsKey(prior.settings) === globalSettingsKey(state.settings));
+      const result = calculate(state, id, affected, counts, prior, preservePrevious);
       return Object.freeze({
         base: previous,
         snapshot: snapshot(result.state, id, previous.revision + 1, counts),
         patches: Object.freeze(result.patches.map((patch) => Object.freeze(patch))),
       });
     },
+  });
+}
+
+/** Seed through the same hard-validity checks used for incremental preservation. */
+export function adoptRoutingSnapshot(
+  graph: RoutingGraph,
+  geometry: RouteGeometry,
+  config: RoutingSettings = {},
+  initialRoutes: ReadonlyMap<string, Route>,
+): RoutingSnapshot {
+  const adoptedConfig: RoutingSettings = {
+    ...config,
+    policy: {
+      curve: { kind: "polyline" },
+      ...config.policy,
+      stability: config.policy?.stability ?? { kind: "preserve-valid" },
+    },
+  };
+  let initial = initialState(graph, adoptedConfig, geometry);
+  for (const [id, route] of initialRoutes) {
+    if (id !== route.edgeId || !initial.edges.has(id))
+      throw new Error(`Initial route has no matching graph edge ${id}`);
+    const authored = initial.settings.edges[id]?.waypoints ?? [];
+    const knots = route.sections.flatMap((section) => [
+      section.path.start,
+      ...section.path.segments.map((segment) => segment.to),
+    ]);
+    if (
+      !authored.every((point) =>
+        knots.some((knot) => Math.hypot(knot.x - point.x, knot.y - point.y) < 1e-7),
+      )
+    )
+      continue;
+    // Validate finite coordinates before a hint enters immutable routing state.
+    for (const section of route.sections) toSvgPath(section.path);
+    const hint = freeze(structuredClone(route));
+    initial = {
+      ...initial,
+      routes: initial.routes.set(id, hint),
+      routeIndex: initial.routeIndex.set(id, routeBounds(hint)),
+    };
+  }
+  const counts = metrics();
+  const result = calculate(initial, geometry, new Set(initial.edges.keys()), counts, initial);
+  return snapshot(result.state, geometry, 0, counts);
+}
+
+export function refineRoutingSnapshot(previous: RoutingSnapshot): RoutingUpdate {
+  const prior = (previous as Snapshot)[STATE];
+  if (!prior) throw new Error("Refinement requires an in-memory routing snapshot");
+  const style = previous.strategy;
+  const known = [
+    "straight",
+    "bezier",
+    "orthogonal",
+    "polyline",
+    "octilinear",
+    "curved",
+    "organic",
+    "parallel",
+    "self-loop",
+    "fan",
+    "bus",
+    "bundle",
+  ] as const;
+  const id = known.find((id) => id === style);
+  if (!id) throw new Error(`Unknown routing strategy ${style}`);
+  const counts = metrics();
+  const result = calculate(prior, id, new Set(prior.edges.keys()), counts, prior, false);
+  return Object.freeze({
+    base: previous,
+    snapshot: snapshot(result.state, id, previous.revision + 1, counts),
+    patches: freeze(result.patches),
+  });
+}
+
+/** Retain trusted native layout postprocessing while keeping dependency reads conservative. */
+export function rebaseLayoutRoutingSnapshot(
+  previous: RoutingSnapshot,
+  paths: ReadonlyMap<string, Route>,
+): RoutingSnapshot {
+  const prior = (previous as Snapshot)[STATE];
+  if (!prior || paths.size !== prior.routes.size)
+    throw new Error("Layout route handoff requires the original native routing snapshot");
+  let routes = prior.routes,
+    routeIndex = prior.routeIndex;
+  for (const [id, route] of paths) {
+    if (id !== route.edgeId || !prior.edges.has(id)) throw new Error(`Unknown layout route ${id}`);
+    routes = routes.set(id, freeze(route));
+    const bounds = routeBounds(route),
+      old = routeIndex.bounds.get(id);
+    routeIndex = routeIndex.set(id, old ? union(old, bounds) : bounds);
+  }
+  const config = settings({
+    ...prior.settings,
+    policy: { ...prior.settings.policy, stability: { kind: "preserve-valid" } },
+  });
+  return Object.freeze({
+    ...previous,
+    routes,
+    [STATE]: Object.freeze({ ...prior, settings: config, routes, routeIndex }),
   });
 }
 export function applyRoutePatches(
