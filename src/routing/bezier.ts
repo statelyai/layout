@@ -23,7 +23,37 @@ import type {
 
 const SIDES: readonly RouteSide[] = ["left", "right", "top", "bottom"];
 
-export function labelFamily(id: string, state: RoutingInput): string[] {
+interface LabelFamilyIndex {
+  readonly children: ReadonlyMap<string, readonly string[]>;
+  readonly roots: ReadonlyMap<string, string>;
+  readonly depths: ReadonlyMap<string, number>;
+}
+const labelFamilies = new WeakMap<RoutingInput["settings"], LabelFamilyIndex>();
+
+export function labelFamilyIndex(state: Pick<RoutingInput, "settings">): LabelFamilyIndex {
+  const cached = labelFamilies.get(state.settings);
+  if (cached) return cached;
+  const children = new Map<string, string[]>(),
+    roots = new Map<string, string>(),
+    depths = new Map<string, number>();
+  for (const [id, config] of Object.entries(state.settings.edges)) {
+    if (config.sourceLabel === undefined) continue;
+    const list = children.get(config.sourceLabel) ?? [];
+    list.push(id);
+    children.set(config.sourceLabel, list);
+    const family = labelFamily(id, state);
+    for (let index = 0; index < family.length; index++) {
+      const member = family[index]!;
+      roots.set(member, family.at(-1)!);
+      depths.set(member, family.length - index);
+    }
+  }
+  const result = { children, roots, depths };
+  labelFamilies.set(state.settings, result);
+  return result;
+}
+
+export function labelFamily(id: string, state: Pick<RoutingInput, "settings">): string[] {
   const result: string[] = [],
     seen = new Set<string>();
   let current: string | undefined = id;
@@ -36,13 +66,7 @@ export function labelFamily(id: string, state: RoutingInput): string[] {
 }
 
 export function expandLabelFamilies(affected: Set<string>, state: RoutingInput): void {
-  const children = new Map<string, string[]>();
-  for (const [id, config] of Object.entries(state.settings.edges)) {
-    if (config.sourceLabel === undefined) continue;
-    const list = children.get(config.sourceLabel) ?? [];
-    list.push(id);
-    children.set(config.sourceLabel, list);
-  }
+  const { children } = labelFamilyIndex(state);
   const queue = [...affected];
   for (let i = 0; i < queue.length; i++) {
     const id = queue[i]!;
@@ -125,9 +149,7 @@ export function routeBezierEdge(
   batch: Batch,
 ): Route {
   const config = state.settings.edges[edge.id] ?? {};
-  const family =
-    config.sourceLabel !== undefined ||
-    Object.values(state.settings.edges).some((other) => other.sourceLabel === edge.id);
+  const family = config.sourceLabel !== undefined || labelFamilyIndex(state).children.has(edge.id);
   if (state.settings.bezier === undefined && config.bezier === undefined && !family)
     return routeEdge(edge, state, "bezier", metrics, batch);
   if (config.bezier?.disabled)

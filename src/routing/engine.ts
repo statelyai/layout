@@ -1,5 +1,5 @@
 import type { GraphDiff } from "@statelyai/graph";
-import { expandLabelFamilies, labelFamily, routeBezierEdge } from "./bezier";
+import { expandLabelFamilies, labelFamilyIndex, routeBezierEdge } from "./bezier";
 import { conflictCost, reservations, reservationBounds, outsideTerminal } from "./coordination";
 import { segmentBounds } from "./search";
 import { routeBounds, routeEdge, type Metrics, type Batch } from "./algorithms";
@@ -16,6 +16,7 @@ import {
   type EdgeGeometry,
   type NodeGeometry,
   type State,
+  type Settings,
 } from "./model";
 import { PersistentMap } from "./persistent";
 import { inflate, intersects, SpatialIndex, union } from "./spatial";
@@ -31,6 +32,60 @@ import type {
 } from "./types";
 
 const STATE = Symbol("routingState");
+const settingsKeys = new WeakMap<Settings, string>();
+function settingsKey(config: Settings): string {
+  const cached = settingsKeys.get(config);
+  if (cached !== undefined) return cached;
+  const key = JSON.stringify(config);
+  settingsKeys.set(config, key);
+  return key;
+}
+
+class PendingRoutes extends Set<string> {
+  readonly #heap: string[] = [];
+  readonly #compare: (a: string, b: string) => number;
+  constructor(compare: (a: string, b: string) => number) {
+    super();
+    this.#compare = compare;
+  }
+  override add(id: string): this {
+    if (this.has(id)) return this;
+    super.add(id);
+    let index = this.#heap.length;
+    this.#heap.push(id);
+    while (index > 0) {
+      const parent = (index - 1) >> 1;
+      if (this.#compare(this.#heap[parent]!, id) <= 0) break;
+      this.#heap[index] = this.#heap[parent]!;
+      index = parent;
+    }
+    this.#heap[index] = id;
+    return this;
+  }
+  take(): string {
+    while (this.#heap.length) {
+      const first = this.#heap[0]!,
+        last = this.#heap.pop()!;
+      if (this.#heap.length) {
+        let index = 0;
+        while (index * 2 + 1 < this.#heap.length) {
+          let child = index * 2 + 1;
+          if (
+            child + 1 < this.#heap.length &&
+            this.#compare(this.#heap[child + 1]!, this.#heap[child]!) < 0
+          )
+            child++;
+          if (this.#compare(last, this.#heap[child]!) <= 0) break;
+          this.#heap[index] = this.#heap[child]!;
+          index = child;
+        }
+        this.#heap[index] = last;
+      }
+      if (this.delete(first)) return first;
+    }
+    throw new Error("Routing queue is empty");
+  }
+}
 type Snapshot = RoutingSnapshot & { readonly [STATE]: State };
 const metrics = (): Metrics => ({
   routedEdges: 0,
@@ -112,21 +167,8 @@ function calculate(
     batch: Batch = {
       plans: new Map(),
     };
-  const pending = new Set(affected);
-  expandLabelFamilies(pending, input);
-  if (previous) expandLabelFamilies(pending, previous);
   const processed = new Set<string>();
-  const familyDepth = new Map<string, number>();
-  const familyRoots = new Map<string, string>();
-  for (const [id, config] of Object.entries(state.settings.edges)) {
-    if (config.sourceLabel === undefined) continue;
-    const family = labelFamily(id, input);
-    for (let index = 0; index < family.length; index++) {
-      const member = family[index]!;
-      familyRoots.set(member, family.at(-1)!);
-      familyDepth.set(member, family.length - index);
-    }
-  }
+  const { roots: familyRoots, depths: familyDepth } = labelFamilyIndex(input);
   const priorities = new Map<string, string>();
   const priority = (id: string) => {
     let result = priorities.get(id);
@@ -149,6 +191,10 @@ function calculate(
     (priority(a) < priority(b) ? -1 : priority(a) > priority(b) ? 1 : 0) ||
     (familyDepth.get(a) ?? 1) - (familyDepth.get(b) ?? 1) ||
     (a < b ? -1 : a > b ? 1 : 0);
+  const pending = new PendingRoutes(compare);
+  for (const id of affected) pending.add(id);
+  expandLabelFamilies(pending, input);
+  if (previous) expandLabelFamilies(pending, previous);
   const later = (candidate: string, id: string) => compare(candidate, id) > 0;
   const invalidate = (id: string, bounds: ReturnType<typeof routeBounds>) => {
     for (const candidate of routeIndex.query(inflate(bounds, state.settings.edgeSpacing))) {
@@ -185,8 +231,7 @@ function calculate(
     }
   const segmentCache = new Map<string, ReturnType<typeof reservations>>();
   while (pending.size) {
-    const id = [...pending].sort(compare)[0]!;
-    pending.delete(id);
+    const id = pending.take();
     processed.add(id);
     const edge = state.edges.get(id),
       oldRoute = previous?.routes.get(id);
@@ -346,12 +391,11 @@ function updateState(
     throw new Error("A routing snapshot belongs to a different graph");
   const candidateSettings = config === undefined ? prior.settings : settings(config);
   const nextSettings =
-    JSON.stringify(candidateSettings) === JSON.stringify(prior.settings)
+    candidateSettings === prior.settings ||
+    settingsKey(candidateSettings) === settingsKey(prior.settings)
       ? prior.settings
       : candidateSettings;
-  const settingsChanged =
-    JSON.stringify(nextSettings) !== JSON.stringify(prior.settings) ||
-    prior.direction !== graph.direction;
+  const settingsChanged = nextSettings !== prior.settings || prior.direction !== graph.direction;
   let state: State = { ...prior, settings: nextSettings, direction: graph.direction };
   const changedNodes = new Set<string>(),
     changedEdges = new Set<string>(),
