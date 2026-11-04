@@ -8,7 +8,8 @@ import {
   type RouteSide,
   type RouteEndpoint,
 } from "../routing";
-import { recordRouteGeometry } from "../routing/layout-cache";
+import { recordRouteGeometry, recordLayoutRouting } from "../routing/layout-cache";
+import { rebaseLayoutRoutingSnapshot } from "../routing/engine";
 
 /** Keep valid layered tracks; repair infeasible port leads and obstacle crossings. */
 export function repairFlatRouting<N, E, G, P>(
@@ -235,10 +236,12 @@ export function repairFlatRouting<N, E, G, P>(
     sourcePort: attach(edge.id, edge.sourceId, edge.sourcePort, edge.points?.[0], true),
     targetPort: attach(edge.id, edge.targetId, edge.targetPort, edge.points?.at(-1), false),
   }));
-  const snapshot = orthogonalRouting.route(
-    { ...graph, nodes: [...routingNodes.values()], edges: routingEdges },
-    { coordinateSpace: "world", maxSearchNodes: 40000, edges: attachments },
-  );
+  const routingGraph = { ...graph, nodes: [...routingNodes.values()], edges: routingEdges };
+  const snapshot = orthogonalRouting.route(routingGraph, {
+    coordinateSpace: "world",
+    maxSearchNodes: 40000,
+    edges: attachments,
+  });
   const authoredEndpoint = (endpoint: RouteEndpoint): RouteEndpoint => {
     if (
       endpoint.kind !== "node" ||
@@ -249,7 +252,7 @@ export function repairFlatRouting<N, E, G, P>(
     const { port: _privatePort, ...authored } = endpoint;
     return authored;
   };
-  const routes = new Map(
+  const cleanedRoutes = new Map(
     [...snapshot.routes].map(([id, route]) => [
       id,
       {
@@ -262,6 +265,8 @@ export function repairFlatRouting<N, E, G, P>(
       },
     ]),
   );
+  const repairedSnapshot = rebaseLayoutRoutingSnapshot(snapshot, cleanedRoutes);
+  const routes = repairedSnapshot.routes;
   const result = {
     ...graph,
     edges: edges.map((edge) => ({
@@ -271,5 +276,6 @@ export function repairFlatRouting<N, E, G, P>(
     compoundRoutes: routes,
   };
   recordRouteGeometry(result, routes);
+  recordLayoutRouting(result, routingGraph, repairedSnapshot);
   return result;
 }

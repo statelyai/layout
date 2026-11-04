@@ -1,6 +1,7 @@
 import { flattenPath } from "./path";
 import { segmentBounds } from "./search";
-import { inflate } from "./spatial";
+import { inflate, SpatialIndex } from "./spatial";
+import { PersistentMap } from "./persistent";
 import type { Settings } from "./model";
 import type { Route, RouteBounds, RoutePoint, RoutePath } from "./types";
 
@@ -8,6 +9,48 @@ export interface Reservation {
   readonly a: RoutePoint;
   readonly b: RoutePoint;
   readonly sharedId?: string;
+}
+interface IndexedReservation extends Reservation {
+  readonly edgeId: string;
+  readonly index: number;
+}
+/** Drawn segments are indexed separately from a route's searched dependency regions. */
+export class RouteReservationIndex {
+  constructor(
+    private readonly spatial = new SpatialIndex(),
+    private readonly segments = new PersistentMap<IndexedReservation>(),
+    private readonly routes = new PersistentMap<number>(),
+  ) {
+    Object.freeze(this);
+  }
+  set(edgeId: string, route?: Route): RouteReservationIndex {
+    let { spatial, segments, routes } = this;
+    const count = routes.get(edgeId) ?? 0;
+    for (let index = 0; index < count; index++) {
+      const key = JSON.stringify([edgeId, index]);
+      spatial = spatial.set(key);
+      segments = segments.delete(key);
+    }
+    routes = routes.delete(edgeId);
+    if (route) {
+      const next = reservations(route);
+      for (const [index, segment] of next.entries()) {
+        const key = JSON.stringify([edgeId, index]);
+        spatial = spatial.set(key, segmentBounds(segment.a, segment.b));
+        segments = segments.set(key, { ...segment, edgeId, index });
+      }
+      routes = routes.set(edgeId, next.length);
+    }
+    return new RouteReservationIndex(spatial, segments, routes);
+  }
+  query(bounds: RouteBounds): readonly IndexedReservation[] {
+    return this.spatial
+      .query(bounds)
+      .map((key) => this.segments.get(key)!)
+      .sort(
+        (a, b) => (a.edgeId < b.edgeId ? -1 : a.edgeId > b.edgeId ? 1 : 0) || a.index - b.index,
+      );
+  }
 }
 export function reservations(route: Route): Reservation[] {
   return route.sections.flatMap((section) =>

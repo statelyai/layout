@@ -1,5 +1,10 @@
 import { worldGeometry } from "../authoring/coordinates";
-import { recordRouteGeometry } from "../routing/layout-cache";
+import {
+  recordRouteGeometry,
+  recordLayoutRouting,
+  getLayoutRouting,
+} from "../routing/layout-cache";
+import { rebaseLayoutRoutingSnapshot } from "../routing/engine";
 import type { CompoundVisualGraph } from "./compound";
 import type { LayeredLayoutOptions } from "./types";
 
@@ -1040,5 +1045,12 @@ export function separateLayoutOpposingTracks<N, E, G, P>(
   });
   const result = { ...graph, edges, compoundRoutes };
   if (compoundRoutes.size) recordRouteGeometry(result, compoundRoutes);
+  const handoff = getLayoutRouting(graph);
+  if (handoff)
+    recordLayoutRouting(
+      result,
+      handoff.graph,
+      rebaseLayoutRoutingSnapshot(handoff.snapshot, compoundRoutes),
+    );
   return result;
 }

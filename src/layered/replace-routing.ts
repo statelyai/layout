@@ -1,6 +1,6 @@
 import { worldGeometry } from "../authoring/coordinates";
 import { routeToPoints } from "../routing/adapters";
-import { recordRouteGeometry } from "../routing/layout-cache";
+import { recordRouteGeometry, recordLayoutRouting } from "../routing/layout-cache";
 import type { CompoundVisualGraph } from "./compound";
 import type { LayeredLayoutOptions } from "./types";
 
@@ -41,5 +41,6 @@ export function replaceLayoutRouting<N, E, G, P>(
     compoundRoutes: snapshot.routes,
   };
   recordRouteGeometry(result, result.compoundRoutes);
+  recordLayoutRouting(result, input, snapshot);
   return result;
 }

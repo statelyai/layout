@@ -147,18 +147,37 @@ Post-layout replacement currently requires unconstrained full layout through `ge
 <!-- routing API and strategy catalog from src/routing/index.ts -->
 
 ```ts
-import { getDiff } from "@statelyai/graph";
-import { orthogonalRouting, toSvgPath } from "@statelyai/layout/routing";
+import { routeEdges, updateRoutes, toSvgPath } from "@statelyai/layout/routing";
 
-const previous = orthogonalRouting.route(graph);
-const { snapshot, patches } = orthogonalRouting.update(
-  nextGraph,
+const previous = routeEdges({
+  graph,
+  geometry: "orthogonal",
+  settings: {
+    coordination: { kind: "independent" },
+    policy: { curve: { kind: "rounded-orthogonal", radius: 8 } },
+  },
+});
+const { snapshot, patches } = updateRoutes({
+  graph: nextGraph,
   previous,
-  getDiff(graph, nextGraph),
-);
-const route = snapshot.routes.get("ab");
-const paths = route?.sections.map((section) => toSvgPath(section.path));
+  changes: graphDiff, // Produced by the editing operation.
+});
+const paths = snapshot.routes.get("ab")?.sections.map((section) => toSvgPath(section.path));
 ```
+
+Geometry (`straight`, `orthogonal`, `polyline`, `octilinear`), curve construction,
+edge coordination (`independent`, `parallel`, `fan`, `bus`, `bundle`) and self-loop
+rules are separate choices. Per-edge endpoints, obstacles, label-only topology,
+marker gaps and attachment boundaries work across geometries. Named legacy
+strategies remain available.
+
+`getLayoutRouting(layout)` returns retained routing geometry and its snapshot
+when native layout used this router. Continue editing that resolved graph to
+retain layout-owned headers, ports and attachment rules. `initialRoutes` can
+seed a new snapshot with validated paths from another layout; adoption opts into
+history-dependent preservation. `refineRoutes({ previous })` reconsiders every
+route after dragging. `createRoutingScheduler` coalesces edit diffs and rejects
+obsolete async results. See the [interactive routing guide](docs/interactive-routing.md).
 
 `bezierRouting` also accepts center-tangent fitting, floating or orthogonal
 attachments, fixed ports, and explicit label-source chains through
@@ -168,6 +187,8 @@ updates child attachments when parent labels move. See the
 
 `settings.policy` independently controls curve families, endpoint and label
 tangents, passive or fixed labels, collisions, monotonicity, and route stability.
+Gap labels can restrict attachments to side midpoints with
+`attachment: "side-midpoint"`, including conditional connectors and incremental updates.
 `routingPolicies.smooth`, `.diagram`, and `.authored` provide Bézier, rounded
 orthogonal, and centripetal Catmull–Rom presets. Following labels use half the
 final path length and return their placement in `Route.label`. See the

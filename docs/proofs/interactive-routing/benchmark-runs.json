@@ -1,0 +1,2622 @@
+[
+  {
+    "side": "baseline",
+    "run": 1,
+    "node": "v24.22.1",
+    "cores": 10,
+    "loadAverage": [8.4189453125, 9.23779296875, 10.91064453125],
+    "scope": "Synchronous routing, patch application and SVG serialization; edit resolution, initial route, final fresh-equivalence check and browser rendering excluded. Heap deltas include GC noise and are not allocation counts.",
+    "results": [
+      {
+        "fixture": "sparse-100",
+        "edges": 100,
+        "frames": 30,
+        "trials": 1,
+        "updateMs": {
+          "p50": 0.2055409999999256,
+          "p95": 0.9621250000000146,
+          "p99": 2.092667000000006,
+          "max": 2.092667000000006
+        },
+        "updateAndRenderMs": {
+          "p50": 0.2140829999999596,
+          "p95": 0.9769159999999601,
+          "p99": 2.1163340000000517,
+          "max": 2.1163340000000517
+        },
+        "patches": 30,
+        "routedEdges": 30,
+        "affectedEdges": 30,
+        "searchNodes": 150,
+        "fallbacks": 0,
+        "svgBytes": 1792,
+        "errors": 0,
+        "perTrial": [
+          {
+            "updateMs": {
+              "p50": 0.2055409999999256,
+              "p95": 0.9621250000000146,
+              "p99": 2.092667000000006,
+              "max": 2.092667000000006
+            },
+            "heapDeltaBytes": -3689648
+          }
+        ]
+      },
+      {
+        "fixture": "configured-100",
+        "edges": 100,
+        "frames": 30,
+        "trials": 1,
+        "updateMs": {
+          "p50": 0.21720800000002782,
+          "p95": 0.45962499999996,
+          "p99": 1.4492089999999962,
+          "max": 1.4492089999999962
+        },
+        "updateAndRenderMs": {
+          "p50": 0.22450000000003456,
+          "p95": 0.4705830000000333,
+          "p99": 1.461500000000001,
+          "max": 1.461500000000001
+        },
+        "patches": 30,
+        "routedEdges": 30,
+        "affectedEdges": 30,
+        "searchNodes": 150,
+        "fallbacks": 0,
+        "svgBytes": 1792,
+        "errors": 0,
+        "perTrial": [
+          {
+            "updateMs": {
+              "p50": 0.21720800000002782,
+              "p95": 0.45962499999996,
+              "p99": 1.4492089999999962,
+              "max": 1.4492089999999962
+            },
+            "heapDeltaBytes": 216904
+          }
+        ]
+      },
+      {
+        "fixture": "sparse-1000",
+        "edges": 1000,
+        "frames": 30,
+        "trials": 1,
+        "updateMs": {
+          "p50": 0.14466600000002927,
+          "p95": 0.28395799999998417,
+          "p99": 1.0292499999999336,
+          "max": 1.0292499999999336
+        },
+        "updateAndRenderMs": {
+          "p50": 0.14912500000002638,
+          "p95": 0.30083300000001145,
+          "p99": 1.038499999999999,
+          "max": 1.038499999999999
+        },
+        "patches": 30,
+        "routedEdges": 30,
+        "affectedEdges": 30,
+        "searchNodes": 150,
+        "fallbacks": 0,
+        "svgBytes": 1912,
+        "errors": 0,
+        "perTrial": [
+          {
+            "updateMs": {
+              "p50": 0.14466600000002927,
+              "p95": 0.28395799999998417,
+              "p99": 1.0292499999999336,
+              "max": 1.0292499999999336
+            },
+            "heapDeltaBytes": 9461056
+          }
+        ]
+      },
+      {
+        "fixture": "configured-1000",
+        "edges": 1000,
+        "frames": 30,
+        "trials": 1,
+        "updateMs": {
+          "p50": 0.61912499999994,
+          "p95": 0.8050419999999576,
+          "p99": 1.496458999999959,
+          "max": 1.496458999999959
+        },
+        "updateAndRenderMs": {
+          "p50": 0.625374999999849,
+          "p95": 1.2603340000000571,
+          "p99": 1.5095420000000104,
+          "max": 1.5095420000000104
+        },
+        "patches": 30,
+        "routedEdges": 30,
+        "affectedEdges": 30,
+        "searchNodes": 150,
+        "fallbacks": 0,
+        "svgBytes": 1912,
+        "errors": 0,
+        "perTrial": [
+          {
+            "updateMs": {
+              "p50": 0.61912499999994,
+              "p95": 0.8050419999999576,
+              "p99": 1.496458999999959,
+              "max": 1.496458999999959
+            },
+            "heapDeltaBytes": 32492568
+          }
+        ]
+      },
+      {
+        "fixture": "obstacle-corridors-24",
+        "edges": 24,
+        "frames": 30,
+        "trials": 1,
+        "updateMs": {
+          "p50": 0.26958300000001145,
+          "p95": 0.31483300000013514,
+          "p99": 0.35895800000002964,
+          "max": 0.35895800000002964
+        },
+        "updateAndRenderMs": {
+          "p50": 0.2797920000000431,
+          "p95": 0.32591600000000653,
+          "p99": 0.37779199999999946,
+          "max": 0.37779199999999946
+        },
+        "patches": 30,
+        "routedEdges": 30,
+        "affectedEdges": 30,
+        "searchNodes": 1262,
+        "fallbacks": 0,
+        "svgBytes": 2332,
+        "errors": 0,
+        "perTrial": [
+          {
+            "updateMs": {
+              "p50": 0.26958300000001145,
+              "p95": 0.31483300000013514,
+              "p99": 0.35895800000002964,
+              "max": 0.35895800000002964
+            },
+            "heapDeltaBytes": 26222552
+          }
+        ]
+      },
+      {
+        "fixture": "high-degree-16",
+        "edges": 16,
+        "frames": 30,
+        "trials": 1,
+        "updateMs": {
+          "p50": 39.362290999999914,
+          "p95": 64.9211250000003,
+          "p99": 173.89558400000033,
+          "max": 173.89558400000033
+        },
+        "updateAndRenderMs": {
+          "p50": 39.44420799999989,
+          "p95": 64.99670800000013,
+          "p99": 173.96833400000014,
+          "max": 173.96833400000014
+        },
+        "patches": 480,
+        "routedEdges": 480,
+        "affectedEdges": 480,
+        "searchNodes": 53851,
+        "fallbacks": 354,
+        "svgBytes": 24088,
+        "errors": 0,
+        "perTrial": [
+          {
+            "updateMs": {
+              "p50": 39.362290999999914,
+              "p95": 64.9211250000003,
+              "p99": 173.89558400000033,
+              "max": 173.89558400000033
+            },
+            "heapDeltaBytes": -22837896
+          }
+        ]
+      },
+      {
+        "fixture": "compound-parent-8",
+        "edges": 8,
+        "frames": 30,
+        "trials": 1,
+        "updateMs": {
+          "p50": 1.2202500000003056,
+          "p95": 8.168707999999697,
+          "p99": 8.356374999999844,
+          "max": 8.356374999999844
+        },
+        "updateAndRenderMs": {
+          "p50": 1.252875000000131,
+          "p95": 8.209707999999864,
+          "p99": 8.399457999999868,
+          "max": 8.399457999999868
+        },
+        "patches": 240,
+        "routedEdges": 240,
+        "affectedEdges": 240,
+        "searchNodes": 1200,
+        "fallbacks": 0,
+        "svgBytes": 12384,
+        "errors": 0,
+        "perTrial": [
+          {
+            "updateMs": {
+              "p50": 1.2202500000003056,
+              "p95": 8.168707999999697,
+              "p99": 8.356374999999844,
+              "max": 8.356374999999844
+            },
+            "heapDeltaBytes": -28199384
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "side": "baseline",
+    "run": 2,
+    "node": "v24.22.1",
+    "cores": 10,
+    "loadAverage": [19.34375, 11.55029296875, 11.7119140625],
+    "scope": "Synchronous routing, patch application and SVG serialization; edit resolution, initial route, final fresh-equivalence check and browser rendering excluded. Heap deltas include GC noise and are not allocation counts.",
+    "results": [
+      {
+        "fixture": "sparse-100",
+        "edges": 100,
+        "frames": 30,
+        "trials": 1,
+        "updateMs": {
+          "p50": 0.18054200000000264,
+          "p95": 0.5801660000000197,
+          "p99": 1.6671670000000063,
+          "max": 1.6671670000000063
+        },
+        "updateAndRenderMs": {
+          "p50": 0.18937499999998408,
+          "p95": 0.8098750000000337,
+          "p99": 1.7063750000000368,
+          "max": 1.7063750000000368
+        },
+        "patches": 30,
+        "routedEdges": 30,
+        "affectedEdges": 30,
+        "searchNodes": 150,
+        "fallbacks": 0,
+        "svgBytes": 1792,
+        "errors": 0,
+        "perTrial": [
+          {
+            "updateMs": {
+              "p50": 0.18054200000000264,
+              "p95": 0.5801660000000197,
+              "p99": 1.6671670000000063,
+              "max": 1.6671670000000063
+            },
+            "heapDeltaBytes": 4164120
+          }
+        ]
+      },
+      {
+        "fixture": "configured-100",
+        "edges": 100,
+        "frames": 30,
+        "trials": 1,
+        "updateMs": {
+          "p50": 0.20066700000000992,
+          "p95": 1.5183329999999842,
+          "p99": 2.961250000000007,
+          "max": 2.961250000000007
+        },
+        "updateAndRenderMs": {
+          "p50": 0.20541700000001129,
+          "p95": 1.5261659999999893,
+          "p99": 2.976959000000022,
+          "max": 2.976959000000022
+        },
+        "patches": 30,
+        "routedEdges": 30,
+        "affectedEdges": 30,
+        "searchNodes": 150,
+        "fallbacks": 0,
+        "svgBytes": 1792,
+        "errors": 0,
+        "perTrial": [
+          {
+            "updateMs": {
+              "p50": 0.20066700000000992,
+              "p95": 1.5183329999999842,
+              "p99": 2.961250000000007,
+              "max": 2.961250000000007
+            },
+            "heapDeltaBytes": 448648
+          }
+        ]
+      },
+      {
+        "fixture": "sparse-1000",
+        "edges": 1000,
+        "frames": 30,
+        "trials": 1,
+        "updateMs": {
+          "p50": 0.11787499999991269,
+          "p95": 0.25025000000005093,
+          "p99": 0.5060000000000855,
+          "max": 0.5060000000000855
+        },
+        "updateAndRenderMs": {
+          "p50": 0.12266599999998107,
+          "p95": 0.2666670000000977,
+          "p99": 0.5165830000000824,
+          "max": 0.5165830000000824
+        },
+        "patches": 30,
+        "routedEdges": 30,
+        "affectedEdges": 30,
+        "searchNodes": 150,
+        "fallbacks": 0,
+        "svgBytes": 1912,
+        "errors": 0,
+        "perTrial": [
+          {
+            "updateMs": {
+              "p50": 0.11787499999991269,
+              "p95": 0.25025000000005093,
+              "p99": 0.5060000000000855,
+              "max": 0.5060000000000855
+            },
+            "heapDeltaBytes": 9450544
+          }
+        ]
+      },
+      {
+        "fixture": "configured-1000",
+        "edges": 1000,
+        "frames": 30,
+        "trials": 1,
+        "updateMs": {
+          "p50": 0.609375,
+          "p95": 1.0392910000000484,
+          "p99": 4.137208000000101,
+          "max": 4.137208000000101
+        },
+        "updateAndRenderMs": {
+          "p50": 0.6149159999999938,
+          "p95": 1.0519580000000133,
+          "p99": 4.1510410000000775,
+          "max": 4.1510410000000775
+        },
+        "patches": 30,
+        "routedEdges": 30,
+        "affectedEdges": 30,
+        "searchNodes": 150,
+        "fallbacks": 0,
+        "svgBytes": 1912,
+        "errors": 0,
+        "perTrial": [
+          {
+            "updateMs": {
+              "p50": 0.609375,
+              "p95": 1.0392910000000484,
+              "p99": 4.137208000000101,
+              "max": 4.137208000000101
+            },
+            "heapDeltaBytes": -22637040
+          }
+        ]
+      },
+      {
+        "fixture": "obstacle-corridors-24",
+        "edges": 24,
+        "frames": 30,
+        "trials": 1,
+        "updateMs": {
+          "p50": 0.2912499999999909,
+          "p95": 0.7802919999999176,
+          "p99": 3.9068749999999,
+          "max": 3.9068749999999
+        },
+        "updateAndRenderMs": {
+          "p50": 0.30204200000002857,
+          "p95": 0.797249999999849,
+          "p99": 3.922375000000102,
+          "max": 3.922375000000102
+        },
+        "patches": 30,
+        "routedEdges": 30,
+        "affectedEdges": 30,
+        "searchNodes": 1262,
+        "fallbacks": 0,
+        "svgBytes": 2332,
+        "errors": 0,
+        "perTrial": [
+          {
+            "updateMs": {
+              "p50": 0.2912499999999909,
+              "p95": 0.7802919999999176,
+              "p99": 3.9068749999999,
+              "max": 3.9068749999999
+            },
+            "heapDeltaBytes": -33808256
+          }
+        ]
+      },
+      {
+        "fixture": "high-degree-16",
+        "edges": 16,
+        "frames": 30,
+        "trials": 1,
+        "updateMs": {
+          "p50": 35.524541999999656,
+          "p95": 43.13824999999997,
+          "p99": 48.09825000000001,
+          "max": 48.09825000000001
+        },
+        "updateAndRenderMs": {
+          "p50": 35.59483399999999,
+          "p95": 43.20945900000015,
+          "p99": 48.16145899999992,
+          "max": 48.16145899999992
+        },
+        "patches": 480,
+        "routedEdges": 480,
+        "affectedEdges": 480,
+        "searchNodes": 53851,
+        "fallbacks": 354,
+        "svgBytes": 24088,
+        "errors": 0,
+        "perTrial": [
+          {
+            "updateMs": {
+              "p50": 35.524541999999656,
+              "p95": 43.13824999999997,
+              "p99": 48.09825000000001,
+              "max": 48.09825000000001
+            },
+            "heapDeltaBytes": 8775704
+          }
+        ]
+      },
+      {
+        "fixture": "compound-parent-8",
+        "edges": 8,
+        "frames": 30,
+        "trials": 1,
+        "updateMs": {
+          "p50": 0.9952500000003965,
+          "p95": 1.6681670000002669,
+          "p99": 1.9339999999997417,
+          "max": 1.9339999999997417
+        },
+        "updateAndRenderMs": {
+          "p50": 1.0195410000001175,
+          "p95": 1.709041999999954,
+          "p99": 1.9657499999998436,
+          "max": 1.9657499999998436
+        },
+        "patches": 240,
+        "routedEdges": 240,
+        "affectedEdges": 240,
+        "searchNodes": 1200,
+        "fallbacks": 0,
+        "svgBytes": 12384,
+        "errors": 0,
+        "perTrial": [
+          {
+            "updateMs": {
+              "p50": 0.9952500000003965,
+              "p95": 1.6681670000002669,
+              "p99": 1.9339999999997417,
+              "max": 1.9339999999997417
+            },
+            "heapDeltaBytes": 37143528
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "side": "baseline",
+    "run": 3,
+    "node": "v24.22.1",
+    "cores": 10,
+    "loadAverage": [18.03466796875, 11.408203125, 11.66064453125],
+    "scope": "Synchronous routing, patch application and SVG serialization; edit resolution, initial route, final fresh-equivalence check and browser rendering excluded. Heap deltas include GC noise and are not allocation counts.",
+    "results": [
+      {
+        "fixture": "sparse-100",
+        "edges": 100,
+        "frames": 30,
+        "trials": 1,
+        "updateMs": {
+          "p50": 0.16241700000000492,
+          "p95": 0.3644170000000031,
+          "p99": 0.734375,
+          "max": 0.734375
+        },
+        "updateAndRenderMs": {
+          "p50": 0.17141699999999105,
+          "p95": 0.49670900000000984,
+          "p99": 0.7772500000000093,
+          "max": 0.7772500000000093
+        },
+        "patches": 30,
+        "routedEdges": 30,
+        "affectedEdges": 30,
+        "searchNodes": 150,
+        "fallbacks": 0,
+        "svgBytes": 1792,
+        "errors": 0,
+        "perTrial": [
+          {
+            "updateMs": {
+              "p50": 0.16241700000000492,
+              "p95": 0.3644170000000031,
+              "p99": 0.734375,
+              "max": 0.734375
+            },
+            "heapDeltaBytes": 4326520
+          }
+        ]
+      },
+      {
+        "fixture": "configured-100",
+        "edges": 100,
+        "frames": 30,
+        "trials": 1,
+        "updateMs": {
+          "p50": 0.1847919999999874,
+          "p95": 0.4018329999999821,
+          "p99": 1.073207999999994,
+          "max": 1.073207999999994
+        },
+        "updateAndRenderMs": {
+          "p50": 0.1889579999999853,
+          "p95": 0.4159999999999968,
+          "p99": 1.0823749999999848,
+          "max": 1.0823749999999848
+        },
+        "patches": 30,
+        "routedEdges": 30,
+        "affectedEdges": 30,
+        "searchNodes": 150,
+        "fallbacks": 0,
+        "svgBytes": 1792,
+        "errors": 0,
+        "perTrial": [
+          {
+            "updateMs": {
+              "p50": 0.1847919999999874,
+              "p95": 0.4018329999999821,
+              "p99": 1.073207999999994,
+              "max": 1.073207999999994
+            },
+            "heapDeltaBytes": 600392
+          }
+        ]
+      },
+      {
+        "fixture": "sparse-1000",
+        "edges": 1000,
+        "frames": 30,
+        "trials": 1,
+        "updateMs": {
+          "p50": 0.10841699999997445,
+          "p95": 0.13174999999995407,
+          "p99": 0.24016600000004473,
+          "max": 0.24016600000004473
+        },
+        "updateAndRenderMs": {
+          "p50": 0.11241599999999607,
+          "p95": 0.13849999999996498,
+          "p99": 0.25770800000003646,
+          "max": 0.25770800000003646
+        },
+        "patches": 30,
+        "routedEdges": 30,
+        "affectedEdges": 30,
+        "searchNodes": 150,
+        "fallbacks": 0,
+        "svgBytes": 1912,
+        "errors": 0,
+        "perTrial": [
+          {
+            "updateMs": {
+              "p50": 0.10841699999997445,
+              "p95": 0.13174999999995407,
+              "p99": 0.24016600000004473,
+              "max": 0.24016600000004473
+            },
+            "heapDeltaBytes": 9451104
+          }
+        ]
+      },
+      {
+        "fixture": "configured-1000",
+        "edges": 1000,
+        "frames": 30,
+        "trials": 1,
+        "updateMs": {
+          "p50": 0.6034579999999323,
+          "p95": 1.4897499999999582,
+          "p99": 1.579541000000063,
+          "max": 1.579541000000063
+        },
+        "updateAndRenderMs": {
+          "p50": 0.6099169999999958,
+          "p95": 1.5117910000000165,
+          "p99": 1.5958330000000842,
+          "max": 1.5958330000000842
+        },
+        "patches": 30,
+        "routedEdges": 30,
+        "affectedEdges": 30,
+        "searchNodes": 150,
+        "fallbacks": 0,
+        "svgBytes": 1912,
+        "errors": 0,
+        "perTrial": [
+          {
+            "updateMs": {
+              "p50": 0.6034579999999323,
+              "p95": 1.4897499999999582,
+              "p99": 1.579541000000063,
+              "max": 1.579541000000063
+            },
+            "heapDeltaBytes": 31789984
+          }
+        ]
+      },
+      {
+        "fixture": "obstacle-corridors-24",
+        "edges": 24,
+        "frames": 30,
+        "trials": 1,
+        "updateMs": {
+          "p50": 0.2762079999999969,
+          "p95": 0.3775839999999562,
+          "p99": 0.3853750000000673,
+          "max": 0.3853750000000673
+        },
+        "updateAndRenderMs": {
+          "p50": 0.2860409999999547,
+          "p95": 0.3929999999999154,
+          "p99": 0.39600000000007185,
+          "max": 0.39600000000007185
+        },
+        "patches": 30,
+        "routedEdges": 30,
+        "affectedEdges": 30,
+        "searchNodes": 1262,
+        "fallbacks": 0,
+        "svgBytes": 2332,
+        "errors": 0,
+        "perTrial": [
+          {
+            "updateMs": {
+              "p50": 0.2762079999999969,
+              "p95": 0.3775839999999562,
+              "p99": 0.3853750000000673,
+              "max": 0.3853750000000673
+            },
+            "heapDeltaBytes": 26356736
+          }
+        ]
+      },
+      {
+        "fixture": "high-degree-16",
+        "edges": 16,
+        "frames": 30,
+        "trials": 1,
+        "updateMs": {
+          "p50": 37.94645799999989,
+          "p95": 53.4596660000002,
+          "p99": 91.93579099999988,
+          "max": 91.93579099999988
+        },
+        "updateAndRenderMs": {
+          "p50": 38.1062079999997,
+          "p95": 53.53233300000011,
+          "p99": 92.00387499999988,
+          "max": 92.00387499999988
+        },
+        "patches": 480,
+        "routedEdges": 480,
+        "affectedEdges": 480,
+        "searchNodes": 53851,
+        "fallbacks": 354,
+        "svgBytes": 24088,
+        "errors": 0,
+        "perTrial": [
+          {
+            "updateMs": {
+              "p50": 37.94645799999989,
+              "p95": 53.4596660000002,
+              "p99": 91.93579099999988,
+              "max": 91.93579099999988
+            },
+            "heapDeltaBytes": 9886224
+          }
+        ]
+      },
+      {
+        "fixture": "compound-parent-8",
+        "edges": 8,
+        "frames": 30,
+        "trials": 1,
+        "updateMs": {
+          "p50": 0.9727920000000267,
+          "p95": 1.1861249999997199,
+          "p99": 2.144749999999931,
+          "max": 2.144749999999931
+        },
+        "updateAndRenderMs": {
+          "p50": 0.9956670000001395,
+          "p95": 1.2191249999996217,
+          "p99": 2.179834000000028,
+          "max": 2.179834000000028
+        },
+        "patches": 240,
+        "routedEdges": 240,
+        "affectedEdges": 240,
+        "searchNodes": 1200,
+        "fallbacks": 0,
+        "svgBytes": 12384,
+        "errors": 0,
+        "perTrial": [
+          {
+            "updateMs": {
+              "p50": 0.9727920000000267,
+              "p95": 1.1861249999997199,
+              "p99": 2.144749999999931,
+              "max": 2.144749999999931
+            },
+            "heapDeltaBytes": 37735456
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "side": "baseline",
+    "run": 4,
+    "node": "v24.22.1",
+    "cores": 10,
+    "loadAverage": [17.15087890625, 11.3349609375, 11.63330078125],
+    "scope": "Synchronous routing, patch application and SVG serialization; edit resolution, initial route, final fresh-equivalence check and browser rendering excluded. Heap deltas include GC noise and are not allocation counts.",
+    "results": [
+      {
+        "fixture": "sparse-100",
+        "edges": 100,
+        "frames": 30,
+        "trials": 1,
+        "updateMs": {
+          "p50": 0.1978330000000028,
+          "p95": 0.30016699999998764,
+          "p99": 0.6453339999999912,
+          "max": 0.6453339999999912
+        },
+        "updateAndRenderMs": {
+          "p50": 0.21204199999999673,
+          "p95": 0.4625419999999849,
+          "p99": 0.6606669999999895,
+          "max": 0.6606669999999895
+        },
+        "patches": 30,
+        "routedEdges": 30,
+        "affectedEdges": 30,
+        "searchNodes": 150,
+        "fallbacks": 0,
+        "svgBytes": 1792,
+        "errors": 0,
+        "perTrial": [
+          {
+            "updateMs": {
+              "p50": 0.1978330000000028,
+              "p95": 0.30016699999998764,
+              "p99": 0.6453339999999912,
+              "max": 0.6453339999999912
+            },
+            "heapDeltaBytes": 4305000
+          }
+        ]
+      },
+      {
+        "fixture": "configured-100",
+        "edges": 100,
+        "frames": 30,
+        "trials": 1,
+        "updateMs": {
+          "p50": 0.20420799999999417,
+          "p95": 0.3337089999999989,
+          "p99": 1.0712090000000103,
+          "max": 1.0712090000000103
+        },
+        "updateAndRenderMs": {
+          "p50": 0.20891699999998536,
+          "p95": 0.34112500000000523,
+          "p99": 1.0783340000000123,
+          "max": 1.0783340000000123
+        },
+        "patches": 30,
+        "routedEdges": 30,
+        "affectedEdges": 30,
+        "searchNodes": 150,
+        "fallbacks": 0,
+        "svgBytes": 1792,
+        "errors": 0,
+        "perTrial": [
+          {
+            "updateMs": {
+              "p50": 0.20420799999999417,
+              "p95": 0.3337089999999989,
+              "p99": 1.0712090000000103,
+              "max": 1.0712090000000103
+            },
+            "heapDeltaBytes": 616088
+          }
+        ]
+      },
+      {
+        "fixture": "sparse-1000",
+        "edges": 1000,
+        "frames": 30,
+        "trials": 1,
+        "updateMs": {
+          "p50": 0.11924999999996544,
+          "p95": 0.21199999999998909,
+          "p99": 0.23720800000000963,
+          "max": 0.23720800000000963
+        },
+        "updateAndRenderMs": {
+          "p50": 0.12349999999997863,
+          "p95": 0.2261249999999677,
+          "p99": 0.253167000000019,
+          "max": 0.253167000000019
+        },
+        "patches": 30,
+        "routedEdges": 30,
+        "affectedEdges": 30,
+        "searchNodes": 150,
+        "fallbacks": 0,
+        "svgBytes": 1912,
+        "errors": 0,
+        "perTrial": [
+          {
+            "updateMs": {
+              "p50": 0.11924999999996544,
+              "p95": 0.21199999999998909,
+              "p99": 0.23720800000000963,
+              "max": 0.23720800000000963
+            },
+            "heapDeltaBytes": 9451280
+          }
+        ]
+      },
+      {
+        "fixture": "configured-1000",
+        "edges": 1000,
+        "frames": 30,
+        "trials": 1,
+        "updateMs": {
+          "p50": 0.6001250000000482,
+          "p95": 0.7694999999999936,
+          "p99": 4.254709000000048,
+          "max": 4.254709000000048
+        },
+        "updateAndRenderMs": {
+          "p50": 0.6054159999999911,
+          "p95": 0.7821249999999509,
+          "p99": 4.2720840000000635,
+          "max": 4.2720840000000635
+        },
+        "patches": 30,
+        "routedEdges": 30,
+        "affectedEdges": 30,
+        "searchNodes": 150,
+        "fallbacks": 0,
+        "svgBytes": 1912,
+        "errors": 0,
+        "perTrial": [
+          {
+            "updateMs": {
+              "p50": 0.6001250000000482,
+              "p95": 0.7694999999999936,
+              "p99": 4.254709000000048,
+              "max": 4.254709000000048
+            },
+            "heapDeltaBytes": -21554384
+          }
+        ]
+      },
+      {
+        "fixture": "obstacle-corridors-24",
+        "edges": 24,
+        "frames": 30,
+        "trials": 1,
+        "updateMs": {
+          "p50": 0.27691700000002584,
+          "p95": 0.4402499999999918,
+          "p99": 0.4740829999999505,
+          "max": 0.4740829999999505
+        },
+        "updateAndRenderMs": {
+          "p50": 0.28466600000001563,
+          "p95": 0.4536669999999958,
+          "p99": 0.49212499999998727,
+          "max": 0.49212499999998727
+        },
+        "patches": 30,
+        "routedEdges": 30,
+        "affectedEdges": 30,
+        "searchNodes": 1262,
+        "fallbacks": 0,
+        "svgBytes": 2332,
+        "errors": 0,
+        "perTrial": [
+          {
+            "updateMs": {
+              "p50": 0.27691700000002584,
+              "p95": 0.4402499999999918,
+              "p99": 0.4740829999999505,
+              "max": 0.4740829999999505
+            },
+            "heapDeltaBytes": 26348416
+          }
+        ]
+      },
+      {
+        "fixture": "high-degree-16",
+        "edges": 16,
+        "frames": 30,
+        "trials": 1,
+        "updateMs": {
+          "p50": 34.599707999999964,
+          "p95": 36.81495800000039,
+          "p99": 37.50054100000011,
+          "max": 37.50054100000011
+        },
+        "updateAndRenderMs": {
+          "p50": 34.668583000000126,
+          "p95": 36.88700000000017,
+          "p99": 37.59012500000017,
+          "max": 37.59012500000017
+        },
+        "patches": 480,
+        "routedEdges": 480,
+        "affectedEdges": 480,
+        "searchNodes": 53851,
+        "fallbacks": 354,
+        "svgBytes": 24088,
+        "errors": 0,
+        "perTrial": [
+          {
+            "updateMs": {
+              "p50": 34.599707999999964,
+              "p95": 36.81495800000039,
+              "p99": 37.50054100000011,
+              "max": 37.50054100000011
+            },
+            "heapDeltaBytes": 9222424
+          }
+        ]
+      },
+      {
+        "fixture": "compound-parent-8",
+        "edges": 8,
+        "frames": 30,
+        "trials": 1,
+        "updateMs": {
+          "p50": 0.9656249999998181,
+          "p95": 1.7685419999997976,
+          "p99": 2.0762500000000728,
+          "max": 2.0762500000000728
+        },
+        "updateAndRenderMs": {
+          "p50": 0.987999999999829,
+          "p95": 1.802458999999999,
+          "p99": 2.109124999999949,
+          "max": 2.109124999999949
+        },
+        "patches": 240,
+        "routedEdges": 240,
+        "affectedEdges": 240,
+        "searchNodes": 1200,
+        "fallbacks": 0,
+        "svgBytes": 12384,
+        "errors": 0,
+        "perTrial": [
+          {
+            "updateMs": {
+              "p50": 0.9656249999998181,
+              "p95": 1.7685419999997976,
+              "p99": 2.0762500000000728,
+              "max": 2.0762500000000728
+            },
+            "heapDeltaBytes": -27651552
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "side": "baseline",
+    "run": 5,
+    "node": "v24.22.1",
+    "cores": 10,
+    "loadAverage": [15.9375, 11.1796875, 11.57666015625],
+    "scope": "Synchronous routing, patch application and SVG serialization; edit resolution, initial route, final fresh-equivalence check and browser rendering excluded. Heap deltas include GC noise and are not allocation counts.",
+    "results": [
+      {
+        "fixture": "sparse-100",
+        "edges": 100,
+        "frames": 30,
+        "trials": 1,
+        "updateMs": {
+          "p50": 0.17262499999998226,
+          "p95": 0.29783299999999713,
+          "p99": 0.8088750000000005,
+          "max": 0.8088750000000005
+        },
+        "updateAndRenderMs": {
+          "p50": 0.1828750000000241,
+          "p95": 0.49304200000000264,
+          "p99": 0.8244579999999928,
+          "max": 0.8244579999999928
+        },
+        "patches": 30,
+        "routedEdges": 30,
+        "affectedEdges": 30,
+        "searchNodes": 150,
+        "fallbacks": 0,
+        "svgBytes": 1792,
+        "errors": 0,
+        "perTrial": [
+          {
+            "updateMs": {
+              "p50": 0.17262499999998226,
+              "p95": 0.29783299999999713,
+              "p99": 0.8088750000000005,
+              "max": 0.8088750000000005
+            },
+            "heapDeltaBytes": 4317864
+          }
+        ]
+      },
+      {
+        "fixture": "configured-100",
+        "edges": 100,
+        "frames": 30,
+        "trials": 1,
+        "updateMs": {
+          "p50": 0.22475000000000023,
+          "p95": 0.4289579999999944,
+          "p99": 1.1890420000000006,
+          "max": 1.1890420000000006
+        },
+        "updateAndRenderMs": {
+          "p50": 0.23187500000000227,
+          "p95": 0.444500000000005,
+          "p99": 1.2004170000000158,
+          "max": 1.2004170000000158
+        },
+        "patches": 30,
+        "routedEdges": 30,
+        "affectedEdges": 30,
+        "searchNodes": 150,
+        "fallbacks": 0,
+        "svgBytes": 1792,
+        "errors": 0,
+        "perTrial": [
+          {
+            "updateMs": {
+              "p50": 0.22475000000000023,
+              "p95": 0.4289579999999944,
+              "p99": 1.1890420000000006,
+              "max": 1.1890420000000006
+            },
+            "heapDeltaBytes": 636664
+          }
+        ]
+      },
+      {
+        "fixture": "sparse-1000",
+        "edges": 1000,
+        "frames": 30,
+        "trials": 1,
+        "updateMs": {
+          "p50": 0.12679199999996627,
+          "p95": 0.23175000000003365,
+          "p99": 0.24316699999997127,
+          "max": 0.24316699999997127
+        },
+        "updateAndRenderMs": {
+          "p50": 0.13179200000001856,
+          "p95": 0.24787500000002183,
+          "p99": 0.2572089999999889,
+          "max": 0.2572089999999889
+        },
+        "patches": 30,
+        "routedEdges": 30,
+        "affectedEdges": 30,
+        "searchNodes": 150,
+        "fallbacks": 0,
+        "svgBytes": 1912,
+        "errors": 0,
+        "perTrial": [
+          {
+            "updateMs": {
+              "p50": 0.12679199999996627,
+              "p95": 0.23175000000003365,
+              "p99": 0.24316699999997127,
+              "max": 0.24316699999997127
+            },
+            "heapDeltaBytes": 9450168
+          }
+        ]
+      },
+      {
+        "fixture": "configured-1000",
+        "edges": 1000,
+        "frames": 30,
+        "trials": 1,
+        "updateMs": {
+          "p50": 0.6001669999999422,
+          "p95": 0.7347089999999525,
+          "p99": 0.7535420000000386,
+          "max": 0.7535420000000386
+        },
+        "updateAndRenderMs": {
+          "p50": 0.6057499999999436,
+          "p95": 0.7647079999999278,
+          "p99": 0.7705000000000837,
+          "max": 0.7705000000000837
+        },
+        "patches": 30,
+        "routedEdges": 30,
+        "affectedEdges": 30,
+        "searchNodes": 150,
+        "fallbacks": 0,
+        "svgBytes": 1912,
+        "errors": 0,
+        "perTrial": [
+          {
+            "updateMs": {
+              "p50": 0.6001669999999422,
+              "p95": 0.7347089999999525,
+              "p99": 0.7535420000000386,
+              "max": 0.7535420000000386
+            },
+            "heapDeltaBytes": 31841400
+          }
+        ]
+      },
+      {
+        "fixture": "obstacle-corridors-24",
+        "edges": 24,
+        "frames": 30,
+        "trials": 1,
+        "updateMs": {
+          "p50": 0.26712499999996453,
+          "p95": 0.30875000000003183,
+          "p99": 0.3505839999999125,
+          "max": 0.3505839999999125
+        },
+        "updateAndRenderMs": {
+          "p50": 0.2740410000000111,
+          "p95": 0.31412499999999,
+          "p99": 0.36724999999989905,
+          "max": 0.36724999999989905
+        },
+        "patches": 30,
+        "routedEdges": 30,
+        "affectedEdges": 30,
+        "searchNodes": 1262,
+        "fallbacks": 0,
+        "svgBytes": 2332,
+        "errors": 0,
+        "perTrial": [
+          {
+            "updateMs": {
+              "p50": 0.26712499999996453,
+              "p95": 0.30875000000003183,
+              "p99": 0.3505839999999125,
+              "max": 0.3505839999999125
+            },
+            "heapDeltaBytes": 26350872
+          }
+        ]
+      },
+      {
+        "fixture": "high-degree-16",
+        "edges": 16,
+        "frames": 30,
+        "trials": 1,
+        "updateMs": {
+          "p50": 34.56104100000016,
+          "p95": 36.627500000000055,
+          "p99": 37.36824999999999,
+          "max": 37.36824999999999
+        },
+        "updateAndRenderMs": {
+          "p50": 34.63541600000008,
+          "p95": 36.69120799999996,
+          "p99": 37.432124999999814,
+          "max": 37.432124999999814
+        },
+        "patches": 480,
+        "routedEdges": 480,
+        "affectedEdges": 480,
+        "searchNodes": 53851,
+        "fallbacks": 354,
+        "svgBytes": 24088,
+        "errors": 0,
+        "perTrial": [
+          {
+            "updateMs": {
+              "p50": 34.56104100000016,
+              "p95": 36.627500000000055,
+              "p99": 37.36824999999999,
+              "max": 37.36824999999999
+            },
+            "heapDeltaBytes": 8961472
+          }
+        ]
+      },
+      {
+        "fixture": "compound-parent-8",
+        "edges": 8,
+        "frames": 30,
+        "trials": 1,
+        "updateMs": {
+          "p50": 0.9901669999999285,
+          "p95": 1.2882079999999405,
+          "p99": 1.875833000000057,
+          "max": 1.875833000000057
+        },
+        "updateAndRenderMs": {
+          "p50": 1.0174589999996897,
+          "p95": 1.3200830000000678,
+          "p99": 1.9102080000002388,
+          "max": 1.9102080000002388
+        },
+        "patches": 240,
+        "routedEdges": 240,
+        "affectedEdges": 240,
+        "searchNodes": 1200,
+        "fallbacks": 0,
+        "svgBytes": 12384,
+        "errors": 0,
+        "perTrial": [
+          {
+            "updateMs": {
+              "p50": 0.9901669999999285,
+              "p95": 1.2882079999999405,
+              "p99": 1.875833000000057,
+              "max": 1.875833000000057
+            },
+            "heapDeltaBytes": 37495664
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "side": "after",
+    "run": 1,
+    "node": "v24.22.1",
+    "cores": 10,
+    "loadAverage": [14.15087890625, 10.412109375, 11.3154296875],
+    "scope": "Synchronous routing, patch application and SVG serialization; edit resolution, initial route, final fresh-equivalence check and browser rendering excluded. Heap deltas include GC noise and are not allocation counts.",
+    "results": [
+      {
+        "fixture": "sparse-100",
+        "edges": 100,
+        "frames": 30,
+        "trials": 1,
+        "updateMs": {
+          "p50": 0.18037499999996953,
+          "p95": 2.372708999999986,
+          "p99": 34.601584,
+          "max": 34.601584
+        },
+        "updateAndRenderMs": {
+          "p50": 0.18704199999996263,
+          "p95": 2.3980000000000246,
+          "p99": 34.69037500000002,
+          "max": 34.69037500000002
+        },
+        "patches": 30,
+        "routedEdges": 30,
+        "affectedEdges": 30,
+        "searchNodes": 150,
+        "fallbacks": 0,
+        "svgBytes": 1792,
+        "errors": 0,
+        "perTrial": [
+          {
+            "updateMs": {
+              "p50": 0.18037499999996953,
+              "p95": 2.372708999999986,
+              "p99": 34.601584,
+              "max": 34.601584
+            },
+            "heapDeltaBytes": -1755912
+          }
+        ]
+      },
+      {
+        "fixture": "configured-100",
+        "edges": 100,
+        "frames": 30,
+        "trials": 1,
+        "updateMs": {
+          "p50": 0.16308399999996936,
+          "p95": 0.3305410000000393,
+          "p99": 0.42766600000004473,
+          "max": 0.42766600000004473
+        },
+        "updateAndRenderMs": {
+          "p50": 0.16904199999999037,
+          "p95": 0.3434159999999906,
+          "p99": 0.4375,
+          "max": 0.4375
+        },
+        "patches": 30,
+        "routedEdges": 30,
+        "affectedEdges": 30,
+        "searchNodes": 150,
+        "fallbacks": 0,
+        "svgBytes": 1792,
+        "errors": 0,
+        "perTrial": [
+          {
+            "updateMs": {
+              "p50": 0.16308399999996936,
+              "p95": 0.3305410000000393,
+              "p99": 0.42766600000004473,
+              "max": 0.42766600000004473
+            },
+            "heapDeltaBytes": 10272216
+          }
+        ]
+      },
+      {
+        "fixture": "sparse-1000",
+        "edges": 1000,
+        "frames": 30,
+        "trials": 1,
+        "updateMs": {
+          "p50": 0.23950000000002092,
+          "p95": 1.3233750000000555,
+          "p99": 11.160166000000004,
+          "max": 11.160166000000004
+        },
+        "updateAndRenderMs": {
+          "p50": 0.24808299999995143,
+          "p95": 1.34637500000008,
+          "p99": 11.177666000000045,
+          "max": 11.177666000000045
+        },
+        "patches": 30,
+        "routedEdges": 30,
+        "affectedEdges": 30,
+        "searchNodes": 150,
+        "fallbacks": 0,
+        "svgBytes": 1912,
+        "errors": 0,
+        "perTrial": [
+          {
+            "updateMs": {
+              "p50": 0.23950000000002092,
+              "p95": 1.3233750000000555,
+              "p99": 11.160166000000004,
+              "max": 11.160166000000004
+            },
+            "heapDeltaBytes": -30108728
+          }
+        ]
+      },
+      {
+        "fixture": "configured-1000",
+        "edges": 1000,
+        "frames": 30,
+        "trials": 1,
+        "updateMs": {
+          "p50": 0.12362500000017462,
+          "p95": 0.24145900000007714,
+          "p99": 8.399541,
+          "max": 8.399541
+        },
+        "updateAndRenderMs": {
+          "p50": 0.1281250000001819,
+          "p95": 0.2597089999999298,
+          "p99": 8.416832999999997,
+          "max": 8.416832999999997
+        },
+        "patches": 30,
+        "routedEdges": 30,
+        "affectedEdges": 30,
+        "searchNodes": 150,
+        "fallbacks": 0,
+        "svgBytes": 1912,
+        "errors": 0,
+        "perTrial": [
+          {
+            "updateMs": {
+              "p50": 0.12362500000017462,
+              "p95": 0.24145900000007714,
+              "p99": 8.399541,
+              "max": 8.399541
+            },
+            "heapDeltaBytes": -43360024
+          }
+        ]
+      },
+      {
+        "fixture": "obstacle-corridors-24",
+        "edges": 24,
+        "frames": 30,
+        "trials": 1,
+        "updateMs": {
+          "p50": 0.2757090000000062,
+          "p95": 0.3595829999999296,
+          "p99": 2.503291999999874,
+          "max": 2.503291999999874
+        },
+        "updateAndRenderMs": {
+          "p50": 0.28175000000010186,
+          "p95": 0.37820800000008603,
+          "p99": 2.519249999999829,
+          "max": 2.519249999999829
+        },
+        "patches": 30,
+        "routedEdges": 30,
+        "affectedEdges": 30,
+        "searchNodes": 1262,
+        "fallbacks": 0,
+        "svgBytes": 2332,
+        "errors": 0,
+        "perTrial": [
+          {
+            "updateMs": {
+              "p50": 0.2757090000000062,
+              "p95": 0.3595829999999296,
+              "p99": 2.503291999999874,
+              "max": 2.503291999999874
+            },
+            "heapDeltaBytes": -34423472
+          }
+        ]
+      },
+      {
+        "fixture": "high-degree-16",
+        "edges": 16,
+        "frames": 30,
+        "trials": 1,
+        "updateMs": {
+          "p50": 55.72262499999988,
+          "p95": 138.53866700000026,
+          "p99": 410.56241599999976,
+          "max": 410.56241599999976
+        },
+        "updateAndRenderMs": {
+          "p50": 55.79666700000007,
+          "p95": 138.6108750000003,
+          "p99": 410.6401659999997,
+          "max": 410.6401659999997
+        },
+        "patches": 480,
+        "routedEdges": 480,
+        "affectedEdges": 480,
+        "searchNodes": 53851,
+        "fallbacks": 354,
+        "svgBytes": 24088,
+        "errors": 0,
+        "perTrial": [
+          {
+            "updateMs": {
+              "p50": 55.72262499999988,
+              "p95": 138.53866700000026,
+              "p99": 410.56241599999976,
+              "max": 410.56241599999976
+            },
+            "heapDeltaBytes": 6637096
+          }
+        ]
+      },
+      {
+        "fixture": "compound-parent-8",
+        "edges": 8,
+        "frames": 30,
+        "trials": 1,
+        "updateMs": {
+          "p50": 1.615708999999697,
+          "p95": 96.36258300000009,
+          "p99": 127.94083300000057,
+          "max": 127.94083300000057
+        },
+        "updateAndRenderMs": {
+          "p50": 1.6467499999998836,
+          "p95": 96.39962500000001,
+          "p99": 128.11108299999978,
+          "max": 128.11108299999978
+        },
+        "patches": 240,
+        "routedEdges": 240,
+        "affectedEdges": 240,
+        "searchNodes": 1200,
+        "fallbacks": 0,
+        "svgBytes": 12384,
+        "errors": 0,
+        "perTrial": [
+          {
+            "updateMs": {
+              "p50": 1.615708999999697,
+              "p95": 96.36258300000009,
+              "p99": 127.94083300000057,
+              "max": 127.94083300000057
+            },
+            "heapDeltaBytes": 37074344
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "side": "after",
+    "run": 2,
+    "node": "v24.22.1",
+    "cores": 10,
+    "loadAverage": [19.34375, 11.55029296875, 11.7119140625],
+    "scope": "Synchronous routing, patch application and SVG serialization; edit resolution, initial route, final fresh-equivalence check and browser rendering excluded. Heap deltas include GC noise and are not allocation counts.",
+    "results": [
+      {
+        "fixture": "sparse-100",
+        "edges": 100,
+        "frames": 30,
+        "trials": 1,
+        "updateMs": {
+          "p50": 0.2702910000000145,
+          "p95": 2.594083000000012,
+          "p99": 4.1736250000000155,
+          "max": 4.1736250000000155
+        },
+        "updateAndRenderMs": {
+          "p50": 0.29279100000002245,
+          "p95": 2.6293330000000026,
+          "p99": 4.327832999999998,
+          "max": 4.327832999999998
+        },
+        "patches": 30,
+        "routedEdges": 30,
+        "affectedEdges": 30,
+        "searchNodes": 150,
+        "fallbacks": 0,
+        "svgBytes": 1792,
+        "errors": 0,
+        "perTrial": [
+          {
+            "updateMs": {
+              "p50": 0.2702910000000145,
+              "p95": 2.594083000000012,
+              "p99": 4.1736250000000155,
+              "max": 4.1736250000000155
+            },
+            "heapDeltaBytes": 2476880
+          }
+        ]
+      },
+      {
+        "fixture": "configured-100",
+        "edges": 100,
+        "frames": 30,
+        "trials": 1,
+        "updateMs": {
+          "p50": 0.15329199999999332,
+          "p95": 0.3095000000000141,
+          "p99": 0.48545799999999417,
+          "max": 0.48545799999999417
+        },
+        "updateAndRenderMs": {
+          "p50": 0.15883300000001555,
+          "p95": 0.3191670000000215,
+          "p99": 0.4941249999999968,
+          "max": 0.4941249999999968
+        },
+        "patches": 30,
+        "routedEdges": 30,
+        "affectedEdges": 30,
+        "searchNodes": 150,
+        "fallbacks": 0,
+        "svgBytes": 1792,
+        "errors": 0,
+        "perTrial": [
+          {
+            "updateMs": {
+              "p50": 0.15329199999999332,
+              "p95": 0.3095000000000141,
+              "p99": 0.48545799999999417,
+              "max": 0.48545799999999417
+            },
+            "heapDeltaBytes": 10093776
+          }
+        ]
+      },
+      {
+        "fixture": "sparse-1000",
+        "edges": 1000,
+        "frames": 30,
+        "trials": 1,
+        "updateMs": {
+          "p50": 0.12104200000004539,
+          "p95": 0.5309169999999881,
+          "p99": 1.5753750000000082,
+          "max": 1.5753750000000082
+        },
+        "updateAndRenderMs": {
+          "p50": 0.12995800000004465,
+          "p95": 0.5407920000000104,
+          "p99": 1.5865830000000187,
+          "max": 1.5865830000000187
+        },
+        "patches": 30,
+        "routedEdges": 30,
+        "affectedEdges": 30,
+        "searchNodes": 150,
+        "fallbacks": 0,
+        "svgBytes": 1912,
+        "errors": 0,
+        "perTrial": [
+          {
+            "updateMs": {
+              "p50": 0.12104200000004539,
+              "p95": 0.5309169999999881,
+              "p99": 1.5753750000000082,
+              "max": 1.5753750000000082
+            },
+            "heapDeltaBytes": 9445840
+          }
+        ]
+      },
+      {
+        "fixture": "configured-1000",
+        "edges": 1000,
+        "frames": 30,
+        "trials": 1,
+        "updateMs": {
+          "p50": 0.12008300000002237,
+          "p95": 0.14345800000000963,
+          "p99": 0.21758300000010422,
+          "max": 0.21758300000010422
+        },
+        "updateAndRenderMs": {
+          "p50": 0.12466700000004494,
+          "p95": 0.14812499999993634,
+          "p99": 0.2313330000000633,
+          "max": 0.2313330000000633
+        },
+        "patches": 30,
+        "routedEdges": 30,
+        "affectedEdges": 30,
+        "searchNodes": 150,
+        "fallbacks": 0,
+        "svgBytes": 1912,
+        "errors": 0,
+        "perTrial": [
+          {
+            "updateMs": {
+              "p50": 0.12008300000002237,
+              "p95": 0.14345800000000963,
+              "p99": 0.21758300000010422,
+              "max": 0.21758300000010422
+            },
+            "heapDeltaBytes": 9378344
+          }
+        ]
+      },
+      {
+        "fixture": "obstacle-corridors-24",
+        "edges": 24,
+        "frames": 30,
+        "trials": 1,
+        "updateMs": {
+          "p50": 0.2844169999999622,
+          "p95": 0.4874170000000504,
+          "p99": 1.9854579999999942,
+          "max": 1.9854579999999942
+        },
+        "updateAndRenderMs": {
+          "p50": 0.2909590000000435,
+          "p95": 0.5024580000000469,
+          "p99": 2.0013329999999314,
+          "max": 2.0013329999999314
+        },
+        "patches": 30,
+        "routedEdges": 30,
+        "affectedEdges": 30,
+        "searchNodes": 1262,
+        "fallbacks": 0,
+        "svgBytes": 2332,
+        "errors": 0,
+        "perTrial": [
+          {
+            "updateMs": {
+              "p50": 0.2844169999999622,
+              "p95": 0.4874170000000504,
+              "p99": 1.9854579999999942,
+              "max": 1.9854579999999942
+            },
+            "heapDeltaBytes": -33928952
+          }
+        ]
+      },
+      {
+        "fixture": "high-degree-16",
+        "edges": 16,
+        "frames": 30,
+        "trials": 1,
+        "updateMs": {
+          "p50": 34.352375000000166,
+          "p95": 73.10149999999999,
+          "p99": 222.32570899999996,
+          "max": 222.32570899999996
+        },
+        "updateAndRenderMs": {
+          "p50": 34.422250000000076,
+          "p95": 73.17370900000014,
+          "p99": 222.4078340000001,
+          "max": 222.4078340000001
+        },
+        "patches": 480,
+        "routedEdges": 480,
+        "affectedEdges": 480,
+        "searchNodes": 53851,
+        "fallbacks": 354,
+        "svgBytes": 24088,
+        "errors": 0,
+        "perTrial": [
+          {
+            "updateMs": {
+              "p50": 34.352375000000166,
+              "p95": 73.10149999999999,
+              "p99": 222.32570899999996,
+              "max": 222.32570899999996
+            },
+            "heapDeltaBytes": 9006544
+          }
+        ]
+      },
+      {
+        "fixture": "compound-parent-8",
+        "edges": 8,
+        "frames": 30,
+        "trials": 1,
+        "updateMs": {
+          "p50": 0.9885420000000522,
+          "p95": 1.3137080000001333,
+          "p99": 1.754667000000154,
+          "max": 1.754667000000154
+        },
+        "updateAndRenderMs": {
+          "p50": 1.0122089999999844,
+          "p95": 1.3462079999999332,
+          "p99": 1.7885000000001128,
+          "max": 1.7885000000001128
+        },
+        "patches": 240,
+        "routedEdges": 240,
+        "affectedEdges": 240,
+        "searchNodes": 1200,
+        "fallbacks": 0,
+        "svgBytes": 12384,
+        "errors": 0,
+        "perTrial": [
+          {
+            "updateMs": {
+              "p50": 0.9885420000000522,
+              "p95": 1.3137080000001333,
+              "p99": 1.754667000000154,
+              "max": 1.754667000000154
+            },
+            "heapDeltaBytes": 36831904
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "side": "after",
+    "run": 3,
+    "node": "v24.22.1",
+    "cores": 10,
+    "loadAverage": [18.03466796875, 11.408203125, 11.66064453125],
+    "scope": "Synchronous routing, patch application and SVG serialization; edit resolution, initial route, final fresh-equivalence check and browser rendering excluded. Heap deltas include GC noise and are not allocation counts.",
+    "results": [
+      {
+        "fixture": "sparse-100",
+        "edges": 100,
+        "frames": 30,
+        "trials": 1,
+        "updateMs": {
+          "p50": 0.24904200000000287,
+          "p95": 0.49745800000000884,
+          "p99": 4.7552499999999895,
+          "max": 4.7552499999999895
+        },
+        "updateAndRenderMs": {
+          "p50": 0.2593750000000057,
+          "p95": 0.6787499999999937,
+          "p99": 4.777208999999999,
+          "max": 4.777208999999999
+        },
+        "patches": 30,
+        "routedEdges": 30,
+        "affectedEdges": 30,
+        "searchNodes": 150,
+        "fallbacks": 0,
+        "svgBytes": 1792,
+        "errors": 0,
+        "perTrial": [
+          {
+            "updateMs": {
+              "p50": 0.24904200000000287,
+              "p95": 0.49745800000000884,
+              "p99": 4.7552499999999895,
+              "max": 4.7552499999999895
+            },
+            "heapDeltaBytes": 3737256
+          }
+        ]
+      },
+      {
+        "fixture": "configured-100",
+        "edges": 100,
+        "frames": 30,
+        "trials": 1,
+        "updateMs": {
+          "p50": 0.14816700000000083,
+          "p95": 0.40920799999997826,
+          "p99": 0.4274589999999989,
+          "max": 0.4274589999999989
+        },
+        "updateAndRenderMs": {
+          "p50": 0.15295899999998142,
+          "p95": 0.43670900000000756,
+          "p99": 0.4488749999999868,
+          "max": 0.4488749999999868
+        },
+        "patches": 30,
+        "routedEdges": 30,
+        "affectedEdges": 30,
+        "searchNodes": 150,
+        "fallbacks": 0,
+        "svgBytes": 1792,
+        "errors": 0,
+        "perTrial": [
+          {
+            "updateMs": {
+              "p50": 0.14816700000000083,
+              "p95": 0.40920799999997826,
+              "p99": 0.4274589999999989,
+              "max": 0.4274589999999989
+            },
+            "heapDeltaBytes": 10244400
+          }
+        ]
+      },
+      {
+        "fixture": "sparse-1000",
+        "edges": 1000,
+        "frames": 30,
+        "trials": 1,
+        "updateMs": {
+          "p50": 0.12241699999998445,
+          "p95": 0.24208300000003646,
+          "p99": 0.2807080000000042,
+          "max": 0.2807080000000042
+        },
+        "updateAndRenderMs": {
+          "p50": 0.12695899999999938,
+          "p95": 0.25524999999998954,
+          "p99": 0.29879199999999173,
+          "max": 0.29879199999999173
+        },
+        "patches": 30,
+        "routedEdges": 30,
+        "affectedEdges": 30,
+        "searchNodes": 150,
+        "fallbacks": 0,
+        "svgBytes": 1912,
+        "errors": 0,
+        "perTrial": [
+          {
+            "updateMs": {
+              "p50": 0.12241699999998445,
+              "p95": 0.24208300000003646,
+              "p99": 0.2807080000000042,
+              "max": 0.2807080000000042
+            },
+            "heapDeltaBytes": 9478912
+          }
+        ]
+      },
+      {
+        "fixture": "configured-1000",
+        "edges": 1000,
+        "frames": 30,
+        "trials": 1,
+        "updateMs": {
+          "p50": 0.11929099999997561,
+          "p95": 0.1466249999999718,
+          "p99": 0.2109579999998914,
+          "max": 0.2109579999998914
+        },
+        "updateAndRenderMs": {
+          "p50": 0.12395799999990231,
+          "p95": 0.1516669999999749,
+          "p99": 0.2263749999999618,
+          "max": 0.2263749999999618
+        },
+        "patches": 30,
+        "routedEdges": 30,
+        "affectedEdges": 30,
+        "searchNodes": 150,
+        "fallbacks": 0,
+        "svgBytes": 1912,
+        "errors": 0,
+        "perTrial": [
+          {
+            "updateMs": {
+              "p50": 0.11929099999997561,
+              "p95": 0.1466249999999718,
+              "p99": 0.2109579999998914,
+              "max": 0.2109579999998914
+            },
+            "heapDeltaBytes": 9388672
+          }
+        ]
+      },
+      {
+        "fixture": "obstacle-corridors-24",
+        "edges": 24,
+        "frames": 30,
+        "trials": 1,
+        "updateMs": {
+          "p50": 0.27395899999999074,
+          "p95": 0.5043750000000955,
+          "p99": 2.358249999999998,
+          "max": 2.358249999999998
+        },
+        "updateAndRenderMs": {
+          "p50": 0.2809590000000526,
+          "p95": 0.5151250000000118,
+          "p99": 2.3746249999999236,
+          "max": 2.3746249999999236
+        },
+        "patches": 30,
+        "routedEdges": 30,
+        "affectedEdges": 30,
+        "searchNodes": 1262,
+        "fallbacks": 0,
+        "svgBytes": 2332,
+        "errors": 0,
+        "perTrial": [
+          {
+            "updateMs": {
+              "p50": 0.27395899999999074,
+              "p95": 0.5043750000000955,
+              "p99": 2.358249999999998,
+              "max": 2.358249999999998
+            },
+            "heapDeltaBytes": -34124816
+          }
+        ]
+      },
+      {
+        "fixture": "high-degree-16",
+        "edges": 16,
+        "frames": 30,
+        "trials": 1,
+        "updateMs": {
+          "p50": 33.80141700000013,
+          "p95": 36.35633299999995,
+          "p99": 36.399999999999864,
+          "max": 36.399999999999864
+        },
+        "updateAndRenderMs": {
+          "p50": 33.86787500000014,
+          "p95": 36.42562500000008,
+          "p99": 36.47341699999993,
+          "max": 36.47341699999993
+        },
+        "patches": 480,
+        "routedEdges": 480,
+        "affectedEdges": 480,
+        "searchNodes": 53851,
+        "fallbacks": 354,
+        "svgBytes": 24088,
+        "errors": 0,
+        "perTrial": [
+          {
+            "updateMs": {
+              "p50": 33.80141700000013,
+              "p95": 36.35633299999995,
+              "p99": 36.399999999999864,
+              "max": 36.399999999999864
+            },
+            "heapDeltaBytes": 9413720
+          }
+        ]
+      },
+      {
+        "fixture": "compound-parent-8",
+        "edges": 8,
+        "frames": 30,
+        "trials": 1,
+        "updateMs": {
+          "p50": 1.0367499999999836,
+          "p95": 1.4316250000001673,
+          "p99": 1.7435829999999441,
+          "max": 1.7435829999999441
+        },
+        "updateAndRenderMs": {
+          "p50": 1.0622909999999592,
+          "p95": 1.4659580000000005,
+          "p99": 1.7749579999999696,
+          "max": 1.7749579999999696
+        },
+        "patches": 240,
+        "routedEdges": 240,
+        "affectedEdges": 240,
+        "searchNodes": 1200,
+        "fallbacks": 0,
+        "svgBytes": 12384,
+        "errors": 0,
+        "perTrial": [
+          {
+            "updateMs": {
+              "p50": 1.0367499999999836,
+              "p95": 1.4316250000001673,
+              "p99": 1.7435829999999441,
+              "max": 1.7435829999999441
+            },
+            "heapDeltaBytes": 36853744
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "side": "after",
+    "run": 4,
+    "node": "v24.22.1",
+    "cores": 10,
+    "loadAverage": [17.15087890625, 11.3349609375, 11.63330078125],
+    "scope": "Synchronous routing, patch application and SVG serialization; edit resolution, initial route, final fresh-equivalence check and browser rendering excluded. Heap deltas include GC noise and are not allocation counts.",
+    "results": [
+      {
+        "fixture": "sparse-100",
+        "edges": 100,
+        "frames": 30,
+        "trials": 1,
+        "updateMs": {
+          "p50": 0.18133299999999508,
+          "p95": 0.6979160000000064,
+          "p99": 3.0325830000000025,
+          "max": 3.0325830000000025
+        },
+        "updateAndRenderMs": {
+          "p50": 0.19200000000000728,
+          "p95": 0.7152499999999975,
+          "p99": 3.0507920000000155,
+          "max": 3.0507920000000155
+        },
+        "patches": 30,
+        "routedEdges": 30,
+        "affectedEdges": 30,
+        "searchNodes": 150,
+        "fallbacks": 0,
+        "svgBytes": 1792,
+        "errors": 0,
+        "perTrial": [
+          {
+            "updateMs": {
+              "p50": 0.18133299999999508,
+              "p95": 0.6979160000000064,
+              "p99": 3.0325830000000025,
+              "max": 3.0325830000000025
+            },
+            "heapDeltaBytes": 3775840
+          }
+        ]
+      },
+      {
+        "fixture": "configured-100",
+        "edges": 100,
+        "frames": 30,
+        "trials": 1,
+        "updateMs": {
+          "p50": 0.1295419999999865,
+          "p95": 0.20254200000002243,
+          "p99": 0.7805000000000177,
+          "max": 0.7805000000000177
+        },
+        "updateAndRenderMs": {
+          "p50": 0.133624999999995,
+          "p95": 0.22037500000001842,
+          "p99": 0.7863750000000209,
+          "max": 0.7863750000000209
+        },
+        "patches": 30,
+        "routedEdges": 30,
+        "affectedEdges": 30,
+        "searchNodes": 150,
+        "fallbacks": 0,
+        "svgBytes": 1792,
+        "errors": 0,
+        "perTrial": [
+          {
+            "updateMs": {
+              "p50": 0.1295419999999865,
+              "p95": 0.20254200000002243,
+              "p99": 0.7805000000000177,
+              "max": 0.7805000000000177
+            },
+            "heapDeltaBytes": -3692512
+          }
+        ]
+      },
+      {
+        "fixture": "sparse-1000",
+        "edges": 1000,
+        "frames": 30,
+        "trials": 1,
+        "updateMs": {
+          "p50": 0.13204200000001265,
+          "p95": 0.23670900000001893,
+          "p99": 0.31654200000002675,
+          "max": 0.31654200000002675
+        },
+        "updateAndRenderMs": {
+          "p50": 0.13620800000001054,
+          "p95": 0.2534170000000131,
+          "p99": 0.3311249999999859,
+          "max": 0.3311249999999859
+        },
+        "patches": 30,
+        "routedEdges": 30,
+        "affectedEdges": 30,
+        "searchNodes": 150,
+        "fallbacks": 0,
+        "svgBytes": 1912,
+        "errors": 0,
+        "perTrial": [
+          {
+            "updateMs": {
+              "p50": 0.13204200000001265,
+              "p95": 0.23670900000001893,
+              "p99": 0.31654200000002675,
+              "max": 0.31654200000002675
+            },
+            "heapDeltaBytes": 9478592
+          }
+        ]
+      },
+      {
+        "fixture": "configured-1000",
+        "edges": 1000,
+        "frames": 30,
+        "trials": 1,
+        "updateMs": {
+          "p50": 0.12466600000004746,
+          "p95": 0.1875,
+          "p99": 0.2817919999999958,
+          "max": 0.2817919999999958
+        },
+        "updateAndRenderMs": {
+          "p50": 0.1292910000000802,
+          "p95": 0.19345800000007785,
+          "p99": 0.2993340000000444,
+          "max": 0.2993340000000444
+        },
+        "patches": 30,
+        "routedEdges": 30,
+        "affectedEdges": 30,
+        "searchNodes": 150,
+        "fallbacks": 0,
+        "svgBytes": 1912,
+        "errors": 0,
+        "perTrial": [
+          {
+            "updateMs": {
+              "p50": 0.12466600000004746,
+              "p95": 0.1875,
+              "p99": 0.2817919999999958,
+              "max": 0.2817919999999958
+            },
+            "heapDeltaBytes": 9617104
+          }
+        ]
+      },
+      {
+        "fixture": "obstacle-corridors-24",
+        "edges": 24,
+        "frames": 30,
+        "trials": 1,
+        "updateMs": {
+          "p50": 0.2792499999999336,
+          "p95": 0.4656249999999318,
+          "p99": 1.7620830000000751,
+          "max": 1.7620830000000751
+        },
+        "updateAndRenderMs": {
+          "p50": 0.2875410000000329,
+          "p95": 0.48329200000000583,
+          "p99": 1.781833000000006,
+          "max": 1.781833000000006
+        },
+        "patches": 30,
+        "routedEdges": 30,
+        "affectedEdges": 30,
+        "searchNodes": 1262,
+        "fallbacks": 0,
+        "svgBytes": 2332,
+        "errors": 0,
+        "perTrial": [
+          {
+            "updateMs": {
+              "p50": 0.2792499999999336,
+              "p95": 0.4656249999999318,
+              "p99": 1.7620830000000751,
+              "max": 1.7620830000000751
+            },
+            "heapDeltaBytes": -32579360
+          }
+        ]
+      },
+      {
+        "fixture": "high-degree-16",
+        "edges": 16,
+        "frames": 30,
+        "trials": 1,
+        "updateMs": {
+          "p50": 34.13908300000003,
+          "p95": 37.753917,
+          "p99": 38.188666999999896,
+          "max": 38.188666999999896
+        },
+        "updateAndRenderMs": {
+          "p50": 34.210249999999974,
+          "p95": 37.823208999999906,
+          "p99": 38.253625000000056,
+          "max": 38.253625000000056
+        },
+        "patches": 480,
+        "routedEdges": 480,
+        "affectedEdges": 480,
+        "searchNodes": 53851,
+        "fallbacks": 354,
+        "svgBytes": 24088,
+        "errors": 0,
+        "perTrial": [
+          {
+            "updateMs": {
+              "p50": 34.13908300000003,
+              "p95": 37.753917,
+              "p99": 38.188666999999896,
+              "max": 38.188666999999896
+            },
+            "heapDeltaBytes": 44839472
+          }
+        ]
+      },
+      {
+        "fixture": "compound-parent-8",
+        "edges": 8,
+        "frames": 30,
+        "trials": 1,
+        "updateMs": {
+          "p50": 0.9857500000000528,
+          "p95": 1.366708000000017,
+          "p99": 1.5867920000000595,
+          "max": 1.5867920000000595
+        },
+        "updateAndRenderMs": {
+          "p50": 1.0081250000000637,
+          "p95": 1.4023749999998927,
+          "p99": 1.6134170000000267,
+          "max": 1.6134170000000267
+        },
+        "patches": 240,
+        "routedEdges": 240,
+        "affectedEdges": 240,
+        "searchNodes": 1200,
+        "fallbacks": 0,
+        "svgBytes": 12384,
+        "errors": 0,
+        "perTrial": [
+          {
+            "updateMs": {
+              "p50": 0.9857500000000528,
+              "p95": 1.366708000000017,
+              "p99": 1.5867920000000595,
+              "max": 1.5867920000000595
+            },
+            "heapDeltaBytes": 37063912
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "side": "after",
+    "run": 5,
+    "node": "v24.22.1",
+    "cores": 10,
+    "loadAverage": [15.9375, 11.1796875, 11.57666015625],
+    "scope": "Synchronous routing, patch application and SVG serialization; edit resolution, initial route, final fresh-equivalence check and browser rendering excluded. Heap deltas include GC noise and are not allocation counts.",
+    "results": [
+      {
+        "fixture": "sparse-100",
+        "edges": 100,
+        "frames": 30,
+        "trials": 1,
+        "updateMs": {
+          "p50": 0.25891699999999673,
+          "p95": 0.4253750000000025,
+          "p99": 3.799457999999987,
+          "max": 3.799457999999987
+        },
+        "updateAndRenderMs": {
+          "p50": 0.29829199999997513,
+          "p95": 0.4856669999999923,
+          "p99": 3.8241250000000093,
+          "max": 3.8241250000000093
+        },
+        "patches": 30,
+        "routedEdges": 30,
+        "affectedEdges": 30,
+        "searchNodes": 150,
+        "fallbacks": 0,
+        "svgBytes": 1792,
+        "errors": 0,
+        "perTrial": [
+          {
+            "updateMs": {
+              "p50": 0.25891699999999673,
+              "p95": 0.4253750000000025,
+              "p99": 3.799457999999987,
+              "max": 3.799457999999987
+            },
+            "heapDeltaBytes": 3552088
+          }
+        ]
+      },
+      {
+        "fixture": "configured-100",
+        "edges": 100,
+        "frames": 30,
+        "trials": 1,
+        "updateMs": {
+          "p50": 0.14858300000000213,
+          "p95": 0.27704199999999446,
+          "p99": 0.49337499999998613,
+          "max": 0.49337499999998613
+        },
+        "updateAndRenderMs": {
+          "p50": 0.1533330000000035,
+          "p95": 0.2874999999999943,
+          "p99": 0.5004169999999988,
+          "max": 0.5004169999999988
+        },
+        "patches": 30,
+        "routedEdges": 30,
+        "affectedEdges": 30,
+        "searchNodes": 150,
+        "fallbacks": 0,
+        "svgBytes": 1792,
+        "errors": 0,
+        "perTrial": [
+          {
+            "updateMs": {
+              "p50": 0.14858300000000213,
+              "p95": 0.27704199999999446,
+              "p99": 0.49337499999998613,
+              "max": 0.49337499999998613
+            },
+            "heapDeltaBytes": 10196384
+          }
+        ]
+      },
+      {
+        "fixture": "sparse-1000",
+        "edges": 1000,
+        "frames": 30,
+        "trials": 1,
+        "updateMs": {
+          "p50": 0.11358300000000554,
+          "p95": 0.13545799999997143,
+          "p99": 0.24120899999996936,
+          "max": 0.24120899999996936
+        },
+        "updateAndRenderMs": {
+          "p50": 0.11745799999999917,
+          "p95": 0.14133299999997462,
+          "p99": 0.2575420000000008,
+          "max": 0.2575420000000008
+        },
+        "patches": 30,
+        "routedEdges": 30,
+        "affectedEdges": 30,
+        "searchNodes": 150,
+        "fallbacks": 0,
+        "svgBytes": 1912,
+        "errors": 0,
+        "perTrial": [
+          {
+            "updateMs": {
+              "p50": 0.11358300000000554,
+              "p95": 0.13545799999997143,
+              "p99": 0.24120899999996936,
+              "max": 0.24120899999996936
+            },
+            "heapDeltaBytes": 9397072
+          }
+        ]
+      },
+      {
+        "fixture": "configured-1000",
+        "edges": 1000,
+        "frames": 30,
+        "trials": 1,
+        "updateMs": {
+          "p50": 0.11958300000003419,
+          "p95": 0.15125000000000455,
+          "p99": 0.20754199999998946,
+          "max": 0.20754199999998946
+        },
+        "updateAndRenderMs": {
+          "p50": 0.12400000000002365,
+          "p95": 0.15599999999994907,
+          "p99": 0.2245829999999387,
+          "max": 0.2245829999999387
+        },
+        "patches": 30,
+        "routedEdges": 30,
+        "affectedEdges": 30,
+        "searchNodes": 150,
+        "fallbacks": 0,
+        "svgBytes": 1912,
+        "errors": 0,
+        "perTrial": [
+          {
+            "updateMs": {
+              "p50": 0.11958300000003419,
+              "p95": 0.15125000000000455,
+              "p99": 0.20754199999998946,
+              "max": 0.20754199999998946
+            },
+            "heapDeltaBytes": 9383328
+          }
+        ]
+      },
+      {
+        "fixture": "obstacle-corridors-24",
+        "edges": 24,
+        "frames": 30,
+        "trials": 1,
+        "updateMs": {
+          "p50": 0.2584160000000111,
+          "p95": 0.3620420000000877,
+          "p99": 2.1615000000000464,
+          "max": 2.1615000000000464
+        },
+        "updateAndRenderMs": {
+          "p50": 0.26958300000001145,
+          "p95": 0.3693750000001046,
+          "p99": 2.177667000000042,
+          "max": 2.177667000000042
+        },
+        "patches": 30,
+        "routedEdges": 30,
+        "affectedEdges": 30,
+        "searchNodes": 1262,
+        "fallbacks": 0,
+        "svgBytes": 2332,
+        "errors": 0,
+        "perTrial": [
+          {
+            "updateMs": {
+              "p50": 0.2584160000000111,
+              "p95": 0.3620420000000877,
+              "p99": 2.1615000000000464,
+              "max": 2.1615000000000464
+            },
+            "heapDeltaBytes": -34100504
+          }
+        ]
+      },
+      {
+        "fixture": "high-degree-16",
+        "edges": 16,
+        "frames": 30,
+        "trials": 1,
+        "updateMs": {
+          "p50": 34.062999999999874,
+          "p95": 36.56120800000008,
+          "p99": 37.03537500000016,
+          "max": 37.03537500000016
+        },
+        "updateAndRenderMs": {
+          "p50": 34.13995900000009,
+          "p95": 36.631415999999945,
+          "p99": 37.107124999999996,
+          "max": 37.107124999999996
+        },
+        "patches": 480,
+        "routedEdges": 480,
+        "affectedEdges": 480,
+        "searchNodes": 53851,
+        "fallbacks": 354,
+        "svgBytes": 24088,
+        "errors": 0,
+        "perTrial": [
+          {
+            "updateMs": {
+              "p50": 34.062999999999874,
+              "p95": 36.56120800000008,
+              "p99": 37.03537500000016,
+              "max": 37.03537500000016
+            },
+            "heapDeltaBytes": 9542752
+          }
+        ]
+      },
+      {
+        "fixture": "compound-parent-8",
+        "edges": 8,
+        "frames": 30,
+        "trials": 1,
+        "updateMs": {
+          "p50": 1.0088330000000951,
+          "p95": 1.2050000000001546,
+          "p99": 1.5842090000001008,
+          "max": 1.5842090000001008
+        },
+        "updateAndRenderMs": {
+          "p50": 1.0322080000000824,
+          "p95": 1.2373750000001564,
+          "p99": 1.609625000000051,
+          "max": 1.609625000000051
+        },
+        "patches": 240,
+        "routedEdges": 240,
+        "affectedEdges": 240,
+        "searchNodes": 1200,
+        "fallbacks": 0,
+        "svgBytes": 12384,
+        "errors": 0,
+        "perTrial": [
+          {
+            "updateMs": {
+              "p50": 1.0088330000000951,
+              "p95": 1.2050000000001546,
+              "p99": 1.5842090000001008,
+              "max": 1.5842090000001008
+            },
+            "heapDeltaBytes": 36877976
+          }
+        ]
+      }
+    ]
+  }
+]

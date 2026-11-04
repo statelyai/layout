@@ -72,6 +72,8 @@
   "scripts": {
     "build": "tsdown --config tsdown.config.mjs",
     "bench": "vitest bench --run",
+    "bench:routing": "tsx scripts/bench-routing.ts",
+    "bench:viz-routing": "tsx scripts/bench-viz-routing.ts",
     "bench:statecharts": "tsx scripts/bench-statecharts.ts",
     "demo": "portless --name layout vite --config demo/vite.config.ts",
     "demo:build": "vite build --config demo/vite.config.ts",

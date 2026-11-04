@@ -1,0 +1,113 @@
+{
+  "id": "flow-statechart-routing",
+  "mode": "directed",
+  "initialNodeId": null,
+  "nodes": [
+    {
+      "type": "node",
+      "id": "a",
+      "parentId": "root",
+      "label": null,
+      "data": null,
+      "x": 0,
+      "y": 0,
+      "width": 120,
+      "height": 80
+    },
+    {
+      "type": "node",
+      "id": "b",
+      "parentId": "root",
+      "label": null,
+      "data": null,
+      "x": 320,
+      "y": 0,
+      "width": 120,
+      "height": 80
+    },
+    {
+      "type": "node",
+      "id": "c",
+      "parentId": "root",
+      "label": null,
+      "data": null,
+      "x": 0,
+      "y": 260,
+      "width": 120,
+      "height": 80
+    },
+    {
+      "type": "node",
+      "id": "d",
+      "parentId": "root",
+      "label": null,
+      "data": null,
+      "x": 320,
+      "y": 260,
+      "width": 120,
+      "height": 80
+    },
+    {
+      "type": "node",
+      "id": "root",
+      "parentId": null,
+      "label": null,
+      "data": null,
+      "x": 0,
+      "y": 0,
+      "width": 0,
+      "height": 0
+    }
+  ],
+  "edges": [
+    {
+      "type": "edge",
+      "id": "AB",
+      "sourceId": "a",
+      "targetId": "b",
+      "label": null,
+      "data": null,
+      "x": 140,
+      "y": 20,
+      "width": 80,
+      "height": 40
+    },
+    {
+      "type": "edge",
+      "id": "CD",
+      "sourceId": "c",
+      "targetId": "d",
+      "label": null,
+      "data": null,
+      "x": 140,
+      "y": 280,
+      "width": 80,
+      "height": 40
+    },
+    {
+      "type": "edge",
+      "id": "AD",
+      "sourceId": "a",
+      "targetId": "d",
+      "label": null,
+      "data": null,
+      "x": 150,
+      "y": 140,
+      "width": 80,
+      "height": 40
+    },
+    {
+      "type": "edge",
+      "id": "CB",
+      "sourceId": "c",
+      "targetId": "b",
+      "label": null,
+      "data": null,
+      "x": 170,
+      "y": 140,
+      "width": 80,
+      "height": 40
+    }
+  ],
+  "data": null
+}

@@ -118,6 +118,26 @@ export function findPath(
   )
     return [start, end];
   if (style === "orthogonal") {
+    const axis = (direction: RoutePoint | undefined) =>
+      direction && direction.x !== 0 && direction.y === 0
+        ? "x"
+        : direction && direction.y !== 0 && direction.x === 0
+          ? "y"
+          : undefined;
+    const incomingAxis = axis(terminals.incoming),
+      outgoingAxis = axis(terminals.outgoing);
+    // Equal terminal axes with perpendicular displacement require two turns,
+    // including turns at the leads. A clear L can already attain that bound.
+    const minimumTurns =
+      incomingAxis &&
+      incomingAxis === outgoingAxis &&
+      start[incomingAxis === "x" ? "y" : "x"] !== end[incomingAxis === "x" ? "y" : "x"]
+        ? 2
+        : aligned
+          ? 0
+          : 1;
+    const reverses = (a: RoutePoint | undefined, b: RoutePoint) =>
+      a && Math.abs(a.x * b.y - a.y * b.x) < 1e-8 && a.x * b.x + a.y * b.y < -1e-8;
     const candidates = [
       { x: start.x, y: end.y },
       { x: end.x, y: start.y },
@@ -129,11 +149,19 @@ export function findPath(
           clear(start, bend, context) &&
           clear(bend, end, context),
       )
-      .map((bend) => simplify([start, bend, end]));
+      .map((bend) => simplify([start, bend, end]))
+      .filter(
+        (points) =>
+          points.length > 1 &&
+          !reverses(terminals.incoming, delta(points[0]!, points[1]!)) &&
+          !reverses(terminals.outgoing, delta(points.at(-2)!, points.at(-1)!)),
+      );
     candidates.sort((a, b) => attachmentCost(a) - attachmentCost(b));
     if (
       candidates.length &&
-      attachmentCost(candidates[0]!) === 0 &&
+      attachmentCost(candidates[0]!) +
+        Math.max(0, candidates[0]!.length - 2) * context.bendPenalty <=
+        minimumTurns * context.bendPenalty + 1e-8 &&
       candidates[0]!
         .slice(1)
         .every((p, i) => (context.edgeCost?.(candidates[0]![i]!, p) ?? 0) === 0)

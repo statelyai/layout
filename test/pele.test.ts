@@ -40,7 +40,7 @@ describe("Pele layout", () => {
   it("keeps the native Pele algorithm separate from ELK discovery", async () => {
     const elk = new ELK();
     expect(
-      (await elk.knownLayoutAlgorithms()).some((algorithm) => algorithm.id.includes("pele")),
+      (await elk.knownLayoutAlgorithms()).some((algorithm) => algorithm.id?.includes("pele")),
     ).toBe(false);
     await expect(
       elk.layout({ id: "g", layoutOptions: { "elk.algorithm": "pele" } }),

@@ -153,6 +153,108 @@ export function getPathLength(path: RoutePath, options?: FlattenPathOptions): nu
   const points = flattenPath(path, options);
   return points.reduce((sum, p, i) => sum + (i ? distance(points[i - 1]!, p) : 0), 0);
 }
+export function splitSegment(
+  start: RoutePoint,
+  segment: RouteSegment,
+  t: number,
+): [RoutePath, RoutePath] {
+  if (segment.kind === "line") {
+    const at = lerp(start, segment.to, t);
+    return [pathFromPoints([start, at]), pathFromPoints([at, segment.to])];
+  }
+  if (segment.kind === "quadratic") {
+    const a = lerp(start, segment.control, t),
+      b = lerp(segment.control, segment.to, t);
+    const at = lerp(a, b, t);
+    return [
+      { start, segments: [{ kind: "quadratic", control: a, to: at }] },
+      { start: at, segments: [{ ...segment, control: b }] },
+    ];
+  }
+  if (segment.kind === "cubic") {
+    const a = lerp(start, segment.control1, t),
+      b = lerp(segment.control1, segment.control2, t),
+      c = lerp(segment.control2, segment.to, t),
+      d = lerp(a, b, t),
+      e = lerp(b, c, t),
+      at = lerp(d, e, t);
+    return [
+      { start, segments: [{ kind: "cubic", control1: a, control2: d, to: at }] },
+      { start: at, segments: [{ ...segment, control1: e, control2: c }] },
+    ];
+  }
+  const arc = arcCenter(start, segment);
+  if (!arc) return splitSegment(start, { kind: "line", to: segment.to }, t);
+  const angle = arc.theta + t * arc.delta;
+  const at = {
+    x: arc.center.x + arc.c * arc.rx * Math.cos(angle) - arc.s * arc.ry * Math.sin(angle),
+    y: arc.center.y + arc.s * arc.rx * Math.cos(angle) + arc.c * arc.ry * Math.sin(angle),
+  };
+  const corrected = { ...segment, rx: arc.rx, ry: arc.ry };
+  return [
+    { start, segments: [{ ...corrected, largeArc: Math.abs(t * arc.delta) > Math.PI, to: at }] },
+    { start: at, segments: [{ ...corrected, largeArc: Math.abs((1 - t) * arc.delta) > Math.PI }] },
+  ];
+}
+
+/** Trim distances along the path, retaining exact curve segments. Lengths are numerical. */
+export function trimPath(
+  path: RoutePath,
+  options: { readonly start?: number; readonly end?: number; readonly tolerance?: number } = {},
+): RoutePath {
+  const start = options.start ?? 0,
+    end = options.end ?? 0,
+    tolerance = options.tolerance ?? 0.01;
+  if (
+    ![start, end].every((n) => Number.isFinite(n) && n >= 0) ||
+    !Number.isFinite(tolerance) ||
+    tolerance <= 0
+  )
+    throw new RangeError("Path trims must be finite and non-negative; tolerance must be positive");
+  if (!start && !end) return path;
+  const pieces: { start: RoutePoint; segment: RouteSegment; length: number }[] = [];
+  let point = path.start,
+    length = 0;
+  for (const segment of path.segments) {
+    const size = getPathLength({ start: point, segments: [segment] }, { tolerance });
+    pieces.push({ start: point, segment, length: size });
+    length += size;
+    point = segment.to;
+  }
+  const locateParameter = (piece: (typeof pieces)[number], distance: number, end: boolean) => {
+    if (distance <= 0) return 0;
+    if (distance >= piece.length) return 1;
+    if (piece.segment.kind === "line") return distance / piece.length;
+    let low = 0,
+      high = 1;
+    for (let i = 0; i < 28; i++) {
+      const middle = (low + high) / 2;
+      const [before] = splitSegment(piece.start, piece.segment, middle);
+      if (getPathLength(before, { tolerance }) < distance) low = middle;
+      else high = middle;
+    }
+    // Stay inside the requested trim budget at either end.
+    return end ? high : low;
+  };
+  const from = Math.min(start, length),
+    to = Math.max(from, length - end);
+  let offset = 0,
+    resultStart: RoutePoint | undefined;
+  const segments: RouteSegment[] = [];
+  for (const piece of pieces) {
+    const next = offset + piece.length;
+    if (next >= from && offset <= to && piece.length > 0) {
+      const a = locateParameter(piece, from - offset, false),
+        b = locateParameter(piece, to - offset, true);
+      const [before] = splitSegment(piece.start, piece.segment, b);
+      const [, selected] = splitSegment(before.start, before.segments[0]!, b ? a / b : 0);
+      resultStart ??= selected.start;
+      if (b > a) segments.push(...selected.segments);
+    }
+    offset = next;
+  }
+  return { start: resultStart ?? point, segments };
+}
 function locate(path: RoutePath, length: number, options?: FlattenPathOptions) {
   const points = flattenPath(path, options);
   let remaining = Math.max(0, length);
@@ -264,18 +366,22 @@ export function segmentCrossesRect(
   segment: RouteSegment,
   rect: RouteBounds,
 ): boolean {
+  const epsilon = 1e-10;
   const overlaps = (points: readonly RoutePoint[]) => {
     const xs = points.map((p) => p.x),
       ys = points.map((p) => p.y);
     return (
-      Math.min(...xs) < rect.x + rect.width &&
-      Math.max(...xs) > rect.x &&
-      Math.min(...ys) < rect.y + rect.height &&
-      Math.max(...ys) > rect.y
+      Math.min(...xs) < rect.x + rect.width - epsilon &&
+      Math.max(...xs) > rect.x + epsilon &&
+      Math.min(...ys) < rect.y + rect.height - epsilon &&
+      Math.max(...ys) > rect.y + epsilon
     );
   };
   const inside = (p: RoutePoint) =>
-    p.x > rect.x && p.x < rect.x + rect.width && p.y > rect.y && p.y < rect.y + rect.height;
+    p.x > rect.x + epsilon &&
+    p.x < rect.x + rect.width - epsilon &&
+    p.y > rect.y + epsilon &&
+    p.y < rect.y + rect.height - epsilon;
   function bezier(controls: readonly RoutePoint[], depth: number): boolean {
     if (!overlaps(controls)) return false;
     if (inside(controls[0]!) || inside(controls.at(-1)!)) return true;
