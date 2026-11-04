@@ -139,7 +139,12 @@ export type RoutingLabel =
   | { readonly kind: "follow"; readonly fraction?: number; readonly offset?: number }
   | { readonly kind: "fixed" }
   | { readonly kind: "through"; readonly tangent?: RoutingTangent }
-  | { readonly kind: "gap"; readonly tangent?: RoutingTangent };
+  | {
+      readonly kind: "gap";
+      readonly tangent?: RoutingTangent;
+      /** Border points may slide by default; constrain them to side centers when required. */
+      readonly attachment?: "border" | "side-midpoint";
+    };
 export interface RoutingPolicy {
   readonly curve?: RoutingCurve;
   readonly sourceTangent?: RoutingTangent;

@@ -353,6 +353,8 @@ function normalizePolicy(input: RoutingPolicy | undefined): RoutingPolicy | unde
       "curve kind",
     );
   if (value.label) oneOf(value.label.kind, ["follow", "fixed", "through", "gap"], "label kind");
+  if (value.label?.kind === "gap" && value.label.attachment !== undefined)
+    oneOf(value.label.attachment, ["border", "side-midpoint"], "label attachment");
   if (value.monotonic) {
     oneOf(value.monotonic.axis, ["x", "y", "both"], "monotonic axis");
     oneOf(value.monotonic.strength, ["prefer", "require"], "monotonic strength");

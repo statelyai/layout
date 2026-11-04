@@ -81,6 +81,10 @@ cubic `RouteSegment` values. Authored waypoints retain their order and position.
 Consecutive duplicate knots do not cause division by zero. Explicit endpoint
 tangents clamp the first or last interval.
 
+If initial Catmull–Rom candidates collide, the router retries with padded guides
+within the remaining search budget. Each fitted curve still passes the same hard
+geometry and tangent checks before it can replace a polyline fallback.
+
 The centripetal theorem prevents cusps and self-intersections within an
 unmodified segment. It does not guarantee global intersection freedom,
 obstacle clearance, or clearance after endpoint clamping. The router validates
@@ -111,6 +115,13 @@ Gap border normals are independent at the entry and exit faces. A continuous
 the label center.
 
 ## Labels
+
+Gap labels accept `attachment: "side-midpoint"` to restrict entry and exit to
+side centers. The default `"border"` allows sliding along the border. This is
+independent of `tangent` and the per-edge `labelSides` restriction. A connector
+using `sourceLabel` inherits the attachment rule from its parent label's policy.
+Preservation and incremental updates cannot retain an off-midpoint attachment
+when midpoint attachment is required.
 
 | `label.kind` | Behavior                                                                         |
 | ------------ | -------------------------------------------------------------------------------- |

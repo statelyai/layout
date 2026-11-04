@@ -74,3 +74,19 @@ it.each<RoutePath>([
 it("rejects malformed marker gaps", () => {
   expect(() => trimPath(pathFromPoints([{ x: 0, y: 0 }]), { end: -1 })).toThrow(RangeError);
 });
+
+it("does not trim past a requested marker gap on a straight cubic", () => {
+  const path = {
+    start: { x: 0, y: 600 },
+    segments: [
+      {
+        kind: "cubic",
+        control1: { x: 0, y: 550 },
+        control2: { x: 0, y: 550 },
+        to: { x: 0, y: 500 },
+      },
+    ],
+  } satisfies import("../src/routing/types").RoutePath;
+  const trimmed = trimPath(path, { end: 10 });
+  expect(trimmed.segments.at(-1)!.to.y - 500).toBeLessThanOrEqual(10);
+});
