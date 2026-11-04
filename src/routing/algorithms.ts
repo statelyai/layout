@@ -1121,6 +1121,18 @@ export function routeEdge(
   const incomingSide = label && labelSide(source.point);
   const targetSide = label && labelSide(target.point);
   let labelFaces: readonly [RouteSide, RouteSide] | undefined;
+  if (
+    label &&
+    loop &&
+    midpointLabel &&
+    source.side === target.side &&
+    !guides &&
+    !(policy?.label?.kind === "gap" && policy.label.tangent?.kind === "vector")
+  ) {
+    const faces: readonly [RouteSide, RouteSide] =
+      source.side === "top" || source.side === "bottom" ? ["left", "right"] : ["top", "bottom"];
+    if (faces.every((side) => !labelSides || labelSides.includes(side))) labelFaces = faces;
+  }
   if (label && !loop && incomingSide === targetSide) {
     const horizontal = incomingSide === "top" || incomingSide === "bottom";
     const from = horizontal ? source.point.x : source.point.y;
@@ -1266,6 +1278,25 @@ export function routeEdge(
       lastSource.side = previous.fromSide;
     }
   }
+  if (label && loop && midpointLabel && labelFaces && lastSource && !guides) {
+    for (const [terminal, labelTerminal, constraint, attachment, port] of [
+      [source, firstTarget, sourceConstraint, perEdge.sourceAttachment, edge.sourcePort],
+      [target, lastSource, targetConstraint, perEdge.targetAttachment, edge.targetPort],
+    ] as const) {
+      if (constraint || attachment || port !== undefined) continue;
+      const normal = vector(labelTerminal.side);
+      const lead = Math.max(config.clearance + 1, config.radius * 2);
+      const projected =
+        terminal.side === "top" || terminal.side === "bottom"
+          ? { x: labelTerminal.point.x + normal.x * lead, y: terminal.point.y }
+          : { x: terminal.point.x, y: labelTerminal.point.y + normal.y * lead };
+      if (
+        onFace(projected, sourceBounds, terminal.side) &&
+        exposedAttachment(projected, terminal.side, `n:${edge.sourceId}`)
+      )
+        terminal.point = projected;
+    }
+  }
   const curvePolicy =
     policy?.curve ??
     (style === "bezier" || style === "curved" || style === "organic" || style === "bundle"
@@ -1405,7 +1436,11 @@ export function routeEdge(
       if (curvePolicy.kind === "rounded-orthogonal" && tangent?.kind !== "vector")
         labelDirection = reverse(vector(firstTarget.side));
       const direction = labelDirection;
-      if (policy.label.kind === "gap" && tangent?.kind === "border-normal") {
+      if (
+        policy.label.kind === "gap" &&
+        (tangent?.kind === "border-normal" ||
+          (midpointLabel && (!tangent || tangent.kind === "automatic")))
+      ) {
         firstTarget.tangent = reverse(vector(firstTarget.side));
         lastSource.tangent = vector(lastSource.side);
       } else {
@@ -1438,6 +1473,7 @@ export function routeEdge(
       }
       if (
         policy.label.kind === "gap" &&
+        !midpointLabel &&
         policy.stability?.kind === "preserve-valid" &&
         (!tangent || tangent.kind === "automatic")
       ) {
@@ -1667,11 +1703,13 @@ export function routeEdge(
           ? reverse(terminal.tangent)
           : terminal.tangent
         : vector(terminal.side);
-      const length = Math.max(config.clearance + padding + 1, config.radius * 2);
-      return {
+      const minimum = config.clearance + padding + 1;
+      const at = (length: number) => ({
         x: terminal.point.x + direction.x * length,
         y: terminal.point.y + direction.y * length,
-      };
+      });
+      const preferred = at(Math.max(minimum, config.radius * 2));
+      return clear(preferred, preferred, compact) ? preferred : at(minimum);
     };
     const anchors = [lead(a, false), ...via, lead(b, true)];
     const points = [a.point];

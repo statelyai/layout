@@ -31,7 +31,10 @@ it("keeps un-authored Catmull obstacle guides compact without a source sag", () 
   expect(pathReverseTravel(first, "both", first.start, first.segments[0]!.to)).toBeLessThan(0.1);
 });
 
-it("fits both Catmull–Rom label legs between closely spaced obstacles", () => {
+it.each([
+  { x: 366, y: 238 },
+  { x: 374, y: 246 },
+])("fits both Catmull–Rom label legs between closely spaced obstacles at $x,$y", ({ x, y }) => {
   const graph = createGraph({
     nodes: [
       { id: "s", x: 80, y: 140, width: 93.1953125, height: 45 },
@@ -42,9 +45,7 @@ it("fits both Catmull–Rom label legs between closely spaced obstacles", () => 
       { id: "three", x: 85, y: 277, width: 129.828125, height: 45 },
       { id: "four", x: 335, y: 374, width: 130.4296875, height: 45 },
     ],
-    edges: [
-      { id: "e", sourceId: "s", targetId: "t", x: 366, y: 238, width: 52.0859375, height: 28 },
-    ],
+    edges: [{ id: "e", sourceId: "s", targetId: "t", x, y, width: 52.0859375, height: 28 }],
   });
   const route = routeEdges({
     graph,

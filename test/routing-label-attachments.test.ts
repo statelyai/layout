@@ -10,6 +10,7 @@ import {
   type RouteBounds,
 } from "../src/routing";
 import { anchor, rect } from "../src/routing/model";
+import { pathReverseTravel } from "../src/routing/policy-geometry";
 
 const graph = createGraph({
   nodes: [
@@ -83,6 +84,38 @@ it("keeps midpoint connections clear of interiors when fixed labels overlap", ()
 function labelsFor(value: typeof graph) {
   return new Map(value.edges.map((e) => [e.id, rect(e)!]));
 }
+
+it.each(["rounded-orthogonal", "polyline", "bezier", "catmull-rom"] as const)(
+  "keeps a parent %s loop attached at label midpoints",
+  (kind) => {
+    const graph = createGraph({
+      nodes: [{ id: "p", x: 140, y: 240, width: 466.1484375, height: 575 }],
+      edges: [
+        { id: "e", sourceId: "p", targetId: "p", x: 300, y: 850, width: 87.546875, height: 28 },
+      ],
+    });
+    const route = routeEdges({
+      graph,
+      settings: {
+        policy: {
+          curve: { kind },
+          sourceTangent: { kind: "border-normal" },
+          targetTangent: { kind: "border-normal" },
+          label: { kind: "gap", attachment: "side-midpoint", tangent: { kind: "border-normal" } },
+        },
+      },
+    }).routes.get("e")!;
+    midpoints(route, labelsFor(graph));
+    for (const { path } of route.sections) {
+      if (kind === "rounded-orthogonal") {
+        expect(pathReverseTravel(path, "both", path.start, path.segments.at(-1)!.to)).toBeLessThan(
+          1e-7,
+        );
+        expect(path.segments.filter((segment) => segment.kind === "arc")).toHaveLength(1);
+      }
+    }
+  },
+);
 function midpoints(route: Route, labels: ReadonlyMap<string, RouteBounds>) {
   expect(route.status, JSON.stringify({ id: route.edgeId, diagnostics: route.diagnostics })).toBe(
     "routed",

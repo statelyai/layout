@@ -69,6 +69,8 @@ sliding along a side. The restriction applies to both label legs and connectors
 using that label as `sourceLabel`, including drag updates and adopted layout hints.
 Midpoint-only loops choose distinct sides when available instead of offsetting
 two attachments along one side. `edges[id].labelSides` still controls allowed sides.
+Automatic tangents follow the selected face normals for midpoint-only gaps;
+explicit tangent vectors keep their requested direction.
 Overlapping fixed labels retain their hard obstacle rectangles, allowing routes
 to reach a shared boundary without requiring clearance padding between them.
 
