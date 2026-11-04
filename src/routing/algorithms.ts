@@ -777,6 +777,16 @@ export function routeEdge(
       !loop
     ) {
       const nodeId = source ? edge.sourceId : edge.targetId;
+      const peerAttractor = (id: string) => {
+        const peer = state.edges.get(id)!;
+        const peerPolicy = effectivePolicy(state.settings, id);
+        const label =
+          peerPolicy?.label?.kind === "follow" || peerPolicy?.label?.kind === "fixed"
+            ? undefined
+            : labelRect(peer, state);
+        const other = state.nodes.get(peer.sourceId === nodeId ? peer.targetId : peer.sourceId);
+        return label ?? (other && worldRect(other, state));
+      };
       const adjacent = (
         duplicateTargets.length > 1
           ? duplicateTargets
@@ -786,8 +796,7 @@ export function routeEdge(
         if (e.sourceId === e.targetId) return false;
         const from = e.sourceId === nodeId;
         if ((from ? e.sourcePort : e.targetPort) !== undefined) return false;
-        const otherNode = state.nodes.get(from ? e.targetId : e.sourceId);
-        const rect = otherNode && worldRect(otherNode, state);
+        const rect = peerAttractor(id);
         if (!rect) return false;
         const explicit = from ? config.edges[id]?.sourceSide : config.edges[id]?.targetSide;
         const natural = sideToward(center(bounds), center(rect));
@@ -799,9 +808,7 @@ export function routeEdge(
       });
       const horizontal = side === "left" || side === "right";
       const projected = (id: string) => {
-        const e = state.edges.get(id)!;
-        const n = state.nodes.get(e.sourceId === nodeId ? e.targetId : e.sourceId)!;
-        const p = center(worldRect(n, state)!);
+        const p = center(peerAttractor(id)!);
         return horizontal ? p.y : p.x;
       };
       adjacent.sort((a, b) => projected(a) - projected(b) || (a < b ? -1 : a > b ? 1 : 0));

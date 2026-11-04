@@ -221,7 +221,7 @@ export function trimPath(
     length += size;
     point = segment.to;
   }
-  const locateParameter = (piece: (typeof pieces)[number], distance: number) => {
+  const locateParameter = (piece: (typeof pieces)[number], distance: number, end: boolean) => {
     if (distance <= 0) return 0;
     if (distance >= piece.length) return 1;
     if (piece.segment.kind === "line") return distance / piece.length;
@@ -233,7 +233,8 @@ export function trimPath(
       if (getPathLength(before, { tolerance }) < distance) low = middle;
       else high = middle;
     }
-    return (low + high) / 2;
+    // Stay inside the requested trim budget at either end.
+    return end ? high : low;
   };
   const from = Math.min(start, length),
     to = Math.max(from, length - end);
@@ -243,8 +244,8 @@ export function trimPath(
   for (const piece of pieces) {
     const next = offset + piece.length;
     if (next >= from && offset <= to && piece.length > 0) {
-      const a = locateParameter(piece, from - offset),
-        b = locateParameter(piece, to - offset);
+      const a = locateParameter(piece, from - offset, false),
+        b = locateParameter(piece, to - offset, true);
       const [before] = splitSegment(piece.start, piece.segment, b);
       const [, selected] = splitSegment(before.start, before.segments[0]!, b ? a / b : 0);
       resultStart ??= selected.start;
