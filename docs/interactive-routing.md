@@ -56,6 +56,13 @@ uses `edges[id].topology: { kind: "label-only" }`: its route stops at its label.
 `sourceLabel` connects a child route to another edge's label. Invalid or disabled
 parents suppress dependent connectors.
 
+Positioned `gap` and `through` labels attract automatic node attachments. When
+both endpoints sit beside a label on opposite sides of its travel axis, entry
+and exit follow that axis.
+Labeled self-loops project separate stems toward the label. With a routing policy,
+search treats crossings and retracing between label legs as hard conflicts outside
+shared attachment regions, even when crossings between different edges cost zero.
+
 ## Generic endpoint constraints
 
 `edges[id].source` and `target` accept a floating rectangle with allowed sides,

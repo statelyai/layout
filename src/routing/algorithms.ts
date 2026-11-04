@@ -631,12 +631,7 @@ export function routeEdge(
             y: outer.y + attachment.bounds.y,
           }
         : outer,
-      other =
-        source && labelOnly && attractingLabel
-          ? attractingLabel
-          : source
-            ? targetBounds
-            : sourceBounds;
+      other = attractingLabel ?? (source ? targetBounds : sourceBounds);
     const name = source
       ? perEdge.sourceLabel === undefined
         ? edge.sourcePort
@@ -748,10 +743,17 @@ export function routeEdge(
     ) {
       const horizontal = side === "top" || side === "bottom";
       const span = horizontal ? bounds.width : bounds.height;
-      const offset = Math.min(config.edgeSpacing / 2, span / 6) * (source ? -1 : 1);
+      const labelSpan = horizontal ? attractingLabel!.width : attractingLabel!.height;
+      const offset = Math.min(labelSpan / 6, span / 6) * (source ? -1 : 1);
+      const middle = horizontal ? center(attractingLabel!).x : center(attractingLabel!).y;
+      const minimum = horizontal ? bounds.x : bounds.y;
+      const aligned = Math.max(
+        minimum + Math.abs(offset),
+        Math.min(minimum + span - Math.abs(offset), middle),
+      );
       point = horizontal
-        ? { x: point.x + offset, y: point.y }
-        : { x: point.x, y: point.y + offset };
+        ? { x: aligned + offset, y: point.y }
+        : { x: point.x, y: aligned + offset };
     }
     const duplicateTargets =
       !source && grouped
@@ -894,6 +896,7 @@ export function routeEdge(
       name === undefined &&
       requested?.kind !== "port" &&
       !attachment &&
+      !loopLabelFace &&
       !(source ? guides?.source : guides?.target)
     ) {
       const previousPath = source
@@ -933,6 +936,7 @@ export function routeEdge(
     if (
       policy?.stability?.kind !== "preserve-valid" ||
       grouped ||
+      loopLabelFace ||
       (source ? perEdge.sourceAttachment : perEdge.targetAttachment)
     )
       return undefined;
@@ -1035,16 +1039,16 @@ export function routeEdge(
   for (const ctx of new Set([context, searchContext])) protectFutureTarget(ctx);
   const drawn: Reservation[] = [];
   // Sharing terminal attachment regions is clipped below. A later leg must
-  // never retrace a collinear segment of this same edge outside those regions.
+  // not cross or retrace this same edge outside those regions.
   const selfCost = (a: RoutePoint, b: RoutePoint) =>
     drawn.reduce((cost, segment) => {
-      const overlap = conflictCost(a, b, segment, {
+      const conflict = conflictCost(a, b, segment, {
         ...config,
         edgeSpacing: 0,
-        crossingPenalty: 0,
+        crossingPenalty: policy ? 1 : 0,
         overlapPenalty: 1,
       });
-      return cost + (overlap > 1e-8 ? Infinity : conflictCost(a, b, segment, config));
+      return cost + (conflict > 1e-8 ? Infinity : conflictCost(a, b, segment, config));
     }, 0);
   for (const ctx of new Set([context, searchContext])) {
     const cost = ctx.edgeCost,
@@ -1066,6 +1070,24 @@ export function routeEdge(
     const preferred = sideToward(center(label!), toward);
     return labelSides?.includes(preferred) === false ? labelSides[0]! : preferred;
   };
+  // When both endpoints lie beside a label, follow their travel direction
+  // through it instead of choosing an exit by allowed-side array order.
+  const incomingSide = label && labelSide(source.point);
+  const targetSide = label && labelSide(target.point);
+  let labelFaces: readonly [RouteSide, RouteSide] | undefined;
+  if (label && !loop && incomingSide === targetSide) {
+    const horizontal = incomingSide === "top" || incomingSide === "bottom";
+    const from = horizontal ? source.point.x : source.point.y;
+    const to = horizontal ? target.point.x : target.point.y;
+    const middle = horizontal ? center(label).x : center(label).y;
+    if ((from - middle) * (to - middle) < 0) {
+      const sides: readonly [RouteSide, RouteSide] = horizontal
+        ? ["left", "right"]
+        : ["top", "bottom"];
+      const faces: readonly [RouteSide, RouteSide] = from < to ? sides : [sides[1], sides[0]];
+      if (faces.every((side) => !labelSides || labelSides.includes(side))) labelFaces = faces;
+    }
+  }
   const labelAnchor = (toward: RoutePoint) => {
     const side = labelSide(toward),
       point = anchor(label!, side);
@@ -1086,8 +1108,8 @@ export function routeEdge(
   };
   const firstTarget: Terminal = label
     ? {
-        point: labelAnchor(source.point),
-        side: labelSide(source.point),
+        point: labelFaces ? anchor(label, labelFaces[0]) : labelAnchor(source.point),
+        side: labelFaces?.[0] ?? labelSide(source.point),
         ref: { kind: "label", edgeId: edge.id },
       }
     : target;
@@ -1100,7 +1122,7 @@ export function routeEdge(
     firstTarget.point = anchor(label, firstTarget.side);
   }
   if (labelOnly) monotonicTarget = firstTarget;
-  if (label && !guides?.source && policy?.stability?.kind === "preserve-valid") {
+  if (label && !loopLabelFace && !guides?.source && policy?.stability?.kind === "preserve-valid") {
     const previous = batch.previous?.sections[0];
     const point = previous?.path.segments.at(-1)?.to;
     if (
@@ -1123,6 +1145,7 @@ export function routeEdge(
     (!perEdge.labelSides || perEdge.labelSides.includes(guides.target.sourceDirection))
       ? guides.target.sourceDirection
       : undefined) ??
+      labelFaces?.[1] ??
       (loop && policy && source.side === target.side
         ? outgoingSide
         : outgoingSide === firstTarget.side
@@ -1164,7 +1187,13 @@ export function routeEdge(
           ref: { kind: "label", edgeId: edge.id },
         }
       : undefined;
-  if (label && lastSource && !guides?.target && policy?.stability?.kind === "preserve-valid") {
+  if (
+    label &&
+    lastSource &&
+    !loopLabelFace &&
+    !guides?.target &&
+    policy?.stability?.kind === "preserve-valid"
+  ) {
     const previous = batch.previous?.sections.at(-1);
     const point = previous?.path.start;
     if (
@@ -1963,13 +1992,26 @@ export function routeEdge(
     }
     if (!path) {
       const alignedFacing =
-        (a.point.x === b.point.x || a.point.y === b.point.y) &&
+        vector(a.side).x === -vector(b.side).x &&
+        vector(a.side).y === -vector(b.side).y &&
         (b.point.x - a.point.x) * vector(a.side).x + (b.point.y - a.point.y) * vector(a.side).y >
           0 &&
         (a.point.x - b.point.x) * vector(b.side).x + (a.point.y - b.point.y) * vector(b.side).y > 0;
       const boundedStub = (t: Terminal, end: boolean) => {
         const p = stub(t, end),
-          gap = distance(a.point, b.point) / 3;
+          gap = Math.max(
+            ((t === source
+              ? perEdge.sourceClearance
+              : t === target
+                ? perEdge.targetClearance
+                : 0) ?? 0) +
+              (policy && curvePolicy.kind === "rounded-orthogonal"
+                ? (curvePolicy.radius ?? config.radius)
+                : 0),
+            ((b.point.x - a.point.x) * vector(a.side).x +
+              (b.point.y - a.point.y) * vector(a.side).y) /
+              3,
+          );
         if (!alignedFacing || distance(t.point, p) <= gap) return p;
         const v = vector(t.side);
         return { x: t.point.x + v.x * gap, y: t.point.y + v.y * gap };
@@ -2498,7 +2540,7 @@ export function routeEdge(
             conflictCost(outgoing.a, outgoing.b, segment, {
               ...config,
               edgeSpacing: 0,
-              crossingPenalty: 0,
+              crossingPenalty: policy ? 1 : 0,
               overlapPenalty: 1,
             }) <= 1e-8,
         ),
