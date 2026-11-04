@@ -150,3 +150,34 @@ it("fits offset opposing leads into a narrow node-to-label gap", () => {
     expect(points[i]!.y).toBeGreaterThanOrEqual(points[i - 1]!.y - 1e-7);
   }
 });
+
+it("keeps a newly derived label face pair when an old border point remains on the moved label", () => {
+  const graph = createGraph({
+    nodes: [
+      { id: "source", x: 0, y: 0, width: 100, height: 60 },
+      { id: "target", x: 400, y: 0, width: 100, height: 60 },
+    ],
+    edges: [
+      {
+        id: "edge",
+        sourceId: "source",
+        targetId: "target",
+        x: 250,
+        y: 1000,
+        width: 500,
+        height: 30,
+      },
+    ],
+  });
+  const previous = routeEdges({ graph, geometry: "orthogonal", settings });
+  expect(previous.routes.get("edge")!.sections[0]!.toSide).toBe("top");
+  const moved = createGraph({ ...graph, edges: graph.edges.map((edge) => ({ ...edge, x: 150 })) });
+  const route = updateRoutes({
+    previous,
+    graph: moved,
+    changes: getDiff(graph, moved),
+  }).snapshot.routes.get("edge")!;
+  expect(route.status).toBe("routed");
+  expect(route.sections[0]!.toSide).toBe("left");
+  expect(route.sections.at(-1)!.fromSide).toBe("right");
+});

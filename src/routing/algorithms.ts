@@ -1137,6 +1137,7 @@ export function routeEdge(
       previous.to.edgeId === edge.id &&
       point &&
       previous.toSide &&
+      (!labelFaces || previous.toSide === labelFaces[0]) &&
       (!labelSides || labelSides.includes(previous.toSide)) &&
       onFace(point, label, previous.toSide) &&
       exposedAttachment(point, previous.toSide, `e:${edge.id}`)
@@ -1208,6 +1209,7 @@ export function routeEdge(
       previous.from.edgeId === edge.id &&
       point &&
       previous.fromSide &&
+      (!labelFaces || previous.fromSide === labelFaces[1]) &&
       (!labelSides || labelSides.includes(previous.fromSide)) &&
       onFace(point, label, previous.fromSide) &&
       exposedAttachment(point, previous.fromSide, `e:${edge.id}`)
