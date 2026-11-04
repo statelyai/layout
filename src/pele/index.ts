@@ -78,7 +78,7 @@ export function getPeleLayout<N, E, G, P>(
     throw new UnsupportedLayoutError(
       "Pele layout uses floating node attachments; named ports are not supported yet",
     );
-  if (graph.nodes.some((node) => node.parentId != null || options.compound?.(node) !== undefined))
+  if (graph.nodes.some((node) => node.parentId != null))
     return getCompoundPeleLayout(graph, options);
   const direction = options.direction ?? graph.direction ?? "down";
   const horizontal = direction === "left" || direction === "right";

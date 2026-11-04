@@ -54,7 +54,9 @@ export function getCompoundPeleLayout<N, E, G, P>(
   const parents = new Set(
     graph.nodes.flatMap((node) => (node.parentId == null ? [] : [node.parentId])),
   );
-  const configs = graph.nodes.map((node) => options.compound?.(node));
+  const configs = graph.nodes.map((node) =>
+    parents.has(node.id) ? options.compound?.(node) : undefined,
+  );
   const insets = configs.map((config) => {
     const inset = paddingOf(config?.padding);
     if (config?.header) {
@@ -84,7 +86,7 @@ export function getCompoundPeleLayout<N, E, G, P>(
       0,
       (parentDirection === "left" || parentDirection === "right" ? result.h : result.w) - 24,
     );
-    result.isGroup = parents.has(node.id) || config !== undefined;
+    result.isGroup = parents.has(node.id);
     result.dir = config?.direction && directions[config.direction];
     result.padLeft = inset.left;
     result.padRight = inset.right;

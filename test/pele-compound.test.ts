@@ -24,6 +24,25 @@ function fixture() {
 }
 
 describe("Pele compound layout", () => {
+  it("applies broad compound callbacks only to nodes with children", () => {
+    const input = fixture();
+    const options: PeleLayoutOptions = {
+      compound: () => ({
+        padding: 80,
+        header: { width: 300, height: 150 },
+        minContentSize: { width: 500, height: 400 },
+      }),
+    };
+    const result = getPeleLayout(input, options);
+    expect([...result.compoundGeometry.keys()]).toEqual(["on"]);
+    for (const node of input.nodes.filter((node) => node.id !== "on")) {
+      const placed = result.nodes.find((candidate) => candidate.id === node.id)!;
+      expect(placed.width).toBe(node.width);
+      expect(placed.height).toBe(node.height);
+    }
+    const flat = createGraph({ nodes: [{ id: "leaf", width: 100, height: 60 }] });
+    expect(getPeleLayout(flat, options)).toEqual(getPeleLayout(flat));
+  });
   it.each(["down", "up", "left", "right"] as const)(
     "lays out the reported nested graph going %s",
     (direction) => {
