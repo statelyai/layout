@@ -43,8 +43,8 @@
 - Initial native Stress, Mr. Tree, Radial, and Force providers are available.
   Exact Java provider/importer behavior, full option coverage, and component
   packing remain incomplete. See [algorithm coverage](algorithm-coverage.md).
-- Independent Pele layout is available for flat graphs. Nested nodes, named
-  ports, constraints, incremental layout, and partial layout remain unsupported.
+- Independent Pele layout is registered. See [Pele layout](../README.md#pele-layout)
+  for its supported scopes and limitations.
 
 ## Evaluation
 
