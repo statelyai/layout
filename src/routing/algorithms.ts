@@ -583,6 +583,8 @@ export function routeEdge(
     policy?.label?.kind === "follow" || policy?.label?.kind === "fixed"
       ? undefined
       : labelRect(edge, state);
+  const midpointLabel =
+    policy?.label?.kind === "gap" && policy.label.attachment === "side-midpoint";
   const loopLabelFace =
     loop && policy && attractingLabel
       ? sideToward(center(sourceBounds), center(attractingLabel))
@@ -923,6 +925,9 @@ export function routeEdge(
       )
         point = previousPoint;
     }
+    const parentPolicy = parentLabel && effectivePolicy(config, parentLabel.id)?.label;
+    if (source && parentPolicy?.kind === "gap" && parentPolicy.attachment === "side-midpoint")
+      point = anchor(bounds, side);
     return {
       point,
       side:
@@ -1147,7 +1152,7 @@ export function routeEdge(
     }
   }
   const outgoingSide = label && labelSide(target.point);
-  const exitSide =
+  let exitSide =
     label &&
     ((guides?.target &&
     (!perEdge.labelSides || perEdge.labelSides.includes(guides.target.sourceDirection))
@@ -1163,7 +1168,16 @@ export function routeEdge(
                 firstTarget.side
               ]
           : outgoingSide));
-  if (label && exitSide === firstTarget.side) {
+  if (label && midpointLabel && exitSide === firstTarget.side) {
+    const alternatives = (labelSides ?? (["left", "right", "top", "bottom"] as const))
+      .filter((side) => side !== firstTarget.side)
+      .sort(
+        (a, b) =>
+          distance(anchor(label, a), target.point) - distance(anchor(label, b), target.point),
+      );
+    exitSide = alternatives[0] ?? exitSide;
+  }
+  if (label && exitSide === firstTarget.side && !midpointLabel) {
     const horizontal = exitSide === "top" || exitSide === "bottom";
     const fraction = (
       horizontal ? source.point.x > target.point.x : source.point.y > target.point.y
@@ -1442,6 +1456,10 @@ export function routeEdge(
           "label-tangent",
         );
     }
+  }
+  if (label && midpointLabel) {
+    firstTarget.point = anchor(label, firstTarget.side);
+    if (lastSource) lastSource.point = anchor(label, lastSource.side);
   }
   const portSegment = (from: RoutePoint, to: RoutePoint): RouteSegment =>
     curvePolicy.kind === "bezier" || curvePolicy.kind === "catmull-rom"
@@ -1835,6 +1853,20 @@ export function routeEdge(
     if (viable.length) {
       if (unshapedCandidates.has(viable[0]!.path)) shapeFallback = true;
       return viable[0]!.path;
+    }
+    if (curvePolicy.kind === "catmull-rom") {
+      // A clear polyline can leave too little room for an interpolating spline.
+      // Retry with padded guides within the remaining shared search budget.
+      for (const padding of [config.radius / 2, config.radius, config.radius * 2]) {
+        const points = compactBezierGuide(a, b, via, padding);
+        if (!points) continue;
+        const tangents = new Map<number, RoutePoint>();
+        if (a.tangent) tangents.set(0, a.tangent);
+        if (b.tangent) tangents.set(points.length - 1, b.tangent);
+        const path = catmullRomPath(points, tangents);
+        const assessed = assessPath(path, a, b);
+        if (assessed.valid && Number.isFinite(assessed.cost)) return path;
+      }
     }
     shapeFallback = true;
     return guide;

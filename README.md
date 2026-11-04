@@ -186,6 +186,8 @@ updates child attachments when parent labels move. See the
 
 `settings.policy` independently controls curve families, endpoint and label
 tangents, passive or fixed labels, collisions, monotonicity, and route stability.
+Gap labels can restrict attachments to side midpoints with
+`attachment: "side-midpoint"`, including conditional connectors and incremental updates.
 `routingPolicies.smooth`, `.diagram`, and `.authored` provide Bézier, rounded
 orthogonal, and centripetal Catmull–Rom presets. Following labels use half the
 final path length and return their placement in `Route.label`. See the

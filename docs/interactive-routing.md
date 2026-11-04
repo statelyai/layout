@@ -63,6 +63,13 @@ Labeled self-loops project separate stems toward the label. With a routing polic
 search treats crossings and retracing between label legs as hard conflicts outside
 shared attachment regions, even when crossings between different edges cost zero.
 
+Use `policy.label: { kind: "gap", attachment: "side-midpoint" }` to restrict
+label connections to the centers of allowed sides. The default `"border"` permits
+sliding along a side. The restriction applies to both label legs and connectors
+using that label as `sourceLabel`, including drag updates and adopted layout hints.
+Midpoint-only loops choose distinct sides when available instead of offsetting
+two attachments along one side. `edges[id].labelSides` still controls allowed sides.
+
 ## Generic endpoint constraints
 
 `edges[id].source` and `target` accept a floating rectangle with allowed sides,
