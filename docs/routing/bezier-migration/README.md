@@ -55,7 +55,10 @@ review artifacts, not new visual-test baselines.
 
 ## Dependency order
 
-Viz PR 889 is merged. Layout 0.5.0 released the shared routing API. During
-review, Viz used an immutable Git revision so installation and CI did not depend
-on unpublished npm code. The consumer tracked replacement of that temporary pin
-separately.
+<!-- consumer verification source from docs/routing/quality/consumer-source.json and docs/routing/quality/verification.json -->
+
+Viz PR 889 is merged. Layout 0.5.0 released the shared routing API. The
+[recorded consumer verification](../quality/consumer-source.json) used a local
+tarball built from Layout revision
+`fc1baa877769bae3ee192b1ce002e0701e28a576`. That evidence records no published
+dependency update.
