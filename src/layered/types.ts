@@ -1,3 +1,16 @@
+import type {
+  NodeSize,
+  LayoutPadding,
+  CompoundLayoutOptions,
+  CompoundEdgeAttachment,
+} from "../compound";
+export type {
+  NodeSize,
+  LayoutPadding,
+  CompoundLayoutOptions,
+  CompoundLayoutGeometry,
+  CompoundEdgeAttachment,
+} from "../compound";
 import type { NativeRoutingStrategy, RoutingSettings } from "../routing/types";
 import type { EntityRect, Graph, GraphEdge, GraphNode, GraphPort, Point } from "@statelyai/graph";
 import type { LayoutConstraints } from "@statelyai/graph/layout";
@@ -5,21 +18,9 @@ import type { LayoutHint } from "./hints";
 import type { LayoutDirection } from "../types";
 import type { ElkLayeredOptionValueByName, LayeredAdvancedOptions } from "./elk-options";
 
-export interface NodeSize {
-  width: number;
-  height: number;
-}
-
 export interface LayeredSpacing {
   node: number;
   layer: number;
-}
-
-export interface LayoutPadding {
-  top: number;
-  right: number;
-  bottom: number;
-  left: number;
 }
 
 export interface LayeredPhaseInput {
@@ -99,25 +100,6 @@ export interface LayeredStrategies {
   minimizeCrossings?: CrossingMinimizer;
   placeNodes?: NodePlacer;
   routeEdges?: EdgeRouter;
-}
-
-/** Geometry reserved while laying out a compound, before its ancestors. */
-export interface CompoundLayoutOptions {
-  padding?: number | Partial<LayoutPadding>;
-  direction?: LayoutDirection;
-  header?: NodeSize & { side?: "top" | "right" | "bottom" | "left" };
-  minContentSize?: Partial<NodeSize>;
-}
-export interface CompoundLayoutGeometry {
-  /** Parent-relative outer rectangle; header/content are relative to this rectangle. */
-  bounds: EntityRect;
-  header?: EntityRect;
-  content: EntityRect;
-}
-export interface CompoundEdgeAttachment {
-  /** Content attachments leave toward the interior; outer attachments leave outward. */
-  source?: "content" | "outer";
-  target?: "content" | "outer";
 }
 
 export interface LayeredLayoutOptions {

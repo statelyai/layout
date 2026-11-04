@@ -174,10 +174,7 @@ describe("Pele layout", () => {
     }
   });
 
-  it("rejects unsupported hierarchy, ports, constraints, scopes and invalid sizes explicitly", async () => {
-    expect(() =>
-      getPeleLayout(createGraph({ nodes: [{ id: "a" }, { id: "b", parentId: "a" }] })),
-    ).toThrow(/nested/);
+  it("rejects unsupported ports, constraints, scopes and invalid sizes explicitly", async () => {
     expect(() =>
       getPeleLayout(createGraph({ nodes: [{ id: "a", ports: [{ name: "out" }] }] })),
     ).toThrow(/ports/);
