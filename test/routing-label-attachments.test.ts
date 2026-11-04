@@ -4,6 +4,7 @@ import {
   routeEdges,
   updateRoutes,
   refineRoutes,
+  segmentCrossesRect,
   type RoutingSettings,
   type Route,
   type RouteBounds,
@@ -16,6 +17,68 @@ const graph = createGraph({
     { id: "t", x: 400, y: 80, width: 100, height: 60 },
   ],
   edges: [{ id: "e", sourceId: "s", targetId: "t", x: 200, y: 0, width: 80, height: 40 }],
+});
+
+it("aligns a straight targetless endpoint with an off-center label midpoint", () => {
+  const graph = createGraph({
+    nodes: [{ id: "p", x: 100, y: 100, width: 500, height: 400 }],
+    edges: [{ id: "e", sourceId: "p", targetId: "p", x: 300, y: 0, width: 80, height: 40 }],
+  });
+  const route = routeEdges({
+    graph,
+    geometry: "straight",
+    settings: {
+      policy: {
+        curve: { kind: "polyline" },
+        sourceTangent: { kind: "border-normal" },
+        label: { kind: "gap", attachment: "side-midpoint", tangent: { kind: "border-normal" } },
+      },
+      edges: { e: { topology: { kind: "label-only" } } },
+    },
+  }).routes.get("e")!;
+  midpoints(route, labelsFor(graph));
+  expect(route.sections[0]!.path.start).toEqual({ x: 340, y: 100 });
+});
+
+it("keeps midpoint connections clear of interiors when fixed labels overlap", () => {
+  const graph = createGraph({
+    nodes: [
+      { id: "a", x: 0, y: 0, width: 120, height: 80 },
+      { id: "b", x: 320, y: 0, width: 120, height: 80 },
+      { id: "c", x: 0, y: 260, width: 120, height: 80 },
+      { id: "d", x: 320, y: 260, width: 120, height: 80 },
+    ],
+    edges: [
+      { id: "AB", sourceId: "a", targetId: "b", x: 140, y: 20, width: 80, height: 40 },
+      { id: "CD", sourceId: "c", targetId: "d", x: 140, y: 280, width: 80, height: 40 },
+      { id: "AD", sourceId: "a", targetId: "d", x: 150, y: 140, width: 80, height: 40 },
+      { id: "CB", sourceId: "c", targetId: "b", x: 170, y: 140, width: 80, height: 40 },
+    ],
+  });
+  const snapshot = routeEdges({
+    graph,
+    settings: {
+      crossingPenalty: 0,
+      policy: {
+        curve: { kind: "rounded-orthogonal" },
+        label: { kind: "gap", attachment: "side-midpoint", tangent: { kind: "border-normal" } },
+      },
+    },
+  });
+  for (const route of snapshot.routes.values()) {
+    midpoints(route, labelsFor(graph));
+    for (const section of route.sections) {
+      let from = section.path.start;
+      for (const segment of section.path.segments) {
+        for (const obstacle of [
+          ...graph.nodes,
+          ...graph.edges.filter((edge) => edge.id !== route.edgeId),
+        ])
+          expect(segmentCrossesRect(from, segment, rect(obstacle)!)).toBe(false);
+        from = segment.to;
+      }
+    }
+  }
 });
 function labelsFor(value: typeof graph) {
   return new Map(value.edges.map((e) => [e.id, rect(e)!]));

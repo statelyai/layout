@@ -106,6 +106,13 @@ function contextFor(
   batch: Batch,
   padding = 0,
 ): SearchContext {
+  const endpointLabels =
+    batch.policy?.label?.kind === "gap" && batch.policy.label.attachment === "side-midpoint"
+      ? [...endpoints].flatMap((id) => {
+          const bounds = id.startsWith("e:") ? state.obstacles.bounds.get(id) : undefined;
+          return bounds ? [bounds] : [];
+        })
+      : [];
   return {
     edgeCost: (a, b) => batch.edgeCost?.(a, b) ?? 0,
     guides: (bounds) => batch.guides?.(bounds) ?? [],
@@ -133,7 +140,11 @@ function contextFor(
         .map((id) =>
           inflate(
             state.obstacles.bounds.get(id)!,
-            endpoints.has(id) || id.startsWith("policy-terminal:")
+            endpoints.has(id) ||
+              id.startsWith("policy-terminal:") ||
+              // Fixed overlapping labels cannot reserve padding at their shared boundary.
+              (id.startsWith("e:") &&
+                endpointLabels.some((label) => intersects(label, state.obstacles.bounds.get(id)!)))
               ? 0
               : state.settings.clearance + padding,
           ),
@@ -543,12 +554,17 @@ export function routeEdge(
       if (id === owner || ancestorObstacles.has(id)) return false;
       if (id.startsWith("n:") && policy?.collisions?.nodes === "allow") return false;
       if (id.startsWith("e:") && policy?.collisions?.labels === "allow") return false;
+      const ownerLabel = owner.startsWith("e:") ? state.obstacles.bounds.get(owner) : undefined;
       const terminal =
         id === `n:${edge.sourceId}` ||
         id === `n:${edge.targetId}` ||
         id === `e:${edge.id}` ||
         id === `e:${parentLabel?.id}` ||
-        id.startsWith("policy-terminal:");
+        id.startsWith("policy-terminal:") ||
+        (midpointLabel &&
+          ownerLabel &&
+          id.startsWith("e:") &&
+          intersects(ownerLabel, state.obstacles.bounds.get(id)!));
       return crossesRect(
         point,
         lead,
@@ -924,6 +940,24 @@ export function routeEdge(
         )
       )
         point = previousPoint;
+    }
+    if (
+      midpointLabel &&
+      attractingLabel &&
+      geometryFor(style) === "straight" &&
+      !loop &&
+      node &&
+      name === undefined &&
+      !attachment &&
+      requested?.kind !== "port"
+    ) {
+      const middle = center(attractingLabel);
+      const projected =
+        side === "top" || side === "bottom"
+          ? { x: middle.x, y: point.y }
+          : { x: point.x, y: middle.y };
+      if (onFace(projected, bounds, side) && exposedAttachment(projected, side, `n:${node.id}`))
+        point = projected;
     }
     const parentPolicy = parentLabel && effectivePolicy(config, parentLabel.id)?.label;
     if (source && parentPolicy?.kind === "gap" && parentPolicy.attachment === "side-midpoint")
