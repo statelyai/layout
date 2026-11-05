@@ -12,6 +12,7 @@ import type {
   RoutingSettings,
 } from "./types";
 
+/** Choose the nearest cardinal boundary; ties follow left, right, top, bottom order. */
 function boundarySide(point: RoutePoint, bounds: RouteBounds): RouteSide {
   const sides = [
     ["left", Math.abs(point.x - bounds.x)],
@@ -61,6 +62,7 @@ export function createPeleRouting(
       end = last?.path.segments.at(-1)?.to;
     const source = nodes.get(edge.sourceId)!,
       target = nodes.get(edge.targetId)!;
+    /** Infer inward attachments only for points on the finite compound content boundary. */
     const attachment = (id: string, point: RoutePoint | undefined) => {
       const geometry = layout.compoundGeometry.get(id),
         node = nodes.get(id)!;

@@ -23,6 +23,7 @@ function fixture() {
     ],
   });
 }
+/** Check cardinal endpoint tangents, self-intersections, and node/label obstacle clearance. */
 function assertSafe(route: Route, graph: RoutingGraph) {
   expect(route.sections.length, JSON.stringify(route.diagnostics)).toBeGreaterThan(0);
   const vectors = {

@@ -434,6 +434,7 @@ function groupPlan(
   batch.plans.set(key, result);
   return result;
 }
+/** Route one edge through fixed terminals and its label, recording constraint failures. */
 export function routeEdge(
   edge: EdgeGeometry,
   state: RoutingInput,
@@ -1614,6 +1615,7 @@ export function routeEdge(
     pathHasSelfIntersection(
       pathFromPoints([source.point, ...(perEdge.waypoints ?? []), target.point]),
     );
+  /** Validate final geometry and score length, conflicts, and terminal clearance. */
   function assessPath(
     path: RoutePath,
     a?: Terminal,
@@ -1733,6 +1735,7 @@ export function routeEdge(
     searchContext.visited += compact.visited;
     return complete ? points : undefined;
   }
+  /** Fit the requested curve to guides, retaining a diagnosed guide if no safe fit exists. */
   function selectPolicyPath(
     a: Terminal,
     b: Terminal,
@@ -2460,6 +2463,7 @@ export function routeEdge(
     }
     return pathFromPoints([a.point, ...via, b.point]);
   }
+  /** Connect fixed terminals with a validated policy curve or a diagnosed guide fallback. */
   function connection(a: Terminal, b: Terminal, via: readonly RoutePoint[] = []): RoutePath {
     const requestedGuide =
       a === source ? guides?.source : b === target ? guides?.target : undefined;

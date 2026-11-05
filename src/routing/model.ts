@@ -339,6 +339,7 @@ export function groupKey(edge: EdgeGeometry, style: string, config: Settings): s
   return `pair:${JSON.stringify([edge.sourceId, edge.targetId].sort())}`;
 }
 
+/** Validate policy fields, normalize vector tangents, and freeze an independent copy. */
 function normalizePolicy(input: RoutingPolicy | undefined): RoutingPolicy | undefined {
   if (!input) return;
   const value = structuredClone(input);
