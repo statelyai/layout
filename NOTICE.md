@@ -65,10 +65,12 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ## Pele layout engine
 
 `src/pele/upstream.ts` derives from `src/layout/layered.ts`;
+`src/pele/upstream-compound.ts` derives from `src/layout/compound.ts`;
 `src/pele/upstream-path.ts` derives from the curve builder in `src/svg/edges.ts`.
 Source: https://github.com/obsidianmd/pele/tree/36e584d59152181927e0d8bf70fddcd2a5f33d6c.
 Local adaptations include formatting, the renderer helper extraction, and
-keeping bypass bends outside full label bands to clear large guard cards. The native graph adapter is maintained separately.
+keeping bypass bends outside full label bands to clear large guard cards, and
+asymmetric compound padding and minimum content height. The native graph adapter is maintained separately.
 
 ```text
 MIT License

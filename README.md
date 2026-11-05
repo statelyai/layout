@@ -317,10 +317,25 @@ reserves their measured boxes without hiding or truncating their contents.
 Render the sections from `getLayoutRoutes` to preserve curves and label gaps.
 Edge `points` provide a flattened fallback, which joins across label gaps.
 
-This version supports full layout of flat graphs in all four directions,
-including cycles, parallel edges, and self-loops. Nested nodes, named ports,
-geometry constraints, incremental, partial, and route-only scopes are not yet
-supported and are rejected explicitly. No editor integration is included.
+Full layout supports flat and nested graphs in all four directions, including
+cycles, parallel edges, and self-loops. Nested graphs use upstream Pele's compound
+engine for per-group placement, border ports and cross-group routing.
+
+Use `compound(node)` to provide each group's `direction`, `padding`, `header`
+(size and side), and `minContentSize`. Use `edgeAttachment(edge)` to choose
+`content` or `outer` connections on compound endpoints. These geometry types are
+shared with the layered engine. Nested output includes `compoundGeometry`;
+node positions are parent-relative, while label rectangles and routes are
+world-space (`edgeCoordinateSpace: "world"`).
+
+Pele retains its own coordinated connections. Self-loops, ancestor connections,
+explicit content attachments, and paths crossing reserved headers use the shared
+constrained router against the positions Pele chose. Loop labels reserve
+placement space before routing. This does not
+enable incremental or fixed-geometry layout scopes.
+
+Named ports, geometry constraints, incremental, partial, and route-only scopes
+remain unsupported and are rejected explicitly. Editor integration lives in Viz.
 The upstream MIT license and pinned revision are recorded in `NOTICE.md`.
 
 ## elkjs compatibility

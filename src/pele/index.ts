@@ -3,16 +3,24 @@ import { getNodeSize, type LayoutOptions } from "@statelyai/graph/layout";
 import { LayoutError, UnsupportedLayoutError } from "../errors";
 import { recordRouteGeometry } from "../routing/layout-cache";
 import { routeToPoints } from "../routing/adapters";
-import type { Route, RoutePath, RouteSegment } from "../routing/types";
+import type { Route, RoutePath } from "../routing/types";
 import type { LayoutAlgorithm } from "../types";
 import { layered, ledge, lnode } from "./upstream";
-import { routePath } from "./upstream-path";
+import { curveFromTriples } from "./curve";
+import { getCompoundPeleLayout } from "./compound";
+import type {
+  CompoundLayoutGeometry,
+  CompoundLayoutOptions,
+  CompoundEdgeAttachment,
+} from "../compound";
 
 export interface PeleLayoutOptions extends Pick<LayoutOptions, "direction" | "measure"> {
   spacing?: { node?: number; layer?: number; edge?: number };
   padding?: number;
   /** Resolve the complete label box, including descriptions and guards. */
   measureLabel?: (edge: GraphEdge) => { width: number; height: number };
+  compound?: (node: Graph["nodes"][number]) => CompoundLayoutOptions | undefined;
+  edgeAttachment?: (edge: GraphEdge) => CompoundEdgeAttachment | undefined;
 }
 
 export interface PeleVisualGraph<
@@ -23,6 +31,9 @@ export interface PeleVisualGraph<
 > extends VisualGraph<N, E, G, P> {
   /** Exact curves and label gaps; read with getLayoutRoutes(). */
   compoundRoutes: ReadonlyMap<string, Route>;
+  /** Present for nested output. Nodes are parent-relative; edges remain world-space. */
+  edgeCoordinateSpace?: "world";
+  compoundGeometry: ReadonlyMap<string, CompoundLayoutGeometry>;
 }
 
 function dimension(value: number, name: string): number {
@@ -35,25 +46,7 @@ function curve(points: readonly number[]): RoutePath {
   if (points.length < 4) throw new LayoutError("Missing Pele route", "INVALID_GEOMETRY");
   const triples: number[] = [];
   for (let i = 0; i < points.length; i += 2) triples.push(points[i]!, points[i + 1]!, 0);
-  const tokens = routePath(triples, undefined, 0, 0, 0, 13).tokens!;
-  const start = { x: tokens[2]!, y: tokens[3]! };
-  const segments: RouteSegment[] = [];
-  for (let i = 4; i < tokens.length;) {
-    const command = tokens[i]!;
-    const count = tokens[i + 1]!;
-    if (command === 76)
-      segments.push({ kind: "line", to: { x: tokens[i + 2]!, y: tokens[i + 3]! } });
-    else if (command === 67)
-      segments.push({
-        kind: "cubic",
-        control1: { x: tokens[i + 2]!, y: tokens[i + 3]! },
-        control2: { x: tokens[i + 4]!, y: tokens[i + 5]! },
-        to: { x: tokens[i + 6]!, y: tokens[i + 7]! },
-      });
-    else throw new LayoutError("Unexpected Pele curve command", "INVALID_GEOMETRY");
-    i += count + 2;
-  }
-  return { start, segments };
+  return curveFromTriples(triples);
 }
 
 function mapPath(path: RoutePath, transform: (p: Point) => Point): RoutePath {
@@ -78,8 +71,6 @@ export function getPeleLayout<N, E, G, P>(
   graph: Graph<N, E, G, P> | VisualGraph<N, E, G, P>,
   options: PeleLayoutOptions = {},
 ): PeleVisualGraph<N, E, G, P> {
-  if (graph.nodes.some((node) => node.parentId != null))
-    throw new UnsupportedLayoutError("Pele layout does not support nested nodes yet");
   if (
     graph.nodes.some((node) => node.ports?.length) ||
     graph.edges.some((edge) => edge.sourcePort !== undefined || edge.targetPort !== undefined)
@@ -87,6 +78,8 @@ export function getPeleLayout<N, E, G, P>(
     throw new UnsupportedLayoutError(
       "Pele layout uses floating node attachments; named ports are not supported yet",
     );
+  if (graph.nodes.some((node) => node.parentId != null))
+    return getCompoundPeleLayout(graph, options);
   const direction = options.direction ?? graph.direction ?? "down";
   const horizontal = direction === "left" || direction === "right";
   const padding = dimension(options.padding ?? 20, "padding");
@@ -328,6 +321,7 @@ export function getPeleLayout<N, E, G, P>(
       points: edge.points.map(translate),
     })),
     compoundRoutes: finalRoutes,
+    compoundGeometry: new Map(),
   };
   recordRouteGeometry(result, finalRoutes);
   return result;
@@ -340,7 +334,7 @@ export const peleAlgorithm: LayoutAlgorithm<PeleLayoutOptions> = {
     incremental: false,
     partial: false,
     routeOnly: false,
-    hierarchy: false,
+    hierarchy: true,
     ports: false,
   },
   layout(graph, options, context) {

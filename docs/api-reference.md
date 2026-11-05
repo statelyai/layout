@@ -35,7 +35,16 @@ Import these exports from `@statelyai/layout`.
 | `getSporeOverlapRemovalLayout` | `SporeLayoutOptions`            |
 
 `PeleVisualGraph` extends `VisualGraph` with exact route sections in
-`compoundRoutes`. Read them through `getLayoutRoutes`.
+`compoundRoutes`. Read them through `getLayoutRoutes`. For nested graphs it also
+returns `compoundGeometry` (bounds, content and optional header rectangles) and
+`edgeCoordinateSpace: "world"`. Nodes remain parent-relative.
+
+`PeleLayoutOptions.compound(node)` accepts the shared `CompoundLayoutOptions`
+(`direction`, `padding`, `header`, `minContentSize`). `edgeAttachment(edge)` accepts
+shared `CompoundEdgeAttachment` intent for `content` or `outer` endpoints.
+Pele uses the pinned upstream compound engine for nesting; its hierarchy
+capability does not imply incremental, partial, route-only, named-port or
+geometry-constraint support.
 
 ### Algorithm objects
 
