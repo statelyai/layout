@@ -134,6 +134,7 @@ export type RoutingCurve =
   | { readonly kind: "polyline" }
   | { readonly kind: "bezier"; readonly curvature?: number }
   | { readonly kind: "catmull-rom" }
+  | { readonly kind: "pele" }
   | { readonly kind: "rounded-orthogonal"; readonly radius?: number };
 export type RoutingLabel =
   | { readonly kind: "follow"; readonly fraction?: number; readonly offset?: number }

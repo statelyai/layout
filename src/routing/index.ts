@@ -1,3 +1,4 @@
+export { createPeleRouting } from "./pele";
 export * from "./strategies";
 export { routeEdges, updateRoutes, refineRoutes } from "./api";
 export type { RouteEdgesOptions, UpdateRoutesOptions } from "./api";

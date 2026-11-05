@@ -38,6 +38,7 @@ export function routePath(
   endTrim: number,
   startReach = startTrim > 0 ? startTrim + LEAD : 0,
   endReach = endTrim > 0 ? endTrim + LEAD : 0,
+  precise = false,
 ): EdgePath {
   const linear = curve === "linear";
   const stepped = curve === "step" || curve === "stepBefore" || curve === "stepAfter";
@@ -137,9 +138,10 @@ export function routePath(
 
   // Keep tokens to avoid parsing d when checking fills.
   const tokens: number[] = [];
+  const coordinate = (v: number): number => (precise ? v : written(v));
   const tok = (v: number): string => {
-    tokens.push(written(v));
-    return num(v);
+    tokens.push(coordinate(v));
+    return precise ? String(v) : num(v);
   };
   tokens.push(77, 2);
   let d = `M${tok(xs[0])},${tok(ys[0])}`;

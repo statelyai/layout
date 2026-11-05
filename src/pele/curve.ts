@@ -3,10 +3,10 @@ import type { RoutePath, RouteSegment } from "../routing/types";
 import { routePath } from "./upstream-path";
 
 /** Keep upstream's axis triples, including turns between differently directed groups. */
-export function curveFromTriples(triples: number[]): RoutePath {
+export function curveFromTriples(triples: number[], startReach = 0, endReach = 13): RoutePath {
   if (triples.length < 6 || !triples.every(Number.isFinite))
     throw new LayoutError("Missing compound Pele route", "INVALID_GEOMETRY");
-  const tokens = routePath(triples, undefined, 0, 0, 0, 13).tokens!;
+  const tokens = routePath(triples, undefined, 0, 0, startReach, endReach, true).tokens!;
   const segments: RouteSegment[] = [];
   for (let i = 4; i < tokens.length;) {
     if (tokens[i] === 76)

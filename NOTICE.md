@@ -70,7 +70,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 Source: https://github.com/obsidianmd/pele/tree/36e584d59152181927e0d8bf70fddcd2a5f33d6c.
 Local adaptations include formatting, the renderer helper extraction, and
 keeping bypass bends outside full label bands to clear large guard cards, and
-asymmetric compound padding and minimum content height. The native graph adapter is maintained separately.
+asymmetric compound padding and minimum content height, and an optional
+full-precision path output for native geometry and incremental curve validation. The native graph adapter is maintained separately.
 
 ```text
 MIT License

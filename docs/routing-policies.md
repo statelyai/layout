@@ -24,11 +24,12 @@ for (const route of snapshot.routes.values()) {
 
 Presets are immutable policy objects. Individual fields can be overridden.
 
-| Preset     | Curve                   | Endpoint tangents | Label                               |
-| ---------- | ----------------------- | ----------------- | ----------------------------------- |
-| `smooth`   | Bézier                  | Automatic         | Follows the path at half its length |
-| `diagram`  | Rounded orthogonal      | Border normal     | Follows the path at half its length |
-| `authored` | Centripetal Catmull–Rom | Automatic         | Follows the path at half its length |
+| Preset     | Curve                   | Endpoint tangents | Label                                      |
+| ---------- | ----------------------- | ----------------- | ------------------------------------------ |
+| `pele`     | Pele axis-aware cubics  | Border normal     | Fixed midpoint gap; preserves valid routes |
+| `smooth`   | Bézier                  | Automatic         | Follows the path at half its length        |
+| `diagram`  | Rounded orthogonal      | Border normal     | Follows the path at half its length        |
+| `authored` | Centripetal Catmull–Rom | Automatic         | Follows the path at half its length        |
 
 Presets avoid nodes and fixed labels and use finite crossing and overlap costs.
 An edge without label dimensions remains an unlabeled edge.
@@ -63,10 +64,15 @@ produce route diagnostics.
 
 | `curve.kind`         | Behavior                                                                            |
 | -------------------- | ----------------------------------------------------------------------------------- |
+| `pele`               | Pele straight runs and broad axis-aware cubic S-curves; validated against obstacles |
 | `polyline`           | Line segments through the selected routing points                                   |
 | `bezier`             | Cubic Bézier geometry with configurable `curvature`                                 |
 | `catmull-rom`        | Centripetal Catmull–Rom interpolation through routing points and authored waypoints |
 | `rounded-orthogonal` | Rectilinear corridors with rounded corners, controlled by `radius`                  |
+
+Pele uses the same path builder as full Pele layout, with bounded local candidates
+and obstacle guides. It preserves curve intent when a cached path is invalid;
+it does not rerun placement or global lane allocation. See [Pele integration](pele/interactive-routing.md).
 
 `curvature` is a preferred chord-length handle multiplier, defaulting to `0.5`.
 Handles and corner radii can shrink to satisfy hard geometry constraints.

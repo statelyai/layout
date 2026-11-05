@@ -262,6 +262,8 @@ The object API is `routeEdges({ graph, geometry?, settings?, initialRoutes? })`,
 `refineRoutes({ previous })`. Geometry, curve construction, coordination and
 self-loop constraints are independent. `getLayoutRouting(layout)` returns a
 retained snapshot and resolved routing graph when available.
+`createPeleRouting(peleLayout, settings?)` creates a seeded Pele snapshot and
+world routing graph for fixed-node label edits; see [Pele integration](pele/interactive-routing.md).
 `createRoutingScheduler` batches operation diffs, supports asynchronous executors,
 and suppresses obsolete results. `mergeRoutingChanges` composes consecutive diffs
 without comparing full graphs. `trimPath` trims marker gaps while retaining curves.
@@ -281,7 +283,7 @@ geometry and contain explicit fallback status. See the [routing reference](routi
 for signatures, snapshot ownership, options, capabilities, and limitations.
 
 `RoutingSettings.policy` and `EdgeRoutingSettings.policy` accept a `RoutingPolicy`.
-`routingPolicies` exports immutable `smooth`, `diagram`, and `authored` presets.
+`routingPolicies` exports immutable `smooth`, `diagram`, `authored`, and `pele` presets.
 Policies independently select curve shape, terminal tangents, labels, collision
 handling, monotonicity, and route stability. Optional `Route.label` returns a
 `RouteLabelPlacement` with `bounds`, `anchor`, and `tangent`. See the

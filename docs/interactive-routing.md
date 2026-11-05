@@ -35,7 +35,7 @@ renderPatches(result.patches);
 ```
 
 Geometry selects straight, arbitrary-angle polyline, orthogonal or octilinear
-search. Curves select polyline, Bézier, Catmull–Rom or rounded orthogonal output.
+search. Curves select polyline, Bézier, Catmull–Rom, rounded orthogonal or Pele output.
 An edge can override the default with `edges[id].geometry`, preserving mixed
 layout scopes in one snapshot. Straight paths cannot detour around obstacles;
 infeasible hard constraints produce diagnostics and may leave empty sections.
@@ -132,6 +132,15 @@ Valid line corridors can retarget floating endpoints without accumulating bends.
 Marker gaps retain private untrimmed hints, so repeated updates trim once. A
 hard-safe guide can remain a curve fallback during preservation; its explicit
 `constraint: "curve"` diagnostic remains until refinement succeeds.
+
+## Continue from Pele
+
+`createPeleRouting(peleLayout, settings?)` captures a fresh Pele result, including
+world geometry, header barriers, attachment coordination and label directions.
+Its snapshot retains `curve: { kind: "pele" }` through invalidated routes and
+label drag/drop. Continue with `updateRoutes` and keep the snapshot after drop.
+See the [Pele consumer contract](pele/interactive-routing.md) for exact setup,
+rendering requirements, bounded-work behavior and fallback limitations.
 
 ## Scheduling and workers
 
