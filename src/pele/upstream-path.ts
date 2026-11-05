@@ -24,13 +24,16 @@ function written(v: number): number {
   const n = Math.round(v * 100);
   return n === 0 ? 0 : n / 100;
 }
-// Builds the path for a route of x, y, axis triples, trimming both ends to leave room for markers.
-// Between two points that are not in line, a route is one S that leaves and arrives along the
-// flow, or a step in a stepped route. Where the route itself turns a corner, a stepped route
-// rounds it a little, and any other but a linear one turns as widely as it can: the turn takes
-// the whole of a leg that ends at a node and half of a leg it shares with the next turn.
-// `startReach` and `endReach` say how far from its nodes the edge starts to turn, where the
-// other edges on the same side of a node need it to; by default, far enough to clear its own marker.
+/**
+ * Builds the path for a route of x, y, axis triples, trimming both ends to leave room for markers.
+ * Between two points that are not in line, a route is one S that leaves and arrives along the
+ * flow, or a step in a stepped route. Where the route itself turns a corner, a stepped route
+ * rounds it a little, and any other but a linear one turns as widely as it can: the turn takes
+ * the whole of a leg that ends at a node and half of a leg it shares with the next turn.
+ * `startReach` and `endReach` say how far from its nodes the edge starts to turn, where the
+ * other edges on the same side of a node need it to; by default, far enough to clear its own marker.
+ * `precise` retains native coordinates for geometry validation instead of display rounding.
+ */
 export function routePath(
   route: number[],
   curve: string | undefined,
@@ -38,6 +41,7 @@ export function routePath(
   endTrim: number,
   startReach = startTrim > 0 ? startTrim + LEAD : 0,
   endReach = endTrim > 0 ? endTrim + LEAD : 0,
+  precise = false,
 ): EdgePath {
   const linear = curve === "linear";
   const stepped = curve === "step" || curve === "stepBefore" || curve === "stepAfter";
@@ -137,9 +141,12 @@ export function routePath(
 
   // Keep tokens to avoid parsing d when checking fills.
   const tokens: number[] = [];
+  /** Preserve native coordinates or apply upstream display rounding. */
+  const coordinate = (v: number): number => (precise ? v : written(v));
+  /** Serialize a coordinate and retain the same value in structured path tokens. */
   const tok = (v: number): string => {
-    tokens.push(written(v));
-    return num(v);
+    tokens.push(coordinate(v));
+    return precise ? String(v) : num(v);
   };
   tokens.push(77, 2);
   let d = `M${tok(xs[0])},${tok(ys[0])}`;

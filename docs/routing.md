@@ -128,6 +128,10 @@ own its snapshot and exchange graph diffs and route patches with the main thread
 mutating the original collection. An empty patch list does not imply an unchanged
 snapshot: its geometry/index state and revision may have advanced.
 
+For a fresh Pele layout, `createPeleRouting(layout, settings?)` returns the
+world routing graph and a seeded snapshot with a persistent Pele curve policy.
+See [Pele label dragging](pele/interactive-routing.md).
+
 ## Strategies
 
 <!-- native routing strategy catalog from src/routing/index.ts -->

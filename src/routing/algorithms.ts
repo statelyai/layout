@@ -58,6 +58,7 @@ import {
   placeFollowingLabel,
 } from "./policy-geometry";
 import { inflate, intersects, union } from "./spatial";
+import { pelePath, peleCornerKnots } from "./pele-path";
 import { retargetLinePath } from "./retarget";
 import { copyUntrimmedRoute, rememberUntrimmedRoute } from "./route-cache";
 import {
@@ -433,6 +434,7 @@ function groupPlan(
   batch.plans.set(key, result);
   return result;
 }
+/** Route one edge through fixed terminals and its label, recording constraint failures. */
 export function routeEdge(
   edge: EdgeGeometry,
   state: RoutingInput,
@@ -1037,6 +1039,7 @@ export function routeEdge(
   const searchContext =
     policy?.curve?.kind === "bezier" ||
     policy?.curve?.kind === "catmull-rom" ||
+    policy?.curve?.kind === "pele" ||
     (!policy?.curve && ["curved", "organic", "bundle", "bezier"].includes(style))
       ? contextFor(
           state,
@@ -1420,7 +1423,12 @@ export function routeEdge(
       });
       terminal.point = { x: point.x + outward.x * length, y: point.y + outward.y * length };
     }
-    if (policy.label && policy.label.kind !== "follow" && !positionedLabel)
+    if (
+      policy.label &&
+      policy.label.kind !== "follow" &&
+      !positionedLabel &&
+      (policy.label.kind !== "gap" || (edge.width ?? 0) > 0 || (edge.height ?? 0) > 0)
+    )
       report("MISSING_GEOMETRY", "This label policy requires positioned label geometry");
     if (label && lastSource && (policy.label?.kind === "through" || policy.label?.kind === "gap")) {
       const tangent = policy.label.tangent;
@@ -1607,6 +1615,7 @@ export function routeEdge(
     pathHasSelfIntersection(
       pathFromPoints([source.point, ...(perEdge.waypoints ?? []), target.point]),
     );
+  /** Validate final geometry and score length, conflicts, and terminal clearance. */
   function assessPath(
     path: RoutePath,
     a?: Terminal,
@@ -1640,7 +1649,7 @@ export function routeEdge(
     const valid =
       validGeometry &&
       policyPathSafe(path) &&
-      (authoredCrossing || !pathHasSelfIntersection(path)) &&
+      ((authoredCrossing && curvePolicy.kind !== "pele") || !pathHasSelfIntersection(path)) &&
       (!a?.tangent || directionMatches(pathEndpointTangent(path, "start"), a.tangent)) &&
       (!b?.tangent || directionMatches(pathEndpointTangent(path, "end"), b.tangent)) &&
       !(policy?.monotonic?.strength === "require" && reverseTravel > 1e-7);
@@ -1726,6 +1735,7 @@ export function routeEdge(
     searchContext.visited += compact.visited;
     return complete ? points : undefined;
   }
+  /** Fit the requested curve to guides, retaining a diagnosed guide if no safe fit exists. */
   function selectPolicyPath(
     a: Terminal,
     b: Terminal,
@@ -1794,7 +1804,9 @@ export function routeEdge(
     const candidates: RoutePath[] = [];
     const unshapedCandidates = new Set<RoutePath>();
     const compact =
-      curvePolicy.kind === "bezier" || curvePolicy.kind === "catmull-rom"
+      curvePolicy.kind === "bezier" ||
+      curvePolicy.kind === "catmull-rom" ||
+      curvePolicy.kind === "pele"
         ? compactBezierGuide(a, b, via)
         : undefined;
     const smoothCompact =
@@ -1822,7 +1834,12 @@ export function routeEdge(
       if (a.tangent) tangents.set(0, a.tangent);
       if (b.tangent) tangents.set(points.length - 1, b.tangent);
       if (curvePolicy.kind === "polyline") candidates.push(pathFromPoints(points));
-      else if (curvePolicy.kind === "catmull-rom")
+      else if (curvePolicy.kind === "pele") {
+        for (const knots of [points, ...[12, 6, 3].map((reach) => peleCornerKnots(points, reach))])
+          candidates.push(
+            pelePath(knots, a.tangent ?? vector(a.side), b.tangent ?? reverse(vector(b.side))),
+          );
+      } else if (curvePolicy.kind === "catmull-rom")
         candidates.push(catmullRomPath(points, tangents));
       else if (curvePolicy.kind === "bezier") {
         const curvature = curvePolicy.curvature ?? 0.5;
@@ -1926,7 +1943,7 @@ export function routeEdge(
       if (unshapedCandidates.has(viable[0]!.path)) shapeFallback = true;
       return viable[0]!.path;
     }
-    if (curvePolicy.kind === "catmull-rom") {
+    if (curvePolicy.kind === "catmull-rom" || curvePolicy.kind === "pele") {
       // A clear polyline can leave too little room for an interpolating spline.
       // Retry with padded guides within the remaining shared search budget.
       for (const padding of [config.radius / 2, config.radius, config.radius * 2]) {
@@ -1935,7 +1952,10 @@ export function routeEdge(
         const tangents = new Map<number, RoutePoint>();
         if (a.tangent) tangents.set(0, a.tangent);
         if (b.tangent) tangents.set(points.length - 1, b.tangent);
-        const path = catmullRomPath(points, tangents);
+        const path =
+          curvePolicy.kind === "pele"
+            ? pelePath(points, a.tangent ?? vector(a.side), b.tangent ?? reverse(vector(b.side)))
+            : catmullRomPath(points, tangents);
         const assessed = assessPath(path, a, b);
         if (assessed.valid && Number.isFinite(assessed.cost)) return path;
       }
@@ -2443,6 +2463,7 @@ export function routeEdge(
     }
     return pathFromPoints([a.point, ...via, b.point]);
   }
+  /** Connect fixed terminals with a validated policy curve or a diagnosed guide fallback. */
   function connection(a: Terminal, b: Terminal, via: readonly RoutePoint[] = []): RoutePath {
     const requestedGuide =
       a === source ? guides?.source : b === target ? guides?.target : undefined;
@@ -2452,6 +2473,38 @@ export function routeEdge(
         : undefined;
     if (guide && !via.length) via = guide.points.slice(1, -1);
     if (!policy) return guideConnection(a, b, via);
+    if (curvePolicy.kind === "pele" && !via.length && !portEscapes.size) {
+      const startDirection = a.tangent ?? vector(a.side);
+      const endDirection = b.tangent ?? reverse(vector(b.side));
+      const direct = pelePath([a.point, b.point], startDirection, endDirection);
+      const directAssessment = assessPath(direct, a, b);
+      if (directAssessment.valid && directAssessment.cost - pathLength(direct) < 1e-7)
+        return direct;
+      const paths = [direct];
+      for (const reach of [13, 26, 52, 104]) {
+        const start = {
+          x: a.point.x + startDirection.x * reach,
+          y: a.point.y + startDirection.y * reach,
+        };
+        const end = {
+          x: b.point.x - endDirection.x * reach,
+          y: b.point.y - endDirection.y * reach,
+        };
+        for (const corner of [
+          { x: start.x, y: end.y },
+          { x: end.x, y: start.y },
+        ]) {
+          const points = [a.point, start, corner, end, b.point];
+          paths.push(pelePath(points, startDirection, endDirection));
+          paths.push(pelePath(peleCornerKnots(points, 6), startDirection, endDirection));
+        }
+      }
+      const viable = paths
+        .map((path) => ({ path, ...assessPath(path, a, b) }))
+        .filter((candidate) => candidate.valid)
+        .sort((a, b) => a.cost - b.cost);
+      if (viable.length) return viable[0]!.path;
+    }
     const diagnosticStart = diagnostics.length;
     const fallbackBefore = shapeFallback;
     const evaluate = (from: Terminal, to: Terminal) => {
@@ -2613,10 +2666,16 @@ export function routeEdge(
   });
   const oldCurveValid =
     previousCurveFallback ||
-    (curvePolicy.kind !== "bezier" && curvePolicy.kind !== "catmull-rom") ||
-    oldSections?.every((section) =>
-      section.path.segments.every((segment) => segment.kind === "cubic"),
-    );
+    (curvePolicy.kind === "pele"
+      ? oldSections?.every((section) =>
+          section.path.segments.every(
+            (segment) => segment.kind === "line" || segment.kind === "cubic",
+          ),
+        )
+      : (curvePolicy.kind !== "bezier" && curvePolicy.kind !== "catmull-rom") ||
+        oldSections?.every((section) =>
+          section.path.segments.every((segment) => segment.kind === "cubic"),
+        ));
   const oldRoundedValid =
     curvePolicy.kind !== "rounded-orthogonal" ||
     oldSections?.every((section) => {

@@ -165,6 +165,9 @@ const { snapshot, patches } = updateRoutes({
 const paths = snapshot.routes.get("ab")?.sections.map((section) => toSvgPath(section.path));
 ```
 
+`createPeleRouting(peleLayout, settings?)` captures Pele routes and compound barriers
+for fixed-node label dragging. See [Pele integration](docs/pele/interactive-routing.md).
+
 Geometry (`straight`, `orthogonal`, `polyline`, `octilinear`), curve construction,
 edge coordination (`independent`, `parallel`, `fan`, `bus`, `bundle`) and self-loop
 rules are separate choices. Per-edge endpoints, obstacles, label-only topology,

@@ -339,6 +339,7 @@ export function groupKey(edge: EdgeGeometry, style: string, config: Settings): s
   return `pair:${JSON.stringify([edge.sourceId, edge.targetId].sort())}`;
 }
 
+/** Validate policy fields, normalize vector tangents, and freeze an independent copy. */
 function normalizePolicy(input: RoutingPolicy | undefined): RoutingPolicy | undefined {
   if (!input) return;
   const value = structuredClone(input);
@@ -349,7 +350,7 @@ function normalizePolicy(input: RoutingPolicy | undefined): RoutingPolicy | unde
   if (value.curve)
     oneOf(
       value.curve.kind,
-      ["polyline", "bezier", "catmull-rom", "rounded-orthogonal"],
+      ["polyline", "bezier", "catmull-rom", "rounded-orthogonal", "pele"],
       "curve kind",
     );
   if (value.label) oneOf(value.label.kind, ["follow", "fixed", "through", "gap"], "label kind");
@@ -479,7 +480,16 @@ export const routingPolicies: Readonly<{
   smooth: RoutingPolicy;
   diagram: RoutingPolicy;
   authored: RoutingPolicy;
+  pele: RoutingPolicy;
 }> = freeze({
+  pele: {
+    curve: { kind: "pele" },
+    sourceTangent: { kind: "border-normal" },
+    targetTangent: { kind: "border-normal" },
+    label: { kind: "gap", attachment: "side-midpoint", tangent: { kind: "border-normal" } },
+    collisions: presetCollisions,
+    stability: { kind: "preserve-valid" },
+  },
   smooth: {
     curve: { kind: "bezier", curvature: 0.5 },
     sourceTangent: { kind: "automatic" },
