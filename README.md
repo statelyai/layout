@@ -189,6 +189,9 @@ updates child attachments when parent labels move. See the
 tangents, passive or fixed labels, collisions, monotonicity, and route stability.
 Gap labels can restrict attachments to side midpoints with
 `attachment: "side-midpoint"`, including conditional connectors and incremental updates.
+Rounded orthogonal curves accept `radius` (preferred), `minRadius` and
+`maxRadius`; short segments shrink bends within those bounds. Infeasible positive
+minimums produce a diagnosed whole-edge sharp fallback.
 `routingPolicies.smooth`, `.diagram`, and `.authored` provide Bézier, rounded
 orthogonal, and centripetal Catmull–Rom presets. Following labels use half the
 final path length and return their placement in `Route.label`. See the

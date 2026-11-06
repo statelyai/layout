@@ -1,3 +1,4 @@
+import { resolveCornerRadius } from "./corner-radius";
 import type { GraphEdge } from "@statelyai/graph";
 import { PersistentMap } from "./persistent";
 import { SpatialIndex } from "./spatial";
@@ -379,7 +380,7 @@ function normalizePolicy(input: RoutingPolicy | undefined): RoutingPolicy | unde
     return { kind: "vector", direction: { x: x / length, y: y / length } };
   }
   if (value.curve?.kind === "bezier") nonnegative(value.curve.curvature, "curvature");
-  if (value.curve?.kind === "rounded-orthogonal") nonnegative(value.curve.radius, "radius");
+  if (value.curve?.kind === "rounded-orthogonal") resolveCornerRadius(value.curve);
   nonnegative(value.collisions?.crossingPenalty, "crossingPenalty");
   nonnegative(value.collisions?.overlapPenalty, "overlapPenalty");
   if (value.label?.kind === "follow") {

@@ -255,3 +255,15 @@ and correctness checks. They do not establish drag-frame latency or FPS. Run the
 consumer's projection/interaction benchmark too before making a UI performance
 claim. Compare work counts on busy hosts; do not treat noisy timing differences
 as speedups. Existing `bench:routing` and `bench:viz-routing` cover other workloads.
+
+## Bounded orthogonal corners
+
+<!-- corner shaping from src/routing/corner-radius.ts, path.ts and algorithms.ts -->
+
+Use orthogonal geometry with a polyline curve for sharp turns, or
+`policy.curve: { kind: "rounded-orthogonal", radius: 10, minRadius: 2, maxRadius: 16 }`
+for rounded turns. Preferred radius is clipped to the interval, then each corner
+fits its adjacent segment lengths. The minimum remains hard: an infeasible
+positive minimum produces a whole-edge sharp fallback with a curve diagnostic.
+Both label legs use the same rule, including preserved paths and drag updates.
+See the [corner policy details](routing-policies.md#curves).

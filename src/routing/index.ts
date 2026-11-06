@@ -49,6 +49,7 @@ export type {
   RoutingSettings,
   RoutingPolicy,
   RoutingCurve,
+  CornerRadiusOptions,
   RoutingTangent,
   RoutingLabel,
   RouteLabelPlacement,

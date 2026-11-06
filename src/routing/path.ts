@@ -1,3 +1,5 @@
+import { resolveCornerRadius } from "./corner-radius";
+import type { CornerRadiusOptions } from "./types";
 import { crossesRect } from "../authoring/routing";
 import type { RouteBounds, RoutePath, RoutePoint, RouteSegment } from "./types";
 
@@ -286,10 +288,8 @@ export function getTangentAtLength(
   return d ? { x: (b.x - a.x) / d, y: (b.y - a.y) / d } : { x: 0, y: 0 };
 }
 /** Round line-to-line corners only; existing curves and path endpoints are retained. */
-export function roundCorners(path: RoutePath, options: { readonly radius: number }): RoutePath {
-  const radius = options.radius;
-  if (!Number.isFinite(radius) || radius < 0)
-    throw new RangeError("radius must be non-negative and finite");
+export function roundCorners(path: RoutePath, options: CornerRadiusOptions): RoutePath {
+  const { radius, minRadius } = resolveCornerRadius(options);
   if (!radius) return path;
   const result: RouteSegment[] = [];
   let previous = path.start;
@@ -305,9 +305,10 @@ export function roundCorners(path: RoutePath, options: { readonly radius: number
           v = { x: (next.to.x - corner.x) / l2, y: (next.to.y - corner.y) / l2 };
         const angle = Math.acos(Math.max(-1, Math.min(1, u.x * v.x + u.y * v.y)));
         if (angle > 1e-8 && angle < Math.PI - 1e-8) {
-          const tangent = Math.tan(angle / 2),
+          const tangent = Math.abs(u.x * v.x + u.y * v.y) < 1e-12 ? 1 : Math.tan(angle / 2),
             trim = Math.min(radius * tangent, l1 / 2, l2 / 2),
             r = trim / tangent;
+          if (r + 1e-9 < minRadius) return path;
           result.push(
             { kind: "line", to: { x: corner.x - u.x * trim, y: corner.y - u.y * trim } },
             {

@@ -130,11 +130,17 @@ export type RoutingTangent =
   | { readonly kind: "automatic" }
   | { readonly kind: "border-normal" }
   | { readonly kind: "vector"; readonly direction: RoutePoint };
+export interface CornerRadiusOptions {
+  /** Preferred radius; shortened locally to fit adjacent segments. Defaults to 10. */
+  readonly radius?: number;
+  readonly minRadius?: number;
+  readonly maxRadius?: number;
+}
 export type RoutingCurve =
   | { readonly kind: "polyline" }
   | { readonly kind: "bezier"; readonly curvature?: number }
   | { readonly kind: "catmull-rom" }
-  | { readonly kind: "rounded-orthogonal"; readonly radius?: number };
+  | ({ readonly kind: "rounded-orthogonal" } & CornerRadiusOptions);
 export type RoutingLabel =
   | { readonly kind: "follow"; readonly fraction?: number; readonly offset?: number }
   | { readonly kind: "fixed" }
