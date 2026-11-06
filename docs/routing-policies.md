@@ -74,7 +74,8 @@ A safe guide returned in place of a requested curve carries fallback diagnostics
 
 For orthogonal geometry, `curve: { kind: "polyline" }` gives sharp corners;
 `curve: { kind: "rounded-orthogonal", radius: 10, minRadius: 2, maxRadius: 16 }`
-adds circular bends. `radius` is preferred, not forced: it is clamped to the
+adds circular bends. Omitted `curve.radius` inherits `RoutingSettings.radius`
+(default 10); standalone `roundCorners` defaults to 10. `radius` is preferred, not forced: it is clamped to the
 configured interval, then each bend shrinks to fit half of each adjacent segment.
 Bounds are finite and nonnegative; an inverted interval is rejected. Omitted
 minimum is zero; an omitted maximum imposes no extra cap on the preferred radius.

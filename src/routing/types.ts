@@ -131,7 +131,8 @@ export type RoutingTangent =
   | { readonly kind: "border-normal" }
   | { readonly kind: "vector"; readonly direction: RoutePoint };
 export interface CornerRadiusOptions {
-  /** Preferred radius; shortened locally to fit adjacent segments. Defaults to 10. */
+  /** Preferred radius; shortened locally to fit adjacent segments.
+   * Routing inherits RoutingSettings.radius (default 10); roundCorners defaults to 10. */
   readonly radius?: number;
   readonly minRadius?: number;
   readonly maxRadius?: number;
