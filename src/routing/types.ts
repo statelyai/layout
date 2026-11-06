@@ -229,6 +229,10 @@ export interface RoutingUpdate {
   readonly base: RoutingSnapshot;
 }
 export type RoutingGraph = Graph<unknown, unknown, unknown, unknown>;
+/** Selected previews retain unrelated routes until an explicit full refinement. */
+export type RoutingUpdateScope =
+  | { readonly kind: "affected" }
+  | { readonly kind: "selected"; readonly edgeIds: readonly string[] };
 export interface RoutingStrategy {
   readonly id: string;
   route(
@@ -240,6 +244,7 @@ export interface RoutingStrategy {
     previous: RoutingSnapshot,
     diff: GraphDiff<unknown, unknown>,
     settings?: RoutingSettings,
+    scope?: RoutingUpdateScope,
   ): RoutingUpdate | Promise<RoutingUpdate>;
 }
 export interface NativeRoutingStrategy extends RoutingStrategy {
@@ -250,6 +255,7 @@ export interface NativeRoutingStrategy extends RoutingStrategy {
     previous: RoutingSnapshot,
     diff: GraphDiff<unknown, unknown>,
     settings?: RoutingSettings,
+    scope?: RoutingUpdateScope,
   ): RoutingUpdate;
 }
 export type RouteBounds = Readonly<EntityRect>;

@@ -40,6 +40,7 @@ import type {
   RoutingSettings,
   RoutingSnapshot,
   RoutingUpdate,
+  RoutingUpdateScope,
 } from "./types";
 
 const STATE = Symbol("routingState");
@@ -64,12 +65,15 @@ function globalSettingsKey(config: Settings): string {
 class PendingRoutes extends Set<string> {
   readonly #heap: string[] = [];
   readonly #compare: (a: string, b: string) => number;
-  constructor(compare: (a: string, b: string) => number) {
+  constructor(
+    compare: (a: string, b: string) => number,
+    readonly allowed?: ReadonlySet<string>,
+  ) {
     super();
     this.#compare = compare;
   }
   override add(id: string): this {
-    if (this.has(id)) return this;
+    if (this.has(id) || (this.allowed && !this.allowed.has(id))) return this;
     super.add(id);
     let index = this.#heap.length;
     this.#heap.push(id);
@@ -181,6 +185,7 @@ function calculate(
   counts: Metrics,
   previous?: State,
   preservePrevious = true,
+  selected?: ReadonlySet<string>,
 ): { state: State; patches: RoutePatch[] } {
   let routes = state.routes,
     routeIndex = state.routeIndex,
@@ -223,14 +228,19 @@ function calculate(
     (priority(a) < priority(b) ? -1 : priority(a) > priority(b) ? 1 : 0) ||
     (familyDepth.get(a) ?? 1) - (familyDepth.get(b) ?? 1) ||
     (a < b ? -1 : a > b ? 1 : 0);
-  const pending = new PendingRoutes(compare);
+  const pending = new PendingRoutes(compare, selected);
   for (const id of affected) pending.add(id);
   expandLabelFamilies(pending, input);
   if (previous) expandLabelFamilies(pending, previous);
   const later = (candidate: string, id: string) => compare(candidate, id) > 0;
   const invalidate = (id: string, bounds: ReturnType<typeof routeBounds>) => {
     for (const candidate of routeIndex.query(inflate(bounds, state.settings.edgeSpacing))) {
-      if (!later(candidate, id) || processed.has(candidate)) continue;
+      if (
+        (selected && !selected.has(candidate)) ||
+        !later(candidate, id) ||
+        processed.has(candidate)
+      )
+        continue;
       if (
         effectivePolicy(state.settings, candidate)?.stability?.kind === "preserve-valid" &&
         routes.has(candidate)
@@ -674,6 +684,40 @@ function updateState(
   expandLabelFamilies(affected, state);
   return { state, affected };
 }
+function topologyChanged(
+  previous: State,
+  state: State,
+  diff: GraphDiff<unknown, unknown>,
+): boolean {
+  if (
+    diff.nodes.added.length ||
+    diff.nodes.removed.length ||
+    diff.edges.added.length ||
+    diff.edges.removed.length
+  )
+    return true;
+  if (
+    diff.edges.updated.some(({ id }) => {
+      const old = previous.edges.get(id)!,
+        next = state.edges.get(id)!;
+      return (["sourceId", "targetId", "sourcePort", "targetPort"] as const).some(
+        (key) => old[key] !== next[key],
+      );
+    })
+  )
+    return true;
+  return diff.nodes.updated.some(({ id }) => {
+    const old = previous.nodes.get(id)!,
+      next = state.nodes.get(id)!;
+    const names = new Set(next.ports?.map((port) => port.name));
+    return (
+      old.parentId !== next.parentId ||
+      (old.ports?.length ?? 0) !== (next.ports?.length ?? 0) ||
+      !!old.ports?.some((port) => !names.has(port.name))
+    );
+  });
+}
+
 export function createRoutingStrategy(id: RouteStyle): NativeRoutingStrategy {
   return Object.freeze({
     id,
@@ -688,6 +732,7 @@ export function createRoutingStrategy(id: RouteStyle): NativeRoutingStrategy {
       previous: RoutingSnapshot,
       diff: GraphDiff<unknown, unknown>,
       config?: RoutingSettings,
+      scope?: RoutingUpdateScope,
     ): RoutingUpdate {
       const prior = (previous as Snapshot)[STATE];
       if (!prior || previous.strategy !== id)
@@ -700,7 +745,35 @@ export function createRoutingStrategy(id: RouteStyle): NativeRoutingStrategy {
         prior.direction === state.direction &&
         (prior.settings === state.settings ||
           globalSettingsKey(prior.settings) === globalSettingsKey(state.settings));
-      const result = calculate(state, id, affected, counts, prior, preservePrevious);
+      let selected: Set<string> | undefined;
+      // Topology and global policy changes require coherent routing, even during preview.
+      if (scope?.kind === "selected" && preservePrevious && !topologyChanged(prior, state, diff)) {
+        selected = new Set(scope.edgeIds);
+        for (const edgeId of selected)
+          if (!state.edges.has(edgeId)) throw new Error(`Unknown selected routing edge ${edgeId}`);
+        let size: number;
+        do {
+          size = selected.size;
+          expandLabelFamilies(selected, state);
+          expandLabelFamilies(selected, prior);
+          for (const edgeId of selected) {
+            for (const version of [prior, state]) {
+              const edge = version.edges.get(edgeId);
+              const key = edge && groupKey(edge, id, version.settings);
+              if (key) for (const peer of version.groups.get(key)?.keys() ?? []) selected.add(peer);
+            }
+          }
+        } while (selected.size !== size);
+      }
+      const result = calculate(
+        state,
+        id,
+        selected ?? affected,
+        counts,
+        prior,
+        preservePrevious,
+        selected,
+      );
       return Object.freeze({
         base: previous,
         snapshot: snapshot(result.state, id, previous.revision + 1, counts),

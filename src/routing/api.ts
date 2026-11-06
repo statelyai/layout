@@ -8,6 +8,7 @@ import type {
   RoutingSettings,
   RoutingSnapshot,
   RoutingUpdate,
+  RoutingUpdateScope,
 } from "./types";
 
 export interface RouteEdgesOptions {
@@ -21,6 +22,7 @@ export interface UpdateRoutesOptions {
   readonly graph: RoutingGraph;
   readonly previous: RoutingSnapshot;
   readonly changes: GraphDiff<unknown, unknown>;
+  readonly scope?: RoutingUpdateScope;
   /** Omit to inherit; supplied settings replace the previous configuration. */
   readonly settings?: RoutingSettings;
 }
@@ -42,6 +44,7 @@ export function updateRoutes({
   previous,
   changes,
   settings,
+  scope,
 }: UpdateRoutesOptions): RoutingUpdate {
   const strategy = Object.values(routingStrategies).find(
     (strategy) => strategy.id === previous.strategy,
@@ -52,6 +55,7 @@ export function updateRoutes({
     previous,
     changes,
     settings === undefined ? undefined : { coordination: { kind: "independent" }, ...settings },
+    scope,
   );
 }
 

@@ -53,7 +53,7 @@ constraint behavior.
 <!-- routeEdges, updateRoutes, refineRoutes and independent routing concerns from src/routing/api.ts and src/routing/types.ts -->
 
 `routeEdges({ graph, geometry, settings, initialRoutes? })` initializes routing.
-`updateRoutes({ graph, previous, changes, settings? })` updates the retained
+`updateRoutes({ graph, previous, changes, settings?, scope? })` updates the retained
 snapshot. Omitted geometry defaults to orthogonal; omitted coordination defaults
 to independent. `geometry` selects straight, orthogonal, polyline or octilinear
 search; `policy.curve` selects the curve; `coordination` selects independent,
@@ -76,7 +76,7 @@ than the path leaves a zero-length path; it never invents a shortcut.
 
 ## Incremental contract
 
-`strategy.update(graph, previous, graphDiff, settings?)` returns
+`strategy.update(graph, previous, graphDiff, settings?, scope?)` returns
 `{ snapshot, patches, base }`. `base` is the exact previous snapshot: an async
 consumer must compare it with its current snapshot before accepting a result.
 Revision numbers are local to a snapshot lineage, not globally unique tokens.

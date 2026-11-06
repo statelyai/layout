@@ -188,3 +188,70 @@ updates; `ROUTING_BENCH_CROSSING_PENALTY` and `ROUTING_BENCH_OVERLAP_PENALTY`
 default to the editor's explicit `0`/`8` profile. Every run reports initial empty
 routes, curve fallbacks, hard diagnostics and machine load. This adverse workload
 still exceeds a frame budget; no uniform latency guarantee is claimed.
+
+## Selected-only drag previews
+
+<!-- preview scope from src/routing/api.ts, src/routing/engine.ts and src/routing/scheduler.ts -->
+
+Omit `scope` (or use `{ kind: "affected" }`) for normal invalidation: moved
+obstacles can reroute nearby unrelated edges. For temporary drag previews:
+
+```ts
+const preview = updateRoutes({
+  previous,
+  graph: nextGraph,
+  changes: completeEditDiff,
+  scope: { kind: "selected", edgeIds: draggedEdgeIds },
+});
+previous = preview.snapshot;
+renderPatches(preview.patches);
+
+// On drop, even if the final geometry is identical to the last preview:
+const committed = refineRoutes({ previous });
+previous = committed.snapshot;
+renderPatches(committed.patches);
+```
+
+An empty selection defers all routing. Unknown selected edge IDs throw. Selection
+expands through label families and coordination groups in both old and new
+settings; those dependencies remain coherent. Unrelated route objects remain
+unchanged even when a moved obstacle crosses them. Preview paths may overlap or
+use stale attachment geometry until commit. Always supply the complete diff;
+selection limits route computation, not geometry tracking. Topology changes,
+global policy changes and direction changes use ordinary coherent invalidation
+instead. `refineRoutes` explicitly recalculates all edges against retained final
+geometry, without moving nodes or labels.
+
+`createRoutingScheduler().enqueue` accepts the same scope. Coalesced selected
+edits union their selections; an affected/default edit takes precedence. A worker
+or custom `RoutingStrategy` must implement the optional fifth `scope` argument
+to honor selected previews; third-party implementations may ignore it.
+On drop, await `scheduler.flush()`, dispose the drag's scheduler, then refine
+`scheduler.snapshot`. Start the next scheduler from the committed snapshot.
+An empty affected update does not repair previously deferred paths.
+
+## Preview/commit benchmarks
+
+<!-- benchmark commands from scripts/bench-routing-preview.ts and package.json -->
+
+`pnpm bench:routing-preview` compares affected and selected previews, alternating
+modes across five measured trials after warmup. It reports per-trial median,
+p95 and range for router-only and router-plus-patch/SVG work, commit latency,
+affected-edge counts, fallback counts and errors. Every frame must do routing
+work; unrelated selected-preview identities, patch counts, finite SVG and final
+full/fresh equivalence are checked. A failed check aborts the run.
+
+```sh
+ROUTING_BENCH_SIZES=100,1000 ROUTING_BENCH_FRAMES=20 ROUTING_BENCH_TRIALS=5 pnpm bench:routing-preview
+ROUTING_BENCH_FILTER=high-degree ROUTING_BENCH_CURVE=bezier pnpm bench:routing-preview
+```
+
+Supported curves are `polyline` (default), `bezier`, `catmull-rom` and
+`rounded-orthogonal`. Fixtures cover sparse graphs, configured routing, fan-out
+and obstacle corridors. Selection contains one or two edges; coordinated group
+and label-chain closure are regression-tested separately. These measurements
+exclude initial routing, input projection/diff construction, browser rendering
+and correctness checks. They do not establish drag-frame latency or FPS. Run the
+consumer's projection/interaction benchmark too before making a UI performance
+claim. Compare work counts on busy hosts; do not treat noisy timing differences
+as speedups. Existing `bench:routing` and `bench:viz-routing` cover other workloads.

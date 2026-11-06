@@ -1,6 +1,12 @@
 import { updateRoutes, type UpdateRoutesOptions } from "./api";
 import { createGraphNode, createGraphEdge, type GraphDiff } from "@statelyai/graph";
-import type { RoutingGraph, RoutingSettings, RoutingSnapshot, RoutingUpdate } from "./types";
+import type {
+  RoutingGraph,
+  RoutingSettings,
+  RoutingSnapshot,
+  RoutingUpdate,
+  RoutingUpdateScope,
+} from "./types";
 
 interface EntityChanges<T> {
   added: T[];
@@ -107,6 +113,7 @@ export interface RoutingScheduler {
     readonly graph: RoutingGraph;
     readonly changes: GraphDiff<unknown, unknown>;
     readonly settings?: RoutingSettings;
+    readonly scope?: RoutingUpdateScope;
   }): void;
   flush(): Promise<void>;
   dispose(): void;
@@ -117,6 +124,7 @@ export function createRoutingScheduler(options: RoutingSchedulerOptions): Routin
   let current = options.snapshot,
     latestGraph: RoutingGraph | undefined,
     latestSettings: RoutingSettings | undefined,
+    latestScope: RoutingUpdateScope | undefined,
     version = 0,
     disposed = false,
     cancelSchedule: (() => void) | undefined,
@@ -154,6 +162,7 @@ export function createRoutingScheduler(options: RoutingSchedulerOptions): Routin
             graph: latestGraph,
             changes: mergeRoutingChanges(pending),
             settings: latestSettings,
+            scope: latestScope,
           },
           controller.signal,
         );
@@ -164,6 +173,7 @@ export function createRoutingScheduler(options: RoutingSchedulerOptions): Routin
         current = result.snapshot;
         pending.length = 0;
         latestSettings = undefined;
+        latestScope = undefined;
         failedVersion = undefined;
         options.onUpdate(result);
       } catch (error) {
@@ -195,6 +205,14 @@ export function createRoutingScheduler(options: RoutingSchedulerOptions): Routin
       if (disposed) throw new Error("Routing scheduler is disposed");
       latestGraph = edit.graph;
       if (edit.settings !== undefined) latestSettings = edit.settings;
+      latestScope = !pending.length
+        ? edit.scope
+        : latestScope?.kind === "selected" && edit.scope?.kind === "selected"
+          ? {
+              kind: "selected",
+              edgeIds: [...new Set([...latestScope.edgeIds, ...edit.scope.edgeIds])],
+            }
+          : undefined;
       pending.push(edit.changes);
       version++;
       controller?.abort();

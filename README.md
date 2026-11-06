@@ -194,7 +194,7 @@ orthogonal, and centripetal Catmull–Rom presets. Following labels use half the
 final path length and return their placement in `Route.label`. See the
 [routing policy reference](docs/routing-policies.md).
 
-Canonical incremental results match fresh routing for the same graph and
+Except temporary selected previews, canonical incremental results match fresh routing for the same graph and
 settings. Opt-in `stability: { kind: "preserve-valid" }` keeps valid prior paths
 to reduce changes during editing and deliberately depends on edit history.
 
@@ -205,6 +205,12 @@ coordinate unrelated groups; residual conflicts stay visible and reported. Nativ
 straight, Bézier, orthogonal, polyline, octilinear, curved, organic, parallel,
 self-loop, fan, bus, and bundled routes. Render curves directly or flatten them
 for a lines-only renderer. ELK/native layout adapters preserve existing output.
+
+For selected-only drag previews, pass `scope: { kind: "selected", edgeIds }` to
+`updateRoutes`, then call `refineRoutes({ previous })` on commit. Dependencies in
+label chains and coordination groups still update together. Other routes retain
+their previous geometry until refinement. Run `pnpm bench:routing-preview` to
+compare preview and commit work; see the [interactive guide](docs/interactive-routing.md).
 
 For efficient dragging, supply the edit's diff directly: `getDiff` scans the
 whole graph. See [routing contracts, algorithms, and examples](docs/routing.md).

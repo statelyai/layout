@@ -55,6 +55,7 @@ export type {
   RoutingSnapshot,
   RoutingStrategy,
   RoutingUpdate,
+  RoutingUpdateScope,
 } from "./types";
 export type { FlattenPathOptions } from "./path";
 export {
