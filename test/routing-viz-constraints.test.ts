@@ -14,7 +14,7 @@ import labelOverlap from "./fixtures/viz-routing-overlapping-labels.json";
 import parallelFixture from "./fixtures/viz-routing-parallel.json";
 
 const policy = {
-  curve: { kind: "rounded-orthogonal", radius: 8 },
+  path: { kind: "rounded-orthogonal", radius: 8 },
   sourceTangent: { kind: "border-normal" },
   targetTangent: { kind: "border-normal" },
   label: { kind: "gap", tangent: { kind: "border-normal" } },
@@ -34,9 +34,8 @@ it("keeps parallel lane planning from rejecting feasible fixed-geometry connecti
           ...value,
           sourceClearance: 5,
           targetClearance: 10,
-          geometry: "orthogonal",
           topology: { kind: "connection" },
-          policy: { curve: { kind: "rounded-orthogonal", radius: 10 } },
+          policy: { path: { kind: "rounded-orthogonal", radius: 10 } },
         };
         return [id, config];
       }),

@@ -5,7 +5,7 @@ import type { RoutingSettings } from "../src/routing/types";
 
 const settings = {
   policy: {
-    curve: { kind: "polyline" },
+    path: { kind: "polyline" },
     sourceTangent: { kind: "border-normal" },
     targetTangent: { kind: "border-normal" },
     stability: { kind: "preserve-valid" },
@@ -99,7 +99,7 @@ it.each([false, true])(
       : base;
     const options: RoutingSettings = {
       policy: {
-        curve: { kind: "rounded-orthogonal", radius: 8 },
+        path: { kind: "rounded-orthogonal", radius: 8 },
         sourceTangent: { kind: "border-normal" },
         targetTangent: { kind: "border-normal" },
         ...(labeled ? { label: { kind: "gap", tangent: { kind: "border-normal" } } } : {}),

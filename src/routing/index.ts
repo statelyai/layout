@@ -48,7 +48,7 @@ export type {
   RoutingMetrics,
   RoutingSettings,
   RoutingPolicy,
-  RoutingCurve,
+  RoutingPathOptions,
   CornerRadiusOptions,
   RoutingTangent,
   RoutingLabel,

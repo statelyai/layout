@@ -122,10 +122,6 @@
     "crossingPenalty": 0,
     "overlapPenalty": 0,
     "policy": {
-      "curve": {
-        "kind": "rounded-orthogonal",
-        "radius": 10
-      },
       "sourceTangent": {
         "kind": "border-normal"
       },
@@ -144,13 +140,16 @@
       "collisions": {
         "nodes": "avoid",
         "labels": "avoid"
+      },
+      "path": {
+        "kind": "rounded-orthogonal",
+        "radius": 10
       }
     },
     "edges": {
       "Invokes": {
-        "geometry": "orthogonal",
         "policy": {
-          "curve": {
+          "path": {
             "kind": "rounded-orthogonal",
             "radius": 10
           }
@@ -165,9 +164,8 @@
         "disabled": false
       },
       "Spawns": {
-        "geometry": "orthogonal",
         "policy": {
-          "curve": {
+          "path": {
             "kind": "rounded-orthogonal",
             "radius": 10
           }
@@ -182,9 +180,8 @@
         "disabled": false
       },
       "Sends WORK": {
-        "geometry": "orthogonal",
         "policy": {
-          "curve": {
+          "path": {
             "kind": "rounded-orthogonal",
             "radius": 10
           }
@@ -199,9 +196,8 @@
         "disabled": false
       },
       "Sends NOTIFY": {
-        "geometry": "orthogonal",
         "policy": {
-          "curve": {
+          "path": {
             "kind": "rounded-orthogonal",
             "radius": 10
           }
@@ -216,9 +212,8 @@
         "disabled": false
       },
       "Sends DONE": {
-        "geometry": "orthogonal",
         "policy": {
-          "curve": {
+          "path": {
             "kind": "rounded-orthogonal",
             "radius": 10
           }
@@ -233,6 +228,5 @@
         "disabled": false
       }
     }
-  },
-  "geometry": "orthogonal"
+  }
 }

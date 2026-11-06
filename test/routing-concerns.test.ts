@@ -56,7 +56,7 @@ describe("independent routing concerns", () => {
     });
     const settings: RoutingSettings = {
       coordination: { kind: "independent" },
-      edges: { free: { geometry: "polyline" } },
+      edges: { free: { policy: { path: { kind: "polyline", geometry: "polyline" } } } },
     };
     const previous = routingStrategies.orthogonal.route(graph, settings);
     orthogonal(previous.routes.get("axis")!);
@@ -81,7 +81,7 @@ describe("independent routing concerns", () => {
   it("rejects a shared trunk with incompatible per-edge geometry", () => {
     const result = routingStrategies.orthogonal.route(diagram(), {
       coordination: { kind: "bus" },
-      edges: { ac: { geometry: "polyline" } },
+      edges: { ac: { policy: { path: { kind: "polyline", geometry: "polyline" } } } },
     });
     for (const route of result.routes.values()) {
       expect(route.sections.every((section) => !section.sharedId)).toBe(true);
@@ -129,7 +129,7 @@ describe("independent routing concerns", () => {
   it("composes a curve policy and fan coordination", () => {
     const result = routingStrategies.polyline.route(diagram(), {
       coordination: { kind: "fan" },
-      policy: { curve: { kind: "bezier" } },
+      policy: { path: { kind: "bezier" } },
     });
     expect(
       [...result.routes.values()].some((route) =>

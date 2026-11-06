@@ -27,7 +27,7 @@ const node = (id: string, x: number, y: number, width = 72, height = 48) => ({
 const edge = { id: "edge", sourceId: "a", targetId: "b" };
 const curveSettings: RoutingSettings = {
   policy: {
-    curve: { kind: "bezier" },
+    path: { kind: "bezier" },
     sourceTangent: { kind: "border-normal" },
     targetTangent: { kind: "border-normal" },
     collisions: { nodes: "avoid", labels: "avoid" },
@@ -161,7 +161,7 @@ export const routingStressFixtures: readonly RoutingQualityFixture[] = [
       edges: [edge],
     }),
     strategy: "orthogonal",
-    settings: { clearance: 14, policy: { curve: { kind: "rounded-orthogonal", radius: 22 } } },
+    settings: { clearance: 14, policy: { path: { kind: "rounded-orthogonal", radius: 22 } } },
     obstacleId: "obstacle",
   },
   {
@@ -189,7 +189,7 @@ export const routingStressFixtures: readonly RoutingQualityFixture[] = [
     description: "Repeated source-target pairs and separate targets test visible edge separation.",
     graph: branchGraph,
     strategy: "parallel",
-    settings: { edgeSpacing: 22, policy: { curve: { kind: "bezier" } } },
+    settings: { edgeSpacing: 22, policy: { path: { kind: "bezier" } } },
   },
   {
     id: "shared-bundle",
@@ -197,7 +197,7 @@ export const routingStressFixtures: readonly RoutingQualityFixture[] = [
     description: "Shared trunks render once. Arrowheads appear only at actual edge targets.",
     graph: branchGraph,
     strategy: "bundle",
-    settings: { edgeSpacing: 22, policy: { curve: { kind: "rounded-orthogonal", radius: 18 } } },
+    settings: { edgeSpacing: 22, policy: { path: { kind: "rounded-orthogonal", radius: 18 } } },
   },
   {
     id: "reversed-edges",
@@ -209,7 +209,7 @@ export const routingStressFixtures: readonly RoutingQualityFixture[] = [
       edges: [edge, { id: "reverse", sourceId: "b", targetId: "a" }],
     }),
     strategy: "parallel",
-    settings: { edgeSpacing: 28, policy: { curve: { kind: "bezier" } } },
+    settings: { edgeSpacing: 28, policy: { path: { kind: "bezier" } } },
   },
   {
     id: "incremental-moves",
@@ -247,7 +247,7 @@ export const routingRegressionFixtures: readonly RoutingQualityFixture[] = [
       ...routingPolicySettings.obstacles,
       policy: {
         ...routingPolicySettings.obstacles.policy,
-        curve: { kind: "bezier", curvature: 2 },
+        path: { kind: "bezier", curvature: 2 },
         label: { kind: "follow" },
       },
     },
@@ -292,7 +292,7 @@ export const routingRegressionFixtures: readonly RoutingQualityFixture[] = [
     settings: {
       ...routingPolicySettings["catmull-rom"],
       policy: {
-        curve: { kind: "catmull-rom" },
+        path: { kind: "catmull-rom" },
         sourceTangent: { kind: "border-normal" },
         targetTangent: { kind: "border-normal" },
       },
@@ -350,7 +350,7 @@ export const routingCurveFamilies = [
   { kind: "bezier" },
   { kind: "catmull-rom" },
   { kind: "rounded-orthogonal", radius: 18 },
-] satisfies NonNullable<RoutingSettings["policy"]>["curve"][];
+] satisfies NonNullable<RoutingSettings["policy"]>["path"][];
 
 const catalogGraph = createRoutingCatalogGraph();
 const strategyNames: readonly RouteStyle[] = [

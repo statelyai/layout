@@ -137,11 +137,37 @@ export interface CornerRadiusOptions {
   readonly minRadius?: number;
   readonly maxRadius?: number;
 }
-export type RoutingCurve =
-  | { readonly kind: "polyline" }
-  | { readonly kind: "bezier"; readonly curvature?: number }
-  | { readonly kind: "catmull-rom" }
-  | ({ readonly kind: "rounded-orthogonal" } & CornerRadiusOptions);
+/** A complete path choice. Only sharp paths accept an independent segment geometry. */
+export type RoutingPathOptions =
+  | {
+      readonly kind: "polyline";
+      readonly geometry?: RouteGeometry;
+      readonly curvature?: never;
+      readonly radius?: never;
+      readonly minRadius?: never;
+      readonly maxRadius?: never;
+    }
+  | {
+      readonly kind: "bezier";
+      readonly curvature?: number;
+      readonly geometry?: never;
+      readonly radius?: never;
+      readonly minRadius?: never;
+      readonly maxRadius?: never;
+    }
+  | {
+      readonly kind: "catmull-rom";
+      readonly geometry?: never;
+      readonly curvature?: never;
+      readonly radius?: never;
+      readonly minRadius?: never;
+      readonly maxRadius?: never;
+    }
+  | ({
+      readonly kind: "rounded-orthogonal";
+      readonly geometry?: never;
+      readonly curvature?: never;
+    } & CornerRadiusOptions);
 export type RoutingLabel =
   | { readonly kind: "follow"; readonly fraction?: number; readonly offset?: number }
   | { readonly kind: "fixed" }
@@ -153,7 +179,7 @@ export type RoutingLabel =
       readonly attachment?: "border" | "side-midpoint";
     };
 export interface RoutingPolicy {
-  readonly curve?: RoutingCurve;
+  readonly path?: RoutingPathOptions;
   readonly sourceTangent?: RoutingTangent;
   readonly targetTangent?: RoutingTangent;
   readonly label?: RoutingLabel;
@@ -171,7 +197,6 @@ export interface RoutingPolicy {
 }
 export interface EdgeRoutingSettings {
   readonly policy?: RoutingPolicy;
-  readonly geometry?: RouteGeometry;
   readonly topology?: { readonly kind: "connection" } | { readonly kind: "label-only" };
   readonly source?: RouteEndpointConstraint;
   readonly target?: RouteEndpointConstraint;

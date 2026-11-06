@@ -19,7 +19,7 @@ it.each(["follow", "fixed", "gap"] as const)(
     const route = bezierRouting
       .route(graph, {
         policy: {
-          curve: { kind: "bezier" },
+          path: { kind: "bezier" },
           label,
           sourceTangent: { kind: "border-normal" },
           targetTangent: { kind: "border-normal" },

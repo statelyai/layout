@@ -17,7 +17,7 @@ const graph = createGraph({
 const settings: RoutingSettings = {
   maxSearchNodes: 8000,
   policy: {
-    curve: { kind: "bezier" },
+    path: { kind: "bezier" },
     collisions: { crossingPenalty: 1000, overlapPenalty: 12 },
     stability: { kind: "preserve-valid" },
   },

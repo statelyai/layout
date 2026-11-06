@@ -71,7 +71,7 @@ it.each([busRouting, fanRouting, bundleRouting])(
       ],
     });
     const snapshot = strategy.route(graph, {
-      policy: { curve: { kind: "polyline" } },
+      policy: { path: { kind: "polyline" } },
       edges: {
         first: { targetSides: ["top"] },
         second: { targetSides: ["top"] },
@@ -102,7 +102,7 @@ it.each([busRouting, fanRouting, bundleRouting])(
       ],
     });
     const routes = strategy.route(graph, {
-      policy: { curve: { kind: "polyline" } },
+      policy: { path: { kind: "polyline" } },
       edges: {
         first: { targetSide: "top" },
         second: { targetSide: "top" },

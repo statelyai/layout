@@ -51,7 +51,7 @@ describe("independent gap border normals", () => {
     });
     const settings: RoutingSettings = {
       policy: {
-        curve: { kind: "bezier" },
+        path: { kind: "bezier" },
         label: { kind: "gap", tangent: { kind: "border-normal" } },
         sourceTangent: { kind: "border-normal" },
         targetTangent: { kind: "border-normal" },

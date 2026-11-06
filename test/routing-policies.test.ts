@@ -76,7 +76,7 @@ describe("routing policies", () => {
       .route(input, {
         maxSearchNodes: 8000,
         policy: {
-          curve: { kind: "bezier" },
+          path: { kind: "bezier" },
           sourceTangent: { kind: "border-normal" },
           targetTangent: { kind: "border-normal" },
         },
@@ -97,7 +97,7 @@ describe("routing policies", () => {
     const point = { x: 80, y: 20 };
     const result = orthogonalRouting
       .route(input, {
-        policy: { curve: { kind: "rounded-orthogonal", radius: 20 } },
+        policy: { path: { kind: "rounded-orthogonal", radius: 20 } },
         edges: { ab: { waypoints: [point] } },
       })
       .routes.get("ab")!;
@@ -287,7 +287,7 @@ describe("routing policies", () => {
       bezierRouting
         .route(input, {
           policy: {
-            curve: { kind: "bezier" },
+            path: { kind: "bezier" },
             collisions: { crossingPenalty, overlapPenalty: 12 },
           },
         })
@@ -330,7 +330,7 @@ describe("routing policies", () => {
     ).toBeGreaterThan(0);
   });
   it.each([
-    { curve: { kind: "unknown" } },
+    { path: { kind: "unknown" } },
     { sourceTangent: { kind: "unknown" } },
     { targetTangent: { kind: "unknown" } },
     { label: { kind: "unknown" } },
@@ -404,10 +404,10 @@ describe("routing policies", () => {
     expect(result.diagnostics).toEqual([]);
   });
   it("freezes presets and validates policy values", () => {
-    expect(Object.isFrozen(routingPolicies.smooth.curve)).toBe(true);
+    expect(Object.isFrozen(routingPolicies.smooth.path)).toBe(true);
     for (const policy of [
-      { curve: { kind: "bezier", curvature: -1 } },
-      { curve: { kind: "rounded-orthogonal", radius: NaN } },
+      { path: { kind: "bezier", curvature: -1 } },
+      { path: { kind: "rounded-orthogonal", radius: NaN } },
       { label: { kind: "follow", fraction: 1.1 } },
       { label: { kind: "follow", offset: Infinity } },
       { sourceTangent: { kind: "vector", direction: { x: 0, y: 0 } } },

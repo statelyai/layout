@@ -17,7 +17,7 @@ const settings: RoutingSettings = {
   overlapPenalty: 8,
   coordination: { kind: "independent" },
   policy: {
-    curve: { kind: "rounded-orthogonal", radius: 10 },
+    path: { kind: "rounded-orthogonal", radius: 10 },
     sourceTangent: { kind: "border-normal" },
     targetTangent: { kind: "border-normal" },
     label: { kind: "gap", tangent: { kind: "border-normal" } },
@@ -63,7 +63,6 @@ it.each([
     });
     const route = routeEdges({
       graph,
-      geometry: "orthogonal",
       settings: {
         ...settings,
         edges: {
@@ -96,7 +95,6 @@ it("uses two direct stems for a parent self-loop with a label just below its bou
   });
   const route = routeEdges({
     graph,
-    geometry: "orthogonal",
     settings: { ...settings, edges: { loop: { targetClearance: 10 } } },
   }).routes.get("loop")!;
   expect(route.status).toBe("routed");
@@ -115,7 +113,7 @@ it("keeps parent self-loop stems readable after a label drag and commit", () => 
       { id: "loop", sourceId: "p", targetId: "p", x: 300, y: 850, width: 87.546875, height: 28 },
     ],
   });
-  const previous = routeEdges({ graph, geometry: "orthogonal", settings });
+  const previous = routeEdges({ graph, settings });
   const moved = createGraph({ ...graph, edges: graph.edges.map((e) => ({ ...e, x: e.x! + 24 })) });
   const updated = updateRoutes({ previous, graph: moved, changes: getDiff(graph, moved) }).snapshot;
   for (const snapshot of [updated, refineRoutes({ previous: updated }).snapshot]) {
@@ -135,7 +133,6 @@ it("fits offset opposing leads into a narrow node-to-label gap", () => {
   });
   const route = routeEdges({
     graph,
-    geometry: "orthogonal",
     settings: {
       ...settings,
       edges: {
@@ -169,7 +166,7 @@ it("keeps a newly derived label face pair when an old border point remains on th
       },
     ],
   });
-  const previous = routeEdges({ graph, geometry: "orthogonal", settings });
+  const previous = routeEdges({ graph, settings });
   expect(previous.routes.get("edge")!.sections[0]!.toSide).toBe("top");
   const moved = createGraph({ ...graph, edges: graph.edges.map((edge) => ({ ...edge, x: 150 })) });
   const route = updateRoutes({

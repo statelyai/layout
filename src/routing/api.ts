@@ -3,7 +3,6 @@ import { adoptRoutingSnapshot, refineRoutingSnapshot } from "./engine";
 import { routingStrategies } from "./strategies";
 import type {
   Route,
-  RouteGeometry,
   RoutingGraph,
   RoutingSettings,
   RoutingSnapshot,
@@ -13,7 +12,6 @@ import type {
 
 export interface RouteEdgesOptions {
   readonly graph: RoutingGraph;
-  readonly geometry?: RouteGeometry;
   readonly settings?: RoutingSettings;
   /** Valid paths are retained under preserve-valid stability; rejected hints are rerouted. */
   readonly initialRoutes?: ReadonlyMap<string, Route>;
@@ -27,12 +25,11 @@ export interface UpdateRoutesOptions {
   readonly settings?: RoutingSettings;
 }
 
-export function routeEdges({
-  graph,
-  geometry = "orthogonal",
-  settings,
-  initialRoutes,
-}: RouteEdgesOptions): RoutingSnapshot {
+export function routeEdges(options: RouteEdgesOptions): RoutingSnapshot {
+  if ("geometry" in options) throw new RangeError("Use settings.policy.path for routing geometry");
+  const { graph, settings, initialRoutes } = options;
+  const path = settings?.policy?.path;
+  const geometry = path?.kind === "polyline" ? (path.geometry ?? "orthogonal") : "orthogonal";
   const config: RoutingSettings = { coordination: { kind: "independent" }, ...settings };
   return initialRoutes
     ? adoptRoutingSnapshot(graph, geometry, config, initialRoutes)

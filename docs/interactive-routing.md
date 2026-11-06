@@ -7,21 +7,20 @@ uses the positioned nodes, ports and labels. Both use the same structured route
 format and native routing constraints. Full and incremental describe how much
 work is performed, independently of either context.
 
-## Geometry, curves, coordination and topology
+## Path style, coordination and topology
 
 ```ts
 import { routeEdges, updateRoutes } from "@statelyai/layout/routing";
 
 let previous = routeEdges({
   graph,
-  geometry: "orthogonal",
   settings: {
     coordinateSpace: "world",
     clearance: 8,
     coordination: { kind: "parallel" },
     selfLoops: { sourceSide: "right", targetSide: "top", clearance: 16 },
     policy: {
-      curve: { kind: "rounded-orthogonal", radius: 8 },
+      path: { kind: "rounded-orthogonal", radius: 8 },
       sourceTangent: { kind: "border-normal" },
       targetTangent: { kind: "border-normal" },
       label: { kind: "gap" },
@@ -34,13 +33,14 @@ previous = result.snapshot;
 renderPatches(result.patches);
 ```
 
-Geometry selects straight, arbitrary-angle polyline, orthogonal or octilinear
-search. Curves select polyline, Bézier, Catmull–Rom or rounded orthogonal output.
-An edge can override the default with `edges[id].geometry`, preserving mixed
-layout scopes in one snapshot. Straight paths cannot detour around obstacles;
+`policy.path` is a complete discriminated choice. Sharp paths use
+`{ kind: "polyline", geometry: "orthogonal" }` (or straight, arbitrary-angle
+polyline, or octilinear geometry). Rounded orthogonal paths own their geometry;
+Bézier and Catmull–Rom own guide selection. The types and runtime validator reject
+conflicting combinations and irrelevant options. Per-edge `policy.path` replaces
+the inherited choice as a unit. Straight paths cannot detour around obstacles;
 infeasible hard constraints produce diagnostics and may leave empty sections.
-Rounded orthogonal curves require orthogonal corridors. Curve fitting always
-checks the finished geometry against hard constraints.
+Fitting always checks the finished path against hard constraints.
 
 Coordination selects independent, parallel, fan, bus or bundle planning. Shared
 groups use per-edge `group` IDs or common-source defaults. Bus, fan and bundle
@@ -260,10 +260,10 @@ as speedups. Existing `bench:routing` and `bench:viz-routing` cover other worklo
 
 <!-- corner shaping from src/routing/corner-radius.ts, path.ts and algorithms.ts -->
 
-Use orthogonal geometry with a polyline curve for sharp turns, or
-`policy.curve: { kind: "rounded-orthogonal", radius: 10, minRadius: 2, maxRadius: 16 }`
+Use `policy.path: { kind: "polyline", geometry: "orthogonal" }` for sharp turns, or
+`policy.path: { kind: "rounded-orthogonal", radius: 10, minRadius: 2, maxRadius: 16 }`
 for rounded turns. Preferred radius is clipped to the interval, then each corner
 fits its adjacent segment lengths. The minimum remains hard: an infeasible
 positive minimum produces a whole-edge sharp fallback with a curve diagnostic.
 Both label legs use the same rule, including preserved paths and drag updates.
-See the [corner policy details](routing-policies.md#curves).
+See the [corner policy details](routing-policies.md#paths).

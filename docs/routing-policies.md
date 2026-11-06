@@ -59,22 +59,34 @@ An explicit policy takes precedence over the corresponding global default.
 Invalid numeric settings throw before routing. Infeasible graph constraints
 produce route diagnostics.
 
-## Curves
+## Paths
 
-| `curve.kind`         | Behavior                                                                                     |
-| -------------------- | -------------------------------------------------------------------------------------------- |
-| `polyline`           | Line segments through the selected routing points                                            |
-| `bezier`             | Cubic Bézier geometry with configurable `curvature`                                          |
-| `catmull-rom`        | Centripetal Catmull–Rom interpolation through routing points and authored waypoints          |
-| `rounded-orthogonal` | Rectilinear corridors with rounded corners, controlled by `radius`, `minRadius`, `maxRadius` |
+`RoutingPolicy.path` is one `RoutingPathOptions` discriminated union. Geometry
+belongs only to sharp `polyline` paths; rounded orthogonal paths own their
+geometry, and spline builders choose their own guides. Conflicting or irrelevant
+fields are rejected by TypeScript and runtime validation, rather than ignored.
+
+| `path.kind`          | Options and behavior                                                                             |
+| -------------------- | ------------------------------------------------------------------------------------------------ |
+| `polyline`           | Sharp segments; optional `geometry`: `orthogonal`, `polyline`, `octilinear`, or `straight`       |
+| `rounded-orthogonal` | Orthogonal corridors with `radius`, `minRadius`, `maxRadius`                                     |
+| `bezier`             | Cubic geometry with optional `curvature`; no independent geometry                                |
+| `catmull-rom`        | Centripetal interpolation through routing points and authored waypoints; no independent geometry |
+
+Examples: `{ kind: "polyline", geometry: "octilinear" }`,
+`{ kind: "rounded-orthogonal", radius: 10 }`, or `{ kind: "bezier" }`.
+There is no separate object-API or edge `geometry` override. Built-in strategy
+objects remain available as defaults, and an explicit path policy overrides the
+strategy's default shape. Coordination, topology, attachment and collision
+constraints remain separate concerns.
 
 `curvature` is a preferred chord-length handle multiplier, defaulting to `0.5`.
 Handles and corner radii can shrink to satisfy hard geometry constraints.
 A safe guide returned in place of a requested curve carries fallback diagnostics.
 
-For orthogonal geometry, `curve: { kind: "polyline" }` gives sharp corners;
-`curve: { kind: "rounded-orthogonal", radius: 10, minRadius: 2, maxRadius: 16 }`
-adds circular bends. Omitted `curve.radius` inherits `RoutingSettings.radius`
+For orthogonal geometry, `path: { kind: "polyline", geometry: "orthogonal" }` gives sharp corners;
+`path: { kind: "rounded-orthogonal", radius: 10, minRadius: 2, maxRadius: 16 }`
+adds circular bends. Omitted `path.radius` inherits `RoutingSettings.radius`
 (default 10); standalone `roundCorners` defaults to 10. `radius` is preferred, not forced: it is clamped to the
 configured interval, then each bend shrinks to fit half of each adjacent segment.
 Bounds are finite and nonnegative; an inverted interval is rejected. Omitted

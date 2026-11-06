@@ -13,7 +13,7 @@ it("keeps inferred return corners clear of outward-facing terminal borders", () 
   const route = bezierRouting
     .route(graph, {
       policy: {
-        curve: { kind: "bezier" },
+        path: { kind: "bezier" },
         sourceTangent: { kind: "border-normal" },
         targetTangent: { kind: "border-normal" },
       },

@@ -113,7 +113,7 @@ export const routingPolicyFixtures: readonly RoutingPolicyFixture[] = [
 export const routingPolicySettings: Readonly<Record<string, RoutingSettings>> = {
   midpoint: {
     policy: {
-      curve: { kind: "bezier" },
+      path: { kind: "bezier" },
       label: { kind: "follow", fraction: 0.5 },
       sourceTangent: { kind: "border-normal" },
       targetTangent: { kind: "border-normal" },
@@ -121,14 +121,14 @@ export const routingPolicySettings: Readonly<Record<string, RoutingSettings>> = 
   },
   tangents: {
     policy: {
-      curve: { kind: "bezier", curvature: 0.5 },
+      path: { kind: "bezier", curvature: 0.5 },
       sourceTangent: { kind: "vector", direction: { x: 1, y: 0.6 } },
       targetTangent: { kind: "border-normal" },
     },
   },
   "label-tangents": {
     policy: {
-      curve: { kind: "bezier" },
+      path: { kind: "bezier" },
       label: { kind: "gap", tangent: { kind: "border-normal" } },
       sourceTangent: { kind: "border-normal" },
       targetTangent: { kind: "border-normal" },
@@ -136,13 +136,13 @@ export const routingPolicySettings: Readonly<Record<string, RoutingSettings>> = 
   },
   obstacles: {
     policy: {
-      curve: { kind: "bezier" },
+      path: { kind: "bezier" },
       label: { kind: "follow" },
       collisions: { nodes: "avoid", labels: "avoid" },
     },
   },
   "catmull-rom": {
-    policy: { curve: { kind: "catmull-rom" } },
+    policy: { path: { kind: "catmull-rom" } },
     edges: {
       edge: {
         waypoints: [
@@ -155,27 +155,27 @@ export const routingPolicySettings: Readonly<Record<string, RoutingSettings>> = 
   },
   rounded: {
     policy: {
-      curve: { kind: "rounded-orthogonal", radius: 22 },
+      path: { kind: "rounded-orthogonal", radius: 22 },
       sourceTangent: { kind: "border-normal" },
       targetTangent: { kind: "border-normal" },
     },
   },
   crossings: {
     policy: {
-      curve: { kind: "bezier" },
+      path: { kind: "bezier" },
       collisions: { crossingPenalty: 1000, overlapPenalty: 12 },
     },
   },
   monotonic: {
     policy: {
-      curve: { kind: "rounded-orthogonal", radius: 14 },
+      path: { kind: "rounded-orthogonal", radius: 14 },
       monotonic: { axis: "both", strength: "require" },
     },
   },
   bundle: {
     edgeSpacing: 20,
     policy: {
-      curve: { kind: "rounded-orthogonal", radius: 18 },
+      path: { kind: "rounded-orthogonal", radius: 18 },
       collisions: { crossingPenalty: 80, overlapPenalty: 8 },
     },
   },

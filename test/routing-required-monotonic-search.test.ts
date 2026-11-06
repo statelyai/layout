@@ -26,7 +26,7 @@ it.each(["fan", "bus", "bundle"] as const)(
     const route = routingStrategies[name]
       .route(graph, {
         policy: {
-          curve: { kind: "rounded-orthogonal", radius: 18 },
+          path: { kind: "rounded-orthogonal", radius: 18 },
           monotonic: { axis: "x", strength: "require" },
         },
         maxSearchNodes: 8000,
@@ -55,7 +55,7 @@ it("uses the selected automatic faces for monotonic direction while locking an e
     edges: [{ id: "edge", sourceId: "a", targetId: "b" }],
   });
   const policy = {
-    curve: { kind: "bezier" as const },
+    path: { kind: "bezier" as const },
     monotonic: { axis: "x" as const, strength: "require" as const },
   };
   const locked = routingStrategies.bezier

@@ -52,13 +52,13 @@ constraint behavior.
 
 <!-- routeEdges, updateRoutes, refineRoutes and independent routing concerns from src/routing/api.ts and src/routing/types.ts -->
 
-`routeEdges({ graph, geometry, settings, initialRoutes? })` initializes routing.
+`routeEdges({ graph, settings, initialRoutes? })` initializes routing.
 `updateRoutes({ graph, previous, changes, settings?, scope? })` updates the retained
-snapshot. Omitted geometry defaults to orthogonal; omitted coordination defaults
-to independent. `geometry` selects straight, orthogonal, polyline or octilinear
-search; `policy.curve` selects the curve; `coordination` selects independent,
-parallel, fan, bus or bundle planning. The historical strategy catalog below
-remains supported.
+snapshot. `settings.policy.path` is a discriminated path choice. Sharp `polyline`
+paths alone accept `geometry`; rounded orthogonal paths own their geometry, and
+Bézier/Catmull–Rom own guide selection. Omitted coordination defaults to independent;
+`coordination` selects independent, parallel, fan, bus or bundle planning.
+The named strategy catalog remains supported.
 
 Self-loops are detected from graph endpoints. `selfLoops` supplies their source
 and target sides and preferred clearance. Per-edge `topology: { kind: "label-only" }`

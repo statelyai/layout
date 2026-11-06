@@ -19,7 +19,7 @@ it("keeps broad source bends and separated smooth returns in dense same-face bra
   });
   const routes = bezierRouting.route(graph, {
     policy: {
-      curve: { kind: "bezier" },
+      path: { kind: "bezier" },
       sourceTangent: { kind: "border-normal" },
       targetTangent: { kind: "border-normal" },
     },

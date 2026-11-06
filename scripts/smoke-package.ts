@@ -220,7 +220,7 @@ const options: LayeredLayoutOptions = { direction: "right" };
 const snapshot: RoutingSnapshot = orthogonalRouting.route(graph);
 const update = orthogonalRouting.update(graph, snapshot, getDiff(graph, graph));
 const routePolicy: RoutingPolicy = { ...routingPolicies.smooth, sourceTangent: { kind: "vector", direction: { x: 1, y: 0 } }, label: { kind: "follow", fraction: 0.5 }, monotonic: { axis: "x", strength: "prefer" } };
-const routeSettings: RoutingSettings = { policy: routePolicy, edges: { ab: { policy: { curve: { kind: "catmull-rom" } } } } };
+const routeSettings: RoutingSettings = { policy: routePolicy, edges: { ab: { policy: { path: { kind: "catmull-rom" } } } } };
 const labelPlacement: RouteLabelPlacement | undefined = orthogonalRouting.route(graph, routeSettings).routes.get("ab")?.label;
 void labelPlacement;
 const asyncStrategy: RoutingStrategy = { id: "custom-worker", route: async (g, s) => orthogonalRouting.route(g, s), update: async (g, p, d, s) => orthogonalRouting.update(g, p, d, s) };

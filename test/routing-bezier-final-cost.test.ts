@@ -42,7 +42,7 @@ function state(crossingPenalty = 1000, optIn = true): RoutingInput {
       overlapPenalty: 0,
       edgeSpacing: 0,
       ...(optIn ? { bezier: { attachmentMode: "orthogonal", targetClearance: 0 } } : {}),
-      edges: { curve: { sourceSide: "right", targetSide: "left", labelSides: ["left", "right"] } },
+      edges: { path: { sourceSide: "right", targetSide: "left", labelSides: ["left", "right"] } },
     }),
   };
 }
@@ -147,7 +147,7 @@ describe("opt-in Bézier final geometry costs", () => {
       settings: settings({
         ...global.settings,
         bezier: undefined,
-        edges: { curve: { ...global.settings.edges.curve, bezier: global.settings.bezier } },
+        edges: { path: { ...global.settings.edges.path, bezier: global.settings.bezier } },
       }),
     };
     const fitted = route(input);

@@ -31,7 +31,7 @@ const graph = createGraph({
 });
 it.each([0.5, 2])("avoids synthetic lobes and source humps at curvature %s", (curvature) => {
   const route = bezierRouting
-    .route(graph, { policy: { curve: { kind: "bezier", curvature }, label: { kind: "follow" } } })
+    .route(graph, { policy: { path: { kind: "bezier", curvature }, label: { kind: "follow" } } })
     .routes.get("edge")!;
   expect(route.status).toBe("routed");
   expect(route.sections).toHaveLength(1);
@@ -54,7 +54,7 @@ it("does not buy a subpixel Catmull length saving with artificial endpoint wiggl
   const route = polylineRouting
     .route(input, {
       policy: {
-        curve: { kind: "catmull-rom" },
+        path: { kind: "catmull-rom" },
         sourceTangent: { kind: "border-normal" },
         targetTangent: { kind: "border-normal" },
       },
@@ -80,7 +80,7 @@ it("retains authored crossing knots", () => {
   });
   const route = bezierRouting
     .route(input, {
-      policy: { curve: { kind: "bezier", curvature: 0.25 } },
+      policy: { path: { kind: "bezier", curvature: 0.25 } },
       edges: { edge: { waypoints } },
     })
     .routes.get("edge")!;

@@ -390,7 +390,6 @@ function calculate(
     batch.previousSettings = previous?.settings;
     let route =
       style === "bezier" &&
-      state.settings.edges[id]?.geometry === undefined &&
       state.settings.coordination === undefined &&
       !batch.policy &&
       !routes.get(state.settings.edges[id]?.sourceLabel ?? "")?.label
@@ -793,7 +792,7 @@ export function adoptRoutingSnapshot(
   const adoptedConfig: RoutingSettings = {
     ...config,
     policy: {
-      curve: { kind: "polyline" },
+      path: { kind: "polyline" },
       ...config.policy,
       stability: config.policy?.stability ?? { kind: "preserve-valid" },
     },

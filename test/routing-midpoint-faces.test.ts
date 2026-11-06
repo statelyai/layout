@@ -16,7 +16,7 @@ it.each([undefined, { kind: "automatic" as const }])(
       graph,
       settings: {
         policy: {
-          curve: { kind: "bezier" },
+          path: { kind: "bezier" },
           label: { kind: "gap", attachment: "side-midpoint", tangent },
         },
         edges: { e: { labelSides: ["left", "top"] } },

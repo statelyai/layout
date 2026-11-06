@@ -39,7 +39,7 @@ const results = [];
 for (const fixture of routingFixtures(sizes).filter((item) =>
   /^(sparse-|configured-|high-degree-|obstacle-corridors-)/.test(item.name),
 )) {
-  const settings = { ...fixture.settings, policy: { ...fixture.settings.policy, curve } };
+  const settings = { ...fixture.settings, policy: { ...fixture.settings.policy, path: curve } };
   if (process.env.ROUTING_BENCH_FILTER && !fixture.name.includes(process.env.ROUTING_BENCH_FILTER))
     continue;
   const edits = routingDragFrames(fixture, frames);

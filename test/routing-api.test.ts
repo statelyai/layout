@@ -103,14 +103,14 @@ it("adopts a full native cubic split at its label without changing its controls"
   });
   const settings = {
     policy: {
-      curve: { kind: "bezier" as const },
+      path: { kind: "bezier" as const },
       sourceTangent: { kind: "automatic" as const },
       targetTangent: { kind: "automatic" as const },
       label: { kind: "gap" as const, tangent: { kind: "automatic" as const } },
       stability: { kind: "preserve-valid" as const },
     },
   };
-  const route = routeEdges({ graph: input, geometry: "polyline", settings }).routes.get("ab")!;
+  const route = routeEdges({ graph: input, settings }).routes.get("ab")!;
   const split = splitPathAtBounds(
     pathFromSplinePoints([
       { x: 110, y: 45 },
@@ -132,7 +132,7 @@ it("adopts a full native cubic split at its label without changing its controls"
       },
     ],
   ]);
-  const adopted = routeEdges({ graph: input, geometry: "polyline", settings, initialRoutes });
+  const adopted = routeEdges({ graph: input, settings, initialRoutes });
   expect(toSvgPath(adopted.routes.get("ab")!.sections[0]!.path)).toBe(toSvgPath(split.before));
 });
 
@@ -146,7 +146,7 @@ it("rejects label-gap hints whose two legs retrace a distant trunk", () => {
   });
   const settings = {
     policy: {
-      curve: { kind: "polyline" as const },
+      path: { kind: "polyline" as const },
       label: { kind: "gap" as const, tangent: { kind: "border-normal" as const } },
       stability: { kind: "preserve-valid" as const },
     },
@@ -205,7 +205,7 @@ it("rechecks hints against rounded geometry, curve families and section topology
   ]);
   const rounded = routeEdges({
     graph: input,
-    settings: { policy: { curve: { kind: "rounded-orthogonal", radius: 10 } } },
+    settings: { policy: { path: { kind: "rounded-orthogonal", radius: 10 } } },
     initialRoutes: new Map([
       ["ab", { ...route, sections: [{ ...route.sections[0]!, path: diagonal }] }],
     ]),
@@ -213,7 +213,7 @@ it("rechecks hints against rounded geometry, curve families and section topology
   expect(rounded.routes.get("ab")!.sections[0]!.path).not.toEqual(diagonal);
   const cubic = routeEdges({
     graph: input,
-    settings: { policy: { curve: { kind: "bezier" } } },
+    settings: { policy: { path: { kind: "bezier" } } },
     initialRoutes: new Map([["ab", route]]),
   });
   expect(

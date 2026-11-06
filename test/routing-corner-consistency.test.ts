@@ -30,7 +30,7 @@ const settings: RoutingSettings = {
   crossingPenalty: 0,
   overlapPenalty: 8,
   policy: {
-    curve: { kind: "rounded-orthogonal", radius: 10 },
+    path: { kind: "rounded-orthogonal", radius: 10 },
     sourceTangent: { kind: "border-normal" },
     targetTangent: { kind: "border-normal" },
     label: { kind: "gap", attachment: "side-midpoint", tangent: { kind: "border-normal" } },
@@ -56,7 +56,7 @@ it("applies per-edge radius bounds without changing fixed label geometry", () =>
       edges: {
         edge: {
           ...settings.edges?.edge,
-          policy: { curve: { kind: "rounded-orthogonal", radius: 40, minRadius: 0, maxRadius: 2 } },
+          policy: { path: { kind: "rounded-orthogonal", radius: 40, minRadius: 0, maxRadius: 2 } },
         },
       },
     },
@@ -94,7 +94,7 @@ it("uses a whole-edge sharp fallback when the requested minimum cannot fit", () 
       ...settings,
       policy: {
         ...settings.policy,
-        curve: { kind: "rounded-orthogonal", radius: 20, minRadius: 20, maxRadius: 20 },
+        path: { kind: "rounded-orthogonal", radius: 20, minRadius: 20, maxRadius: 20 },
       },
       edges: { ab: { sourceSides: ["right"], labelSides: ["left", "right"] } },
     },
@@ -119,7 +119,7 @@ it("preserves an exact waypoint coinciding with a terminal lead", () => {
   const route = routeEdges({
     graph: input,
     settings: {
-      policy: { curve: { kind: "rounded-orthogonal", radius: 10 } },
+      policy: { path: { kind: "rounded-orthogonal", radius: 10 } },
       edges: { ab: { waypoints: [waypoint], sourceSides: ["right"], targetSides: ["left"] } },
     },
   }).routes.get("ab")!;
@@ -136,7 +136,7 @@ it.each([0, 2, 10])(
       ...settings,
       policy: {
         ...settings.policy,
-        curve: { kind: "rounded-orthogonal", radius: 40, minRadius: 0, maxRadius },
+        path: { kind: "rounded-orthogonal", radius: 40, minRadius: 0, maxRadius },
       },
     };
     let previous = routeEdges({ graph, settings: configured });

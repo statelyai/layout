@@ -16,7 +16,7 @@ it.each([14, 22])("leaves room for radius %s at terminal corners", (radius) => {
   const route = orthogonalRouting
     .route(graph, {
       policy: {
-        curve: { kind: "rounded-orthogonal", radius },
+        path: { kind: "rounded-orthogonal", radius },
         sourceTangent: { kind: "border-normal" },
         targetTangent: { kind: "border-normal" },
       },
