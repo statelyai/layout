@@ -5,8 +5,8 @@ minimum 0, maximum 64, 100% canvas zoom. Before: observed mixed sharp/rounded
 label legs in the old browser bundle. After: pinned Layout 38c1cf3, both legs rounded.
 Nodes and label remain fixed; routing may select a different safe corridor.
 
-| Before | After |
-| --- | --- |
+| Before                               | After                                    |
+| ------------------------------------ | ---------------------------------------- |
 | ![Mixed corners](corners-before.jpg) | ![Consistent corners](corners-after.jpg) |
 
 Viz's `Canvas/NativeRouting/RoundedCorners` story exposes Preferred, Minimum and
