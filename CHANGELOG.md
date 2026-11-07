@@ -1,5 +1,23 @@
 # @statelyai/layout
 
+## 0.7.0
+
+### Minor Changes
+
+- 38c1cf3: Add preferred/minimum/maximum corner radii to rounded orthogonal routing and roundCorners. Fit short segments and obstacle-padded guides consistently across label legs, retain exact waypoints, and diagnose uniform sharp fallback when minimums cannot fit.
+- 8b49ac5: Replace independent geometry and curve options with RoutingPolicy.path, a RoutingPathOptions discriminated union. Only polyline paths accept segment geometry; rounded orthogonal paths own their geometry and bounds, while Bezier and Catmull-Rom own guide selection. Reject irrelevant path options at runtime and compile time.
+  
+  Keep runtime validation consistent with optional undefined fields, and update snapshot strategy and refinement when a global path choice changes geometry.
+- 8dff0ae: Add explicit fixed-geometry routing with separate coordination and self-loop rules, generic endpoint constraints and label-only topology. Retain native layout routing snapshots for incremental editing, validate adopted route hints, provide marker-gap trimming and coalesced asynchronous scheduling, and optimize immutable settings and pending route updates.
+- 315c6eb: Support nested Pele layout through the pinned upstream compound engine. Share explicit group geometry and attachment options with layered layout; preserve mixed-direction curves, label gaps, headers, asymmetric padding and minimum content sizes. Keep incremental and fixed-geometry scopes separate.
+- 560c925: Add explicit selected-edge preview scopes to incremental routing and its scheduler, retaining unrelated paths until full refinement. Include preview/commit benchmarks and dependency-coherence regression tests.
+
+### Patch Changes
+
+- dff6494: Route fixed labels using label-facing node attachments and coherent label entry/exit faces. Align labeled self-loop stems, shorten opposing leads in narrow gaps, and reject self-crossing label legs independently of penalties for other edges.
+  
+  Add a gap-label side-midpoint attachment constraint, preserved across incremental updates, layout hints, and conditional label chains. Retry blocked Catmull–Rom fits with padded guides before returning an orthogonal fallback.
+
 ## 0.6.1
 
 ### Patch Changes
