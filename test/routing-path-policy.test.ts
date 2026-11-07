@@ -130,3 +130,18 @@ it.each(["parallel", "bezier", "curved", "organic", "fan", "bus", "bundle", "sel
     ]);
   },
 );
+
+it.each(["straight", "orthogonal", "polyline", "octilinear"] as const)(
+  "resets %s geometry to defaults only when replacement settings are supplied",
+  (geometry) => {
+    const previous = routeEdges({
+      graph,
+      settings: { policy: { path: { kind: "polyline", geometry } } },
+    });
+    const inherited = updateRoutes({ graph, previous, changes: getDiff(graph, graph) });
+    expect(inherited.snapshot.strategy).toBe(geometry);
+    const reset = updateRoutes({ graph, previous, changes: getDiff(graph, graph), settings: {} });
+    expect(reset.snapshot.strategy).toBe("orthogonal");
+    expect([...reset.snapshot.routes]).toEqual([...routeEdges({ graph }).routes]);
+  },
+);

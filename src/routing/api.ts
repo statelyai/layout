@@ -52,12 +52,8 @@ export function updateRoutes({
       ? undefined
       : { coordination: { kind: "independent" as const }, ...settings };
   const path = settings?.policy?.path;
-  if (
-    path &&
-    config &&
-    ["straight", "orthogonal", "polyline", "octilinear"].includes(previous.strategy)
-  ) {
-    const geometry = path.kind === "polyline" ? (path.geometry ?? "orthogonal") : "orthogonal";
+  if (config && ["straight", "orthogonal", "polyline", "octilinear"].includes(previous.strategy)) {
+    const geometry = path?.kind === "polyline" ? (path.geometry ?? "orthogonal") : "orthogonal";
     if (geometry !== previous.strategy)
       return changeRoutingGeometry(graph, previous, changes, geometry, config);
   }
