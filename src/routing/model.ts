@@ -356,7 +356,7 @@ function normalizePolicy(input: RoutingPolicy | undefined): RoutingPolicy | unde
       ["straight", "orthogonal", "polyline", "octilinear"],
       "path geometry",
     );
-  if (value.path && value.path.kind !== "polyline" && "geometry" in value.path)
+  if (value.path && value.path.kind !== "polyline" && value.path.geometry !== undefined)
     throw new RangeError("Geometry is only configurable for polyline paths");
   if (value.path) {
     const allowed =
@@ -367,8 +367,8 @@ function normalizePolicy(input: RoutingPolicy | undefined): RoutingPolicy | unde
           : value.path.kind === "rounded-orthogonal"
             ? ["kind", "radius", "minRadius", "maxRadius"]
             : ["kind"];
-    for (const key of Object.keys(value.path))
-      if (!allowed.includes(key))
+    for (const [key, option] of Object.entries(value.path))
+      if (option !== undefined && !allowed.includes(key))
         throw new RangeError(`Unsupported ${key} for ${value.path.kind} paths`);
   }
   if (value.label) oneOf(value.label.kind, ["follow", "fixed", "through", "gap"], "label kind");

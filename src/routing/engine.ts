@@ -828,6 +828,27 @@ export function adoptRoutingSnapshot(
   return snapshot(result.state, geometry, 0, counts);
 }
 
+/** A global path change invalidates every route, including scoped previews. */
+export function changeRoutingGeometry(
+  graph: RoutingGraph,
+  previous: RoutingSnapshot,
+  changes: GraphDiff<unknown, unknown>,
+  geometry: RouteGeometry,
+  config: RoutingSettings,
+): RoutingUpdate {
+  const prior = (previous as Snapshot)[STATE];
+  if (!prior) throw new Error("Geometry changes require an in-memory routing snapshot");
+  const { state, affected } = updateState(graph, prior, changes, geometry, config);
+  for (const id of state.edges.keys()) affected.add(id);
+  const counts = metrics();
+  const result = calculate(state, geometry, affected, counts, prior, false);
+  return Object.freeze({
+    base: previous,
+    snapshot: snapshot(result.state, geometry, previous.revision + 1, counts),
+    patches: freeze(result.patches),
+  });
+}
+
 export function refineRoutingSnapshot(previous: RoutingSnapshot): RoutingUpdate {
   const prior = (previous as Snapshot)[STATE];
   if (!prior) throw new Error("Refinement requires an in-memory routing snapshot");

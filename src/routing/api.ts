@@ -1,5 +1,5 @@
 import type { GraphDiff } from "@statelyai/graph";
-import { adoptRoutingSnapshot, refineRoutingSnapshot } from "./engine";
+import { adoptRoutingSnapshot, changeRoutingGeometry, refineRoutingSnapshot } from "./engine";
 import { routingStrategies } from "./strategies";
 import type {
   Route,
@@ -47,13 +47,22 @@ export function updateRoutes({
     (strategy) => strategy.id === previous.strategy,
   );
   if (!strategy) throw new Error(`Unknown routing strategy ${previous.strategy}`);
-  return strategy.update(
-    graph,
-    previous,
-    changes,
-    settings === undefined ? undefined : { coordination: { kind: "independent" }, ...settings },
-    scope,
-  );
+  const config =
+    settings === undefined
+      ? undefined
+      : { coordination: { kind: "independent" as const }, ...settings };
+  const path = settings?.policy?.path;
+  if (
+    path &&
+    config &&
+    ["straight", "orthogonal", "polyline", "octilinear"].includes(previous.strategy)
+  ) {
+    const geometry = path.kind === "polyline" ? (path.geometry ?? "orthogonal") : "orthogonal";
+    if (geometry !== previous.strategy)
+      return changeRoutingGeometry(graph, previous, changes, geometry, config);
+  }
+
+  return strategy.update(graph, previous, changes, config, scope);
 }
 
 /** Reconsider every route from current geometry, including valid preserved corridors. */

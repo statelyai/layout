@@ -267,3 +267,5 @@ fits its adjacent segment lengths. The minimum remains hard: an infeasible
 positive minimum produces a whole-edge sharp fallback with a curve diagnostic.
 Both label legs use the same rule, including preserved paths and drag updates.
 See the [corner policy details](routing-policies.md#paths).
+
+Changing the global `policy.path` choice through `updateRoutes` updates the snapshot strategy and reroutes every edge when its base geometry changes, even during selected previews. Omitted optional path fields may be represented by `undefined`.
