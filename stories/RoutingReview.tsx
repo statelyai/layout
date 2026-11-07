@@ -6,7 +6,7 @@ import {
   routingStrategies,
   toSvgPath,
   type RouteBounds,
-  type RoutingCurve,
+  type RoutingPathOptions,
   type RoutingGraph,
   type RoutingLabel,
   type RoutingSettings,
@@ -402,13 +402,13 @@ function RoutingReviewSession({
         <summary>Policy controls</summary>
         <div className="routing-review-toolbar">
           <label>
-            Curve family{" "}
+            Path style{" "}
             <select
-              aria-label="Curve family"
-              value={policy?.curve?.kind ?? ""}
+              aria-label="Path style"
+              value={policy?.path?.kind ?? ""}
               onChange={(event) => {
                 const curve = routingCurveFamilies.find((item) => item.kind === event.target.value);
-                if (curve) configure({ curve });
+                if (curve) configure({ path: curve });
               }}
             >
               <option value="" disabled>
@@ -596,7 +596,7 @@ export function RoutingComparison({
             <header>
               <h2>{fixture.title}</h2>
               <p>
-                {fixture.strategy} · {fixture.settings.policy?.curve?.kind ?? "default curve"}
+                {fixture.strategy} · {fixture.settings.policy?.path?.kind ?? "default path"}
               </p>
             </header>
             <RoutingQualityCanvas graph={graph} snapshot={snapshot} bounds={bounds} />
@@ -612,10 +612,10 @@ export function RoutingComparison({
 export function curveComparisonFixtures(
   fixture: RoutingQualityFixture,
 ): readonly RoutingQualityFixture[] {
-  return routingCurveFamilies.map((curve: RoutingCurve) => ({
+  return routingCurveFamilies.map((curve: RoutingPathOptions) => ({
     ...fixture,
     id: `${fixture.id}-${curve.kind}`,
     title: curve.kind,
-    settings: { ...fixture.settings, policy: { ...fixture.settings.policy, curve } },
+    settings: { ...fixture.settings, policy: { ...fixture.settings.policy, path: curve } },
   }));
 }

@@ -52,13 +52,13 @@ constraint behavior.
 
 <!-- routeEdges, updateRoutes, refineRoutes and independent routing concerns from src/routing/api.ts and src/routing/types.ts -->
 
-`routeEdges({ graph, geometry, settings, initialRoutes? })` initializes routing.
-`updateRoutes({ graph, previous, changes, settings? })` updates the retained
-snapshot. Omitted geometry defaults to orthogonal; omitted coordination defaults
-to independent. `geometry` selects straight, orthogonal, polyline or octilinear
-search; `policy.curve` selects the curve; `coordination` selects independent,
-parallel, fan, bus or bundle planning. The historical strategy catalog below
-remains supported.
+`routeEdges({ graph, settings, initialRoutes? })` initializes routing.
+`updateRoutes({ graph, previous, changes, settings?, scope? })` updates the retained
+snapshot. `settings.policy.path` is a discriminated path choice. Sharp `polyline`
+paths alone accept `geometry`; rounded orthogonal paths own their geometry, and
+Bézier/Catmull–Rom own guide selection. Omitted coordination defaults to independent;
+`coordination` selects independent, parallel, fan, bus or bundle planning.
+The named strategy catalog remains supported.
 
 Self-loops are detected from graph endpoints. `selfLoops` supplies their source
 and target sides and preferred clearance. Per-edge `topology: { kind: "label-only" }`
@@ -76,7 +76,7 @@ than the path leaves a zero-length path; it never invents a shortcut.
 
 ## Incremental contract
 
-`strategy.update(graph, previous, graphDiff, settings?)` returns
+`strategy.update(graph, previous, graphDiff, settings?, scope?)` returns
 `{ snapshot, patches, base }`. `base` is the exact previous snapshot: an async
 consumer must compare it with its current snapshot before accepting a result.
 Revision numbers are local to a snapshot lineage, not globally unique tokens.

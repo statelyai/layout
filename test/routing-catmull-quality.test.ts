@@ -18,7 +18,7 @@ it("keeps un-authored Catmull obstacle guides compact without a source sag", () 
   const route = bezierRouting
     .route(graph, {
       policy: {
-        curve: { kind: "catmull-rom" },
+        path: { kind: "catmull-rom" },
         sourceTangent: { kind: "border-normal" },
         targetTangent: { kind: "border-normal" },
       },
@@ -52,7 +52,7 @@ it.each([
     settings: {
       crossingPenalty: 0,
       policy: {
-        curve: { kind: "catmull-rom" },
+        path: { kind: "catmull-rom" },
         sourceTangent: { kind: "border-normal" },
         targetTangent: { kind: "border-normal" },
         label: { kind: "gap", tangent: { kind: "border-normal" } },

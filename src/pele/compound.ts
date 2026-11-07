@@ -368,7 +368,7 @@ export function getCompoundPeleLayout<N, E, G, P>(
         coordinateSpace: "world",
         edges: settings,
         policy: {
-          curve: { kind: "bezier" },
+          path: { kind: "bezier" },
           label: { kind: "gap", attachment: "side-midpoint", tangent: { kind: "border-normal" } },
         },
         maxSearchNodes: 40000,

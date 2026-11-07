@@ -1,3 +1,4 @@
+import { resolveCornerRadius, isRoundedOrthogonalPath } from "./corner-radius";
 import type {
   Route,
   RouteBounds,
@@ -84,6 +85,7 @@ interface Terminal {
 }
 interface Plan {
   path: RoutePath;
+  guide?: RoutePath;
   id: string;
 }
 export interface Batch {
@@ -402,7 +404,8 @@ function groupPlan(
   exterior.sort((a, b) => score(a) - score(b));
   candidates.push(...exterior);
   for (const candidate of candidates) {
-    const geometry = geometryFor(style);
+    const geometry =
+      batch.policy?.path?.kind === "rounded-orthogonal" ? "orthogonal" : geometryFor(style);
     const points = findPath(
       candidate.start,
       candidate.end,
@@ -410,7 +413,7 @@ function groupPlan(
       context,
     );
     if (!points) continue;
-    const policy = batch.policy?.curve;
+    const policy = batch.policy?.path;
     const path =
       policy?.kind === "catmull-rom"
         ? catmullRomPath(points)
@@ -419,6 +422,8 @@ function groupPlan(
           : policy?.kind === "rounded-orthogonal"
             ? roundCorners(pathFromPoints(points), {
                 radius: policy.radius ?? state.settings.radius,
+                minRadius: policy.minRadius,
+                maxRadius: policy.maxRadius,
               })
             : policy?.kind === "polyline"
               ? pathFromPoints(points)
@@ -426,7 +431,11 @@ function groupPlan(
                 ? curve(points, state, context)
                 : pathFromPoints(points);
     if (batch.policy && !safe(path, context)) continue;
-    result = { id: `trunk:${key}`, path };
+    result = {
+      id: `trunk:${key}`,
+      path,
+      ...(policy?.kind === "rounded-orthogonal" ? { guide: pathFromPoints(points) } : {}),
+    };
     break;
   }
   metrics.searchNodes += context.visited;
@@ -442,8 +451,8 @@ export function routeEdge(
 ): Route {
   const policy = effectivePolicy(state.settings, edge.id);
   const strategyStyle = style;
-  style = state.settings.edges[edge.id]?.geometry ?? style;
-  if (policy?.curve?.kind === "rounded-orthogonal" && !sharedCoordination(style, state.settings))
+  if (policy?.path?.kind === "polyline") style = policy.path.geometry ?? style;
+  if (policy?.path?.kind === "rounded-orthogonal" && !sharedCoordination(style, state.settings))
     style = "orthogonal";
   const config = policy ? { ...state.settings, ...policy.collisions } : state.settings,
     perEdge = config.edges[edge.id] ?? {},
@@ -576,16 +585,9 @@ export function routeEdge(
   const loopClearance = config.selfLoops?.clearance ?? config.clearance + config.edgeSpacing + 1;
   const group = groupKey(edge, strategyStyle, config),
     peers = group ? [...(state.groups.get(group)?.keys() ?? [])] : [];
-  const compatibleGroup =
-    (!policy ||
-      peers.every(
-        (id) => JSON.stringify(effectivePolicy(state.settings, id)) === JSON.stringify(policy),
-      )) &&
-    peers.every(
-      (id) =>
-        (state.settings.edges[id]?.geometry ?? geometryFor(strategyStyle)) ===
-        (perEdge.geometry ?? geometryFor(strategyStyle)),
-    );
+  const compatibleGroup = peers.every(
+    (id) => JSON.stringify(effectivePolicy(state.settings, id)) === JSON.stringify(policy),
+  );
   const grouped =
     !loop && peers.length > 1 && sharedCoordination(strategyStyle, config) && compatibleGroup;
   if (!compatibleGroup)
@@ -1035,9 +1037,9 @@ export function routeEdge(
     lane * config.edgeSpacing,
   );
   const searchContext =
-    policy?.curve?.kind === "bezier" ||
-    policy?.curve?.kind === "catmull-rom" ||
-    (!policy?.curve && ["curved", "organic", "bundle", "bezier"].includes(style))
+    policy?.path?.kind === "bezier" ||
+    policy?.path?.kind === "catmull-rom" ||
+    (!policy?.path && ["curved", "organic", "bundle", "bezier"].includes(style))
       ? contextFor(
           state,
           excluded,
@@ -1084,6 +1086,7 @@ export function routeEdge(
   };
   for (const ctx of new Set([context, searchContext])) protectFutureTarget(ctx);
   const drawn: Reservation[] = [];
+  const drawnGuideBounds: RouteBounds[] = [];
   // Sharing terminal attachment regions is clipped below. A later leg must
   // not cross or retrace this same edge outside those regions.
   const selfCost = (a: RoutePoint, b: RoutePoint) =>
@@ -1102,7 +1105,9 @@ export function routeEdge(
     ctx.edgeCost = (a, b) => (cost?.(a, b) ?? 0) + selfCost(a, b);
     ctx.guides = (bounds) => [
       ...(guides?.(bounds) ?? []),
-      ...drawn.map((s) => reservationBounds(s, config.edgeSpacing)),
+      ...(drawnGuideBounds.length
+        ? drawnGuideBounds
+        : drawn.map((s) => reservationBounds(s, config.edgeSpacing))),
     ];
   }
   const exposedLabelSides =
@@ -1297,8 +1302,8 @@ export function routeEdge(
         terminal.point = projected;
     }
   }
-  const curvePolicy =
-    policy?.curve ??
+  const pathOptions =
+    policy?.path ??
     (style === "bezier" || style === "curved" || style === "organic" || style === "bundle"
       ? { kind: "bezier" as const }
       : { kind: "polyline" as const });
@@ -1346,7 +1351,7 @@ export function routeEdge(
           sourceEnd ? "source-tangent" : "target-tangent",
         );
       if (
-        curvePolicy.kind === "rounded-orthogonal" &&
+        pathOptions.kind === "rounded-orthogonal" &&
         terminal.tangent &&
         Math.abs(terminal.tangent.x * terminal.tangent.y) > 1e-8
       )
@@ -1433,7 +1438,7 @@ export function routeEdge(
                 x: target.point.x - source.point.x,
                 y: target.point.y - source.point.y,
               });
-      if (curvePolicy.kind === "rounded-orthogonal" && tangent?.kind !== "vector")
+      if (pathOptions.kind === "rounded-orthogonal" && tangent?.kind !== "vector")
         labelDirection = reverse(vector(firstTarget.side));
       const direction = labelDirection;
       if (
@@ -1519,7 +1524,7 @@ export function routeEdge(
           "Label tangent conflicts with allowed entry and exit faces",
           "label-tangent",
         );
-      if (curvePolicy.kind === "rounded-orthogonal" && Math.abs(direction.x * direction.y) > 1e-8)
+      if (pathOptions.kind === "rounded-orthogonal" && Math.abs(direction.x * direction.y) > 1e-8)
         report(
           "CONSTRAINT_VIOLATION",
           "Orthogonal paths require axis-aligned label tangents",
@@ -1532,7 +1537,7 @@ export function routeEdge(
     if (lastSource) lastSource.point = anchor(label, lastSource.side);
   }
   const portSegment = (from: RoutePoint, to: RoutePoint): RouteSegment =>
-    curvePolicy.kind === "bezier" || curvePolicy.kind === "catmull-rom"
+    pathOptions.kind === "bezier" || pathOptions.kind === "catmull-rom"
       ? {
           kind: "cubic",
           control1: { x: from.x + (to.x - from.x) / 3, y: from.y + (to.y - from.y) / 3 },
@@ -1615,7 +1620,7 @@ export function routeEdge(
     let from = path.start;
     const geometry = geometryFor(style);
     const validGeometry =
-      curvePolicy.kind !== "polyline" ||
+      pathOptions.kind !== "polyline" ||
       path.segments.every((segment) => {
         const dx = Math.abs(segment.to.x - from.x),
           dy = Math.abs(segment.to.y - from.y);
@@ -1649,7 +1654,7 @@ export function routeEdge(
       cost:
         pathCost(path, context) +
         terminalClearanceCost(path, a, b) +
-        (curvePolicy.kind === "bezier" && path.segments.length > 1
+        (pathOptions.kind === "bezier" && path.segments.length > 1
           ? path.segments.filter((segment, index) => {
               if (segment.kind !== "cubic") return false;
               const start = index ? path.segments[index - 1]!.to : path.start;
@@ -1660,15 +1665,26 @@ export function routeEdge(
               );
             }).length * context.bendPenalty
           : 0) +
-        (curvePolicy.kind === "catmull-rom"
+        (pathOptions.kind === "catmull-rom"
           ? Math.max(0, path.segments.length - (perEdge.waypoints?.length ?? 0) - 1) *
             context.bendPenalty
           : 0) +
         (policy?.monotonic?.strength === "prefer" ? reverseTravel * 80 : 0),
     };
   }
+  const cornerRadius =
+    pathOptions.kind === "rounded-orthogonal"
+      ? resolveCornerRadius(pathOptions, config.radius)
+      : undefined;
+  const sharpGuides = cornerRadius ? new Map<RoutePath, RoutePath>() : undefined;
   let shapeFallback = false;
-  function compactBezierGuide(a: Terminal, b: Terminal, via: readonly RoutePoint[], padding = 0) {
+  function compactCurveGuide(
+    a: Terminal,
+    b: Terminal,
+    via: readonly RoutePoint[],
+    padding = 0,
+    radius = cornerRadius?.radius ?? config.radius,
+  ) {
     const remaining =
       config.maxSearchNodes -
       searchContext.visited -
@@ -1703,24 +1719,87 @@ export function routeEdge(
           ? reverse(terminal.tangent)
           : terminal.tangent
         : vector(terminal.side);
-      const minimum = config.clearance + padding + 1;
+      const markerGap =
+        terminal === source
+          ? (perEdge.sourceClearance ?? 0)
+          : terminal === target
+            ? (perEdge.targetClearance ?? 0)
+            : 0;
+      const minimum = Math.max(
+        config.clearance + padding + 1,
+        cornerRadius ? markerGap + radius + 1 : 0,
+      );
       const at = (length: number) => ({
         x: terminal.point.x + direction.x * length,
         y: terminal.point.y + direction.y * length,
       });
-      const preferred = at(Math.max(minimum, config.radius * 2));
+      const preferred = at(cornerRadius ? minimum : Math.max(minimum, config.radius * 2));
       return clear(preferred, preferred, compact) ? preferred : at(minimum);
     };
     const anchors = [lead(a, false), ...via, lead(b, true)];
+    // Protect the port leads against crossings as well as collinear retracing.
+    if (cornerRadius) {
+      const cost = compact.edgeCost;
+      const leads = [
+        { a: a.point, b: anchors[0]! },
+        { a: anchors.at(-1)!, b: b.point },
+      ];
+      const conflicts = { ...config, crossingPenalty: 1, overlapPenalty: 1, edgeSpacing: 0 };
+      compact.edgeCost = (p, q) => {
+        for (const lead of leads) {
+          if (
+            [p, q].some((point) => distance(point, lead.a) < 1e-7 || distance(point, lead.b) < 1e-7)
+          )
+            continue;
+          if (conflictCost(p, q, lead, conflicts) > 1e-8) return Infinity;
+        }
+        return cost?.(p, q) ?? 0;
+      };
+    }
     const points = [a.point];
+    let from = anchors[0]!;
     let complete = true;
     for (let i = 1; i < anchors.length; i++) {
-      const found = findPath(anchors[i - 1]!, anchors[i]!, "polyline", compact);
+      const found = cornerRadius
+        ? findPathBetweenLeads(
+            from,
+            anchors[i]!,
+            "orthogonal",
+            compact,
+            [
+              [a.point, anchors[0]!],
+              [anchors.at(-1)!, b.point],
+            ],
+            {
+              incoming: i === 1 ? (a.tangent ?? vector(a.side)) : undefined,
+              outgoing:
+                i === anchors.length - 1 ? (b.tangent ?? reverse(vector(b.side))) : undefined,
+            },
+          )
+        : findPath(from, anchors[i]!, "polyline", compact);
       if (!found) {
         complete = false;
         break;
       }
       points.push(...found.slice(i === 1 && padding ? 0 : 1));
+      from = anchors[i]!;
+      if (cornerRadius && i < anchors.length - 1) {
+        const previous = points.findLast((point) => distance(point, from) > 1e-9) ?? a.point;
+        const length = distance(previous, from);
+        if (length) {
+          const lead = Math.max(1, radius * 2);
+          const exit = {
+            x: from.x + ((from.x - previous.x) / length) * lead,
+            y: from.y + ((from.y - previous.y) / length) * lead,
+          };
+          if (!clear(from, exit, compact)) {
+            complete = false;
+            break;
+          }
+          points.push(exit);
+          from = exit;
+        }
+      }
     }
     if (padding) points.push(b.point);
     searchContext.visited += compact.visited;
@@ -1732,7 +1811,7 @@ export function routeEdge(
     via: readonly RoutePoint[],
     guide: RoutePath,
   ): RoutePath {
-    if (loop && !via.length && curvePolicy.kind === "bezier" && distance(a.point, b.point) < 1e-8) {
+    if (loop && !via.length && pathOptions.kind === "bezier" && distance(a.point, b.point) < 1e-8) {
       const normal = vector(a.side),
         lateral = { x: -normal.y, y: normal.x };
       const extent = loopClearance + 9;
@@ -1774,14 +1853,14 @@ export function routeEdge(
       }
     }
     const guidePoints = [guide.start, ...guide.segments.map((part) => part.to)];
-    if (curvePolicy.kind === "bezier" && !via.length) {
+    if (pathOptions.kind === "bezier" && !via.length) {
       const tangents = new Map<number, RoutePoint>();
       if (a.tangent) tangents.set(0, a.tangent);
       if (b.tangent) tangents.set(1, b.tangent);
       const direct = bezierThroughPoints(
         [a.point, b.point],
         tangents,
-        curvePolicy.curvature ?? 0.5,
+        pathOptions.curvature ?? 0.5,
       );
       if (
         assessPath(direct, a, b).valid &&
@@ -1794,12 +1873,12 @@ export function routeEdge(
     const candidates: RoutePath[] = [];
     const unshapedCandidates = new Set<RoutePath>();
     const compact =
-      curvePolicy.kind === "bezier" || curvePolicy.kind === "catmull-rom"
-        ? compactBezierGuide(a, b, via)
+      pathOptions.kind === "bezier" || pathOptions.kind === "catmull-rom"
+        ? compactCurveGuide(a, b, via)
         : undefined;
     const smoothCompact =
-      curvePolicy.kind === "bezier" && !via.length && terminalClearanceCost(guide, a, b) > 1e-7
-        ? compactBezierGuide(a, b, via, config.radius / 2)
+      pathOptions.kind === "bezier" && !via.length && terminalClearanceCost(guide, a, b) > 1e-7
+        ? compactCurveGuide(a, b, via, config.radius / 2)
         : undefined;
     const pointCandidates = [
       [a.point, ...via, b.point],
@@ -1821,11 +1900,11 @@ export function routeEdge(
       const tangents = new Map<number, RoutePoint>();
       if (a.tangent) tangents.set(0, a.tangent);
       if (b.tangent) tangents.set(points.length - 1, b.tangent);
-      if (curvePolicy.kind === "polyline") candidates.push(pathFromPoints(points));
-      else if (curvePolicy.kind === "catmull-rom")
+      if (pathOptions.kind === "polyline") candidates.push(pathFromPoints(points));
+      else if (pathOptions.kind === "catmull-rom")
         candidates.push(catmullRomPath(points, tangents));
-      else if (curvePolicy.kind === "bezier") {
-        const curvature = curvePolicy.curvature ?? 0.5;
+      else if (pathOptions.kind === "bezier") {
+        const curvature = pathOptions.curvature ?? 0.5;
         const requested = bezierThroughPoints(points, tangents, curvature);
         candidates.push(requested);
         const returnNormal = vector(b.side);
@@ -1893,7 +1972,11 @@ export function routeEdge(
           .slice(1)
           .every((point, index) => point.x === points[index]!.x || point.y === points[index]!.y)
       ) {
-        for (const scale of [1, 0.5, 0.25]) {
+        for (const radius of new Set([
+          cornerRadius!.radius,
+          Math.max(cornerRadius!.minRadius, cornerRadius!.radius / 2),
+          Math.max(cornerRadius!.minRadius, cornerRadius!.radius / 4),
+        ])) {
           const segments: RoutePath["segments"][number][] = [];
           let start = 0;
           for (let end = 1; end < points.length; end++) {
@@ -1904,12 +1987,19 @@ export function routeEdge(
               continue;
             segments.push(
               ...roundCorners(pathFromPoints(points.slice(start, end + 1)), {
-                radius: (curvePolicy.radius ?? config.radius) * scale,
+                radius,
+                minRadius: cornerRadius!.minRadius,
+                maxRadius: cornerRadius!.maxRadius,
               }).segments,
             );
             start = end;
           }
-          candidates.push({ start: points[0]!, segments });
+          const path = { start: points[0]!, segments };
+          const sharp = pathFromPoints(points);
+          if (isRoundedOrthogonalPath(path, cornerRadius!) && assessPath(sharp, a, b).valid) {
+            sharpGuides!.set(path, sharp);
+            candidates.push(path);
+          }
         }
       }
     }
@@ -1926,11 +2016,39 @@ export function routeEdge(
       if (unshapedCandidates.has(viable[0]!.path)) shapeFallback = true;
       return viable[0]!.path;
     }
-    if (curvePolicy.kind === "catmull-rom") {
+    if (cornerRadius) {
+      const radii = new Set([
+        cornerRadius.radius,
+        Math.max(cornerRadius.minRadius, cornerRadius.radius / 2),
+        Math.max(cornerRadius.minRadius, cornerRadius.radius / 4),
+        ...(cornerRadius.minRadius ? [cornerRadius.minRadius] : []),
+      ]);
+      for (const radius of radii)
+        for (const padding of [radius / 2, radius, radius * 2]) {
+          const points = compactCurveGuide(a, b, via, padding, radius);
+          if (!points) continue;
+          const sharp = pathFromPoints(points);
+          const path = roundCorners(sharp, { ...cornerRadius, radius });
+          if (
+            !isRoundedOrthogonalPath(path, cornerRadius) ||
+            !assessPath(sharp, a, b).valid ||
+            !via.every((point) =>
+              [path.start, ...path.segments.map((part) => part.to)].some(
+                (knot) => distance(point, knot) < 1e-7,
+              ),
+            )
+          )
+            continue;
+          sharpGuides!.set(path, sharp);
+          const assessed = assessPath(path, a, b);
+          if (assessed.valid && Number.isFinite(assessed.cost)) return path;
+        }
+    }
+    if (pathOptions.kind === "catmull-rom") {
       // A clear polyline can leave too little room for an interpolating spline.
       // Retry with padded guides within the remaining shared search budget.
       for (const padding of [config.radius / 2, config.radius, config.radius * 2]) {
-        const points = compactBezierGuide(a, b, via, padding);
+        const points = compactCurveGuide(a, b, via, padding);
         if (!points) continue;
         const tangents = new Map<number, RoutePoint>();
         if (a.tangent) tangents.set(0, a.tangent);
@@ -1963,8 +2081,17 @@ export function routeEdge(
         config.clearance +
           1 +
           (!grouped && peers.length > 1 ? peers.indexOf(edge.id) : 0) * config.edgeSpacing,
-        policy && curvePolicy.kind === "rounded-orthogonal"
-          ? (curvePolicy.radius ?? config.radius) * 2
+        cornerRadius
+          ? Math.max(
+              cornerRadius.radius * 2,
+              (t === source
+                ? (perEdge.sourceClearance ?? 0)
+                : t === target
+                  ? (perEdge.targetClearance ?? 0)
+                  : 0) +
+                cornerRadius.radius +
+                1,
+            )
           : 0,
       );
     return { x: t.point.x + v.x * length, y: t.point.y + v.y * length };
@@ -2118,9 +2245,7 @@ export function routeEdge(
               : t === target
                 ? perEdge.targetClearance
                 : 0) ?? 0) +
-              (policy && curvePolicy.kind === "rounded-orthogonal"
-                ? (curvePolicy.radius ?? config.radius)
-                : 0),
+              (policy && pathOptions.kind === "rounded-orthogonal" ? cornerRadius!.radius : 0),
             ((b.point.x - a.point.x) * vector(a.side).x +
               (b.point.y - a.point.y) * vector(a.side).y) /
               3,
@@ -2170,7 +2295,7 @@ export function routeEdge(
       const points: RoutePoint[] = [a.point],
         anchors = [start, ...waypoints, end];
       const searchStyle =
-        policy?.curve?.kind === "rounded-orthogonal"
+        policy?.path?.kind === "rounded-orthogonal"
           ? "orthogonal"
           : style === "polyline" || style === "organic" || style === "parallel"
             ? "polyline"
@@ -2469,6 +2594,9 @@ export function routeEdge(
             diagnostics.splice(i, 1);
       return {
         path: withPortEscapes(path, from, to),
+        guide: cornerRadius
+          ? withPortEscapes(sharpGuides!.get(path) ?? guide, from, to)
+          : undefined,
         from,
         to,
         ...assessPath(path, from, to),
@@ -2516,6 +2644,7 @@ export function routeEdge(
       Object.assign(source, best.from);
       Object.assign(target, best.to);
     }
+    if (best.guide) sharpGuides!.set(best.path, best.guide);
     return best.path;
   }
   const via = perEdge.waypoints ?? [];
@@ -2539,7 +2668,11 @@ export function routeEdge(
       -config.clearance,
     );
     const v = vector(target.side);
-    for (let length = config.clearance + 1; length >= 1e-6; length /= 2) {
+    for (
+      let length = cornerRadius ? distance(target.point, stub(target, true)) : config.clearance + 1;
+      length >= 1e-6;
+      length /= 2
+    ) {
       const lead = {
         x: target.point.x + v.x * length,
         y: target.point.y + v.y * length,
@@ -2558,7 +2691,7 @@ export function routeEdge(
   const oldPolicy = batch.previousSettings && effectivePolicy(batch.previousSettings, edge.id);
   const shapePolicy = (p: RoutingPolicy | undefined) =>
     p && {
-      curve: p.curve,
+      path: p.path,
       sourceTangent: p.sourceTangent,
       targetTangent: p.targetTangent,
       label: p.label,
@@ -2613,29 +2746,13 @@ export function routeEdge(
   });
   const oldCurveValid =
     previousCurveFallback ||
-    (curvePolicy.kind !== "bezier" && curvePolicy.kind !== "catmull-rom") ||
+    (pathOptions.kind !== "bezier" && pathOptions.kind !== "catmull-rom") ||
     oldSections?.every((section) =>
       section.path.segments.every((segment) => segment.kind === "cubic"),
     );
   const oldRoundedValid =
-    curvePolicy.kind !== "rounded-orthogonal" ||
-    oldSections?.every((section) => {
-      let from = section.path.start;
-      return section.path.segments.every((segment) => {
-        const dx = Math.abs(segment.to.x - from.x),
-          dy = Math.abs(segment.to.y - from.y);
-        from = segment.to;
-        return segment.kind === "line"
-          ? dx < 1e-7 || dy < 1e-7
-          : segment.kind === "arc" &&
-              segment.rotation === 0 &&
-              !segment.largeArc &&
-              segment.rx <= (curvePolicy.radius ?? config.radius) + 1e-7 &&
-              Math.abs(segment.rx - segment.ry) < 1e-7 &&
-              Math.abs(dx - segment.rx) < 1e-7 &&
-              Math.abs(dy - segment.ry) < 1e-7;
-      });
-    });
+    !cornerRadius ||
+    oldSections?.every((section) => isRoundedOrthogonalPath(section.path, cornerRadius));
   const corridor = futureTargetCorridor;
   futureTargetCorridor = undefined;
   const oldLegsDoNotRetrace = () => {
@@ -2713,7 +2830,7 @@ export function routeEdge(
     !portEscapes.size &&
     !sourceConstraint &&
     !targetConstraint &&
-    curvePolicy.kind === "polyline"
+    pathOptions.kind === "polyline"
   ) {
     const path = retargetLinePath(
       oldSections[0]!.path,
@@ -2754,6 +2871,7 @@ export function routeEdge(
     if (grouped && !plan)
       report("ROUTE_BLOCKED", "Shared trunk unavailable; used individual fallback routing");
     if (plan) {
+      if (cornerRadius && plan.guide) sharpGuides!.set(plan.path, plan.guide);
       const start = plan.path.start,
         end = plan.path.segments.at(-1)?.to ?? start;
       const j0: Terminal = {
@@ -2791,7 +2909,17 @@ export function routeEdge(
       });
     if (lastSource) {
       futureTargetCorridor = undefined;
-      let segments = sections.flatMap((s) => pathReservations(s.path));
+      let segments = sections.flatMap((section) => {
+        const sharp = sharpGuides?.get(section.path);
+        return [
+          ...pathReservations(section.path),
+          ...(sharp &&
+          sharp !== section.path &&
+          section.path.segments.some((part) => part.kind === "arc")
+            ? pathReservations(sharp)
+            : []),
+        ];
+      });
       // The two legs meet at a label and, for a self-loop, at their node. Sharing
       // those attachment regions is legitimate; retracing a distant trunk is not.
       // Label interiors are gaps, but strokes along their borders remain visible
@@ -2801,6 +2929,21 @@ export function routeEdge(
         segments = segments.flatMap((s) =>
           outsideTerminal(s, inflate(sourceBounds, config.clearance + 1)),
         );
+      // Grid hints use whole segments; collision costs retain the precise flattened arcs.
+      if (cornerRadius)
+        for (const section of sections) {
+          let from = section.path.start;
+          for (const segment of section.path.segments) {
+            drawnGuideBounds.push(
+              inflate(getPathBounds({ start: from, segments: [segment] }), config.edgeSpacing),
+            );
+            from = segment.to;
+          }
+          const sharp = sharpGuides?.get(section.path);
+          if (sharp && sharp !== section.path)
+            for (const segment of pathReservations(sharp))
+              drawnGuideBounds.push(reservationBounds(segment, config.edgeSpacing));
+        }
       drawn.push(...segments);
       sections.push({
         id: `${edge.id}:label-target`,
@@ -2809,6 +2952,18 @@ export function routeEdge(
         path: connection(lastSource, target),
         ...(policy ? { fromSide: lastSource.side, toSide: target.side } : {}),
       });
+    }
+  }
+  if (
+    cornerRadius &&
+    sections.some((section) => !isRoundedOrthogonalPath(section.path, cornerRadius))
+  )
+    shapeFallback = true;
+  if (cornerRadius && shapeFallback) {
+    for (let index = 0; index < sections.length; index++) {
+      const section = sections[index]!;
+      const guide = sharpGuides!.get(section.path);
+      if (guide) sections[index] = { ...section, path: guide };
     }
   }
   metrics.searchNodes += searchContext.visited + (searchContext === context ? 0 : context.visited);

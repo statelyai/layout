@@ -130,11 +130,44 @@ export type RoutingTangent =
   | { readonly kind: "automatic" }
   | { readonly kind: "border-normal" }
   | { readonly kind: "vector"; readonly direction: RoutePoint };
-export type RoutingCurve =
-  | { readonly kind: "polyline" }
-  | { readonly kind: "bezier"; readonly curvature?: number }
-  | { readonly kind: "catmull-rom" }
-  | { readonly kind: "rounded-orthogonal"; readonly radius?: number };
+export interface CornerRadiusOptions {
+  /** Preferred radius; shortened locally to fit adjacent segments.
+   * Routing inherits RoutingSettings.radius (default 10); roundCorners defaults to 10. */
+  readonly radius?: number;
+  readonly minRadius?: number;
+  readonly maxRadius?: number;
+}
+/** A complete path choice. Only sharp paths accept an independent segment geometry. */
+export type RoutingPathOptions =
+  | {
+      readonly kind: "polyline";
+      readonly geometry?: RouteGeometry;
+      readonly curvature?: never;
+      readonly radius?: never;
+      readonly minRadius?: never;
+      readonly maxRadius?: never;
+    }
+  | {
+      readonly kind: "bezier";
+      readonly curvature?: number;
+      readonly geometry?: never;
+      readonly radius?: never;
+      readonly minRadius?: never;
+      readonly maxRadius?: never;
+    }
+  | {
+      readonly kind: "catmull-rom";
+      readonly geometry?: never;
+      readonly curvature?: never;
+      readonly radius?: never;
+      readonly minRadius?: never;
+      readonly maxRadius?: never;
+    }
+  | ({
+      readonly kind: "rounded-orthogonal";
+      readonly geometry?: never;
+      readonly curvature?: never;
+    } & CornerRadiusOptions);
 export type RoutingLabel =
   | { readonly kind: "follow"; readonly fraction?: number; readonly offset?: number }
   | { readonly kind: "fixed" }
@@ -146,7 +179,7 @@ export type RoutingLabel =
       readonly attachment?: "border" | "side-midpoint";
     };
 export interface RoutingPolicy {
-  readonly curve?: RoutingCurve;
+  readonly path?: RoutingPathOptions;
   readonly sourceTangent?: RoutingTangent;
   readonly targetTangent?: RoutingTangent;
   readonly label?: RoutingLabel;
@@ -164,7 +197,6 @@ export interface RoutingPolicy {
 }
 export interface EdgeRoutingSettings {
   readonly policy?: RoutingPolicy;
-  readonly geometry?: RouteGeometry;
   readonly topology?: { readonly kind: "connection" } | { readonly kind: "label-only" };
   readonly source?: RouteEndpointConstraint;
   readonly target?: RouteEndpointConstraint;
@@ -229,6 +261,10 @@ export interface RoutingUpdate {
   readonly base: RoutingSnapshot;
 }
 export type RoutingGraph = Graph<unknown, unknown, unknown, unknown>;
+/** Selected previews retain unrelated routes until an explicit full refinement. */
+export type RoutingUpdateScope =
+  | { readonly kind: "affected" }
+  | { readonly kind: "selected"; readonly edgeIds: readonly string[] };
 export interface RoutingStrategy {
   readonly id: string;
   route(
@@ -240,6 +276,7 @@ export interface RoutingStrategy {
     previous: RoutingSnapshot,
     diff: GraphDiff<unknown, unknown>,
     settings?: RoutingSettings,
+    scope?: RoutingUpdateScope,
   ): RoutingUpdate | Promise<RoutingUpdate>;
 }
 export interface NativeRoutingStrategy extends RoutingStrategy {
@@ -250,6 +287,7 @@ export interface NativeRoutingStrategy extends RoutingStrategy {
     previous: RoutingSnapshot,
     diff: GraphDiff<unknown, unknown>,
     settings?: RoutingSettings,
+    scope?: RoutingUpdateScope,
   ): RoutingUpdate;
 }
 export type RouteBounds = Readonly<EntityRect>;

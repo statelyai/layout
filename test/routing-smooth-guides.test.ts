@@ -22,7 +22,7 @@ it.each([false, true])("keeps obstacle guide joins smooth with fixed ports %s", 
   const route = bezierRouting
     .route(graph, {
       policy: {
-        curve: { kind: "bezier" },
+        path: { kind: "bezier" },
         sourceTangent: { kind: "border-normal" },
         targetTangent: { kind: "border-normal" },
       },

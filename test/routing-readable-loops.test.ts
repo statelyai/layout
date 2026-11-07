@@ -14,7 +14,7 @@ it.each([false, true])("draws a readable smooth same-face loop beside obstacle %
   const route = selfLoopRouting
     .route(graph, {
       policy: {
-        curve: { kind: "bezier" },
+        path: { kind: "bezier" },
         sourceTangent: { kind: "border-normal" },
         targetTangent: { kind: "border-normal" },
       },

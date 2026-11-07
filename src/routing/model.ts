@@ -1,3 +1,4 @@
+import { resolveCornerRadius } from "./corner-radius";
 import type { GraphEdge } from "@statelyai/graph";
 import { PersistentMap } from "./persistent";
 import { SpatialIndex } from "./spatial";
@@ -104,11 +105,7 @@ export function settings(input: RoutingSettings = {}): Settings {
       throw new RangeError("Bézier targetClearance must be finite and non-negative");
   }
   for (const edge of Object.values(result.edges)) {
-    if (
-      edge.geometry !== undefined &&
-      !["straight", "orthogonal", "polyline", "octilinear"].includes(edge.geometry)
-    )
-      throw new RangeError("Invalid edge routing geometry");
+    if ("geometry" in edge) throw new RangeError("Use edge policy.path for routing geometry");
     if (edge.topology && !["connection", "label-only"].includes(edge.topology.kind))
       throw new RangeError("Invalid edge topology kind");
     for (const gap of [edge.sourceClearance, edge.targetClearance])
@@ -341,17 +338,39 @@ export function groupKey(edge: EdgeGeometry, style: string, config: Settings): s
 
 function normalizePolicy(input: RoutingPolicy | undefined): RoutingPolicy | undefined {
   if (!input) return;
+  if ("curve" in input) throw new RangeError("Use policy.path instead of policy.curve");
   const value = structuredClone(input);
   const oneOf = (value: unknown, allowed: readonly string[], name: string) => {
     if (typeof value !== "string" || !allowed.includes(value))
       throw new RangeError(`Invalid ${name}`);
   };
-  if (value.curve)
+  if (value.path)
     oneOf(
-      value.curve.kind,
+      value.path.kind,
       ["polyline", "bezier", "catmull-rom", "rounded-orthogonal"],
-      "curve kind",
+      "path kind",
     );
+  if (value.path?.kind === "polyline" && value.path.geometry !== undefined)
+    oneOf(
+      value.path.geometry,
+      ["straight", "orthogonal", "polyline", "octilinear"],
+      "path geometry",
+    );
+  if (value.path && value.path.kind !== "polyline" && value.path.geometry !== undefined)
+    throw new RangeError("Geometry is only configurable for polyline paths");
+  if (value.path) {
+    const allowed =
+      value.path.kind === "polyline"
+        ? ["kind", "geometry"]
+        : value.path.kind === "bezier"
+          ? ["kind", "curvature"]
+          : value.path.kind === "rounded-orthogonal"
+            ? ["kind", "radius", "minRadius", "maxRadius"]
+            : ["kind"];
+    for (const [key, option] of Object.entries(value.path))
+      if (option !== undefined && !allowed.includes(key))
+        throw new RangeError(`Unsupported ${key} for ${value.path.kind} paths`);
+  }
   if (value.label) oneOf(value.label.kind, ["follow", "fixed", "through", "gap"], "label kind");
   if (value.label?.kind === "gap" && value.label.attachment !== undefined)
     oneOf(value.label.attachment, ["border", "side-midpoint"], "label attachment");
@@ -378,8 +397,8 @@ function normalizePolicy(input: RoutingPolicy | undefined): RoutingPolicy | unde
       throw new RangeError("Tangent direction must be finite and nonzero");
     return { kind: "vector", direction: { x: x / length, y: y / length } };
   }
-  if (value.curve?.kind === "bezier") nonnegative(value.curve.curvature, "curvature");
-  if (value.curve?.kind === "rounded-orthogonal") nonnegative(value.curve.radius, "radius");
+  if (value.path?.kind === "bezier") nonnegative(value.path.curvature, "curvature");
+  if (value.path?.kind === "rounded-orthogonal") resolveCornerRadius(value.path);
   nonnegative(value.collisions?.crossingPenalty, "crossingPenalty");
   nonnegative(value.collisions?.overlapPenalty, "overlapPenalty");
   if (value.label?.kind === "follow") {
@@ -441,7 +460,7 @@ export function effectivePolicy(config: Settings, edgeId: string): RoutingPolicy
     };
   }
   return {
-    curve: local?.curve ?? global?.curve,
+    path: local?.path ?? global?.path,
     sourceTangent: local?.sourceTangent ?? legacyTangent ?? global?.sourceTangent,
     targetTangent: local?.targetTangent ?? legacyTangent ?? global?.targetTangent,
     label,
@@ -481,7 +500,7 @@ export const routingPolicies: Readonly<{
   authored: RoutingPolicy;
 }> = freeze({
   smooth: {
-    curve: { kind: "bezier", curvature: 0.5 },
+    path: { kind: "bezier", curvature: 0.5 },
     sourceTangent: { kind: "automatic" },
     targetTangent: { kind: "automatic" },
     label: { kind: "follow", fraction: 0.5 },
@@ -489,7 +508,7 @@ export const routingPolicies: Readonly<{
     stability: { kind: "recompute" },
   },
   diagram: {
-    curve: { kind: "rounded-orthogonal", radius: 10 },
+    path: { kind: "rounded-orthogonal", radius: 10 },
     sourceTangent: { kind: "border-normal" },
     targetTangent: { kind: "border-normal" },
     label: { kind: "follow", fraction: 0.5 },
@@ -497,7 +516,7 @@ export const routingPolicies: Readonly<{
     stability: { kind: "recompute" },
   },
   authored: {
-    curve: { kind: "catmull-rom" },
+    path: { kind: "catmull-rom" },
     sourceTangent: { kind: "automatic" },
     targetTangent: { kind: "automatic" },
     label: { kind: "follow", fraction: 0.5 },

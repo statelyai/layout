@@ -27,10 +27,9 @@ it("aligns a straight targetless endpoint with an off-center label midpoint", ()
   });
   const route = routeEdges({
     graph,
-    geometry: "straight",
     settings: {
       policy: {
-        curve: { kind: "polyline" },
+        path: { kind: "polyline", geometry: "straight" },
         sourceTangent: { kind: "border-normal" },
         label: { kind: "gap", attachment: "side-midpoint", tangent: { kind: "border-normal" } },
       },
@@ -61,7 +60,7 @@ it("keeps midpoint connections clear of interiors when fixed labels overlap", ()
     settings: {
       crossingPenalty: 0,
       policy: {
-        curve: { kind: "rounded-orthogonal" },
+        path: { kind: "rounded-orthogonal" },
         label: { kind: "gap", attachment: "side-midpoint", tangent: { kind: "border-normal" } },
       },
     },
@@ -98,7 +97,7 @@ it.each(["rounded-orthogonal", "polyline", "bezier", "catmull-rom"] as const)(
       graph,
       settings: {
         policy: {
-          curve: { kind },
+          path: { kind },
           sourceTangent: { kind: "border-normal" },
           targetTangent: { kind: "border-normal" },
           label: { kind: "gap", attachment: "side-midpoint", tangent: { kind: "border-normal" } },
@@ -140,7 +139,7 @@ it.each(["polyline", "bezier", "catmull-rom", "rounded-orthogonal"] as const)(
   (kind) => {
     const settings: RoutingSettings = {
       policy: {
-        curve: { kind },
+        path: { kind },
         label: { kind: "gap", attachment: "side-midpoint", tangent: { kind: "border-normal" } },
         stability: { kind: "preserve-valid" },
       },

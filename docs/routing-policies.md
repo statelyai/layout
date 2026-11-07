@@ -59,18 +59,50 @@ An explicit policy takes precedence over the corresponding global default.
 Invalid numeric settings throw before routing. Infeasible graph constraints
 produce route diagnostics.
 
-## Curves
+## Paths
 
-| `curve.kind`         | Behavior                                                                            |
-| -------------------- | ----------------------------------------------------------------------------------- |
-| `polyline`           | Line segments through the selected routing points                                   |
-| `bezier`             | Cubic Bézier geometry with configurable `curvature`                                 |
-| `catmull-rom`        | Centripetal Catmull–Rom interpolation through routing points and authored waypoints |
-| `rounded-orthogonal` | Rectilinear corridors with rounded corners, controlled by `radius`                  |
+`RoutingPolicy.path` is one `RoutingPathOptions` discriminated union. Geometry
+belongs only to sharp `polyline` paths; rounded orthogonal paths own their
+geometry, and spline builders choose their own guides. Conflicting or irrelevant
+fields are rejected by TypeScript and runtime validation, rather than ignored.
+
+| `path.kind`          | Options and behavior                                                                             |
+| -------------------- | ------------------------------------------------------------------------------------------------ |
+| `polyline`           | Sharp segments; optional `geometry`: `orthogonal`, `polyline`, `octilinear`, or `straight`       |
+| `rounded-orthogonal` | Orthogonal corridors with `radius`, `minRadius`, `maxRadius`                                     |
+| `bezier`             | Cubic geometry with optional `curvature`; no independent geometry                                |
+| `catmull-rom`        | Centripetal interpolation through routing points and authored waypoints; no independent geometry |
+
+Examples: `{ kind: "polyline", geometry: "octilinear" }`,
+`{ kind: "rounded-orthogonal", radius: 10 }`, or `{ kind: "bezier" }`.
+There is no separate object-API or edge `geometry` override. Built-in strategy
+objects remain available as defaults, and an explicit path policy overrides the
+strategy's default shape. Coordination, topology, attachment and collision
+constraints remain separate concerns.
 
 `curvature` is a preferred chord-length handle multiplier, defaulting to `0.5`.
 Handles and corner radii can shrink to satisfy hard geometry constraints.
 A safe guide returned in place of a requested curve carries fallback diagnostics.
+
+For orthogonal geometry, `path: { kind: "polyline", geometry: "orthogonal" }` gives sharp corners;
+`path: { kind: "rounded-orthogonal", radius: 10, minRadius: 2, maxRadius: 16 }`
+adds circular bends. Omitted `path.radius` inherits `RoutingSettings.radius`
+(default 10); standalone `roundCorners` defaults to 10. `radius` is preferred, not forced: it is clamped to the
+configured interval, then each bend shrinks to fit half of each adjacent segment.
+Bounds are finite and nonnegative; an inverted interval is rejected. Omitted
+minimum is zero; an omitted maximum imposes no extra cap on the preferred radius.
+A positive minimum that cannot fit does not silently round only one label leg:
+the whole edge retains sharp hard-safe guides and reports a curve constraint.
+Zero preferred radius with a zero minimum deliberately gives sharp output.
+`roundCorners(path, options)` accepts the same `CornerRadiusOptions`; if a positive
+minimum cannot fit every corner, it returns the original path without partial rounding.
+
+Rounded routing retries obstacle-padded orthogonal guides within the existing
+search budget. Port normals, label-side midpoints, marker gaps and authored
+waypoints remain exact. Cached sharp/mixed paths cannot be adopted as rounded
+successes. Following the [JointJS connector precedent](https://docs.jointjs.com/api/connectors/),
+corner shaping stays separate from geometry search and short segments reduce
+corner radii symmetrically.
 
 Bézier policies also fit a compact visibility guide between authored anchors.
 Discovered search vertices can change; authored waypoints remain exact. Final

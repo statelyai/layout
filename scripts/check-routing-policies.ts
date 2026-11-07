@@ -18,18 +18,18 @@ const policies: readonly RoutingPolicy[] = [
   routingPolicies.smooth,
   routingPolicies.diagram,
   routingPolicies.authored,
-  { curve: { kind: "polyline" } },
+  { path: { kind: "polyline" } },
   {
-    curve: { kind: "bezier" },
+    path: { kind: "bezier" },
     sourceTangent: { kind: "border-normal" },
     targetTangent: { kind: "border-normal" },
   },
   {
-    curve: { kind: "rounded-orthogonal", radius: 18 },
+    path: { kind: "rounded-orthogonal", radius: 18 },
     monotonic: { axis: "x", strength: "require" },
   },
   {
-    curve: { kind: "catmull-rom" },
+    path: { kind: "catmull-rom" },
     collisions: { nodes: "avoid", labels: "avoid", crossingPenalty: 200, overlapPenalty: 10 },
   },
 ];

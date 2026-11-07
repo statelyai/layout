@@ -1,0 +1,966 @@
+{
+  "verdict": "Timing comparisons inconclusive under shared-host contention; work and correctness checks passed. No browser FPS claim.",
+  "configuration": {
+    "curve": {
+      "kind": "rounded-orthogonal",
+      "radius": 10,
+      "minRadius": 0
+    },
+    "frames": 5,
+    "trials": 5,
+    "alternatingModes": true,
+    "warmupTrials": 1
+  },
+  "commands": [
+    "ROUTING_BENCH_SIZES=100,1000 ROUTING_BENCH_CURVE=rounded-orthogonal ROUTING_BENCH_FRAMES=5 ROUTING_BENCH_TRIALS=5 ROUTING_BENCH_FILTER=sparse pnpm exec tsx scripts/bench-routing-preview.ts",
+    "ROUTING_BENCH_SIZES=100,1000 ROUTING_BENCH_CURVE=rounded-orthogonal ROUTING_BENCH_FRAMES=5 ROUTING_BENCH_TRIALS=5 ROUTING_BENCH_FILTER=obstacle-corridors pnpm exec tsx scripts/bench-routing-preview.ts"
+  ],
+  "runs": [
+    {
+      "node": "v24.22.1",
+      "cores": 10,
+      "loadAverage": [53.2177734375, 23.02783203125, 14.1416015625],
+      "scope": "Routing plus patch application/SVG serialization, alternating modes after warmup; initial layout, graph diff/projection, DOM/rendering and fresh-equivalence checks excluded. Commit timing is full routing only. Fallback counts remain visible; errors abort the run.",
+      "results": [
+        {
+          "fixture": "sparse-100",
+          "curve": "rounded-orthogonal",
+          "mode": "affected",
+          "trial": 0,
+          "edges": 100,
+          "selected": 1,
+          "frames": 5,
+          "previewMs": {
+            "median": 0.432707999999991,
+            "p95": 0.7255000000000109,
+            "min": 0.41608399999995527,
+            "max": 0.7255000000000109
+          },
+          "updateAndSvgMs": {
+            "median": 0.441915999999992,
+            "p95": 0.7495000000000118,
+            "min": 0.4269170000000031,
+            "max": 0.7495000000000118
+          },
+          "commitMs": 21.025915999999995,
+          "affectedEdges": 5,
+          "patches": 5,
+          "routedEdges": 5,
+          "searchNodes": 0,
+          "initialFallbacks": 0,
+          "commitFallbacks": 0,
+          "fallback": 0,
+          "svgBytes": 778,
+          "errors": 0
+        },
+        {
+          "fixture": "sparse-100",
+          "curve": "rounded-orthogonal",
+          "mode": "selected",
+          "trial": 0,
+          "edges": 100,
+          "selected": 1,
+          "frames": 5,
+          "previewMs": {
+            "median": 0.336749999999995,
+            "p95": 0.33970799999997325,
+            "min": 0.3029579999999896,
+            "max": 0.33970799999997325
+          },
+          "updateAndSvgMs": {
+            "median": 0.34462500000000773,
+            "p95": 0.34695799999997234,
+            "min": 0.3229580000000283,
+            "max": 0.34695799999997234
+          },
+          "commitMs": 19.489000000000033,
+          "affectedEdges": 5,
+          "patches": 5,
+          "routedEdges": 5,
+          "searchNodes": 0,
+          "initialFallbacks": 0,
+          "commitFallbacks": 0,
+          "fallback": 0,
+          "svgBytes": 778,
+          "errors": 0
+        },
+        {
+          "fixture": "sparse-100",
+          "curve": "rounded-orthogonal",
+          "mode": "selected",
+          "trial": 1,
+          "edges": 100,
+          "selected": 1,
+          "frames": 5,
+          "previewMs": {
+            "median": 0.5184169999999995,
+            "p95": 0.8684170000000222,
+            "min": 0.42525000000000546,
+            "max": 0.8684170000000222
+          },
+          "updateAndSvgMs": {
+            "median": 0.5359169999999835,
+            "p95": 0.9204579999999964,
+            "min": 0.45045899999996664,
+            "max": 0.9204579999999964
+          },
+          "commitMs": 18.55241699999999,
+          "affectedEdges": 5,
+          "patches": 5,
+          "routedEdges": 5,
+          "searchNodes": 0,
+          "initialFallbacks": 0,
+          "commitFallbacks": 0,
+          "fallback": 0,
+          "svgBytes": 778,
+          "errors": 0
+        },
+        {
+          "fixture": "sparse-100",
+          "curve": "rounded-orthogonal",
+          "mode": "affected",
+          "trial": 1,
+          "edges": 100,
+          "selected": 1,
+          "frames": 5,
+          "previewMs": {
+            "median": 0.467708000000016,
+            "p95": 0.5010839999999916,
+            "min": 0.4026250000000573,
+            "max": 0.5010839999999916
+          },
+          "updateAndSvgMs": {
+            "median": 0.478917000000024,
+            "p95": 0.5205419999999776,
+            "min": 0.4117500000000973,
+            "max": 0.5205419999999776
+          },
+          "commitMs": 29.51887499999998,
+          "affectedEdges": 5,
+          "patches": 5,
+          "routedEdges": 5,
+          "searchNodes": 0,
+          "initialFallbacks": 0,
+          "commitFallbacks": 0,
+          "fallback": 0,
+          "svgBytes": 778,
+          "errors": 0
+        },
+        {
+          "fixture": "sparse-100",
+          "curve": "rounded-orthogonal",
+          "mode": "affected",
+          "trial": 2,
+          "edges": 100,
+          "selected": 1,
+          "frames": 5,
+          "previewMs": {
+            "median": 0.34970799999996416,
+            "p95": 0.3962089999999989,
+            "min": 0.32133299999998144,
+            "max": 0.3962089999999989
+          },
+          "updateAndSvgMs": {
+            "median": 0.35866599999997106,
+            "p95": 0.405666999999994,
+            "min": 0.3439580000000433,
+            "max": 0.405666999999994
+          },
+          "commitMs": 20.802708000000052,
+          "affectedEdges": 5,
+          "patches": 5,
+          "routedEdges": 5,
+          "searchNodes": 0,
+          "initialFallbacks": 0,
+          "commitFallbacks": 0,
+          "fallback": 0,
+          "svgBytes": 778,
+          "errors": 0
+        },
+        {
+          "fixture": "sparse-100",
+          "curve": "rounded-orthogonal",
+          "mode": "selected",
+          "trial": 2,
+          "edges": 100,
+          "selected": 1,
+          "frames": 5,
+          "previewMs": {
+            "median": 0.3644160000000056,
+            "p95": 0.39495799999997416,
+            "min": 0.3510830000000169,
+            "max": 0.39495799999997416
+          },
+          "updateAndSvgMs": {
+            "median": 0.3737499999999727,
+            "p95": 0.4031250000000455,
+            "min": 0.3635420000000522,
+            "max": 0.4031250000000455
+          },
+          "commitMs": 20.310458999999923,
+          "affectedEdges": 5,
+          "patches": 5,
+          "routedEdges": 5,
+          "searchNodes": 0,
+          "initialFallbacks": 0,
+          "commitFallbacks": 0,
+          "fallback": 0,
+          "svgBytes": 778,
+          "errors": 0
+        },
+        {
+          "fixture": "sparse-100",
+          "curve": "rounded-orthogonal",
+          "mode": "selected",
+          "trial": 3,
+          "edges": 100,
+          "selected": 1,
+          "frames": 5,
+          "previewMs": {
+            "median": 0.6507910000000265,
+            "p95": 1.0229170000000067,
+            "min": 0.322208000000046,
+            "max": 1.0229170000000067
+          },
+          "updateAndSvgMs": {
+            "median": 0.6716659999999592,
+            "p95": 1.0403340000000298,
+            "min": 0.3430000000000746,
+            "max": 1.0403340000000298
+          },
+          "commitMs": 56.798,
+          "affectedEdges": 5,
+          "patches": 5,
+          "routedEdges": 5,
+          "searchNodes": 0,
+          "initialFallbacks": 0,
+          "commitFallbacks": 0,
+          "fallback": 0,
+          "svgBytes": 778,
+          "errors": 0
+        },
+        {
+          "fixture": "sparse-100",
+          "curve": "rounded-orthogonal",
+          "mode": "affected",
+          "trial": 3,
+          "edges": 100,
+          "selected": 1,
+          "frames": 5,
+          "previewMs": {
+            "median": 0.45004100000005565,
+            "p95": 0.6871250000000373,
+            "min": 0.3324999999999818,
+            "max": 0.6871250000000373
+          },
+          "updateAndSvgMs": {
+            "median": 0.46487500000000637,
+            "p95": 0.7063329999999723,
+            "min": 0.3562499999999318,
+            "max": 0.7063329999999723
+          },
+          "commitMs": 40.96825000000001,
+          "affectedEdges": 5,
+          "patches": 5,
+          "routedEdges": 5,
+          "searchNodes": 0,
+          "initialFallbacks": 0,
+          "commitFallbacks": 0,
+          "fallback": 0,
+          "svgBytes": 778,
+          "errors": 0
+        },
+        {
+          "fixture": "sparse-100",
+          "curve": "rounded-orthogonal",
+          "mode": "affected",
+          "trial": 4,
+          "edges": 100,
+          "selected": 1,
+          "frames": 5,
+          "previewMs": {
+            "median": 0.3452919999999722,
+            "p95": 0.3545839999999316,
+            "min": 0.3206670000000713,
+            "max": 0.3545839999999316
+          },
+          "updateAndSvgMs": {
+            "median": 0.3537499999999909,
+            "p95": 0.3642089999999598,
+            "min": 0.34483299999999417,
+            "max": 0.3642089999999598
+          },
+          "commitMs": 19.896624999999972,
+          "affectedEdges": 5,
+          "patches": 5,
+          "routedEdges": 5,
+          "searchNodes": 0,
+          "initialFallbacks": 0,
+          "commitFallbacks": 0,
+          "fallback": 0,
+          "svgBytes": 778,
+          "errors": 0
+        },
+        {
+          "fixture": "sparse-100",
+          "curve": "rounded-orthogonal",
+          "mode": "selected",
+          "trial": 4,
+          "edges": 100,
+          "selected": 1,
+          "frames": 5,
+          "previewMs": {
+            "median": 0.3584160000000338,
+            "p95": 0.4294169999998303,
+            "min": 0.3360419999999067,
+            "max": 0.4294169999998303
+          },
+          "updateAndSvgMs": {
+            "median": 0.36658299999999144,
+            "p95": 0.44783299999994597,
+            "min": 0.352333999999928,
+            "max": 0.44783299999994597
+          },
+          "commitMs": 17.04495799999995,
+          "affectedEdges": 5,
+          "patches": 5,
+          "routedEdges": 5,
+          "searchNodes": 0,
+          "initialFallbacks": 0,
+          "commitFallbacks": 0,
+          "fallback": 0,
+          "svgBytes": 778,
+          "errors": 0
+        },
+        {
+          "fixture": "sparse-1000",
+          "curve": "rounded-orthogonal",
+          "mode": "affected",
+          "trial": 0,
+          "edges": 1000,
+          "selected": 1,
+          "frames": 5,
+          "previewMs": {
+            "median": 0.42854199999965203,
+            "p95": 0.6353749999998399,
+            "min": 0.40625,
+            "max": 0.6353749999998399
+          },
+          "updateAndSvgMs": {
+            "median": 0.43724999999994907,
+            "p95": 0.64712499999996,
+            "min": 0.4197909999998046,
+            "max": 0.64712499999996
+          },
+          "commitMs": 574.3219580000004,
+          "affectedEdges": 5,
+          "patches": 5,
+          "routedEdges": 5,
+          "searchNodes": 0,
+          "initialFallbacks": 0,
+          "commitFallbacks": 0,
+          "fallback": 0,
+          "svgBytes": 808,
+          "errors": 0
+        },
+        {
+          "fixture": "sparse-1000",
+          "curve": "rounded-orthogonal",
+          "mode": "selected",
+          "trial": 0,
+          "edges": 1000,
+          "selected": 1,
+          "frames": 5,
+          "previewMs": {
+            "median": 0.5692499999995562,
+            "p95": 1.187750000000051,
+            "min": 0.45316600000023755,
+            "max": 1.187750000000051
+          },
+          "updateAndSvgMs": {
+            "median": 0.588249999999789,
+            "p95": 1.2503340000002936,
+            "min": 0.47695800000019517,
+            "max": 1.2503340000002936
+          },
+          "commitMs": 233.36741699999948,
+          "affectedEdges": 5,
+          "patches": 5,
+          "routedEdges": 5,
+          "searchNodes": 0,
+          "initialFallbacks": 0,
+          "commitFallbacks": 0,
+          "fallback": 0,
+          "svgBytes": 808,
+          "errors": 0
+        },
+        {
+          "fixture": "sparse-1000",
+          "curve": "rounded-orthogonal",
+          "mode": "selected",
+          "trial": 1,
+          "edges": 1000,
+          "selected": 1,
+          "frames": 5,
+          "previewMs": {
+            "median": 0.4133750000000873,
+            "p95": 0.5435000000006767,
+            "min": 0.39174999999977445,
+            "max": 0.5435000000006767
+          },
+          "updateAndSvgMs": {
+            "median": 0.4227080000000569,
+            "p95": 0.5610420000002705,
+            "min": 0.40024999999968713,
+            "max": 0.5610420000002705
+          },
+          "commitMs": 220.7760419999995,
+          "affectedEdges": 5,
+          "patches": 5,
+          "routedEdges": 5,
+          "searchNodes": 0,
+          "initialFallbacks": 0,
+          "commitFallbacks": 0,
+          "fallback": 0,
+          "svgBytes": 808,
+          "errors": 0
+        },
+        {
+          "fixture": "sparse-1000",
+          "curve": "rounded-orthogonal",
+          "mode": "affected",
+          "trial": 1,
+          "edges": 1000,
+          "selected": 1,
+          "frames": 5,
+          "previewMs": {
+            "median": 0.44474999999965803,
+            "p95": 0.4474999999993088,
+            "min": 0.4115830000000642,
+            "max": 0.4474999999993088
+          },
+          "updateAndSvgMs": {
+            "median": 0.4611669999994774,
+            "p95": 0.4694579999995767,
+            "min": 0.43862499999977445,
+            "max": 0.4694579999995767
+          },
+          "commitMs": 180.97766599999977,
+          "affectedEdges": 5,
+          "patches": 5,
+          "routedEdges": 5,
+          "searchNodes": 0,
+          "initialFallbacks": 0,
+          "commitFallbacks": 0,
+          "fallback": 0,
+          "svgBytes": 808,
+          "errors": 0
+        },
+        {
+          "fixture": "sparse-1000",
+          "curve": "rounded-orthogonal",
+          "mode": "affected",
+          "trial": 2,
+          "edges": 1000,
+          "selected": 1,
+          "frames": 5,
+          "previewMs": {
+            "median": 0.3645839999999225,
+            "p95": 0.37458299999980227,
+            "min": 0.338832999999795,
+            "max": 0.37458299999980227
+          },
+          "updateAndSvgMs": {
+            "median": 0.37229200000001583,
+            "p95": 0.384541999999783,
+            "min": 0.3563750000002983,
+            "max": 0.384541999999783
+          },
+          "commitMs": 184.75950000000012,
+          "affectedEdges": 5,
+          "patches": 5,
+          "routedEdges": 5,
+          "searchNodes": 0,
+          "initialFallbacks": 0,
+          "commitFallbacks": 0,
+          "fallback": 0,
+          "svgBytes": 808,
+          "errors": 0
+        },
+        {
+          "fixture": "sparse-1000",
+          "curve": "rounded-orthogonal",
+          "mode": "selected",
+          "trial": 2,
+          "edges": 1000,
+          "selected": 1,
+          "frames": 5,
+          "previewMs": {
+            "median": 0.4360000000006039,
+            "p95": 4.355583000000479,
+            "min": 0.3667920000007143,
+            "max": 4.355583000000479
+          },
+          "updateAndSvgMs": {
+            "median": 0.4456660000005286,
+            "p95": 4.3816249999999854,
+            "min": 0.3861249999999927,
+            "max": 4.3816249999999854
+          },
+          "commitMs": 193.2387919999992,
+          "affectedEdges": 5,
+          "patches": 5,
+          "routedEdges": 5,
+          "searchNodes": 0,
+          "initialFallbacks": 0,
+          "commitFallbacks": 0,
+          "fallback": 0,
+          "svgBytes": 808,
+          "errors": 0
+        },
+        {
+          "fixture": "sparse-1000",
+          "curve": "rounded-orthogonal",
+          "mode": "selected",
+          "trial": 3,
+          "edges": 1000,
+          "selected": 1,
+          "frames": 5,
+          "previewMs": {
+            "median": 0.454834000000119,
+            "p95": 0.7910419999998339,
+            "min": 0.3422499999996944,
+            "max": 0.7910419999998339
+          },
+          "updateAndSvgMs": {
+            "median": 0.4751669999996011,
+            "p95": 0.8073329999997441,
+            "min": 0.3642090000003009,
+            "max": 0.8073329999997441
+          },
+          "commitMs": 229.15595900000062,
+          "affectedEdges": 5,
+          "patches": 5,
+          "routedEdges": 5,
+          "searchNodes": 0,
+          "initialFallbacks": 0,
+          "commitFallbacks": 0,
+          "fallback": 0,
+          "svgBytes": 808,
+          "errors": 0
+        },
+        {
+          "fixture": "sparse-1000",
+          "curve": "rounded-orthogonal",
+          "mode": "affected",
+          "trial": 3,
+          "edges": 1000,
+          "selected": 1,
+          "frames": 5,
+          "previewMs": {
+            "median": 0.38237499999922875,
+            "p95": 0.3916669999998703,
+            "min": 0.3616250000013679,
+            "max": 0.3916669999998703
+          },
+          "updateAndSvgMs": {
+            "median": 0.3931250000005093,
+            "p95": 0.4007499999988795,
+            "min": 0.3803750000006403,
+            "max": 0.4007499999988795
+          },
+          "commitMs": 511.8115830000006,
+          "affectedEdges": 5,
+          "patches": 5,
+          "routedEdges": 5,
+          "searchNodes": 0,
+          "initialFallbacks": 0,
+          "commitFallbacks": 0,
+          "fallback": 0,
+          "svgBytes": 808,
+          "errors": 0
+        },
+        {
+          "fixture": "sparse-1000",
+          "curve": "rounded-orthogonal",
+          "mode": "affected",
+          "trial": 4,
+          "edges": 1000,
+          "selected": 1,
+          "frames": 5,
+          "previewMs": {
+            "median": 0.4979169999987789,
+            "p95": 10.291916999998648,
+            "min": 0.3692080000000715,
+            "max": 10.291916999998648
+          },
+          "updateAndSvgMs": {
+            "median": 0.5087079999993875,
+            "p95": 10.310999999999694,
+            "min": 0.3802080000004935,
+            "max": 10.310999999999694
+          },
+          "commitMs": 468.5824169999996,
+          "affectedEdges": 5,
+          "patches": 5,
+          "routedEdges": 5,
+          "searchNodes": 0,
+          "initialFallbacks": 0,
+          "commitFallbacks": 0,
+          "fallback": 0,
+          "svgBytes": 808,
+          "errors": 0
+        },
+        {
+          "fixture": "sparse-1000",
+          "curve": "rounded-orthogonal",
+          "mode": "selected",
+          "trial": 4,
+          "edges": 1000,
+          "selected": 1,
+          "frames": 5,
+          "previewMs": {
+            "median": 0.39279099999839673,
+            "p95": 0.4135000000005675,
+            "min": 0.36924999999973807,
+            "max": 0.4135000000005675
+          },
+          "updateAndSvgMs": {
+            "median": 0.4039999999986321,
+            "p95": 0.42295800000101735,
+            "min": 0.39187499999934516,
+            "max": 0.42295800000101735
+          },
+          "commitMs": 635.5464579999989,
+          "affectedEdges": 5,
+          "patches": 5,
+          "routedEdges": 5,
+          "searchNodes": 0,
+          "initialFallbacks": 0,
+          "commitFallbacks": 0,
+          "fallback": 0,
+          "svgBytes": 808,
+          "errors": 0
+        }
+      ]
+    },
+    {
+      "node": "v24.22.1",
+      "cores": 10,
+      "loadAverage": [46.60791015625, 22.61328125, 14.0986328125],
+      "scope": "Routing plus patch application/SVG serialization, alternating modes after warmup; initial layout, graph diff/projection, DOM/rendering and fresh-equivalence checks excluded. Commit timing is full routing only. Fallback counts remain visible; errors abort the run.",
+      "results": [
+        {
+          "fixture": "obstacle-corridors-24",
+          "curve": "rounded-orthogonal",
+          "mode": "affected",
+          "trial": 0,
+          "edges": 24,
+          "selected": 1,
+          "frames": 5,
+          "previewMs": {
+            "median": 15.213625000000093,
+            "p95": 99.39675000000011,
+            "min": 14.331874999999854,
+            "max": 99.39675000000011
+          },
+          "updateAndSvgMs": {
+            "median": 15.239874999999984,
+            "p95": 99.507791,
+            "min": 14.357999999999947,
+            "max": 99.507791
+          },
+          "commitMs": 181.35741600000006,
+          "affectedEdges": 22,
+          "patches": 16,
+          "routedEdges": 22,
+          "searchNodes": 12069,
+          "initialFallbacks": 0,
+          "commitFallbacks": 0,
+          "fallback": 0,
+          "svgBytes": 2579,
+          "errors": 0
+        },
+        {
+          "fixture": "obstacle-corridors-24",
+          "curve": "rounded-orthogonal",
+          "mode": "selected",
+          "trial": 0,
+          "edges": 24,
+          "selected": 1,
+          "frames": 5,
+          "previewMs": {
+            "median": 6.271124999999756,
+            "p95": 6.952957999999853,
+            "min": 5.994000000000142,
+            "max": 6.952957999999853
+          },
+          "updateAndSvgMs": {
+            "median": 6.2967499999999745,
+            "p95": 6.976916000000074,
+            "min": 6.016958000000159,
+            "max": 6.976916000000074
+          },
+          "commitMs": 187.52154199999995,
+          "affectedEdges": 5,
+          "patches": 5,
+          "routedEdges": 5,
+          "searchNodes": 2098,
+          "initialFallbacks": 0,
+          "commitFallbacks": 0,
+          "fallback": 0,
+          "svgBytes": 995,
+          "errors": 0
+        },
+        {
+          "fixture": "obstacle-corridors-24",
+          "curve": "rounded-orthogonal",
+          "mode": "selected",
+          "trial": 1,
+          "edges": 24,
+          "selected": 1,
+          "frames": 5,
+          "previewMs": {
+            "median": 6.353833000000122,
+            "p95": 6.57004199999983,
+            "min": 5.726458000000093,
+            "max": 6.57004199999983
+          },
+          "updateAndSvgMs": {
+            "median": 6.385499999999865,
+            "p95": 6.598457999999937,
+            "min": 5.75020799999993,
+            "max": 6.598457999999937
+          },
+          "commitMs": 195.227167,
+          "affectedEdges": 5,
+          "patches": 5,
+          "routedEdges": 5,
+          "searchNodes": 2098,
+          "initialFallbacks": 0,
+          "commitFallbacks": 0,
+          "fallback": 0,
+          "svgBytes": 995,
+          "errors": 0
+        },
+        {
+          "fixture": "obstacle-corridors-24",
+          "curve": "rounded-orthogonal",
+          "mode": "affected",
+          "trial": 1,
+          "edges": 24,
+          "selected": 1,
+          "frames": 5,
+          "previewMs": {
+            "median": 15.872624999999971,
+            "p95": 156.48874999999998,
+            "min": 14.374333000000206,
+            "max": 156.48874999999998
+          },
+          "updateAndSvgMs": {
+            "median": 15.901707999999871,
+            "p95": 156.64374999999973,
+            "min": 14.400250000000142,
+            "max": 156.64374999999973
+          },
+          "commitMs": 242.41095799999994,
+          "affectedEdges": 22,
+          "patches": 16,
+          "routedEdges": 22,
+          "searchNodes": 12069,
+          "initialFallbacks": 0,
+          "commitFallbacks": 0,
+          "fallback": 0,
+          "svgBytes": 2579,
+          "errors": 0
+        },
+        {
+          "fixture": "obstacle-corridors-24",
+          "curve": "rounded-orthogonal",
+          "mode": "affected",
+          "trial": 2,
+          "edges": 24,
+          "selected": 1,
+          "frames": 5,
+          "previewMs": {
+            "median": 15.25241700000015,
+            "p95": 105.94791600000008,
+            "min": 14.808665999999903,
+            "max": 105.94791600000008
+          },
+          "updateAndSvgMs": {
+            "median": 15.281875000000127,
+            "p95": 106.06849999999986,
+            "min": 14.837165999999797,
+            "max": 106.06849999999986
+          },
+          "commitMs": 211.82516700000042,
+          "affectedEdges": 22,
+          "patches": 16,
+          "routedEdges": 22,
+          "searchNodes": 12069,
+          "initialFallbacks": 0,
+          "commitFallbacks": 0,
+          "fallback": 0,
+          "svgBytes": 2579,
+          "errors": 0
+        },
+        {
+          "fixture": "obstacle-corridors-24",
+          "curve": "rounded-orthogonal",
+          "mode": "selected",
+          "trial": 2,
+          "edges": 24,
+          "selected": 1,
+          "frames": 5,
+          "previewMs": {
+            "median": 6.174084000000221,
+            "p95": 7.314124999999876,
+            "min": 5.681666999999834,
+            "max": 7.314124999999876
+          },
+          "updateAndSvgMs": {
+            "median": 6.197624999999789,
+            "p95": 7.3408339999996315,
+            "min": 5.703916999999819,
+            "max": 7.3408339999996315
+          },
+          "commitMs": 181.36466700000074,
+          "affectedEdges": 5,
+          "patches": 5,
+          "routedEdges": 5,
+          "searchNodes": 2098,
+          "initialFallbacks": 0,
+          "commitFallbacks": 0,
+          "fallback": 0,
+          "svgBytes": 995,
+          "errors": 0
+        },
+        {
+          "fixture": "obstacle-corridors-24",
+          "curve": "rounded-orthogonal",
+          "mode": "selected",
+          "trial": 3,
+          "edges": 24,
+          "selected": 1,
+          "frames": 5,
+          "previewMs": {
+            "median": 6.44629199999963,
+            "p95": 6.767957999999453,
+            "min": 5.173999999999978,
+            "max": 6.767957999999453
+          },
+          "updateAndSvgMs": {
+            "median": 6.472374999999374,
+            "p95": 6.797082999999475,
+            "min": 5.1935419999999795,
+            "max": 6.797082999999475
+          },
+          "commitMs": 184.0744590000004,
+          "affectedEdges": 5,
+          "patches": 5,
+          "routedEdges": 5,
+          "searchNodes": 2098,
+          "initialFallbacks": 0,
+          "commitFallbacks": 0,
+          "fallback": 0,
+          "svgBytes": 995,
+          "errors": 0
+        },
+        {
+          "fixture": "obstacle-corridors-24",
+          "curve": "rounded-orthogonal",
+          "mode": "affected",
+          "trial": 3,
+          "edges": 24,
+          "selected": 1,
+          "frames": 5,
+          "previewMs": {
+            "median": 14.826624999999694,
+            "p95": 99.10895800000071,
+            "min": 13.130874999999833,
+            "max": 99.10895800000071
+          },
+          "updateAndSvgMs": {
+            "median": 14.85608400000001,
+            "p95": 99.29479100000026,
+            "min": 13.158583999999792,
+            "max": 99.29479100000026
+          },
+          "commitMs": 186.60079199999927,
+          "affectedEdges": 22,
+          "patches": 16,
+          "routedEdges": 22,
+          "searchNodes": 12069,
+          "initialFallbacks": 0,
+          "commitFallbacks": 0,
+          "fallback": 0,
+          "svgBytes": 2579,
+          "errors": 0
+        },
+        {
+          "fixture": "obstacle-corridors-24",
+          "curve": "rounded-orthogonal",
+          "mode": "affected",
+          "trial": 4,
+          "edges": 24,
+          "selected": 1,
+          "frames": 5,
+          "previewMs": {
+            "median": 15.227790999999343,
+            "p95": 99.50616599999921,
+            "min": 14.47150000000056,
+            "max": 99.50616599999921
+          },
+          "updateAndSvgMs": {
+            "median": 15.257915999999568,
+            "p95": 99.6593329999996,
+            "min": 14.501625000000786,
+            "max": 99.6593329999996
+          },
+          "commitMs": 178.46920799999953,
+          "affectedEdges": 22,
+          "patches": 16,
+          "routedEdges": 22,
+          "searchNodes": 12069,
+          "initialFallbacks": 0,
+          "commitFallbacks": 0,
+          "fallback": 0,
+          "svgBytes": 2579,
+          "errors": 0
+        },
+        {
+          "fixture": "obstacle-corridors-24",
+          "curve": "rounded-orthogonal",
+          "mode": "selected",
+          "trial": 4,
+          "edges": 24,
+          "selected": 1,
+          "frames": 5,
+          "previewMs": {
+            "median": 6.728874999999789,
+            "p95": 7.3774999999996,
+            "min": 5.636917000000722,
+            "max": 7.3774999999996
+          },
+          "updateAndSvgMs": {
+            "median": 6.75629200000003,
+            "p95": 7.401499999999942,
+            "min": 5.661667000000307,
+            "max": 7.401499999999942
+          },
+          "commitMs": 206.21379200000047,
+          "affectedEdges": 5,
+          "patches": 5,
+          "routedEdges": 5,
+          "searchNodes": 2098,
+          "initialFallbacks": 0,
+          "commitFallbacks": 0,
+          "fallback": 0,
+          "svgBytes": 995,
+          "errors": 0
+        }
+      ]
+    }
+  ]
+}

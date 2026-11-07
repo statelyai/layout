@@ -106,7 +106,8 @@
     "test:parity:self-loops": "tsx scripts/check-mixed-self-loop-parity.ts",
     "test:parity:flat": "tsx scripts/check-flat-parity.ts",
     "test:parity:model-order": "tsx scripts/check-model-order-parity.ts",
-    "test:parity:oracle": "vitest run --config vitest.parity.config.ts"
+    "test:parity:oracle": "vitest run --config vitest.parity.config.ts",
+    "bench:routing-preview": "tsx scripts/bench-routing-preview.ts"
   },
   "dependencies": {
     "@lume/kiwi": "^0.4.4",

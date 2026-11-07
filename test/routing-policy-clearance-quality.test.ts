@@ -13,7 +13,7 @@ import { inflate } from "../src/routing/spatial";
 
 const settings: RoutingSettings = {
   policy: {
-    curve: { kind: "bezier" },
+    path: { kind: "bezier" },
     label: { kind: "follow" },
     collisions: { nodes: "avoid", labels: "avoid" },
   },

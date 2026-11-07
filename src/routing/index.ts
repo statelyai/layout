@@ -48,13 +48,15 @@ export type {
   RoutingMetrics,
   RoutingSettings,
   RoutingPolicy,
-  RoutingCurve,
+  RoutingPathOptions,
+  CornerRadiusOptions,
   RoutingTangent,
   RoutingLabel,
   RouteLabelPlacement,
   RoutingSnapshot,
   RoutingStrategy,
   RoutingUpdate,
+  RoutingUpdateScope,
 } from "./types";
 export type { FlattenPathOptions } from "./path";
 export {

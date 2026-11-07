@@ -151,10 +151,9 @@ import { routeEdges, updateRoutes, toSvgPath } from "@statelyai/layout/routing";
 
 const previous = routeEdges({
   graph,
-  geometry: "orthogonal",
   settings: {
     coordination: { kind: "independent" },
-    policy: { curve: { kind: "rounded-orthogonal", radius: 8 } },
+    policy: { path: { kind: "rounded-orthogonal", radius: 8 } },
   },
 });
 const { snapshot, patches } = updateRoutes({
@@ -165,11 +164,13 @@ const { snapshot, patches } = updateRoutes({
 const paths = snapshot.routes.get("ab")?.sections.map((section) => toSvgPath(section.path));
 ```
 
-Geometry (`straight`, `orthogonal`, `polyline`, `octilinear`), curve construction,
-edge coordination (`independent`, `parallel`, `fan`, `bus`, `bundle`) and self-loop
-rules are separate choices. Per-edge endpoints, obstacles, label-only topology,
-marker gaps and attachment boundaries work across geometries. Named legacy
-strategies remain available.
+`RoutingPolicy.path` is a discriminated choice: sharp `polyline` paths accept
+`geometry` (`straight`, `orthogonal`, `polyline`, `octilinear`); rounded orthogonal
+paths accept corner bounds; Bézier and Catmull–Rom select their own guides.
+Conflicting or irrelevant fields are rejected. Edge coordination (`independent`,
+`parallel`, `fan`, `bus`, `bundle`), self-loop rules, endpoints, obstacles,
+label-only topology and marker gaps remain separate. Named legacy strategies
+remain available as defaults.
 
 `getLayoutRouting(layout)` returns retained routing geometry and its snapshot
 when native layout used this router. Continue editing that resolved graph to
@@ -189,12 +190,15 @@ updates child attachments when parent labels move. See the
 tangents, passive or fixed labels, collisions, monotonicity, and route stability.
 Gap labels can restrict attachments to side midpoints with
 `attachment: "side-midpoint"`, including conditional connectors and incremental updates.
+Rounded orthogonal curves accept `radius` (preferred), `minRadius` and
+`maxRadius`; short segments shrink bends within those bounds. Infeasible positive
+minimums produce a diagnosed whole-edge sharp fallback.
 `routingPolicies.smooth`, `.diagram`, and `.authored` provide Bézier, rounded
 orthogonal, and centripetal Catmull–Rom presets. Following labels use half the
 final path length and return their placement in `Route.label`. See the
 [routing policy reference](docs/routing-policies.md).
 
-Canonical incremental results match fresh routing for the same graph and
+Except temporary selected previews, canonical incremental results match fresh routing for the same graph and
 settings. Opt-in `stability: { kind: "preserve-valid" }` keeps valid prior paths
 to reduce changes during editing and deliberately depends on edit history.
 
@@ -205,6 +209,12 @@ coordinate unrelated groups; residual conflicts stay visible and reported. Nativ
 straight, Bézier, orthogonal, polyline, octilinear, curved, organic, parallel,
 self-loop, fan, bus, and bundled routes. Render curves directly or flatten them
 for a lines-only renderer. ELK/native layout adapters preserve existing output.
+
+For selected-only drag previews, pass `scope: { kind: "selected", edgeIds }` to
+`updateRoutes`, then call `refineRoutes({ previous })` on commit. Dependencies in
+label chains and coordination groups still update together. Other routes retain
+their previous geometry until refinement. Run `pnpm bench:routing-preview` to
+compare preview and commit work; see the [interactive guide](docs/interactive-routing.md).
 
 For efficient dragging, supply the edit's diff directly: `getDiff` scans the
 whole graph. See [routing contracts, algorithms, and examples](docs/routing.md).
